@@ -1,6 +1,13 @@
 import random
 import sys
 
+from persistent import Persistent
+
+from BTrees.OOBTree import OOBTree
+from BTrees.IOBTree import IOBTree
+from BTrees.OIBTree import OIBTree
+from BTrees.IIBTree import IISet
+
 """
 Pathindex data structure of document map:
 
@@ -62,27 +69,27 @@ there's a child at '/a/b/c').
 
 _marker = object()
 
-class DocumentMap(object):
+class DocumentMap(Persistent):
     
-    nextid = None
+    _v_nextid = None
 
     def __init__(self):
-        self.docid_to_path = {}
-        self.path_to_docid = {}
-        self.pathindex = {}
+        self.docid_to_path = IOBTree()
+        self.path_to_docid = OIBTree()
+        self.pathindex = OOBTree()
 
     def new_docid(self, path_tuple):
         while True:
-            if self.nextid is None:
-                self.nextid = random.randrange(-sys.maxint, sys.maxint)
+            if self._v_nextid is None:
+                self._v_nextid = random.randrange(-sys.maxint, sys.maxint)
 
-            docid = self.nextid
-            self.nextid += 1
+            docid = self._v_nextid
+            self._v_nextid += 1
 
             if docid not in self.docid_to_path:
                 return docid
 
-            self.nextid = None
+            self._v_nextid = None
             
     def add(self, path_tuple, docid=_marker):
         if path_tuple in self.path_to_docid:
@@ -103,9 +110,9 @@ class DocumentMap(object):
 
         for x in range(pathlen):
             els = path_tuple[:x+1]
-            dmap = self.pathindex.setdefault(els, {})
+            dmap = self.pathindex.setdefault(els, IOBTree())
             level = pathlen - len(els)
-            didset = dmap.setdefault(level, set())
+            didset = dmap.setdefault(level, IISet())
             didset.add(docid)
 
         return docid
@@ -127,14 +134,15 @@ class DocumentMap(object):
 
         # rationale: if this key isn't present, no path added ever contained it
         if dmap is None:
-            return set()
+            return IISet()
 
         removed = set()
         # sorted() only for clarity during tests
-        items = sorted(dmap.items())
+        items = dmap.items()
 
+        removepaths = []
         # this can be done with a min= option to BTree.items method
-        for k, dm in self.pathindex.items():
+        for k, dm in self.pathindex.items(min=path_tuple):
             if k[:pathlen] == path_tuple:
                 for didset in dm.values():
                     removed.update(didset)
@@ -143,8 +151,13 @@ class DocumentMap(object):
                             p = self.docid_to_path[did]
                             del self.docid_to_path[did]
                             del self.path_to_docid[p]
-                # XXX mutation while iterating
-                del self.pathindex[k]
+                # dont mutate while iterating
+                removepaths.append(k)
+            else:
+                break
+
+        for k in removepaths:
+            del self.pathindex[k]
 
         for x in range(pathlen-1):
             offset = x + 1
@@ -184,7 +197,7 @@ class DocumentMap(object):
             raise StopIteration
         
         if depth is None:
-            for d, didset in sorted(dmap.items()):
+            for d, didset in dmap.items():
                 
                 if d == 0 and not include_origin:
                     continue
@@ -206,124 +219,4 @@ class DocumentMap(object):
                     for v in didset:
                         yield v
 
-if __name__ == '__main__':
 
-    def split(s):
-        return (u'',) + tuple(filter(None, s.split(u'/')))
-
-    def l(path, depth=None):
-        path_tuple = split(path)
-        return sorted(list(docmap.pathlookup(path_tuple, depth)))
-
-    docmap = DocumentMap()
-    docmap.nextid = 1
-
-    root = split('/')
-    a = split('/a')
-    ab = split('/a/b')
-    abc = split('/a/b/c')
-    z = split('/z')
-
-    did1 = docmap.add(ab)
-    did2 = docmap.add(abc)
-    did3 = docmap.add(a)
-    did4 = docmap.add(root)
-    did5 = docmap.add(z)
-
-    # /
-    nodepth = l('/')
-    assert nodepth == [did1, did2, did3, did4, did5], nodepth
-    depth0 = l('/', depth=0)
-    assert depth0 == [did4], depth0
-    depth1 = l('/', depth=1)
-    assert depth1 == [did3, did4, did5], depth1
-    depth2 = l('/', depth=2)
-    assert depth2 == [did1, did3, did4, did5], depth2
-    depth3 = l('/', depth=3)
-    assert depth3 == [did1, did2, did3, did4, did5], depth3
-    depth4 = l('/', depth=4)
-    assert depth4 == [did1, did2, did3, did4, did5], depth4
-    
-    # /a
-    nodepth = l('/a')
-    assert nodepth == [did1, did2, did3], nodepth
-    depth0 = l('/a', depth=0)
-    assert depth0 == [did3], depth0
-    depth1 = l('/a', depth=1)
-    assert depth1 == [did1, did3], depth1
-    depth2 = l('/a', depth=2)
-    assert depth2 == [did1, did2, did3], depth2
-    depth3 = l('/a', depth=3)
-    assert depth3 == [did1, did2, did3], depth3
-    
-    # /a/b
-    nodepth = l('/a/b')
-    assert nodepth == [did1, did2], nodepth
-    depth0 = l('/a/b', depth=0)
-    assert depth0 == [did1], depth0
-    depth1 = l('/a/b', depth=1)
-    assert depth1 == [did1, did2], depth1
-    depth2 = l('/a/b', depth=2)
-    assert depth2 == [did1, did2], depth2
-    
-    # /a/b/c
-    nodepth = l('/a/b/c')
-    assert nodepth == [did2], nodepth
-    depth0 = l('/a/b/c', depth=0)
-    assert depth0 == [did2], depth0
-    depth1 = l('/a/b/c', depth=1)
-    assert depth1 == [did2], depth1
-
-    # remove '/a/b'
-    removed = docmap.remove(did1)
-    assert removed == set([1,2])
-
-    # /a/b/c
-    nodepth = l('/a/b/c')
-    assert nodepth == [], nodepth
-    depth0 = l('/a/b/c', depth=0)
-    assert depth0 == [], depth0
-    depth1 = l('/a/b/c', depth=1)
-    assert depth1 == [], depth1
-
-    # /a/b
-    nodepth = l('/a/b')
-    assert nodepth == [], nodepth
-    depth0 = l('/a/b', depth=0)
-    assert depth0 == [], depth0
-    depth1 = l('/a/b', depth=1)
-    assert depth1 == [], depth1
-
-    # /a
-    nodepth = l('/a')
-    assert nodepth == [did3], nodepth
-    depth0 = l('/a', depth=0)
-    assert depth0 == [did3], depth0
-    depth1 = l('/a', depth=1)
-    assert depth1 == [did3], depth1
-
-    # /
-    nodepth = l('/')
-    assert nodepth == [did3, did4, did5], nodepth
-    depth0 = l('/', depth=0)
-    assert depth0 == [did4], depth0
-    depth1 = l('/', depth=1)
-    assert depth1 == [did3, did4, did5], depth1
-
-    assert docmap.pathindex == {(u'',): {0: set([4]), 1: set([3, 5])}, 
-                                (u'', u'a'): {0: set([3])},
-                                (u'', u'z'): {0: set([5])}}
-    assert docmap.docid_to_path == {3: (u'', u'a'), 4: (u'',), 5: (u'', u'z')}
-    assert docmap.path_to_docid == {(u'', u'z'): 5, (u'', u'a'): 3, (u'',): 4}
-
-    # remove '/'
-    removed = docmap.remove((u'',))
-    assert removed == set([3,4,5])
-
-    assert docmap.pathindex == {}
-    print docmap.docid_to_path
-    
-    assert docmap.docid_to_path == {}
-    assert docmap.path_to_docid == {}
-    
-    print 'OK'
