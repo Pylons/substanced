@@ -1,0 +1,11 @@
+*.egg
+*.egg-info
+*.pyc
+*$py.class
+*~
+.coverage
+build/
+dist/
+.tox/
+nosetests.xml
+env*/
