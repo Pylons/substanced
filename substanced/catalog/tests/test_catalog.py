@@ -2,42 +2,41 @@ import re
 import unittest
 from pyramid import testing
 
-from zope.interface import directlyProvides
-from zope.interface import implements
+from zope.interface import implementer
 
 from repoze.catalog.interfaces import ICatalogIndex
 
-class TestCatalogManager(unittest.TestCase):
+class TestCatalog(unittest.TestCase):
     def setUp(self):
         self.config = testing.setUp()
 
     def tearDown(self):
         testing.tearDown()
 
-    def _makeOne(self, context, output):
-        from .. import CatalogManager
-        return CatalogManager(context, self.config.registry, output)
+    def _makeOne(self, site):
+        from .. import Catalog
+        return Catalog(site)
 
     def test_reindex(self):
         from ...interfaces import ICatalogSite
         a = testing.DummyModel()
-        self.config.testing_resources({'a':a})
+        self.config.testing_resources({'/a':a})
         L = []
-        output = L.append
-        site = testing.DummyModel()
-        site.update_indexes = lambda *arg: L.append('updated')
-        catalog = DummyCatalog({'a':1})
-        directlyProvides(site, ICatalogSite)
-        site.catalog = catalog
         transaction = DummyTransaction()
-        inst = self._makeOne(site, output)
-        inst.reindex(transaction=transaction)
-        self.assertEqual(catalog.reindexed, [1])
-        self.assertEqual(L,
+        site = testing.DummyModel()
+        inst = self._makeOne(site)
+        inst.document_map.path_to_docid = {(u'', u'a'): 1}
+        self.assertTrue(ICatalogSite.providedBy(site))
+        self.assertEqual(site.catalog, inst)
+        inst.reindex_doc = lambda docid, model: L.append((docid, model))
+        out = []
+        inst.reindex(transaction=transaction, output=out.append)
+        self.assertEqual(L, [(1, a)])
+        self.assertEqual(out,
                          ['refreshing indexes',
                           'refreshed',
                           '*** committing ***',
-                          'reindexing a',
+                          "reindexing /a",
                           '*** committing ***'])
         self.assertEqual(transaction.committed, 2)
 
@@ -45,23 +44,26 @@ class TestCatalogManager(unittest.TestCase):
         from ...interfaces import ICatalogSite
         a = testing.DummyModel()
         b = testing.DummyModel()
-        self.config.testing_resources({'a':a, 'b':b})
+        self.config.testing_resources({'/a':a, '/b':b})
         L = []
-        output = L.append
         site = testing.DummyModel()
-        site.update_indexes = lambda *arg: L.append('updated')
-        catalog = DummyCatalog({'a':1, 'b':2})
-        directlyProvides(site, ICatalogSite)
-        site.catalog = catalog
         transaction = DummyTransaction()
-        inst = self._makeOne(site, output)
-        inst.reindex(transaction=transaction, path_re=re.compile('a'))
-        self.assertEqual(catalog.reindexed, [1])
-        self.assertEqual(L,
+        inst = self._makeOne(site)
+        inst.document_map.path_to_docid = {(u'', u'a'): 1, (u'', u'b'): 2}
+        self.assertTrue(ICatalogSite.providedBy(site))
+        inst.reindex_doc = lambda docid, model: L.append((docid, model))
+        out = []
+        inst.reindex(
+            transaction=transaction,
+            path_re=re.compile('/a'), 
+            output=out.append
+            )
+        self.assertEqual(L, [(1, a)])
+        self.assertEqual(out,
                          ['refreshing indexes',
                           'refreshed',
                           '*** committing ***',
-                          'reindexing a',
+                          'reindexing /a',
                           '*** committing ***'])
         self.assertEqual(transaction.committed, 2)
 
@@ -69,52 +71,51 @@ class TestCatalogManager(unittest.TestCase):
         from ...interfaces import ICatalogSite
         a = testing.DummyModel()
         b = testing.DummyModel()
-        self.config.testing_resources({'a':a, 'b':b})
+        self.config.testing_resources({'/a':a, '/b':b})
         L = []
-        output = L.append
         site = testing.DummyModel()
-        site.update_indexes = lambda *arg: L.append('updated')
-        catalog = DummyCatalog({'a':1, 'b':2})
-        directlyProvides(site, ICatalogSite)
-        site.catalog = catalog
         transaction = DummyTransaction()
-        inst = self._makeOne(site, output)
-        inst.reindex(transaction=transaction, dry_run=True)
-        self.assertEqual(catalog.reindexed, [1, 2])
-        self.assertEqual(L,
+        inst = self._makeOne(site)
+        inst.document_map.path_to_docid = {(u'', u'a'): 1, (u'', u'b'): 2}
+        inst.reindex_doc = lambda docid, model: L.append((docid, model))
+        out = []
+        self.assertTrue(ICatalogSite.providedBy(site))
+        inst.reindex(transaction=transaction, dry_run=True, output=out.append)
+        self.assertEqual(sorted(L), [(1, a), (2, b)])
+        self.assertEqual(out,
                          ['refreshing indexes',
                           'refreshed',
                           '*** aborting ***',
-                          'reindexing a',
-                          'reindexing b',
+                          'reindexing /b',
+                          'reindexing /a',
                           '*** aborting ***'])
         self.assertEqual(transaction.aborted, 2)
         self.assertEqual(transaction.committed, 0)
 
     def test_it_with_indexes(self):
-        from ...interfaces import ICatalogSite
         a = testing.DummyModel()
-        self.config.testing_resources({'a':a})
+        self.config.testing_resources({'/a':a})
         L = []
-        output = L.append
         site = testing.DummyModel()
-        site.update_indexes = lambda *arg: L.append('updated')
-        catalog = DummyCatalog({'a':1})
-        catalog.index = DummyIndex()
-        directlyProvides(site, ICatalogSite)
-        site.catalog = catalog
         transaction = DummyTransaction()
-        inst = self._makeOne(site, output)
-        inst.reindex(transaction=transaction, indexes=('index',))
-        self.assertEqual(L,
+        inst = self._makeOne(site)
+        inst.document_map.path_to_docid = {(u'', u'a'):1}
+        index = DummyIndex()
+        inst['index'] = index
+        self.config.registry._pyramid_catalog_indexes = {'index':index}
+        index.reindex_doc = lambda docid, model: L.append((docid, model))
+        out = []
+        inst.reindex(transaction=transaction, indexes=('index',), 
+                     output=out.append)
+        self.assertEqual(out,
                          ['refreshing indexes',
                           'refreshed',
                           '*** committing ***',
                           "reindexing only indexes ('index',)",
-                          'reindexing a',
+                          'reindexing /a',
                           '*** committing ***'])
         self.assertEqual(transaction.committed, 2)
-        self.assertEqual(catalog.index.indexed, {1:a})
+        self.assertEqual(L, [(1,a)])
 
 class TestSearch(unittest.TestCase):
     def setUp(self):
@@ -138,7 +139,7 @@ class TestSearch(unittest.TestCase):
 
     def test_it(self):
         site = self._makeSite()
-        site.catalog = DummyCatalog2()
+        site.catalog = DummyCatalog()
         adapter = self._makeOne(site)
         q = DummyQuery()
         num, docids, resolver = adapter(q)
@@ -147,7 +148,7 @@ class TestSearch(unittest.TestCase):
 
     def test_peachy_keen(self):
         site = self._makeSite()
-        site.catalog = DummyCatalog2((1, [1]), {1:'/'})
+        site.catalog = DummyCatalog((1, [1]), {1:'/'})
         ob = object()
         self.config.testing_resources({'/':ob})
         adapter = self._makeOne(site)
@@ -161,7 +162,7 @@ class TestSearch(unittest.TestCase):
         a = testing.DummyModel()
         self.config.testing_resources({'/a':a})
         site = self._makeSite()
-        site.catalog = DummyCatalog2((1, [1]))
+        site.catalog = DummyCatalog((1, [1]))
         adapter = self._makeOne(site)
         q = DummyQuery()
         num, docids, resolver = adapter(q)
@@ -172,7 +173,7 @@ class TestSearch(unittest.TestCase):
 
     def test_unfound_docid(self):
         site = self._makeSite()
-        site.catalog = DummyCatalog2()
+        site.catalog = DummyCatalog()
         adapter = self._makeOne(site)
         q = DummyQuery()
         num, docids, resolver = adapter(q)
@@ -181,32 +182,13 @@ class TestSearch(unittest.TestCase):
 class DummyQuery(object):
     pass    
 
-class DummyCache(dict):
-    generation = None
-
-class DummyCatalog(object):
-    def __init__(self, path_to_docid, indexes=None):
-        self.document_map = testing.DummyModel()
-        self.document_map.path_to_docid = path_to_docid
-        self.indexes = indexes or {}
-        self.reindexed = []
-
-    def __getitem__(self, k):
-        return getattr(self, k)
-
-    def __iter__(self):
-        return iter(self.indexes)
-
-    def reindex_doc(self, docid, model):
-        self.reindexed.append(docid)
-
 class DummyDocumentMap(object):
     def __init__(self, docid_to_path=None): 
         if docid_to_path is None:
             docid_to_path = {}
         self.docid_to_path = docid_to_path
         
-class DummyCatalog2(object):
+class DummyCatalog(object):
     def __init__(self, result=(0, []), docid_to_path=None):
         self.document_map = DummyDocumentMap(docid_to_path)
         self.result = result
@@ -226,15 +208,8 @@ class DummyTransaction(object):
         self.aborted += 1
         
 
+@implementer(ICatalogIndex)
 class DummyIndex:
-    implements(ICatalogIndex)
-    def __init__(self):
-        self.indexed = {}
-
-    def index_doc(self, docid, val):
-        self.indexed[docid] = val
-
-    reindex_doc = index_doc
-
+    pass
 
 
