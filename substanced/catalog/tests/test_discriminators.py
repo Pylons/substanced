@@ -16,14 +16,37 @@ class TestGetTextRepr(unittest.TestCase):
         from ..discriminators import get_textrepr
         return get_textrepr(object, default)
 
-    def test_no_adapter(self):
-        from ...interfaces import ICatalogable
-        context = testing.DummyModel(__provides__=ICatalogable)
-        context.title = 'title'
-        context.description = 'description'
+    def test_one_element(self):
+        context = testing.DummyModel()
+        context.texts = ('title',)
+        textrepr = self._callFUT(context, None)
+        self.assertEqual(textrepr, 'title')
+
+    def test_two_elements(self):
+        context = testing.DummyModel()
+        context.texts = ('title', 'description')
         textrepr = self._callFUT(context, None)
         self.assertEqual(textrepr, 'title ' * 10 + 'description')
 
+    def test_two_elements_first_empty(self):
+        context = testing.DummyModel()
+        context.texts = ('', 'description')
+        textrepr = self._callFUT(context, None)
+        self.assertEqual(textrepr, 'description')
+        
+    def test_None(self):
+        context = testing.DummyModel()
+        context.texts = None
+        textrepr = self._callFUT(context, None)
+        self.assertEqual(textrepr, None)
+
+    def test_string(self):
+        context = testing.DummyModel()
+        context.texts = 'title'
+        textrepr = self._callFUT(context, None)
+        self.assertEqual(textrepr, 'title')
+
+        
 class _TestGetDate(object):
 
     def test_not_set(self):
