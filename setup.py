@@ -27,6 +27,7 @@ install_requires = [
     'pyramid',
     'repoze.catalog',
     'repoze.evolution',
+    'pyramid_deform',
     ]
 
 docs_extras = ['Sphinx']

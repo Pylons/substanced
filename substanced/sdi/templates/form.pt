@@ -1,0 +1,29 @@
+<div metal:use-macro="view.macros['master']">
+
+  <div metal:fill-slot="head_append">
+    <!-- CSS -->
+    <tal:block repeat="reqt css_links|[]">
+      <link rel="stylesheet" 
+            href="${request.static_url('deform:static/%s' % reqt)}" 
+            type="text/css" />
+     </tal:block>
+    <!-- JavaScript -->
+    <tal:block repeat="reqt js_links|[]">
+      <script type="text/javascript"
+              src="${request.static_url('deform:static/%s' % reqt)}"
+       ></script>
+    </tal:block>
+  </div>
+
+  <div metal:fill-slot="main">
+    <h1>${view.title|None}</h1>
+    <h2 tal:repeat="msg request.session.pop_flash()">${msg}</h2>
+    <div id="form" tal:content="structure form"/>
+    <script type="text/javascript">
+      jQuery(function() {
+         deform.load();
+         });
+    </script>
+  </div>
+
+</div>

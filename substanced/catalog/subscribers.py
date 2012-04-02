@@ -66,5 +66,3 @@ def object_modified(obj, event):
             else:
                 catalog.reindex_doc(docid, obj)
 
-def includeme(config): # pragma: no cover
-    config.scan('substanced.subscribers')

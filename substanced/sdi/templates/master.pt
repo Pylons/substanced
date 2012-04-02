@@ -1,0 +1,11 @@
+<html>
+<head>
+  <title>${view.title|'Substance D'}</title>
+  <!-- Meta Tags -->
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <metal:block define-slot="head_append"/>
+</head>
+<body>
+  <metal:block define-slot="main"/>
+</body>
+</html>

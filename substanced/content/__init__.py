@@ -79,7 +79,7 @@ class content(object):
         settings = dict(category_iface=self.category_iface)
         def callback(context, name, ob):
             config = context.config.with_package(info.module)
-            config.add_content_type(wrapped, self.content_iface, **settings)
+            config.add_content_type(self.content_iface, wrapped, **settings)
         info = self.venusian.attach(wrapped, callback, category='substanced')
         settings['_info'] = info.codeinfo # fbo "action_method"
         return wrapped
