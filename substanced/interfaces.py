@@ -5,6 +5,9 @@ from zope.interface import (
     Attribute
     )
 
+class IContent(Interface):
+    """" Marker interface representing an object that has a content type """
+
 class ICatalogable(Interface):
     """ Marker interface describing catalogable content.  An object must
     implement this interface to have its attributes indexed """
