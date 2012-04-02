@@ -26,6 +26,7 @@ except IOError:
 install_requires = [
     'pyramid',
     'repoze.catalog',
+    'repoze.evolution',
     ]
 
 docs_extras = ['Sphinx']
@@ -57,7 +58,11 @@ setup(name='substanced',
       install_requires=install_requires,
       tests_require=install_requires,
       test_suite="substanced",
-      entry_points='',
+      entry_points="""
+      [console_scripts]
+      sd_evolve = substanced.scripts.evolve:main
+      sd_reindex = substanced.scripts.reindex:main
+      """,
       extras_require = {
           'testing':testing_extras,
           'docs':docs_extras,

@@ -1,7 +1,7 @@
 Substance D
 ===========
 
-A Zope2-like system built upon the Pyramid web application server.  It
+A Zope2-like system built upon the Pyramid web application framework.  It
 provides integration between ZODB, ``repoze.catalog``, and other subsystems.
 
 See the documentation at
