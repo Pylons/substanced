@@ -62,22 +62,22 @@ class Catalog(_Catalog):
                 continue
             output and output('reindexing %s' % upath)
             try:
-                model = find_resource(self.site, path)
+                resource = find_resource(self.site, path)
             except KeyError:
                 output and output('error: %s not found' % upath)
                 continue
 
             if indexes is None:
-                self.reindex_doc(docid, model)
+                self.reindex_doc(docid, resource)
             else:
                 for index in indexes:
-                    self[index].reindex_doc(docid, model)
-            if i % commit_interval == 0:
+                    self[index].reindex_doc(docid, resource)
+            if i % commit_interval == 0: # pragma: no cover
                 commit_or_abort()
             i+=1
         commit_or_abort()
 
-    def refresh(self, reset=False, output=None, registry=None):
+    def refresh(self, output=None, registry=None):
         output and output('refreshing indexes')
 
         if registry is None:
@@ -87,21 +87,18 @@ class Catalog(_Catalog):
         
         # add mentioned indexes
         for name, index in indexes.items():
-            if reset:
-                try:
-                    del self[name]
-                except KeyError:
-                    pass
             if not name in self:
                 self[name] = index
+                output and output('added %s index' % (name,))
 
         # remove unmentioned indexes
         todel = set()
         for name in self:
             if not name in indexes:
-                todel.add(self[name])
+                todel.add(name)
         for name in todel:
             del self[name]
+            output and output('removed %s index' % (name,))
 
         output and output('refreshed')
 
@@ -111,30 +108,34 @@ class Search(object):
         self.context = context
         self.catalog = find_catalog(self.context)
 
-    def __call__(self, q, **kw):
-        num, docids = self.catalog.query(q, **kw)
+    def resolver(self, docid):
         def path_for_docid(docid):
             return self.catalog.document_map.docid_to_path.get(docid)
-        def resolver(docid):
-            path = path_for_docid(docid)
-            if path is None:
-                return None
-            try:
-                return find_resource(self.context, path)
-            except KeyError:
-                logger and logger.warn('Model missing: %s' % path)
-                return None
-        return num, docids, resolver
+        path = path_for_docid(docid)
+        if path is None:
+            return None
+        try:
+            return find_resource(self.context, path)
+        except KeyError:
+            logger.warn('Resource missing: %s' % (path,))
+            return None
+        
+    def query(self, q, **kw):
+        num, docids = self.catalog.query(q, **kw)
+        return num, docids, self.resolver
 
-def _add_catalog_index(config, name, index):
+    def search(self, **kw):
+        num, docids = self.catalog.search(**kw)
+        return num, docids, self.resolver
+    
+def _add_catalog_index(config, name, index): # pragma: no cover
     def register():
-        # each index needs to participate in conflict resolution
-        indexes = getattr(config, '_catalog_indexes', {})
+        indexes = getattr(config.registry, '_pyramid_catalog_indexes', {})
         indexes[name] = index
-        config._catalog_indexes = indexes
+        config.registry._pyramid_catalog_indexes = indexes
     config.action(('catalog-index', name), callable=register)
 
-def includeme(config):
+def includeme(config): # pragma: no cover
     from zope.interface import Interface
     config.registry.registerAdapter(Search, (Interface,), ISearch)
     config.add_directive('add_catalog_index', _add_catalog_index)
