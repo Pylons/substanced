@@ -10,18 +10,12 @@ from pyramid.security import principals_allowed_by_permission
 from ..interfaces import ICatalogable
 from ..util import coarse_datetime_repr
 
-def get_acl(object, default):
-    return getattr(object, '__acl__', default)
-
 def get_title(object, default):
     title = getattr(object, 'title', '')
     if isinstance(title, basestring):
         # lowercase for alphabetic sorting
         title = title.lower()
     return title
-
-def get_name(object, default):
-    return getattr(object, '__name__', default)
 
 def get_interfaces(object, default):
     # we unwind all derived and immediate interfaces using spec.flattened()
@@ -91,8 +85,7 @@ def get_textrepr(object, default):
     
 def _get_date_or_datetime(object, attr, default):
     d = getattr(object, attr, None)
-    if (isinstance(d, datetime.datetime) or
-        isinstance(d, datetime.date)):
+    if isinstance(d, datetime.datetime) or isinstance(d, datetime.date):
         return coarse_datetime_repr(d)
     return default
 
@@ -102,17 +95,14 @@ def get_creation_date(object, default):
 def get_modified_date(object, default):
     return _get_date_or_datetime(object, 'modified', default)
 
-def get_creator(object, default):
-    creator = getattr(object, 'creator', None)
-    if creator is None:
-        return default
-    return creator
+class NoWay(object):
+    pass
 
-def get_allowed_to_view(object, default):
+def get_allowed_to_view(obj, default):
     principals = principals_allowed_by_permission(object, 'view')
     if not principals:
         # An empty value tells the catalog to match anything, whereas when
         # there are no principals with permission to view we want for there
         # to be no matches.
-        principals = [object(),]
+        principals = [NoWay()]
     return principals

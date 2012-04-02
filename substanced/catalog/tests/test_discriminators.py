@@ -110,21 +110,6 @@ class TestGetContainment(unittest.TestCase):
         result = get_containment(context, None)
         self.assertEqual(sorted(result), [Dummy1, Dummy2, Interface])
 
-class TestGetName(unittest.TestCase):
-    def _callFUT(self, object, default):
-        from ..discriminators import get_name
-        return get_name(object, default)
-
-    def test_it(self):
-        class Dummy:
-            pass
-        context = Dummy()
-        result = self._callFUT(context, None)
-        self.assertEqual(result, None)
-        context.__name__= 'bar'
-        result = self._callFUT(context, None)
-        self.assertEqual(result, 'bar')
-
 class TestGetTitle(unittest.TestCase):
     def _callFUT(self, object, default):
         from ..discriminators import get_title
@@ -146,20 +131,13 @@ class TestGetTitle(unittest.TestCase):
         result = self._callFUT(context, None)
         self.assertEqual(result, 'foobar')
 
-class TestGetACL(unittest.TestCase):
-    def _callFUT(self, object, default):
-        from ..discriminators import get_acl
-        return get_acl(object, default)
-
-    def test_it(self):
-        context = testing.DummyModel()
-        result = self._callFUT(context, None)
-        self.assertEqual(result, None)
-        context.__acl__ = 'foo'
-        result = self._callFUT(context, None)
-        self.assertEqual(result, 'foo')
-
 class TestGetAllowedToView(unittest.TestCase):
+    def setUp(self):
+        self.config = testing.setUp()
+
+    def tearDown(self):
+        testing.tearDown()
+        
     def _callFUT(self, object, default):
         from ..discriminators import get_allowed_to_view
         return get_allowed_to_view(object, default)
@@ -168,4 +146,17 @@ class TestGetAllowedToView(unittest.TestCase):
         context = testing.DummyModel()
         result = self._callFUT(context, None)
         self.assertEqual(result, ['system.Everyone'])
+
+    def test_it_notpermitted(self):
+        from pyramid.interfaces import IAuthenticationPolicy
+        self.config.testing_securitypolicy(permissive=False)
+        from ..discriminators import NoWay
+        pol = self.config.registry.getUtility(IAuthenticationPolicy)
+        def noprincipals(context, permission):
+            return []
+        pol.principals_allowed_by_permission = noprincipals
+        context = testing.DummyModel()
+        result = self._callFUT(context, None)
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0].__class__, NoWay)
 
