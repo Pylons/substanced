@@ -72,16 +72,17 @@ _marker = object()
 class DocumentMap(Persistent):
     
     _v_nextid = None
+    _randrange = random.randrange
 
     def __init__(self):
         self.docid_to_path = IOBTree()
         self.path_to_docid = OIBTree()
         self.pathindex = OOBTree()
 
-    def new_docid(self, path_tuple):
+    def new_docid(self):
         while True:
             if self._v_nextid is None:
-                self._v_nextid = random.randrange(-sys.maxint, sys.maxint)
+                self._v_nextid = self._randrange(-sys.maxint, sys.maxint)
 
             docid = self._v_nextid
             self._v_nextid += 1
@@ -96,10 +97,10 @@ class DocumentMap(Persistent):
             raise ValueError('path %s already exists' % (path_tuple,))
         
         if not isinstance(path_tuple, tuple):
-            raise ValueError('add accepts only a tuple, got' % (path_tuple,))
+            raise ValueError('add accepts only a tuple, got %s' % (path_tuple,))
         
         if docid is _marker:
-            docid = self.new_docid(path_tuple)
+            docid = self.new_docid()
         elif docid in self.docid_to_path:
             raise ValueError('docid %s already exists' % docid)
 
@@ -124,8 +125,8 @@ class DocumentMap(Persistent):
             path_tuple = docid_or_path_tuple
         else:
             raise ValueError(
-                'remove accepts only a docid or a path tuple, got' % (
-                    docid_or_path_tuple,)
+                'remove accepts only a docid or a path tuple, got %s' % (
+                    (docid_or_path_tuple,))
                 )
 
         pathlen = len(path_tuple)
@@ -160,16 +161,14 @@ class DocumentMap(Persistent):
             del self.pathindex[k]
 
         for x in range(pathlen-1):
+
             offset = x + 1
             els = path_tuple[:pathlen-offset]
-            dmap2 = self.pathindex.get(els)
+            dmap2 = self.pathindex[els]
             for level, didset in items:
 
                 i = level + offset
-                didset2 = dmap2.get(i)
-
-                if didset2 is None:
-                    continue
+                didset2 = dmap2[i]
 
                 for did in didset:
                     if did in didset2:
