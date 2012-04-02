@@ -33,8 +33,7 @@ class Catalog(_Catalog):
         _Catalog.__init__(self, family)
         directlyProvides(site, ICatalogSite)
         site.catalog = self
-        self.__parent__ = site
-        self.__name__ = 'catalog'
+        self.site = site
         self.document_map = DocumentMap()
 
     def reindex(self, path_re=None, commit_interval=200, 
@@ -63,7 +62,7 @@ class Catalog(_Catalog):
                 continue
             output and output('reindexing %s' % upath)
             try:
-                model = find_resource(self.__parent__, path)
+                model = find_resource(self.site, path)
             except KeyError:
                 output and output('error: %s not found' % upath)
                 continue
