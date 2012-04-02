@@ -26,7 +26,6 @@ except IOError:
 install_requires = [
     'pyramid',
     'repoze.catalog',
-    'repoze.folder',
     ]
 
 docs_extras = ['Sphinx']
