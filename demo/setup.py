@@ -11,6 +11,7 @@ requires = [
     'pyramid_debugtoolbar',
     'waitress',
     'substanced',
+    'pyramid_tm',
     ]
 
 setup(name='demo',
