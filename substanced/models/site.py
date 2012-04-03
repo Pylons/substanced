@@ -5,10 +5,11 @@ from zope.interface import implementer
 
 from pyramid_zodbconn import get_connection
 
-from .interfaces import IDocmapSite
-from .docmap import DocumentMap
+from ..interfaces import IDocmapSite
+from ..docmap import DocumentMap
+from ..sdi import Schema
+
 from .folder import Folder
-from .sdi import Schema
 
 class SiteSchema(Schema):
     name = colander.SchemaNode(colander.String())

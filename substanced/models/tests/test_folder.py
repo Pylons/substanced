@@ -12,7 +12,7 @@ class TestFolder(unittest.TestCase):
         self.config = testing.setUp()
 
     def _getTargetClass(self):
-        from . import Folder
+        from ..folder import Folder
         return Folder
 
     def _makeOne(self, data=None):
@@ -21,11 +21,11 @@ class TestFolder(unittest.TestCase):
 
     def test_klass_provides_IFolder(self):
         klass = self._getTargetClass()
-        from ..interfaces import IFolder
+        from ...interfaces import IFolder
         verifyClass(IFolder, klass)
         
     def test_inst_provides_IFolder(self):
-        from ..interfaces import IFolder
+        from ...interfaces import IFolder
         inst = self._makeOne()
         verifyObject(IFolder, inst)
 
@@ -102,9 +102,9 @@ class TestFolder(unittest.TestCase):
         self.assertRaises(TypeError, folder.__setitem__, '', None)
 
     def test___setitem__(self):
-        from ..interfaces import IObjectEvent
-        from ..interfaces import IObjectWillBeAddedEvent
-        from ..interfaces import IObjectAddedEvent
+        from ...interfaces import IObjectEvent
+        from ...interfaces import IObjectWillBeAddedEvent
+        from ...interfaces import IObjectAddedEvent
         events = []
         def listener(object, event):
             events.append(event)
@@ -134,9 +134,9 @@ class TestFolder(unittest.TestCase):
         self.assertRaises(TypeError, folder.add, '', 'foo')
 
     def test_add_send_events(self):
-        from ..interfaces import IObjectEvent
-        from ..interfaces import IObjectWillBeAddedEvent
-        from ..interfaces import IObjectAddedEvent
+        from ...interfaces import IObjectEvent
+        from ...interfaces import IObjectWillBeAddedEvent
+        from ...interfaces import IObjectAddedEvent
         events = []
         def listener(object, event):
             events.append(event)
@@ -158,7 +158,7 @@ class TestFolder(unittest.TestCase):
         self.assertEqual(folder['a'], dummy)
 
     def test_add_suppress_events(self):
-        from ..interfaces import IObjectEvent
+        from ...interfaces import IObjectEvent
         events = []
         def listener(object, event):
             events.append(event) #pragma NO COVER
@@ -187,9 +187,9 @@ class TestFolder(unittest.TestCase):
         self.assertEqual(folder._num_objects(), 1)
 
     def test___delitem__(self):
-        from ..interfaces import IObjectEvent
-        from ..interfaces import IObjectRemovedEvent
-        from ..interfaces import IObjectWillBeRemovedEvent
+        from ...interfaces import IObjectEvent
+        from ...interfaces import IObjectRemovedEvent
+        from ...interfaces import IObjectWillBeRemovedEvent
         events = []
         def listener(object, event):
             events.append(event)
@@ -225,9 +225,9 @@ class TestFolder(unittest.TestCase):
         self.assertTrue(folder.remove("a") is dummy)
 
     def test_remove_send_events(self):
-        from ..interfaces import IObjectEvent
-        from ..interfaces import IObjectRemovedEvent
-        from ..interfaces import IObjectWillBeRemovedEvent
+        from ...interfaces import IObjectEvent
+        from ...interfaces import IObjectRemovedEvent
+        from ...interfaces import IObjectWillBeRemovedEvent
         events = []
         def listener(object, event):
             events.append(event)
@@ -252,7 +252,7 @@ class TestFolder(unittest.TestCase):
         self.failIf(hasattr(dummy, '__name__'))
 
     def test_remove_suppress_events(self):
-        from ..interfaces import IObjectEvent
+        from ...interfaces import IObjectEvent
         events = []
         def listener(object, event):
             events.append(event) #pragma NO COVER
@@ -277,9 +277,9 @@ class TestFolder(unittest.TestCase):
         self.assertEqual(folder.order, ['b'])
 
     def test_pop_success(self):
-        from ..interfaces import IObjectEvent
-        from ..interfaces import IObjectRemovedEvent
-        from ..interfaces import IObjectWillBeRemovedEvent
+        from ...interfaces import IObjectEvent
+        from ...interfaces import IObjectRemovedEvent
+        from ...interfaces import IObjectWillBeRemovedEvent
         dummy = DummyModel()
         dummy.__parent__ = None
         dummy.__name__ = None
@@ -317,7 +317,7 @@ class TestFolder(unittest.TestCase):
         folder.__name__ = 'thefolder'
         r = repr(folder)
         self.assertTrue(
-            r.startswith("<substanced.folder.Folder object 'thefolder"))
+            r.startswith("<substanced.models.folder.Folder object 'thefolder"))
         self.assertTrue(r.endswith('>'))
 
     def test_str(self):
@@ -325,7 +325,7 @@ class TestFolder(unittest.TestCase):
         folder.__name__ = 'thefolder'
         r = str(folder)
         self.assertTrue(
-            r.startswith("<substanced.folder.Folder object 'thefolder"))
+            r.startswith("<substanced.models.folder.Folder object 'thefolder"))
         self.assertTrue(r.endswith('>'))
 
     def test_unresolveable_unicode_setitem(self):
