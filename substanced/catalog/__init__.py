@@ -31,7 +31,6 @@ def find_catalog(context):
 class Catalog(_Catalog):
     def __init__(self, site, family=None):
         _Catalog.__init__(self, family)
-        site.catalog = self
         self.site = site
         self.docids = IITreeSet()
 
