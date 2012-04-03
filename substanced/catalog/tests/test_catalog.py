@@ -6,6 +6,8 @@ from zope.interface import implementer
 
 from repoze.catalog.interfaces import ICatalogIndex
 
+from ...interfaces import IDocmapSite, ICatalogSite
+
 class TestCatalog(unittest.TestCase):
     def setUp(self):
         self.config = testing.setUp()
@@ -18,14 +20,14 @@ class TestCatalog(unittest.TestCase):
         return Catalog(site)
 
     def test_reindex(self):
-        from ...interfaces import ICatalogSite
         a = testing.DummyModel()
         self.config.testing_resources({'/a':a})
         L = []
         transaction = DummyTransaction()
-        site = testing.DummyModel()
+        site = DummySite()
+        site.docmap.docid_to_path = {1:(u'', u'a')}
         inst = self._makeOne(site)
-        inst.document_map.path_to_docid = {(u'', u'a'): 1}
+        inst.docids = [1]
         self.assertTrue(ICatalogSite.providedBy(site))
         self.assertEqual(site.catalog, inst)
         inst.reindex_doc = lambda docid, model: L.append((docid, model))
@@ -41,14 +43,14 @@ class TestCatalog(unittest.TestCase):
         self.assertEqual(transaction.committed, 2)
 
     def test_reindex_with_missing_resource(self):
-        from ...interfaces import ICatalogSite
         a = testing.DummyModel()
         self.config.testing_resources({'/a':a})
         L = []
         transaction = DummyTransaction()
-        site = testing.DummyModel()
+        site = DummySite()
+        site.docmap.docid_to_path = {1: (u'', u'a'), 2:(u'', u'b')}
         inst = self._makeOne(site)
-        inst.document_map.path_to_docid = {(u'', u'a'): 1, (u'', u'b'): 2}
+        inst.docids = [1, 2]
         self.assertTrue(ICatalogSite.providedBy(site))
         self.assertEqual(site.catalog, inst)
         inst.reindex_doc = lambda docid, model: L.append((docid, model))
@@ -59,22 +61,22 @@ class TestCatalog(unittest.TestCase):
                          ['refreshing indexes',
                           'refreshed',
                           '*** committing ***',
+                          "reindexing /a",
                           "reindexing /b",
                           "error: /b not found",
-                          "reindexing /a",
                           '*** committing ***'])
         self.assertEqual(transaction.committed, 2)
         
     def test_reindex_pathre(self):
-        from ...interfaces import ICatalogSite
         a = testing.DummyModel()
         b = testing.DummyModel()
         self.config.testing_resources({'/a':a, '/b':b})
         L = []
-        site = testing.DummyModel()
+        site = DummySite()
+        site.docmap.docid_to_path = {1: (u'', u'a'), 2: (u'', u'b')}
         transaction = DummyTransaction()
         inst = self._makeOne(site)
-        inst.document_map.path_to_docid = {(u'', u'a'): 1, (u'', u'b'): 2}
+        inst.docids = [1, 2]
         self.assertTrue(ICatalogSite.providedBy(site))
         inst.reindex_doc = lambda docid, model: L.append((docid, model))
         out = []
@@ -93,26 +95,25 @@ class TestCatalog(unittest.TestCase):
         self.assertEqual(transaction.committed, 2)
 
     def test_reindex_dryrun(self):
-        from ...interfaces import ICatalogSite
         a = testing.DummyModel()
         b = testing.DummyModel()
         self.config.testing_resources({'/a':a, '/b':b})
         L = []
-        site = testing.DummyModel()
+        site = DummySite()
+        site.docmap.docid_to_path = {1: (u'', u'a'), 2: (u'', u'b')}
         transaction = DummyTransaction()
         inst = self._makeOne(site)
-        inst.document_map.path_to_docid = {(u'', u'a'): 1, (u'', u'b'): 2}
+        inst.docids = [1,2]
         inst.reindex_doc = lambda docid, model: L.append((docid, model))
         out = []
-        self.assertTrue(ICatalogSite.providedBy(site))
         inst.reindex(transaction=transaction, dry_run=True, output=out.append)
         self.assertEqual(sorted(L), [(1, a), (2, b)])
         self.assertEqual(out,
                          ['refreshing indexes',
                           'refreshed',
                           '*** aborting ***',
-                          'reindexing /b',
                           'reindexing /a',
+                          'reindexing /b',
                           '*** aborting ***'])
         self.assertEqual(transaction.aborted, 2)
         self.assertEqual(transaction.committed, 0)
@@ -121,10 +122,11 @@ class TestCatalog(unittest.TestCase):
         a = testing.DummyModel()
         self.config.testing_resources({'/a':a})
         L = []
-        site = testing.DummyModel()
+        site = DummySite()
+        site.docmap.docid_to_path = {1: (u'', u'a')}
         transaction = DummyTransaction()
         inst = self._makeOne(site)
-        inst.document_map.path_to_docid = {(u'', u'a'):1}
+        inst.docids = [1]
         index = DummyIndex()
         inst['index'] = index
         self.config.registry._pyramid_catalog_indexes = {'index':index}
@@ -184,9 +186,8 @@ class TestSearch(unittest.TestCase):
         adapter = self._getTargetClass()(context)
         return adapter
 
-    def _makeSite(self):
-        from ...interfaces import ICatalogSite
-        site = testing.DummyModel(__provides__=ICatalogSite)
+    def _makeSite(self, docid_to_path=None):
+        site = DummySite(docid_to_path)
         return site
 
     def test_query(self):
@@ -207,8 +208,8 @@ class TestSearch(unittest.TestCase):
         self.assertEqual(list(docids), [])
         
     def test_query_peachy_keen(self):
-        site = self._makeSite()
-        site.catalog = DummyCatalog((1, [1]), {1:(u'',)})
+        site = self._makeSite({1:(u'',)})
+        site.catalog = DummyCatalog((1, [1]))
         ob = object()
         self.config.testing_resources({'/':ob})
         adapter = self._makeOne(site)
@@ -219,8 +220,8 @@ class TestSearch(unittest.TestCase):
         self.assertEqual(resolver(1), ob)
 
     def test_query_unfound_model(self):
-        site = self._makeSite()
-        site.catalog = DummyCatalog((1, [1]), {1:(u'', u'a')})
+        site = self._makeSite({1:(u'', u'a')})
+        site.catalog = DummyCatalog((1, [1]))
         adapter = self._makeOne(site)
         q = DummyQuery()
         num, docids, resolver = adapter.query(q)
@@ -245,10 +246,16 @@ class DummyDocumentMap(object):
         if docid_to_path is None:
             docid_to_path = {}
         self.docid_to_path = docid_to_path
+
+@implementer(IDocmapSite, ICatalogSite)
+class DummySite(object):
+    __parent__ = None
+    __name__ = ''
+    def __init__(self, docid_to_path=None):
+        self.docmap = DummyDocumentMap(docid_to_path)
         
 class DummyCatalog(object):
-    def __init__(self, result=(0, []), docid_to_path=None):
-        self.document_map = DummyDocumentMap(docid_to_path)
+    def __init__(self, result=(0, [])):
         self.result = result
 
     def query(self, q, **kw):

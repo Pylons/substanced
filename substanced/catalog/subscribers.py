@@ -12,6 +12,7 @@ from ..interfaces import (
     )
     
 from . import find_catalog
+from ..docmap import find_docmap
 
 def _postorder(startnode):
     def visit(node):
@@ -26,15 +27,16 @@ def _postorder(startnode):
 def object_added(obj, event):
     """ Index content (an IObjectAddedEvent subscriber) """
     catalog = find_catalog(obj)
-    if catalog is not None:
+    docmap = find_docmap(obj)
+    if docmap is not None:
         for node in _postorder(obj):
-            if ICatalogable.providedBy(node):
-                path_tuple = resource_path_tuple(node)
-                docid = getattr(node, 'docid', None)
-                if docid is None:
-                    docid = node.docid = catalog.document_map.add(path_tuple)
-                else:
-                    catalog.document_map.add(path_tuple, docid)
+            path_tuple = resource_path_tuple(node)
+            docid = getattr(node, '__docid__', None)
+            if docid is None:
+                docid = node.__docid__ = docmap.add(path_tuple)
+            else:
+                docmap.add(path_tuple, docid)
+            if ICatalogable.providedBy(node) and catalog is not None:
                 catalog.index_doc(docid, node)
 
 @subscriber([Interface, IObjectWillBeRemovedEvent])
@@ -46,23 +48,28 @@ def object_removed(obj, event):
     # contain catalogable objects (e.g. it might be a folder with catalogable
     # items within it).
     catalog = find_catalog(obj)
-    if catalog is not None:
+    docmap = find_docmap(obj)
+    if docmap is not None:
         path_tuple = resource_path_tuple(obj)
-        docids = catalog.document_map.remove(path_tuple)
-        for docid in docids:
-            catalog.unindex_doc(docid)
+        docids = docmap.remove(path_tuple)
+        if catalog is not None:
+            for docid in docids:
+                if docid in catalog.docids:
+                    catalog.unindex_doc(docid)
 
 @subscriber([Interface, IObjectModifiedEvent])
 def object_modified(obj, event):
     """ Reindex a single piece of content (non-recursive); an
     ObjectModifed event subscriber """
-    if ICatalogable.providedBy(obj):
-        catalog = find_catalog(obj)
-        if catalog is not None:
-            path_tuple = resource_path_tuple(obj)
-            docid = catalog.document_map.path_to_docid.get(path_tuple)
-            if docid is None:
-                object_added(obj, event)
-            else:
+    docmap = find_docmap(obj)
+    if docmap is not None:
+        path_tuple = resource_path_tuple(obj)
+        docid = docmap.path_to_docid.get(path_tuple)
+        if docid is None:
+            object_added(obj, event)
+            docid = getattr(obj, '__docid__')
+        else:
+            catalog = find_catalog(obj)
+            if ICatalogable.providedBy(obj) and catalog is not None:
                 catalog.reindex_doc(docid, obj)
 

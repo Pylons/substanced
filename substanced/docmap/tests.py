@@ -2,7 +2,7 @@ import unittest
 
 class TestDocumentMap(unittest.TestCase):
     def _makeOne(self):
-        from ..docmap import DocumentMap
+        from . import DocumentMap
         return DocumentMap()
 
     def test_new_docid(self):

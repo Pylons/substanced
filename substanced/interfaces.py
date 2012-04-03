@@ -13,7 +13,12 @@ class ICatalogable(Interface):
     implement this interface to have its attributes indexed """
 
 class ICatalogSite(Interface):
-    """ A site has a ``catalog`` attribute; marker interface """
+    """ A catalog site has a ``catalog`` attribute which is an instance of a
+    ``substanced.catalog.Catalog``; marker interface"""
+
+class IDocmapSite(Interface):
+    """ A docmap site has a ``docmap`` attribute which is an instance of a
+    ``substanced.docmap.DocumentMap``; marker interface"""
 
 class ISearch(Interface):
     """ Adapter for searching the catalog """

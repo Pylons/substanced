@@ -65,25 +65,30 @@ class Test_object_added(unittest.TestCase):
         self._callFUT(model, None) # doesnt blow up
 
     def test_content_object(self):
-        from ...interfaces import ICatalogSite, ICatalogable
-        model = testing.DummyResource(__provides__=(ICatalogSite, ICatalogable))
-        path = resource_path_tuple(model)
+        from ...interfaces import ICatalogSite, ICatalogable, IDocmapSite
         catalog = DummyCatalog()
-        model.catalog = catalog
+        docmap = DummyDocumentMap()
+        model = testing.DummyResource(
+            docmap=docmap, catalog=catalog,
+            __provides__=(ICatalogSite, ICatalogable, IDocmapSite)
+            )
+        path = resource_path_tuple(model)
         self._callFUT(model, None)
-        self.assertEqual(catalog.document_map.added, [(None, path)])
+        self.assertEqual(docmap.added, [(None, path)])
         self.assertEqual(catalog.indexed, [(1, model)])
-        self.assertEqual(model.docid, 1)
+        self.assertEqual(model.__docid__, 1)
 
     def test_content_object_w_existing_docid(self):
-        from ...interfaces import ICatalogSite, ICatalogable
-        model = testing.DummyResource(__provides__=(ICatalogSite, ICatalogable))
-        path = resource_path_tuple(model)
+        from ...interfaces import ICatalogSite, ICatalogable, IDocmapSite
         catalog = DummyCatalog()
-        model.catalog = catalog
-        model.docid = 123
+        docmap = DummyDocumentMap()
+        model = testing.DummyResource(
+            docmap=docmap, catalog=catalog, __docid__ = 123,
+            __provides__=(ICatalogSite, ICatalogable, IDocmapSite),
+            )
+        path = resource_path_tuple(model)
         self._callFUT(model, None)
-        self.assertEqual(catalog.document_map.added, [(123, path)])
+        self.assertEqual(docmap.added, [(123, path)])
         self.assertEqual(catalog.indexed, [(123, model)])
 
 class Test_object_removed(unittest.TestCase):
@@ -97,19 +102,22 @@ class Test_object_removed(unittest.TestCase):
         from ..subscribers import object_removed
         return object_removed(object, event)
 
-    def test_content_object_no_catalog(self):
+    def test_content_object_no_docmap(self):
         model = testing.DummyResource()
-
         self._callFUT(model, None) # doesnt blow up
 
-    def test_content_object_w_catalog(self):
-        from ...interfaces import ICatalogSite
-        model = testing.DummyResource(__provides__=ICatalogSite)
-        path = resource_path_tuple(model)
-        catalog = model.catalog = DummyCatalog({1: path})
+    def test_content_object_w_docmap_and_catalog(self):
+        from ...interfaces import ICatalogSite, IDocmapSite
+        docmap = DummyDocumentMap({1: (u'',)})
+        catalog = DummyCatalog()
+        catalog.docids = [1]
+        model = testing.DummyResource(
+            docmap=docmap, catalog=catalog,
+            __provides__=(ICatalogSite, IDocmapSite),
+            )
         self._callFUT(model, None)
         self.assertEqual(catalog.unindexed, [1])
-        self.assertEqual(catalog.document_map.removed, [1])
+        self.assertEqual(docmap.removed, [1])
 
 class Test_object_modified(unittest.TestCase):
     def setUp(self):
@@ -127,32 +135,37 @@ class Test_object_modified(unittest.TestCase):
         self._callFUT(model, None) # doesnt blow up
 
     def test_content_object(self):
-        from ...interfaces import ICatalogSite, ICatalogable
-        model = testing.DummyResource(__provides__=(ICatalogSite, ICatalogable))
-        path = resource_path_tuple(model)
-        catalog = DummyCatalog({1:path})
-        model.catalog = catalog
+        from ...interfaces import ICatalogSite, ICatalogable, IDocmapSite
+        docmap = DummyDocumentMap({1:(u'',)})
+        catalog = DummyCatalog()
+        model = testing.DummyResource(
+            docmap=docmap, catalog=catalog,
+            __provides__=(ICatalogSite, ICatalogable, IDocmapSite),
+            )
         self._callFUT(model, None)
         self.assertEqual(catalog.reindexed, [(1, model)])
 
     def test_content_object_not_yet_indexed(self):
-        from ...interfaces import ICatalogSite, ICatalogable
-        model = testing.DummyResource(__provides__=(ICatalogSite, ICatalogable))
-        path = resource_path_tuple(model)
+        from ...interfaces import ICatalogSite, ICatalogable, IDocmapSite
         catalog = DummyCatalog()
-        model.catalog = catalog
+        docmap = DummyDocumentMap()
+        model = testing.DummyResource(
+            catalog = catalog, docmap=docmap,
+            __provides__=(ICatalogSite, ICatalogable, IDocmapSite)
+            )
         self._callFUT(model, None)
         self.assertEqual(catalog.reindexed, [])
-        self.assertEqual(model.docid, 1)
+        self.assertEqual(model.__docid__, 1)
         self.assertEqual(catalog.indexed, [(1, model)])
         
 class DummyCatalog(dict):
-    def __init__(self, docid_to_path=None):
-        self.document_map = DummyDocumentMap(docid_to_path or {})
+    def __init__(self):
+        from BTrees.IIBTree import IITreeSet
         self.queries = []
         self.indexed = []
         self.unindexed = []
         self.reindexed = []
+        self.docids = IITreeSet()
 
     def index_doc(self, docid, obj):
         self.indexed.append((docid, obj))
@@ -164,7 +177,9 @@ class DummyCatalog(dict):
         self.reindexed.append((docid, obj))
 
 class DummyDocumentMap:
-    def __init__(self, docid_to_path):
+    def __init__(self, docid_to_path=None):
+        if docid_to_path is None:
+            docid_to_path = {}
         self.docid_to_path = dict(docid_to_path)
         self.path_to_docid = {}
         for k, v in docid_to_path.items():

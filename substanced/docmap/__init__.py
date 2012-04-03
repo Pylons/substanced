@@ -8,6 +8,16 @@ from BTrees.IOBTree import IOBTree
 from BTrees.OIBTree import OIBTree
 from BTrees.IIBTree import IISet
 
+from ..interfaces import IDocmapSite
+
+from pyramid.traversal import find_interface
+
+def find_docmap(context):
+    site = find_interface(context, IDocmapSite)
+    if site is None:
+        return
+    return site.docmap
+
 """
 Pathindex data structure of document map:
 

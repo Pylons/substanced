@@ -2,6 +2,8 @@ import logging
 
 import transaction
 
+from BTrees.IIBTree import IITreeSet
+
 from zope.interface import directlyProvides
 
 from repoze.catalog.catalog import Catalog as _Catalog
@@ -11,14 +13,14 @@ from pyramid.traversal import (
     find_interface,
     )
 
+from ..docmap import find_docmap
+
 from pyramid.threadlocal import get_current_registry
 
 from ..interfaces import (
     ISearch,
     ICatalogSite,
     )
-
-from .docmap import DocumentMap
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +36,35 @@ class Catalog(_Catalog):
         directlyProvides(site, ICatalogSite)
         site.catalog = self
         self.site = site
-        self.document_map = DocumentMap()
+        self.docids = IITreeSet()
+
+    def clear(self):
+        """ Clear all indexes in this catalog. """
+        _Catalog.clear(self)
+        self.docids = IITreeSet()
+
+    def index_doc(self, docid, obj):
+        """Register the document represented by ``obj`` in indexes of
+        this catalog using docid ``docid``."""
+        _Catalog.index_doc(self, docid, obj)
+        self.docids.insert(docid)
+
+    def unindex_doc(self, docid):
+        """Unregister the document id from indexes of this catalog."""
+        _Catalog.unindex_doc(self, docid)
+        try:
+            self.docids.remove(docid)
+        except KeyError:
+            pass
+
+    def reindex_doc(self, docid, obj):
+        """ Reindex the document referenced by docid using the object
+        passed in as ``obj`` (typically just does the equivalent of
+        ``unindex_doc``, then ``index_doc``, but specialized indexes
+        can override the method that this API calls to do less work. """
+        _Catalog.reindex_doc(self, docid)
+        if not docid in self.docids:
+            self.docids.insert(docid)
 
     def reindex(self, path_re=None, commit_interval=200, 
                 dry_run=False, output=None, transaction=transaction, 
@@ -56,7 +86,9 @@ class Catalog(_Catalog):
             output and output('reindexing only indexes %s' % str(indexes))
 
         i = 1
-        for path, docid in self.document_map.path_to_docid.items():
+        docmap = find_docmap(self.site)
+        for docid in self.docids:
+            path = docmap.docid_to_path.get(docid)
             upath = u'/'.join(path)
             if path_re is not None and path_re.match(upath) is None:
                 continue
@@ -107,10 +139,11 @@ class Search(object):
     def __init__(self, context):
         self.context = context
         self.catalog = find_catalog(self.context)
+        self.docmap = find_docmap(self.context)
 
     def resolver(self, docid):
         def path_for_docid(docid):
-            return self.catalog.document_map.docid_to_path.get(docid)
+            return self.docmap.docid_to_path.get(docid)
         path = path_for_docid(docid)
         if path is None:
             return None
