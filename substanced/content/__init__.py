@@ -51,6 +51,7 @@ class ContentCategories(object):
         if category_iface is None:
             category_iface = IContent
         addbase(content_iface, category_iface)
+        implementer(content_iface)(factory)
         category = self.categories.setdefault(category_iface,
                                               ContentCategory(category_iface))
         category.add(content_iface, factory)
@@ -75,7 +76,6 @@ class content(object):
         self.category_iface = category_iface
 
     def __call__(self, wrapped):
-        implementer(self.content_iface)(wrapped)
         settings = dict(category_iface=self.category_iface)
         def callback(context, name, ob):
             config = context.config.with_package(info.module)

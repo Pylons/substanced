@@ -98,8 +98,11 @@ class TestContentCategories(unittest.TestCase):
         inst = self._makeOne()
         class IFoo(Interface):
             pass
-        inst.add(IFoo, 'factory')
-        self.assertEqual(inst.categories[IContent].factories[IFoo], 'factory')
+        class Factory(object):
+            pass
+        inst.add(IFoo, Factory)
+        self.assertEqual(inst.categories[IContent].factories[IFoo], Factory)
+        self.assertTrue(IFoo.providedBy(Factory()))
         self.assertTrue(IContent in IFoo.__iro__)
         self.assertTrue(IContent in IFoo.__bases__)
         
@@ -107,8 +110,11 @@ class TestContentCategories(unittest.TestCase):
         inst = self._makeOne()
         class IFoo(Interface):
             pass
-        inst.add(IFoo, 'factory', ICategory)
-        self.assertEqual(inst.categories[ICategory].factories[IFoo], 'factory')
+        class Factory(object):
+            pass
+        inst.add(IFoo, Factory, ICategory)
+        self.assertEqual(inst.categories[ICategory].factories[IFoo], Factory)
+        self.assertTrue(IFoo.providedBy(Factory()))
         self.assertTrue(ICategory in IFoo.__iro__)
         self.assertTrue(ICategory in IFoo.__bases__)
 
