@@ -14,12 +14,14 @@ class ICatalogable(Interface):
 
 class ICatalogSite(Interface):
     """ An ICatalogSite has a ``catalog`` attribute which is an instance of a
-    ``substanced.catalog.Catalog``; marker interface"""
+    ``substanced.catalog.Catalog``; this is also a marker interface for
+    lookup of a component via its lineage"""
     catalog = Attribute('a catalog')
 
 class IDocmapSite(Interface):
     """ An IDocmapSite has a ``docmap`` attribute which is an instance of a
-    ``substanced.docmap.DocumentMap``; marker interface"""
+    ``substanced.docmap.DocumentMap``; this is a marker interface for lookup
+    of a component via its lineage."""
     docmap = Attribute('document map')
 
 class ISite(ICatalogSite, IDocmapSite):
