@@ -4,8 +4,6 @@ import transaction
 
 from BTrees.IIBTree import IITreeSet
 
-from zope.interface import directlyProvides
-
 from repoze.catalog.catalog import Catalog as _Catalog
 
 from pyramid.traversal import (
