@@ -27,7 +27,8 @@ class Site(Folder):
         self.catalog = Catalog(self)
     
     @classmethod
-    def root_factory(cls, request):
+    def root_factory(cls, request, transaction=transaction, 
+                     get_connection=get_connection):
         # this is a classmethod so that it works when Site is subclassed.
         conn = get_connection(request)
         zodb_root = conn.root()
