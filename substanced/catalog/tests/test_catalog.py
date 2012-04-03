@@ -29,7 +29,6 @@ class TestCatalog(unittest.TestCase):
         inst = self._makeOne(site)
         inst.docids = [1]
         self.assertTrue(ICatalogSite.providedBy(site))
-        self.assertEqual(site.catalog, inst)
         inst.reindex_doc = lambda docid, model: L.append((docid, model))
         out = []
         inst.reindex(transaction=transaction, output=out.append)
@@ -52,7 +51,6 @@ class TestCatalog(unittest.TestCase):
         inst = self._makeOne(site)
         inst.docids = [1, 2]
         self.assertTrue(ICatalogSite.providedBy(site))
-        self.assertEqual(site.catalog, inst)
         inst.reindex_doc = lambda docid, model: L.append((docid, model))
         out = []
         inst.reindex(transaction=transaction, output=out.append)
