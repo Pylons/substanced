@@ -18,7 +18,7 @@ class mgmt_path(object):
         kw['traverse'] = traverse
         return self.request.route_path('substanced_manage', *arg, **kw)
 
-def includeme(config):
+def includeme(config): # pragma: no cover
     config.add_directive('add_mgmt_view', add_mgmt_view)
     config.add_static_view('deformstatic', 'deform:static', cache_max_age=3600)
     config.add_static_view('sdistatic', 'substanced.sdi:static', 
