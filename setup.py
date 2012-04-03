@@ -29,6 +29,7 @@ install_requires = [
     'repoze.evolution',
     'pyramid_deform',
     'pyramid_zodbconn',
+    'deform_bootstrap',
     ]
 
 docs_extras = ['Sphinx']
