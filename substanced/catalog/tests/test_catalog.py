@@ -19,6 +19,45 @@ class TestCatalog(unittest.TestCase):
         from .. import Catalog
         return Catalog(site)
 
+    def test_clear(self):
+        site = testing.DummyModel()
+        inst = self._makeOne(site)
+        inst.docids.insert(1)
+        inst.clear()
+        self.assertEqual(list(inst.docids), [])
+
+    def test_index_doc(self):
+        site = testing.DummyModel()
+        inst = self._makeOne(site)
+        inst.index_doc(1, object())
+        self.assertEqual(list(inst.docids), [1])
+        
+    def test_unindex_doc_exists(self):
+        site = testing.DummyModel()
+        inst = self._makeOne(site)
+        inst.docids.insert(1)
+        inst.unindex_doc(1)
+        self.assertEqual(list(inst.docids), [])
+
+    def test_unindex_doc_notexists(self):
+        site = testing.DummyModel()
+        inst = self._makeOne(site)
+        inst.unindex_doc(1)
+        self.assertEqual(list(inst.docids), [])
+
+    def test_reindex_doc_exists(self):
+        site = testing.DummyModel()
+        inst = self._makeOne(site)
+        inst.docids.insert(1)
+        inst.reindex_doc(1, object())
+        self.assertEqual(list(inst.docids), [1])
+        
+    def test_reindex_doc_notexists(self):
+        site = testing.DummyModel()
+        inst = self._makeOne(site)
+        inst.reindex_doc(1, object())
+        self.assertEqual(list(inst.docids), [1])
+        
     def test_reindex(self):
         a = testing.DummyModel()
         self.config.testing_resources({'/a':a})

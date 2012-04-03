@@ -58,7 +58,7 @@ class Catalog(_Catalog):
         passed in as ``obj`` (typically just does the equivalent of
         ``unindex_doc``, then ``index_doc``, but specialized indexes
         can override the method that this API calls to do less work. """
-        _Catalog.reindex_doc(self, docid)
+        _Catalog.reindex_doc(self, docid, obj)
         if not docid in self.docids:
             self.docids.insert(docid)
 
