@@ -11,7 +11,7 @@ from ..interfaces import (
     IObjectModifiedEvent,
     )
     
-from . import find_catalog
+from ..catalog import find_catalog
 from ..docmap import find_docmap
 
 def _postorder(startnode):

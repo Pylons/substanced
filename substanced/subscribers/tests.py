@@ -12,7 +12,7 @@ class Test__postorder(unittest.TestCase):
         testing.tearDown()
 
     def _callFUT(self, node):
-        from ..subscribers import _postorder
+        from . import _postorder
         return _postorder(node)
 
     def test_None_node(self):
@@ -20,13 +20,13 @@ class Test__postorder(unittest.TestCase):
         self.assertEqual(result, [None])
 
     def test_IFolder_node_no_children(self):
-        from ...interfaces import IFolder
+        from ..interfaces import IFolder
         model = testing.DummyResource(__provides__=IFolder)
         result = list(self._callFUT(model))
         self.assertEqual(result, [model])
 
     def test_IFolder_node_nonfolder_children(self):
-        from ...interfaces import IFolder
+        from ..interfaces import IFolder
         model = testing.DummyResource(__provides__=IFolder)
         one = testing.DummyResource()
         two = testing.DummyResource()
@@ -36,7 +36,7 @@ class Test__postorder(unittest.TestCase):
         self.assertEqual(result, [two, one, model])
 
     def test_IFolder_node_folder_children(self):
-        from ...interfaces import IFolder
+        from ..interfaces import IFolder
         model = testing.DummyResource(__provides__=IFolder)
         one = testing.DummyResource()
         two = testing.DummyResource(__provides__=IFolder)
@@ -57,7 +57,7 @@ class Test_object_added(unittest.TestCase):
         testing.tearDown()
 
     def _callFUT(self, object, event):
-        from ..subscribers import object_added
+        from . import object_added
         return object_added(object, event)
 
     def test_content_object_no_catalog(self):
@@ -65,7 +65,7 @@ class Test_object_added(unittest.TestCase):
         self._callFUT(model, None) # doesnt blow up
 
     def test_content_object(self):
-        from ...interfaces import ICatalogSite, ICatalogable, IDocmapSite
+        from ..interfaces import ICatalogSite, ICatalogable, IDocmapSite
         catalog = DummyCatalog()
         docmap = DummyDocumentMap()
         model = testing.DummyResource(
@@ -79,7 +79,7 @@ class Test_object_added(unittest.TestCase):
         self.assertEqual(model.__docid__, 1)
 
     def test_content_object_w_existing_docid(self):
-        from ...interfaces import ICatalogSite, ICatalogable, IDocmapSite
+        from ..interfaces import ICatalogSite, ICatalogable, IDocmapSite
         catalog = DummyCatalog()
         docmap = DummyDocumentMap()
         model = testing.DummyResource(
@@ -99,7 +99,7 @@ class Test_object_removed(unittest.TestCase):
         testing.tearDown()
 
     def _callFUT(self, object, event):
-        from ..subscribers import object_removed
+        from . import object_removed
         return object_removed(object, event)
 
     def test_content_object_no_docmap(self):
@@ -107,7 +107,7 @@ class Test_object_removed(unittest.TestCase):
         self._callFUT(model, None) # doesnt blow up
 
     def test_content_object_w_docmap_and_catalog(self):
-        from ...interfaces import ICatalogSite, IDocmapSite
+        from ..interfaces import ICatalogSite, IDocmapSite
         docmap = DummyDocumentMap({1: (u'',)})
         catalog = DummyCatalog()
         catalog.docids = [1]
@@ -127,7 +127,7 @@ class Test_object_modified(unittest.TestCase):
         testing.tearDown()
 
     def _callFUT(self, object, event):
-        from ..subscribers import object_modified
+        from . import object_modified
         return object_modified(object, event)
 
     def test_content_object_no_catalog(self):
@@ -135,7 +135,7 @@ class Test_object_modified(unittest.TestCase):
         self._callFUT(model, None) # doesnt blow up
 
     def test_content_object(self):
-        from ...interfaces import ICatalogSite, ICatalogable, IDocmapSite
+        from ..interfaces import ICatalogSite, ICatalogable, IDocmapSite
         docmap = DummyDocumentMap({1:(u'',)})
         catalog = DummyCatalog()
         model = testing.DummyResource(
@@ -146,7 +146,7 @@ class Test_object_modified(unittest.TestCase):
         self.assertEqual(catalog.reindexed, [(1, model)])
 
     def test_content_object_not_yet_indexed(self):
-        from ...interfaces import ICatalogSite, ICatalogable, IDocmapSite
+        from ..interfaces import ICatalogSite, ICatalogable, IDocmapSite
         catalog = DummyCatalog()
         docmap = DummyDocumentMap()
         model = testing.DummyResource(
