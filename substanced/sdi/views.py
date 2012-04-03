@@ -17,7 +17,7 @@ class PropertiesView(FormView):
         self.context.__dict__.update(appstruct)
         self.context._p_changed = True
         self.request.session.flash('Updated')
-        return HTTPFound('/manage' + self.request.resource_path(self.context))
+        return HTTPFound(self.request.mgmt_path(self.context, '@@properties'))
 
     def show(self, form):
         appstruct = self.context.__dict__
