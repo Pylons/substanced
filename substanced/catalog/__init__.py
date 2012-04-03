@@ -168,5 +168,4 @@ def includeme(config): # pragma: no cover
     from zope.interface import Interface
     config.registry.registerAdapter(Search, (Interface,), ISearch)
     config.add_directive('add_catalog_index', _add_catalog_index)
-    config.scan('substanced.catalog.subscribers')
     
