@@ -73,3 +73,6 @@ def object_modified(obj, event):
             if ICatalogable.providedBy(obj) and catalog is not None:
                 catalog.reindex_doc(docid, obj)
 
+def includeme(config):
+    config.scan('substanced.subscribers')
+    
