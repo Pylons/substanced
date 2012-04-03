@@ -1,7 +1,8 @@
 import random
-import sys
 
 from persistent import Persistent
+
+import BTrees
 
 from BTrees.OOBTree import OOBTree
 from BTrees.IOBTree import IOBTree
@@ -92,7 +93,8 @@ class DocumentMap(Persistent):
     def new_docid(self):
         while True:
             if self._v_nextid is None:
-                self._v_nextid = self._randrange(-sys.maxint, sys.maxint)
+                self._v_nextid = self._randrange(BTrees.IOBTree.family.minint, 
+                                                 BTrees.IOBTree.family.maxint)
 
             docid = self._v_nextid
             self._v_nextid += 1
