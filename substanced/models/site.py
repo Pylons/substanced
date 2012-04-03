@@ -5,8 +5,9 @@ from zope.interface import implementer
 
 from pyramid_zodbconn import get_connection
 
-from ..interfaces import IDocmapSite
+from ..interfaces import ISite
 from ..docmap import DocumentMap
+from ..catalog import Catalog
 from ..sdi import Schema
 
 from .folder import Folder
@@ -15,7 +16,7 @@ class SiteSchema(Schema):
     name = colander.SchemaNode(colander.String())
     description = colander.SchemaNode(colander.String())
 
-@implementer(IDocmapSite)
+@implementer(ISite)
 class Site(Folder):
     name = ''
     description = ''
@@ -23,6 +24,7 @@ class Site(Folder):
     def __init__(self):
         Folder.__init__(self)
         self.docmap = DocumentMap()
+        self.catalog = Catalog(self)
     
     @classmethod
     def root_factory(cls, request):
