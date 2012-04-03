@@ -2,7 +2,7 @@ from pyramid_deform import FormView
 from pyramid.renderers import get_renderer
 from pyramid.httpexceptions import HTTPFound
 
-class ContentView(FormView):
+class PropertiesView(FormView):
 
     buttons = ('save',)
     
