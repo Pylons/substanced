@@ -1,5 +1,5 @@
 from pyramid.config import Configurator
-from substanced.site import Site
+from substanced.models import Site
 
 def main(global_config, **settings):
     """ This function returns a Pyramid WSGI application.
