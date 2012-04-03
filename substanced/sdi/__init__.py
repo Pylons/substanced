@@ -1,4 +1,3 @@
-from pyramid.session import UnencryptedCookieSessionFactoryConfig
 from pyramid.traversal import resource_path_tuple
 
 from pyramid_deform import CSRFSchema as Schema # API
@@ -20,10 +19,6 @@ class mgmt_path(object):
         return self.request.route_path('substanced_manage', *arg, **kw)
 
 def includeme(config):
-    settings = config.get_settings()
-    secret = settings['substanced.session_secret']
-    session_factory = UnencryptedCookieSessionFactoryConfig(secret)
-    config.set_session_factory(session_factory)
     config.add_directive('add_mgmt_view', add_mgmt_view)
     config.add_static_view('deformstatic', 'deform:static', cache_max_age=3600)
     config.add_static_view('sdistatic', 'substanced.sdi:static', 
