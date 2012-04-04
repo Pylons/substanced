@@ -32,7 +32,7 @@ class IObjectmap(Interface):
         inclusive) removed as the result of removing this object from the
         object map."""
     def pathlookup(obj_or_path_tuple, depth=None, include_origin=True):
-        """ Returns a generator-iterator of document ids within
+        """ Returns an iterator of document ids within
         obj_or_path_tuple (a traversable object or a path tuple).  If depth
         is specified, returns only objects at that depth.  If
         ``include_origin`` is ``True``, returns the docid of the object

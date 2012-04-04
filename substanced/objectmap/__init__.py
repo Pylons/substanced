@@ -233,8 +233,10 @@ class ObjectMap(Persistent):
         
         dmap = self.pathindex.get(path_tuple)
 
+        result = IISet()
+
         if dmap is None:
-            raise StopIteration
+            return result
         
         if depth is None:
             for d, didset in dmap.items():
@@ -242,8 +244,7 @@ class ObjectMap(Persistent):
                 if d == 0 and not include_origin:
                     continue
 
-                for v in didset:
-                    yield v
+                result.update(didset)
 
         else:
             for d in range(depth+1):
@@ -256,7 +257,8 @@ class ObjectMap(Persistent):
                 if didset is None:
                     continue
                 else:
-                    for v in didset:
-                        yield v
+                    result.update(didset)
+
+        return result
 
 

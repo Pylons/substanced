@@ -97,8 +97,7 @@ class TestObjectMap(unittest.TestCase):
 
     def test_pathlookup_not_valid(self):
         inst = self._makeOne()
-        gen = inst.pathlookup(1)
-        self.assertRaises(ValueError, list, gen)
+        self.assertRaises(ValueError, inst.pathlookup, 1)
 
     def test_pathlookup_traversable_object(self):
         inst = self._makeOne()

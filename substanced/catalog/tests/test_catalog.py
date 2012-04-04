@@ -187,7 +187,7 @@ class TestCatalog(unittest.TestCase):
         inst['index'] = DummyIndex()
         registry = testing.DummyResource()
         registry._substanced_indexes = {'index2':DummyIndex(), 
-                                             'index':DummyIndex()}
+                                        'index':DummyIndex()}
         out = []
         inst.refresh(output=out.append, registry=registry)
         self.assertEqual(out,
