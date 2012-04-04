@@ -6,7 +6,7 @@ class TestObjectMap(unittest.TestCase):
         from . import ObjectMap
         return ObjectMap()
 
-    def test_new_objectid(self):
+    def test_new_objectid_empty(self):
         inst = self._makeOne()
         times = [0]
         def randrange(frm, to):
@@ -14,8 +14,20 @@ class TestObjectMap(unittest.TestCase):
             times[0] = times[0] + 1
             return val
         inst._randrange = randrange
-        inst.add((u'', 'whatever'), 0)
-        self.assertEqual(inst.new_objectid(), 1)
+        result = inst.new_objectid()
+        self.assertEqual(result, 0)
+        
+    def test_new_objectid_notempty(self):
+        inst = self._makeOne()
+        times = [0]
+        def randrange(frm, to):
+            val = times[0]
+            times[0] = times[0] + 1
+            return val
+        inst._randrange = randrange
+        inst.objectid_to_path[0] = True
+        result = inst.new_objectid()
+        self.assertEqual(result, 1)
 
     def test_objectid_for_object(self):
         obj = testing.DummyResource()
@@ -39,13 +51,17 @@ class TestObjectMap(unittest.TestCase):
         
     def test_add_already_in_path_to_objectid(self):
         inst = self._makeOne()
+        obj = testing.DummyResource()
+        obj.__objectid__ = 1
         inst.path_to_objectid[(u'',)] = 1
-        self.assertRaises(ValueError, inst.add, (u'',))
+        self.assertRaises(ValueError, inst.add, obj)
 
     def test_add_already_in_objectid_to_path(self):
         inst = self._makeOne()
+        obj = testing.DummyResource()
+        obj.__objectid__ = 1
         inst.objectid_to_path[1] = True
-        self.assertRaises(ValueError, inst.add, (u'', u'a'), 1)
+        self.assertRaises(ValueError, inst.add, obj)
 
     def test_add_traversable_object(self):
         inst = self._makeOne()
@@ -53,6 +69,7 @@ class TestObjectMap(unittest.TestCase):
         obj = testing.DummyResource()
         inst.add(obj)
         self.assertEqual(inst.objectid_to_path[1], (u'',))
+        self.assertEqual(obj.__objectid__, 1)
         
     def test_add_not_valid(self):
         inst = self._makeOne()
@@ -90,7 +107,17 @@ class TestObjectMap(unittest.TestCase):
         self.assertEqual(result, [])
         
     def test_functional(self):
-    
+
+        def resource(path):
+            path_tuple = split(path)
+            parent = None
+            for element in path_tuple:
+                obj = testing.DummyResource()
+                obj.__parent__ = parent
+                obj.__name__ = element
+                parent = obj
+            return obj
+                
         def split(s):
             return (u'',) + tuple(filter(None, s.split(u'/')))
 
@@ -103,11 +130,11 @@ class TestObjectMap(unittest.TestCase):
         objmap = self._makeOne()
         objmap._v_nextid = 1
 
-        root = split('/')
-        a = split('/a')
-        ab = split('/a/b')
-        abc = split('/a/b/c')
-        z = split('/z')
+        root = resource('/')
+        a = resource('/a')
+        ab = resource('/a/b')
+        abc = resource('/a/b/c')
+        z = resource('/z')
 
         did1 = objmap.add(ab)
         did2 = objmap.add(abc)

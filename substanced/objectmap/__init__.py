@@ -121,22 +121,21 @@ class ObjectMap(Persistent):
     def path_for(self, objectid):
         return self.objectid_to_path.get(objectid)
             
-    def add(self, obj_or_path_tuple, objectid=_marker):
-        if isinstance(obj_or_path_tuple, tuple):
-            path_tuple = obj_or_path_tuple
-        elif hasattr(obj_or_path_tuple, '__parent__'):
-            path_tuple = resource_path_tuple(obj_or_path_tuple)
-        else:
+    def add(self, obj):
+        if not hasattr(obj, '__parent__'):
             raise ValueError(
-                'add accepts a traversable object or a path tuple, '
-                'got %s' % (obj_or_path_tuple,))
-        if path_tuple in self.path_to_objectid:
-            raise ValueError('path %s already exists' % (path_tuple,))
+                'add accepts a traversable object got %s' % (obj,))
+        path_tuple = resource_path_tuple(obj)
+        objectid = getattr(obj, '__objectid__', _marker)
         
         if objectid is _marker:
             objectid = self.new_objectid()
+            obj.__objectid__ = objectid
         elif objectid in self.objectid_to_path:
-            raise ValueError('objectid %s already exists' % objectid)
+            raise ValueError('objectid %s already exists' % (objectid,))
+
+        if path_tuple in self.path_to_objectid:
+            raise ValueError('path %s already exists' % (path_tuple,))
 
         self.path_to_objectid[path_tuple] = objectid
         self.objectid_to_path[objectid] = path_tuple
@@ -153,12 +152,12 @@ class ObjectMap(Persistent):
         return objectid
 
     def remove(self, obj_objectid_or_path_tuple):
-        if isinstance(obj_objectid_or_path_tuple, int):
+        if hasattr(obj_objectid_or_path_tuple, '__parent__'):
+            path_tuple = resource_path_tuple(obj_objectid_or_path_tuple)
+        elif isinstance(obj_objectid_or_path_tuple, int):
             path_tuple = self.objectid_to_path[obj_objectid_or_path_tuple]
         elif isinstance(obj_objectid_or_path_tuple, tuple):
             path_tuple = obj_objectid_or_path_tuple
-        elif hasattr(obj_objectid_or_path_tuple, '__parent__'):
-            path_tuple = resource_path_tuple(obj_objectid_or_path_tuple)
         else:
             raise ValueError(
                 'Value passed to remove must be a traversable '
@@ -222,10 +221,10 @@ class ObjectMap(Persistent):
         return removed
 
     def pathlookup(self, obj_or_path_tuple, depth=None, include_origin=True):
-        if isinstance(obj_or_path_tuple, tuple):
-            path_tuple = obj_or_path_tuple
-        elif hasattr(obj_or_path_tuple, '__parent__'):
+        if hasattr(obj_or_path_tuple, '__parent__'):
             path_tuple = resource_path_tuple(obj_or_path_tuple)
+        elif isinstance(obj_or_path_tuple, tuple):
+            path_tuple = obj_or_path_tuple
         else:
             raise ValueError(
                 'pathlookup must be provided a traversable object or a '

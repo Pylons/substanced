@@ -73,21 +73,8 @@ class Test_object_added(unittest.TestCase):
             __provides__=(ICatalogSite, ICatalogable, IObjectmapSite)
             )
         self._callFUT(model, None)
-        self.assertEqual(objectmap.added, [(None, model)])
+        self.assertEqual(objectmap.added, [model])
         self.assertEqual(catalog.indexed, [(1, model)])
-        self.assertEqual(model.__objectid__, 1)
-
-    def test_content_object_w_existing_objectid(self):
-        from ..interfaces import ICatalogSite, ICatalogable, IObjectmapSite
-        catalog = DummyCatalog()
-        objectmap = DummyObjectMap()
-        model = testing.DummyResource(
-            objectmap=objectmap, catalog=catalog, __objectid__ = 123,
-            __provides__=(ICatalogSite, ICatalogable, IObjectmapSite),
-            )
-        self._callFUT(model, None)
-        self.assertEqual(objectmap.added, [(123, model)])
-        self.assertEqual(catalog.indexed, [(123, model)])
 
 class Test_object_removed(unittest.TestCase):
     def setUp(self):
@@ -185,9 +172,13 @@ class DummyObjectMap:
         self.added = []
         self.removed = []
 
-    def add(self, path, objectid=None):
-        self.added.append((objectid, path))
-        return 1
+    def add(self, obj):
+        self.added.append(obj)
+        objectid = getattr(obj, '__objectid__', None)
+        if objectid is None:
+            objectid = 1
+            obj.__objectid__ = objectid
+        return objectid
 
     def objectid_for(self, obj):
         path_tuple = resource_path_tuple(obj)

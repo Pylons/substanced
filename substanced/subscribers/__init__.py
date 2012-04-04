@@ -29,13 +29,9 @@ def object_added(obj, event):
     objectmap = find_objectmap(obj)
     if objectmap is not None:
         for node in _postorder(obj):
-            objectid = getattr(node, '__objectid__', None)
-            if objectid is None:
-                objectid = node.__objectid__ = objectmap.add(obj)
-            else:
-                objectmap.add(obj, objectid)
+            objectid = objectmap.add(obj)
             if ICatalogable.providedBy(node) and catalog is not None:
-                catalog.index_doc(objectid, node)
+                objectid = catalog.index_doc(objectid, node)
 
 @subscriber([Interface, IObjectWillBeRemovedEvent])
 def object_removed(obj, event):
