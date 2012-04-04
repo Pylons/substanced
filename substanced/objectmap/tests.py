@@ -4,7 +4,8 @@ from pyramid import testing
 class TestObjectMap(unittest.TestCase):
     def _makeOne(self):
         from . import ObjectMap
-        return ObjectMap()
+        site = testing.DummyResource()
+        return ObjectMap(site)
 
     def test_new_objectid_empty(self):
         inst = self._makeOne()

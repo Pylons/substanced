@@ -2,6 +2,8 @@ import logging
 
 import transaction
 
+from zope.interface import implementer
+
 from BTrees.IIBTree import IITreeSet
 
 from repoze.catalog.catalog import Catalog as _Catalog
@@ -18,6 +20,7 @@ from pyramid.threadlocal import get_current_registry
 from ..interfaces import (
     ISearch,
     ICatalogSite,
+    ICatalog,
     )
 
 logger = logging.getLogger(__name__)
@@ -28,6 +31,7 @@ def find_site(context):
 def find_catalog(context):
     return getattr(find_site(context), 'catalog', None)
 
+@implementer(ICatalog)
 class Catalog(_Catalog):
     def __init__(self, site, family=None):
         _Catalog.__init__(self, family)

@@ -12,6 +12,41 @@ class ICatalogable(Interface):
     """ Marker interface describing catalogable content.  An object must
     implement this interface to have its attributes indexed """
 
+class IObjectmap(Interface):
+    """ A map of objects to paths """
+    site = Attribute(
+        'The persistent IObjectmap object onto which this is attached as '
+        '``objectmap``')
+    def objectid_for(obj_or_path_tuple):
+        """ Return the object id for obj_or_path_tuple """
+    def path_for(objectid):
+        """ Return the path tuple for objectid """
+    def add(obj):
+        """ Add a new object to the object map.  Assigns a new objectid to
+        obj.__objectid__ to the object if it doesn't already have one.  The
+        object's path or objectid must not already exist in the map.  Returns
+        the object id."""
+    def remove(obj_objectid_or_path_tuple):
+        """ Removes an object from the object map using the object itself, an
+        object id, or a path tuple.  Returns a set of objectids (children,
+        inclusive) removed as the result of removing this object from the
+        object map."""
+    def pathlookup(obj_or_path_tuple, depth=None, include_origin=True):
+        """ Returns a generator-iterator of document ids within
+        obj_or_path_tuple (a traversable object or a path tuple).  If depth
+        is specified, returns only objects at that depth.  If
+        ``include_origin`` is ``True``, returns the docid of the object
+        passed as ``obj_or_path_tuple`` in the returned set, otherwise it
+        omits it."""
+
+class ICatalog(Interface):
+    """ A collection of indices """
+    site = Attribute(
+        'The persistent ICatalogSite object onto which this is attached as '
+        '``catalog``')
+    objectids = Attribute(
+        'a sequence of objectids that are cataloged in this catalog')
+    
 class ICatalogSite(Interface):
     """ An ICatalogSite has a ``catalog`` attribute which is an instance of a
     ``substanced.catalog.Catalog``; this is also a marker interface for

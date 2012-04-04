@@ -23,7 +23,7 @@ class Site(Folder):
     __schema__ = SiteSchema()
     def __init__(self):
         Folder.__init__(self)
-        self.objectmap = ObjectMap()
+        self.objectmap = ObjectMap(self)
         self.catalog = Catalog(self)
     
     @classmethod

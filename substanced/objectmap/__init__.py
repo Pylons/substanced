@@ -88,7 +88,8 @@ class ObjectMap(Persistent):
     _v_nextid = None
     _randrange = random.randrange
 
-    def __init__(self):
+    def __init__(self, site):
+        self.site = site
         self.objectid_to_path = IOBTree()
         self.path_to_objectid = OIBTree()
         self.pathindex = OOBTree()
@@ -170,7 +171,7 @@ class ObjectMap(Persistent):
 
         # rationale: if this key isn't present, no path added ever contained it
         if dmap is None:
-            return IISet()
+            return set()
 
         removed = set()
         # sorted() only for clarity during tests
