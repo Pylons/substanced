@@ -116,7 +116,7 @@ class Catalog(_Catalog):
         if registry is None:
             registry = get_current_registry()
 
-        indexes = getattr(registry, '_pyramid_catalog_indexes', {})
+        indexes = getattr(registry, '_substanced_indexes', {})
         
         # add mentioned indexes
         for name, index in indexes.items():
@@ -162,9 +162,9 @@ class Search(object):
     
 def _add_catalog_index(config, name, index): # pragma: no cover
     def register():
-        indexes = getattr(config.registry, '_pyramid_catalog_indexes', {})
+        indexes = getattr(config.registry, '_substanced_indexes', {})
         indexes[name] = index
-        config.registry._pyramid_catalog_indexes = indexes
+        config.registry._substanced_indexes = indexes
     config.action(('catalog-index', name), callable=register)
 
 def includeme(config): # pragma: no cover

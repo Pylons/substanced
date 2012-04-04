@@ -166,7 +166,7 @@ class TestCatalog(unittest.TestCase):
         inst.objectids = [1]
         index = DummyIndex()
         inst['index'] = index
-        self.config.registry._pyramid_catalog_indexes = {'index':index}
+        self.config.registry._substanced_indexes = {'index':index}
         index.reindex_doc = lambda objectid, model: L.append((objectid, model))
         out = []
         inst.reindex(transaction=transaction, indexes=('index',), 
@@ -186,7 +186,7 @@ class TestCatalog(unittest.TestCase):
         inst = self._makeOne(site)
         inst['index'] = DummyIndex()
         registry = testing.DummyResource()
-        registry._pyramid_catalog_indexes = {'index2':DummyIndex(), 
+        registry._substanced_indexes = {'index2':DummyIndex(), 
                                              'index':DummyIndex()}
         out = []
         inst.refresh(output=out.append, registry=registry)
@@ -200,7 +200,7 @@ class TestCatalog(unittest.TestCase):
         inst = self._makeOne(site)
         inst['index'] = DummyIndex()
         registry = testing.DummyResource()
-        registry._pyramid_catalog_indexes = {}
+        registry._substanced_indexes = {}
         out = []
         inst.refresh(output=out.append, registry=registry)
         self.assertEqual(out,
