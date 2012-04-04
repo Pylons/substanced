@@ -18,13 +18,13 @@ class ICatalogSite(Interface):
     lookup of a component via its lineage"""
     catalog = Attribute('a catalog')
 
-class IDocmapSite(Interface):
-    """ An IDocmapSite has a ``docmap`` attribute which is an instance of a
-    ``substanced.docmap.DocumentMap``; this is a marker interface for lookup
-    of a component via its lineage."""
-    docmap = Attribute('document map')
+class IObjectmapSite(Interface):
+    """ An IObjectmapSite has a ``objectmap`` attribute which is an instance
+    of a ``substanced.objmap.ObjectMap``; this is a marker interface for
+    lookup of a component via its lineage."""
+    objectmap = Attribute('object map')
 
-class ISite(ICatalogSite, IDocmapSite):
+class ISite(ICatalogSite, IObjectmapSite):
     """ Marker interface for something that is both an ICatalogSite and 
     an IDocmapSite  """
 

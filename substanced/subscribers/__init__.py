@@ -1,7 +1,6 @@
 from zope.interface import Interface
 
 from pyramid.events import subscriber
-from pyramid.traversal import resource_path_tuple
 
 from ..interfaces import (
     IFolder,
@@ -12,7 +11,7 @@ from ..interfaces import (
     )
     
 from ..catalog import find_catalog
-from ..docmap import find_docmap
+from ..objectmap import find_objectmap
 
 def _postorder(startnode):
     def visit(node):
@@ -27,17 +26,16 @@ def _postorder(startnode):
 def object_added(obj, event):
     """ Index content (an IObjectAddedEvent subscriber) """
     catalog = find_catalog(obj)
-    docmap = find_docmap(obj)
-    if docmap is not None:
+    objectmap = find_objectmap(obj)
+    if objectmap is not None:
         for node in _postorder(obj):
-            path_tuple = resource_path_tuple(node)
-            docid = getattr(node, '__docid__', None)
-            if docid is None:
-                docid = node.__docid__ = docmap.add(path_tuple)
+            objectid = getattr(node, '__objectid__', None)
+            if objectid is None:
+                objectid = node.__objectid__ = objectmap.add(obj)
             else:
-                docmap.add(path_tuple, docid)
+                objectmap.add(obj, objectid)
             if ICatalogable.providedBy(node) and catalog is not None:
-                catalog.index_doc(docid, node)
+                catalog.index_doc(objectid, node)
 
 @subscriber([Interface, IObjectWillBeRemovedEvent])
 def object_removed(obj, event):
@@ -48,30 +46,28 @@ def object_removed(obj, event):
     # contain catalogable objects (e.g. it might be a folder with catalogable
     # items within it).
     catalog = find_catalog(obj)
-    docmap = find_docmap(obj)
-    if docmap is not None:
-        path_tuple = resource_path_tuple(obj)
-        docids = docmap.remove(path_tuple)
+    objectmap = find_objectmap(obj)
+    if objectmap is not None:
+        objectids = objectmap.remove(obj)
         if catalog is not None:
-            for docid in docids:
-                if docid in catalog.docids:
-                    catalog.unindex_doc(docid)
+            for objectid in objectids:
+                if objectid in catalog.objectids:
+                    catalog.unindex_doc(objectid)
 
 @subscriber([Interface, IObjectModifiedEvent])
 def object_modified(obj, event):
     """ Reindex a single piece of content (non-recursive); an
     ObjectModifed event subscriber """
-    docmap = find_docmap(obj)
-    if docmap is not None:
-        path_tuple = resource_path_tuple(obj)
-        docid = docmap.path_to_docid.get(path_tuple)
-        if docid is None:
+    objectmap = find_objectmap(obj)
+    if objectmap is not None:
+        objectid = objectmap.objectid_for(obj)
+        if objectid is None:
             object_added(obj, event)
-            docid = getattr(obj, '__docid__')
+            objectid = obj.__objectid__
         else:
             catalog = find_catalog(obj)
             if ICatalogable.providedBy(obj) and catalog is not None:
-                catalog.reindex_doc(docid, obj)
+                catalog.reindex_doc(objectid, obj)
 
 def includeme(config): # pragma: no cover
     config.scan('substanced.subscribers')

@@ -6,7 +6,7 @@ from zope.interface import implementer
 from pyramid_zodbconn import get_connection
 
 from ..interfaces import ISite
-from ..docmap import DocumentMap
+from ..objectmap import ObjectMap
 from ..catalog import Catalog
 from ..sdi import Schema
 
@@ -23,7 +23,7 @@ class Site(Folder):
     __schema__ = SiteSchema()
     def __init__(self):
         Folder.__init__(self)
-        self.docmap = DocumentMap()
+        self.objectmap = ObjectMap()
         self.catalog = Catalog(self)
     
     @classmethod

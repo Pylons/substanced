@@ -11,7 +11,7 @@ from pyramid.traversal import (
     find_interface,
     )
 
-from ..docmap import find_docmap
+from ..objectmap import find_objectmap
 
 from pyramid.threadlocal import get_current_registry
 
@@ -32,24 +32,25 @@ class Catalog(_Catalog):
     def __init__(self, site, family=None):
         _Catalog.__init__(self, family)
         self.site = site
-        self.docids = IITreeSet()
+        self.objectids = IITreeSet()
 
     def clear(self):
         """ Clear all indexes in this catalog. """
         _Catalog.clear(self)
-        self.docids = IITreeSet()
+        self.objectids = IITreeSet()
 
     def index_doc(self, docid, obj):
         """Register the document represented by ``obj`` in indexes of
-        this catalog using docid ``docid``."""
+        this catalog using objectid ``docid``."""
         _Catalog.index_doc(self, docid, obj)
-        self.docids.insert(docid)
+        self.objectids.insert(docid)
 
     def unindex_doc(self, docid):
-        """Unregister the document id from indexes of this catalog."""
+        """Unregister the document represented by docid from indexes of
+        this catalog."""
         _Catalog.unindex_doc(self, docid)
         try:
-            self.docids.remove(docid)
+            self.objectids.remove(docid)
         except KeyError:
             pass
 
@@ -59,8 +60,8 @@ class Catalog(_Catalog):
         ``unindex_doc``, then ``index_doc``, but specialized indexes
         can override the method that this API calls to do less work. """
         _Catalog.reindex_doc(self, docid, obj)
-        if not docid in self.docids:
-            self.docids.insert(docid)
+        if not docid in self.objectids:
+            self.objectids.insert(docid)
 
     def reindex(self, path_re=None, commit_interval=200, 
                 dry_run=False, output=None, transaction=transaction, 
@@ -82,9 +83,9 @@ class Catalog(_Catalog):
             output and output('reindexing only indexes %s' % str(indexes))
 
         i = 1
-        docmap = find_docmap(self.site)
-        for docid in self.docids:
-            path = docmap.docid_to_path.get(docid)
+        objectmap = find_objectmap(self.site)
+        for objectid in self.objectids:
+            path = objectmap.path_for(objectid)
             upath = u'/'.join(path)
             if path_re is not None and path_re.match(upath) is None:
                 continue
@@ -96,10 +97,10 @@ class Catalog(_Catalog):
                 continue
 
             if indexes is None:
-                self.reindex_doc(docid, resource)
+                self.reindex_doc(objectid, resource)
             else:
                 for index in indexes:
-                    self[index].reindex_doc(docid, resource)
+                    self[index].reindex_doc(objectid, resource)
             if i % commit_interval == 0: # pragma: no cover
                 commit_or_abort()
             i+=1
@@ -135,12 +136,10 @@ class Search(object):
     def __init__(self, context):
         self.context = context
         self.catalog = find_catalog(self.context)
-        self.docmap = find_docmap(self.context)
+        self.objectmap = find_objectmap(self.context)
 
-    def resolver(self, docid):
-        def path_for_docid(docid):
-            return self.docmap.docid_to_path.get(docid)
-        path = path_for_docid(docid)
+    def resolver(self, objectid):
+        path = self.objectmap.path_for(objectid)
         if path is None:
             return None
         try:
@@ -150,12 +149,12 @@ class Search(object):
             return None
         
     def query(self, q, **kw):
-        num, docids = self.catalog.query(q, **kw)
-        return num, docids, self.resolver
+        num, objectids = self.catalog.query(q, **kw)
+        return num, objectids, self.resolver
 
     def search(self, **kw):
-        num, docids = self.catalog.search(**kw)
-        return num, docids, self.resolver
+        num, objectids = self.catalog.search(**kw)
+        return num, objectids, self.resolver
     
 def _add_catalog_index(config, name, index): # pragma: no cover
     def register():

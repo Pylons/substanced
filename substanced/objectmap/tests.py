@@ -1,11 +1,12 @@
 import unittest
+from pyramid import testing
 
-class TestDocumentMap(unittest.TestCase):
+class TestObjectMap(unittest.TestCase):
     def _makeOne(self):
-        from . import DocumentMap
-        return DocumentMap()
+        from . import ObjectMap
+        return ObjectMap()
 
-    def test_new_docid(self):
+    def test_new_objectid(self):
         inst = self._makeOne()
         times = [0]
         def randrange(frm, to):
@@ -14,19 +15,46 @@ class TestDocumentMap(unittest.TestCase):
             return val
         inst._randrange = randrange
         inst.add((u'', 'whatever'), 0)
-        self.assertEqual(inst.new_docid(), 1)
+        self.assertEqual(inst.new_objectid(), 1)
 
-    def test_add_already_in_path_to_docid(self):
+    def test_objectid_for_object(self):
+        obj = testing.DummyResource()
         inst = self._makeOne()
-        inst.path_to_docid[(u'',)] = 1
+        inst.path_to_objectid[(u'',)] = 1
+        self.assertEqual(inst.objectid_for(obj), 1)
+
+    def test_objectid_for_path_tuple(self):
+        inst = self._makeOne()
+        inst.path_to_objectid[(u'',)] = 1
+        self.assertEqual(inst.objectid_for((u'',)), 1)
+
+    def test_objectid_for_nonsense(self):
+        inst = self._makeOne()
+        self.assertRaises(ValueError, inst.objectid_for, 'a')
+
+    def test_path_for(self):
+        inst = self._makeOne()
+        inst.objectid_to_path[1] = 'abc'
+        self.assertEqual(inst.path_for(1), 'abc')
+        
+    def test_add_already_in_path_to_objectid(self):
+        inst = self._makeOne()
+        inst.path_to_objectid[(u'',)] = 1
         self.assertRaises(ValueError, inst.add, (u'',))
 
-    def test_add_already_in_docid_to_path(self):
+    def test_add_already_in_objectid_to_path(self):
         inst = self._makeOne()
-        inst.docid_to_path[1] = True
+        inst.objectid_to_path[1] = True
         self.assertRaises(ValueError, inst.add, (u'', u'a'), 1)
 
-    def test_add_not_a_tuple(self):
+    def test_add_traversable_object(self):
+        inst = self._makeOne()
+        inst._v_nextid = 1
+        obj = testing.DummyResource()
+        inst.add(obj)
+        self.assertEqual(inst.objectid_to_path[1], (u'',))
+        
+    def test_add_not_valid(self):
         inst = self._makeOne()
         self.assertRaises(ValueError, inst.add, 'a')
 
@@ -34,16 +62,32 @@ class TestDocumentMap(unittest.TestCase):
         inst = self._makeOne()
         self.assertRaises(ValueError, inst.remove, 'a')
 
+    def test_remove_traversable_object(self):
+        inst = self._makeOne()
+        inst.objectid_to_path[1] = (u'',)
+        inst.path_to_objectid[(u'',)] = 1
+        inst.pathindex[(u'',)] = {0:[1]}
+        obj = testing.DummyResource()
+        inst.remove(obj)
+        self.assertEqual(dict(inst.objectid_to_path), {})
+        
     def test_remove_no_dmap(self):
         inst = self._makeOne()
-        inst.docid_to_path[1] = (u'',)
+        inst.objectid_to_path[1] = (u'',)
         result = inst.remove((u'',))
         self.assertEqual(list(result), [])
 
-    def test_pathlookup_not_a_tuple(self):
+    def test_pathlookup_not_valid(self):
         inst = self._makeOne()
         gen = inst.pathlookup(1)
         self.assertRaises(ValueError, list, gen)
+
+    def test_pathlookup_traversable_object(self):
+        inst = self._makeOne()
+        obj = testing.DummyResource()
+        gen = inst.pathlookup(obj)
+        result = list(gen)
+        self.assertEqual(result, [])
         
     def test_functional(self):
     
@@ -53,11 +97,11 @@ class TestDocumentMap(unittest.TestCase):
         def l(path, depth=None, include_origin=True):
             path_tuple = split(path)
             return sorted(
-                list(docmap.pathlookup(path_tuple, depth, include_origin))
+                list(objmap.pathlookup(path_tuple, depth, include_origin))
                 )
 
-        docmap = self._makeOne()
-        docmap._v_nextid = 1
+        objmap = self._makeOne()
+        objmap._v_nextid = 1
 
         root = split('/')
         a = split('/a')
@@ -65,11 +109,11 @@ class TestDocumentMap(unittest.TestCase):
         abc = split('/a/b/c')
         z = split('/z')
 
-        did1 = docmap.add(ab)
-        did2 = docmap.add(abc)
-        did3 = docmap.add(a)
-        did4 = docmap.add(root)
-        did5 = docmap.add(z)
+        did1 = objmap.add(ab)
+        did2 = objmap.add(abc)
+        did3 = objmap.add(a)
+        did4 = objmap.add(root)
+        did5 = objmap.add(z)
 
         # /
         nodepth = l('/')
@@ -116,7 +160,7 @@ class TestDocumentMap(unittest.TestCase):
         assert depth1 == [did2], depth1
 
         # remove '/a/b'
-        removed = docmap.remove(did1)
+        removed = objmap.remove(did1)
         assert removed == set([1,2])
 
         # /a/b/c
@@ -159,7 +203,7 @@ class TestDocumentMap(unittest.TestCase):
         depth1 = l('/', include_origin=False, depth=0)
         assert depth1 == [], depth1
         
-        pathindex = docmap.pathindex
+        pathindex = objmap.pathindex
         keys = list(pathindex.keys())
 
         self.assertEqual(
@@ -181,16 +225,16 @@ class TestDocumentMap(unittest.TestCase):
         self.assertEqual(set(z[0]), set([5]))
         
         self.assertEqual(
-            dict(docmap.docid_to_path),
+            dict(objmap.objectid_to_path),
             {3: (u'', u'a'), 4: (u'',), 5: (u'', u'z')})
         self.assertEqual(
-            dict(docmap.path_to_docid),
+            dict(objmap.path_to_objectid),
             {(u'', u'z'): 5, (u'', u'a'): 3, (u'',): 4})
 
         # remove '/'
-        removed = docmap.remove((u'',))
+        removed = objmap.remove((u'',))
         self.assertEqual(removed, set([3,4,5]))
 
-        assert dict(docmap.pathindex) == {}
-        assert dict(docmap.docid_to_path) == {}
-        assert dict(docmap.path_to_docid) == {}
+        assert dict(objmap.pathindex) == {}
+        assert dict(objmap.objectid_to_path) == {}
+        assert dict(objmap.path_to_objectid) == {}

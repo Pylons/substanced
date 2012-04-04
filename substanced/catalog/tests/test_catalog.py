@@ -6,7 +6,7 @@ from zope.interface import implementer
 
 from repoze.catalog.interfaces import ICatalogIndex
 
-from ...interfaces import IDocmapSite, ICatalogSite
+from ...interfaces import IObjectmapSite, ICatalogSite
 
 class TestCatalog(unittest.TestCase):
     def setUp(self):
@@ -22,41 +22,41 @@ class TestCatalog(unittest.TestCase):
     def test_clear(self):
         site = testing.DummyModel()
         inst = self._makeOne(site)
-        inst.docids.insert(1)
+        inst.objectids.insert(1)
         inst.clear()
-        self.assertEqual(list(inst.docids), [])
+        self.assertEqual(list(inst.objectids), [])
 
     def test_index_doc(self):
         site = testing.DummyModel()
         inst = self._makeOne(site)
         inst.index_doc(1, object())
-        self.assertEqual(list(inst.docids), [1])
+        self.assertEqual(list(inst.objectids), [1])
         
     def test_unindex_doc_exists(self):
         site = testing.DummyModel()
         inst = self._makeOne(site)
-        inst.docids.insert(1)
+        inst.objectids.insert(1)
         inst.unindex_doc(1)
-        self.assertEqual(list(inst.docids), [])
+        self.assertEqual(list(inst.objectids), [])
 
     def test_unindex_doc_notexists(self):
         site = testing.DummyModel()
         inst = self._makeOne(site)
         inst.unindex_doc(1)
-        self.assertEqual(list(inst.docids), [])
+        self.assertEqual(list(inst.objectids), [])
 
     def test_reindex_doc_exists(self):
         site = testing.DummyModel()
         inst = self._makeOne(site)
-        inst.docids.insert(1)
+        inst.objectids.insert(1)
         inst.reindex_doc(1, object())
-        self.assertEqual(list(inst.docids), [1])
+        self.assertEqual(list(inst.objectids), [1])
         
     def test_reindex_doc_notexists(self):
         site = testing.DummyModel()
         inst = self._makeOne(site)
         inst.reindex_doc(1, object())
-        self.assertEqual(list(inst.docids), [1])
+        self.assertEqual(list(inst.objectids), [1])
         
     def test_reindex(self):
         a = testing.DummyModel()
@@ -64,11 +64,11 @@ class TestCatalog(unittest.TestCase):
         L = []
         transaction = DummyTransaction()
         site = DummySite()
-        site.docmap.docid_to_path = {1:(u'', u'a')}
+        site.objectmap.objectid_to_path = {1:(u'', u'a')}
         inst = self._makeOne(site)
-        inst.docids = [1]
+        inst.objectids = [1]
         self.assertTrue(ICatalogSite.providedBy(site))
-        inst.reindex_doc = lambda docid, model: L.append((docid, model))
+        inst.reindex_doc = lambda objectid, model: L.append((objectid, model))
         out = []
         inst.reindex(transaction=transaction, output=out.append)
         self.assertEqual(L, [(1, a)])
@@ -86,11 +86,11 @@ class TestCatalog(unittest.TestCase):
         L = []
         transaction = DummyTransaction()
         site = DummySite()
-        site.docmap.docid_to_path = {1: (u'', u'a'), 2:(u'', u'b')}
+        site.objectmap.objectid_to_path = {1: (u'', u'a'), 2:(u'', u'b')}
         inst = self._makeOne(site)
-        inst.docids = [1, 2]
+        inst.objectids = [1, 2]
         self.assertTrue(ICatalogSite.providedBy(site))
-        inst.reindex_doc = lambda docid, model: L.append((docid, model))
+        inst.reindex_doc = lambda objectid, model: L.append((objectid, model))
         out = []
         inst.reindex(transaction=transaction, output=out.append)
         self.assertEqual(L, [(1, a)])
@@ -110,12 +110,12 @@ class TestCatalog(unittest.TestCase):
         self.config.testing_resources({'/a':a, '/b':b})
         L = []
         site = DummySite()
-        site.docmap.docid_to_path = {1: (u'', u'a'), 2: (u'', u'b')}
+        site.objectmap.objectid_to_path = {1: (u'', u'a'), 2: (u'', u'b')}
         transaction = DummyTransaction()
         inst = self._makeOne(site)
-        inst.docids = [1, 2]
+        inst.objectids = [1, 2]
         self.assertTrue(ICatalogSite.providedBy(site))
-        inst.reindex_doc = lambda docid, model: L.append((docid, model))
+        inst.reindex_doc = lambda objectid, model: L.append((objectid, model))
         out = []
         inst.reindex(
             transaction=transaction,
@@ -137,11 +137,11 @@ class TestCatalog(unittest.TestCase):
         self.config.testing_resources({'/a':a, '/b':b})
         L = []
         site = DummySite()
-        site.docmap.docid_to_path = {1: (u'', u'a'), 2: (u'', u'b')}
+        site.objectmap.objectid_to_path = {1: (u'', u'a'), 2: (u'', u'b')}
         transaction = DummyTransaction()
         inst = self._makeOne(site)
-        inst.docids = [1,2]
-        inst.reindex_doc = lambda docid, model: L.append((docid, model))
+        inst.objectids = [1,2]
+        inst.reindex_doc = lambda objectid, model: L.append((objectid, model))
         out = []
         inst.reindex(transaction=transaction, dry_run=True, output=out.append)
         self.assertEqual(sorted(L), [(1, a), (2, b)])
@@ -160,14 +160,14 @@ class TestCatalog(unittest.TestCase):
         self.config.testing_resources({'/a':a})
         L = []
         site = DummySite()
-        site.docmap.docid_to_path = {1: (u'', u'a')}
+        site.objectmap.objectid_to_path = {1: (u'', u'a')}
         transaction = DummyTransaction()
         inst = self._makeOne(site)
-        inst.docids = [1]
+        inst.objectids = [1]
         index = DummyIndex()
         inst['index'] = index
         self.config.registry._pyramid_catalog_indexes = {'index':index}
-        index.reindex_doc = lambda docid, model: L.append((docid, model))
+        index.reindex_doc = lambda objectid, model: L.append((objectid, model))
         out = []
         inst.reindex(transaction=transaction, indexes=('index',), 
                      output=out.append)
@@ -223,8 +223,8 @@ class TestSearch(unittest.TestCase):
         adapter = self._getTargetClass()(context)
         return adapter
 
-    def _makeSite(self, docid_to_path=None):
-        site = DummySite(docid_to_path)
+    def _makeSite(self, objectid_to_path=None):
+        site = DummySite(objectid_to_path)
         return site
 
     def test_query(self):
@@ -232,17 +232,17 @@ class TestSearch(unittest.TestCase):
         site.catalog = DummyCatalog()
         adapter = self._makeOne(site)
         q = DummyQuery()
-        num, docids, resolver = adapter.query(q)
+        num, objectids, resolver = adapter.query(q)
         self.assertEqual(num, 0)
-        self.assertEqual(list(docids), [])
+        self.assertEqual(list(objectids), [])
 
     def test_search(self):
         site = self._makeSite()
         site.catalog = DummyCatalog()
         adapter = self._makeOne(site)
-        num, docids, resolver = adapter.search()
+        num, objectids, resolver = adapter.search()
         self.assertEqual(num, 0)
-        self.assertEqual(list(docids), [])
+        self.assertEqual(list(objectids), [])
         
     def test_query_peachy_keen(self):
         site = self._makeSite({1:(u'',)})
@@ -251,9 +251,9 @@ class TestSearch(unittest.TestCase):
         self.config.testing_resources({'/':ob})
         adapter = self._makeOne(site)
         q = DummyQuery()
-        num, docids, resolver = adapter.query(q)
+        num, objectids, resolver = adapter.query(q)
         self.assertEqual(num, 1)
-        self.assertEqual(list(docids), [1])
+        self.assertEqual(list(objectids), [1])
         self.assertEqual(resolver(1), ob)
 
     def test_query_unfound_model(self):
@@ -261,35 +261,38 @@ class TestSearch(unittest.TestCase):
         site.catalog = DummyCatalog((1, [1]))
         adapter = self._makeOne(site)
         q = DummyQuery()
-        num, docids, resolver = adapter.query(q)
+        num, objectids, resolver = adapter.query(q)
         self.assertEqual(num, 1)
-        self.assertEqual(list(docids), [1])
-        results = map(resolver, docids)
+        self.assertEqual(list(objectids), [1])
+        results = map(resolver, objectids)
         self.assertEqual(results, [None])
 
-    def test_query_unfound_docid(self):
+    def test_query_unfound_objectid(self):
         site = self._makeSite()
         site.catalog = DummyCatalog()
         adapter = self._makeOne(site)
         q = DummyQuery()
-        num, docids, resolver = adapter.query(q)
+        num, objectids, resolver = adapter.query(q)
         self.assertEqual(resolver(123), None)
 
 class DummyQuery(object):
     pass    
 
-class DummyDocumentMap(object):
-    def __init__(self, docid_to_path=None): 
-        if docid_to_path is None:
-            docid_to_path = {}
-        self.docid_to_path = docid_to_path
+class DummyObjectMap(object):
+    def __init__(self, objectid_to_path=None): 
+        if objectid_to_path is None:
+            objectid_to_path = {}
+        self.objectid_to_path = objectid_to_path
 
-@implementer(IDocmapSite, ICatalogSite)
+    def path_for(self, objectid):
+        return self.objectid_to_path.get(objectid)
+
+@implementer(IObjectmapSite, ICatalogSite)
 class DummySite(object):
     __parent__ = None
     __name__ = ''
-    def __init__(self, docid_to_path=None):
-        self.docmap = DummyDocumentMap(docid_to_path)
+    def __init__(self, objectid_to_path=None):
+        self.objectmap = DummyObjectMap(objectid_to_path)
         
 class DummyCatalog(object):
     def __init__(self, result=(0, [])):

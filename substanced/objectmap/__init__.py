@@ -9,25 +9,28 @@ from BTrees.IOBTree import IOBTree
 from BTrees.OIBTree import OIBTree
 from BTrees.IIBTree import IISet
 
-from ..interfaces import IDocmapSite
+from ..interfaces import IObjectmapSite
 
-from pyramid.traversal import find_interface
+from pyramid.traversal import (
+    find_interface,
+    resource_path_tuple,
+    )
 
-def find_docmap(context):
-    site = find_interface(context, IDocmapSite)
+def find_objectmap(context):
+    site = find_interface(context, IObjectmapSite)
     if site is None:
         return
-    return site.docmap
+    return site.objectmap
 
 """
-Pathindex data structure of document map:
+Pathindex data structure of object map:
 
-{pathtuple:{level:set_of_docids, ...}, ...}
+{pathtuple:{level:set_of_objectids, ...}, ...}
 
->>> map = DocumentMap()
+>>> map = ObjectMap()
 
-For example if a document map with an otherwise empty pathindex has
-``add('/a/b/c')`` called on it, and the docid for ``/a/b/c`` winds up being
+For example if a object map with an otherwise empty pathindex has
+``add('/a/b/c')`` called on it, and the objectid for ``/a/b/c`` winds up being
 ``1``, the path index will end up looking like this:
 
 >>> map.add('/a/b/c')
@@ -40,7 +43,7 @@ For example if a document map with an otherwise empty pathindex has
 
 (Level 0 is "this path")
 
-If we then ``add('/a')`` and the result winds up as docid 2, the pathindex
+If we then ``add('/a')`` and the result winds up as objectid 2, the pathindex
 will look like this:
 
 >>> map.add('/a')
@@ -51,7 +54,7 @@ will look like this:
  (u'', u'a', u'b'):       {1: set([1])},
  (u'', u'a', u'b', u'c'): {0: set([1])}}
 
-If we then add '/z' (and its docid is 3):
+If we then add '/z' (and its objectid is 3):
 
 >>> map.add('/z')
 >>> map.pathindex
@@ -63,11 +66,11 @@ If we then add '/z' (and its docid is 3):
  (u'', u'z'):             {0: set([3])}}
 
 And so on and so forth as more items are added.  It is an error to attempt to
-add an item to document map with a path that already exists in the document
+add an item to object map with a path that already exists in the object
 map.
 
-If '/a' (docid 2) is then removed, the pathindex is adjusted to remove
-references to the docid represented by '/a' *and* any children (in this case,
+If '/a' (objectid 2) is then removed, the pathindex is adjusted to remove
+references to the objectid represented by '/a' *and* any children (in this case,
 there's a child at '/a/b/c').
 
 >>> map.remove(2)
@@ -80,44 +83,63 @@ there's a child at '/a/b/c').
 
 _marker = object()
 
-class DocumentMap(Persistent):
+class ObjectMap(Persistent):
     
     _v_nextid = None
     _randrange = random.randrange
 
     def __init__(self):
-        self.docid_to_path = IOBTree()
-        self.path_to_docid = OIBTree()
+        self.objectid_to_path = IOBTree()
+        self.path_to_objectid = OIBTree()
         self.pathindex = OOBTree()
 
-    def new_docid(self):
+    def new_objectid(self):
         while True:
             if self._v_nextid is None:
                 self._v_nextid = self._randrange(BTrees.IOBTree.family.minint, 
                                                  BTrees.IOBTree.family.maxint)
 
-            docid = self._v_nextid
+            objectid = self._v_nextid
             self._v_nextid += 1
 
-            if docid not in self.docid_to_path:
-                return docid
+            if objectid not in self.objectid_to_path:
+                return objectid
 
             self._v_nextid = None
+
+    def objectid_for(self, obj_or_path_tuple):
+        if isinstance(obj_or_path_tuple, tuple):
+            path_tuple = obj_or_path_tuple
+        elif hasattr(obj_or_path_tuple, '__parent__'):
+            path_tuple = resource_path_tuple(obj_or_path_tuple)
+        else:
+            raise ValueError(
+                'objectid_for accepts a traversable object or a path tuple, '
+                'got %s' % (obj_or_path_tuple,))
+        return self.path_to_objectid.get(path_tuple)
+
+    def path_for(self, objectid):
+        return self.objectid_to_path.get(objectid)
             
-    def add(self, path_tuple, docid=_marker):
-        if path_tuple in self.path_to_docid:
+    def add(self, obj_or_path_tuple, objectid=_marker):
+        if isinstance(obj_or_path_tuple, tuple):
+            path_tuple = obj_or_path_tuple
+        elif hasattr(obj_or_path_tuple, '__parent__'):
+            path_tuple = resource_path_tuple(obj_or_path_tuple)
+        else:
+            raise ValueError(
+                'add accepts a traversable object or a path tuple, '
+                'got %s' % (obj_or_path_tuple,))
+        if path_tuple in self.path_to_objectid:
             raise ValueError('path %s already exists' % (path_tuple,))
         
-        if not isinstance(path_tuple, tuple):
-            raise ValueError('add accepts only a tuple, got %s' % (path_tuple,))
-        
-        if docid is _marker:
-            docid = self.new_docid()
-        elif docid in self.docid_to_path:
-            raise ValueError('docid %s already exists' % docid)
+        if objectid is _marker:
+            objectid = self.new_objectid()
+        elif objectid in self.objectid_to_path:
+            raise ValueError('objectid %s already exists' % objectid)
 
-        self.path_to_docid[path_tuple] = docid
-        self.docid_to_path[docid] = path_tuple
+        self.path_to_objectid[path_tuple] = objectid
+        self.objectid_to_path[objectid] = path_tuple
 
         pathlen = len(path_tuple)
 
@@ -126,20 +148,22 @@ class DocumentMap(Persistent):
             dmap = self.pathindex.setdefault(els, IOBTree())
             level = pathlen - len(els)
             didset = dmap.setdefault(level, IISet())
-            didset.add(docid)
+            didset.add(objectid)
 
-        return docid
+        return objectid
 
-    def remove(self, docid_or_path_tuple):
-        if isinstance(docid_or_path_tuple, int):
-            path_tuple = self.docid_to_path[docid_or_path_tuple]
-        elif isinstance(docid_or_path_tuple, tuple):
-            path_tuple = docid_or_path_tuple
+    def remove(self, obj_objectid_or_path_tuple):
+        if isinstance(obj_objectid_or_path_tuple, int):
+            path_tuple = self.objectid_to_path[obj_objectid_or_path_tuple]
+        elif isinstance(obj_objectid_or_path_tuple, tuple):
+            path_tuple = obj_objectid_or_path_tuple
+        elif hasattr(obj_objectid_or_path_tuple, '__parent__'):
+            path_tuple = resource_path_tuple(obj_objectid_or_path_tuple)
         else:
             raise ValueError(
-                'remove accepts only a docid or a path tuple, got %s' % (
-                    (docid_or_path_tuple,))
-                )
+                'Value passed to remove must be a traversable '
+                'object, an object id, or a path tuple, got %s' % (
+                    (obj_objectid_or_path_tuple,)))
 
         pathlen = len(path_tuple)
 
@@ -160,10 +184,10 @@ class DocumentMap(Persistent):
                 for didset in dm.values():
                     removed.update(didset)
                     for did in didset:
-                        if did in self.docid_to_path:
-                            p = self.docid_to_path[did]
-                            del self.docid_to_path[did]
-                            del self.path_to_docid[p]
+                        if did in self.objectid_to_path:
+                            p = self.objectid_to_path[did]
+                            del self.objectid_to_path[did]
+                            del self.path_to_objectid[p]
                 # dont mutate while iterating
                 removepaths.append(k)
             else:
@@ -185,22 +209,27 @@ class DocumentMap(Persistent):
                 for did in didset:
                     if did in didset2:
                         didset2.remove(did)
-                        # adding to removed and removing from docid_to_path
-                        # and path_to_docid should have been taken care of
+                        # adding to removed and removing from objectid_to_path
+                        # and path_to_objectid should have been taken care of
                         # above in the for k, dm in self.pathindex.items()
                         # loop
                         assert did in removed, did
-                        assert not did in self.docid_to_path, did
+                        assert not did in self.objectid_to_path, did
 
                 if not didset2:
                     del dmap2[i]
                     
         return removed
 
-    def pathlookup(self, path_tuple, depth=None, include_origin=True):
-        if not isinstance(path_tuple, tuple):
+    def pathlookup(self, obj_or_path_tuple, depth=None, include_origin=True):
+        if isinstance(obj_or_path_tuple, tuple):
+            path_tuple = obj_or_path_tuple
+        elif hasattr(obj_or_path_tuple, '__parent__'):
+            path_tuple = resource_path_tuple(obj_or_path_tuple)
+        else:
             raise ValueError(
-                'pathlookup accepts only a tuple, got %s' % (path_tuple,))
+                'pathlookup must be provided a traversable object or a '
+                'path tuple, got %s' % (obj_or_path_tuple,))
         
         dmap = self.pathindex.get(path_tuple)
 
