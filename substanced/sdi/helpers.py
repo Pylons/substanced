@@ -31,14 +31,14 @@ def get_mgmt_views(request, context=None):
         context = request.context
     introspector = registry.introspector
     L = []
-    for intr in introspector.get_category('views'): 
-        discriminator = intr['introspectable'].discriminator
-        route_name = discriminator[8]
+    for data in introspector.get_category('views'): 
+        intr = data['introspectable']
+        route_name = intr['route_name']
         if route_name == MANAGE_ROUTE_NAME:
-            iface = discriminator[1] or Interface
+            iface = intr['context'] or Interface
             if IInterface.providedBy(iface):
                 if iface.providedBy(context):
-                    view_name = discriminator[2]
+                    view_name = intr['name']
                     if view_name:
                         if view_execution_permitted(context, request,view_name):
                             L.append(view_name)
