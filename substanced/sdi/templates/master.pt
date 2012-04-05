@@ -49,7 +49,7 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </a>
-          <a class="brand" href="request.mgmt_path(request.root)">Substance D</a>
+          <a class="brand" href="${request.mgmt_path(request.root)}">Substance D</a>
           <div class="nav-collapse">
             <ul class="nav">
               <li class="active"><a href="#">Home</a></li>
