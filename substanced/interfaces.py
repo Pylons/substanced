@@ -12,6 +12,10 @@ class ICatalogable(Interface):
     """ Marker interface describing catalogable content.  An object must
     implement this interface to have its attributes indexed """
 
+class IPropertied(Interface):
+    """ Interface for objects with properties """
+    __schema__ = Attribute('Colander schema which denotes property schema')
+
 class IObjectmap(Interface):
     """ A map of objects to paths """
     site = Attribute(
@@ -59,7 +63,7 @@ class IObjectmapSite(Interface):
     lookup of a component via its lineage."""
     objectmap = Attribute('object map')
 
-class ISite(ICatalogSite, IObjectmapSite):
+class ISite(ICatalogSite, IObjectmapSite, IPropertied):
     """ Marker interface for something that is both an ICatalogSite and 
     an IDocmapSite  """
 

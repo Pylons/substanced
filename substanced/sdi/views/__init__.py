@@ -1,11 +1,11 @@
 from pyramid.httpexceptions import HTTPFound
 
-from ...interfaces import IContent
+from ...interfaces import IPropertied
 
 from .. import mgmt_view
 from ...form import FormView
 
-@mgmt_view(context=IContent, name='properties', renderer='templates/form.pt',
+@mgmt_view(context=IPropertied, name='properties', renderer='templates/form.pt',
            tab_title='Properties')
 class PropertiesView(FormView):
 
