@@ -74,10 +74,10 @@
                 <li tal:condition="not isroot"
                     class="nav-header" >Navigation</li>
                 <li tal:condition="not isroot"><a href=".."
-                   >${u"\u25B2" + " to context.__parent__.__name__"}</a></li>
+                   >${u"\u25B2 to " + (context.__parent__.__name__ or 'root')}</a></li>
                 <li class="nav-header">
                   <a href="${request.url}" 
-                    tal:content="'Subitems of %s' % (name or 'root')"
+                    tal:content="name or 'root'"
                     >Name</a></li>
                 <li tal:repeat="node h.get_subnodes(request)">
                     <a href="${node['url']}">${node['name'] or '/'}</a>
@@ -89,17 +89,24 @@
           <div class="span9">
 
             <ul class="nav nav-tabs">
-              <li class="active"><a href="#">Lorem</a></li>
-              <li><a href="#">Ipsum</a></li>
-              <li><a href="#">Dolor</a></li>
+              <li tal:repeat="view_name h.get_mgmt_views(request)"
+                  tal:attributes="class request.view_name==view_name and 'active' or None"><a href="${request.mgmt_path(context, '@@%s' % view_name)}">${view_name.capitalize()}</a>
+              </li>
             </ul>
-
-            <h2>Content</h2>
 
             <div class="above-content">
             </div>
 
-            <div>Message goes here</div>
+            <div id="messages" class="${request.is_xhr and 'ajax-replace' or ''}">
+              <div tal:repeat="queue ('info', 'success', 'error', '')" tal:omit-tag="">
+                <div class="alert alert-${queue}"
+                   tal:define="messages request.session.pop_flash(queue)"
+                   tal:condition="messages"
+                   tal:repeat="message messages">
+                  ${message}
+                </div>
+              </div>
+            </div>
 
             <div class="inner-content">
               <div metal:define-slot="main">

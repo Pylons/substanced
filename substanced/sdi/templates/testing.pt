@@ -1,0 +1,7 @@
+<div metal:use-macro="h.macros()['master']">
+
+  <div metal:fill-slot="main">
+     Testing
+  </div>
+
+</div>

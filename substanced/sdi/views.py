@@ -1,5 +1,4 @@
 from pyramid_deform import FormView
-from pyramid.renderers import get_renderer
 from pyramid.httpexceptions import HTTPFound
 
 class PropertiesView(FormView):
@@ -7,8 +6,6 @@ class PropertiesView(FormView):
     buttons = ('save',)
     
     def __init__(self, request):
-        template = get_renderer('templates/master.pt').implementation()
-        self.macros = {'master':template}
         self.request = request
         self.context = request.context
         self.schema = self.context.__schema__

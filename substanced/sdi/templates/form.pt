@@ -1,4 +1,4 @@
-<div metal:use-macro="view.macros['master']">
+<div metal:use-macro="h.macros()['master']">
 
   <div metal:fill-slot="head-more">
     <!-- CSS -->
@@ -17,7 +17,6 @@
 
   <div metal:fill-slot="main">
     <h1>${view.title|None}</h1>
-    <h2 tal:repeat="msg request.session.pop_flash()">${msg}</h2>
     <div id="form" tal:content="structure form"/>
     <script type="text/javascript">
       jQuery(function() {
