@@ -29,8 +29,8 @@ def object_added(obj, event):
     objectmap = find_objectmap(obj)
     if objectmap is not None:
         for node in _postorder(obj):
-            objectid = objectmap.add(obj)
-            if ICatalogable.providedBy(node) and catalog is not None:
+            objectid = objectmap.add(node)
+            if catalog is not None and ICatalogable.providedBy(node):
                 objectid = catalog.index_doc(objectid, node)
 
 @subscriber([Interface, IObjectWillBeRemovedEvent])
@@ -62,7 +62,7 @@ def object_modified(obj, event):
             objectid = obj.__objectid__
         else:
             catalog = find_catalog(obj)
-            if ICatalogable.providedBy(obj) and catalog is not None:
+            if catalog is not None and ICatalogable.providedBy(obj):
                 catalog.reindex_doc(objectid, obj)
 
 def includeme(config): # pragma: no cover
