@@ -1,17 +1,12 @@
 import re
 
-from pyramid.traversal import resource_path
-
 from pyramid.security import (
     Deny,
     Everyone,
     AllPermissionsList,
     )
 
-from substanced.interfaces import (
-    IFolder,
-    ICatalogable,
-    )
+from substanced.interfaces import ICatalogable
 
 from substanced.catalog import find_catalog
 
@@ -40,7 +35,7 @@ def get_context_workflow(context):
     return
 
 @mgmt_view(name='security', permission='change security', 
-           renderer='templates/acl_edit.pt')
+           renderer='templates/acl_edit.pt', tab_title='Security')
 def acl_edit_view(context, request):
 
     acl = original_acl = getattr(context, '__acl__', [])
@@ -154,27 +149,4 @@ def acl_edit_view(context, request):
         inheriting=inheriting,
         security_state=security_state,
         security_states=security_states)
-
-def make_acls(node, request, acls=None, offset=0):
-    if acls is None:
-        acls = []
-    path = resource_path(node)
-    url = request.mgmt_path(node)
-    acl = getattr(node, '__acl__', None)
-    folderish = IFolder.providedBy(node)
-    name = node.__name__ or '/'
-    has_children = False
-    security_state = getattr(node, 'security_state', None)
-    if folderish:
-        has_children = bool(len(node))
-    if (folderish and has_children) or acl is not None:
-        acls.append({'offset':offset, 'path':path, 'acl':acl, 'name':name,
-                     'security_state':security_state, 'url':url})
-    if folderish:
-        children = list(node.items())
-        children.sort()
-        for childname, child in children:
-            make_acls(child, request, acls, offset+1)
-    node._p_deactivate()
-    return acls
 

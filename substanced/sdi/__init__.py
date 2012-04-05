@@ -7,9 +7,6 @@ from pyramid.httpexceptions import HTTPFound
 from pyramid.view import view_config
 from pyramid.interfaces import IView
 
-from pyramid_deform import CSRFSchema as Schema # API
-Schema = Schema # for pyflakes
-
 from pyramid.events import BeforeRender
 
 from . import helpers
@@ -25,7 +22,7 @@ def add_mgmt_view(
         request_param=None, containment=None, attr=None, renderer=None, 
         wrapper=None, xhr=False, accept=None, header=None, path_info=None, 
         custom_predicates=(), context=None, decorator=None, mapper=None, 
-        http_cache=None, match_param=None, request_type=None
+        http_cache=None, match_param=None, request_type=None, tab_title=None,
         ):
     view = config.maybe_dotted(view)
     context = config.maybe_dotted(context)
@@ -68,6 +65,7 @@ def add_mgmt_view(
     
     intr = config.introspectable(
         'sdi views', discriminator, view_desc, 'sdi view')
+    intr['tab_title'] = tab_title
     intr.relate('views', view_discriminator)
     config.action(discriminator, introspectables=(intr,))
 
@@ -80,6 +78,15 @@ class mgmt_path(object):
         kw['traverse'] = traverse
         return self.request.route_path(helpers.MANAGE_ROUTE_NAME, *arg, **kw)
 
+class _default(object):
+    def __nonzero__(self):
+        return False
+    __bool__ = __nonzero__
+    def __repr__(self): # pragma: no cover
+        return '(default)'
+
+default = _default()
+    
 class mgmt_view(view_config):
     """ A class :term:`decorator` which, when applied to a class, will
     provide defaults for all view configurations that use the class.  This
@@ -89,6 +96,22 @@ class mgmt_view(view_config):
     See :ref:`view_defaults` for more information.
     """
     venusian = venusian
+    def __init__(self, name=default, request_type=default, for_=default,
+                 permission=default, route_name=default,
+                 request_method=default, request_param=default,
+                 containment=default, attr=default, renderer=default,
+                 wrapper=default, xhr=default, accept=default,
+                 header=default, path_info=default,
+                 custom_predicates=default, context=default,
+                 decorator=default, mapper=default, http_cache=default,
+                 match_param=default, tab_title=default):
+        L = locals()
+        if (context is not default) or (for_ is not default):
+            L['context'] = context or for_
+        for k, v in L.items():
+            if k not in ('self', 'L') and v is not default:
+                setattr(self, k, v)
+    
     def __call__(self, wrapped):
         settings = self.__dict__.copy()
 
@@ -112,11 +135,12 @@ def add_renderer_globals(event):
    event['h'] = helpers
 
 def manage_main(request):
-    view_names = filter(None, helpers.get_mgmt_views(request))
-    if not view_names:
+    view_data = helpers.get_mgmt_views(request)
+    if not view_data:
         request.response.body = 'No management views for %s' % request.context
         return request.response
-    return HTTPFound(request.mgmt_path(request.context, '@@%s' % view_names[0]))
+    view_name = view_data[0]['view_name']
+    return HTTPFound(request.mgmt_path(request.context, '@@%s' % view_name))
 
 def includeme(config): # pragma: no cover
     config.add_directive('add_mgmt_view', add_mgmt_view)
@@ -124,7 +148,7 @@ def includeme(config): # pragma: no cover
     config.add_static_view('sdistatic', 'substanced.sdi:static', 
                            cache_max_age=3600)
     config.add_route(helpers.MANAGE_ROUTE_NAME, '/manage*traverse')
-    config.add_mgmt_view(manage_main, name='')
+    config.add_mgmt_view(manage_main, name='', tab_title='manage_main')
     config.scan('substanced.sdi')
     config.set_request_property(mgmt_path, reify=True)
     config.add_subscriber(add_renderer_globals, BeforeRender)

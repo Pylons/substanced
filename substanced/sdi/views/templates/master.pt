@@ -90,8 +90,8 @@
           <div class="span9">
 
             <ul class="nav nav-tabs">
-              <li tal:repeat="view_name h.get_mgmt_views(request)"
-                  tal:attributes="class request.view_name==view_name and 'active' or None"><a href="${request.mgmt_path(context, '@@%s' % view_name)}">${view_name.capitalize()}</a>
+              <li tal:repeat="tab_data h.get_mgmt_views(request)"
+                  tal:attributes="class request.view_name==tab_data['view_name'] and 'active' or None"><a href="${request.mgmt_path(context, '@@%s' % tab_data['view_name'])}">${tab_data['tab_title']}</a>
               </li>
             </ul>
 

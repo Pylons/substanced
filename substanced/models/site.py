@@ -8,7 +8,7 @@ from pyramid_zodbconn import get_connection
 from ..interfaces import ISite
 from ..objectmap import ObjectMap
 from ..catalog import Catalog
-from ..sdi import Schema
+from ..schema import Schema
 
 from .folder import Folder
 

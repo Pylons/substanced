@@ -1,11 +1,12 @@
-from pyramid_deform import FormView
 from pyramid.httpexceptions import HTTPFound
 
 from ...interfaces import IContent
 
 from .. import mgmt_view
+from ...form import FormView
 
-@mgmt_view(context=IContent, name='properties', renderer='templates/form.pt')
+@mgmt_view(context=IContent, name='properties', renderer='templates/form.pt',
+           tab_title='Properties')
 class PropertiesView(FormView):
 
     buttons = ('save',)

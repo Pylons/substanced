@@ -25,11 +25,12 @@ except IOError:
 
 install_requires = [
     'pyramid',
+    'deform',
+    'colander',
+    'deform_bootstrap',
     'repoze.catalog',
     'repoze.evolution',
-    'pyramid_deform',
     'pyramid_zodbconn',
-    'deform_bootstrap',
     ]
 
 docs_extras = ['Sphinx']
