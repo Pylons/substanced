@@ -6,8 +6,10 @@ from pyramid.traversal import resource_path_tuple
 from pyramid.httpexceptions import HTTPFound
 from pyramid.view import view_config
 from pyramid.interfaces import IView
-
-from pyramid.events import BeforeRender
+from pyramid.events import (
+    subscriber,
+    BeforeRender,
+    )
 
 from . import helpers
 
@@ -130,10 +132,12 @@ class mgmt_view(view_config):
 
         settings['_info'] = info.codeinfo # fbo "action_method"
         return wrapped
-        
+
+@subscriber(BeforeRender)
 def add_renderer_globals(event):
    event['h'] = helpers
 
+@mgmt_view(tab_title='manage_main')
 def manage_main(request):
     view_data = helpers.get_mgmt_views(request)
     if not view_data:
@@ -148,8 +152,6 @@ def includeme(config): # pragma: no cover
     config.add_static_view('sdistatic', 'substanced.sdi:static', 
                            cache_max_age=3600)
     config.add_route(helpers.MANAGE_ROUTE_NAME, '/manage*traverse')
-    config.add_mgmt_view(manage_main, name='', tab_title='manage_main')
-    config.scan('substanced.sdi')
     config.set_request_property(mgmt_path, reify=True)
-    config.add_subscriber(add_renderer_globals, BeforeRender)
     config.include('deform_bootstrap')
+    config.scan('substanced.sdi')

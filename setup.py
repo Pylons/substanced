@@ -25,6 +25,7 @@ except IOError:
 
 install_requires = [
     'pyramid',
+    'venusian',
     'deform',
     'colander',
     'deform_bootstrap',
