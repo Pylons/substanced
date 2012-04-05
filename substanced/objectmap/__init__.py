@@ -142,10 +142,10 @@ class ObjectMap(Persistent):
 
         for x in range(pathlen):
             els = path_tuple[:x+1]
-            dmap = self.pathindex.setdefault(els, self.family.IO.BTree())
+            omap = self.pathindex.setdefault(els, self.family.IO.BTree())
             level = pathlen - len(els)
-            didset = dmap.setdefault(level, self.family.IF.Set())
-            didset.add(objectid)
+            oidset = omap.setdefault(level, self.family.IF.Set())
+            oidset.add(objectid)
 
         return objectid
 
@@ -164,26 +164,26 @@ class ObjectMap(Persistent):
 
         pathlen = len(path_tuple)
 
-        dmap = self.pathindex.get(path_tuple)
+        omap = self.pathindex.get(path_tuple)
 
         # rationale: if this key isn't present, no path added ever contained it
-        if dmap is None:
+        if omap is None:
             return set()
 
         removed = set()
         # sorted() only for clarity during tests
-        items = dmap.items()
+        items = omap.items()
 
         removepaths = []
         # this can be done with a min= option to BTree.items method
         for k, dm in self.pathindex.items(min=path_tuple):
             if k[:pathlen] == path_tuple:
-                for didset in dm.values():
-                    removed.update(didset)
-                    for did in didset:
-                        if did in self.objectid_to_path:
-                            p = self.objectid_to_path[did]
-                            del self.objectid_to_path[did]
+                for oidset in dm.values():
+                    removed.update(oidset)
+                    for oid in oidset:
+                        if oid in self.objectid_to_path:
+                            p = self.objectid_to_path[oid]
+                            del self.objectid_to_path[oid]
                             del self.path_to_objectid[p]
                 # dont mutate while iterating
                 removepaths.append(k)
@@ -197,24 +197,24 @@ class ObjectMap(Persistent):
 
             offset = x + 1
             els = path_tuple[:pathlen-offset]
-            dmap2 = self.pathindex[els]
-            for level, didset in items:
+            omap2 = self.pathindex[els]
+            for level, oidset in items:
 
                 i = level + offset
-                didset2 = dmap2[i]
+                oidset2 = omap2[i]
 
-                for did in didset:
-                    if did in didset2:
-                        didset2.remove(did)
+                for oid in oidset:
+                    if oid in oidset2:
+                        oidset2.remove(oid)
                         # adding to removed and removing from objectid_to_path
                         # and path_to_objectid should have been taken care of
                         # above in the for k, dm in self.pathindex.items()
                         # loop
-                        assert did in removed, did
-                        assert not did in self.objectid_to_path, did
+                        assert oid in removed, oid
+                        assert not oid in self.objectid_to_path, oid
 
-                if not didset2:
-                    del dmap2[i]
+                if not oidset2:
+                    del omap2[i]
                     
         return removed
 
@@ -234,17 +234,17 @@ class ObjectMap(Persistent):
         return self._navgen(path_tuple, depth)
 
     def _navgen(self, path_tuple, depth=1):
-        dmap = self.pathindex.get(path_tuple)
-        if dmap is None:
+        omap = self.pathindex.get(path_tuple)
+        if omap is None:
             return []
-        didset = dmap.get(1)
+        oidset = omap.get(1)
         result = []
-        if didset is None:
+        if oidset is None:
             return result
         newdepth = depth-1
         if newdepth > -1:
-            for did in didset:
-                pt = self.objectid_to_path[did]
+            for oid in oidset:
+                pt = self.objectid_to_path[oid]
                 result.append(
                     {'path':pt,
                      'children':self._navgen(pt, newdepth),
@@ -255,20 +255,20 @@ class ObjectMap(Persistent):
 
     def pathlookup(self, obj_or_path_tuple, depth=None, include_origin=True):
         path_tuple = self._get_path_tuple(obj_or_path_tuple)
-        dmap = self.pathindex.get(path_tuple)
+        omap = self.pathindex.get(path_tuple)
 
         result = self.family.IF.Set()
 
-        if dmap is None:
+        if omap is None:
             return result
         
         if depth is None:
-            for d, didset in dmap.items():
+            for d, oidset in omap.items():
                 
                 if d == 0 and not include_origin:
                     continue
 
-                result.update(didset)
+                result.update(oidset)
 
         else:
             for d in range(depth+1):
@@ -276,12 +276,12 @@ class ObjectMap(Persistent):
                 if d == 0 and not include_origin:
                     continue
 
-                didset = dmap.get(d)
+                oidset = omap.get(d)
 
-                if didset is None:
+                if oidset is None:
                     continue
                 else:
-                    result.update(didset)
+                    result.update(oidset)
 
         return result
 

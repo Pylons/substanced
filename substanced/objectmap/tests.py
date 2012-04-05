@@ -89,7 +89,7 @@ class TestObjectMap(unittest.TestCase):
         inst.remove(obj)
         self.assertEqual(dict(inst.objectid_to_path), {})
         
-    def test_remove_no_dmap(self):
+    def test_remove_no_omap(self):
         inst = self._makeOne()
         inst.objectid_to_path[1] = (u'',)
         result = inst.remove((u'',))
@@ -232,58 +232,58 @@ class TestObjectMap(unittest.TestCase):
         abc = resource('/a/b/c')
         z = resource('/z')
 
-        did1 = objmap.add(ab)
-        did2 = objmap.add(abc)
-        did3 = objmap.add(a)
-        did4 = objmap.add(root)
-        did5 = objmap.add(z)
+        oid1 = objmap.add(ab)
+        oid2 = objmap.add(abc)
+        oid3 = objmap.add(a)
+        oid4 = objmap.add(root)
+        oid5 = objmap.add(z)
 
         # /
         nodepth = l('/')
-        assert nodepth == [did1, did2, did3, did4, did5], nodepth
+        assert nodepth == [oid1, oid2, oid3, oid4, oid5], nodepth
         depth0 = l('/', depth=0)
-        assert depth0 == [did4], depth0
+        assert depth0 == [oid4], depth0
         depth1 = l('/', depth=1)
-        assert depth1 == [did3, did4, did5], depth1
+        assert depth1 == [oid3, oid4, oid5], depth1
         depth2 = l('/', depth=2)
-        assert depth2 == [did1, did3, did4, did5], depth2
+        assert depth2 == [oid1, oid3, oid4, oid5], depth2
         depth3 = l('/', depth=3)
-        assert depth3 == [did1, did2, did3, did4, did5], depth3
+        assert depth3 == [oid1, oid2, oid3, oid4, oid5], depth3
         depth4 = l('/', depth=4)
-        assert depth4 == [did1, did2, did3, did4, did5], depth4
+        assert depth4 == [oid1, oid2, oid3, oid4, oid5], depth4
 
         # /a
         nodepth = l('/a')
-        assert nodepth == [did1, did2, did3], nodepth
+        assert nodepth == [oid1, oid2, oid3], nodepth
         depth0 = l('/a', depth=0)
-        assert depth0 == [did3], depth0
+        assert depth0 == [oid3], depth0
         depth1 = l('/a', depth=1)
-        assert depth1 == [did1, did3], depth1
+        assert depth1 == [oid1, oid3], depth1
         depth2 = l('/a', depth=2)
-        assert depth2 == [did1, did2, did3], depth2
+        assert depth2 == [oid1, oid2, oid3], depth2
         depth3 = l('/a', depth=3)
-        assert depth3 == [did1, did2, did3], depth3
+        assert depth3 == [oid1, oid2, oid3], depth3
 
         # /a/b
         nodepth = l('/a/b')
-        assert nodepth == [did1, did2], nodepth
+        assert nodepth == [oid1, oid2], nodepth
         depth0 = l('/a/b', depth=0)
-        assert depth0 == [did1], depth0
+        assert depth0 == [oid1], depth0
         depth1 = l('/a/b', depth=1)
-        assert depth1 == [did1, did2], depth1
+        assert depth1 == [oid1, oid2], depth1
         depth2 = l('/a/b', depth=2)
-        assert depth2 == [did1, did2], depth2
+        assert depth2 == [oid1, oid2], depth2
 
         # /a/b/c
         nodepth = l('/a/b/c')
-        assert nodepth == [did2], nodepth
+        assert nodepth == [oid2], nodepth
         depth0 = l('/a/b/c', depth=0)
-        assert depth0 == [did2], depth0
+        assert depth0 == [oid2], depth0
         depth1 = l('/a/b/c', depth=1)
-        assert depth1 == [did2], depth1
+        assert depth1 == [oid2], depth1
 
         # remove '/a/b'
-        removed = objmap.remove(did1)
+        removed = objmap.remove(oid1)
         assert removed == set([1,2])
 
         # /a/b/c
@@ -304,23 +304,23 @@ class TestObjectMap(unittest.TestCase):
 
         # /a
         nodepth = l('/a')
-        assert nodepth == [did3], nodepth
+        assert nodepth == [oid3], nodepth
         depth0 = l('/a', depth=0)
-        assert depth0 == [did3], depth0
+        assert depth0 == [oid3], depth0
         depth1 = l('/a', depth=1)
-        assert depth1 == [did3], depth1
+        assert depth1 == [oid3], depth1
 
         # /
         nodepth = l('/')
-        assert nodepth == [did3, did4, did5], nodepth
+        assert nodepth == [oid3, oid4, oid5], nodepth
         depth0 = l('/', depth=0)
-        assert depth0 == [did4], depth0
+        assert depth0 == [oid4], depth0
         depth1 = l('/', depth=1)
-        assert depth1 == [did3, did4, did5], depth1
+        assert depth1 == [oid3, oid4, oid5], depth1
 
         # test include_origin false with /, no depth
         nodepth = l('/', include_origin=False)
-        assert nodepth == [did3, did5], nodepth
+        assert nodepth == [oid3, oid5], nodepth
 
         # test include_origin false with /, depth=1
         depth1 = l('/', include_origin=False, depth=0)
