@@ -22,4 +22,4 @@ class PropertiesView(FormView):
     def show(self, form):
         appstruct = self.context.__dict__
         return {'form':form.render(appstruct=appstruct)}
-        
+

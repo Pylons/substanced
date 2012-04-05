@@ -218,7 +218,7 @@ class ObjectMap(Persistent):
                     
         return removed
 
-    def pathlookup(self, obj_or_path_tuple, depth=None, include_origin=True):
+    def _get_path_tuple(self, obj_or_path_tuple):
         if hasattr(obj_or_path_tuple, '__parent__'):
             path_tuple = resource_path_tuple(obj_or_path_tuple)
         elif isinstance(obj_or_path_tuple, tuple):
@@ -227,7 +227,34 @@ class ObjectMap(Persistent):
             raise ValueError(
                 'pathlookup must be provided a traversable object or a '
                 'path tuple, got %s' % (obj_or_path_tuple,))
-        
+        return path_tuple
+    
+    def navgen(self, obj_or_path_tuple, depth):
+        path_tuple = self._get_path_tuple(obj_or_path_tuple)
+        return self._navgen(path_tuple, depth)
+
+    def _navgen(self, path_tuple, depth=1):
+        dmap = self.pathindex.get(path_tuple)
+        if dmap is None:
+            return []
+        didset = dmap.get(1)
+        result = []
+        if didset is None:
+            return result
+        newdepth = depth-1
+        if newdepth > -1:
+            for did in didset:
+                pt = self.objectid_to_path[did]
+                result.append(
+                    {'path':pt,
+                     'children':self._navgen(pt, newdepth),
+                     'name':pt[-1],
+                     }
+                    )
+        return result
+
+    def pathlookup(self, obj_or_path_tuple, depth=None, include_origin=True):
+        path_tuple = self._get_path_tuple(obj_or_path_tuple)
         dmap = self.pathindex.get(path_tuple)
 
         result = self.family.IF.Set()

@@ -105,21 +105,117 @@ class TestObjectMap(unittest.TestCase):
         gen = inst.pathlookup(obj)
         result = list(gen)
         self.assertEqual(result, [])
+
+    def test_navgen_notexist(self):
+        inst = self._makeOne()
+        result = inst.navgen((u'',), 99)
+        self.assertEqual(result, [])
+
+    def test_navgen_bigdepth(self):
+        inst = self._makeOne()
+        root = resource('/')
+        a = resource('/a')
+        ab = resource('/a/b')
+        abc = resource('/a/b/c')
+        z = resource('/z')
+        for thing in root, a, ab, abc, z:
+            inst.add(thing)
+        result = inst.navgen(root, 99)
+        self.assertEqual(
+            result, 
+            [{'path': ('', u'a'), 
+              'name':u'a',
+              'children': [{'path': ('', u'a', u'b'), 
+                            'name':u'b',
+                            'children': [{'path': ('', u'a', u'b', u'c'), 
+                                          'name':u'c',
+                                          'children': []}]}]}, 
+             {'path': ('', u'z'), 
+              'name':u'z',
+              'children': []}]
+            )
+
+    def test_navgen_bigdepth_notroot(self):
+        inst = self._makeOne()
+        root = resource('/')
+        a = resource('/a')
+        ab = resource('/a/b')
+        abc = resource('/a/b/c')
+        z = resource('/z')
+        for thing in root, a, ab, abc, z:
+            inst.add(thing)
+        result = inst.navgen(a, 99)
+        self.assertEqual(
+            result,
+            [{'path': ('', u'a', u'b'), 
+              'name':u'b',
+              'children': [{'path': ('', u'a', u'b', u'c'), 
+                            'name':u'c',
+                            'children': []}]}]
+            )
+        
+    def test_navgen_smalldepth(self):
+        inst = self._makeOne()
+        root = resource('/')
+        a = resource('/a')
+        ab = resource('/a/b')
+        abc = resource('/a/b/c')
+        z = resource('/z')
+        for thing in root, a, ab, abc, z:
+            inst.add(thing)
+        result = inst.navgen(root, 1)
+        self.assertEqual(
+            result,
+            [{'path': ('', u'a'), 
+              'name':'a',
+              'children': []},
+             {'path': ('', u'z'), 
+              'name':u'z',
+              'children': []}]
+            )
+
+    def test_navgen_smalldepth_notroot(self):
+        inst = self._makeOne()
+        root = resource('/')
+        a = resource('/a')
+        ab = resource('/a/b')
+        abc = resource('/a/b/c')
+        z = resource('/z')
+        for thing in root, a, ab, abc, z:
+            inst.add(thing)
+        result = inst.navgen(a, 1)
+        self.assertEqual(
+            result,
+            [{'path': ('', u'a', u'b'), 
+              'name':u'b',
+              'children': []}]
+            )
+        
+    def test_navgen_nodepth(self):
+        inst = self._makeOne()
+        root = resource('/')
+        a = resource('/a')
+        ab = resource('/a/b')
+        abc = resource('/a/b/c')
+        z = resource('/z')
+        for thing in root, a, ab, abc, z:
+            inst.add(thing)
+        result = inst.navgen(root, 0)
+        self.assertEqual(result, [])
+
+    def test_navgen_nodepth_notroot(self):
+        inst = self._makeOne()
+        root = resource('/')
+        a = resource('/a')
+        ab = resource('/a/b')
+        abc = resource('/a/b/c')
+        z = resource('/z')
+        for thing in root, a, ab, abc, z:
+            inst.add(thing)
+        result = inst.navgen(a, 0)
+        self.assertEqual(result, [])
         
     def test_functional(self):
-
-        def resource(path):
-            path_tuple = split(path)
-            parent = None
-            for element in path_tuple:
-                obj = testing.DummyResource()
-                obj.__parent__ = parent
-                obj.__name__ = element
-                parent = obj
-            return obj
-                
-        def split(s):
-            return (u'',) + tuple(filter(None, s.split(u'/')))
 
         def l(path, depth=None, include_origin=True):
             path_tuple = split(path)
@@ -265,3 +361,18 @@ class TestObjectMap(unittest.TestCase):
         assert dict(objmap.pathindex) == {}
         assert dict(objmap.objectid_to_path) == {}
         assert dict(objmap.path_to_objectid) == {}
+
+def resource(path):
+    path_tuple = split(path)
+    parent = None
+    for element in path_tuple:
+        obj = testing.DummyResource()
+        obj.__parent__ = parent
+        obj.__name__ = element
+        parent = obj
+    return obj
+                
+        
+def split(s):
+    return (u'',) + tuple(filter(None, s.split(u'/')))
+

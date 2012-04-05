@@ -3,7 +3,10 @@ from pyramid.traversal import resource_path_tuple
 from pyramid_deform import CSRFSchema as Schema # API
 Schema = Schema # for pyflakes
 
+from pyramid.events import BeforeRender
+
 from ..interfaces import IContent
+from . import helpers
 
 def add_mgmt_view(config, *arg, **kw):
     kw['route_name'] = 'substanced_manage'
@@ -18,6 +21,9 @@ class mgmt_path(object):
         kw['traverse'] = traverse
         return self.request.route_path('substanced_manage', *arg, **kw)
 
+def add_renderer_globals(event):
+   event['h'] = helpers
+   
 def includeme(config): # pragma: no cover
     config.add_directive('add_mgmt_view', add_mgmt_view)
     config.add_static_view('deformstatic', 'deform:static', cache_max_age=3600)
@@ -26,5 +32,7 @@ def includeme(config): # pragma: no cover
     config.add_route('substanced_manage', '/manage*traverse')
     config.add_mgmt_view('.views.PropertiesView', context=IContent,
                          name='properties', renderer='templates/form.pt')
+    config.scan('substanced.sdi')
     config.set_request_property(mgmt_path, reify=True)
+    config.add_subscriber(add_renderer_globals, BeforeRender)
     config.include('deform_bootstrap')

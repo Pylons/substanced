@@ -6,6 +6,16 @@
     <title metal:define-slot="page-title">${view.title | 'Substance D'}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+   <style type="text/css">
+      body {
+        padding-top: 60px;
+        padding-bottom: 40px;
+      }
+      .sidebar-nav {
+        padding: 9px 0;
+      }
+    </style>
+
     <!-- HTML5 shim, for IE6-8 support of HTML elements -->
     <!--[if lt IE 9]>
         <script src="https://html5shim.googlecode.com/svn/trunk/html5.js"></script>
@@ -30,7 +40,81 @@
   </head>
 
   <body>
-    <metal:block define-slot="main"/>
+
+    <div class="navbar navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container-fluid">
+          <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </a>
+          <a class="brand" href="#">Substance D</a>
+          <div class="nav-collapse">
+            <ul class="nav">
+              <li class="active"><a href="#">Home</a></li>
+              <li><a href="#about">About</a></li>
+              <li><a href="#contact">Contact</a></li>
+            </ul>
+           <p class="navbar-text pull-right">Logged in as <a href="#">username</a></p>
+          </div><!--/.nav-collapse -->
+        </div>
+      </div>
+    </div>
+
+    <div class="container-fluid">
+
+        <div class="row-fluid">
+
+          <div class="span2">
+            <div class="well sidebar-nav">
+              <ul class="nav nav-list"
+                  tal:define="isroot not context.__parent__;
+                              name context.__name__">
+                <li tal:condition="not isroot"
+                    class="nav-header" >Navigation</li>
+                <li tal:condition="not isroot"><a href=".."
+                   >${u"\u25B2" + " to context.__parent__.__name__"}</a></li>
+                <li class="nav-header">
+                  <a href="${request.url}" 
+                    tal:content="'Subitems of %s' % (name or 'root')"
+                    >Name</a></li>
+                <li tal:repeat="node h.get_subnodes(request)">
+                    <a href="${node['url']}">${node['name'] or '/'}</a>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="span9">
+
+            <ul class="nav nav-tabs">
+              <li class="active"><a href="#">Lorem</a></li>
+              <li><a href="#">Ipsum</a></li>
+              <li><a href="#">Dolor</a></li>
+            </ul>
+
+            <h2>Content</h2>
+
+            <div class="above-content">
+            </div>
+
+            <div>Message goes here</div>
+
+            <div class="inner-content">
+              <div metal:define-slot="main">
+              </div>
+            </div>
+
+            <div class="below-content" >
+            </div>
+
+          </div>
+
+        </div>
+
+    </div>
+
   </body>
 
 </html>
