@@ -9,24 +9,30 @@ from zope.interface import (
 
 from ..interfaces import IContent
 
+class IFoo(Interface):
+    pass
+
+class IBar(IFoo):
+    pass
+
 class Test_addbase(unittest.TestCase):
+    def tearDown(self):
+        # prevent whining from tests when unsubscribe happens
+        IBar.__bases__ = (IFoo,)
+        
     def _callFUT(self, I1, I2):
         from . import addbase
         return addbase(I1, I2)
 
     def test_already_in_iro(self):
-        class IFoo(IContent):
-            pass
-        result = self._callFUT(IFoo, IContent)
+        result = self._callFUT(IBar, IFoo)
         self.assertEqual(result, False)
         
     def test_not_in_iro(self):
-        class IFoo(Interface):
-            pass
-        result = self._callFUT(IFoo, IContent)
+        result = self._callFUT(IBar, IContent)
         self.assertEqual(result, True)
-        self.failUnless(IContent in IFoo.__bases__)
-        self.failUnless(IContent in IFoo.__iro__)
+        self.failUnless(IContent in IBar.__bases__)
+        self.failUnless(IContent in IBar.__iro__)
 
 class TestContentCategory(unittest.TestCase):
     def _makeOne(self, category_iface):

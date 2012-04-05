@@ -2,9 +2,9 @@ import logging
 
 import transaction
 
-from zope.interface import implementer
+import BTrees
 
-from BTrees.IIBTree import IITreeSet
+from zope.interface import implementer
 
 from repoze.catalog.catalog import Catalog as _Catalog
 
@@ -33,15 +33,16 @@ def find_catalog(context):
 
 @implementer(ICatalog)
 class Catalog(_Catalog):
+    family = BTrees.family32
     def __init__(self, site, family=None):
         _Catalog.__init__(self, family)
         self.site = site
-        self.objectids = IITreeSet()
+        self.objectids = self.family.IF.TreeSet()
 
     def clear(self):
         """ Clear all indexes in this catalog. """
         _Catalog.clear(self)
-        self.objectids = IITreeSet()
+        self.objectids = self.family.IF.TreeSet()
 
     def index_doc(self, docid, obj):
         """Register the document represented by ``obj`` in indexes of

@@ -4,11 +4,6 @@ from persistent import Persistent
 
 import BTrees
 
-from BTrees.OOBTree import OOBTree
-from BTrees.IOBTree import IOBTree
-from BTrees.OIBTree import OIBTree
-from BTrees.IIBTree import IISet
-
 from ..interfaces import IObjectmapSite
 
 from pyramid.traversal import (
@@ -88,17 +83,19 @@ class ObjectMap(Persistent):
     _v_nextid = None
     _randrange = random.randrange
 
+    family = BTrees.family32
+
     def __init__(self, site):
         self.site = site
-        self.objectid_to_path = IOBTree()
-        self.path_to_objectid = OIBTree()
-        self.pathindex = OOBTree()
+        self.objectid_to_path = self.family.IO.BTree()
+        self.path_to_objectid = self.family.OI.BTree()
+        self.pathindex = self.family.OO.BTree()
 
     def new_objectid(self):
         while True:
             if self._v_nextid is None:
-                self._v_nextid = self._randrange(BTrees.IOBTree.family.minint, 
-                                                 BTrees.IOBTree.family.maxint)
+                self._v_nextid = self._randrange(self.family.minint, 
+                                                 self.family.maxint)
 
             objectid = self._v_nextid
             self._v_nextid += 1
@@ -145,9 +142,9 @@ class ObjectMap(Persistent):
 
         for x in range(pathlen):
             els = path_tuple[:x+1]
-            dmap = self.pathindex.setdefault(els, IOBTree())
+            dmap = self.pathindex.setdefault(els, self.family.IO.BTree())
             level = pathlen - len(els)
-            didset = dmap.setdefault(level, IISet())
+            didset = dmap.setdefault(level, self.family.IF.Set())
             didset.add(objectid)
 
         return objectid
@@ -233,7 +230,7 @@ class ObjectMap(Persistent):
         
         dmap = self.pathindex.get(path_tuple)
 
-        result = IISet()
+        result = self.family.IF.Set()
 
         if dmap is None:
             return result
