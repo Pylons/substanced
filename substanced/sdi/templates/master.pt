@@ -71,14 +71,13 @@
               <ul class="nav nav-list"
                   tal:define="isroot not context.__parent__;
                               name context.__name__">
-                <li tal:condition="not isroot"
-                    class="nav-header" >Navigation</li>
+                <li class="nav-header" >Navigation</li>
                 <li tal:condition="not isroot"><a href=".."
-                   >${u"\u25B2 to " + (context.__parent__.__name__ or 'root')}</a></li>
-                <li class="nav-header">
-                  <a href="${request.url}" 
-                    tal:content="name or 'root'"
-                    >Name</a></li>
+                   >${u"\u25B2 " + (context.__parent__.__name__ or 'top')}</a></li>
+                <li tal:condition="isroot">(top)</li>
+                <li class="nav-header"
+                    tal:content="name or 'top'"
+                    >Name</li>
                 <li tal:repeat="node h.get_subnodes(request)">
                     <a href="${node['url']}">${node['name'] or '/'}</a>
                 </li>
