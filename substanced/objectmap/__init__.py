@@ -229,7 +229,7 @@ class ObjectMap(Persistent):
                 'path tuple, got %s' % (obj_or_path_tuple,))
         return path_tuple
     
-    def navgen(self, obj_or_path_tuple, depth):
+    def navgen(self, obj_or_path_tuple, depth=1):
         path_tuple = self._get_path_tuple(obj_or_path_tuple)
         return self._navgen(path_tuple, depth)
 
