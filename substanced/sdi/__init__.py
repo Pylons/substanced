@@ -118,10 +118,6 @@ def manage_main(request):
         return request.response
     return HTTPFound(request.mgmt_path(request.context, '@@%s' % view_names[0]))
 
-@mgmt_view(name='testing', renderer='templates/testing.pt')
-def testing(request):
-    return {}
-   
 def includeme(config): # pragma: no cover
     config.add_directive('add_mgmt_view', add_mgmt_view)
     config.add_static_view('deformstatic', 'deform:static', cache_max_age=3600)

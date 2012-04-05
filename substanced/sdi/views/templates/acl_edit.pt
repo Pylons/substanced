@@ -1,0 +1,113 @@
+<div metal:use-macro="h.macros()['master']">
+
+ <div metal:fill-slot="main">
+
+ <h2> Local ACL </h2>
+
+ <table border="1" cellpadding="2" cellspacing="2">
+
+  <tr>
+   <th width="15%">Allow / Deny</th>
+   <th width="25%">Principal</th>
+   <th width="40%">Permissions</th>
+   <th width="15%">&nbsp;</th>
+  </tr>
+
+  <tr bgcolor="#CCCCCC">
+   <th colspan="4">Current</th>
+  </tr>
+
+  <tr tal:repeat="ace local_acl">
+   <td tal:content="ace[0]">Allow</td>
+   <td tal:content="ace[1]">PRINCIPAL</td>
+   <td tal:content="', '.join(ace[2])">PERM1, PERM2</td>
+   <td>
+    <form action="@@security" method="post">
+     <input type="hidden" name="index" value="${repeat['ace'].index}" />
+     <input type="submit" name="form.move_up" value="&uarr;" style="padding: 0;" />
+     <input type="submit" name="form.move_down" value="&darr;" style="padding: 0;" />
+     <input type="submit" name="form.remove" value="X" style="padding: 0;" />
+    </form>
+   </td>
+  </tr>
+
+  <tr bgcolor="#CCCCCC">
+   <th colspan="4">New</th>
+  </tr>
+
+  <form action="@@security" method="post">
+  <tr>
+   <td>
+    <div>
+     <input type="radio" id="allow_add" name="verb" value="Allow" checked="true"/>
+     <label for="allow_add">Allow</label>
+    </div>
+
+    <div>
+     <input type="radio" id="deny_add" name="verb" value="Deny" />
+     <label for="deny_add">Deny</label>
+    </div>
+   </td>
+   <td>
+    <input type="text" name="principal" />
+   </td>
+   <td>
+    <input type="text" name="permissions" />
+   </td>
+   <td>
+    <input type="submit" name="form.add" value="Add" />
+   </td>
+  </tr>
+  </form>
+
+ </table>
+
+ <h2> Inherit Parent ACL?</h2>
+ <p>
+  <form action="@@security" method="post">
+    <input type="radio" id="inherit_enabled" name="inherit" value="enabled"
+           tal:attributes="checked inheriting == 'enabled'" />
+    <label for="inherit_enabled">Enabled</label>
+
+    <input type="radio" id="inherit_disabled" name="inherit"
+           value="disabled"
+           tal:attributes="checked inheriting == 'disabled'" />
+    <label for="inherit_disabled">Disabled</label>
+
+    <input type="submit" name="form.inherit" value="Update inherit" />
+  </form>
+ </p>
+
+ <tal:block condition="security_states">
+  <h2>Workflow State</h2>
+  <form action="@@security" method="post">
+   <select name="security_state">
+    <option tal:repeat="state security_states"
+            value="${state}"
+            selected="${state == security_state}">${state}</option>
+   </select>
+   <input type="submit" name="form.security_state"
+          value="Update workflow state"/>
+  </form>
+ </tal:block>
+
+ <h2> Parent ACL </h2>
+ <table border="1" cellpadding="2" cellspacing="2">
+
+  <tr>
+   <th>Allow / Deny</th>
+   <th>Principal</th>
+   <th>Permissions</th>
+  </tr>
+
+  <tr tal:repeat="ace parent_acl">
+   <td tal:content="ace[0]">Allow</td>
+   <td tal:content="ace[1]">PRINCIPAL</td>
+   <td tal:content="', '.join(ace[2])">PERM1, PERM2</td>
+  </tr>
+
+ </table>
+
+</div>
+
+</div>

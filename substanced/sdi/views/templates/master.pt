@@ -79,7 +79,9 @@
                     tal:content="name or 'top'"
                     >Name</li>
                 <li tal:repeat="node h.get_subnodes(request)">
-                    <a href="${node['url']}">${node['name'] or '/'}</a>
+                    <a tal:condition="node['url']" 
+                       href="${node['url']}">${node['name'] or '/'}</a>
+                    <span tal:omit-tag="" tal:condition="not node['url']">${node['name'] or '/'}</span>
                 </li>
               </ul>
             </div>

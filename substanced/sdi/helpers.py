@@ -2,7 +2,6 @@ from zope.interface.interfaces import IInterface
 
 from pyramid.traversal import find_resource
 from pyramid.renderers import get_renderer
-from pyramid.security import has_permission
 from pyramid.request import Request
 
 from substanced.objectmap import find_objectmap
@@ -17,9 +16,11 @@ def get_subnodes(request, context=None):
     L = []
     for node in nodes:
         obj = find_resource(context, node['path'])
-        if has_permission('view', obj, request):
-            node['url'] = request.mgmt_path(obj)
-            L.append(node)
+        if get_mgmt_views(request, obj):
+            node['url']  = request.mgmt_path(obj)
+        else:
+            node['url'] = None
+        L.append(node)
     return L
 
 def get_mgmt_views(request, context=None):
@@ -62,5 +63,5 @@ def get_mgmt_views(request, context=None):
     return sorted(L)
 
 def macros():
-    template = get_renderer('templates/master.pt').implementation()
+    template = get_renderer('views/templates/master.pt').implementation()
     return {'master':template}
