@@ -42,7 +42,7 @@ def get_mgmt_views(request, context=None):
                     if view_name:
                         if view_execution_permitted(context, request,view_name):
                             L.append(view_name)
-    return L
+    return sorted(L)
 
 def macros():
     template = get_renderer('templates/master.pt').implementation()
