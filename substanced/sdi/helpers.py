@@ -1,12 +1,9 @@
 from zope.interface.interfaces import IInterface
-from zope.interface import Interface
 
 from pyramid.traversal import find_resource
 from pyramid.renderers import get_renderer
-from pyramid.security import (
-    view_execution_permitted,
-    has_permission,
-    )
+from pyramid.security import has_permission
+from pyramid.request import Request
 
 from substanced.objectmap import find_objectmap
 
@@ -31,20 +28,37 @@ def get_mgmt_views(request, context=None):
         context = request.context
     introspector = registry.introspector
     L = []
-    for data in introspector.get_category('views'): 
-        intr = data['introspectable']
-        route_name = intr['route_name']
-        if route_name == MANAGE_ROUTE_NAME:
-            iface = intr['context'] or Interface
-            if IInterface.providedBy(iface):
-                ok = iface.providedBy(context)
-            else:
-                ok = context.__class__ == iface
-            if ok:
-                view_name = intr['name']
-                if view_name and not view_name in L:
-                    if view_execution_permitted(context, request, view_name):
-                        L.append(view_name)
+
+    # create a dummy request signaling our intent
+    req = Request(request.environ.copy())
+    req.script_name = request.script_name
+    req.context = context
+    req.matched_route = request.matched_route
+    req.method = 'GET' 
+
+    for data in introspector.get_category('sdi views'): 
+        related = data['related']
+        for intr in related:
+            view_name = intr['name']
+            if intr.category_name == 'views' and not view_name in L:
+                derived = intr['derived_callable']
+                # do a passable job at figuring out whether, if we visit the
+                # url implied by this view, we'll be permitted to view it and
+                # something reasonable will show up
+                if IInterface.providedBy(intr['context']):
+                    if not intr['context'].providedBy(context):
+                        continue
+                elif intr['context'] and not isinstance(
+                        context, intr['context']):
+                    continue
+                req.path_info = request.mgmt_path(context, view_name)
+                if hasattr(derived, '__predicated__'):
+                    if not derived.__predicated__(context, req):
+                        continue
+                if hasattr(derived, '__permitted__'):
+                    if not derived.__permitted__(context, req):
+                        continue
+                L.append(view_name)
     return sorted(L)
 
 def macros():
