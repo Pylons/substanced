@@ -42,10 +42,9 @@ def get_mgmt_views(request, context=None):
                 ok = context.__class__ == iface
             if ok:
                 view_name = intr['name']
-                if view_name:
-                    if view_execution_permitted(context, request,view_name):
-                        if not view_name in L:
-                            L.append(view_name)
+                if view_name and not view_name in L:
+                    if view_execution_permitted(context, request, view_name):
+                        L.append(view_name)
     return sorted(L)
 
 def macros():
