@@ -37,10 +37,14 @@ def get_mgmt_views(request, context=None):
         if route_name == MANAGE_ROUTE_NAME:
             iface = intr['context'] or Interface
             if IInterface.providedBy(iface):
-                if iface.providedBy(context):
-                    view_name = intr['name']
-                    if view_name:
-                        if view_execution_permitted(context, request,view_name):
+                ok = iface.providedBy(context)
+            else:
+                ok = context.__class__ == iface
+            if ok:
+                view_name = intr['name']
+                if view_name:
+                    if view_execution_permitted(context, request,view_name):
+                        if not view_name in L:
                             L.append(view_name)
     return sorted(L)
 
