@@ -4,4 +4,5 @@ def includeme(config): # pragma: no cover
     config.include('substanced.catalog')
     config.include('substanced.models')
     config.include('substanced.subscribers')
+    config.include('substanced.evolution')
     config.include('substanced.sdi')
