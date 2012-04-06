@@ -1,3 +1,5 @@
+import operator
+
 from zope.interface.interfaces import IInterface
 
 from pyramid.traversal import find_resource
@@ -67,7 +69,7 @@ def get_mgmt_views(request, context=None):
                     {'view_name':view_name,
                      'tab_title':tab_title or view_name.capitalize()}
                     )
-    return sorted(L)
+    return sorted(L, key=operator.itemgetter('tab_title'))
 
 def macros():
     template = get_renderer('views/templates/master.pt').implementation()

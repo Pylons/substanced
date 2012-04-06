@@ -28,6 +28,7 @@ class Site(Folder):
         Folder.__init__(self)
         self.objectmap = ObjectMap(self)
         self.catalog = Catalog(self)
+        self.catalog.refresh()
 
     def get_properties(self):
         return dict(name=self.name, description=self.description)
