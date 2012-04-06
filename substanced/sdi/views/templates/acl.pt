@@ -22,7 +22,7 @@
    <td tal:content="ace[1]">PRINCIPAL</td>
    <td tal:content="', '.join(ace[2])">PERM1, PERM2</td>
    <td>
-    <form action="@@security" method="post">
+    <form action="@@acl_edit" method="post">
      <input type="hidden" name="index" value="${repeat['ace'].index}" />
      <input type="submit" name="form.move_up" value="&uarr;" style="padding: 0;" />
      <input type="submit" name="form.move_down" value="&darr;" style="padding: 0;" />
@@ -35,7 +35,7 @@
    <th colspan="4">New</th>
   </tr>
 
-  <form action="@@security" method="post">
+  <form action="@@acl_edit" method="post">
   <tr>
    <td>
     <div>
@@ -67,7 +67,7 @@
 
  <h2> Inherit Parent ACL?</h2>
  <p>
-  <form action="@@security" method="post">
+  <form action="@@acl_edit" method="post">
     <input type="radio" id="inherit_enabled" name="inherit" value="enabled"
            tal:attributes="checked inheriting == 'enabled'" />
     <label for="inherit_enabled">Enabled</label>
@@ -83,7 +83,7 @@
 
  <tal:block condition="security_states">
   <h2>Workflow State</h2>
-  <form action="@@security" method="post">
+  <form action="@@acl_edit" method="post">
    <select name="security_state">
     <option tal:repeat="state security_states"
             value="${state}"
