@@ -17,11 +17,18 @@ class PropertiesView(FormView):
         self.schema = self.context.__propschema__
 
     def save_success(self, appstruct):
-        self.context.set_properties(appstruct)
+        if hasattr(self.context, 'set_properties'):
+            self.context.set_properties(appstruct)
+        else:
+            self.context.__dict__.update(appstruct)
+            self.context._p_changed = True
         self.request.session.flash('Updated')
         return HTTPFound(self.request.mgmt_path(self.context, '@@properties'))
 
     def show(self, form):
-        appstruct = self.context.get_properties()
+        if hasattr(self.context, 'get_properties'):
+            appstruct = self.context.get_properties()
+        else:
+            appstruct = self.context.__dict__.copy()
         return {'form':form.render(appstruct=appstruct)}
 
