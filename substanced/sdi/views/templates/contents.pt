@@ -29,6 +29,9 @@
     </tal:def>
   </tal:loop>
 
+   <input type="hidden" name="csrf_token" 
+          value="${request.session.get_csrf_token()}"/>
+
     <div class="form-actions">
         <button
             id="delete"

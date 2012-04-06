@@ -27,6 +27,9 @@
      <input type="submit" name="form.move_up" value="&uarr;" style="padding: 0;" />
      <input type="submit" name="form.move_down" value="&darr;" style="padding: 0;" />
      <input type="submit" name="form.remove" value="X" style="padding: 0;" />
+     <input type="hidden" name="csrf_token" 
+            value="${request.session.get_csrf_token()}"/>
+
     </form>
    </td>
   </tr>
@@ -61,6 +64,8 @@
     <input type="submit" name="form.add" value="Add" />
    </td>
   </tr>
+   <input type="hidden" name="csrf_token" 
+          value="${request.session.get_csrf_token()}"/>
   </form>
 
  </table>
@@ -78,6 +83,8 @@
     <label for="inherit_disabled">Disabled</label>
 
     <input type="submit" name="form.inherit" value="Update inherit" />
+   <input type="hidden" name="csrf_token" 
+          value="${request.session.get_csrf_token()}"/>
   </form>
  </p>
 
@@ -91,6 +98,8 @@
    </select>
    <input type="submit" name="form.security_state"
           value="Update workflow state"/>
+   <input type="hidden" name="csrf_token" 
+          value="${request.session.get_csrf_token()}"/>
   </form>
  </tal:block>
 

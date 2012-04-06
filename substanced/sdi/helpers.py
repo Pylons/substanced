@@ -79,19 +79,21 @@ def macros():
 
 def merge_url(url, **kw):
     segments = urlparse.urlsplit(url)
-    query = segments.query
+    extra_qs = [ '%s=%s' % (k, v) for (k, v) in 
+                 urlparse.parse_qsl(segments.query, keep_blank_values=1) 
+                 if k not in ('batch_size', 'batch_num')]
     qs = ''
     for k, v in sorted(kw.items()):
         qs += '%s=%s&' % (k, v)
-    if query:
-        qs = qs + query
+    if extra_qs:
+        qs += '&'.join(extra_qs)
     else:
-        qs = qs[-1]
+        qs = qs[:-1]
     return urlparse.urlunsplit(
         (segments.scheme, segments.netloc, segments.path, qs, segments.fragment)
         )
 
-def get_batchinfo(sequence, request, url=None, default_size=20):
+def get_batchinfo(sequence, request, url=None, default_size=15):
     
     if url is None:
         url = request.url
@@ -116,7 +118,7 @@ def get_batchinfo(sequence, request, url=None, default_size=20):
     last_url = None
     
     if num:
-        first_url = merge_url(url, batch_size=size, batch_num=num)
+        first_url = merge_url(url, batch_size=size, batch_num=0)
     if start >= size:
         prev_url = merge_url(url, batch_size=size, batch_num=num-1)
     if len(sequence) > end:

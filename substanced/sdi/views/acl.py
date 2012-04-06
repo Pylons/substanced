@@ -1,5 +1,7 @@
 import re
 
+from pyramid.httpexceptions import HTTPBadRequest
+
 from pyramid.security import (
     Deny,
     Everyone,
@@ -35,6 +37,10 @@ def get_context_workflow(context):
     """
     return
 
+def check_csrf_token(request):
+    if request.POST['csrf_token'] != request.session.get_csrf_token():
+        raise HTTPBadRequest('incorrect CSRF token')
+
 @mgmt_view(name='acl_edit', permission='change acls', 
            renderer='templates/acl.pt', tab_title='Security')
 def acl_edit_view(context, request):
@@ -47,6 +53,7 @@ def acl_edit_view(context, request):
         epilog = []
 
     if 'form.move_up' in request.POST:
+        check_csrf_token(request)
         index = int(request.POST['index'])
         if index > 0:
             new = acl[:]
@@ -54,6 +61,7 @@ def acl_edit_view(context, request):
             acl = new
 
     elif 'form.move_down' in request.POST:
+        check_csrf_token(request)
         index = int(request.POST['index'])
         if index < len(acl) - 1:
             new = acl[:]
@@ -61,12 +69,14 @@ def acl_edit_view(context, request):
             acl = new
 
     elif 'form.remove' in request.POST:
+        check_csrf_token(request)
         index = int(request.POST['index'])
         new = acl[:]
         del new[index]
         acl = new
 
     elif 'form.add' in request.POST:
+        check_csrf_token(request)
         verb = request.POST['verb']
         principal = request.POST['principal']
         permission = request.POST['permission']
@@ -75,6 +85,7 @@ def acl_edit_view(context, request):
         acl = new
 
     elif 'form.inherit' in request.POST:
+        check_csrf_token(request)
         no_inherit = request.POST['inherit'] == 'disabled'
         if no_inherit:
             epilog = [NO_INHERIT]
@@ -82,6 +93,7 @@ def acl_edit_view(context, request):
             epilog = []
 
     elif 'form.security_state' in request.POST:
+        check_csrf_token(request)
         new_state = request.POST['security_state']
         if new_state != 'CUSTOM':
             workflow = get_context_workflow(context)
