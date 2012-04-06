@@ -1,9 +1,9 @@
 from pyramid.httpexceptions import HTTPFound
 
 from ..interfaces import IPropertied
+from ..form import FormView
 
 from . import mgmt_view
-from ..form import FormView
 
 @mgmt_view(context=IPropertied, name='properties', renderer='templates/form.pt',
            tab_title='Properties', permission='edit properties')
