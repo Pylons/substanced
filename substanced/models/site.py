@@ -18,13 +18,23 @@ class SiteSchema(Schema):
 
 @implementer(ISite)
 class Site(Folder):
+    
+    __propschema__ = SiteSchema()
+    
     name = ''
     description = ''
-    __schema__ = SiteSchema()
+
     def __init__(self):
         Folder.__init__(self)
         self.objectmap = ObjectMap(self)
         self.catalog = Catalog(self)
+
+    def get_properties(self):
+        return dict(name=self.name, description=self.description)
+
+    def set_properties(self, struct):
+        self.name = struct['name']
+        self.description = struct['description']
     
     @classmethod
     def root_factory(cls, request, transaction=transaction, 
