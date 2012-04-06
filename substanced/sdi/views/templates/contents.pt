@@ -1,0 +1,48 @@
+<div metal:use-macro="h.macros()['master']">
+
+  <div metal:fill-slot="main">
+     <form action="@@contents" method="POST">
+
+<fieldset>
+
+      <tr id="pagination-buttons" tal:condition="batchinfo['required']">
+        <td colspan="4">
+          <a tal:omit-tag="not batchinfo['first_url']" href="${batchinfo['first_url']}">first</a>
+          <a tal:omit-tag="not batchinfo['prev_url']" href="${batchinfo['prev_url']}">prev</a>
+          <span id="batch-num-disp" >&nbsp;batch ${batchinfo['num']+1} of ${batchinfo['last']+1}&nbsp;</span>
+          <a tal:omit-tag="not batchinfo['next_url']" href="${batchinfo['next_url']}">next</a>
+          <a tal:omit-tag="not batchinfo['last_url']" href="${batchinfo['last_url']}">last</a>
+        </td>
+      </tr>
+
+  <h2 tal:condition="not batchinfo['batch']">No items</h2>
+
+  <tal:loop tal:repeat="choice batchinfo['batch']">
+    <tal:def tal:define="(name, title) choice">
+      <label class="checkbox" for="delete-${repeat.choice.index}">
+        <input type="checkbox"
+               name="delete"
+               value="${name}"
+               id="delete-${repeat.choice.index}"/>
+        <a href="${name}">${name}</a>
+      </label>
+    </tal:def>
+  </tal:loop>
+
+    <div class="form-actions">
+        <button
+            id="delete"
+            name="form.delete"
+            type="submit"
+            class="btn btn-primary"
+            value="delete">
+          Delete
+        </button>
+    </div>
+
+</fieldset>
+     </form>
+
+  </div>
+
+</div>
