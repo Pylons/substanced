@@ -36,7 +36,7 @@ def get_context_workflow(context):
     return
 
 @mgmt_view(name='security', permission='change security', 
-           renderer='templates/acl_edit.pt', tab_title='Security')
+           renderer='templates/acl.pt', tab_title='Security')
 def acl_edit_view(context, request):
 
     acl = original_acl = getattr(context, '__acl__', [])
