@@ -2,10 +2,10 @@ from pyramid.security import has_permission
 from pyramid.httpexceptions import HTTPFound
 from pyramid.httpexceptions import HTTPBadRequest
 
-from ...interfaces import IFolder
+from ..interfaces import IFolder
 
-from ..helpers import get_batchinfo
-from .. import mgmt_view
+from .helpers import get_batchinfo
+from . import mgmt_view
 
 @mgmt_view(context=IFolder, name='contents', renderer='templates/contents.pt')
 def folder_contents(context, request):

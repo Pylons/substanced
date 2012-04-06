@@ -8,7 +8,7 @@ from pyramid.traversal import find_resource
 from pyramid.renderers import get_renderer
 from pyramid.request import Request
 
-from substanced.objectmap import find_objectmap
+from ..objectmap import find_objectmap
 
 MANAGE_ROUTE_NAME = 'substanced_manage'
 
@@ -74,7 +74,7 @@ def get_mgmt_views(request, context=None):
     return sorted(L, key=operator.itemgetter('tab_title'))
 
 def macros():
-    template = get_renderer('views/templates/master.pt').implementation()
+    template = get_renderer('templates/master.pt').implementation()
     return {'master':template}
 
 def merge_url(url, **kw):

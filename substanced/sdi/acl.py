@@ -17,7 +17,7 @@ from substanced.subscribers import (
     _postorder as postorder, # XXX
     )
 
-from substanced.sdi import mgmt_view
+from . import mgmt_view
 
 def get_workflow(*arg, **kw):
     return # XXX
