@@ -12,7 +12,7 @@ from substanced.interfaces import ICatalogable
 from substanced.catalog import find_catalog
 
 from substanced.subscribers import (
-    _postorder as postorder,
+    _postorder as postorder, # XXX
     )
 
 from substanced.sdi import mgmt_view
@@ -148,6 +148,7 @@ def acl_edit_view(context, request):
         name = data['introspectable']['value']
         if name != NO_PERMISSION_REQUIRED:
             permissions.append(name)
+    permissions.sort()
 
     return dict(
         parent_acl=parent_acl or (),
