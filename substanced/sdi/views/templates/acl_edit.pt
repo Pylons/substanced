@@ -52,7 +52,10 @@
     <input type="text" name="principal" />
    </td>
    <td>
-    <input type="text" name="permissions" />
+   <select name="permission">
+    <option tal:repeat="permission permissions"
+            value="${permission}">${permission}</option>
+   </select>
    </td>
    <td>
     <input type="submit" name="form.add" value="Add" />

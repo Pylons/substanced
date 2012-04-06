@@ -4,6 +4,7 @@ from pyramid.security import (
     Deny,
     Everyone,
     AllPermissionsList,
+    NO_PERMISSION_REQUIRED,
     )
 
 from substanced.interfaces import ICatalogable
@@ -68,10 +69,9 @@ def acl_edit_view(context, request):
     elif 'form.add' in request.POST:
         verb = request.POST['verb']
         principal = request.POST['principal']
-        permissions = tuple(filter(None,
-                              COMMA_WS.split(request.POST['permissions'])))
+        permission = request.POST['permission']
         new = acl[:]
-        new.append((verb, principal, permissions))
+        new.append((verb, principal, (permission,)))
         acl = new
 
     elif 'form.inherit' in request.POST:
@@ -142,10 +142,17 @@ def acl_edit_view(context, request):
             break
         local_acl.append(l_ace)
 
+    permissions = []
+    introspector = request.registry.introspector
+    for data in introspector.get_category('permissions'): 
+        name = data['introspectable']['value']
+        if name != NO_PERMISSION_REQUIRED:
+            permissions.append(name)
 
     return dict(
         parent_acl=parent_acl or (),
         local_acl=local_acl,
+        permissions=permissions,
         inheriting=inheriting,
         security_state=security_state,
         security_states=security_states)
