@@ -18,10 +18,10 @@ from substanced.subscribers import (
 from substanced.sdi import mgmt_view
 
 def get_workflow(*arg, **kw):
-    return
+    return # XXX
 
 def get_security_states(*arg, **kw):
-    return []
+    return [] # XXX
 
 COMMA_WS = re.compile(r'[\s,]+')
 
