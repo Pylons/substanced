@@ -30,7 +30,7 @@ class IPropertied(Interface):
         argument is optional.  If it is not defined, the __dict__ of the
         propertied object will be updated."""
         
-class IObjectmap(Interface):
+class IObjectMap(Interface):
     """ A map of objects to paths """
     def objectid_for(obj_or_path_tuple):
         """ Return the object id for obj_or_path_tuple """
@@ -60,8 +60,7 @@ class ICatalog(Interface):
         'a sequence of objectids that are cataloged in this catalog')
     
 class ISite(IPropertied):
-    """ Marker interface for something that is both an ICatalogSite and 
-    an IDocmapSite  """
+    """ Marker interface for something that is the root of a site """
 
 class ISearch(Interface):
     """ Adapter for searching the catalog """
