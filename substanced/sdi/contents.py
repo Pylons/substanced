@@ -28,7 +28,8 @@ def folder_contents(context, request):
     L = []
     for k, v in context.items():
         deletable = ( has_permission('delete', v, request) 
-                      and not k == SERVICES_NAME )
+                      and not k == SERVICES_NAME 
+                      and not context.__name__ == SERVICES_NAME)
         L.append((k, deletable))
     batchinfo = get_batchinfo(L, request, url=request.url)
     return dict(batchinfo=batchinfo)
