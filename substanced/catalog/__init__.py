@@ -8,7 +8,6 @@ from zope.interface import implementer
 
 from repoze.catalog.catalog import Catalog as _Catalog
 
-from pyramid.traversal import find_resource
 from pyramid.threadlocal import get_current_registry
 
 from ..objectmap import find_objectmap
@@ -19,6 +18,7 @@ from ..interfaces import (
     )
 
 from ..service import find_service
+from ..util import resource_or_none
 
 logger = logging.getLogger(__name__)
 
@@ -88,9 +88,8 @@ class Catalog(_Catalog):
             if path_re is not None and path_re.match(upath) is None:
                 continue
             output and output('reindexing %s' % upath)
-            try:
-                resource = find_resource(self, path)
-            except KeyError:
+            resource = resource_or_none(self, path)
+            if resource is None:
                 output and output('error: %s not found' % upath)
                 continue
 
@@ -140,11 +139,10 @@ class Search(object):
         path = self.objectmap.path_for(objectid)
         if path is None:
             return None
-        try:
-            return find_resource(self.context, path)
-        except KeyError:
+        resource = resource_or_none(self.context, path)
+        if resource is None:
             logger.warn('Resource missing: %s' % (path,))
-            return None
+        return resource
         
     def query(self, q, **kw):
         num, objectids = self.catalog.query(q, **kw)

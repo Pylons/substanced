@@ -226,7 +226,25 @@ class IFolder(Interface):
 
         If ``send_events`` is false, suppress the sending of folder events.
         """
+
+class IUser(IPropertied):
+    """ Marker interface representing a user """
+
+class IGroup(IPropertied):
+    """ Marker interface representing a group """
+
+class IUsers(Interface):
+    """ Marker interface representing a collection of users """
+
+class IGroups(Interface):
+    """ Marker interface representing a collection of groups """
     
+class IPrincipals(Interface):
+    """ Marker interface representing a container of users and groups """
+
+class IPrincipalContent(IContent):
+    """ A category for principal content """
+        
 marker = object()
 
 SERVICES_NAME = '__services__'

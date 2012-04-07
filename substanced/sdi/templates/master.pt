@@ -56,7 +56,10 @@
               <!-- <li><a href="#about">About</a></li> -->
               <!-- <li><a href="#contact">Contact</a></li> -->
             </ul>
-           <p class="navbar-text pull-right">Logged in as <a href="#">username</a></p>
+           <p class="navbar-text pull-right">
+             <span tal:condition="request.user">${request.user.__name__} <a href="${request.mgmt_path(request.root, '@@logout')}">(logout)</a></span>
+             <span tal:condition="not request.user">Not logged in</span>
+           </p>
           </div><!--/.nav-collapse -->
         </div>
       </div>
@@ -69,11 +72,11 @@
           <div class="span2">
             <div class="well sidebar-nav">
               <ul class="nav nav-list"
-                  tal:define="isroot not context.__parent__;
-                              name context.__name__">
+                  tal:define="isroot not request.context.__parent__;
+                              name request.context.__name__">
                 <li class="nav-header" >Navigation</li>
                 <li tal:condition="not isroot"><a href=".."
-                   >${u"\u25B2 " + (context.__parent__.__name__ or 'top')}</a></li>
+                   >${u"\u25B2 " + (request.context.__parent__.__name__ or 'top')}</a></li>
                 <li tal:condition="isroot">(top)</li>
                 <li class="nav-header"
                     tal:content="name or 'top'"
@@ -91,7 +94,7 @@
 
             <ul class="nav nav-tabs">
               <li tal:repeat="tab_data h.get_mgmt_views(request)"
-                  tal:attributes="class request.view_name==tab_data['view_name'] and 'active' or None"><a href="${request.mgmt_path(context, '@@%s' % tab_data['view_name'])}">${tab_data['tab_title']}</a>
+                  tal:attributes="class request.view_name==tab_data['view_name'] and 'active' or None"><a href="${request.mgmt_path(request.context, '@@%s' % tab_data['view_name'])}">${tab_data['tab_title']}</a>
               </li>
             </ul>
 

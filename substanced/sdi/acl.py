@@ -1,16 +1,15 @@
 import re
 
-from pyramid.httpexceptions import HTTPBadRequest
-
 from pyramid.security import (
     Deny,
     Everyone,
     AllPermissionsList,
     NO_PERMISSION_REQUIRED,
+    ALL_PERMISSIONS,
     )
 
 from substanced.interfaces import ICatalogable
-
+from substanced.service import find_service
 from substanced.catalog import find_catalog
 
 from substanced.subscribers import (
@@ -18,6 +17,9 @@ from substanced.subscribers import (
     )
 
 from . import mgmt_view
+
+from .helpers import check_csrf_token
+from ..util import resource_or_none
 
 def get_workflow(*arg, **kw):
     return # XXX
@@ -36,10 +38,6 @@ def get_context_workflow(context):
     Otherwise returns None.
     """
     return
-
-def check_csrf_token(request):
-    if request.POST['csrf_token'] != request.session.get_csrf_token():
-        raise HTTPBadRequest('incorrect CSRF token')
 
 @mgmt_view(name='acl_edit', permission='change acls', 
            renderer='templates/acl.pt', tab_title='Security')
@@ -79,10 +77,21 @@ def acl_edit_view(context, request):
         check_csrf_token(request)
         verb = request.POST['verb']
         principal = request.POST['principal']
-        permission = request.POST['permission']
-        new = acl[:]
-        new.append((verb, principal, (permission,)))
-        acl = new
+        principals = find_service(context, 'principals')
+        principal_id = None
+        if principal in principals['users']:
+            principal_id = principals['users'][principal].__objectid__
+        elif principal in principals['groups']:
+            principal_id = principals['groups'][principal].__objectid__
+        if principal_id is not None:
+            permission = request.POST['permission']
+            if permission == '-- ALL --':
+                permissions = ALL_PERMISSIONS
+            else:
+                permissions = (permission,)
+            new = acl[:]
+            new.append((verb, principal_id, permissions))
+            acl = new
 
     elif 'form.inherit' in request.POST:
         check_csrf_token(request)
@@ -148,13 +157,26 @@ def acl_edit_view(context, request):
     local_acl = []
     inheriting = 'enabled'
     l_acl = getattr(context, '__acl__', ())
+    objectmap = find_service(context, 'objectmap')
     for l_ace in l_acl:
+        principal_id = l_ace[1]
+        permissions = l_ace[2]
         if l_ace == NO_INHERIT:
             inheriting = 'disabled'
             break
-        local_acl.append(l_ace)
+        if permissions == ALL_PERMISSIONS:
+            permissions = ('-- ALL --',)
+        path = objectmap.path_for(principal_id)
+        principal = resource_or_none(context, path)
+        if principal is None:
+            pname = '<deleted principal>'
+        else:
+            pname = principal.__name__
+            
+        new_ace = (l_ace[0], pname, permissions)
+        local_acl.append(new_ace)
 
-    permissions = []
+    permissions = ['-- ALL --']
     introspector = request.registry.introspector
     for data in introspector.get_category('permissions'): 
         name = data['introspectable']['value']

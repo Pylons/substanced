@@ -52,10 +52,8 @@ class Test__postorder(unittest.TestCase):
         model = testing.DummyResource(__provides__=IFolder)
         one = testing.DummyResource()
         two = testing.DummyResource(__provides__=IFolder)
-        services = testing.DummyResource()
         model['one'] = one
         model['two'] = two
-        model['__services__'] = services # will be skipped
         three = testing.DummyResource()
         four = testing.DummyResource()
         two['three'] = three
@@ -85,7 +83,7 @@ class Test_object_added(unittest.TestCase):
         site = _makeSite(objectmap=objectmap, catalog=catalog,
                          __provides__=ICatalogable)
         self._callFUT(site, None)
-        self.assertEqual(objectmap.added, [site])
+        self.assertEqual(objectmap.added, [site['__services__'], site])
         self.assertEqual(catalog.indexed, [(1, site)])
 
 class Test_object_removed(unittest.TestCase):

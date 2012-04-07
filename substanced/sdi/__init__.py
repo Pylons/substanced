@@ -1,6 +1,10 @@
 import inspect
 import venusian
 
+from pyramid.authentication import AuthTktAuthenticationPolicy
+from pyramid.exceptions import ConfigurationError
+from pyramid.authorization import ACLAuthorizationPolicy
+from pyramid.security import authenticated_userid
 from pyramid.compat import is_nonstr_iter
 from pyramid.traversal import resource_path_tuple
 from pyramid.httpexceptions import HTTPFound
@@ -12,6 +16,8 @@ from pyramid.events import (
     )
 
 from . import helpers
+from ..service import find_service
+from ..util import resource_or_none
 
 def as_sorted_tuple(val):
     if not is_nonstr_iter(val):
@@ -25,6 +31,7 @@ def add_mgmt_view(
         wrapper=None, xhr=False, accept=None, header=None, path_info=None, 
         custom_predicates=(), context=None, decorator=None, mapper=None, 
         http_cache=None, match_param=None, request_type=None, tab_title=None,
+        tab_condition=None,
         ):
     view = config.maybe_dotted(view)
     context = config.maybe_dotted(context)
@@ -68,6 +75,7 @@ def add_mgmt_view(
     intr = config.introspectable(
         'sdi views', discriminator, view_desc, 'sdi view')
     intr['tab_title'] = tab_title
+    intr['tab_condition'] = tab_condition
     intr.relate('views', view_discriminator)
     config.action(discriminator, introspectables=(intr,))
 
@@ -106,7 +114,7 @@ class mgmt_view(view_config):
                  header=default, path_info=default,
                  custom_predicates=default, context=default,
                  decorator=default, mapper=default, http_cache=default,
-                 match_param=default, tab_title=default):
+                 match_param=default, tab_title=default, tab_condition=default):
         L = locals()
         if (context is not default) or (for_ is not default):
             L['context'] = context or for_
@@ -141,10 +149,20 @@ def add_renderer_globals(event):
 def manage_main(request):
     view_data = helpers.get_mgmt_views(request)
     if not view_data:
-        request.response.body = 'No management views for %s' % request.context
-        return request.response
+        request.session['came_from'] = request.url
+        return HTTPFound(location=request.mgmt_path(request.root, '@@login'))
     view_name = view_data[0]['view_name']
     return HTTPFound(request.mgmt_path(request.context, '@@%s' % view_name))
+
+def get_user(request):
+    userid = authenticated_userid(request)
+    if userid is None:
+        return None
+    objectmap = find_service(request.context, 'objectmap')
+    path = objectmap.path_for(userid)
+    if path is None:
+        return None
+    return resource_or_none(request.context, path)
 
 def includeme(config): # pragma: no cover
     config.add_directive('add_mgmt_view', add_mgmt_view)
@@ -153,5 +171,14 @@ def includeme(config): # pragma: no cover
                            cache_max_age=3600)
     config.add_route(helpers.MANAGE_ROUTE_NAME, '/manage*traverse')
     config.set_request_property(mgmt_path, reify=True)
+    config.set_request_property(get_user, name='user', reify=True)
     config.include('deform_bootstrap')
+    secret = config.registry.settings.get('substanced.secret')
+    if secret is None:
+        raise ConfigurationError(
+            'You must set a substanced.secret key in your .ini file')
+    authn_policy = AuthTktAuthenticationPolicy(secret)
+    authz_policy = ACLAuthorizationPolicy()
+    config.set_authentication_policy(authn_policy)
+    config.set_authorization_policy(authz_policy)
     config.scan('substanced.sdi')

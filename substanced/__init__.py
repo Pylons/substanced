@@ -6,3 +6,4 @@ def includeme(config): # pragma: no cover
     config.include('substanced.subscribers')
     config.include('substanced.evolution')
     config.include('substanced.sdi')
+    config.include('substanced.principal')

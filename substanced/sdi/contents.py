@@ -9,7 +9,8 @@ from ..interfaces import IFolder
 from .helpers import get_batchinfo
 from . import mgmt_view
 
-@mgmt_view(context=IFolder, name='contents', renderer='templates/contents.pt')
+@mgmt_view(context=IFolder, name='contents', renderer='templates/contents.pt',
+           permission='view')
 def folder_contents(context, request):
     if 'form.delete' in request.POST:
         if request.POST['csrf_token'] != request.session.get_csrf_token():

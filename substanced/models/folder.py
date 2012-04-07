@@ -18,6 +18,8 @@ from ..events import (
     ObjectWillBeRemovedEvent,
     )
 
+from ..service import find_service
+
 @implementer(IFolder)
 class Folder(Persistent):
     """ A folder implementation which acts much like a Python dictionary.
@@ -52,9 +54,8 @@ class Folder(Persistent):
         """
         return self.order
 
-    @property
-    def services(self):
-        return self[SERVICES_NAME]
+    def get_service(self, service_name):
+        return find_service(self, service_name)
 
     def __iter__(self):
         return iter(self.order)
@@ -106,7 +107,7 @@ class Folder(Persistent):
         """
         return self.add(name, other)
 
-    def add(self, name, other, send_events=True):
+    def add(self, name, other, send_events=True, allow_services=False):
         """ See IFolder.
         """
         if not isinstance(name, basestring):
@@ -115,6 +116,9 @@ class Folder(Persistent):
         if not name:
             raise TypeError("Name must not be empty")
 
+        if name == SERVICES_NAME and not allow_services:
+            raise KeyError('%s is a reserved name' % SERVICES_NAME)
+        
         name = unicode(name)
 
         if self.data.has_key(name):
@@ -137,16 +141,16 @@ class Folder(Persistent):
             self._notify(event)
 
     def add_service(self, name, obj):
-        services = self.get('__services__')
+        services = self.get(SERVICES_NAME)
         if services is None:
             services = Folder()
-            self.add('__services__', services, send_events=False)
+            self.add(SERVICES_NAME, services, send_events=False, 
+                     allow_services=True)
         services.add(name, obj, send_events=False)
 
     def _notify(self, event):
-            reg = get_current_registry()
-            reg.subscribers((event.object, event), None)
-        
+        reg = get_current_registry()
+        reg.subscribers((event.object, event), None)
 
     def __delitem__(self, name):
         """ See IFolder.

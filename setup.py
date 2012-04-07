@@ -32,6 +32,7 @@ install_requires = [
     'repoze.catalog',
     'repoze.evolution',
     'pyramid_zodbconn',
+    'cryptacular',
     ]
 
 docs_extras = ['Sphinx']

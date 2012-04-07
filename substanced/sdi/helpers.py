@@ -4,11 +4,13 @@ import urlparse
 
 from zope.interface.interfaces import IInterface
 
-from pyramid.traversal import find_resource
 from pyramid.renderers import get_renderer
 from pyramid.request import Request
+from pyramid.httpexceptions import HTTPBadRequest
+from pyramid.security import authenticated_userid
 
 from ..objectmap import find_objectmap
+from ..util import resource_or_none
 
 MANAGE_ROUTE_NAME = 'substanced_manage'
 
@@ -19,12 +21,13 @@ def get_subnodes(request, context=None):
     nodes = objectmap.navgen(context, depth=1)
     L = []
     for node in nodes:
-        obj = find_resource(context, node['path'])
-        if get_mgmt_views(request, obj):
-            node['url']  = request.mgmt_path(obj)
-        else:
-            node['url'] = None
-        L.append(node)
+        obj = resource_or_none(context, node['path'])
+        if obj is not None:
+            if get_mgmt_views(request, obj):
+                node['url']  = request.mgmt_path(obj)
+            else:
+                node['url'] = None
+            L.append(node)
     return L
 
 def get_mgmt_views(request, context=None):
@@ -45,6 +48,10 @@ def get_mgmt_views(request, context=None):
         related = data['related']
         sdi_intr = data['introspectable']
         tab_title = sdi_intr['tab_title']
+        tab_condition = sdi_intr['tab_condition']
+        if tab_condition is not None:
+            if tab_condition is False or not tab_condition(request):
+                continue
         for intr in related:
             view_name = intr['name']
             if view_name == '' and tab_title == 'manage_main':
@@ -152,3 +159,8 @@ def get_batchinfo(sequence, request, url=None, default_size=15):
                 start=start,
                 end=end,
                 last=last)
+
+def check_csrf_token(request):
+    if request.POST['csrf_token'] != request.session.get_csrf_token():
+        raise HTTPBadRequest('incorrect CSRF token')
+
