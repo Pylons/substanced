@@ -2,11 +2,22 @@ import re
 import unittest
 from pyramid import testing
 
-from zope.interface import implementer
+from zope.interface import (
+    implementer,
+    alsoProvides,
+    )
 
 from repoze.catalog.interfaces import ICatalogIndex
 
-from ...interfaces import IObjectmapSite, ICatalogSite
+def _makeSite(**kw):
+    from ...interfaces import IFolder
+    site = testing.DummyResource(__provides__=kw.pop('__provides__', None))
+    alsoProvides(site, IFolder)
+    services = testing.DummyResource()
+    for k, v in kw.items():
+        services[k] = v
+    site['__services__'] = services
+    return site
 
 class TestCatalog(unittest.TestCase):
     def setUp(self):
@@ -15,46 +26,40 @@ class TestCatalog(unittest.TestCase):
     def tearDown(self):
         testing.tearDown()
 
-    def _makeOne(self, site):
+    def _makeOne(self):
         from .. import Catalog
-        return Catalog(site)
+        return Catalog()
 
     def test_clear(self):
-        site = testing.DummyModel()
-        inst = self._makeOne(site)
+        inst = self._makeOne()
         inst.objectids.insert(1)
         inst.clear()
         self.assertEqual(list(inst.objectids), [])
 
     def test_index_doc(self):
-        site = testing.DummyModel()
-        inst = self._makeOne(site)
+        inst = self._makeOne()
         inst.index_doc(1, object())
         self.assertEqual(list(inst.objectids), [1])
         
     def test_unindex_doc_exists(self):
-        site = testing.DummyModel()
-        inst = self._makeOne(site)
+        inst = self._makeOne()
         inst.objectids.insert(1)
         inst.unindex_doc(1)
         self.assertEqual(list(inst.objectids), [])
 
     def test_unindex_doc_notexists(self):
-        site = testing.DummyModel()
-        inst = self._makeOne(site)
+        inst = self._makeOne()
         inst.unindex_doc(1)
         self.assertEqual(list(inst.objectids), [])
 
     def test_reindex_doc_exists(self):
-        site = testing.DummyModel()
-        inst = self._makeOne(site)
+        inst = self._makeOne()
         inst.objectids.insert(1)
         inst.reindex_doc(1, object())
         self.assertEqual(list(inst.objectids), [1])
         
     def test_reindex_doc_notexists(self):
-        site = testing.DummyModel()
-        inst = self._makeOne(site)
+        inst = self._makeOne()
         inst.reindex_doc(1, object())
         self.assertEqual(list(inst.objectids), [1])
         
@@ -63,11 +68,11 @@ class TestCatalog(unittest.TestCase):
         self.config.testing_resources({'/a':a})
         L = []
         transaction = DummyTransaction()
-        site = DummySite()
-        site.objectmap.objectid_to_path = {1:(u'', u'a')}
-        inst = self._makeOne(site)
+        inst = self._makeOne()
+        objectmap = DummyObjectMap()
+        objectmap.objectid_to_path = {1:(u'', u'a')}
+        _makeSite(catalog=inst, objectmap=objectmap)
         inst.objectids = [1]
-        self.assertTrue(ICatalogSite.providedBy(site))
         inst.reindex_doc = lambda objectid, model: L.append((objectid, model))
         out = []
         inst.reindex(transaction=transaction, output=out.append)
@@ -85,11 +90,11 @@ class TestCatalog(unittest.TestCase):
         self.config.testing_resources({'/a':a})
         L = []
         transaction = DummyTransaction()
-        site = DummySite()
-        site.objectmap.objectid_to_path = {1: (u'', u'a'), 2:(u'', u'b')}
-        inst = self._makeOne(site)
+        objectmap = DummyObjectMap()
+        objectmap.objectid_to_path = {1: (u'', u'a'), 2:(u'', u'b')}
+        inst = self._makeOne()
+        _makeSite(catalog=inst, objectmap=objectmap)
         inst.objectids = [1, 2]
-        self.assertTrue(ICatalogSite.providedBy(site))
         inst.reindex_doc = lambda objectid, model: L.append((objectid, model))
         out = []
         inst.reindex(transaction=transaction, output=out.append)
@@ -109,12 +114,12 @@ class TestCatalog(unittest.TestCase):
         b = testing.DummyModel()
         self.config.testing_resources({'/a':a, '/b':b})
         L = []
-        site = DummySite()
-        site.objectmap.objectid_to_path = {1: (u'', u'a'), 2: (u'', u'b')}
+        objectmap = DummyObjectMap()
+        objectmap.objectid_to_path = {1: (u'', u'a'), 2: (u'', u'b')}
         transaction = DummyTransaction()
-        inst = self._makeOne(site)
+        inst = self._makeOne()
+        _makeSite(catalog=inst, objectmap=objectmap)
         inst.objectids = [1, 2]
-        self.assertTrue(ICatalogSite.providedBy(site))
         inst.reindex_doc = lambda objectid, model: L.append((objectid, model))
         out = []
         inst.reindex(
@@ -136,10 +141,11 @@ class TestCatalog(unittest.TestCase):
         b = testing.DummyModel()
         self.config.testing_resources({'/a':a, '/b':b})
         L = []
-        site = DummySite()
-        site.objectmap.objectid_to_path = {1: (u'', u'a'), 2: (u'', u'b')}
+        objectmap = DummyObjectMap()
+        objectmap.objectid_to_path = {1: (u'', u'a'), 2: (u'', u'b')}
         transaction = DummyTransaction()
-        inst = self._makeOne(site)
+        inst = self._makeOne()
+        _makeSite(catalog=inst, objectmap=objectmap)
         inst.objectids = [1,2]
         inst.reindex_doc = lambda objectid, model: L.append((objectid, model))
         out = []
@@ -159,10 +165,11 @@ class TestCatalog(unittest.TestCase):
         a = testing.DummyModel()
         self.config.testing_resources({'/a':a})
         L = []
-        site = DummySite()
-        site.objectmap.objectid_to_path = {1: (u'', u'a')}
+        objectmap = DummyObjectMap()
+        objectmap.objectid_to_path = {1: (u'', u'a')}
         transaction = DummyTransaction()
-        inst = self._makeOne(site)
+        inst = self._makeOne()
+        _makeSite(catalog=inst, objectmap=objectmap)
         inst.objectids = [1]
         index = DummyIndex()
         inst['index'] = index
@@ -182,8 +189,7 @@ class TestCatalog(unittest.TestCase):
         self.assertEqual(L, [(1,a)])
 
     def test_refresh_add_unmentioned(self):
-        site = testing.DummyResource()
-        inst = self._makeOne(site)
+        inst = self._makeOne()
         inst['index'] = DummyIndex()
         registry = testing.DummyResource()
         registry._substanced_indexes = {'index2':DummyIndex(), 
@@ -196,8 +202,7 @@ class TestCatalog(unittest.TestCase):
                          'refreshed'])
 
     def test_refresh_remove_unmentioned(self):
-        site = testing.DummyResource()
-        inst = self._makeOne(site)
+        inst = self._makeOne()
         inst['index'] = DummyIndex()
         registry = testing.DummyResource()
         registry._substanced_indexes = {}
@@ -223,13 +228,9 @@ class TestSearch(unittest.TestCase):
         adapter = self._getTargetClass()(context)
         return adapter
 
-    def _makeSite(self, objectid_to_path=None):
-        site = DummySite(objectid_to_path)
-        return site
-
     def test_query(self):
-        site = self._makeSite()
-        site.catalog = DummyCatalog()
+        catalog = DummyCatalog()
+        site = _makeSite(catalog=catalog)
         adapter = self._makeOne(site)
         q = DummyQuery()
         num, objectids, resolver = adapter.query(q)
@@ -237,16 +238,17 @@ class TestSearch(unittest.TestCase):
         self.assertEqual(list(objectids), [])
 
     def test_search(self):
-        site = self._makeSite()
-        site.catalog = DummyCatalog()
+        catalog = DummyCatalog()
+        site = _makeSite(catalog=catalog)
         adapter = self._makeOne(site)
         num, objectids, resolver = adapter.search()
         self.assertEqual(num, 0)
         self.assertEqual(list(objectids), [])
         
     def test_query_peachy_keen(self):
-        site = self._makeSite({1:(u'',)})
-        site.catalog = DummyCatalog((1, [1]))
+        objectmap = DummyObjectMap({1:(u'',)})
+        catalog = DummyCatalog((1, [1]))
+        site = _makeSite(objectmap=objectmap, catalog=catalog)
         ob = object()
         self.config.testing_resources({'/':ob})
         adapter = self._makeOne(site)
@@ -257,8 +259,9 @@ class TestSearch(unittest.TestCase):
         self.assertEqual(resolver(1), ob)
 
     def test_query_unfound_model(self):
-        site = self._makeSite({1:(u'', u'a')})
-        site.catalog = DummyCatalog((1, [1]))
+        catalog = DummyCatalog((1, [1]))
+        objectmap = DummyObjectMap({1:(u'', u'a')})
+        site = _makeSite(catalog=catalog, objectmap=objectmap)
         adapter = self._makeOne(site)
         q = DummyQuery()
         num, objectids, resolver = adapter.query(q)
@@ -268,12 +271,52 @@ class TestSearch(unittest.TestCase):
         self.assertEqual(results, [None])
 
     def test_query_unfound_objectid(self):
-        site = self._makeSite()
-        site.catalog = DummyCatalog()
+        catalog = DummyCatalog()
+        objectmap = DummyObjectMap({})
+        site = _makeSite(catalog=catalog, objectmap=objectmap)
         adapter = self._makeOne(site)
         q = DummyQuery()
         num, objectids, resolver = adapter.query(q)
         self.assertEqual(resolver(123), None)
+
+class Test_query_catalog(unittest.TestCase):
+    def _makeOne(self, request):
+        from .. import query_catalog
+        return query_catalog(request)
+
+    def test_it(self):
+        request = testing.DummyRequest()
+        request.context = testing.DummyResource()
+        inst = self._makeOne(request)
+        inst.Search = DummySearch(True)
+        result = inst('q', a=1)
+        self.assertEqual(result, True)
+
+class Test_search_catalog(unittest.TestCase):
+    def _makeOne(self, request):
+        from .. import search_catalog
+        return search_catalog(request)
+
+    def test_it(self):
+        request = testing.DummyRequest()
+        request.context = testing.DummyResource()
+        inst = self._makeOne(request)
+        inst.Search = DummySearch(True)
+        result = inst(a=1)
+        self.assertEqual(result, True)
+        
+class DummySearch(object):
+    def __init__(self, result):
+        self.result = result
+
+    def __call__(self, context):
+        return self
+
+    def query(self, *arg, **kw):
+        return self.result
+
+    def search(self, **kw):
+        return self.result
 
 class DummyQuery(object):
     pass    
@@ -287,13 +330,6 @@ class DummyObjectMap(object):
     def path_for(self, objectid):
         return self.objectid_to_path.get(objectid)
 
-@implementer(IObjectmapSite, ICatalogSite)
-class DummySite(object):
-    __parent__ = None
-    __name__ = ''
-    def __init__(self, objectid_to_path=None):
-        self.objectmap = DummyObjectMap(objectid_to_path)
-        
 class DummyCatalog(object):
     def __init__(self, result=(0, [])):
         self.result = result

@@ -8,6 +8,7 @@ from BTrees.Length import Length
 from ..interfaces import (
     IFolder,
     marker,
+    SERVICES_NAME,
     )
 
 from ..events import (
@@ -50,6 +51,10 @@ class Folder(Persistent):
         """ See IFolder.
         """
         return self.order
+
+    @property
+    def services(self):
+        return self[SERVICES_NAME]
 
     def __iter__(self):
         return iter(self.order)
@@ -130,6 +135,13 @@ class Folder(Persistent):
         if send_events:
             event = ObjectAddedEvent(other, self, name)
             self._notify(event)
+
+    def add_service(self, name, obj):
+        services = self.get('__services__')
+        if services is None:
+            services = Folder()
+            self.add('__services__', services, send_events=False)
+        services.add(name, obj, send_events=False)
 
     def _notify(self, event):
             reg = get_current_registry()

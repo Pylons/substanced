@@ -32,9 +32,6 @@ class IPropertied(Interface):
         
 class IObjectmap(Interface):
     """ A map of objects to paths """
-    site = Attribute(
-        'The persistent IObjectmap object onto which this is attached as '
-        '``objectmap``')
     def objectid_for(obj_or_path_tuple):
         """ Return the object id for obj_or_path_tuple """
     def path_for(objectid):
@@ -59,25 +56,10 @@ class IObjectmap(Interface):
 
 class ICatalog(Interface):
     """ A collection of indices """
-    site = Attribute(
-        'The persistent ICatalogSite object onto which this is attached as '
-        '``catalog``')
     objectids = Attribute(
         'a sequence of objectids that are cataloged in this catalog')
     
-class ICatalogSite(Interface):
-    """ An ICatalogSite has a ``catalog`` attribute which is an instance of a
-    ``substanced.catalog.Catalog``; this is also a marker interface for
-    lookup of a component via its lineage"""
-    catalog = Attribute('a catalog')
-
-class IObjectmapSite(Interface):
-    """ An IObjectmapSite has a ``objectmap`` attribute which is an instance
-    of a ``substanced.objmap.ObjectMap``; this is a marker interface for
-    lookup of a component via its lineage."""
-    objectmap = Attribute('object map')
-
-class ISite(ICatalogSite, IObjectmapSite, IPropertied):
+class ISite(IPropertied):
     """ Marker interface for something that is both an ICatalogSite and 
     an IDocmapSite  """
 
@@ -121,7 +103,6 @@ class IFolder(Interface):
     default system encoding or the UTF-8 encoding."""
 
     order = Attribute("""Order of items within the folder
-
     (Optional) If not set on the instance, objects are iterated in an
     arbitrary order based on the underlying data store.""")
 
@@ -248,4 +229,6 @@ class IFolder(Interface):
         """
     
 marker = object()
+
+SERVICES_NAME = '__services__'
 

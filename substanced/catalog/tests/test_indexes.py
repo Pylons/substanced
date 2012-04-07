@@ -4,19 +4,26 @@ from pyramid import testing
 from BTrees.IIBTree import IITreeSet
 from BTrees.IFBTree import IFSet
 
+def _makeSite(**kw):
+    from ...interfaces import IFolder
+    from zope.interface import alsoProvides
+    site = testing.DummyResource(__provides__=kw.pop('__provides__', None))
+    alsoProvides(site, IFolder)
+    services = testing.DummyResource()
+    for k, v in kw.items():
+        services[k] = v
+    site['__services__'] = services
+    return site
+
 class TestPathIndex(unittest.TestCase):
     def _makeOne(self):
         from ..indexes import PathIndex
-        from ...interfaces import IObjectmapSite, ICatalogSite
         from ...objectmap import ObjectMap
-        site = testing.DummyResource(
-            __provides__=(IObjectmapSite, ICatalogSite))
-        site.objectmap = ObjectMap(site)
-        catalog = DummyCatalog(site)
-        catalog.__parent__ = site
-        site.catalog = catalog
+        objectmap = ObjectMap()
+        catalog = DummyCatalog()
         index = PathIndex()
-        index.__parent__ = site.catalog
+        index.__parent__ = catalog
+        _makeSite(catalog=catalog, objectmap=objectmap)
         return index
 
     def test_index_doc(self):
@@ -37,7 +44,7 @@ class TestPathIndex(unittest.TestCase):
     def test_search(self):
         inst = self._makeOne()
         obj = testing.DummyResource()
-        objectmap = inst.__parent__.site.objectmap
+        objectmap = inst.__parent__.__parent__['objectmap']
         objectmap._v_nextid = 1
         objectmap.add(obj)
         result = inst.search((u'',))
@@ -46,7 +53,7 @@ class TestPathIndex(unittest.TestCase):
     def test_apply_obj(self):
         inst = self._makeOne()
         obj = testing.DummyResource()
-        objectmap = inst.__parent__.site.objectmap
+        objectmap = inst.__parent__.__parent__['objectmap']
         objectmap._v_nextid = 1
         objectmap.add(obj)
         result = inst.apply(obj)
@@ -61,7 +68,7 @@ class TestPathIndex(unittest.TestCase):
     def test_apply_path(self):
         inst = self._makeOne()
         obj = testing.DummyResource()
-        objectmap = inst.__parent__.site.objectmap
+        objectmap = inst.__parent__.__parent__['objectmap']
         objectmap._v_nextid = 1
         objectmap.add(obj)
         result = inst.apply((u'',))
@@ -70,7 +77,7 @@ class TestPathIndex(unittest.TestCase):
     def test_apply_dict(self):
         inst = self._makeOne()
         obj = testing.DummyResource()
-        objectmap = inst.__parent__.site.objectmap
+        objectmap = inst.__parent__.__parent__['objectmap']
         objectmap._v_nextid = 1
         objectmap.add(obj)
         obj2 = testing.DummyResource(__name__='a')
@@ -82,7 +89,7 @@ class TestPathIndex(unittest.TestCase):
     def test_apply_dict_withdepth(self):
         inst = self._makeOne()
         obj = testing.DummyResource()
-        objectmap = inst.__parent__.site.objectmap
+        objectmap = inst.__parent__.__parent__['objectmap']
         objectmap._v_nextid = 1
         objectmap.add(obj)
         obj2 = testing.DummyResource(__name__='a')
@@ -94,7 +101,7 @@ class TestPathIndex(unittest.TestCase):
     def test_apply_dict_with_include_origin_false(self):
         inst = self._makeOne()
         obj = testing.DummyResource()
-        objectmap = inst.__parent__.site.objectmap
+        objectmap = inst.__parent__.__parent__['objectmap']
         objectmap._v_nextid = 1
         objectmap.add(obj)
         obj2 = testing.DummyResource(__name__='a')
@@ -127,15 +134,14 @@ class TestPathIndex(unittest.TestCase):
         # ftest to make sure we have the right kind of Sets
         inst = self._makeOne()
         obj = testing.DummyResource()
-        objectmap = inst.__parent__.site.objectmap
+        objectmap = inst.__parent__.__parent__['objectmap']
         objectmap._v_nextid = 1
         objectmap.add(obj)
         result = inst.apply_intersect(obj, IFSet([1]))
         self.assertEqual(list(result),  [1])
 
 class DummyCatalog(object):
-    def __init__(self, site, objectids=None):
-        self.site = site
+    def __init__(self, objectids=None):
         if objectids is None:
             objectids = IITreeSet()
         self.objectids = objectids

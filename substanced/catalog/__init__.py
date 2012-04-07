@@ -8,35 +8,28 @@ from zope.interface import implementer
 
 from repoze.catalog.catalog import Catalog as _Catalog
 
-from pyramid.traversal import (
-    find_resource,
-    find_interface,
-    )
+from pyramid.traversal import find_resource
+from pyramid.threadlocal import get_current_registry
 
 from ..objectmap import find_objectmap
 
-from pyramid.threadlocal import get_current_registry
-
 from ..interfaces import (
     ISearch,
-    ICatalogSite,
     ICatalog,
     )
 
+from ..service import find_service
+
 logger = logging.getLogger(__name__)
 
-def find_site(context):
-    return find_interface(context, ICatalogSite)
-
 def find_catalog(context):
-    return getattr(find_site(context), 'catalog', None)
+    return find_service(context, 'catalog')
 
 @implementer(ICatalog)
 class Catalog(_Catalog):
     family = BTrees.family32
-    def __init__(self, site, family=None):
+    def __init__(self, family=None):
         _Catalog.__init__(self, family)
-        self.site = site
         self.objectids = self.family.IF.TreeSet()
 
     def clear(self):
@@ -88,7 +81,7 @@ class Catalog(_Catalog):
             output and output('reindexing only indexes %s' % str(indexes))
 
         i = 1
-        objectmap = find_objectmap(self.site)
+        objectmap = find_objectmap(self)
         for objectid in self.objectids:
             path = objectmap.path_for(objectid)
             upath = u'/'.join(path)
@@ -96,7 +89,7 @@ class Catalog(_Catalog):
                 continue
             output and output('reindexing %s' % upath)
             try:
-                resource = find_resource(self.site, path)
+                resource = find_resource(self, path)
             except KeyError:
                 output and output('error: %s not found' % upath)
                 continue
@@ -168,8 +161,24 @@ def _add_catalog_index(config, name, index): # pragma: no cover
         config.registry._substanced_indexes = indexes
     config.action(('catalog-index', name), callable=register)
 
+class _catalog_request_api(object):
+    Search = Search
+    def __init__(self, request):
+        self.request = request
+        self.context = request.context
+
+class query_catalog(_catalog_request_api):
+    def __call__(self, *arg, **kw):
+        return self.Search(self.context).query(*arg, **kw)
+
+class search_catalog(_catalog_request_api):
+    def __call__(self, **kw):
+        return self.Search(self.context).search(**kw)
+
 def includeme(config): # pragma: no cover
     from zope.interface import Interface
     config.registry.registerAdapter(Search, (Interface,), ISearch)
     config.add_directive('add_catalog_index', _add_catalog_index)
+    config.set_request_property(query_catalog, reify=True)
+    config.set_request_property(search_catalog, reify=True)
     

@@ -1,8 +1,20 @@
 import unittest
 
+from zope.interface import alsoProvides
+
 from pyramid import testing
 
 from pyramid.traversal import resource_path_tuple
+
+def _makeSite(**kw):
+    from ..interfaces import IFolder
+    site = testing.DummyResource(__provides__=kw.pop('__provides__', None))
+    alsoProvides(site, IFolder)
+    services = testing.DummyResource()
+    for k, v in kw.items():
+        services[k] = v
+    site['__services__'] = services
+    return site
 
 class Test__postorder(unittest.TestCase):
     def setUp(self):
@@ -40,8 +52,10 @@ class Test__postorder(unittest.TestCase):
         model = testing.DummyResource(__provides__=IFolder)
         one = testing.DummyResource()
         two = testing.DummyResource(__provides__=IFolder)
+        services = testing.DummyResource()
         model['one'] = one
         model['two'] = two
+        model['__services__'] = services # will be skipped
         three = testing.DummyResource()
         four = testing.DummyResource()
         two['three'] = three
@@ -60,21 +74,19 @@ class Test_object_added(unittest.TestCase):
         from . import object_added
         return object_added(object, event)
 
-    def test_content_object_no_catalog(self):
+    def test_no_catalog(self):
         model = testing.DummyResource()
         self._callFUT(model, None) # doesnt blow up
 
-    def test_content_object(self):
-        from ..interfaces import ICatalogSite, ICatalogable, IObjectmapSite
+    def test_catalogable_object(self):
+        from ..interfaces import ICatalogable
         catalog = DummyCatalog()
         objectmap = DummyObjectMap()
-        model = testing.DummyResource(
-            objectmap=objectmap, catalog=catalog,
-            __provides__=(ICatalogSite, ICatalogable, IObjectmapSite)
-            )
-        self._callFUT(model, None)
-        self.assertEqual(objectmap.added, [model])
-        self.assertEqual(catalog.indexed, [(1, model)])
+        site = _makeSite(objectmap=objectmap, catalog=catalog,
+                         __provides__=ICatalogable)
+        self._callFUT(site, None)
+        self.assertEqual(objectmap.added, [site])
+        self.assertEqual(catalog.indexed, [(1, site)])
 
 class Test_object_removed(unittest.TestCase):
     def setUp(self):
@@ -92,15 +104,11 @@ class Test_object_removed(unittest.TestCase):
         self._callFUT(model, None) # doesnt blow up
 
     def test_content_object_w_objectmap_and_catalog(self):
-        from ..interfaces import ICatalogSite, IObjectmapSite
         objectmap = DummyObjectMap({1: (u'',)})
         catalog = DummyCatalog()
         catalog.objectids = [1]
-        model = testing.DummyResource(
-            objectmap=objectmap, catalog=catalog,
-            __provides__=(ICatalogSite, IObjectmapSite),
-            )
-        self._callFUT(model, None)
+        site = _makeSite(objectmap=objectmap, catalog=catalog)
+        self._callFUT(site, None)
         self.assertEqual(catalog.unindexed, [1])
         self.assertEqual(objectmap.removed, [1])
 
@@ -120,28 +128,24 @@ class Test_object_modified(unittest.TestCase):
         self._callFUT(model, None) # doesnt blow up
 
     def test_content_object(self):
-        from ..interfaces import ICatalogSite, ICatalogable, IObjectmapSite
+        from ..interfaces import ICatalogable
         objectmap = DummyObjectMap({1:(u'',)})
         catalog = DummyCatalog()
-        model = testing.DummyResource(
-            objectmap=objectmap, catalog=catalog,
-            __provides__=(ICatalogSite, ICatalogable, IObjectmapSite),
-            )
-        self._callFUT(model, None)
-        self.assertEqual(catalog.reindexed, [(1, model)])
+        site = _makeSite(objectmap=objectmap, catalog=catalog, 
+                         __provides__=ICatalogable)
+        self._callFUT(site, None)
+        self.assertEqual(catalog.reindexed, [(1, site)])
 
     def test_content_object_not_yet_indexed(self):
-        from ..interfaces import ICatalogSite, ICatalogable, IObjectmapSite
+        from ..interfaces import ICatalogable
         catalog = DummyCatalog()
         objectmap = DummyObjectMap()
-        model = testing.DummyResource(
-            catalog = catalog, objectmap=objectmap,
-            __provides__=(ICatalogSite, ICatalogable, IObjectmapSite)
-            )
-        self._callFUT(model, None)
+        site = _makeSite(catalog=catalog, objectmap=objectmap, 
+                         __provides__=ICatalogable)
+        self._callFUT(site, None)
         self.assertEqual(catalog.reindexed, [])
-        self.assertEqual(model.__objectid__, 1)
-        self.assertEqual(catalog.indexed, [(1, model)])
+        self.assertEqual(site.__objectid__, 1)
+        self.assertEqual(catalog.indexed, [(1, site)])
         
 class DummyCatalog(dict):
     def __init__(self):

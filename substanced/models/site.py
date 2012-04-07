@@ -26,17 +26,10 @@ class Site(Folder):
 
     def __init__(self):
         Folder.__init__(self)
-        self.objectmap = ObjectMap(self)
-        self.catalog = Catalog(self)
-        self.catalog.refresh()
+        self.add_service('objectmap', ObjectMap())
+        self.add_service('catalog', Catalog())
+        self.services['catalog'].refresh()
 
-    def get_properties(self):
-        return dict(name=self.name, description=self.description)
-
-    def set_properties(self, struct):
-        self.name = struct['name']
-        self.description = struct['description']
-    
     @classmethod
     def root_factory(cls, request, transaction=transaction, 
                      get_connection=get_connection):

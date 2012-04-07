@@ -8,6 +8,7 @@ from ..interfaces import (
     IObjectAddedEvent,
     IObjectWillBeRemovedEvent,
     IObjectModifiedEvent,
+    SERVICES_NAME,
     )
     
 from ..catalog import find_catalog
@@ -16,9 +17,10 @@ from ..objectmap import find_objectmap
 def _postorder(startnode):
     def visit(node):
         if IFolder.providedBy(node):
-            for child in node.values():
-                for result in visit(child):
-                    yield result
+            for name, child in node.items():
+                if name != SERVICES_NAME:
+                    for result in visit(child):
+                        yield result
         yield node
     return visit(startnode)
 

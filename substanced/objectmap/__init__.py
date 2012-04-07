@@ -4,18 +4,12 @@ from persistent import Persistent
 
 import BTrees
 
-from ..interfaces import IObjectmapSite
+from pyramid.traversal import resource_path_tuple
 
-from pyramid.traversal import (
-    find_interface,
-    resource_path_tuple,
-    )
+from ..service import find_service
 
 def find_objectmap(context):
-    site = find_interface(context, IObjectmapSite)
-    if site is None:
-        return
-    return site.objectmap
+    return find_service(context, 'objectmap')
 
 """
 Pathindex data structure of object map:
@@ -85,8 +79,7 @@ class ObjectMap(Persistent):
 
     family = BTrees.family32
 
-    def __init__(self, site):
-        self.site = site
+    def __init__(self):
         self.objectid_to_path = self.family.IO.BTree()
         self.path_to_objectid = self.family.OI.BTree()
         self.pathindex = self.family.OO.BTree()
