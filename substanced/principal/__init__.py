@@ -102,12 +102,13 @@ class GroupSchema(Schema):
         )
 
 @content(IGroup, IPrincipalContent)
-class Group(Persistent):
+class Group(Folder):
     description = ''
     
     __propschema__ = GroupSchema()
 
     def __init__(self, description):
+        Folder.__init__(self)
         self.description = description
         self.members = IFTreeSet()
 
@@ -208,12 +209,13 @@ class UserSchema(Schema):
 NO_CHANGE = u'\ufffd' * 8
 
 @content(IUser, IPrincipalContent)
-class User(Persistent):
+class User(Folder):
 
     __propschema__ = UserSchema()
     
     def __init__(self, password, email=None, security_question=None,
                  security_answer=None, groups=()):
+        Folder.__init__(self)
         self.password = pwd_manager.encode(password)
         self.email = email
         self.security_question = security_question
