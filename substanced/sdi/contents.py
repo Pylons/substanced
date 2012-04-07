@@ -2,6 +2,8 @@ from pyramid.security import has_permission
 from pyramid.httpexceptions import HTTPFound
 from pyramid.httpexceptions import HTTPBadRequest
 
+from substanced.interfaces import SERVICES_NAME
+
 from ..interfaces import IFolder
 
 from .helpers import get_batchinfo
@@ -25,8 +27,9 @@ def folder_contents(context, request):
     
     L = []
     for k, v in context.items():
-        if has_permission('delete', v, request):
-            L.append((k, v))
+        deletable = ( has_permission('delete', v, request) 
+                      and not k == SERVICES_NAME )
+        L.append((k, deletable))
     batchinfo = get_batchinfo(L, request, url=request.url)
     return dict(batchinfo=batchinfo)
 

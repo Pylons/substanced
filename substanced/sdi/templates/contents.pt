@@ -18,9 +18,10 @@
   <h2 tal:condition="not batchinfo['batch']">No items</h2>
 
   <tal:loop tal:repeat="choice batchinfo['batch']">
-    <tal:def tal:define="(name, title) choice">
+    <tal:def tal:define="(name, deletable) choice">
       <label class="checkbox" for="delete-${repeat.choice.index}">
-        <input type="checkbox"
+        <input tal:attributes="disabled not deletable"
+               type="checkbox"
                name="delete"
                value="${name}"
                id="delete-${repeat.choice.index}"/>
