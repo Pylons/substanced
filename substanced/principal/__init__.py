@@ -206,7 +206,6 @@ class UserSchema(Schema):
 
 NO_CHANGE = u'\ufffd' * 8
 
-@implementer(IUser)
 @content(IUser, IPrincipalContent)
 class User(Persistent):
 
