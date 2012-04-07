@@ -10,15 +10,15 @@ from ..interfaces import (
     IPrincipalContent,
     )
 
-from ..sdi import mgmt_view
+from . import mgmt_view
 
-from . import (
+from ..principal import (
     UserSchema,
     GroupSchema,
     )
 
 @mgmt_view(context=IUsers, name='add', permission='add user', 
-           renderer='substanced.sdi:templates/form.pt')
+           renderer='templates/form.pt')
 class AddUserView(FormView):
     title = 'Add User'
     schema = UserSchema()
@@ -32,7 +32,7 @@ class AddUserView(FormView):
         return HTTPFound(self.request.mgmt_path(user, '@@properties'))
 
 @mgmt_view(context=IGroups, name='add', permission='add group', 
-           renderer='substanced.sdi:templates/form.pt')
+           renderer='templates/form.pt')
 class AddGroupView(FormView):
     title = 'Add Group'
     schema = GroupSchema()

@@ -78,7 +78,8 @@ def groupname_validator(node, kw):
 
 class MembersWidget(deform.widget.Widget):
     def serialize(self, field, cstruct, readonly=False):
-        result = render('templates/members.pt', {'cstruct':cstruct})
+        result = render('substanced.sdi:templates/members.pt', 
+                        {'cstruct':cstruct})
         return result
 
     def deserialize(self, field, pstruct):
