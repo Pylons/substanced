@@ -1,6 +1,6 @@
 from pyramid.location import lineage
 
-from .interfaces import (
+from ..interfaces import (
     IFolder,
     SERVICES_NAME
     )
