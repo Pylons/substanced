@@ -68,24 +68,7 @@
 
         <div class="row-fluid">
 
-          <div class="span2">
-            <div class="well sidebar-nav">
-              <ul class="nav nav-list"
-                  tal:define="isroot not request.context.__parent__;
-                              name request.context.__name__">
-                <li class="nav-header"
-                    tal:content="name or 'Home'"
-                    >Name</li>
-                <li tal:repeat="node h.get_subnodes(request)">
-                    <a tal:condition="node['url']" 
-                       href="${node['url']}">${node['name'] or '/'}</a>
-                    <span tal:omit-tag="" tal:condition="not node['url']">${node['name'] or '/'}</span>
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          <div class="span9">
+          <div class="span12">
 
             <ul class="nav nav-tabs">
               <li tal:repeat="tab_data h.get_mgmt_views(request)"
