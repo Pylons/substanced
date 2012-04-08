@@ -100,7 +100,7 @@ class GroupSchema(Schema):
 @content(IGroup, IPrincipalContent)
 class Group(Folder):
     description = ''
-    tab_order = ('properties',)
+    __tab_order__ = ('properties',)
     __propschema__ = GroupSchema()
 
     def __init__(self, description):
@@ -206,8 +206,7 @@ NO_CHANGE = u'\ufffd' * 8
 @content(IUser, IPrincipalContent)
 class User(Folder):
 
-    tab_order = ('properties',)
-
+    __tab_order__ = ('properties',)
     __propschema__ = UserSchema()
     
     def __init__(self, password, email='', security_question='',

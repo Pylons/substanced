@@ -79,8 +79,8 @@ def get_mgmt_views(request, context=None):
     selected = []
     extra = []
     
-    if hasattr(context, 'tab_order'):
-        tab_order = context.tab_order
+    if hasattr(context, '__tab_order__'):
+        tab_order = context.__tab_order__
         for view_data in L:
             for view_name in tab_order:
                 if view_name == view_data['view_name']:
