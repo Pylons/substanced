@@ -1,3 +1,4 @@
+import BTrees
 from zope.interface import Interface
 
 from pyramid.events import subscriber
@@ -33,9 +34,8 @@ def object_will_be_removed(obj, event):
     if objectmap is None or catalog is None:
         return
     objectids = objectmap.pathlookup(obj)
-    for oid in objectids:
-        if oid in catalog.objectids:
-            catalog.unindex_doc(oid)
+    for oid in BTrees.family32.IF.intersection(objectids, catalog.objectids):
+        catalog.unindex_doc(oid)
 
 @subscriber([Interface, IObjectModifiedEvent])
 def object_modified(obj, event):

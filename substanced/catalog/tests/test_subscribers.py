@@ -1,10 +1,9 @@
 import unittest
+import BTrees
 
 from zope.interface import alsoProvides
 
 from pyramid import testing
-
-from pyramid.traversal import resource_path_tuple
 
 def _makeSite(**kw):
     from ...interfaces import IFolder
@@ -75,7 +74,7 @@ class Test_object_will_be_removed(unittest.TestCase):
     def test_with_pathlookup(self):
         model = testing.DummyResource()
         catalog = DummyCatalog()
-        catalog.objectids = [1,2]
+        catalog.objectids = BTrees.family32.IF.Set([1,2])
         objectmap = DummyObjectMap()
         site = _makeSite(objectmap=objectmap, catalog=catalog)
         site['model'] = model
@@ -87,7 +86,7 @@ class Test_object_will_be_removed(unittest.TestCase):
     def test_with_pathlookup_limited_by_objectids(self):
         model = testing.DummyResource()
         catalog = DummyCatalog()
-        catalog.objectids = [1]
+        catalog.objectids = BTrees.family32.IF.Set([1])
         objectmap = DummyObjectMap()
         site = _makeSite(objectmap=objectmap, catalog=catalog)
         site['model'] = model
@@ -154,7 +153,7 @@ class DummyCatalog(dict):
 
 class DummyObjectMap:
     def pathlookup(self, obj):
-        return [1,2]
+        return BTrees.family32.IF.Set([1,2])
 
 class DummyEvent(object):
     def __init__(self, parent):
