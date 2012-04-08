@@ -6,6 +6,7 @@ from persistent import Persistent
 import BTrees
 
 from pyramid.events import subscriber
+from pyramid.location import lineage
 from pyramid.traversal import (
     resource_path_tuple,
     find_resource,
@@ -305,6 +306,12 @@ class ObjectMap(Persistent):
 
         return result
 
+def node_path_tuple(resource):
+    # cant use resource_path_tuple from pyramid, it wants everything to 
+    # have a __name__
+    return tuple(reversed([getattr(loc, '__name__', '') for 
+                           loc in lineage(resource)]))
+    
 @subscriber([Interface, IObjectWillBeAddedEvent])
 def object_will_be_added(obj, event):
     """ Give content an __objectid__ and index it (an IObjectWillBeAddedEvent
@@ -323,7 +330,7 @@ def object_will_be_added(obj, event):
     basepath = resource_path_tuple(event.parent)
     name = event.name
     for node in postorder(obj):
-        node_path = resource_path_tuple(node)
+        node_path = node_path_tuple(node)
         path_tuple = basepath + (name,) + node_path[1:]
         objectmap.add(node, path_tuple) # gives node an __objectid__
 

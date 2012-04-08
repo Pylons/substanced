@@ -448,6 +448,22 @@ class Test_object_will_be_added(unittest.TestCase):
             [(two, ('', 'one', 'two')), (one, ('', 'one'))]
             )
 
+    def test_added_object_has_children_object_has_no_name(self):
+        from ..interfaces import IFolder
+        objectmap = DummyObjectMap()
+        site = _makeSite(objectmap=objectmap)
+        one = testing.DummyModel(__provides__=IFolder)
+        two = testing.DummyModel(__provides__=IFolder)
+        one['two'] = two
+        event = DummyEvent(site)
+        event.name = 'one'
+        del one.__name__
+        self._callFUT(one, event)
+        self.assertEqual(
+            objectmap.added,
+            [(two, ('', 'one', 'two')), (one, ('', 'one'))]
+            )
+        
     def test_added_object_has_children_not_adding_to_root(self):
         from ..interfaces import IFolder
         objectmap = DummyObjectMap()
@@ -480,7 +496,7 @@ class Test_object_will_be_added(unittest.TestCase):
                          ('', 'bogusparent2', 'one'))
         event = DummyEvent(site)
         self.assertRaises(ValueError, self._callFUT, one, event)
-        
+
 class Test_object_removed(unittest.TestCase):
     def _callFUT(self, object, event):
         from . import object_removed
