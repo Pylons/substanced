@@ -12,6 +12,7 @@ def coarse_datetime_repr(date):
     return int(timetime) // 100
 
 def postorder(startnode):
+    """ Yields deepest nodes first """
     def visit(node):
         if IFolder.providedBy(node):
             for child in node.values():
