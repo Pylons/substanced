@@ -1,7 +1,4 @@
 from pyramid.security import (
-    Deny,
-    Everyone,
-    AllPermissionsList,
     NO_PERMISSION_REQUIRED,
     ALL_PERMISSIONS,
     )

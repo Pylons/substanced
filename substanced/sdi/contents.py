@@ -1,20 +1,21 @@
 from pyramid.security import has_permission
 from pyramid.httpexceptions import HTTPFound
-from pyramid.httpexceptions import HTTPBadRequest
 
 from substanced.interfaces import SERVICES_NAME
 
 from ..interfaces import IFolder
 
-from .helpers import get_batchinfo
+from .helpers import (
+    get_batchinfo,
+    check_csrf_token,
+    )
 from . import mgmt_view
 
 @mgmt_view(context=IFolder, name='contents', renderer='templates/contents.pt',
            permission='view')
 def folder_contents(context, request):
     if 'form.delete' in request.POST:
-        if request.POST['csrf_token'] != request.session.get_csrf_token():
-            raise HTTPBadRequest('Invalid CSRF token')
+        check_csrf_token(request)
         todelete = request.POST.getall('delete')
         deleted = 0
         for name in todelete:
