@@ -320,14 +320,12 @@ class DummyQuery(object):
 
 class DummyObjectMap(object):
     def __init__(self, objectid_to=None): 
-        if objectid_to is None:
-            objectid_to = {}
+        if objectid_to is None: objectid_to = {}
         self.objectid_to = objectid_to
 
     def path_for(self, objectid):
         data = self.objectid_to.get(objectid)
-        if data is None:
-            return
+        if data is None: return
         return data[1]
 
     def object_for(self, objectid):
