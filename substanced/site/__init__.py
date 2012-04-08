@@ -19,25 +19,30 @@ from ..schema import Schema
 from ..folder import Folder
 
 class SiteSchema(Schema):
-    name = colander.SchemaNode(colander.String())
-    description = colander.SchemaNode(colander.String())
+    title = colander.SchemaNode(colander.String(),
+                                missing=colander.null)
+    description = colander.SchemaNode(colander.String(),
+                                      missing=colander.null)
 
 @implementer(ISite)
 class Site(Folder):
     
     __propschema__ = SiteSchema()
     
-    name = ''
+    title = ''
     description = ''
 
     def __init__(self, initial_login, initial_password):
         Folder.__init__(self)
-        self.add_service('objectmap', ObjectMap())
-        self.add_service('catalog', Catalog())
-        self.add_service('principals', Principals())
-        user = self.get_service('principals')['users'].add_user(
-            initial_login, initial_password)
-        self.get_service('catalog').refresh()
+        objectmap = ObjectMap()
+        catalog = Catalog()
+        principals = Principals()
+        self.add_service('objectmap', objectmap)
+        self.add_service('catalog', catalog)
+        self.add_service('principals', principals)
+        user = principals['users'].add_user(initial_login, initial_password)
+        catalog.refresh()
+        objectmap.add(self, ('',))
         self.__acl__ = [(Allow, user.__objectid__, ALL_PERMISSIONS)]
 
     @classmethod

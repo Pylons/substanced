@@ -8,7 +8,9 @@ from pyramid.renderers import get_renderer
 from pyramid.request import Request
 from pyramid.httpexceptions import HTTPBadRequest
 from pyramid.location import lineage
+from pyramid.traversal import find_interface
 
+from ..interfaces import ISite
 from ..service import find_service
 
 MANAGE_ROUTE_NAME = 'substanced_manage'
@@ -107,6 +109,10 @@ def breadcrumbs(request):
         active = resource is request.context and 'active' or None
         breadcrumbs.append({'url':url, 'name':name, 'active':active})
     return breadcrumbs
+
+def get_site_title(request):
+    site = find_interface(request.context, ISite)
+    return site.title or 'Substance D'
 
 def merge_url(url, **kw):
     segments = urlparse.urlsplit(url)
