@@ -95,7 +95,9 @@
   </div>
   </form>
 
- <h2> Inherit ACL</h2>
+ <tal:block condition="context is not request.root">
+
+ <h2> Inherit ACL </h2>
  <div class="row">
   <form action="@@acl_edit" method="post">
     <div class="span2">
@@ -122,6 +124,8 @@
 
   </form>
  </div>
+
+ </tal:block>
 
  <tal:block condition="security_states">
   <h2>Workflow State</h2>
