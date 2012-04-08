@@ -7,21 +7,19 @@ from zope.interface.interfaces import IInterface
 from pyramid.renderers import get_renderer
 from pyramid.request import Request
 from pyramid.httpexceptions import HTTPBadRequest
-from pyramid.security import authenticated_userid
 
-from ..objectmap import find_objectmap
-from ..util import resource_or_none
+from ..service import find_service
 
 MANAGE_ROUTE_NAME = 'substanced_manage'
 
 def get_subnodes(request, context=None):
     if context is None:
         context = request.context
-    objectmap = find_objectmap(context)
+    objectmap = find_service(context, 'objectmap')
     nodes = objectmap.navgen(context, depth=1)
     L = []
     for node in nodes:
-        obj = resource_or_none(context, node['path'])
+        obj = objectmap.object_for(node['path'])
         if obj is not None:
             if get_mgmt_views(request, obj):
                 node['url']  = request.mgmt_path(obj)

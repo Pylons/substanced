@@ -9,6 +9,7 @@ from zope.interface import implementer
 from repoze.catalog.catalog import Catalog as _Catalog
 
 from pyramid.threadlocal import get_current_registry
+from pyramid.traversal import resource_path
 
 from ..objectmap import find_objectmap
 
@@ -18,7 +19,6 @@ from ..interfaces import (
     )
 
 from ..service import find_service
-from ..util import resource_or_none
 
 logger = logging.getLogger(__name__)
 
@@ -83,15 +83,21 @@ class Catalog(_Catalog):
         i = 1
         objectmap = find_objectmap(self)
         for objectid in self.objectids:
-            path = objectmap.path_for(objectid)
-            upath = u'/'.join(path)
-            if path_re is not None and path_re.match(upath) is None:
-                continue
-            output and output('reindexing %s' % upath)
-            resource = resource_or_none(self, path)
+            resource = objectmap.object_for(objectid)
             if resource is None:
-                output and output('error: %s not found' % upath)
+                path = objectmap.path_for(objectid)
+                if path is None:
+                    output and output(
+                        'error: no path for objectid %s in object map' % 
+                        objectid)
+                    continue
+                upath = u'/'.join(path)
+                output and output('error: object at path %s not found' % upath)
                 continue
+            path = resource_path(resource)
+            if path_re is not None and path_re.match(path) is None:
+                continue
+            output and output('reindexing %s' % path)
 
             if indexes is None:
                 self.reindex_doc(objectid, resource)
@@ -136,12 +142,9 @@ class Search(object):
         self.objectmap = find_objectmap(self.context)
 
     def resolver(self, objectid):
-        path = self.objectmap.path_for(objectid)
-        if path is None:
-            return None
-        resource = resource_or_none(self.context, path)
+        resource = self.objectmap.object_for(objectid)
         if resource is None:
-            logger.warn('Resource missing: %s' % (path,))
+            logger.warn('Resource for objectid %s missing' % (objectid,))
         return resource
         
     def query(self, q, **kw):

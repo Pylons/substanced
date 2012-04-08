@@ -5,8 +5,11 @@ from persistent import Persistent
 
 import BTrees
 
-from pyramid.traversal import resource_path_tuple
 from pyramid.events import subscriber
+from pyramid.traversal import (
+    resource_path_tuple,
+    find_resource,
+    )
 
 from ..service import find_service
 from ..util import postorder
@@ -119,6 +122,18 @@ class ObjectMap(Persistent):
 
     def path_for(self, objectid):
         return self.objectid_to_path.get(objectid)
+
+    def object_for(self, objectid_or_path_tuple):
+        if isinstance(objectid_or_path_tuple, int):
+            path_tuple = self.objectid_to_path.get(objectid_or_path_tuple)
+        elif isinstance(objectid_or_path_tuple, tuple):
+            path_tuple = objectid_or_path_tuple
+        else:
+            raise ValueError('Unknown input %s' % (objectid_or_path_tuple,))
+        try:
+            return find_resource(self.__parent__, path_tuple)
+        except KeyError:
+            return None
             
     def add(self, obj, path_tuple):
         if not isinstance(path_tuple, tuple):

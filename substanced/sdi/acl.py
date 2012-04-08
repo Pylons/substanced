@@ -17,7 +17,6 @@ from substanced.util import postorder
 from . import mgmt_view
 
 from .helpers import check_csrf_token
-from ..util import resource_or_none
 
 def get_workflow(*arg, **kw):
     return # XXX
@@ -164,8 +163,7 @@ def acl_edit_view(context, request):
             break
         if permissions == ALL_PERMISSIONS:
             permissions = ('-- ALL --',)
-        path = objectmap.path_for(principal_id)
-        principal = resource_or_none(context, path)
+        principal = objectmap.object_for(principal_id)
         if principal is None:
             pname = '<deleted principal>'
         else:

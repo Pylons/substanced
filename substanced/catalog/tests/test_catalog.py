@@ -25,7 +25,7 @@ class TestCatalog(unittest.TestCase):
 
     def tearDown(self):
         testing.tearDown()
-
+        
     def _makeOne(self):
         from .. import Catalog
         return Catalog()
@@ -65,13 +65,12 @@ class TestCatalog(unittest.TestCase):
         
     def test_reindex(self):
         a = testing.DummyModel()
-        self.config.testing_resources({'/a':a})
         L = []
         transaction = DummyTransaction()
         inst = self._makeOne()
-        objectmap = DummyObjectMap()
-        objectmap.objectid_to_path = {1:(u'', u'a')}
-        _makeSite(catalog=inst, objectmap=objectmap)
+        objectmap = DummyObjectMap({1:[a, (u'', u'a')]})
+        site = _makeSite(catalog=inst, objectmap=objectmap)
+        site['a'] = a
         inst.objectids = [1]
         inst.reindex_doc = lambda objectid, model: L.append((objectid, model))
         out = []
@@ -87,13 +86,14 @@ class TestCatalog(unittest.TestCase):
 
     def test_reindex_with_missing_resource(self):
         a = testing.DummyModel()
-        self.config.testing_resources({'/a':a})
         L = []
         transaction = DummyTransaction()
-        objectmap = DummyObjectMap()
-        objectmap.objectid_to_path = {1: (u'', u'a'), 2:(u'', u'b')}
+        objectmap = DummyObjectMap(
+            {1: [a, (u'', u'a')], 2:[None, (u'', u'b')]}
+            )
         inst = self._makeOne()
-        _makeSite(catalog=inst, objectmap=objectmap)
+        site = _makeSite(catalog=inst, objectmap=objectmap)
+        site['a'] = a
         inst.objectids = [1, 2]
         inst.reindex_doc = lambda objectid, model: L.append((objectid, model))
         out = []
@@ -104,21 +104,20 @@ class TestCatalog(unittest.TestCase):
                           'refreshed',
                           '*** committing ***',
                           "reindexing /a",
-                          "reindexing /b",
-                          "error: /b not found",
+                          "error: object at path /b not found",
                           '*** committing ***'])
         self.assertEqual(transaction.committed, 2)
         
     def test_reindex_pathre(self):
         a = testing.DummyModel()
         b = testing.DummyModel()
-        self.config.testing_resources({'/a':a, '/b':b})
         L = []
-        objectmap = DummyObjectMap()
-        objectmap.objectid_to_path = {1: (u'', u'a'), 2: (u'', u'b')}
+        objectmap = DummyObjectMap({1: [a, (u'', u'a')], 2: [b, (u'', u'b')]})
         transaction = DummyTransaction()
         inst = self._makeOne()
-        _makeSite(catalog=inst, objectmap=objectmap)
+        site = _makeSite(catalog=inst, objectmap=objectmap)
+        site['a'] = a
+        site['b'] = b
         inst.objectids = [1, 2]
         inst.reindex_doc = lambda objectid, model: L.append((objectid, model))
         out = []
@@ -139,13 +138,13 @@ class TestCatalog(unittest.TestCase):
     def test_reindex_dryrun(self):
         a = testing.DummyModel()
         b = testing.DummyModel()
-        self.config.testing_resources({'/a':a, '/b':b})
         L = []
-        objectmap = DummyObjectMap()
-        objectmap.objectid_to_path = {1: (u'', u'a'), 2: (u'', u'b')}
+        objectmap = DummyObjectMap({1: [a, (u'', u'a')], 2: [b, (u'', u'b')]})
         transaction = DummyTransaction()
         inst = self._makeOne()
-        _makeSite(catalog=inst, objectmap=objectmap)
+        site = _makeSite(catalog=inst, objectmap=objectmap)
+        site['a'] = a
+        site['b'] = b
         inst.objectids = [1,2]
         inst.reindex_doc = lambda objectid, model: L.append((objectid, model))
         out = []
@@ -163,13 +162,12 @@ class TestCatalog(unittest.TestCase):
 
     def test_reindex_with_indexes(self):
         a = testing.DummyModel()
-        self.config.testing_resources({'/a':a})
         L = []
-        objectmap = DummyObjectMap()
-        objectmap.objectid_to_path = {1: (u'', u'a')}
+        objectmap = DummyObjectMap({1: [a, (u'', u'a')]})
         transaction = DummyTransaction()
         inst = self._makeOne()
-        _makeSite(catalog=inst, objectmap=objectmap)
+        site = _makeSite(catalog=inst, objectmap=objectmap)
+        site['a'] = a
         inst.objectids = [1]
         index = DummyIndex()
         inst['index'] = index
@@ -246,11 +244,10 @@ class TestSearch(unittest.TestCase):
         self.assertEqual(list(objectids), [])
         
     def test_query_peachy_keen(self):
-        objectmap = DummyObjectMap({1:(u'',)})
+        ob = object()
+        objectmap = DummyObjectMap({1:[ob, (u'',)]})
         catalog = DummyCatalog((1, [1]))
         site = _makeSite(objectmap=objectmap, catalog=catalog)
-        ob = object()
-        self.config.testing_resources({'/':ob})
         adapter = self._makeOne(site)
         q = DummyQuery()
         num, objectids, resolver = adapter.query(q)
@@ -260,7 +257,7 @@ class TestSearch(unittest.TestCase):
 
     def test_query_unfound_model(self):
         catalog = DummyCatalog((1, [1]))
-        objectmap = DummyObjectMap({1:(u'', u'a')})
+        objectmap = DummyObjectMap({1:[None, (u'', u'a')]})
         site = _makeSite(catalog=catalog, objectmap=objectmap)
         adapter = self._makeOne(site)
         q = DummyQuery()
@@ -322,13 +319,22 @@ class DummyQuery(object):
     pass    
 
 class DummyObjectMap(object):
-    def __init__(self, objectid_to_path=None): 
-        if objectid_to_path is None:
-            objectid_to_path = {}
-        self.objectid_to_path = objectid_to_path
+    def __init__(self, objectid_to=None): 
+        if objectid_to is None:
+            objectid_to = {}
+        self.objectid_to = objectid_to
 
     def path_for(self, objectid):
-        return self.objectid_to_path.get(objectid)
+        data = self.objectid_to.get(objectid)
+        if data is None:
+            return
+        return data[1]
+
+    def object_for(self, objectid):
+        data = self.objectid_to.get(objectid)
+        if data is None:
+            return
+        return data[0]
 
 class DummyCatalog(object):
     def __init__(self, result=(0, [])):

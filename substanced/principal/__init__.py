@@ -1,4 +1,3 @@
-from persistent import Persistent
 from BTrees.IFBTree import IFTreeSet
 
 from zope.interface import implementer
@@ -30,7 +29,6 @@ from ..service import find_service
 
 from ..content import content
 from ..models.folder import Folder
-from ..util import resource_or_none
 
 @implementer(IPrincipals)
 class Principals(Folder):
@@ -133,8 +131,7 @@ class Group(Folder):
         L = []
         objectmap = find_service(self, 'objectmap')
         for memberid in self.members:
-            path = objectmap.path_for(memberid)
-            member = resource_or_none(self, path)
+            member = objectmap.object_for(memberid)
             if member is not None:
                 L.append(member)
         return L
@@ -254,8 +251,7 @@ class User(Folder):
         L = []
         objectmap = find_service(self, 'objectmap')
         for groupid in self.groups:
-            path = objectmap.path_for(groupid)
-            group = resource_or_none(self, path)
+            group = objectmap.object_for(groupid)
             if group is not None:
                 L.append(group)
         return L
@@ -273,8 +269,7 @@ def user_added(user, event):
     objectmap = find_service(user, 'objectmap')
     userid = user.__objectid__
     for groupid in user.groups:
-        path = objectmap.path_for(groupid)
-        group = resource_or_none(user, path)
+        group = objectmap.object_for(groupid)
         if group is not None:
             group.members.insert(userid)
 
@@ -291,8 +286,7 @@ def group_added(group, event):
     groupid = group.__objectid__
     objectmap = find_service(group, 'objectmap')
     for userid in group.members:
-        path = objectmap.path_for(userid)
-        user = resource_or_none(path)
+        user = objectmap.object_for(userid)
         if user is not None:
             user.groups.insert(groupid)
     
@@ -347,8 +341,7 @@ def group_modified(group, event):
 def groupfinder(userid, request):
     context = request.context
     objectmap = find_service(context, 'objectmap')
-    path = objectmap.path_for(userid)
-    user = resource_or_none(context, path)
+    user = objectmap.object_for(userid)
     if user is None:
         return None
     return list(user.groups)

@@ -17,7 +17,6 @@ from pyramid.events import (
 
 from . import helpers
 from ..service import find_service
-from ..util import resource_or_none
 
 def as_sorted_tuple(val):
     if not is_nonstr_iter(val):
@@ -159,10 +158,7 @@ def get_user(request):
     if userid is None:
         return None
     objectmap = find_service(request.context, 'objectmap')
-    path = objectmap.path_for(userid)
-    if path is None:
-        return None
-    return resource_or_none(request.context, path)
+    return objectmap.object_for(userid)
 
 def includeme(config): # pragma: no cover
     config.add_directive('add_mgmt_view', add_mgmt_view)
