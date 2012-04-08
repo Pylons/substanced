@@ -136,6 +136,8 @@ def acl_edit_view(context, request):
         security_state = None
         security_states = None
 
+    objectmap = find_service(context, 'objectmap')
+        
     parent = context.__parent__
     parent_acl = []
     while parent is not None:
@@ -145,7 +147,18 @@ def acl_edit_view(context, request):
             if ace == NO_INHERIT:
                 stop = True
             else:
-                parent_acl.append(ace)
+                principal_id = ace[1]
+                principal = objectmap.object_for(principal_id)
+                if principal is None:
+                    pname = '<deleted principal>'
+                else:
+                    pname = principal.__name__
+                if ace[2] == ALL_PERMISSIONS:
+                    perms =  ('-- ALL --',)
+                else:
+                    perms = ace[2]
+                new_ace = (ace[0], pname, perms)
+                parent_acl.append(new_ace)
         if stop:
             break
         parent = parent.__parent__
@@ -153,7 +166,6 @@ def acl_edit_view(context, request):
     local_acl = []
     inheriting = 'enabled'
     l_acl = getattr(context, '__acl__', ())
-    objectmap = find_service(context, 'objectmap')
     for l_ace in l_acl:
         principal_id = l_ace[1]
         permissions = l_ace[2]
