@@ -80,7 +80,7 @@ class MembersWidget(deform.widget.Widget):
         return result
 
     def deserialize(self, field, pstruct):
-        pass
+        return colander.null
 
 class GroupSchema(Schema):
     name = colander.SchemaNode(
