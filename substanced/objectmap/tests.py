@@ -71,6 +71,18 @@ class TestObjectMap(unittest.TestCase):
         inst._find_resource = lambda *arg: a
         self.assertEqual(inst.object_for((u'',)), a)
 
+    def test_object_for_unknown(self):
+        inst = self._makeOne()
+        self.assertRaises(ValueError, inst.object_for, None)
+
+    def test_object_for_cantbefound(self):
+        inst = self._makeOne()
+        inst.objectid_to_path[1] = 'abc'
+        def find_resource(*arg):
+            raise KeyError('a')
+        inst._find_resource = find_resource
+        self.assertEqual(inst.object_for(1), None)
+        
     def test_object_for_path_tuple_alternate_context(self):
         a = testing.DummyResource()
         inst = self._makeOne()
@@ -95,10 +107,6 @@ class TestObjectMap(unittest.TestCase):
         ctx = testing.DummyResource()
         self.assertEqual(inst._find_resource(ctx, ('', 'a')), 1)
         
-    def test_object_for_unknown(self):
-        inst = self._makeOne()
-        self.assertRaises(ValueError, inst.object_for, None)
-
     def test_add_already_in_path_to_objectid(self):
         inst = self._makeOne()
         obj = testing.DummyResource()
