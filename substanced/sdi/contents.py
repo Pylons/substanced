@@ -1,41 +1,41 @@
 from pyramid.security import has_permission
 from pyramid.httpexceptions import HTTPFound
 
-from substanced.interfaces import SERVICES_NAME
-
 from ..interfaces import IFolder
 
 from .helpers import (
     get_batchinfo,
     check_csrf_token,
     )
+
 from . import mgmt_view
+
+# TODO: rename, cut, copy, paste
 
 @mgmt_view(context=IFolder, name='contents', renderer='templates/contents.pt',
            permission='view')
 def folder_contents(context, request):
-    if 'form.delete' in request.POST:
-        check_csrf_token(request)
-        todelete = request.POST.getall('delete')
-        deleted = 0
-        for name in todelete:
-            v = context.get(name)
-            if v is not None:
-                if has_permission('delete', v, request):
-                    del context[name]
-                    deleted += 1
-        request.session.flash('Deleted %s items' % deleted)
-        return HTTPFound(request.referrer)
-    
+    can_manage = has_permission('manage contents', context, request)
     L = []
     for k, v in context.items():
-        if not has_permission('view', v, request):
-            continue
-        deletable = ( has_permission('delete', v, request) 
-                      and not k == SERVICES_NAME 
-                      and not context.__name__ == SERVICES_NAME)
-        L.append((k, deletable))
+        viewable = False
+        url = request.mgmt_path(v)
+        if has_permission('view', v, request):
+            viewable = True
+        L.append(dict(name=k, deletable=can_manage, viewable=viewable, url=url))
     batchinfo = get_batchinfo(L, request, url=request.url)
     return dict(batchinfo=batchinfo)
 
-            
+@mgmt_view(context=IFolder, name='delete_folder_contents',
+           permission='manage contents', tab_condition=False)
+def delete_folder_contents(context, request):
+    check_csrf_token(request)
+    todelete = request.POST.getall('delete')
+    deleted = 0
+    for name in todelete:
+        v = context.get(name)
+        if v is not None:
+            del context[name]
+            deleted += 1
+    request.session.flash('Deleted %s items' % deleted)
+    return HTTPFound(request.mgmt_path(context, '@@contents'))

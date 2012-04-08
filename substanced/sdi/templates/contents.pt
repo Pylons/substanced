@@ -1,7 +1,7 @@
 <div metal:use-macro="h.macros()['master']">
 
   <div metal:fill-slot="main">
-     <form action="@@contents" method="POST">
+     <form action="@@delete_folder_contents" method="POST">
 
 <fieldset>
 
@@ -18,16 +18,16 @@
   <h2 tal:condition="not batchinfo['batch']">No items</h2>
 
   <tal:loop tal:repeat="choice batchinfo['batch']">
-    <tal:def tal:define="(name, deletable) choice">
+    <tal:block condition="choice['viewable']">
       <label class="checkbox" for="delete-${repeat.choice.index}">
-        <input tal:attributes="disabled not deletable"
+        <input tal:attributes="disabled not choice['deletable']"
                type="checkbox"
                name="delete"
-               value="${name}"
+               value="${choice['name']}"
                id="delete-${repeat.choice.index}"/>
-        <a href="${name}">${name}</a>
+        <a href="${choice['url']}">${choice['name']}</a>
       </label>
-    </tal:def>
+    </tal:block>
   </tal:loop>
 
    <input type="hidden" name="csrf_token" 
