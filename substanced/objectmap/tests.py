@@ -4,6 +4,12 @@ from zope.interface import alsoProvides
 from pyramid.traversal import resource_path_tuple
 
 class TestObjectMap(unittest.TestCase):
+    def setUp(self):
+        self.config = testing.setUp()
+
+    def tearDown(self):
+        testing.tearDown()
+        
     def _makeOne(self):
         from . import ObjectMap
         return ObjectMap()
@@ -50,7 +56,49 @@ class TestObjectMap(unittest.TestCase):
         inst = self._makeOne()
         inst.objectid_to_path[1] = 'abc'
         self.assertEqual(inst.path_for(1), 'abc')
+
+    def test_object_for_objectid(self):
+        a = testing.DummyResource()
+        inst = self._makeOne()
+        inst.objectid_to_path[1] = 'abc'
+        inst._find_resource = lambda *arg: a
+        self.assertEqual(inst.object_for(1), a)
+
+    def test_object_for_path_tuple(self):
+        a = testing.DummyResource()
+        inst = self._makeOne()
+        inst.objectid_to_path[1] = 'abc'
+        inst._find_resource = lambda *arg: a
+        self.assertEqual(inst.object_for((u'',)), a)
+
+    def test_object_for_path_tuple_alternate_context(self):
+        a = testing.DummyResource()
+        inst = self._makeOne()
+        inst.objectid_to_path[1] = 'abc'
+        L= []
+        def find_resource(context, path_tuple):
+            L.append(context)
+            return a
+        inst._find_resource = find_resource
+        self.assertEqual(inst.object_for((u'',), 'a'), a)
+        self.assertEqual(L, ['a'])
+
+    def test__find_resource_no_context(self):
+        self.config.testing_resources({'/a':1})
+        inst = self._makeOne()
+        inst.__parent__ = None
+        self.assertEqual(inst._find_resource(None, ('', 'a')), 1)
+
+    def test__find_resource_with_alternate_context(self):
+        self.config.testing_resources({'/a':1})
+        inst = self._makeOne()
+        ctx = testing.DummyResource()
+        self.assertEqual(inst._find_resource(ctx, ('', 'a')), 1)
         
+    def test_object_for_unknown(self):
+        inst = self._makeOne()
+        self.assertRaises(ValueError, inst.object_for, None)
+
     def test_add_already_in_path_to_objectid(self):
         inst = self._makeOne()
         obj = testing.DummyResource()
