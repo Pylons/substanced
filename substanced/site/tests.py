@@ -10,7 +10,7 @@ class Test_root_factory(unittest.TestCase):
         testing.tearDown()
         
     def _callFUT(self, request, transaction, get_connection):
-        from ..site import Site
+        from . import Site
         return Site.root_factory(request, transaction, get_connection)
 
     def test_without_app_root_no_initial_password(self):

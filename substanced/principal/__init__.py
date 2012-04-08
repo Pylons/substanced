@@ -26,9 +26,8 @@ from ..interfaces import (
 
 from ..schema import Schema
 from ..service import find_service
-
 from ..content import content
-from ..models.folder import Folder
+from ..folder import Folder
 
 @implementer(IPrincipals)
 class Principals(Folder):

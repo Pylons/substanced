@@ -16,8 +16,7 @@ from ..objectmap import ObjectMap
 from ..catalog import Catalog
 from ..principal import Principals
 from ..schema import Schema
-
-from .folder import Folder
+from ..folder import Folder
 
 class SiteSchema(Schema):
     name = colander.SchemaNode(colander.String())
@@ -61,3 +60,5 @@ class Site(Folder):
             transaction.commit()
         return zodb_root['app_root']
 
+def includeme(config): # pragma: no cover
+    config.add_content_type(ISite, Site)

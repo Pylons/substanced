@@ -1,5 +1,5 @@
 from pyramid.config import Configurator
-from substanced.models import Site
+from substanced.site import Site
 from pyramid.session import UnencryptedCookieSessionFactoryConfig
 
 def main(global_config, **settings):
