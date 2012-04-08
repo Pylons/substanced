@@ -7,6 +7,7 @@ from zope.interface.interfaces import IInterface
 from pyramid.renderers import get_renderer
 from pyramid.request import Request
 from pyramid.httpexceptions import HTTPBadRequest
+from pyramid.location import lineage
 
 from ..service import find_service
 
@@ -97,6 +98,15 @@ def get_mgmt_views(request, context=None):
 def macros():
     template = get_renderer('templates/master.pt').implementation()
     return {'master':template}
+
+def breadcrumbs(request):
+    breadcrumbs = []
+    for resource in reversed(list(lineage(request.context))):
+        url = request.mgmt_path(resource)
+        name = resource.__name__ or 'Home'
+        active = resource is request.context and 'active' or None
+        breadcrumbs.append({'url':url, 'name':name, 'active':active})
+    return breadcrumbs
 
 def merge_url(url, **kw):
     segments = urlparse.urlsplit(url)
