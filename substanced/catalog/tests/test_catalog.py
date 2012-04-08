@@ -84,7 +84,7 @@ class TestCatalog(unittest.TestCase):
                           '*** committing ***'])
         self.assertEqual(transaction.committed, 2)
 
-    def test_reindex_with_missing_resource(self):
+    def test_reindex_with_missing_path(self):
         a = testing.DummyModel()
         L = []
         transaction = DummyTransaction()
@@ -107,6 +107,27 @@ class TestCatalog(unittest.TestCase):
                           "error: object at path /b not found",
                           '*** committing ***'])
         self.assertEqual(transaction.committed, 2)
+
+    def test_reindex_with_missing_objectid(self):
+        a = testing.DummyModel()
+        L = []
+        transaction = DummyTransaction()
+        objectmap = DummyObjectMap()
+        inst = self._makeOne()
+        site = _makeSite(catalog=inst, objectmap=objectmap)
+        site['a'] = a
+        inst.objectids = [1]
+        out = []
+        inst.reindex(transaction=transaction, output=out.append)
+        self.assertEqual(L, [])
+        self.assertEqual(out,
+                         ['refreshing indexes',
+                          'refreshed',
+                          '*** committing ***',
+                          "error: no path for objectid 1 in object map",
+                          '*** committing ***'])
+        self.assertEqual(transaction.committed, 2)
+        
         
     def test_reindex_pathre(self):
         a = testing.DummyModel()
