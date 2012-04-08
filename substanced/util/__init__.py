@@ -2,6 +2,8 @@ import calendar
 
 from pyramid.traversal import find_resource
 
+from ..interfaces import IFolder
+
 def resource_or_none(resource, path):
     try:
         return find_resource(resource, path)
@@ -16,4 +18,13 @@ def coarse_datetime_repr(date):
     """
     timetime = calendar.timegm(date.timetuple())
     return int(timetime) // 100
+
+def postorder(startnode):
+    def visit(node):
+        if IFolder.providedBy(node):
+            for child in node.values():
+                for result in visit(child):
+                    yield result
+        yield node
+    return visit(startnode)
 

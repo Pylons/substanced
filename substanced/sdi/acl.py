@@ -12,9 +12,7 @@ from substanced.interfaces import ICatalogable
 from substanced.service import find_service
 from substanced.catalog import find_catalog
 
-from substanced.subscribers import (
-    _postorder as postorder, # XXX
-    )
+from substanced.util import postorder
 
 from . import mgmt_view
 

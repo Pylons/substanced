@@ -1,5 +1,7 @@
 import unittest
 from pyramid import testing
+from zope.interface import alsoProvides
+from pyramid.traversal import resource_path_tuple
 
 class TestObjectMap(unittest.TestCase):
     def _makeOne(self):
@@ -54,26 +56,30 @@ class TestObjectMap(unittest.TestCase):
         obj = testing.DummyResource()
         obj.__objectid__ = 1
         inst.path_to_objectid[(u'',)] = 1
-        self.assertRaises(ValueError, inst.add, obj)
+        self.assertRaises(ValueError, inst.add, obj, (u'',))
 
     def test_add_already_in_objectid_to_path(self):
         inst = self._makeOne()
         obj = testing.DummyResource()
         obj.__objectid__ = 1
         inst.objectid_to_path[1] = True
-        self.assertRaises(ValueError, inst.add, obj)
+        self.assertRaises(ValueError, inst.add, obj, (u'',))
+
+    def test_add_not_a_path_tuple(self):
+        inst = self._makeOne()
+        self.assertRaises(ValueError, inst.add, None, None)
 
     def test_add_traversable_object(self):
         inst = self._makeOne()
         inst._v_nextid = 1
         obj = testing.DummyResource()
-        inst.add(obj)
+        inst.add(obj, (u'',))
         self.assertEqual(inst.objectid_to_path[1], (u'',))
         self.assertEqual(obj.__objectid__, 1)
         
     def test_add_not_valid(self):
         inst = self._makeOne()
-        self.assertRaises(ValueError, inst.add, 'a')
+        self.assertRaises(AttributeError, inst.add, 'a', (u'',))
 
     def test_remove_not_an_int_or_tuple(self):
         inst = self._makeOne()
@@ -118,7 +124,7 @@ class TestObjectMap(unittest.TestCase):
         abc = resource('/a/b/c')
         z = resource('/z')
         for thing in root, a, ab, abc, z:
-            inst.add(thing)
+            inst.add(thing, thing.path_tuple)
         result = inst.navgen(root, 99)
         self.assertEqual(
             result, 
@@ -142,7 +148,7 @@ class TestObjectMap(unittest.TestCase):
         abc = resource('/a/b/c')
         z = resource('/z')
         for thing in root, a, ab, abc, z:
-            inst.add(thing)
+            inst.add(thing, thing.path_tuple)
         result = inst.navgen(a, 99)
         self.assertEqual(
             result,
@@ -161,7 +167,7 @@ class TestObjectMap(unittest.TestCase):
         abc = resource('/a/b/c')
         z = resource('/z')
         for thing in root, a, ab, abc, z:
-            inst.add(thing)
+            inst.add(thing, thing.path_tuple)
         result = inst.navgen(root, 1)
         self.assertEqual(
             result,
@@ -181,7 +187,7 @@ class TestObjectMap(unittest.TestCase):
         abc = resource('/a/b/c')
         z = resource('/z')
         for thing in root, a, ab, abc, z:
-            inst.add(thing)
+            inst.add(thing, thing.path_tuple)
         result = inst.navgen(a, 1)
         self.assertEqual(
             result,
@@ -198,7 +204,7 @@ class TestObjectMap(unittest.TestCase):
         abc = resource('/a/b/c')
         z = resource('/z')
         for thing in root, a, ab, abc, z:
-            inst.add(thing)
+            inst.add(thing, thing.path_tuple)
         result = inst.navgen(root, 0)
         self.assertEqual(result, [])
 
@@ -210,7 +216,7 @@ class TestObjectMap(unittest.TestCase):
         abc = resource('/a/b/c')
         z = resource('/z')
         for thing in root, a, ab, abc, z:
-            inst.add(thing)
+            inst.add(thing, thing.path_tuple)
         result = inst.navgen(a, 0)
         self.assertEqual(result, [])
         
@@ -231,11 +237,11 @@ class TestObjectMap(unittest.TestCase):
         abc = resource('/a/b/c')
         z = resource('/z')
 
-        oid1 = objmap.add(ab)
-        oid2 = objmap.add(abc)
-        oid3 = objmap.add(a)
-        oid4 = objmap.add(root)
-        oid5 = objmap.add(z)
+        oid1 = objmap.add(ab, ab.path_tuple)
+        oid2 = objmap.add(abc, abc.path_tuple)
+        oid3 = objmap.add(a, a.path_tuple)
+        oid4 = objmap.add(root, root.path_tuple)
+        oid5 = objmap.add(z, z.path_tuple)
 
         # /
         nodepth = l('/')
@@ -361,6 +367,83 @@ class TestObjectMap(unittest.TestCase):
         assert dict(objmap.objectid_to_path) == {}
         assert dict(objmap.path_to_objectid) == {}
 
+class Test_object_will_be_added(unittest.TestCase):
+    def _callFUT(self, object, event):
+        from . import object_will_be_added
+        return object_will_be_added(object, event)
+
+    def test_no_objectmap(self):
+        model = testing.DummyResource()
+        event = DummyEvent(None)
+        self._callFUT(model, event) # doesnt blow up
+
+    def test_added_object_has_children(self):
+        from ..interfaces import IFolder
+        objectmap = DummyObjectMap()
+        site = _makeSite(objectmap=objectmap)
+        one = testing.DummyModel(__provides__=IFolder)
+        two = testing.DummyModel(__provides__=IFolder)
+        one['two'] = two
+        event = DummyEvent(site)
+        event.name = 'one'
+        self._callFUT(one, event)
+        self.assertEqual(
+            objectmap.added,
+            [(two, ('', 'one', 'two')), (one, ('', 'one'))]
+            )
+
+    def test_added_object_has_children_not_adding_to_root(self):
+        from ..interfaces import IFolder
+        objectmap = DummyObjectMap()
+        site = _makeSite(objectmap=objectmap)
+        one = testing.DummyModel(__provides__=IFolder)
+        two = testing.DummyModel(__provides__=IFolder)
+        inter = testing.DummyModel()
+        site['inter'] = inter
+        one['two'] = two
+        event = DummyEvent(inter)
+        event.name = 'one'
+        self._callFUT(one, event)
+        self.assertEqual(
+            objectmap.added,
+            [(two, ('', 'inter', 'one', 'two')), (one, ('', 'inter', 'one'))]
+            )
+        
+    def test_object_has_a_parent(self):
+        from ..interfaces import IFolder
+        objectmap = DummyObjectMap()
+        site = _makeSite(objectmap=objectmap)
+        bogusroot = testing.DummyModel(__provides__=IFolder)
+        bogusparent2 = testing.DummyModel(__provides__=IFolder)
+        one = testing.DummyModel(__provides__=IFolder)
+        two = testing.DummyModel(__provides__=IFolder)
+        bogusroot['bogusparent2'] = bogusparent2
+        bogusparent2['one'] = one
+        one['two'] = two
+        self.assertEqual(resource_path_tuple(one), 
+                         ('', 'bogusparent2', 'one'))
+        event = DummyEvent(site)
+        self.assertRaises(ValueError, self._callFUT, one, event)
+        
+class Test_object_removed(unittest.TestCase):
+    def _callFUT(self, object, event):
+        from . import object_removed
+        return object_removed(object, event)
+
+    def test_no_objectmap(self):
+        model = testing.DummyResource()
+        event = DummyEvent(None)
+        self._callFUT(model, event) # doesnt blow up
+
+    def test_it(self):
+        model = testing.DummyResource()
+        model.__objectid__ = 1
+        objectmap = DummyObjectMap()
+        site = _makeSite(objectmap=objectmap)
+        event = DummyEvent(site)
+        self._callFUT(model, event)
+        self.assertEqual(objectmap.removed, [1])
+        
 def resource(path):
     path_tuple = split(path)
     parent = None
@@ -369,9 +452,41 @@ def resource(path):
         obj.__parent__ = parent
         obj.__name__ = element
         parent = obj
+    obj.path_tuple = path_tuple
     return obj
                 
         
 def split(s):
     return (u'',) + tuple(filter(None, s.split(u'/')))
+
+class DummyObjectMap:
+    def __init__(self):
+        self.added = []
+        self.removed = []
+
+    def add(self, obj, path):
+        self.added.append((obj, path))
+        objectid = getattr(obj, '__objectid__', None)
+        if objectid is None:
+            objectid = 1
+            obj.__objectid__ = objectid
+        return objectid
+
+    def remove(self, objectid):
+        self.removed.append(objectid)
+        return [objectid]
+
+class DummyEvent(object):
+    def __init__(self, parent):
+        self.parent = parent
+        
+def _makeSite(**kw):
+    from ..interfaces import IFolder
+    site = testing.DummyResource(__provides__=kw.pop('__provides__', None))
+    alsoProvides(site, IFolder)
+    services = testing.DummyResource()
+    for k, v in kw.items():
+        services[k] = v
+    site['__services__'] = services
+    return site
 

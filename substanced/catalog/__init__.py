@@ -179,4 +179,5 @@ def includeme(config): # pragma: no cover
     config.add_directive('add_catalog_index', _add_catalog_index)
     config.set_request_property(query_catalog, reify=True)
     config.set_request_property(search_catalog, reify=True)
+    config.scan('substanced.catalog.subscribers')
     

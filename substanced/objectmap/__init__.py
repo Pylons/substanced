@@ -1,12 +1,20 @@
 import random
+from zope.interface import Interface
 
 from persistent import Persistent
 
 import BTrees
 
 from pyramid.traversal import resource_path_tuple
+from pyramid.events import subscriber
 
 from ..service import find_service
+from ..util import postorder
+
+from ..interfaces import (
+    IObjectWillBeAddedEvent,
+    IObjectRemovedEvent,
+    )
 
 def find_objectmap(context):
     return find_service(context, 'objectmap')
@@ -112,11 +120,10 @@ class ObjectMap(Persistent):
     def path_for(self, objectid):
         return self.objectid_to_path.get(objectid)
             
-    def add(self, obj):
-        if not hasattr(obj, '__parent__'):
-            raise ValueError(
-                'add accepts a traversable object got %s' % (obj,))
-        path_tuple = resource_path_tuple(obj)
+    def add(self, obj, path_tuple):
+        if not isinstance(path_tuple, tuple):
+            raise ValueError('path_tuple argument must be a tuple')
+
         objectid = getattr(obj, '__objectid__', _marker)
         
         if objectid is _marker:
@@ -278,4 +285,39 @@ class ObjectMap(Persistent):
 
         return result
 
+@subscriber([Interface, IObjectWillBeAddedEvent])
+def object_will_be_added(obj, event):
+    """ Give content an __objectid__ and index it (an IObjectWillBeAddedEvent
+     subscriber, so objects always have an __objectid__ within the more
+     convenient IObjectAddedEvent)"""
+    parent = event.parent
+    objectmap = find_objectmap(parent)
+    if objectmap is None:
+        return
+    if getattr(obj, '__parent__', None):
+        raise ValueError(
+            'obj %s added to folder %s already has a __parent__ attribute, '
+            'please remove it completely from its existing parent (%s) before '
+            'trying to readd it to this one' % (obj, parent, obj.__parent__)
+            )
+    basepath = resource_path_tuple(event.parent)
+    name = event.name
+    for node in postorder(obj):
+        node_path = resource_path_tuple(node)
+        path_tuple = basepath + (name,) + node_path[1:]
+        objectmap.add(node, path_tuple) # gives node an __objectid__
 
+@subscriber([Interface, IObjectRemovedEvent])
+def object_removed(obj, event):
+    """ IObjectRemovedEvent subscriber.
+    """
+    parent = event.parent
+    objectmap = find_objectmap(parent)
+    if objectmap is None:
+        return
+    objectid = obj.__objectid__
+    objectmap.remove(objectid)
+
+def includeme(config): # pragma: no cover
+    config.scan('substanced.objectmap')
+    

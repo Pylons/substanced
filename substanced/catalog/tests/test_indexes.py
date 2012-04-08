@@ -46,7 +46,7 @@ class TestPathIndex(unittest.TestCase):
         obj = testing.DummyResource()
         objectmap = inst.__parent__.__parent__['objectmap']
         objectmap._v_nextid = 1
-        objectmap.add(obj)
+        objectmap.add(obj, (u'',))
         result = inst.search((u'',))
         self.assertEqual(list(result),  [1])
 
@@ -55,7 +55,7 @@ class TestPathIndex(unittest.TestCase):
         obj = testing.DummyResource()
         objectmap = inst.__parent__.__parent__['objectmap']
         objectmap._v_nextid = 1
-        objectmap.add(obj)
+        objectmap.add(obj, (u'',))
         result = inst.apply(obj)
         self.assertEqual(list(result),  [1])
 
@@ -70,7 +70,7 @@ class TestPathIndex(unittest.TestCase):
         obj = testing.DummyResource()
         objectmap = inst.__parent__.__parent__['objectmap']
         objectmap._v_nextid = 1
-        objectmap.add(obj)
+        objectmap.add(obj, (u'',))
         result = inst.apply((u'',))
         self.assertEqual(list(result),  [1])
 
@@ -79,10 +79,10 @@ class TestPathIndex(unittest.TestCase):
         obj = testing.DummyResource()
         objectmap = inst.__parent__.__parent__['objectmap']
         objectmap._v_nextid = 1
-        objectmap.add(obj)
+        objectmap.add(obj, (u'',))
         obj2 = testing.DummyResource(__name__='a')
         obj2.__parent__ = obj
-        objectmap.add(obj2)
+        objectmap.add(obj2, (u'', u'a'))
         result = inst.apply({'path':obj})
         self.assertEqual(list(result),  [1, 2])
 
@@ -91,10 +91,10 @@ class TestPathIndex(unittest.TestCase):
         obj = testing.DummyResource()
         objectmap = inst.__parent__.__parent__['objectmap']
         objectmap._v_nextid = 1
-        objectmap.add(obj)
+        objectmap.add(obj, (u'',))
         obj2 = testing.DummyResource(__name__='a')
         obj2.__parent__ = obj
-        objectmap.add(obj2)
+        objectmap.add(obj2, (u'', u'a'))
         result = inst.apply({'path':obj, 'depth':0})
         self.assertEqual(list(result),  [1])
 
@@ -103,10 +103,10 @@ class TestPathIndex(unittest.TestCase):
         obj = testing.DummyResource()
         objectmap = inst.__parent__.__parent__['objectmap']
         objectmap._v_nextid = 1
-        objectmap.add(obj)
+        objectmap.add(obj, (u'',))
         obj2 = testing.DummyResource(__name__='a')
         obj2.__parent__ = obj
-        objectmap.add(obj2)
+        objectmap.add(obj2, (u'', u'a'))
         result = inst.apply({'path':obj, 'include_origin':False})
         self.assertEqual(list(result),  [2])
         
@@ -136,7 +136,7 @@ class TestPathIndex(unittest.TestCase):
         obj = testing.DummyResource()
         objectmap = inst.__parent__.__parent__['objectmap']
         objectmap._v_nextid = 1
-        objectmap.add(obj)
+        objectmap.add(obj, (u'',))
         result = inst.apply_intersect(obj, IFSet([1]))
         self.assertEqual(list(result),  [1])
 
