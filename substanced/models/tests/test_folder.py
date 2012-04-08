@@ -133,6 +133,10 @@ class TestFolder(unittest.TestCase):
         folder = self._makeOne()
         self.assertRaises(TypeError, folder.add, '', 'foo')
 
+    def test_add_dont_allow_services(self):
+        folder = self._makeOne()
+        self.assertRaises(KeyError, folder.add, '__services__', None)
+
     def test_add_send_events(self):
         from ...interfaces import IObjectEvent
         from ...interfaces import IObjectWillBeAddedEvent
