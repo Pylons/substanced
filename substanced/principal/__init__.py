@@ -75,8 +75,7 @@ def groupname_validator(node, kw):
 
 class MembersWidget(deform.widget.Widget):
     def serialize(self, field, cstruct, readonly=False):
-        result = render('substanced.sdi:templates/members.pt', 
-                        {'cstruct':cstruct})
+        result = render('templates/members.pt', {'cstruct':cstruct})
         return result
 
     def deserialize(self, field, pstruct):
@@ -101,7 +100,7 @@ class GroupSchema(Schema):
 @content(IGroup, IPrincipalContent)
 class Group(Folder):
     description = ''
-    
+    tab_order = ('properties',)
     __propschema__ = GroupSchema()
 
     def __init__(self, description):
@@ -207,10 +206,12 @@ NO_CHANGE = u'\ufffd' * 8
 @content(IUser, IPrincipalContent)
 class User(Folder):
 
+    tab_order = ('properties',)
+
     __propschema__ = UserSchema()
     
-    def __init__(self, password, email=None, security_question=None,
-                 security_answer=None, groups=()):
+    def __init__(self, password, email='', security_question='',
+                 security_answer='', groups=()):
         Folder.__init__(self)
         self.password = pwd_manager.encode(password)
         self.email = email

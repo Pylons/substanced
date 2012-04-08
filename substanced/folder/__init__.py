@@ -26,6 +26,7 @@ class Folder(Persistent):
 
     Keys must be Unicode strings; values must be arbitrary Python objects.
     """
+    tab_order = ('contents',)
 
     __name__ = None
     __parent__ = None

@@ -76,7 +76,22 @@ def get_mgmt_views(request, context=None):
                     {'view_name':view_name,
                      'tab_title':tab_title or view_name.capitalize()}
                     )
-    return sorted(L, key=operator.itemgetter('tab_title'))
+    selected = []
+    extra = []
+    
+    if hasattr(context, 'tab_order'):
+        tab_order = context.tab_order
+        for view_data in L:
+            for view_name in tab_order:
+                if view_name == view_data['view_name']:
+                    selected.append(view_data)
+                    break
+            else:
+                extra.append(view_data)
+    else:
+        extra = L
+                
+    return selected + sorted(extra, key=operator.itemgetter('tab_title'))
 
 def macros():
     template = get_renderer('templates/master.pt').implementation()
