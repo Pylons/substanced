@@ -106,8 +106,10 @@ def breadcrumbs(request):
     for resource in reversed(list(lineage(request.context))):
         url = request.mgmt_path(resource)
         name = resource.__name__ or 'Home'
+        icon = request.registry.content.get_meta(resource, 'icon', 'icon-file')
         active = resource is request.context and 'active' or None
-        breadcrumbs.append({'url':url, 'name':name, 'active':active})
+        breadcrumbs.append({'url':url, 'name':name, 'active':active,
+                            'icon':icon})
     return breadcrumbs
 
 def get_site_title(request):

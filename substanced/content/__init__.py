@@ -46,6 +46,13 @@ class ContentCategory(object):
             raise ValueError('%s is not content' % context)
         return ifaces[0]
 
+    def get_meta(self, context, name, default=None):
+        try:
+            content_iface = self.first(context)
+        except ValueError:
+            return None
+        return content_iface.queryTaggedValue(name, default)
+
 class ContentCategories(object):
     def __init__(self):
         self.categories = {}
@@ -71,6 +78,9 @@ class ContentCategories(object):
     def all(self, context):
         return self.categories[IContent].all(context)
 
+    def get_meta(self, context, name, default=None):
+        return self.categories[IContent].get_meta(context, name, default)
+    
 # venusian decorator that marks a class as a content class
 class content(object):
     venusian = venusian

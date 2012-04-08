@@ -22,7 +22,10 @@ def folder_contents(context, request):
         url = request.mgmt_path(v)
         if has_permission('view', v, request):
             viewable = True
-        L.append(dict(name=k, deletable=can_manage, viewable=viewable, url=url))
+        icon = request.registry.content.get_meta(context, 'icon', 'icon-file')
+        data = dict(name=k, deletable=can_manage, viewable=viewable, url=url, 
+                    icon=icon)
+        L.append(data)
     batchinfo = get_batchinfo(L, request, url=request.url)
     return dict(batchinfo=batchinfo)
 

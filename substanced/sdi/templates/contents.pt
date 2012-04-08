@@ -20,6 +20,7 @@
   <tal:loop tal:repeat="choice batchinfo['batch']">
     <tal:block condition="choice['viewable']">
       <label class="checkbox" for="delete-${repeat.choice.index}">
+        <i class="${choice['icon']}"> </i>
         <input tal:attributes="disabled not choice['deletable']"
                type="checkbox"
                name="delete"
