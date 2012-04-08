@@ -4,7 +4,7 @@ from ..interfaces import IPropertied
 from ..form import FormView
 
 from . import mgmt_view
-from ..events import ObjectModifiedEvent
+from ..event import ObjectModifiedEvent
 
 @mgmt_view(context=IPropertied, name='properties', renderer='templates/form.pt',
            tab_title='Properties', permission='edit properties')

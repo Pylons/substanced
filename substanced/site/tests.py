@@ -24,7 +24,7 @@ class Test_root_factory(unittest.TestCase):
         def object_added(obj, event):
             obj.__objectid__ = 1
         from zope.interface import Interface
-        from substanced.events import IObjectAddedEvent
+        from substanced.event import IObjectAddedEvent
         self.config.add_subscriber(object_added, [Interface, IObjectAddedEvent])
         # ^^^ to get user.__objectid__ set up right
         txn = DummyTransaction()

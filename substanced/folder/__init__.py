@@ -11,7 +11,7 @@ from ..interfaces import (
     SERVICES_NAME,
     )
 
-from ..events import (
+from ..event import (
     ObjectAddedEvent,
     ObjectWillBeAddedEvent,
     ObjectRemovedEvent,
