@@ -11,8 +11,6 @@ from repoze.catalog.catalog import Catalog as _Catalog
 from pyramid.threadlocal import get_current_registry
 from pyramid.traversal import resource_path
 
-from ..objectmap import find_objectmap
-
 from ..interfaces import (
     ISearch,
     ICatalog,
@@ -21,9 +19,6 @@ from ..interfaces import (
 from ..service import find_service
 
 logger = logging.getLogger(__name__)
-
-def find_catalog(context):
-    return find_service(context, 'catalog')
 
 @implementer(ICatalog)
 class Catalog(_Catalog):
@@ -81,7 +76,7 @@ class Catalog(_Catalog):
             output and output('reindexing only indexes %s' % str(indexes))
 
         i = 1
-        objectmap = find_objectmap(self)
+        objectmap = find_service(self, 'objectmap')
         for objectid in self.objectids:
             resource = objectmap.object_for(objectid)
             if resource is None:
@@ -138,8 +133,8 @@ class Search(object):
     """ Catalog query helper """
     def __init__(self, context):
         self.context = context
-        self.catalog = find_catalog(self.context)
-        self.objectmap = find_objectmap(self.context)
+        self.catalog = find_service(self.context, 'catalog')
+        self.objectmap = find_service(self.context, 'objectmap')
 
     def resolver(self, objectid):
         resource = self.objectmap.object_for(objectid)

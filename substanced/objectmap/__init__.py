@@ -19,9 +19,6 @@ from ..interfaces import (
     IObjectRemovedEvent,
     )
 
-def find_objectmap(context):
-    return find_service(context, 'objectmap')
-
 """
 Pathindex data structure of object map:
 
@@ -314,7 +311,7 @@ def object_will_be_added(obj, event):
      subscriber, so objects always have an __objectid__ within the more
      convenient IObjectAddedEvent)"""
     parent = event.parent
-    objectmap = find_objectmap(parent)
+    objectmap = find_service(parent, 'objectmap')
     if objectmap is None:
         return
     if getattr(obj, '__parent__', None):
@@ -335,7 +332,7 @@ def object_removed(obj, event):
     """ IObjectRemovedEvent subscriber.
     """
     parent = event.parent
-    objectmap = find_objectmap(parent)
+    objectmap = find_service(parent, 'objectmap')
     if objectmap is None:
         return
     objectid = obj.__objectid__

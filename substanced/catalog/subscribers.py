@@ -10,16 +10,14 @@ from ..interfaces import (
     IObjectModifiedEvent,
     )
     
-from ..objectmap import find_objectmap
+from ..service import find_service
 from ..util import postorder
-
-from . import find_catalog
 
 @subscriber([Interface, IObjectAddedEvent])
 def object_added(obj, event):
     """ Depends upon substance.objectmap.object_will_be_added to be fired
     before this gets fired to assign an __objectid__ to all nodes"""
-    catalog = find_catalog(obj)
+    catalog = find_service(obj, 'catalog')
     if catalog is None:
         return
     for node in postorder(obj):
@@ -29,8 +27,8 @@ def object_added(obj, event):
 
 @subscriber([Interface, IObjectWillBeRemovedEvent])
 def object_will_be_removed(obj, event):
-    objectmap = find_objectmap(obj)
-    catalog = find_catalog(obj)
+    objectmap = find_service(obj, 'objectmap')
+    catalog = find_service(obj, 'catalog')
     if objectmap is None or catalog is None:
         return
     objectids = objectmap.pathlookup(obj)
@@ -42,7 +40,7 @@ def object_modified(obj, event):
     """ Reindex a single piece of content (non-recursive); an
     ObjectModifedEvent event subscriber """
     objectid = obj.__objectid__
-    catalog = find_catalog(obj)
+    catalog = find_service(obj, 'catalog')
     if catalog is not None:
         if ICatalogable.providedBy(obj):
             catalog.reindex_doc(objectid, obj)

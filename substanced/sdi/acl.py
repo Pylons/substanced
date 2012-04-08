@@ -10,7 +10,6 @@ from pyramid.security import (
 
 from substanced.interfaces import ICatalogable
 from substanced.service import find_service
-from substanced.catalog import find_catalog
 
 from substanced.util import postorder
 
@@ -113,7 +112,7 @@ def acl_edit_view(context, request):
     if acl != original_acl:
         context.__custom_acl__ = acl # added so we can find customized obs later
         context.__acl__ = acl
-        catalog = find_catalog(context)
+        catalog = find_service(context, 'catalog')
         if catalog is not None:
             allowed = catalog.get('allowed')
             if allowed is not None:

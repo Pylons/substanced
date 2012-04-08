@@ -8,7 +8,7 @@ from repoze.catalog.interfaces import ICatalogIndex
 from pyramid.traversal import resource_path_tuple
 from pyramid.compat import url_unquote_text
 
-from substanced.objectmap import find_objectmap
+from ..service import find_service
 
 @implementer(ICatalogIndex)
 class PathIndex(CatalogIndex):
@@ -32,7 +32,7 @@ class PathIndex(CatalogIndex):
     _indexed = docids
 
     def search(self, path_tuple, depth=None, include_origin=True):
-        objectmap = find_objectmap(self.__parent__)
+        objectmap = find_service(self.__parent__, 'objectmap')
         return objectmap.pathlookup(path_tuple, depth, include_origin)
 
     def _parse_path(self, obj_or_path):
