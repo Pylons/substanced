@@ -110,6 +110,7 @@ class ObjectMap(Persistent):
             self._v_nextid = None
 
     def objectid_for(self, obj_or_path_tuple):
+        """ Returns an objectid or None given an object or a path tuple """
         if isinstance(obj_or_path_tuple, tuple):
             path_tuple = obj_or_path_tuple
         elif hasattr(obj_or_path_tuple, '__parent__'):
@@ -121,9 +122,11 @@ class ObjectMap(Persistent):
         return self.path_to_objectid.get(path_tuple)
 
     def path_for(self, objectid):
+        """ Returns an path or None given an objectid """
         return self.objectid_to_path.get(objectid)
 
     def object_for(self, objectid_or_path_tuple, context=None):
+        """ Returns an object or None given an objectid or a path tuple """
         if isinstance(objectid_or_path_tuple, int):
             path_tuple = self.objectid_to_path.get(objectid_or_path_tuple)
         elif isinstance(objectid_or_path_tuple, tuple):
