@@ -1,5 +1,3 @@
-import re
-
 from pyramid.security import (
     Deny,
     Everyone,
@@ -12,6 +10,7 @@ from substanced.interfaces import ICatalogable
 from substanced.service import find_service
 
 from substanced.util import postorder
+from substanced.principal import NO_INHERIT
 
 from . import mgmt_view
 
@@ -22,11 +21,6 @@ def get_workflow(*arg, **kw):
 
 def get_security_states(*arg, **kw):
     return [] # XXX
-
-COMMA_WS = re.compile(r'[\s,]+')
-
-ALL = AllPermissionsList()
-NO_INHERIT = (Deny, Everyone, ALL)
 
 def get_context_workflow(context):
     """
@@ -93,7 +87,8 @@ def acl_edit_view(context, request):
             acl = new
             request.session.flash('ACE added')
         else:
-            request.session.flash('Unknown user or group %s' % principal, 'error')
+            request.session.flash('Unknown user or group %s' % principal, 
+                                  'error')
 
     elif 'form.inherit' in request.POST:
         check_csrf_token(request)

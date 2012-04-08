@@ -14,9 +14,12 @@ from pyramid_zodbconn import get_connection
 from ..interfaces import ISite
 from ..objectmap import ObjectMap
 from ..catalog import Catalog
-from ..principal import Principals
 from ..schema import Schema
 from ..folder import Folder
+from ..principal import (
+    Principals,
+    NO_INHERIT,
+    )
 
 class SiteSchema(Schema):
     title = colander.SchemaNode(colander.String(),
@@ -44,6 +47,10 @@ class Site(Folder):
         catalog.refresh()
         objectmap.add(self, ('',))
         self.__acl__ = [(Allow, user.__objectid__, ALL_PERMISSIONS)]
+        self['__services__'].__acl__ = [
+            (Allow, user.__objectid__, ALL_PERMISSIONS),
+            NO_INHERIT,
+            ]
 
     @classmethod
     def root_factory(cls, request, transaction=transaction, 

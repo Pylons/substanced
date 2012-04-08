@@ -2,13 +2,18 @@ from BTrees.IFBTree import IFTreeSet
 
 from zope.interface import implementer
 
+from cryptacular.bcrypt import BCRYPTPasswordManager
+
+
 import colander
 import deform
 import deform.widget
 
-from cryptacular.bcrypt import BCRYPTPasswordManager
-pwd_manager = BCRYPTPasswordManager()
-
+from pyramid.security import (
+    Deny,
+    Everyone,
+    ALL_PERMISSIONS,
+    )
 from pyramid.events import subscriber
 from pyramid.renderers import render
 
@@ -23,6 +28,10 @@ from ..interfaces import (
     IObjectWillBeRemovedEvent,
     IObjectModifiedEvent,
     )
+
+NO_INHERIT = (Deny, Everyone, ALL_PERMISSIONS) # API
+
+pwd_manager = BCRYPTPasswordManager()
 
 from ..schema import Schema
 from ..service import find_service

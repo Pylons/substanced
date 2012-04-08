@@ -28,6 +28,8 @@ def folder_contents(context, request):
     
     L = []
     for k, v in context.items():
+        if not has_permission('view', v, request):
+            continue
         deletable = ( has_permission('delete', v, request) 
                       and not k == SERVICES_NAME 
                       and not context.__name__ == SERVICES_NAME)
