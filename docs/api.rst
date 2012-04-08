@@ -1,9 +1,9 @@
-.. _pyramid_catalog_api:
+.. _substanced_api:
 
-:mod:`pyramid_catalog` API
+:mod:`substanced` API
 ---------------------------
 
-.. automodule:: pyramid_catalog
+.. automodule:: substanced
 
 .. autofunction:: includeme
 

@@ -20,6 +20,8 @@
 
 import sys, os
 
+print sys.path
+
 # Add and use Pylons theme
 if 'sphinx-build' in ' '.join(sys.argv): # protect against dumb importers
     from subprocess import call, Popen, PIPE

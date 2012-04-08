@@ -92,6 +92,7 @@ More Information
 .. toctree::
    :maxdepth: 1
 
+   content.rst
    api.rst
    glossary.rst
 

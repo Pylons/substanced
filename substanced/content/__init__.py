@@ -1,6 +1,7 @@
 from zope.interface.interfaces import IInterface
 from zope.interface import (
     providedBy,
+    Interface,
     implementer,
     )
 
@@ -11,6 +12,8 @@ from pyramid.exceptions import ConfigurationError
 from ..interfaces import IContent
 
 _marker = object()
+
+Type = Interface # API
 
 def addbase(iface1, iface2):
     if not iface2 in iface1.__iro__:
