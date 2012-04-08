@@ -41,6 +41,7 @@ def get_mgmt_views(request, context=None):
     req.context = context
     req.matched_route = request.matched_route
     req.method = 'GET' 
+    req.registry = request.registry
 
     for data in introspector.get_category('sdi views'): 
         related = data['related']

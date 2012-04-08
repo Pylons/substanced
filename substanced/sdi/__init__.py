@@ -1,13 +1,14 @@
 import inspect
 import venusian
 
-from pyramid.authentication import AuthTktAuthenticationPolicy
+from pyramid.authentication import SessionAuthenticationPolicy
 from pyramid.exceptions import ConfigurationError
 from pyramid.authorization import ACLAuthorizationPolicy
 from pyramid.security import authenticated_userid
 from pyramid.compat import is_nonstr_iter
 from pyramid.traversal import resource_path_tuple
 from pyramid.httpexceptions import HTTPFound
+from pyramid.session import UnencryptedCookieSessionFactoryConfig
 from pyramid.view import view_config
 from pyramid.interfaces import IView
 from pyramid.events import (
@@ -17,6 +18,7 @@ from pyramid.events import (
 
 from . import helpers
 from ..service import find_service
+from ..principal import groupfinder
 
 def as_sorted_tuple(val):
     if not is_nonstr_iter(val):
@@ -173,7 +175,9 @@ def includeme(config): # pragma: no cover
     if secret is None:
         raise ConfigurationError(
             'You must set a substanced.secret key in your .ini file')
-    authn_policy = AuthTktAuthenticationPolicy(secret)
+    session_factory = UnencryptedCookieSessionFactoryConfig(secret)
+    config.set_session_factory(session_factory)
+    authn_policy = SessionAuthenticationPolicy(callback=groupfinder)
     authz_policy = ACLAuthorizationPolicy()
     config.set_authentication_policy(authn_policy)
     config.set_authorization_policy(authz_policy)

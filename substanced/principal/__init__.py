@@ -340,6 +340,8 @@ def group_modified(group, event):
 def groupfinder(userid, request):
     context = request.context
     objectmap = find_service(context, 'objectmap')
+    if objectmap is None:
+        return None
     user = objectmap.object_for(userid)
     if user is None:
         return None
