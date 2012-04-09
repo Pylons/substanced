@@ -45,6 +45,14 @@ class TestContentCategory(unittest.TestCase):
         inst.add(IDummy, True)
         self.assertEqual(inst.factories[IDummy], True)
 
+    def test_add_with_meta(self):
+        inst = self._makeOne(ICategory)
+        class IFoo(Interface):
+            pass
+        inst.add(IFoo, True, icon='fred')
+        self.assertEqual(inst.factories[IFoo], True)
+        self.assertEqual(IFoo.getTaggedValue('icon'), 'fred')
+        
     def test_create(self):
         inst = self._makeOne(ICategory)
         inst.factories[IDummy] = lambda a: a
@@ -96,23 +104,23 @@ class TestContentCategory(unittest.TestCase):
         dummy = Dummy()
         self.assertRaises(ValueError, inst.first, dummy)
 
-    def test_get_meta(self):
+    def test_metadata(self):
         inst = self._makeOne(ICategory)
         inst.factories[IDummy] = True
         inst.factories[ICategory] = True
         dummy = Dummy()
         alsoProvides(dummy, IDummy)
         alsoProvides(dummy, ICategory)
-        self.assertEqual(inst.get_meta(dummy, 'icon'), 'icon-name')
+        self.assertEqual(inst.metadata(dummy, 'icon'), 'icon-name')
 
-    def test_get_meta_notfound(self):
+    def test_metadata_notfound(self):
         inst = self._makeOne(ICategory)
         inst.factories[IDummy] = True
         inst.factories[ICategory] = True
         dummy = Dummy()
         alsoProvides(dummy, IDummy)
         alsoProvides(dummy, ICategory)
-        self.assertEqual(inst.get_meta(dummy, 'doesntexist'), None)
+        self.assertEqual(inst.metadata(dummy, 'doesntexist'), None)
         
 class TestContentCategories(unittest.TestCase):
     def _makeOne(self):
@@ -127,7 +135,6 @@ class TestContentCategories(unittest.TestCase):
             pass
         inst.add(IFoo, Factory)
         self.assertEqual(inst.categories[IContent].factories[IFoo], Factory)
-        ## self.assertTrue(IFoo.providedBy(Factory()))
         self.assertTrue(IContent in IFoo.__iro__)
         self.assertTrue(IContent in IFoo.__bases__)
         
@@ -137,9 +144,8 @@ class TestContentCategories(unittest.TestCase):
             pass
         class Factory(object):
             pass
-        inst.add(IFoo, Factory, ICategory)
+        inst.add(IFoo, Factory, category=ICategory)
         self.assertEqual(inst.categories[ICategory].factories[IFoo], Factory)
-        ## self.assertTrue(IFoo.providedBy(Factory()))
         self.assertTrue(ICategory in IFoo.__iro__)
         self.assertTrue(ICategory in IFoo.__bases__)
 
@@ -179,11 +185,11 @@ class TestContentCategories(unittest.TestCase):
         inst.categories[IContent] = DummyCategory(None)
         self.assertEqual(inst.all(), [])
         
-    def test_get_meta(self):
+    def test_metadata(self):
         inst = self._makeOne()
         inst.categories[IContent] = DummyCategory(None)
         dummy = Dummy()
-        self.assertEqual(inst.get_meta(dummy, 'abc'), 'abc')
+        self.assertEqual(inst.metadata(dummy, 'abc'), 'abc')
 
 class Test_content(unittest.TestCase):
     def _makeOne(self, iface):
@@ -222,12 +228,16 @@ class Test_add_content_type(unittest.TestCase):
     def test_content_iface_not_IInterface(self):
         from pyramid.exceptions import ConfigurationError
         self.assertRaises(
-            ConfigurationError, self._callFUT, None, object(), None, IDummy)
+            ConfigurationError,
+            self._callFUT,
+            None, object(), None, category=IDummy)
 
     def test_category_iface_not_IInterface(self):
         from pyramid.exceptions import ConfigurationError
         self.assertRaises(
-            ConfigurationError, self._callFUT, None, IDummy, None, object())
+            ConfigurationError,
+            self._callFUT,
+            None, IDummy, None, category=object())
         
     def test_success(self):
         def factory(): pass
@@ -235,7 +245,7 @@ class Test_add_content_type(unittest.TestCase):
         config.registry.content = DummyContentCategories()
         class IFoo(Interface):
             pass
-        self._callFUT(config, IFoo, factory, ICategory)
+        self._callFUT(config, IFoo, factory, category=ICategory)
         self.assertEqual(len(config.actions), 1)
         self.assertEqual(
             config.actions[0][0],
@@ -244,14 +254,14 @@ class Test_add_content_type(unittest.TestCase):
         config.actions[0][1]['callable']()
         self.assertEqual(
             config.registry.content.added,
-            [(IFoo, factory, ICategory)])
+            [((IFoo, factory), {'category':ICategory})])
 
 class DummyContentCategories(object):
     def __init__(self):
         self.added = []
 
-    def add(self, *arg):
-        self.added.append(arg)
+    def add(self, *arg, **meta):
+        self.added.append((arg, meta))
 
 class DummyCategory(object):
     def __init__(self, result):
@@ -272,7 +282,7 @@ class DummyCategory(object):
     def first(self, context):
         return None
 
-    def get_meta(self, context, name, default=None):
+    def metadata(self, context, name, default=None):
         return name
         
 class ICategory(Interface):

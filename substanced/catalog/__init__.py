@@ -19,7 +19,7 @@ from ..service import find_service
 
 logger = logging.getLogger(__name__)
 
-@content(ICatalog)
+@content(ICatalog, icon='icon-search')
 class Catalog(_Catalog):
     family = BTrees.family32
     def __init__(self, family=None):

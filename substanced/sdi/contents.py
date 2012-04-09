@@ -22,7 +22,7 @@ def folder_contents(context, request):
         url = request.mgmt_path(v)
         if has_permission('view', v, request):
             viewable = True
-        icon = request.registry.content.get_meta(v, 'icon')
+        icon = request.registry.content.metadata(v, 'icon')
         data = dict(name=k, deletable=can_manage, viewable=viewable, url=url, 
                     icon=icon)
         L.append(data)

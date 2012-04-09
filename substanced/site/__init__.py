@@ -26,7 +26,7 @@ class SiteSchema(Schema):
     description = colander.SchemaNode(colander.String(),
                                       missing=colander.null)
 
-@content(ISite)
+@content(ISite, icon='icon-home')
 class Site(Folder):
     
     __propschema__ = SiteSchema()

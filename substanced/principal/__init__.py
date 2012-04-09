@@ -35,21 +35,21 @@ NO_INHERIT = (Deny, Everyone, ALL_PERMISSIONS) # API
 
 pwd_manager = BCRYPTPasswordManager()
 
-@content(IPrincipals)
+@content(IPrincipals, icon='icon-lock')
 class Principals(Folder):
     def __init__(self):
         Folder.__init__(self)
         self['users'] = Users()
         self['groups'] = Groups()
 
-@content(IUsers)
+@content(IUsers, icon='icon-list-alt')
 class Users(Folder):
     def add_user(self, login, password):
         user = User(password)
         self[login] = user
         return user
 
-@content(IGroups)
+@content(IGroups, icon='icon-list-alt')
 class Groups(Folder):
     pass
 
@@ -103,7 +103,7 @@ class GroupSchema(Schema):
         missing=colander.null,
         )
 
-@content(IGroup)
+@content(IGroup, icon='icon-th-list')
 class Group(Folder):
     description = ''
     __tab_order__ = ('properties',)
@@ -209,7 +209,7 @@ class UserSchema(Schema):
 
 NO_CHANGE = u'\ufffd' * 8
 
-@content(IUser)
+@content(IUser, icon='icon-user')
 class User(Folder):
 
     __tab_order__ = ('properties',)
