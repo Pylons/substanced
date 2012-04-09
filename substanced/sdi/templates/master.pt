@@ -59,6 +59,7 @@
       <ul class="breadcrumb">
         <tal:breadcrumbs repeat="breadcrumb h.breadcrumbs(request)">
           <li tal:attributes="class breadcrumb['active']">
+             <i class="${breadcrumb['icon']}"> </i>
              <a href="${breadcrumb['url']}">${breadcrumb['name']}</a> 
              <span tal:condition="not repeat.breadcrumb.end" 
                    class="divider">/</span>

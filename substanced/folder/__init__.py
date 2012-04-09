@@ -1,9 +1,10 @@
-from zope.interface import implementer
 from pyramid.threadlocal import get_current_registry
 
 from persistent import Persistent
 from BTrees.OOBTree import OOBTree
 from BTrees.Length import Length
+
+from zope.interface import implementer
 
 from ..interfaces import (
     IFolder,
@@ -18,9 +19,12 @@ from ..event import (
     ObjectWillBeRemovedEvent,
     )
 
+from ..content import content
+
 from ..service import find_service
 
 @implementer(IFolder)
+@content(IFolder)
 class Folder(Persistent):
     """ A folder implementation which acts much like a Python dictionary.
 

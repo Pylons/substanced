@@ -47,11 +47,12 @@ class ContentCategory(object):
         return ifaces[0]
 
     def get_meta(self, context, name, default=None):
-        try:
-            content_iface = self.first(context)
-        except ValueError:
-            return None
-        return content_iface.queryTaggedValue(name, default)
+        content_ifaces = self.all(context)
+        for iface in content_ifaces:
+            maybe = iface.queryTaggedValue(name, default)
+            if maybe is not None:
+                return maybe
+        return default
 
 class ContentCategories(object):
     def __init__(self):
@@ -60,8 +61,8 @@ class ContentCategories(object):
     def add(self, content_iface, factory, category_iface=None):
         if category_iface is None:
             category_iface = IContent
-        addbase(content_iface, category_iface)
-        implementer(content_iface)(factory)
+        if category_iface is not None:
+            addbase(content_iface, category_iface)
         category = self.categories.setdefault(category_iface,
                                               ContentCategory(category_iface))
         category.add(content_iface, factory)
@@ -75,8 +76,11 @@ class ContentCategories(object):
     def provided_by(self, resource):
         return self.categories[IContent].provided_by(resource)
 
-    def all(self, context):
+    def all(self, context=_marker):
         return self.categories[IContent].all(context)
+
+    def first(self, context):
+        return self.categories[IContent].first(context)
 
     def get_meta(self, context, name, default=None):
         return self.categories[IContent].get_meta(context, name, default)
@@ -89,6 +93,7 @@ class content(object):
         self.category_iface = category_iface
 
     def __call__(self, wrapped):
+        implementer(self.content_iface)(wrapped)
         settings = dict(category_iface=self.category_iface)
         def callback(context, name, ob):
             config = context.config.with_package(info.module)
@@ -111,7 +116,11 @@ def add_content_type(config, content_iface, factory, category_iface=None):
                 'The provided "category_iface" argument (%r) is not an '
                 'interface object (it does not inherit from '
                 'zope.interface.Interface' % type)
-        
+
+    if not content_iface.providedBy(factory):
+        # was not called by decorator
+        implementer(content_iface)(factory)
+    
     def register_factory():
         config.registry.content.add(content_iface, factory, category_iface)
 

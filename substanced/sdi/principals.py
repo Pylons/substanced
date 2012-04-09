@@ -7,7 +7,6 @@ from ..interfaces import (
     IUser,
     IGroups,
     IGroup,
-    IPrincipalContent,
     )
 
 from . import mgmt_view
@@ -27,7 +26,7 @@ class AddUserView(FormView):
     def add_success(self, appstruct):
         registry = self.request.registry
         name = appstruct.pop('login')
-        user = registry.content[IPrincipalContent].create(IUser, **appstruct)
+        user = registry.content.create(IUser, **appstruct)
         self.request.context[name] = user
         return HTTPFound(self.request.mgmt_path(user, '@@properties'))
 
@@ -42,7 +41,7 @@ class AddGroupView(FormView):
         registry = self.request.registry
         name = appstruct.pop('name')
         appstruct.pop('members')
-        group = registry.content[IPrincipalContent].create(IGroup, **appstruct)
+        group = registry.content.create(IGroup, **appstruct)
         self.request.context[name] = group
         return HTTPFound(self.request.mgmt_path(group, '@@properties'))
     

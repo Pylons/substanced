@@ -4,8 +4,6 @@ import transaction
 
 import BTrees
 
-from zope.interface import implementer
-
 from repoze.catalog.catalog import Catalog as _Catalog
 
 from pyramid.threadlocal import get_current_registry
@@ -16,11 +14,12 @@ from ..interfaces import (
     ICatalog,
     )
 
+from ..content import content
 from ..service import find_service
 
 logger = logging.getLogger(__name__)
 
-@implementer(ICatalog)
+@content(ICatalog)
 class Catalog(_Catalog):
     family = BTrees.family32
     def __init__(self, family=None):
@@ -177,5 +176,5 @@ def includeme(config): # pragma: no cover
     config.add_directive('add_catalog_index', _add_catalog_index)
     config.set_request_property(query_catalog, reify=True)
     config.set_request_property(search_catalog, reify=True)
-    config.scan('substanced.catalog.subscribers')
+    config.scan('substanced.catalog')
     

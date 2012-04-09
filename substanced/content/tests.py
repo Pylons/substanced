@@ -5,6 +5,7 @@ from zope.interface import (
     Interface,
     directlyProvides,
     alsoProvides,
+    taggedValue,
     )
 
 from ..interfaces import IContent
@@ -95,6 +96,24 @@ class TestContentCategory(unittest.TestCase):
         dummy = Dummy()
         self.assertRaises(ValueError, inst.first, dummy)
 
+    def test_get_meta(self):
+        inst = self._makeOne(ICategory)
+        inst.factories[IDummy] = True
+        inst.factories[ICategory] = True
+        dummy = Dummy()
+        alsoProvides(dummy, IDummy)
+        alsoProvides(dummy, ICategory)
+        self.assertEqual(inst.get_meta(dummy, 'icon'), 'icon-name')
+
+    def test_get_meta_notfound(self):
+        inst = self._makeOne(ICategory)
+        inst.factories[IDummy] = True
+        inst.factories[ICategory] = True
+        dummy = Dummy()
+        alsoProvides(dummy, IDummy)
+        alsoProvides(dummy, ICategory)
+        self.assertEqual(inst.get_meta(dummy, 'doesntexist'), None)
+        
 class TestContentCategories(unittest.TestCase):
     def _makeOne(self):
         from . import ContentCategories
@@ -108,7 +127,7 @@ class TestContentCategories(unittest.TestCase):
             pass
         inst.add(IFoo, Factory)
         self.assertEqual(inst.categories[IContent].factories[IFoo], Factory)
-        self.assertTrue(IFoo.providedBy(Factory()))
+        ## self.assertTrue(IFoo.providedBy(Factory()))
         self.assertTrue(IContent in IFoo.__iro__)
         self.assertTrue(IContent in IFoo.__bases__)
         
@@ -120,7 +139,7 @@ class TestContentCategories(unittest.TestCase):
             pass
         inst.add(IFoo, Factory, ICategory)
         self.assertEqual(inst.categories[ICategory].factories[IFoo], Factory)
-        self.assertTrue(IFoo.providedBy(Factory()))
+        ## self.assertTrue(IFoo.providedBy(Factory()))
         self.assertTrue(ICategory in IFoo.__iro__)
         self.assertTrue(ICategory in IFoo.__bases__)
 
@@ -142,6 +161,12 @@ class TestContentCategories(unittest.TestCase):
         dummy = Dummy()
         inst.categories[IContent] = DummyCategory(None)
         self.assertTrue(inst.provided_by(dummy))
+
+    def test_first(self):
+        inst = self._makeOne()
+        inst.categories[IContent] = DummyCategory(None)
+        dummy = Dummy()
+        self.assertEqual(inst.first(dummy), None)
         
     def test_all_with_context(self):
         inst = self._makeOne()
@@ -149,23 +174,46 @@ class TestContentCategories(unittest.TestCase):
         dummy = Dummy()
         self.assertEqual(inst.all(dummy), [])
 
+    def test_all_no_context(self):
+        inst = self._makeOne()
+        inst.categories[IContent] = DummyCategory(None)
+        self.assertEqual(inst.all(), [])
+        
+    def test_get_meta(self):
+        inst = self._makeOne()
+        inst.categories[IContent] = DummyCategory(None)
+        dummy = Dummy()
+        self.assertEqual(inst.get_meta(dummy, 'abc'), 'abc')
+
 class Test_content(unittest.TestCase):
     def _makeOne(self, iface):
         from ..content import content
         return content(iface)
 
-    def test_call(self):
-        decorator = self._makeOne(IDummy)
+    def test_decorates_class(self):
+        decorator = self._makeOne(ISpecial)
         venusian = DummyVenusian()
         decorator.venusian = venusian
         decorator.venusian.info.scope = 'class'
-        class foo(object): pass
-        wrapped = decorator(foo)
-        self.assertTrue(wrapped is foo)
+        wrapped = decorator(Special)
+        self.assertTrue(wrapped is Special)
+        self.assertTrue(ISpecial.implementedBy(Special))
         config = call_venusian(venusian)
         ct = config.content_types
         self.assertEqual(len(ct), 1)
 
+    def test_decorates_function(self):
+        decorator = self._makeOne(ISpecial)
+        venusian = DummyVenusian()
+        decorator.venusian = venusian
+        decorator.venusian.info.scope = 'class'
+        wrapped = decorator(special)
+        self.assertTrue(wrapped is special)
+        self.assertTrue(ISpecial.implementedBy(special))
+        config = call_venusian(venusian)
+        ct = config.content_types
+        self.assertEqual(len(ct), 1)
+        
 class Test_add_content_type(unittest.TestCase):
     def _callFUT(self, *arg, **kw):
         from . import add_content_type
@@ -182,7 +230,7 @@ class Test_add_content_type(unittest.TestCase):
             ConfigurationError, self._callFUT, None, IDummy, None, object())
         
     def test_success(self):
-        factory = object()
+        def factory(): pass
         config = DummyConfig()
         config.registry.content = DummyContentCategories()
         class IFoo(Interface):
@@ -218,14 +266,20 @@ class DummyCategory(object):
     def provided_by(self, resource):
         return True
 
-    def all(self, context):
+    def all(self, context=None):
         return []
+
+    def first(self, context):
+        return None
+
+    def get_meta(self, context, name, default=None):
+        return name
         
 class ICategory(Interface):
     pass
 
 class IDummy(Interface):
-    pass
+    taggedValue('icon', 'icon-name')
 
 class Dummy(object):
     pass
@@ -268,3 +322,12 @@ class DummyVenusian(object):
     def attach(self, wrapped, callback, category=None):
         self.attachments.append((wrapped, callback, category))
         return self.info
+
+# use these special objects only in "content" decorator tests; the decorator
+# uses "implementer", which mutates them.
+
+class ISpecial(Interface): pass
+
+class Special(object): pass
+
+def special(): pass

@@ -2,7 +2,8 @@ from zope.interface.interfaces import IObjectEvent
 
 from zope.interface import (
     Interface,
-    Attribute
+    Attribute,
+    taggedValue,
     )
 
 class IContent(Interface):
@@ -32,6 +33,7 @@ class IPropertied(Interface):
         
 class IObjectMap(Interface):
     """ A map of objects to paths """
+    taggedValue('icon', 'icon-asterisk')
     def objectid_for(obj_or_path_tuple):
         """ Return the object id for obj_or_path_tuple """
     def path_for(objectid):
@@ -58,9 +60,12 @@ class ICatalog(Interface):
     """ A collection of indices """
     objectids = Attribute(
         'a sequence of objectids that are cataloged in this catalog')
-    
+
+    taggedValue('icon', 'icon-search')
+
 class ISite(IPropertied):
     """ Marker interface for something that is the root of a site """
+    taggedValue('icon', 'icon-home')
 
 class ISearch(Interface):
     """ Adapter for searching the catalog """
@@ -100,6 +105,9 @@ class IFolder(Interface):
     All methods which accept a ``name`` argument expect the
     name to either be Unicode or a byte string decodable using the
     default system encoding or the UTF-8 encoding."""
+
+    taggedValue('icon', 'icon-folder-close')
+
 
     order = Attribute("""Order of items within the folder
     (Optional) If not set on the instance, objects are iterated in an
@@ -229,22 +237,24 @@ class IFolder(Interface):
 
 class IUser(IPropertied):
     """ Marker interface representing a user """
+    taggedValue('icon', 'icon-user')
 
 class IGroup(IPropertied):
     """ Marker interface representing a group """
+    taggedValue('icon', 'icon-th-list')
 
 class IUsers(Interface):
     """ Marker interface representing a collection of users """
+    taggedValue('icon', 'icon-list-alt')
 
 class IGroups(Interface):
     """ Marker interface representing a collection of groups """
+    taggedValue('icon', 'icon-list-alt')
     
 class IPrincipals(Interface):
     """ Marker interface representing a container of users and groups """
+    taggedValue('icon', 'icon-lock')
 
-class IPrincipalContent(IContent):
-    """ A category for principal content """
-        
 marker = object()
 
 SERVICES_NAME = '__services__'

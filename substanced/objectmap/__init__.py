@@ -12,12 +12,14 @@ from pyramid.traversal import (
     find_resource,
     )
 
+from ..content import content
 from ..service import find_service
 from ..util import postorder
 
 from ..interfaces import (
     IObjectWillBeAddedEvent,
     IObjectRemovedEvent,
+    IObjectMap,
     )
 
 """
@@ -81,6 +83,7 @@ there's a child at '/a/b/c').
 
 _marker = object()
 
+@content(IObjectMap)
 class ObjectMap(Persistent):
     
     _v_nextid = None

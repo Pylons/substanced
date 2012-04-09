@@ -1,8 +1,6 @@
 import transaction
 import colander
 
-from zope.interface import implementer
-
 from pyramid.exceptions import ConfigurationError
 from pyramid.security import (
     Allow,
@@ -20,6 +18,7 @@ from ..principal import (
     Principals,
     NO_INHERIT,
     )
+from ..content import content
 
 class SiteSchema(Schema):
     title = colander.SchemaNode(colander.String(),
@@ -27,7 +26,7 @@ class SiteSchema(Schema):
     description = colander.SchemaNode(colander.String(),
                                       missing=colander.null)
 
-@implementer(ISite)
+@content(ISite)
 class Site(Folder):
     
     __propschema__ = SiteSchema()

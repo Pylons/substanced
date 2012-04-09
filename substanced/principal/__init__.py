@@ -1,7 +1,5 @@
 from BTrees.IFBTree import IFTreeSet
 
-from zope.interface import implementer
-
 from cryptacular.bcrypt import BCRYPTPasswordManager
 
 
@@ -23,36 +21,35 @@ from ..interfaces import (
     IUsers,
     IGroups,
     IPrincipals,
-    IPrincipalContent,
     IObjectAddedEvent,
     IObjectWillBeRemovedEvent,
     IObjectModifiedEvent,
     )
 
+from ..content import content
+from ..schema import Schema
+from ..service import find_service
+from ..folder import Folder
+
 NO_INHERIT = (Deny, Everyone, ALL_PERMISSIONS) # API
 
 pwd_manager = BCRYPTPasswordManager()
 
-from ..schema import Schema
-from ..service import find_service
-from ..content import content
-from ..folder import Folder
-
-@implementer(IPrincipals)
+@content(IPrincipals)
 class Principals(Folder):
     def __init__(self):
         Folder.__init__(self)
         self['users'] = Users()
         self['groups'] = Groups()
 
-@implementer(IUsers)
+@content(IUsers)
 class Users(Folder):
     def add_user(self, login, password):
         user = User(password)
         self[login] = user
         return user
 
-@implementer(IGroups)
+@content(IGroups)
 class Groups(Folder):
     pass
 
@@ -106,7 +103,7 @@ class GroupSchema(Schema):
         missing=colander.null,
         )
 
-@content(IGroup, IPrincipalContent)
+@content(IGroup)
 class Group(Folder):
     description = ''
     __tab_order__ = ('properties',)
@@ -212,7 +209,7 @@ class UserSchema(Schema):
 
 NO_CHANGE = u'\ufffd' * 8
 
-@content(IUser, IPrincipalContent)
+@content(IUser)
 class User(Folder):
 
     __tab_order__ = ('properties',)
