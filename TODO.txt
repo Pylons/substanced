@@ -4,3 +4,5 @@
 - Make acl edit view not look weird at small resolutions.
 
 - Cut, copy, paste, rename.
+
+- XML-RPC.
