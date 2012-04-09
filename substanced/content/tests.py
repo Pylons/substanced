@@ -3,7 +3,6 @@ import unittest
 
 from zope.interface import (
     Interface,
-    directlyProvides,
     alsoProvides,
     taggedValue,
     )
@@ -57,17 +56,6 @@ class TestContentCategory(unittest.TestCase):
         inst = self._makeOne(ICategory)
         inst.factories[IDummy] = lambda a: a
         self.assertEqual(inst.create(IDummy, 'a'), 'a')
-
-    def test_provided_by_true(self):
-        inst = self._makeOne(ICategory)
-        dummy = Dummy()
-        directlyProvides(dummy, ICategory)
-        self.assertTrue(inst.provided_by(dummy))
-
-    def test_provided_by_false(self):
-        inst = self._makeOne(ICategory)
-        dummy = Dummy()
-        self.assertFalse(inst.provided_by(dummy))
 
     def test_all_no_context(self):
         inst = self._makeOne(ICategory)
@@ -161,12 +149,6 @@ class TestContentCategories(unittest.TestCase):
         self.assertEqual(inst.create(IDummy, 'a'), 'abc')
         self.assertEqual(category.content_iface, IDummy)
         self.assertEqual(category.arg, ('a',))
-
-    def test_provided_by(self):
-        inst = self._makeOne()
-        dummy = Dummy()
-        inst.categories[IContent] = DummyCategory(None)
-        self.assertTrue(inst.provided_by(dummy))
 
     def test_first(self):
         inst = self._makeOne()
@@ -272,9 +254,6 @@ class DummyCategory(object):
         self.arg = arg
         self.kw = kw
         return self.result
-
-    def provided_by(self, resource):
-        return True
 
     def all(self, context=None):
         return []

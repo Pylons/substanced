@@ -34,9 +34,6 @@ class ContentCategory(object):
     def create(self, content_iface, *arg, **kw):
         return self.factories[content_iface](*arg, **kw)
 
-    def provided_by(self, resource):
-        return self.category_iface.providedBy(resource)
-
     def all(self, context=_marker, **meta):
         if context is _marker:
             candidates = self.factories.keys()
@@ -89,9 +86,6 @@ class ContentCategories(object):
     def create(self, content_iface, *arg, **kw):
         return self.categories[IContent].create(content_iface, *arg, **kw)
 
-    def provided_by(self, resource):
-        return self.categories[IContent].provided_by(resource)
-
     def all(self, context=_marker, **meta):
         return self.categories[IContent].all(context, **meta)
 
@@ -134,7 +128,7 @@ def add_content_type(config, content_iface, factory, **meta):
                 'interface object (it does not inherit from '
                 'zope.interface.Interface' % type)
 
-    if not content_iface.providedBy(factory):
+    if not content_iface.implementedBy(factory):
         # was not called by decorator
         implementer(content_iface)(factory)
     
