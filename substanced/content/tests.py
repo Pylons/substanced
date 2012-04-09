@@ -92,6 +92,13 @@ class TestContentCategory(unittest.TestCase):
         inst = self._makeOne(ICategory)
         inst.factories[IFoo] = True
         self.assertEqual(inst.all(a=2), [])
+
+    def test_all_with_meta_not_matching_missing(self):
+        class IFoo(Interface):
+            pass
+        inst = self._makeOne(ICategory)
+        inst.factories[IFoo] = True
+        self.assertEqual(inst.all(a=2), [])
         
     def test_first(self):
         inst = self._makeOne(ICategory)
