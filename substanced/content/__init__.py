@@ -146,8 +146,6 @@ def includeme(config): # pragma: no cover
 # usage:
 # registry.content[IContent].create(IFoo, 'a', bar=1)
 # registry.content.create(IFoo, a', bar=2)
-# registry.content.[IContent].provided_by(model)
-# registry.content.provided_by(model)
 # registry.content.[IContent].all(context)
 # registry.content.all(context)
 # registry.content.[IContent].all()
