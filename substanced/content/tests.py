@@ -77,6 +77,22 @@ class TestContentCategory(unittest.TestCase):
         dummy = Dummy()
         self.assertEqual(inst.all(dummy), [])
 
+    def test_all_with_meta_matching(self):
+        class IFoo(Interface):
+            pass
+        IFoo.setTaggedValue('a', 1)
+        inst = self._makeOne(ICategory)
+        inst.factories[IFoo] = True
+        self.assertEqual(inst.all(a=1), [IFoo])
+
+    def test_all_with_meta_not_matching(self):
+        class IFoo(Interface):
+            pass
+        IFoo.setTaggedValue('a', 1)
+        inst = self._makeOne(ICategory)
+        inst.factories[IFoo] = True
+        self.assertEqual(inst.all(a=2), [])
+        
     def test_first(self):
         inst = self._makeOne(ICategory)
         inst.factories[IDummy] = True
