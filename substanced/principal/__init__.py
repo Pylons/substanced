@@ -1,7 +1,6 @@
-from BTrees.IFBTree import IFTreeSet
+from zope.interface import Interface
 
 from cryptacular.bcrypt import BCRYPTPasswordManager
-
 
 import colander
 import deform
@@ -20,10 +19,10 @@ from ..interfaces import (
     IGroup,
     IUsers,
     IGroups,
+    IPrincipal,
     IPrincipals,
     IObjectAddedEvent,
     IObjectWillBeRemovedEvent,
-    IObjectModifiedEvent,
     )
 
 from ..content import content
@@ -34,7 +33,8 @@ from ..util import oid_of
 
 NO_INHERIT = (Deny, Everyone, ALL_PERMISSIONS) # API
 
-pwd_manager = BCRYPTPasswordManager()
+class UserToGroup(Interface):
+    pass
 
 @content(IPrincipals, icon='icon-lock')
 class Principals(Folder):
@@ -113,7 +113,6 @@ class Group(Folder):
     def __init__(self, description):
         Folder.__init__(self)
         self.description = description
-        self.members = IFTreeSet()
 
     def get_properties(self):
         props = {}
@@ -128,18 +127,31 @@ class Group(Folder):
             self.description = struct.description
         name = struct['name']
         if name != self.__name__:
+            memberids = list(self.get_memberids())
             parent = self.__parent__
             del parent[self.__name__]
             parent[name] = self # will raise exc if already exists
+            self.connect(*memberids)
+
+    def get_memberids(self):
+        objectmap = self.get_service('objectmap')
+        return objectmap.sourceids(self, UserToGroup)
 
     def get_members(self):
-        L = []
-        objectmap = find_service(self, 'objectmap')
-        for memberid in self.members:
-            member = objectmap.object_for(memberid)
-            if member is not None:
-                L.append(member)
-        return L
+        objectmap = self.get_service('objectmap')
+        return objectmap.sources(self, UserToGroup)
+
+    def connect(self, *members):
+        objectmap = self.get_service('objectmap')
+        for member in members:
+            objectmap.connect(member, self, UserToGroup)
+
+    def disconnect(self, *members):
+        if not members:
+            members = list(self.get_members())
+        objectmap = self.get_service('objectmap')
+        for member in members:
+            objectmap.disconnect(member, self, UserToGroup)
 
 @colander.deferred
 def login_validator(node, kw):
@@ -215,25 +227,35 @@ class User(Folder):
 
     __tab_order__ = ('properties',)
     __propschema__ = UserSchema()
-    
+
+    pwd_manager = BCRYPTPasswordManager()
+
     def __init__(self, password, email='', security_question='',
-                 security_answer='', groups=()):
+                 security_answer=''):
         Folder.__init__(self)
-        self.password = pwd_manager.encode(password)
+        self.password = self.pwd_manager.encode(password)
         self.email = email
         self.security_question = security_question
         self.security_answer = security_answer
-        self.groups = IFTreeSet(groups)
+
+    def _resolve_group(self, group_or_groupid):
+        objectmap = self.get_service('objectmap')
+        if oid_of(group_or_groupid, None) is None:
+            # it's a group id
+            group = objectmap.object_for(group_or_groupid)
+        else:
+            group = group_or_groupid
+        return group
 
     def check_password(self, password):
-        if pwd_manager.check(self.password, password):
+        if self.pwd_manager.check(self.password, password):
             return True
         return False
 
     def set_properties(self, struct):
         password = struct['password']
         if password != NO_CHANGE:
-            self.password = pwd_manager.encode(password)
+            self.password = self.pwd_manager.encode(password)
         for attr in ('email', 'security_question', 'security_answer'):
             setattr(self, attr, struct[attr])
         login = struct['login']
@@ -241,8 +263,8 @@ class User(Folder):
             parent = self.__parent__
             del parent[self.__name__]
             parent[login] = self # will raise exc if already exists
-        newgroups = IFTreeSet(map(int, struct['groups']))
-        self.groups = newgroups
+        self.disconnect()
+        self.connect(*struct['groups'])
 
     def get_properties(self):
         props = {}
@@ -250,100 +272,54 @@ class User(Folder):
             props[attr] = getattr(self, attr)
         props['password'] = NO_CHANGE
         props['login'] = self.__name__
-        props['groups'] = [str(x) for x in self.groups]
+        group_strs = map(str, self.get_groupids())
+        props['groups'] = group_strs
         return props
 
+    def get_groupids(self, objectmap=None):
+        if objectmap is None:
+            objectmap = self.get_service('objectmap')
+        return objectmap.targetids(self, UserToGroup)
+
     def get_groups(self):
-        L = []
-        objectmap = find_service(self, 'objectmap')
-        for groupid in self.groups:
-            group = objectmap.object_for(groupid)
-            if group is not None:
-                L.append(group)
-        return L
+        objectmap = self.get_service('objectmap')
+        return objectmap.targets(self, UserToGroup)
 
-@subscriber([IUser, IObjectAddedEvent])
-def user_added(user, event):
-    principals = find_service(user, 'principals')
-    groups = principals['groups']
-    login = user.__name__
-    if login in groups:
-        raise ValueError(
-            'Cannot add a user with a login name the same as the '
-            'group name %s' % login
-            )
-    objectmap = find_service(user, 'objectmap')
-    userid = oid_of(user)
-    for groupid in user.groups:
-        group = objectmap.object_for(groupid)
-        if group is not None:
-            group.members.insert(userid)
+    def connect(self, *groups):
+        objectmap = self.get_service('objectmap')
+        for groupid in groups:
+            group = self._resolve_group(groupid)
+            objectmap.connect(self, group, UserToGroup)
 
-@subscriber([IGroup, IObjectAddedEvent])
-def group_added(group, event):
-    principals = find_service(group, 'principals')
-    users = principals['users']
-    name = group.__name__
-    if name in users:
-        raise ValueError(
-            'Cannot add a group with a name the same as the '
-            'user with the login name %s' % name
-            )
-    groupid = oid_of(group)
-    objectmap = find_service(group, 'objectmap')
-    for userid in group.members:
-        user = objectmap.object_for(userid)
-        if user is not None:
-            user.groups.insert(groupid)
+    def disconnect(self, *groups):
+        if not groups:
+            groups = list(self.get_groups())
+        objectmap = self.get_service('objectmap')
+        for group in groups:
+            objectmap.disconnect(self, group, UserToGroup)
+
+@subscriber([IPrincipal, IObjectAddedEvent])
+def principal_added(principal, event):
+    # disallow same-named groups and users for human sanity (not because
+    # same-named users and groups are disallowed by the system)
+    principal_name = principal.__name__
+    principals = find_service(principal, 'principals')
     
-@subscriber([IUser, IObjectWillBeRemovedEvent])
-def user_removed(user, event):
-    userid = oid_of(user)
-    principals = find_service(user, 'principals')
-    groups = principals['groups']
-    for group in groups.values():
-        if userid in group.members:
-            group.members.remove(userid)
-
-@subscriber([IGroup, IObjectWillBeRemovedEvent])
-def group_removed(group, event):
-    groupid = oid_of(group)
-    principals = find_service(group, 'principals')
-    users = principals['users']
-    for user in users.values():
-        if groupid in user.groups:
-            user.groups.remove(groupid)
-
-#from zope.interface import Interface
-
-@subscriber([IUser, IObjectModifiedEvent])
-def user_modified(user, event):
-    userid = oid_of(user)
-    principals = find_service(user, 'principals')
-    groups = principals['groups']
-    for group in groups.values():
-        groupid = oid_of(group)
-        if groupid in user.groups:
-            if not userid in group.members:
-                group.members.insert(userid)
-        else:
-            if userid in group.members:
-                group.members.remove(userid)
-
-@subscriber([IGroup, IObjectModifiedEvent])
-def group_modified(group, event):
-    groupid = oid_of(group)
-    principals = find_service(group, 'principals')
-    users = principals['users']
-    for user in users.values():
-        userid = oid_of(user)
-        if userid in group.members:
-            if not groupid in user.groups:
-                user.groups.insert(groupid)
-        else:
-            if groupid in user.groups:
-                user.groups.remove(groupid)
-
+    if IUser.providedBy(principal):
+        groups = principals['groups']
+        if principal_name in groups:
+            raise ValueError(
+                'Cannot add a user with a login name the same as the '
+                'group name %s' % principal_name
+                )
+    else:
+        users = principals['users']
+        if principal_name in users:
+            raise ValueError(
+                'Cannot add a group with a name the same as the '
+                'user with the login name %s' % principal_name
+            )
+    
 def groupfinder(userid, request):
     context = request.context
     objectmap = find_service(context, 'objectmap')
@@ -352,7 +328,7 @@ def groupfinder(userid, request):
     user = objectmap.object_for(userid)
     if user is None:
         return None
-    return list(user.groups)
+    return user.get_groupids(objectmap)
 
 def includeme(config): # pragma: no cover
     config.scan('substanced.principal')

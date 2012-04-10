@@ -199,11 +199,9 @@ class ObjectMap(Persistent):
             return set()
 
         removed = set()
-        # sorted() only for clarity during tests
         items = omap.items()
-
         removepaths = []
-        # this can be done with a min= option to BTree.items method
+        
         for k, dm in self.pathindex.items(min=path_tuple):
             if k[:pathlen] == path_tuple:
                 for oidset in dm.values():
@@ -243,6 +241,9 @@ class ObjectMap(Persistent):
 
                 if not oidset2:
                     del omap2[i]
+
+        for refset in self.referencemap.refmap.values():
+            refset.remove(removed)
                     
         return removed
 
@@ -313,82 +314,76 @@ class ObjectMap(Persistent):
 
         return result
 
-    def connect(self, src, target, reftype):
-        src_oid, target_oid = oid_of(src, src), oid_of(target, target)
-        self.referencemap.connect(src_oid, target_oid, reftype)
+    def connect(self, source, target, reftype):
+        source, target = oid_of(source, source), oid_of(target, target)
+        self.referencemap.connect(source, target, reftype)
 
-    def disconnect(self, src, target, reftype):
-        src_oid, target_oid = oid_of(src, src), oid_of(target, target)
-        self.referencemap.disconnect(src_oid, target_oid, reftype)
+    def disconnect(self, source, target, reftype):
+        source, target = oid_of(source, source), oid_of(target, target)
+        self.referencemap.disconnect(source, target, reftype)
 
-    def get_referents(self, obj, reftype):
+    def sources(self, obj, reftype):
+        for oid in self.sourceids(obj, reftype):
+            yield self.object_for(oid)
+
+    def targets(self, obj, reftype):
+        for oid in self.targetids(obj, reftype):
+            yield self.object_for(oid)
+
+    def sourceids(self, obj, reftype):
         oid = oid_of(obj, obj)
-        for referent_oid in self.referencemap.get_referents(oid, reftype):
-            yield self.object_for(referent_oid)
+        return self.referencemap.sourceids(oid, reftype)
 
-    def get_referent(self, obj, reftype):
-        try:
-            return self.get_referents(obj, reftype).next()
-        except StopIteration:
-            return None
-
-    def get_referrers(self, obj, reftype):
+    def targetids(self, obj, reftype):
         oid = oid_of(obj, obj)
-        for referrer_oid in self.referencemap.get_referrers(oid, reftype):
-            yield self.object_for(referrer_oid)
-
-    def get_referrer(self, obj, reftype):
-        try:
-            return self.get_referrers(obj, reftype).next()
-        except StopIteration:
-            return None
+        return self.referencemap.targetids(oid, reftype)
 
 class ReferenceSet(Persistent):
     
     family = BTrees.family32
 
     def __init__(self):
-        self.referents = self.family.IO.BTree()
-        self.referrers = self.family.IO.BTree()
+        self.src2target = self.family.IO.BTree()
+        self.target2src = self.family.IO.BTree()
 
-    def connect(self, src, target):
-        referents = self.referents.setdefault(src, self.family.IF.TreeSet())
-        referents.insert(target)
-        referrers = self.referrers.setdefault(target, self.family.IF.TreeSet())
-        referrers.insert(src)
+    def connect(self, source, target):
+        targets = self.src2target.setdefault(source, self.family.IF.TreeSet())
+        targets.insert(target)
+        sources = self.target2src.setdefault(target, self.family.IF.TreeSet())
+        sources.insert(source)
 
-    def disconnect(self, src, target):
-        referents = self.referents.get(src)
-        if referents is not None:
+    def remove(self, oidset):
+        # if it's the target
+        for oid in oidset:
+            if oid in self.src2target:
+                targets = self.src2target.pop(oid)
+                for target in targets:
+                    self.target2src.get(target).remove(oid)
+            if oid in self.target2src:
+                sources = self.target2src.pop(oid)
+                for source in sources:
+                    self.src2target.get(source).remove(oid)
+
+    def disconnect(self, source, target):
+        targets = self.src2target.get(source)
+        if targets is not None:
             try:
-                referents.remove(target)
+                targets.remove(target)
             except KeyError:
                 pass
             
-        referrers = self.referrers.get(target)
-        if referrers is not None:
+        sources = self.target2src.get(target)
+        if sources is not None:
             try:
-                referrers.remove(src)
+                sources.remove(source)
             except KeyError:
                 pass
 
-    def refers_to(self, src, target):
-        referents = self.referents.get(src)
-        if referents is not None:
-            return target in referents
-        return False
+    def targetids(self, oid):
+        return self.src2target.get(oid, self.family.IF.Set())
 
-    def referred_to(self, src, target):
-        referrers = self.referrers.get(src)
-        if referrers is not None:
-            return target in referrers
-        return False
-
-    def get_referents(self, src):
-        return self.referents.get(src, [])
-
-    def get_referrers(self, src):
-        return self.referrers.get(src, [])
+    def sourceids(self, oid):
+        return self.target2src.get(oid, self.family.IF.Set())
 
 class ReferenceMap(Persistent):
     
@@ -399,40 +394,26 @@ class ReferenceMap(Persistent):
             refmap = self.family.OO.BTree()
         self.refmap = refmap
 
-    def connect(self, src, target, reftype):
+    def connect(self, source, target, reftype):
         refset = self.refmap.setdefault(reftype, ReferenceSet())
-        refset.connect(src, target)
+        refset.connect(source, target)
 
-    def disconnect(self, src, target, reftype):
+    def disconnect(self, source, target, reftype):
         refset = self.refmap.get(reftype)
         if refset is not None:
-            refset.disconnect(src, target)
+            refset.disconnect(source, target)
 
-    def refers_to(self, src, target, reftype):
+    def targetids(self, oid, reftype):
         refset = self.refmap.get(reftype)
         if refset is not None:
-            return refset.refers_to(src, target)
-        return False
+            return refset.targetids(oid)
+        return self.family.IF.Set()
 
-    def referred_to(self, src, target, reftype):
+    def sourceids(self, oid, reftype):
         refset = self.refmap.get(reftype)
         if refset is not None:
-            return refset.referred_to(src, target)
-        return False
-
-    def get_referents(self, src, reftype):
-        refset = self.refmap.get(reftype)
-        if refset is not None:
-            return refset.get_referents(src)
-        return []
-
-    def get_referrers(self, src, reftype):
-        refset = self.refmap.get(reftype)
-        if refset is not None:
-            return refset.get_referrers(src)
-        return []
-
-    
+            return refset.sourceids(oid)
+        return self.family.IF.Set()
 
 def node_path_tuple(resource):
     # cant use resource_path_tuple from pyramid, it wants everything to 
@@ -460,7 +441,7 @@ def object_will_be_added(obj, event):
     for node in postorder(obj):
         node_path = node_path_tuple(node)
         path_tuple = basepath + (name,) + node_path[1:]
-        objectmap.add(node, path_tuple) # gives node an __objectid__
+        objectmap.add(node, path_tuple) # gives node an object id
 
 @subscriber([Interface, IObjectRemovedEvent])
 def object_removed(obj, event):

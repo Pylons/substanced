@@ -31,3 +31,6 @@ def oid_of(obj, default=_marker):
             raise
         return default
 
+def set_oid(obj, value):
+    obj.__objectid__ = value
+    

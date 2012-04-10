@@ -26,8 +26,10 @@ class AddUserView(FormView):
     def add_success(self, appstruct):
         registry = self.request.registry
         name = appstruct.pop('login')
+        groups = appstruct.pop('groups')
         user = registry.content.create(IUser, **appstruct)
         self.request.context[name] = user
+        user.connect(*groups)
         return HTTPFound(self.request.mgmt_path(user, '@@properties'))
 
 @mgmt_view(context=IGroups, name='add', permission='add group', 
