@@ -59,6 +59,40 @@ class ICatalog(Interface):
     objectids = Attribute(
         'a sequence of objectids that are cataloged in this catalog')
 
+class IReferences(Interface):
+    """ A service which allows the referencing of objects to other objects """
+    def connect(src, target, reftype):
+        """Connect ``src_object`` to ``target_object`` using the reference
+        type ``reftype``."""
+
+    def disconnect(src, target, reftype):
+        """Disonnect ``src_object`` from ``target_object`` using the
+        reference type ``reftype``."""
+
+    def get_referents(obj, reftype):
+        """ Return an iterator consisting of objects which have
+        ``obj`` as a relationship source using ``reftype``."""
+        
+    def get_referent(obj, reftype):
+        """ Get one object which has ``obj`` as a relationship
+        source using the reference type ``reftype``. This API calls
+        ``get_referents`` and returns the first item in the iterable.
+        If the iterator is empty, it returns ``None`` (if no forward
+        relationship exists between this object and any other object
+        using the reftype.)"""
+
+    def get_referrers(obj, reftype):
+        """ Return an iterator consisting of objects which have
+        ``obj`` as a relationship target using ``reftype``."""
+        
+    def get_referrer(obj, reftype):
+        """ Get one object which has ``obj`` as a relationship
+        target using the reference type ``reftype``. This API calls
+        ``get_referrers`` and returns the first item in the iterable.
+        If the iterator is empty, it returns ``None`` (if no reverse
+        relationship exists between this object and any other object
+        using the reftype.)"""
+
 class ISite(IPropertied):
     """ Marker interface for something that is the root of a site """
 

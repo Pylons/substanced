@@ -30,6 +30,7 @@ from ..content import content
 from ..schema import Schema
 from ..service import find_service
 from ..folder import Folder
+from ..util import oid_of
 
 NO_INHERIT = (Deny, Everyone, ALL_PERMISSIONS) # API
 
@@ -170,7 +171,7 @@ def login_validator(node, kw):
 def groups_widget(node, kw):
     request = kw['request']
     principals = find_service(request.context, 'principals')
-    values = [(str(group.__objectid__), name) for name, group in 
+    values = [(str(oid_of(group)), name) for name, group in 
               principals['groups'].items()]
     widget = deform.widget.CheckboxChoiceWidget(values=values)
     return widget
@@ -272,7 +273,7 @@ def user_added(user, event):
             'group name %s' % login
             )
     objectmap = find_service(user, 'objectmap')
-    userid = user.__objectid__
+    userid = oid_of(user)
     for groupid in user.groups:
         group = objectmap.object_for(groupid)
         if group is not None:
@@ -288,7 +289,7 @@ def group_added(group, event):
             'Cannot add a group with a name the same as the '
             'user with the login name %s' % name
             )
-    groupid = group.__objectid__
+    groupid = oid_of(group)
     objectmap = find_service(group, 'objectmap')
     for userid in group.members:
         user = objectmap.object_for(userid)
@@ -297,7 +298,7 @@ def group_added(group, event):
     
 @subscriber([IUser, IObjectWillBeRemovedEvent])
 def user_removed(user, event):
-    userid = user.__objectid__
+    userid = oid_of(user)
     principals = find_service(user, 'principals')
     groups = principals['groups']
     for group in groups.values():
@@ -306,7 +307,7 @@ def user_removed(user, event):
 
 @subscriber([IGroup, IObjectWillBeRemovedEvent])
 def group_removed(group, event):
-    groupid = group.__objectid__
+    groupid = oid_of(group)
     principals = find_service(group, 'principals')
     users = principals['users']
     for user in users.values():
@@ -317,11 +318,11 @@ def group_removed(group, event):
 
 @subscriber([IUser, IObjectModifiedEvent])
 def user_modified(user, event):
-    userid = user.__objectid__
+    userid = oid_of(user)
     principals = find_service(user, 'principals')
     groups = principals['groups']
     for group in groups.values():
-        groupid = group.__objectid__
+        groupid = oid_of(group)
         if groupid in user.groups:
             if not userid in group.members:
                 group.members.insert(userid)
@@ -331,11 +332,11 @@ def user_modified(user, event):
 
 @subscriber([IGroup, IObjectModifiedEvent])
 def group_modified(group, event):
-    groupid = group.__objectid__
+    groupid = oid_of(group)
     principals = find_service(group, 'principals')
     users = principals['users']
     for user in users.values():
-        userid = user.__objectid__
+        userid = oid_of(user)
         if userid in group.members:
             if not groupid in user.groups:
                 user.groups.insert(groupid)

@@ -13,12 +13,14 @@ from ..interfaces import ISite
 from ..objectmap import ObjectMap
 from ..catalog import Catalog
 from ..schema import Schema
+from ..reference import References
 from ..folder import Folder
 from ..principal import (
     Principals,
     NO_INHERIT,
     )
 from ..content import content
+from ..util import oid_of
 
 class SiteSchema(Schema):
     title = colander.SchemaNode(colander.String(),
@@ -39,15 +41,17 @@ class Site(Folder):
         objectmap = ObjectMap()
         catalog = Catalog()
         principals = Principals()
+        references = References()
         self.add_service('objectmap', objectmap)
         self.add_service('catalog', catalog)
         self.add_service('principals', principals)
+        self.add_service('references', references)
         user = principals['users'].add_user(initial_login, initial_password)
         catalog.refresh()
         objectmap.add(self, ('',))
-        self.__acl__ = [(Allow, user.__objectid__, ALL_PERMISSIONS)]
+        self.__acl__ = [(Allow, oid_of(user), ALL_PERMISSIONS)]
         self['__services__'].__acl__ = [
-            (Allow, user.__objectid__, ALL_PERMISSIONS),
+            (Allow, oid_of(user), ALL_PERMISSIONS),
             NO_INHERIT,
             ]
 

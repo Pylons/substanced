@@ -11,7 +11,10 @@ from ..interfaces import (
     )
     
 from ..service import find_service
-from ..util import postorder
+from ..util import (
+    postorder,
+    oid_of,
+    )
 
 @subscriber([Interface, IObjectAddedEvent])
 def object_added(obj, event):
@@ -22,7 +25,7 @@ def object_added(obj, event):
         return
     for node in postorder(obj):
         if ICatalogable.providedBy(node):
-            objectid = node.__objectid__
+            objectid = oid_of(node)
             objectid = catalog.index_doc(objectid, node)
 
 @subscriber([Interface, IObjectWillBeRemovedEvent])
@@ -39,7 +42,7 @@ def object_will_be_removed(obj, event):
 def object_modified(obj, event):
     """ Reindex a single piece of content (non-recursive); an
     ObjectModifedEvent event subscriber """
-    objectid = obj.__objectid__
+    objectid = oid_of(obj)
     catalog = find_service(obj, 'catalog')
     if catalog is not None:
         if ICatalogable.providedBy(obj):

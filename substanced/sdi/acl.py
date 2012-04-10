@@ -3,15 +3,18 @@ from pyramid.security import (
     ALL_PERMISSIONS,
     )
 
-from substanced.interfaces import ICatalogable
-from substanced.service import find_service
-
-from substanced.util import postorder
-from substanced.principal import NO_INHERIT
-
-from . import mgmt_view
+from ..interfaces import ICatalogable
+from ..service import find_service
+from ..util import (
+    postorder,
+    oid_of,
+    )
+from ..principal import NO_INHERIT
 
 from .helpers import check_csrf_token
+from . import mgmt_view
+
+
 
 def get_workflow(*arg, **kw):
     return # XXX
@@ -70,9 +73,9 @@ def acl_edit_view(context, request):
         principals = find_service(context, 'principals')
         principal_id = None
         if principal in principals['users']:
-            principal_id = principals['users'][principal].__objectid__
+            principal_id = oid_of(principals['users'][principal])
         elif principal in principals['groups']:
-            principal_id = principals['groups'][principal].__objectid__
+            principal_id = oid_of(principals['groups'][principal])
         if principal_id is not None:
             permission = request.POST['permission']
             if permission == '-- ALL --':
@@ -118,7 +121,7 @@ def acl_edit_view(context, request):
             if allowed is not None:
                 for node in postorder(context):
                     if ICatalogable.providedBy(node):
-                        catalog.reindex_doc(node.__objectid__, node)
+                        catalog.reindex_doc(oid_of(node), node)
 
     workflow = get_context_workflow(context)
     if workflow is not None:

@@ -2,6 +2,8 @@ import calendar
 
 from ..interfaces import IFolder
 
+_marker = object()
+
 def coarse_datetime_repr(date):
     """Convert a datetime to an integer with 100 second granularity.
 
@@ -20,4 +22,12 @@ def postorder(startnode):
                     yield result
         yield node
     return visit(startnode)
+
+def oid_of(obj, default=_marker):
+    oid = getattr(obj, '__objectid__', default)
+    if oid is _marker:
+        if default is _marker:
+            raise KeyError('%s has no __objectid__' % (obj,))
+        return default
+    return oid
 

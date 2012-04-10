@@ -10,6 +10,7 @@ from pyramid.security import (
 from . import mgmt_view
 from .helpers import check_csrf_token
 from ..service import find_service
+from ..util import oid_of
 
 @mgmt_view(name='login', renderer='templates/login.pt', tab_condition=False)
 @mgmt_view(renderer='templates/login.pt', context=HTTPForbidden, 
@@ -31,7 +32,7 @@ def login(context, request):
         users = principals['users']
         user = users.get(login)
         if user is not None and user.check_password(password):
-            headers = remember(request, user.__objectid__)
+            headers = remember(request, oid_of(user))
             request.session.flash('Successful log in')
             return HTTPFound(location = came_from, headers = headers)
         request.session.flash('Failed login')
