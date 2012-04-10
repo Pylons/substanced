@@ -353,7 +353,7 @@ class ReferenceSet(Persistent):
         sources.insert(source)
 
     def remove(self, oidset):
-        # if it's the target
+        # XXX is there a way to make this less expensive?
         for oid in oidset:
             if oid in self.src2target:
                 targets = self.src2target.pop(oid)
