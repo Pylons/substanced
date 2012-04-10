@@ -24,10 +24,10 @@ def postorder(startnode):
     return visit(startnode)
 
 def oid_of(obj, default=_marker):
-    oid = getattr(obj, '__objectid__', default)
-    if oid is _marker:
+    try:
+        return obj.__objectid__
+    except AttributeError:
         if default is _marker:
-            raise KeyError('%s has no __objectid__' % (obj,))
+            raise
         return default
-    return oid
 
