@@ -31,21 +31,25 @@ class IPropertied(Interface):
         propertied object will be updated."""
         
 class IObjectMap(Interface):
-    """ A map of objects to paths """
+    """ A map of objects to paths and a reference engine """
     def objectid_for(obj_or_path_tuple):
         """ Return the object id for obj_or_path_tuple """
+        
     def path_for(objectid):
         """ Return the path tuple for objectid """
+        
     def add(obj):
         """ Add a new object to the object map.  Assigns a new objectid to
         obj.__objectid__ to the object if it doesn't already have one.  The
         object's path or objectid must not already exist in the map.  Returns
         the object id."""
+        
     def remove(obj_objectid_or_path_tuple):
         """ Removes an object from the object map using the object itself, an
         object id, or a path tuple.  Returns a set of objectids (children,
         inclusive) removed as the result of removing this object from the
         object map."""
+        
     def pathlookup(obj_or_path_tuple, depth=None, include_origin=True):
         """ Returns an iterator of document ids within
         obj_or_path_tuple (a traversable object or a path tuple).  If depth
@@ -53,14 +57,7 @@ class IObjectMap(Interface):
         ``include_origin`` is ``True``, returns the docid of the object
         passed as ``obj_or_path_tuple`` in the returned set, otherwise it
         omits it."""
-
-class ICatalog(Interface):
-    """ A collection of indices """
-    objectids = Attribute(
-        'a sequence of objectids that are cataloged in this catalog')
-
-class IReferences(Interface):
-    """ A service which allows the referencing of objects to other objects """
+        
     def connect(src, target, reftype):
         """Connect ``src_object`` to ``target_object`` using the reference
         type ``reftype``."""
@@ -92,6 +89,11 @@ class IReferences(Interface):
         If the iterator is empty, it returns ``None`` (if no reverse
         relationship exists between this object and any other object
         using the reftype.)"""
+
+class ICatalog(Interface):
+    """ A collection of indices """
+    objectids = Attribute(
+        'a sequence of objectids that are cataloged in this catalog')
 
 class ISite(IPropertied):
     """ Marker interface for something that is the root of a site """
@@ -261,10 +263,13 @@ class IFolder(Interface):
         If ``send_events`` is false, suppress the sending of folder events.
         """
 
-class IUser(IPropertied):
+class IPrincipal(IPropertied):
+    """ Marker interface representing a user or group """
+
+class IUser(IPrincipal):
     """ Marker interface representing a user """
 
-class IGroup(IPropertied):
+class IGroup(IPrincipal):
     """ Marker interface representing a group """
 
 class IUsers(Interface):

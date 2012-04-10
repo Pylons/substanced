@@ -13,7 +13,6 @@ from ..interfaces import ISite
 from ..objectmap import ObjectMap
 from ..catalog import Catalog
 from ..schema import Schema
-from ..reference import References
 from ..folder import Folder
 from ..principal import (
     Principals,
@@ -41,11 +40,9 @@ class Site(Folder):
         objectmap = ObjectMap()
         catalog = Catalog()
         principals = Principals()
-        references = References()
         self.add_service('objectmap', objectmap)
         self.add_service('catalog', catalog)
         self.add_service('principals', principals)
-        self.add_service('references', references)
         user = principals['users'].add_user(initial_login, initial_password)
         catalog.refresh()
         objectmap.add(self, ('',))

@@ -14,7 +14,10 @@ from pyramid.traversal import (
 
 from ..content import content
 from ..service import find_service
-from ..util import postorder
+from ..util import (
+    postorder,
+    oid_of,
+    )
 
 from ..interfaces import (
     IObjectWillBeAddedEvent,
@@ -95,6 +98,7 @@ class ObjectMap(Persistent):
         self.objectid_to_path = self.family.IO.BTree()
         self.path_to_objectid = self.family.OI.BTree()
         self.pathindex = self.family.OO.BTree()
+        self.referencemap = ReferenceMap()
 
     def new_objectid(self):
         while True:
@@ -148,8 +152,8 @@ class ObjectMap(Persistent):
         if not isinstance(path_tuple, tuple):
             raise ValueError('path_tuple argument must be a tuple')
 
-        objectid = getattr(obj, '__objectid__', _marker)
-        
+        objectid = oid_of(obj, _marker)
+
         if objectid is _marker:
             objectid = self.new_objectid()
             obj.__objectid__ = objectid
@@ -309,6 +313,127 @@ class ObjectMap(Persistent):
 
         return result
 
+    def connect(self, src, target, reftype):
+        src_oid, target_oid = oid_of(src, src), oid_of(target, target)
+        self.referencemap.connect(src_oid, target_oid, reftype)
+
+    def disconnect(self, src, target, reftype):
+        src_oid, target_oid = oid_of(src, src), oid_of(target, target)
+        self.referencemap.disconnect(src_oid, target_oid, reftype)
+
+    def get_referents(self, obj, reftype):
+        oid = oid_of(obj, obj)
+        for referent_oid in self.referencemap.get_referents(oid, reftype):
+            yield self.object_for(referent_oid)
+
+    def get_referent(self, obj, reftype):
+        try:
+            return self.get_referents(obj, reftype).next()
+        except StopIteration:
+            return None
+
+    def get_referrers(self, obj, reftype):
+        oid = oid_of(obj, obj)
+        for referrer_oid in self.referencemap.get_referrers(oid, reftype):
+            yield self.object_for(referrer_oid)
+
+    def get_referrer(self, obj, reftype):
+        try:
+            return self.get_referrers(obj, reftype).next()
+        except StopIteration:
+            return None
+
+class ReferenceSet(Persistent):
+    
+    family = BTrees.family32
+
+    def __init__(self):
+        self.referents = self.family.IO.BTree()
+        self.referrers = self.family.IO.BTree()
+
+    def connect(self, src, target):
+        referents = self.referents.setdefault(src, self.family.IF.TreeSet())
+        referents.insert(target)
+        referrers = self.referrers.setdefault(target, self.family.IF.TreeSet())
+        referrers.insert(src)
+
+    def disconnect(self, src, target):
+        referents = self.referents.get(src)
+        if referents is not None:
+            try:
+                referents.remove(target)
+            except KeyError:
+                pass
+            
+        referrers = self.referrers.get(target)
+        if referrers is not None:
+            try:
+                referrers.remove(src)
+            except KeyError:
+                pass
+
+    def refers_to(self, src, target):
+        referents = self.referents.get(src)
+        if referents is not None:
+            return target in referents
+        return False
+
+    def referred_to(self, src, target):
+        referrers = self.referrers.get(src)
+        if referrers is not None:
+            return target in referrers
+        return False
+
+    def get_referents(self, src):
+        return self.referents.get(src, [])
+
+    def get_referrers(self, src):
+        return self.referrers.get(src, [])
+
+class ReferenceMap(Persistent):
+    
+    family = BTrees.family32
+    
+    def __init__(self, refmap=None):
+        if refmap is None:
+            refmap = self.family.OO.BTree()
+        self.refmap = refmap
+
+    def connect(self, src, target, reftype):
+        refset = self.refmap.setdefault(reftype, ReferenceSet())
+        refset.connect(src, target)
+
+    def disconnect(self, src, target, reftype):
+        refset = self.refmap.get(reftype)
+        if refset is not None:
+            refset.disconnect(src, target)
+
+    def refers_to(self, src, target, reftype):
+        refset = self.refmap.get(reftype)
+        if refset is not None:
+            return refset.refers_to(src, target)
+        return False
+
+    def referred_to(self, src, target, reftype):
+        refset = self.refmap.get(reftype)
+        if refset is not None:
+            return refset.referred_to(src, target)
+        return False
+
+    def get_referents(self, src, reftype):
+        refset = self.refmap.get(reftype)
+        if refset is not None:
+            return refset.get_referents(src)
+        return []
+
+    def get_referrers(self, src, reftype):
+        refset = self.refmap.get(reftype)
+        if refset is not None:
+            return refset.get_referrers(src)
+        return []
+
+    
+
 def node_path_tuple(resource):
     # cant use resource_path_tuple from pyramid, it wants everything to 
     # have a __name__
@@ -345,7 +470,7 @@ def object_removed(obj, event):
     objectmap = find_service(parent, 'objectmap')
     if objectmap is None:
         return
-    objectid = obj.__objectid__
+    objectid = oid_of(obj)
     objectmap.remove(objectid)
 
 def includeme(config): # pragma: no cover
