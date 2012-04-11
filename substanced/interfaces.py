@@ -119,12 +119,16 @@ class IObjectWillBeRemovedEvent(IObjectEvent):
     object = Attribute('The object being removed')
     parent = Attribute('The folder from which the object is being removed')
     name = Attribute('The name of the object within the folder')
+    moving = Attribute('Boolean indicating that this removal is part of an '
+                       'object move')
 
 class IObjectRemovedEvent(IObjectEvent):
     """ An event type sent when an object is removed """
     object = Attribute('The object being removed')
     parent = Attribute('The folder from which the object is being removed')
     name = Attribute('The name of the object within the folder')
+    moving = Attribute('Boolean indicating that this removal is part of an '
+                       'object move')
 
 class IObjectModifiedEvent(IObjectEvent):
     """ May be sent when an object is modified """
@@ -257,12 +261,35 @@ class IFolder(Interface):
         and ``__parent__`` value,
         """
 
-    def remove(name, send_events=True):
+    def remove(name, send_events=True, moving=False):
         """ Same thing as ``__delitem__``.
 
         If ``send_events`` is false, suppress the sending of folder events.
+        If ``moving`` is True, the events sent will indicate that a move is
+        in process.
         """
 
+    def move(name, other, newname=None):
+        """
+        Move a subobject named ``name`` from this folder to the folder
+        represented by ``other``.  If ``newname`` is not none, it is used as
+        the target object name; otherwise the existing subobject name is
+        used.
+
+        This operation is done in terms of a remove and an add.  The Removed
+        and WillBeRemoved events sent will indicate that the object is
+        moving.
+        """
+
+    def rename(oldname, newname):
+        """
+        Rename a subobject from oldname to newname.
+
+        This operation is done in terms of a remove and an add.  The Removed
+        and WillBeRemoved events sent will indicate that the object is
+        moving.
+        """
+        
 class IPrincipal(IPropertied):
     """ Marker interface representing a user or group """
 

@@ -177,7 +177,7 @@ class ObjectMap(Persistent):
 
         return objectid
 
-    def remove(self, obj_objectid_or_path_tuple):
+    def remove(self, obj_objectid_or_path_tuple, references=True):
         if hasattr(obj_objectid_or_path_tuple, '__parent__'):
             path_tuple = resource_path_tuple(obj_objectid_or_path_tuple)
         elif isinstance(obj_objectid_or_path_tuple, int):
@@ -242,7 +242,8 @@ class ObjectMap(Persistent):
                 if not oidset2:
                     del omap2[i]
 
-        self.referencemap.remove(removed)
+        if references:
+            self.referencemap.remove(removed)
 
         return removed
 
@@ -475,11 +476,12 @@ def object_removed(obj, event):
     """ IObjectRemovedEvent subscriber.
     """
     parent = event.parent
+    moving = event.moving
     objectmap = find_service(parent, 'objectmap')
     if objectmap is None:
         return
     objectid = oid_of(obj)
-    objectmap.remove(objectid)
+    objectmap.remove(objectid, references=not moving)
 
 def includeme(config): # pragma: no cover
     config.scan('substanced.objectmap')

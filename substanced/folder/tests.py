@@ -249,9 +249,12 @@ class TestFolder(unittest.TestCase):
         self.assertEqual(events[0].object, dummy)
         self.assertEqual(events[0].parent, folder)
         self.assertEqual(events[0].name, 'a')
+        self.assertFalse(events[0].moving)
         self.assertEqual(events[1].object, dummy)
         self.assertEqual(events[1].parent, folder)
         self.assertEqual(events[1].name, 'a')
+        self.assertFalse(events[1].moving)
+        
         self.failIf(hasattr(dummy, '__parent__'))
         self.failIf(hasattr(dummy, '__name__'))
 
@@ -272,6 +275,68 @@ class TestFolder(unittest.TestCase):
         self.failIf(hasattr(dummy, '__parent__'))
         self.failIf(hasattr(dummy, '__name__'))
 
+    def test_remove_moving(self):
+        from ..interfaces import IObjectEvent
+        from ..interfaces import IObjectRemovedEvent
+        from ..interfaces import IObjectWillBeRemovedEvent
+        events = []
+        def listener(object, event):
+            events.append(event) #pragma NO COVER
+        self._registerEventListener(listener, IObjectEvent)
+        dummy = DummyModel()
+        dummy.__parent__ = None
+        dummy.__name__ = None
+        folder = self._makeOne({'a':dummy})
+        self.assertEqual(folder._num_objects(), 1)
+        folder.remove('a', moving=True)
+        self.assertEqual(folder._num_objects(), 0)
+        self.failIf(hasattr(dummy, '__parent__'))
+        self.failIf(hasattr(dummy, '__name__'))
+        self.assertEqual(len(events), 2)
+        self.failUnless(IObjectWillBeRemovedEvent.providedBy(events[0]))
+        self.failUnless(IObjectRemovedEvent.providedBy(events[1]))
+        self.assertEqual(events[0].object, dummy)
+        self.assertEqual(events[0].parent, folder)
+        self.assertEqual(events[0].name, 'a')
+        self.assertTrue(events[0].moving)
+        self.assertEqual(events[1].object, dummy)
+        self.assertEqual(events[1].parent, folder)
+        self.assertEqual(events[1].name, 'a')
+        self.assertTrue(events[1].moving)
+
+    def test_move_no_newname(self):
+        folder = self._makeOne()
+        other = self._makeOne()
+        model = DummyModel()
+        folder['a'] = model
+        folder.move('a', other)
+        self.assertEqual(other['a'], model)
+        self.assertEqual(other['a'].__name__, 'a')
+        self.assertEqual(other['a'].__parent__, other)
+        self.assertFalse('a' in folder)
+        
+    def test_move_newname(self):
+        folder = self._makeOne()
+        other = self._makeOne()
+        model = DummyModel()
+        folder['a'] = model
+        folder.move('a', other, 'b')
+        self.assertEqual(other['b'], model)
+        self.assertEqual(other['b'].__name__, 'b')
+        self.assertEqual(other['b'].__parent__, other)
+        self.assertFalse('a' in other)
+        self.assertFalse('a' in folder)
+
+    def test_rename(self):
+        folder = self._makeOne()
+        model = DummyModel()
+        folder['a'] = model
+        folder.rename('a', 'b')
+        self.assertEqual(folder['b'], model)
+        self.assertEqual(folder['b'].__name__, 'b')
+        self.assertEqual(folder['b'].__parent__, folder)
+        self.assertFalse('a' in folder)
+        
     def test_remove_with_order_removes_name(self):
         folder = self._makeOne()
         folder['a'] = DummyModel()

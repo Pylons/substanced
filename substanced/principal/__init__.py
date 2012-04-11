@@ -1,5 +1,3 @@
-from zope.interface import Interface
-
 from cryptacular.bcrypt import BCRYPTPasswordManager
 
 import colander
@@ -22,7 +20,6 @@ from ..interfaces import (
     IPrincipal,
     IPrincipals,
     IObjectAddedEvent,
-    IObjectWillBeRemovedEvent,
     )
 
 from ..content import content
@@ -32,9 +29,7 @@ from ..folder import Folder
 from ..util import oid_of
 
 NO_INHERIT = (Deny, Everyone, ALL_PERMISSIONS) # API
-
-class UserToGroup(Interface):
-    pass
+USER_TO_GROUP = 'user-to-group'
 
 @content(IPrincipals, icon='icon-lock')
 class Principals(Folder):
@@ -125,33 +120,31 @@ class Group(Folder):
     def set_properties(self, struct):
         if struct['description']:
             self.description = struct.description
-        name = struct['name']
-        if name != self.__name__:
-            memberids = list(self.get_memberids())
+        newname = struct['name']
+        oldname = self.__name__
+        if newname != oldname:
             parent = self.__parent__
-            del parent[self.__name__]
-            parent[name] = self # will raise exc if already exists
-            self.connect(*memberids)
+            parent.move(oldname, newname)
 
     def get_memberids(self):
         objectmap = self.get_service('objectmap')
-        return objectmap.sourceids(self, UserToGroup)
+        return objectmap.sourceids(self, USER_TO_GROUP)
 
     def get_members(self):
         objectmap = self.get_service('objectmap')
-        return objectmap.sources(self, UserToGroup)
+        return objectmap.sources(self, USER_TO_GROUP)
 
     def connect(self, *members):
         objectmap = self.get_service('objectmap')
         for member in members:
-            objectmap.connect(member, self, UserToGroup)
+            objectmap.connect(member, self, USER_TO_GROUP)
 
     def disconnect(self, *members):
         if not members:
-            members = list(self.get_members())
+            members = self.get_memberids()
         objectmap = self.get_service('objectmap')
         for member in members:
-            objectmap.disconnect(member, self, UserToGroup)
+            objectmap.disconnect(member, self, USER_TO_GROUP)
 
 @colander.deferred
 def login_validator(node, kw):
@@ -260,9 +253,7 @@ class User(Folder):
             setattr(self, attr, struct[attr])
         login = struct['login']
         if login != self.__name__:
-            parent = self.__parent__
-            del parent[self.__name__]
-            parent[login] = self # will raise exc if already exists
+            self.move(self.__name__, login)
         self.disconnect()
         self.connect(*struct['groups'])
 
@@ -279,24 +270,24 @@ class User(Folder):
     def get_groupids(self, objectmap=None):
         if objectmap is None:
             objectmap = self.get_service('objectmap')
-        return objectmap.targetids(self, UserToGroup)
+        return objectmap.targetids(self, USER_TO_GROUP)
 
     def get_groups(self):
         objectmap = self.get_service('objectmap')
-        return objectmap.targets(self, UserToGroup)
+        return objectmap.targets(self, USER_TO_GROUP)
 
     def connect(self, *groups):
         objectmap = self.get_service('objectmap')
         for groupid in groups:
             group = self._resolve_group(groupid)
-            objectmap.connect(self, group, UserToGroup)
+            objectmap.connect(self, group, USER_TO_GROUP)
 
     def disconnect(self, *groups):
         if not groups:
-            groups = list(self.get_groups())
+            groups = self.get_groupids()
         objectmap = self.get_service('objectmap')
         for group in groups:
-            objectmap.disconnect(self, group, UserToGroup)
+            objectmap.disconnect(self, group, USER_TO_GROUP)
 
 @subscriber([IPrincipal, IObjectAddedEvent])
 def principal_added(principal, event):

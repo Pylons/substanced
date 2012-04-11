@@ -756,6 +756,17 @@ class Test_object_removed(unittest.TestCase):
         event = DummyEvent(site)
         self._callFUT(model, event)
         self.assertEqual(objectmap.removed, [1])
+        self.assertTrue(objectmap.references_removed)
+
+    def test_moving(self):
+        model = testing.DummyResource()
+        model.__objectid__ = 1
+        objectmap = DummyObjectMap()
+        site = _makeSite(objectmap=objectmap)
+        event = DummyEvent(site, moving=True)
+        self._callFUT(model, event)
+        self.assertEqual(objectmap.removed, [1])
+        self.assertFalse(objectmap.references_removed)
         
 def resource(path):
     path_tuple = split(path)
@@ -785,13 +796,15 @@ class DummyObjectMap:
             obj.__objectid__ = objectid
         return objectid
 
-    def remove(self, objectid):
+    def remove(self, objectid, references=True):
+        self.references_removed = references
         self.removed.append(objectid)
         return [objectid]
 
 class DummyEvent(object):
-    def __init__(self, parent):
+    def __init__(self, parent, moving=False):
         self.parent = parent
+        self.moving = moving
 
 class DummyTreeSet(set):
     def insert(self, val):

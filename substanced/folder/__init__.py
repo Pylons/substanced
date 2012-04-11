@@ -159,14 +159,14 @@ class Folder(Persistent):
         """
         return self.remove(name)
 
-    def remove(self, name, send_events=True):
+    def remove(self, name, send_events=True, moving=False):
         """ See IFolder.
         """
         name = unicode(name)
         other = self.data[name]
 
         if send_events:
-            event = ObjectWillBeRemovedEvent(other, self, name)
+            event = ObjectWillBeRemovedEvent(other, self, name, moving)
             self._notify(event)
 
         if hasattr(other, '__parent__'):
@@ -182,10 +182,20 @@ class Folder(Persistent):
             self._order = tuple([x for x in self._order if x != name])
 
         if send_events:
-            event = ObjectRemovedEvent(other, self, name)
+            event = ObjectRemovedEvent(other, self, name, moving)
             self._notify(event)
 
         return other
+
+    def move(self, name, other, newname=None):
+        if newname is None:
+            newname = name
+        ob = self.remove(name, moving=True)
+        other.add(newname, ob)
+        return ob
+
+    def rename(self, oldname, newname):
+        return self.move(oldname, self, newname)
 
     def pop(self, name, default=marker):
         """ See IFolder.

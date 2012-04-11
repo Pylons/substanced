@@ -22,12 +22,19 @@ class ObjectAddedEvent(_ObjectEvent):
 class ObjectWillBeAddedEvent(_ObjectEvent):
     pass
 
+class _ObjectRemovalEvent(object):
+    def __init__(self, object, parent, name, moving=False):
+        self.object = object
+        self.parent = parent
+        self.name = name
+        self.moving = moving
+
 @implementer(IObjectRemovedEvent)
-class ObjectRemovedEvent(_ObjectEvent):
+class ObjectRemovedEvent(_ObjectRemovalEvent):
     pass
 
 @implementer(IObjectWillBeRemovedEvent)
-class ObjectWillBeRemovedEvent(_ObjectEvent):
+class ObjectWillBeRemovedEvent(_ObjectRemovalEvent):
     pass
 
 @implementer(IObjectModifiedEvent)
