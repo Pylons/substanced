@@ -464,9 +464,10 @@ def node_path_tuple(resource):
     
 @subscriber([Interface, IObjectWillBeAddedEvent])
 def object_will_be_added(obj, event):
-    """ Give content an __objectid__ and index it (an IObjectWillBeAddedEvent
-     subscriber, so objects always have an __objectid__ within the more
-     convenient IObjectAddedEvent)"""
+    """ Objects added to folders must always have an __objectid__.  This must
+     be an IObjectWillBeAdded event subscriber so that a resulting object
+     will have an __objectid__ within the (more convenient) IObjectAddedEvent
+     fired later."""
     parent = event.parent
     objectmap = find_service(parent, 'objectmap')
     if objectmap is None:
