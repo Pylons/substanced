@@ -487,6 +487,17 @@ class TestObjectMap(unittest.TestCase):
         inst.disconnect(1, 2, 'ref')
         self.assertTrue('ref' not in inst.referencemap)
 
+    def test_disconnect_with_objects(self):
+        one = testing.DummyResource(__objectid__=1)
+        two = testing.DummyResource(__objectid__=2)
+        inst = self._makeOne()
+        inst.objectid_to_path[1] = (u'',)
+        inst.objectid_to_path[2] = (u'', u'a')
+        inst.referencemap = DummyReferenceMap()
+        inst.referencemap['ref'] = True
+        inst.disconnect(one, two, 'ref')
+        self.assertTrue('ref' not in inst.referencemap)
+        
     def test_sourceids(self):
         inst = self._makeOne()
         inst.objectid_to_path[1] = (u'',)

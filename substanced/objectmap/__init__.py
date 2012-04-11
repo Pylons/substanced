@@ -334,7 +334,7 @@ class ObjectMap(Persistent):
 
     def disconnect(self, source, target, reftype):
         sourceid, targetid = self._refids_for(source, target)
-        self.referencemap.disconnect(source, target, reftype)
+        self.referencemap.disconnect(sourceid, targetid, reftype)
 
     def sourceids(self, obj, reftype):
         oid = self._refid_for(obj)
