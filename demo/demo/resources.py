@@ -5,9 +5,12 @@ from pyramid.httpexceptions import HTTPFound
 import colander
 import deform.widget
 
+from substanced.interfaces import (
+    IFolder,
+    IPropertied
+    )
 from substanced.schema import Schema
 from substanced.content import content
-from substanced.content import Type
 from substanced.sdi import mgmt_view
 from substanced.form import FormView
 
@@ -23,7 +26,7 @@ class DocumentSchema(Schema):
         widget=deform.widget.RichTextWidget()
         )
 
-class DocumentType(Type):
+class DocumentType(IPropertied):
     pass
 
 @content(DocumentType, icon='icon-file')
@@ -46,7 +49,9 @@ class Document(Persistent):
         self.description = struct['description']
         self.title = struct['title']
     
-@mgmt_view(context=DocumentType, name='add', tab_title='Add Document')
+@mgmt_view(context=IFolder, name='add document', tab_title='Add Document', 
+           permission='add content', 
+           renderer='substanced.sdi:templates/form.pt')
 class AddUserView(FormView):
     title = 'Add User'
     schema = DocumentSchema()
