@@ -51,7 +51,7 @@ from . import _marker
 class Test_oid_of(unittest.TestCase):
     def _callFUT(self, obj, default=_marker):
         from . import oid_of
-        return oid_of(obj, _marker)
+        return oid_of(obj, default)
 
     def test_gardenpath(self):
         obj = testing.DummyResource()
