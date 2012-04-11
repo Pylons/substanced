@@ -423,6 +423,102 @@ class TestObjectMap(unittest.TestCase):
         assert dict(objmap.objectid_to_path) == {}
         assert dict(objmap.path_to_objectid) == {}
 
+    def test__refids_for_source_missing(self):
+        inst = self._makeOne()
+        self.assertRaises(ValueError, inst._refids_for, 1, 2)
+        
+    def test__refids_for_target_missing(self):
+        inst = self._makeOne()
+        inst.objectid_to_path[1] = (u'',)
+        self.assertRaises(ValueError, inst._refids_for, 1, 2)
+
+    def test__refids_for_success_oids(self):
+        inst = self._makeOne()
+        inst.objectid_to_path[1] = (u'',)
+        inst.objectid_to_path[2] = (u'',)
+        s, t = inst._refids_for(1, 2)
+        self.assertEqual(s, 1)
+        self.assertEqual(t, 2)
+
+    def test__refids_for_success_objects(self):
+        inst = self._makeOne()
+        one = testing.DummyResource()
+        one.__objectid__ = 1
+        two = testing.DummyResource()
+        two.__objectid__ = 2
+        inst.objectid_to_path[1] = (u'',)
+        inst.objectid_to_path[2] = (u'',)
+        s, t = inst._refids_for(one, two)
+        self.assertEqual(s, 1)
+        self.assertEqual(t, 2)
+        
+    def test__refid_for_missing(self):
+        inst = self._makeOne()
+        self.assertRaises(ValueError, inst._refid_for, 1)
+        
+    def test__refid_for_success_oid(self):
+        inst = self._makeOne()
+        inst.objectid_to_path[1] = (u'',)
+        oid = inst._refid_for(1)
+        self.assertEqual(oid, 1)
+
+    def test__refid_for_success_object(self):
+        inst = self._makeOne()
+        obj = testing.DummyResource()
+        obj.__objectid__ = 1
+        inst.objectid_to_path[1] = (u'',)
+        oid = inst._refid_for(obj)
+        self.assertEqual(oid, 1)
+
+    def test_connect(self):
+        inst = self._makeOne()
+        inst.objectid_to_path[1] = (u'',)
+        inst.objectid_to_path[2] = (u'', u'a')
+        inst.referencemap = DummyReferenceMap()
+        inst.connect(1, 2, 'ref')
+        self.assertEqual(inst.referencemap['ref'], (1, 2))
+
+    def test_disconnect(self):
+        inst = self._makeOne()
+        inst.objectid_to_path[1] = (u'',)
+        inst.objectid_to_path[2] = (u'', u'a')
+        inst.referencemap = DummyReferenceMap()
+        inst.referencemap['ref'] = True
+        inst.disconnect(1, 2, 'ref')
+        self.assertTrue('ref' not in inst.referencemap)
+
+    def test_sourceids(self):
+        inst = self._makeOne()
+        inst.objectid_to_path[1] = (u'',)
+        inst.referencemap = DummyReferenceMap(sourceids=[2])
+        self.assertEqual(inst.sourceids(1, 'ref'), [2])
+        
+    def test_targetids(self):
+        inst = self._makeOne()
+        inst.objectid_to_path[1] = (u'',)
+        inst.referencemap = DummyReferenceMap(targetids=[2])
+        self.assertEqual(inst.targetids(1, 'ref'), [2])
+
+    def test_sources(self):
+        inst = self._makeOne()
+        inst.objectid_to_path[1] = (u'',)
+        inst.objectid_to_path[2] = (u'', u'a')
+        inst.objectid_to_path[3] = (u'', u'b')
+        inst.referencemap = DummyReferenceMap(sourceids=[2, 3])
+        obj = object()
+        inst._find_resource = lambda *arg: obj
+        self.assertEqual(list(inst.sources(1, 'ref')), [obj, obj])
+        
+    def test_targets(self):
+        inst = self._makeOne()
+        inst.objectid_to_path[1] = (u'',)
+        inst.objectid_to_path[2] = (u'', u'a')
+        inst.objectid_to_path[3] = (u'', u'b')
+        inst.referencemap = DummyReferenceMap(targetids=[2, 3])
+        obj = object()
+        inst._find_resource = lambda *arg: obj
+        self.assertEqual(list(inst.targets(1, 'ref')), [obj, obj])
+        
 class TestReferenceSet(unittest.TestCase):
     def _makeOne(self):
         from . import ReferenceSet
@@ -436,16 +532,16 @@ class TestReferenceSet(unittest.TestCase):
         
     def test_connect_nonempty_overlap(self):
         refset = self._makeOne()
-        refset.src2target[1] = DummyOOTreeSet([2])
-        refset.target2src[2] = DummyOOTreeSet([1])
+        refset.src2target[1] = DummyTreeSet([2])
+        refset.target2src[2] = DummyTreeSet([1])
         refset.connect(1, 2)
         self.assertEqual(list(refset.src2target[1]), [2])
         self.assertEqual(list(refset.target2src[2]), [1])
 
     def test_connect_nonempty_nonoverlap(self):
         refset = self._makeOne()
-        refset.src2target[1] = DummyOOTreeSet([3])
-        refset.target2src[2] = DummyOOTreeSet([4])
+        refset.src2target[1] = DummyTreeSet([3])
+        refset.target2src[2] = DummyTreeSet([4])
         refset.connect(1, 2)
         self.assertEqual(sorted(list(refset.src2target[1])), [2, 3])
         self.assertEqual(sorted(list(refset.target2src[2])), [1, 4])
@@ -458,31 +554,61 @@ class TestReferenceSet(unittest.TestCase):
         
     def test_disconnect_nonempty(self):
         refset = self._makeOne()
-        refset.src2target[1] = DummyOOTreeSet([2, 3])
-        refset.target2src[2] = DummyOOTreeSet([1, 4])
+        refset.src2target[1] = DummyTreeSet([2, 3])
+        refset.target2src[2] = DummyTreeSet([1, 4])
         refset.disconnect(1, 2)
         self.assertEqual(list(refset.src2target[1]), [3])
         self.assertEqual(list(refset.target2src[2]), [4])
 
     def test_disconnect_keyerrors(self):
         refset = self._makeOne()
-        refset.src2target[1] = DummyOOTreeSet()
-        refset.target2src[2] = DummyOOTreeSet()
+        refset.src2target[1] = DummyTreeSet()
+        refset.target2src[2] = DummyTreeSet()
         refset.disconnect(1, 2)
         self.assertEqual(list(refset.src2target[1]), [])
         self.assertEqual(list(refset.target2src[2]), [])
 
     def test_targetids(self):
         refset = self._makeOne()
-        dummyset = DummyOOTreeSet([1])
+        dummyset = DummyTreeSet([1])
         refset.src2target[1] = dummyset
         self.assertEqual(refset.targetids(1), dummyset)
         
     def test_sourceids(self):
         refset = self._makeOne()
-        dummyset = DummyOOTreeSet(['a'])
+        dummyset = DummyTreeSet([1])
         refset.target2src[1] = dummyset
         self.assertEqual(refset.sourceids(1), dummyset)
+
+    def test_remove_empty(self):
+        refset = self._makeOne()
+        self.assertEqual(list(refset.remove([1,2])), [])
+
+    def test_remove_notempty(self):
+        # emulate the result of:
+        # connect(1, 2)
+        # connect(3, 4)
+        # connect(2, 4)
+        # connect(2, 1)
+        # connect(3, 5)
+        src2target = {1:DummyTreeSet([2]), 3:DummyTreeSet([4, 5]), 
+                      2:DummyTreeSet([4, 1])}
+        target2src = {2:DummyTreeSet([1]), 4:DummyTreeSet([3, 2]),
+                      1:DummyTreeSet([2]), 5:DummyTreeSet([3])}
+        refset = self._makeOne()
+        refset.src2target = src2target
+        refset.target2src = target2src
+        oids = [1,4, 10]
+        result = refset.remove(oids)
+        self.assertEqual(list(result), [1,4]) # 10 unmentioned
+        self.assertEqual(
+            src2target,
+            {3:DummyTreeSet([5])}
+            )
+        self.assertEqual(
+            target2src,
+            {5:DummyTreeSet([3])}
+            )
 
 class TestReferenceMap(unittest.TestCase):
     def _makeOne(self, map=None):
@@ -526,6 +652,17 @@ class TestReferenceMap(unittest.TestCase):
         map = {'reftype':refset}
         refs = self._makeOne(map)
         self.assertEqual(list(refs.sourceids('a', 'reftype')), ['123'])
+
+    def test_remove(self):
+        L = []
+        refset1 = DummyReferenceSet()
+        refset2 = DummyReferenceSet()
+        refset1.remove = lambda oids: L.append(oids)
+        refset2.remove = lambda oids: L.append(oids)
+        map = {'reftype':refset1, 'reftype2':refset2}
+        refs = self._makeOne(map)
+        refs.remove([1,2])
+        self.assertEqual(L, [[1,2], [1,2]])
 
 class Test_object_will_be_added(unittest.TestCase):
     def _callFUT(self, object, event):
@@ -656,11 +793,11 @@ class DummyEvent(object):
     def __init__(self, parent):
         self.parent = parent
 
-class DummyOOTreeSet(set):
+class DummyTreeSet(set):
     def insert(self, val):
         self.add(val)
-        
-class DummyReferenceSet:
+
+class DummyReferenceSet(object):
     def __init__(self, result=True):
         self.result = result
         self.connected = []
@@ -677,8 +814,24 @@ class DummyReferenceSet:
 
     def sourceids(self, src):
         return self.result
-    
+
+class DummyReferenceMap(dict):
+    def __init__(self, sourceids=(), targetids=()):
+        self._sourceids = sourceids
+        self._targetids = targetids
         
+    def connect(self, src, target, reftype):
+        self[reftype] = (src, target)
+
+    def disconnect(self, src, target, reftype):
+        del self[reftype]
+
+    def sourceids(self, oid, reftype):
+        return self._sourceids
+
+    def targetids(self, oid, reftype):
+        return self._targetids
+    
 def _makeSite(**kw):
     from ..interfaces import IFolder
     site = testing.DummyResource(__provides__=kw.pop('__provides__', None))

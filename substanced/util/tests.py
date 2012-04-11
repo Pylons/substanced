@@ -46,3 +46,22 @@ class Test__postorder(unittest.TestCase):
         result = list(self._callFUT(model))
         self.assertEqual(result, [four, three, two, one, model])
 
+from . import _marker
+
+class Test_oid_of(unittest.TestCase):
+    def _callFUT(self, obj, default=_marker):
+        from . import oid_of
+        return oid_of(obj, _marker)
+
+    def test_gardenpath(self):
+        obj = testing.DummyResource()
+        obj.__objectid__ = 1
+        self.assertEqual(self._callFUT(obj), 1)
+
+    def test_no_objectid_no_default(self):
+        obj = testing.DummyResource()
+        self.assertRaises(AttributeError, self._callFUT, obj)
+
+    def test_no_objectid_with_default(self):
+        obj = testing.DummyResource()
+        self.assertEqual(self._callFUT(obj, 1), 1)

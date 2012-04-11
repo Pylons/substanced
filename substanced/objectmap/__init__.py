@@ -242,9 +242,8 @@ class ObjectMap(Persistent):
                 if not oidset2:
                     del omap2[i]
 
-        for refset in self.referencemap.refmap.values():
-            refset.remove(removed)
-                    
+        self.referencemap.remove(removed)
+
         return removed
 
     def _get_path_tuple(self, obj_or_path_tuple):
@@ -314,13 +313,35 @@ class ObjectMap(Persistent):
 
         return result
 
+    def _refids_for(self, source, target):
+        sourceid, targetid = oid_of(source, source), oid_of(target, target)
+        if not sourceid in self.objectid_to_path:
+            raise ValueError('source %s is not in objectmap' % (source,))
+        if not targetid in self.objectid_to_path:
+            raise ValueError('target %s is not in objectmap' % (target,))
+        return sourceid, targetid
+
+    def _refid_for(self, obj):
+        oid = oid_of(obj, obj)
+        if not oid in self.objectid_to_path:
+            raise ValueError('oid %s is not in objectmap' % (obj,))
+        return oid
+
     def connect(self, source, target, reftype):
-        source, target = oid_of(source, source), oid_of(target, target)
-        self.referencemap.connect(source, target, reftype)
+        sourceid, targetid = self._refids_for(source, target)
+        self.referencemap.connect(sourceid, targetid, reftype)
 
     def disconnect(self, source, target, reftype):
-        source, target = oid_of(source, source), oid_of(target, target)
+        sourceid, targetid = self._refids_for(source, target)
         self.referencemap.disconnect(source, target, reftype)
+
+    def sourceids(self, obj, reftype):
+        oid = self._refid_for(obj)
+        return self.referencemap.sourceids(oid, reftype)
+
+    def targetids(self, obj, reftype):
+        oid = self._refid_for(obj)
+        return self.referencemap.targetids(oid, reftype)
 
     def sources(self, obj, reftype):
         for oid in self.sourceids(obj, reftype):
@@ -329,61 +350,6 @@ class ObjectMap(Persistent):
     def targets(self, obj, reftype):
         for oid in self.targetids(obj, reftype):
             yield self.object_for(oid)
-
-    def sourceids(self, obj, reftype):
-        oid = oid_of(obj, obj)
-        return self.referencemap.sourceids(oid, reftype)
-
-    def targetids(self, obj, reftype):
-        oid = oid_of(obj, obj)
-        return self.referencemap.targetids(oid, reftype)
-
-class ReferenceSet(Persistent):
-    
-    family = BTrees.family32
-
-    def __init__(self):
-        self.src2target = self.family.IO.BTree()
-        self.target2src = self.family.IO.BTree()
-
-    def connect(self, source, target):
-        targets = self.src2target.setdefault(source, self.family.IF.TreeSet())
-        targets.insert(target)
-        sources = self.target2src.setdefault(target, self.family.IF.TreeSet())
-        sources.insert(source)
-
-    def remove(self, oidset):
-        # XXX is there a way to make this less expensive?
-        for oid in oidset:
-            if oid in self.src2target:
-                targets = self.src2target.pop(oid)
-                for target in targets:
-                    self.target2src.get(target).remove(oid)
-            if oid in self.target2src:
-                sources = self.target2src.pop(oid)
-                for source in sources:
-                    self.src2target.get(source).remove(oid)
-
-    def disconnect(self, source, target):
-        targets = self.src2target.get(source)
-        if targets is not None:
-            try:
-                targets.remove(target)
-            except KeyError:
-                pass
-            
-        sources = self.target2src.get(target)
-        if sources is not None:
-            try:
-                sources.remove(source)
-            except KeyError:
-                pass
-
-    def targetids(self, oid):
-        return self.src2target.get(oid, self.family.IF.Set())
-
-    def sourceids(self, oid):
-        return self.target2src.get(oid, self.family.IF.Set())
 
 class ReferenceMap(Persistent):
     
@@ -415,6 +381,67 @@ class ReferenceMap(Persistent):
             return refset.sourceids(oid)
         return self.family.IF.Set()
 
+    def remove(self, oids):
+        for refset in self.refmap.values():
+            refset.remove(oids)
+
+class ReferenceSet(Persistent):
+    
+    family = BTrees.family32
+
+    def __init__(self):
+        self.src2target = self.family.IO.BTree()
+        self.target2src = self.family.IO.BTree()
+
+    def connect(self, source, target):
+        targets = self.src2target.setdefault(source, self.family.IF.TreeSet())
+        targets.insert(target)
+        sources = self.target2src.setdefault(target, self.family.IF.TreeSet())
+        sources.insert(source)
+
+    def disconnect(self, source, target):
+        targets = self.src2target.get(source)
+        if targets is not None:
+            try:
+                targets.remove(target)
+            except KeyError:
+                pass
+            
+        sources = self.target2src.get(target)
+        if sources is not None:
+            try:
+                sources.remove(source)
+            except KeyError:
+                pass
+
+    def targetids(self, oid):
+        return self.src2target.get(oid, self.family.IF.Set())
+
+    def sourceids(self, oid):
+        return self.target2src.get(oid, self.family.IF.Set())
+
+    def remove(self, oidset):
+        # XXX is there a way to make this less expensive?
+        removed = self.family.IF.Set()
+        for oid in oidset:
+            if oid in self.src2target:
+                removed.insert(oid)
+                targets = self.src2target.pop(oid)
+                for target in targets:
+                    oidset = self.target2src.get(target)
+                    oidset.remove(oid)
+                    if not oidset:
+                        del self.target2src[target]
+            if oid in self.target2src:
+                removed.insert(oid)
+                sources = self.target2src.pop(oid)
+                for source in sources:
+                    oidset = self.src2target.get(source)
+                    oidset.remove(oid)
+                    if not oidset:
+                        del self.src2target[source]
+        return removed
+    
 def node_path_tuple(resource):
     # cant use resource_path_tuple from pyramid, it wants everything to 
     # have a __name__
