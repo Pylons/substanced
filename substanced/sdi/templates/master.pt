@@ -57,8 +57,10 @@
 
     <div class="container-fluid">
 
-      <ul class="breadcrumb">
-        <tal:breadcrumbs repeat="breadcrumb h.breadcrumbs(request)">
+      <ul class="breadcrumb"
+          tal:define="breadcrumbs h.breadcrumbs(request)"
+          tal:condition="breadcrumbs">
+        <tal:breadcrumbs repeat="breadcrumb breadcrumbs">
           <li tal:attributes="class breadcrumb['active']">
              <i class="${breadcrumb['icon']}"> </i>
              <a href="${breadcrumb['url']}">${breadcrumb['name']}</a> 
@@ -72,8 +74,10 @@
 
           <div class="span12">
 
-            <ul class="nav nav-tabs">
-              <li tal:repeat="tab_data h.get_mgmt_views(request)"
+            <ul class="nav nav-tabs" 
+                tal:define="tabs h.get_mgmt_views(request)"
+                tal:condition="tabs">
+              <li tal:repeat="tab_data tabs"
                   tal:attributes="class request.view_name==tab_data['view_name'] and 'active' or None"><a href="${request.mgmt_path(request.context, '@@%s' % tab_data['view_name'])}">${tab_data['tab_title']}</a>
               </li>
             </ul>

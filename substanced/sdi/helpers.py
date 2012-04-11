@@ -9,6 +9,7 @@ from pyramid.request import Request
 from pyramid.httpexceptions import HTTPBadRequest
 from pyramid.location import lineage
 from pyramid.traversal import find_interface
+from pyramid.security import has_permission
 
 from ..interfaces import ISite
 
@@ -87,6 +88,8 @@ def macros():
 def breadcrumbs(request):
     breadcrumbs = []
     for resource in reversed(list(lineage(request.context))):
+        if not has_permission('view', resource, request):
+            return []
         url = request.mgmt_path(resource)
         name = resource.__name__ or 'Home'
         icon = request.registry.content.metadata(resource, 'icon')
