@@ -502,13 +502,13 @@ class TestObjectMap(unittest.TestCase):
         inst = self._makeOne()
         inst.objectid_to_path[1] = (u'',)
         inst.referencemap = DummyReferenceMap(sourceids=[2])
-        self.assertEqual(inst.sourceids(1, 'ref'), [2])
+        self.assertEqual(list(inst.sourceids(1, 'ref')), [2])
         
     def test_targetids(self):
         inst = self._makeOne()
         inst.objectid_to_path[1] = (u'',)
         inst.referencemap = DummyReferenceMap(targetids=[2])
-        self.assertEqual(inst.targetids(1, 'ref'), [2])
+        self.assertEqual(list(inst.targetids(1, 'ref')), [2])
 
     def test_sources(self):
         inst = self._makeOne()

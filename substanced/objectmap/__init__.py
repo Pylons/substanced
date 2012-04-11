@@ -336,13 +336,26 @@ class ObjectMap(Persistent):
         sourceid, targetid = self._refids_for(source, target)
         self.referencemap.disconnect(sourceid, targetid, reftype)
 
+    # We make a copy of the set returned by ``targetids`` and ``sourceids``
+    # because it's not atypical for callers to want to modify the
+    # underlying bucket while iterating over the returned set.  For example:
+    #
+    # groups = objectmap.targetids(self, USER_TO_GROUP)
+    # for group in groups:
+    #    objectmap.disconnect(self, group, USER_TO_GROUP)
+    #
+    # if we don't make a copy, this kind of code will result in e.g.
+    #
+    #     for group in groups:
+    # RuntimeError: the bucket being iterated changed size
+    
     def sourceids(self, obj, reftype):
         oid = self._refid_for(obj)
-        return self.referencemap.sourceids(oid, reftype)
+        return self.family.IF.Set(self.referencemap.sourceids(oid, reftype))
 
     def targetids(self, obj, reftype):
         oid = self._refid_for(obj)
-        return self.referencemap.targetids(oid, reftype)
+        return self.family.IF.Set(self.referencemap.targetids(oid, reftype))
 
     def sources(self, obj, reftype):
         for oid in self.sourceids(obj, reftype):
