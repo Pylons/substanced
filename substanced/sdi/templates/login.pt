@@ -2,8 +2,12 @@
 
   <div metal:fill-slot="main">
     <form action="${url}" method="post">
-      <input type="text" name="login" value="${login}"/><br/>
-      <input type="password" name="password" value="${password}"/><br/>
+      <label> Username
+         <input type="text" name="login" value="${login}"/>
+      </label>
+      <label> Password
+         <input type="password" name="password" value="${password}"/>
+      </label>
       <input type="submit" name="form.submitted" value="Log In" 
              class="btn btn-primary"/>
       <input type="hidden" name="csrf_token" 
