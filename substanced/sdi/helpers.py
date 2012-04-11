@@ -11,25 +11,8 @@ from pyramid.location import lineage
 from pyramid.traversal import find_interface
 
 from ..interfaces import ISite
-from ..service import find_service
 
 MANAGE_ROUTE_NAME = 'substanced_manage'
-
-def get_subnodes(request, context=None):
-    if context is None:
-        context = request.context
-    objectmap = find_service(context, 'objectmap')
-    nodes = objectmap.navgen(context, depth=1)
-    L = []
-    for node in nodes:
-        obj = objectmap.object_for(node['path'])
-        if obj is not None:
-            if get_mgmt_views(request, obj):
-                node['url']  = request.mgmt_path(obj)
-            else:
-                node['url'] = None
-            L.append(node)
-    return L
 
 def get_mgmt_views(request, context=None):
     registry = request.registry
