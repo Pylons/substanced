@@ -9,3 +9,7 @@
 
 - Undo last action.
 
+- Figure out a way to mutate ACLs when a principal referred to by one is
+  deleted.  Maybe change ACL such that the principal id is replaced by an
+  unobtainable object id.
+
