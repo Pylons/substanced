@@ -253,7 +253,7 @@ class User(Folder):
             setattr(self, attr, struct[attr])
         login = struct['login']
         if login != self.__name__:
-            self.rename(self.__name__, login)
+            self.__parent__.rename(self.__name__, login)
         self.disconnect()
         self.connect(*struct['groups'])
 
