@@ -124,7 +124,7 @@ class Group(Folder):
         oldname = self.__name__
         if newname != oldname:
             parent = self.__parent__
-            parent.move(oldname, newname)
+            parent.rename(oldname, newname)
 
     def get_memberids(self):
         objectmap = self.get_service('objectmap')
@@ -253,7 +253,7 @@ class User(Folder):
             setattr(self, attr, struct[attr])
         login = struct['login']
         if login != self.__name__:
-            self.move(self.__name__, login)
+            self.rename(self.__name__, login)
         self.disconnect()
         self.connect(*struct['groups'])
 
