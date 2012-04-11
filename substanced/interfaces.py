@@ -20,15 +20,15 @@ class IPropertied(Interface):
     def get_properties():
         """ Returns a data structure representing the current property state
         according to the attached __propschema__ (usually a dictionary).
-        This attribute is optional.  If it is not defined, the __dict__ of
-        the propertied object will be used."""
+        This method definition is optional.  If it is not defined, the
+        __dict__ of the propertied object will be used."""
 
     def set_properties(struct):
         """ Persists a data structure representing the property state
         represented by ``struct`` (usually a dictionary).  The data structure
         will have already been validated against the __propschema__.  This
-        argument is optional.  If it is not defined, the __dict__ of the
-        propertied object will be updated."""
+        method definition is optional.  If it is not defined, the __dict__ of
+        the propertied object will be updated."""
         
 class IObjectMap(Interface):
     """ A map of objects to paths and a reference engine """
@@ -37,6 +37,10 @@ class IObjectMap(Interface):
         
     def path_for(objectid):
         """ Return the path tuple for objectid """
+
+    def object_for(objectid):
+        """ Return the object associated with ``objectid`` or ``None`` if the
+        object cannot be found."""
         
     def add(obj):
         """ Add a new object to the object map.  Assigns a new objectid to
@@ -60,36 +64,32 @@ class IObjectMap(Interface):
         
     def connect(src, target, reftype):
         """Connect ``src_object`` to ``target_object`` using the reference
-        type ``reftype``."""
+        type ``reftype``.  ``src`` and ``target`` may be objects or object
+        identifiers."""
 
     def disconnect(src, target, reftype):
         """Disonnect ``src_object`` from ``target_object`` using the
-        reference type ``reftype``."""
+        reference type ``reftype``. ``src`` and ``target`` may be objects or
+        object identifiers"""
 
-    def get_referents(obj, reftype):
-        """ Return an iterator consisting of objects which have
-        ``obj`` as a relationship source using ``reftype``."""
+    def sources(obj, reftype):
+        """ Return a generator consisting of objects which have ``obj`` as a
+        relationship source using ``reftype``.  ``obj`` can be an object or
+        an object id."""
         
-    def get_referent(obj, reftype):
-        """ Get one object which has ``obj`` as a relationship
-        source using the reference type ``reftype``. This API calls
-        ``get_referents`` and returns the first item in the iterable.
-        If the iterator is empty, it returns ``None`` (if no forward
-        relationship exists between this object and any other object
-        using the reftype.)"""
+    def targets(obj, reftype):
+        """ Return a generator consisting of objects which have ``obj`` as a
+        relationship target using ``reftype``. ``obj`` can be an object or an
+        object id."""
 
-    def get_referrers(obj, reftype):
-        """ Return an iterator consisting of objects which have
-        ``obj`` as a relationship target using ``reftype``."""
+    def targetids(obj, reftype):
+        """ Return a set of objectids which have ``obj`` as a relationship
+        target using ``reftype``.  ``obj`` can be an object or an object id."""
+
+    def sourceids(obj, reftype):
+        """ Return a set of objectids which have ``obj`` as a relationship
+        source using ``reftype``.  ``obj`` can be an object or an object id."""
         
-    def get_referrer(obj, reftype):
-        """ Get one object which has ``obj`` as a relationship
-        target using the reference type ``reftype``. This API calls
-        ``get_referrers`` and returns the first item in the iterable.
-        If the iterator is empty, it returns ``None`` (if no reverse
-        relationship exists between this object and any other object
-        using the reftype.)"""
-
 class ICatalog(Interface):
     """ A collection of indices """
     objectids = Attribute(
