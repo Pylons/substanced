@@ -1,7 +1,10 @@
 from pyramid.security import has_permission
 from pyramid.httpexceptions import HTTPFound
 
-from ..interfaces import IFolder
+from ..interfaces import (
+    IFolder,
+    SERVICES_NAME
+    )
 
 from .helpers import (
     get_batchinfo,
@@ -23,7 +26,8 @@ def folder_contents(context, request):
         if has_permission('view', v, request):
             viewable = True
         icon = request.registry.content.metadata(v, 'icon')
-        data = dict(name=k, deletable=can_manage, viewable=viewable, url=url, 
+        deletable = can_manage and k != SERVICES_NAME
+        data = dict(name=k, deletable=deletable, viewable=viewable, url=url, 
                     icon=icon)
         L.append(data)
     batchinfo = get_batchinfo(L, request, url=request.url)
