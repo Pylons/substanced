@@ -47,7 +47,7 @@ def acl_edit_view(context, request):
             new = acl[:]
             new[index-1], new[index] = new[index], new[index-1]
             acl = new
-        request.session.flash('ACE moved up')
+        request.flash_undo('ACE moved up')
 
     elif 'form.move_down' in request.POST:
         check_csrf_token(request)
@@ -56,7 +56,7 @@ def acl_edit_view(context, request):
             new = acl[:]
             new[index+1], new[index] = new[index], new[index+1]
             acl = new
-        request.session.flash('ACE moved down')
+        request.flash_undo('ACE moved down')
 
     elif 'form.remove' in request.POST:
         check_csrf_token(request)
@@ -64,7 +64,7 @@ def acl_edit_view(context, request):
         new = acl[:]
         del new[index]
         acl = new
-        request.session.flash('ACE removed')
+        request.flash_undo('ACE removed')
 
     elif 'form.add' in request.POST:
         check_csrf_token(request)
@@ -85,7 +85,7 @@ def acl_edit_view(context, request):
             new = acl[:]
             new.append((verb, principal_id, permissions))
             acl = new
-            request.session.flash('ACE added')
+            request.flash_undo('ACE added')
         else:
             request.session.flash('Unknown user or group %s' % principal, 
                                   'error')
@@ -95,10 +95,10 @@ def acl_edit_view(context, request):
         no_inherit = request.POST['inherit'] == 'disabled'
         if no_inherit:
             epilog = [NO_INHERIT]
-            request.session.flash('ACL will *not* inherit from parent')
+            request.flash_undo('ACL will *not* inherit from parent')
         else:
             epilog = []
-            request.session.flash('ACL will inherit from parent')
+            request.flash_undo('ACL will inherit from parent')
 
     elif 'form.security_state' in request.POST:
         check_csrf_token(request)

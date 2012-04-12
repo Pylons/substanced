@@ -25,7 +25,7 @@ class PropertiesView(FormView):
             self.context._p_changed = True
         event = ObjectModifiedEvent(self.context)
         self.request.registry.subscribers((self.context, event), None)
-        self.request.session.flash('Updated')
+        self.request.flash_undo('Updated properties')
         return HTTPFound(self.request.mgmt_path(self.context, '@@properties'))
 
     def show(self, form):
