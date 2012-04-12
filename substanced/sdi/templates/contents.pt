@@ -4,7 +4,9 @@
     <script type="text/javascript">
       function toggleChecked(status) {
           $("#choices input").each( function() {
-          $(this).attr("checked",status);
+             if (!$(this).attr("disabled")) {
+               $(this).attr("checked",status);
+             }
          })};
     </script>
   </div>
