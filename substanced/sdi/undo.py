@@ -37,7 +37,7 @@ def undo_one(request):
     undo = None
     conn = get_connection(request)
     db = conn.db()
-    for record in db.undoInfo():
+    for record in db.undoInfo(): # by default, the last 20 transactions
         description = record['description']
         if needle in description:
             undo = dict(record)

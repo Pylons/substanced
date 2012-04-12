@@ -40,7 +40,14 @@ def delete_folder_contents(context, request):
         if v is not None:
             del context[name]
             deleted += 1
-    msg = 'Deleted %s items' % deleted
-    request.flash_undo(msg)
+    if not deleted:
+        msg = 'No items deleted'
+        request.session.flash(msg)
+    elif deleted == 1:
+        msg = 'Deleted 1 item'
+        request.flash_undo(msg)
+    else:
+        msg = 'Deleted %s items' % deleted
+        request.flash_undo(msg)
     return HTTPFound(request.mgmt_path(context, '@@contents'))
 
