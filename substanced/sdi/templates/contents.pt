@@ -1,5 +1,14 @@
 <div metal:use-macro="h.macros()['master']">
 
+  <div tal:omit-tag="" metal:fill-slot="head-more">
+    <script type="text/javascript">
+      function toggleChecked(status) {
+          $("#choices input").each( function() {
+          $(this).attr("checked",status);
+         })};
+    </script>
+  </div>
+
   <div metal:fill-slot="main">
      <form action="@@delete_folder_contents" method="POST">
 
@@ -17,19 +26,33 @@
 
   <h2 tal:condition="not batchinfo['batch']">No items</h2>
 
-  <tal:loop tal:repeat="choice batchinfo['batch']">
-    <tal:block condition="choice['viewable']">
-      <label class="checkbox" for="delete-${repeat.choice.index}">
-        <i class="${choice['icon']}"> </i>
-        <input tal:attributes="disabled not choice['deletable']"
-               type="checkbox"
-               name="delete"
-               value="${choice['name']}"
-               id="delete-${repeat.choice.index}"/>
-        <a href="${choice['url']}">${choice['name']}</a>
-      </label>
-    </tal:block>
-  </tal:loop>
+  <div tal:define="batch batchinfo['batch']"
+       tal:condition="batch">
+
+    <label class="checkbox" for="selectall">
+       <input type="checkbox" onclick="toggleChecked(this.checked)"/>
+       -- all --
+    </label>
+
+    <div id="choices">
+
+      <tal:loop tal:repeat="choice batch">
+        <tal:block condition="choice['viewable']">
+          <label class="checkbox" for="delete-${repeat.choice.index}">
+            <i class="${choice['icon']}"> </i>
+            <input tal:attributes="disabled not choice['deletable']"
+                   type="checkbox"
+                   name="delete"
+                   value="${choice['name']}"
+                   id="delete-${repeat.choice.index}"/>
+            <a href="${choice['url']}">${choice['name']}</a>
+          </label>
+        </tal:block>
+      </tal:loop>
+
+    </div>
+
+  </div>
 
    <input type="hidden" name="csrf_token" 
           value="${request.session.get_csrf_token()}"/>
