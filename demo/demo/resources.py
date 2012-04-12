@@ -17,12 +17,19 @@ from substanced.form import FormView
 @colander.deferred
 def exists_validator(node, kw):
     context = kw['request'].context
-    if DocumentType.providedBy(context):
-        context = context.__parent__
     def exists(node, value):
-        if value in context:
-            raise colander.Invalid(node, 'Object named "%s" already exists' % 
-                                   value)
+        if DocumentType.providedBy(context):
+            if value != context.__name__:
+                if value in context.__parent__:
+                    raise colander.Invalid(node, 
+                                           'Object named "%s" already exists' % 
+                                           value)
+        else:
+            if value in context:
+                raise colander.Invalid(node, 
+                                       'Object named "%s" already exists' % 
+                                       value)
+                
     return exists
 
 class DocumentSchema(Schema):
