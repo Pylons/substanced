@@ -179,6 +179,6 @@ def get_batchinfo(sequence, request, url=None, default_size=15):
                 last=last)
 
 def check_csrf_token(request):
-    if request.POST['csrf_token'] != request.session.get_csrf_token():
+    if request.params['csrf_token'] != request.session.get_csrf_token():
         raise HTTPBadRequest('incorrect CSRF token')
 

@@ -91,7 +91,7 @@
                    tal:define="messages request.session.pop_flash(queue)"
                    tal:condition="messages"
                    tal:repeat="message messages">
-                  ${message}
+                  ${structure:message}
                 </div>
               </div>
             </div>
