@@ -11,10 +11,10 @@ from ..util import (
     )
 from ..principal import NO_INHERIT
 
-from .helpers import check_csrf_token
-from . import mgmt_view
-
-
+from . import (
+    mgmt_view,
+    check_csrf_token,
+    )
 
 def get_workflow(*arg, **kw):
     return # XXX

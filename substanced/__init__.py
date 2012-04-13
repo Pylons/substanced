@@ -6,4 +6,5 @@ def includeme(config): # pragma: no cover
     config.include('substanced.site')
     config.include('substanced.evolution')
     config.include('substanced.sdi')
+    config.include('substanced.folder')
     config.include('substanced.principal')

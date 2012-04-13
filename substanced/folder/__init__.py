@@ -232,3 +232,6 @@ class Folder(Persistent):
                                           self.__name__,
                                           id(self))
 
+def includeme(config):
+    config.scan('substanced.folder.views')
+
