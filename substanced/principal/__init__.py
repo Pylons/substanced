@@ -107,7 +107,6 @@ class GroupSchema(Schema):
 
 @content(IGroup, icon='icon-th-list', add_view='add_group', name='Group')
 class Group(Folder):
-    description = ''
     __tab_order__ = ('properties',)
     __propschema__ = GroupSchema()
 
@@ -125,7 +124,7 @@ class Group(Folder):
 
     def set_properties(self, struct):
         if struct['description']:
-            self.description = struct.description
+            self.description = struct['description']
         newname = struct['name']
         oldname = self.__name__
         if newname != oldname:

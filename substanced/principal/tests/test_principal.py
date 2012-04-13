@@ -95,6 +95,66 @@ class TestMembersWidget(unittest.TestCase):
         inst = self._makeOne()
         result = inst.deserialize(None, None)
         self.assertTrue(result is colander.null)
+
+class TestGroup(unittest.TestCase):
+    def _makeOne(self, description=''):
+        from .. import Group
+        return Group(description)
+
+    def _makeParent(self):
+        parent = DummyFolder()
+        parent['__services__'] = DummyFolder()
+        objectmap = DummyObjectMap()
+        parent['__services__']['objectmap'] = objectmap
+        parent.objectmap = objectmap
+        return parent
+
+    def test_get_properties(self):
+        inst = self._makeOne('desc')
+        parent = self._makeParent()
+        parent['name'] = inst
+        props = inst.get_properties()
+        self.assertEqual(props['description'], 'desc')
+        self.assertEqual(props['members'], [])
+        self.assertEqual(props['name'], 'name')
+
+    def test_set_properties(self):
+        inst = self._makeOne()
+        parent = self._makeParent()
+        parent['oldname'] = inst
+        inst.set_properties({'description':'desc', 'name':'name'})
+        self.assertEqual(inst.description, 'desc')
+        self.assertTrue('name' in parent)
+
+    def test_get_memberids(self):
+        parent = self._makeParent()
+        inst = self._makeOne()
+        parent['name'] = inst
+        self.assertEqual(inst.get_memberids(), ())
+
+    def test_get_members(self):
+        parent = self._makeParent()
+        inst = self._makeOne()
+        parent['name'] = inst
+        self.assertEqual(inst.get_members(), ())
+
+    def test_connect(self):
+        from .. import UserToGroup
+        parent = self._makeParent()
+        inst = self._makeOne()
+        parent['name'] = inst
+        inst.connect(1, 2)
+        self.assertEqual(parent.objectmap.connections,
+                         [(1, inst, UserToGroup), (2, inst, UserToGroup)])
+
+    def test_disconnect(self):
+        from .. import UserToGroup
+        parent = self._makeParent()
+        inst = self._makeOne()
+        parent['name'] = inst
+        inst.disconnect(1, 2)
+        self.assertEqual(parent.objectmap.disconnections,
+                         [(1, inst, UserToGroup), (2, inst, UserToGroup)])
         
 from ...interfaces import IFolder
 
@@ -103,3 +163,27 @@ class DummyFolder(testing.DummyResource):
     def check_name(self, value):
         if value in self:
             raise KeyError(value)
+
+    def rename(self, oldname, newname):
+        old = self[oldname]
+        del self[oldname]
+        self[newname] = old
+
+class DummyObjectMap(object):
+    def __init__(self, result=()):
+        self.result = result
+        self.connections = []
+        self.disconnections = []
+
+    def sourceids(self, object, reftype):
+        return self.result
+
+    def sources(self, object, reftype):
+        return self.result
+
+    def connect(self, source, target, reftype):
+        self.connections.append((source, target, reftype))
+
+    def disconnect(self, source, target, reftype):
+        self.disconnections.append((source, target, reftype))
+    
