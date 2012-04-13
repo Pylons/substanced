@@ -1,7 +1,7 @@
-from ..form import FormView
-
 from pyramid.httpexceptions import HTTPFound
 
+from ..form import FormView
+from ..sdi import mgmt_view
 from ..interfaces import (
     IUsers,
     IUser,
@@ -9,9 +9,7 @@ from ..interfaces import (
     IGroup,
     )
 
-from . import mgmt_view
-
-from ..principal import (
+from . import (
     UserSchema,
     GroupSchema,
     )
