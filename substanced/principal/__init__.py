@@ -55,15 +55,18 @@ def groupname_validator(node, kw):
     adding = not IGroup.providedBy(context)
     def exists(node, value):
         principals = find_service(context, 'principals')
-        invalid = colander.Invalid(node, 'Group named "%s" already exists' % 
-                                   value)
         if adding:
-            if value in context:
-                raise invalid
+            try:
+                context.check_name(value)
+            except Exception as e:
+                raise colander.Invalid(node, e.message, value)
         else:
             groups = principals['groups']
-            if value != context.__name__ and value in groups:
-                raise invalid
+            if value != context.__name__:
+                try:
+                    groups.check_name(value)
+                except Exception as e:
+                    raise colander.Invalid(node, e.message, value)
 
         users = principals['users']
         if value in users:
@@ -152,15 +155,18 @@ def login_validator(node, kw):
     adding = not IUser.providedBy(context)
     def exists(node, value):
         principals = find_service(context, 'principals')
-        invalid = colander.Invalid(node, 'Login named "%s" already exists' % 
-                                   value)
         if adding:
-            if value in context:
-                raise invalid
+            try:
+                context.check_name(value)
+            except Exception as e:
+                raise colander.Invalid(node, e.message, value)
         else:
             users = principals['users']
-            if value != context.__name__ and value in users:
-                raise invalid
+            if value != context.__name__:
+                try:
+                    users.check_name(value)
+                except Exception as e:
+                    raise colander.Invalid(node, e.message, value)
 
         groups = principals['groups']
         if value in groups:
