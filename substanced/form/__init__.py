@@ -27,8 +27,6 @@ class FormView(object):
                 try:
                     controls = self.request.POST.items()
                     validated = form.validate(controls)
-                    if '_csrf_token_' in validated:
-                        del validated['_csrf_token_']
                     result = success_method(validated)
                 except deform.exception.ValidationFailure, e:
                     fail = getattr(self, '%s_failure' % button.name, None)

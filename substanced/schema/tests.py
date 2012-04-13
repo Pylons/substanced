@@ -1,5 +1,6 @@
 import unittest
 from pyramid import testing
+import colander
 
 class TestSchema(unittest.TestCase):
     def _getTargetClass(self):
@@ -27,8 +28,26 @@ class TestSchema(unittest.TestCase):
         inst = self._makeOne()
         request = DummyRequest()
         inst2 = inst.bind(request=request)
-        self.assertEqual(inst2.deserialize({'_csrf_token_':'csrf_token'}),
-                         {'_csrf_token_': 'csrf_token'})
+        self.assertEqual(inst2.deserialize({'_csrf_token_':'csrf_token'}),{})
+
+class TestRemoveCSRFMapping(unittest.TestCase):
+    def _makeOne(self):
+        from . import RemoveCSRFMapping
+        return RemoveCSRFMapping()
+
+    def test_deserialize_colander_null(self):
+        inst = self._makeOne()
+        node = object()
+        result = inst.deserialize(node, colander.null)
+        self.assertEqual(result, colander.null)
+
+    def test_deserialize_real_mapping(self):
+        inst = self._makeOne()
+        node = colander.SchemaNode(colander.Mapping())
+        a = colander.SchemaNode(colander.String(), name='a')
+        node.add(a)
+        result = inst.deserialize(node, {'_csrf_token_':'token', 'a':'1'})
+        self.assertEqual(result, {'a':'1'})
         
 class DummySession(dict):
     def get_csrf_token(self):
