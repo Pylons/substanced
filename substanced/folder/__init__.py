@@ -21,7 +21,8 @@ from ..content import content
 
 from ..service import find_service
 
-@content(IFolder, icon='icon-folder-close')
+@content(IFolder, icon='icon-folder-close', add_view='add_folder', 
+         name='Folder')
 class Folder(Persistent):
     """ A folder implementation which acts much like a Python dictionary.
 
@@ -109,26 +110,42 @@ class Folder(Persistent):
         """
         return self.add(name, other)
 
-    def add(self, name, other, send_events=True, allow_services=False):
-        """ See IFolder.
-        """
+    def check_name(self, name, allow_services=False):
         if not isinstance(name, basestring):
-            raise TypeError("Name must be a string rather than a %s" %
-                            name.__class__.__name__)
+            raise ValueError("Name must be a string rather than a %s" %
+                             name.__class__.__name__)
         if not name:
-            raise TypeError("Name must not be empty")
+            raise ValueError("Name must not be empty")
+
+        try:
+            name = unicode(name)
+        except UnicodeDecodeError:
+            raise ValueError('Name "%s" not decodeable to unicode' % name)
 
         if name == SERVICES_NAME and not allow_services:
-            raise KeyError('%s is a reserved name' % SERVICES_NAME)
-        
-        name = unicode(name)
+            raise ValueError('%s is a reserved name' % SERVICES_NAME)
+
+        if name.startswith('@@'):
+            raise ValueError('Names which start with "@@" are not allowed')
+
+        if '/' in name:
+            raise ValueError('Names which contain a slash ("/") are not '
+                             'allowed')
 
         if self.data.has_key(name):
             raise KeyError('An object named %s already exists' % name)
+        
+        return name
+    
+    def add(self, name, other, send_events=True, allow_services=False):
+        """ See IFolder.
+        """
+        name = self.check_name(name, allow_services)
 
         if send_events:
             event = ObjectWillBeAddedEvent(other, self, name)
             self._notify(event)
+            
         other.__parent__ = self
         other.__name__ = name
 

@@ -217,11 +217,19 @@ class IFolder(Interface):
         and ``__parent__`` value.
         """
 
-    def add(name, other, send_events=True):
+    def add(name, other, send_events=True, allow_services=False):
         """ Same as ``__setitem__``.
 
         If ``send_events`` is false, suppress the sending of folder events.
+        If ``allow_services`` is True, allow the name ``__services__`` to be
+        added.
         """
+
+    def check_name(name, allow_services=False):
+        """
+        Checks the name passed for validity.  If the name is valid, and the
+        name does not already exist in the folder, returns a validated name.
+        If the name is not valid, a ValueError will be raised.  """
 
     def pop(name, default=None):
         """ Remove the item stored in the under ``name`` and return it.

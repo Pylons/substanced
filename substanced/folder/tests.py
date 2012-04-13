@@ -91,15 +91,15 @@ class TestFolder(unittest.TestCase):
 
     def test___setitem__nonstring(self):
         folder = self._makeOne()
-        self.assertRaises(TypeError, folder.__setitem__, None, None)
+        self.assertRaises(ValueError, folder.__setitem__, None, None)
         
     def test___setitem__8bitstring(self):
         folder = self._makeOne()
-        self.assertRaises(UnicodeDecodeError, folder.__setitem__, '\xff', None)
+        self.assertRaises(ValueError, folder.__setitem__, '\xff', None)
 
     def test___setitem__empty(self):
         folder = self._makeOne()
-        self.assertRaises(TypeError, folder.__setitem__, '', None)
+        self.assertRaises(ValueError, folder.__setitem__, '', None)
 
     def test___setitem__(self):
         from ..interfaces import IObjectEvent
@@ -127,16 +127,28 @@ class TestFolder(unittest.TestCase):
 
     def test_add_name_wrongtype(self):
         folder = self._makeOne()
-        self.assertRaises(TypeError, folder.add, 1, 'foo')
+        self.assertRaises(ValueError, folder.add, 1, 'foo')
 
     def test_add_name_empty(self):
         folder = self._makeOne()
-        self.assertRaises(TypeError, folder.add, '', 'foo')
+        self.assertRaises(ValueError, folder.add, '', 'foo')
 
     def test_add_dont_allow_services(self):
         folder = self._makeOne()
-        self.assertRaises(KeyError, folder.add, '__services__', None)
+        self.assertRaises(ValueError, folder.add, '__services__', None)
 
+    def test_add_with_slash_in_name(self):
+        folder = self._makeOne()
+        self.assertRaises(ValueError, folder.add, '/abc', None)
+
+    def test_add_begins_with_atat(self):
+        folder = self._makeOne()
+        self.assertRaises(ValueError, folder.add, '@@abc', None)
+
+    def test_check_name(self):
+        folder = self._makeOne()
+        self.assertRaises(ValueError, folder.check_name, '@@abc')
+        
     def test_add_send_events(self):
         from ..interfaces import IObjectEvent
         from ..interfaces import IObjectWillBeAddedEvent
@@ -400,7 +412,7 @@ class TestFolder(unittest.TestCase):
     def test_unresolveable_unicode_setitem(self):
         name = unicode('La Pe\xc3\xb1a', 'utf-8').encode('latin-1')
         folder = self._makeOne()
-        self.assertRaises(UnicodeDecodeError, 
+        self.assertRaises(ValueError, 
                           folder.__setitem__, name, DummyModel())
 
     def test_resolveable_unicode_setitem(self):
