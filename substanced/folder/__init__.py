@@ -232,6 +232,6 @@ class Folder(Persistent):
                                           self.__name__,
                                           id(self))
 
-def includeme(config):
+def includeme(config): # pragma: no cover
     config.scan('substanced.folder.views')
 
