@@ -15,27 +15,27 @@ from substanced.sdi import mgmt_view
 from substanced.form import FormView
 
 @colander.deferred
-def exists_validator(node, kw):
+def name_validator(node, kw):
     context = kw['request'].context
     def exists(node, value):
         if DocumentType.providedBy(context):
             if value != context.__name__:
-                if value in context.__parent__:
-                    raise colander.Invalid(node, 
-                                           'Object named "%s" already exists' % 
-                                           value)
+                try:
+                    context.__parent__.check_name(value)
+                except Exception as e:
+                    raise colander.Invalid(node, e.message, value)
         else:
-            if value in context:
-                raise colander.Invalid(node, 
-                                       'Object named "%s" already exists' % 
-                                       value)
+            try:
+                context.check_name(value)
+            except Exception as e:
+                raise colander.Invalid(node, e.message, value)
                 
     return exists
 
 class DocumentSchema(Schema):
     name = colander.SchemaNode(
         colander.String(),
-        validator = exists_validator,
+        validator = name_validator,
         )
     title = colander.SchemaNode(
         colander.String(),
@@ -48,7 +48,7 @@ class DocumentSchema(Schema):
 class DocumentType(IPropertied):
     pass
 
-@content(DocumentType, icon='icon-file')
+@content(DocumentType, icon='icon-file', add_view='add_document')
 class Document(Persistent):
 
     __propschema__ = DocumentSchema()
@@ -68,11 +68,12 @@ class Document(Persistent):
             parent.rename(oldname, newname)
         self.body = struct['body']
         self.title = struct['title']
+
     
-@mgmt_view(context=IFolder, name='add document', tab_title='Add Document', 
+@mgmt_view(context=IFolder, name='add_document', tab_title='Add Document', 
            permission='add content', 
-           renderer='substanced.sdi:templates/form.pt')
-class AddUserView(FormView):
+           renderer='substanced.sdi:templates/form.pt', tab_condition=False)
+class AddDocumentView(FormView):
     title = 'Add Document'
     schema = DocumentSchema()
     buttons = ('add',)
@@ -83,4 +84,4 @@ class AddUserView(FormView):
         document = registry.content.create(DocumentType, **appstruct)
         self.request.context[name] = document
         return HTTPFound(self.request.mgmt_path(document, '@@properties'))
-    
+
