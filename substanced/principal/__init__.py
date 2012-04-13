@@ -102,7 +102,7 @@ class GroupSchema(Schema):
         missing=colander.null,
         )
 
-@content(IGroup, icon='icon-th-list')
+@content(IGroup, icon='icon-th-list', add_view='add_group', name='Group')
 class Group(Folder):
     description = ''
     __tab_order__ = ('properties',)
@@ -221,7 +221,7 @@ class UserSchema(Schema):
 
 NO_CHANGE = u'\ufffd' * 8
 
-@content(IUser, icon='icon-user')
+@content(IUser, icon='icon-user', add_view='add_user', name='User')
 class User(Folder):
 
     __tab_order__ = ('properties',)
