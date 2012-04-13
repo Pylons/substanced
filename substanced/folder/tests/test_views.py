@@ -110,7 +110,67 @@ class Test_folder_contents(unittest.TestCase):
         self.assertFalse(item['deletable'])
         self.assertEqual(item['icon'], 'icon')
         self.assertEqual(item['name'], '__services__')
+
+class Test_delete_folder_contents(unittest.TestCase):
+    def _callFUT(self, context, request):
+        from ..views import delete_folder_contents
+        return delete_folder_contents(context, request)
+
+    def _makeRequest(self):
+        request = testing.DummyRequest()
+        request.mgmt_path = lambda *arg: '/manage'
+        request.registry.content = DummyContent()
+        request.params['csrf_token'] = request.session.get_csrf_token()
+        request.flash_undo = request.session.flash
+        return request
+
+    def test_none_deleted(self):
+        context = testing.DummyResource()
+        request = self._makeRequest()
+        request.POST = DummyPost()
+        result = self._callFUT(context, request)
+        self.assertEqual(request.session['_f_'], ['No items deleted'])
+        self.assertEqual(result.location, '/manage')
+
+    def test_one_deleted(self):
+        context = testing.DummyResource()
+        context['a'] = testing.DummyResource()
+        request = self._makeRequest()
+        request.POST = DummyPost(('a',))
+        result = self._callFUT(context, request)
+        self.assertEqual(request.session['_f_'], ['Deleted 1 item'])
+        self.assertEqual(result.location, '/manage')
+        self.assertFalse('a' in context)
+
+    def test_multiple_deleted(self):
+        context = testing.DummyResource()
+        context['a'] = testing.DummyResource()
+        context['b'] = testing.DummyResource()
+        request = self._makeRequest()
+        request.POST = DummyPost(('a', 'b'))
+        result = self._callFUT(context, request)
+        self.assertEqual(request.session['_f_'], ['Deleted 2 items'])
+        self.assertEqual(result.location, '/manage')
+        self.assertFalse('a' in context)
+        self.assertFalse('b' in context)
+
+    def test_undeletable_item(self):
+        context = testing.DummyResource()
+        context['a'] = testing.DummyResource()
+        request = self._makeRequest()
+        request.POST = DummyPost(('a', 'b'))
+        result = self._callFUT(context, request)
+        self.assertEqual(request.session['_f_'], ['Deleted 1 item'])
+        self.assertEqual(result.location, '/manage')
+        self.assertFalse('a' in context)
         
+class DummyPost(dict):
+    def __init__(self, result=()):
+        self.result = result
+        
+    def getall(self, name):
+        return self.result
+
 class DummyFolder(object):
     def __init__(self, exc=None):
         self.exc = exc
