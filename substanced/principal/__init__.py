@@ -77,7 +77,7 @@ def groupname_validator(node, kw):
                                    value)
         
     return colander.All(
-        colander.Length(min=4, max=100),
+        colander.Length(min=1, max=100),
         exists,
         )
 
