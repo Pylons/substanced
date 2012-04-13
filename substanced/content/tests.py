@@ -254,7 +254,7 @@ class Test_add_content_type(unittest.TestCase):
         self.assertEqual(len(config.actions), 1)
         self.assertEqual(
             config.actions[0][0],
-            (('content-type', IFoo, ICategory,),)
+            (('sd-content-type', IFoo, ICategory,),)
             )
         config.actions[0][1]['callable']()
         self.assertEqual(
@@ -296,7 +296,12 @@ class IDummy(Interface):
 class Dummy(object):
     pass
 
+class DummyIntrospectable(dict):
+    def __init__(self, *arg, **kw):
+        pass
+
 class DummyConfig(object):
+    introspectable = DummyIntrospectable
     def __init__(self):
         self.registry = Dummy()
         self.actions = []

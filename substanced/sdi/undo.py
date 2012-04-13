@@ -5,9 +5,12 @@ from pyramid_zodbconn import get_connection
 
 from pyramid.renderers import render
 from pyramid.httpexceptions import HTTPFound
+from pyramid.security import has_permission
 
-from . import mgmt_view
-from .helpers import check_csrf_token
+from . import (
+    mgmt_view,
+    check_csrf_token,
+    )
 
 class FlashUndo(object):
     def __init__(self, request):
@@ -17,7 +20,8 @@ class FlashUndo(object):
         request = self.request
         conn = get_connection(request)
         db = conn.db()
-        if db.supportsUndo():
+        has_perm = has_permission('undo', request.context, request)
+        if db.supportsUndo() and has_perm:
             hsh = str(id(request)) + str(hash(msg))
             t = transaction.get()
             t.note(msg)

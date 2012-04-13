@@ -16,8 +16,8 @@ from ..principal import (
     GroupSchema,
     )
 
-@mgmt_view(context=IUsers, name='add', permission='add user', 
-           renderer='templates/form.pt')
+@mgmt_view(context=IUsers, name='add_user', permission='add user', 
+           renderer='templates/form.pt', tab_condition=False)
 class AddUserView(FormView):
     title = 'Add User'
     schema = UserSchema()
@@ -32,8 +32,8 @@ class AddUserView(FormView):
         user.connect(*groups)
         return HTTPFound(self.request.mgmt_path(user, '@@properties'))
 
-@mgmt_view(context=IGroups, name='add', permission='add group', 
-           renderer='templates/form.pt')
+@mgmt_view(context=IGroups, name='add_group', permission='add group', 
+           renderer='templates/form.pt', tab_condition=False)
 class AddGroupView(FormView):
     title = 'Add Group'
     schema = GroupSchema()

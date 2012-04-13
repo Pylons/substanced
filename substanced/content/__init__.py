@@ -10,6 +10,7 @@ import venusian
 from pyramid.exceptions import ConfigurationError
 
 from ..interfaces import IContent
+from ..util import dotted_name
 
 _marker = object()
 
@@ -135,8 +136,18 @@ def add_content_type(config, content_iface, factory, **meta):
     def register_factory():
         config.registry.content.add(content_iface, factory, **meta)
 
-    discrim = ('content-type', content_iface, category_iface)
-    config.action(discrim, callable=register_factory)
+    discrim = ('sd-content-type', content_iface, category_iface)
+    
+    intr = config.introspectable(
+        'substance d content types',
+        discrim, dotted_name(content_iface),
+        'substance d content type',
+        )
+    intr['meta'] = meta
+    intr['category_iface'] = category_iface
+    intr['content_iface'] = content_iface
+    intr['factory'] = factory
+    config.action(discrim, callable=register_factory, introspectables=(intr,))
     
 
 def includeme(config): # pragma: no cover

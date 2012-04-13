@@ -6,7 +6,7 @@ from ..interfaces import (
     SERVICES_NAME
     )
 
-from .helpers import (
+from . import (
     get_batchinfo,
     check_csrf_token,
     )

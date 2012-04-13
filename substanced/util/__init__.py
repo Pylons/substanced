@@ -31,3 +31,5 @@ def oid_of(obj, default=_marker):
             raise
         return default
 
+def dotted_name(g):
+    return '%s.%s' % (g.__module__, g.__name__)

@@ -7,8 +7,10 @@ from pyramid.security import (
     forget,
     )
 
-from . import mgmt_view
-from .helpers import check_csrf_token
+from . import (
+    mgmt_view,
+    check_csrf_token,
+    )
 from ..service import find_service
 from ..util import oid_of
 
