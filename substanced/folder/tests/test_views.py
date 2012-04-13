@@ -45,7 +45,72 @@ class TestAddFolderView(unittest.TestCase):
         resp = inst.add_success({'name':'name'})
         self.assertEqual(request.context['name'], resource)
         self.assertEqual(resp.location, 'http://example.com')
-         
+
+class Test_folder_contents(unittest.TestCase):
+    def setUp(self):
+        self.config = testing.setUp()
+
+    def tearDown(self):
+        testing.tearDown()
+        
+    def _callFUT(self, context, request):
+        from ..views import folder_contents
+        return folder_contents(context, request)
+
+    def _makeRequest(self):
+        request = testing.DummyRequest()
+        request.mgmt_path = lambda *arg: '/manage'
+        request.registry.content = DummyContent()
+        return request
+    
+    def test_no_permissions(self):
+        self.config.testing_securitypolicy(permissive=False)
+        context = testing.DummyResource()
+        context['a'] = testing.DummyResource()
+        request = self._makeRequest()
+        result = self._callFUT(context, request)
+        batchinfo = result['batchinfo']
+        batch = batchinfo['batch']
+        self.assertEqual(len(batch), 1)
+        item = batch[0]
+        self.assertEqual(item['url'], '/manage')
+        self.assertFalse(item['viewable'])
+        self.assertFalse(item['deletable'])
+        self.assertEqual(item['icon'], 'icon')
+        self.assertEqual(item['name'], 'a')
+
+    def test_all_permissions(self):
+        self.config.testing_securitypolicy(permissive=True)
+        context = testing.DummyResource()
+        context['a'] = testing.DummyResource()
+        request = self._makeRequest()
+        result = self._callFUT(context, request)
+        batchinfo = result['batchinfo']
+        batch = batchinfo['batch']
+        self.assertEqual(len(batch), 1)
+        item = batch[0]
+        self.assertEqual(item['url'], '/manage')
+        self.assertTrue(item['viewable'])
+        self.assertTrue(item['deletable'])
+        self.assertEqual(item['icon'], 'icon')
+        self.assertEqual(item['name'], 'a')
+
+    def test_all_permissions_services_name(self):
+        self.config.testing_securitypolicy(permissive=True)
+        context = testing.DummyResource()
+        context['__services__'] = testing.DummyResource()
+        request = self._makeRequest()
+        result = self._callFUT(context, request)
+        batchinfo = result['batchinfo']
+        batch = batchinfo['batch']
+        self.assertEqual(len(batch), 1)
+        item = batch[0]
+        self.assertEqual(item['url'], '/manage')
+        self.assertTrue(item['viewable'])
+        self.assertFalse(item['deletable'])
+        self.assertEqual(item['icon'], 'icon')
+        self.assertEqual(item['name'], '__services__')
+        
 class DummyFolder(object):
     def __init__(self, exc=None):
         self.exc = exc
@@ -56,10 +121,14 @@ class DummyFolder(object):
         return name
 
 class DummyContent(object):
-    def __init__(self, resource):
+    def __init__(self, resource=None):
         self.resource = resource
 
     def create(self, iface, *arg, **kw):
         return self.resource
+
+    def metadata(self, v, default=None):
+        return default
+    
         
         
