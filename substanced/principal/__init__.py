@@ -1,4 +1,5 @@
 from cryptacular.bcrypt import BCRYPTPasswordManager
+from zope.interface import Interface
 
 import colander
 import deform
@@ -29,7 +30,9 @@ from ..folder import Folder
 from ..util import oid_of
 
 NO_INHERIT = (Deny, Everyone, ALL_PERMISSIONS) # API
-USER_TO_GROUP = 'user-to-group'
+
+class UserToGroup(Interface): # reference type
+    pass
 
 @content(IPrincipals, icon='icon-lock')
 class Principals(Folder):
@@ -131,23 +134,23 @@ class Group(Folder):
 
     def get_memberids(self):
         objectmap = self.get_service('objectmap')
-        return objectmap.sourceids(self, USER_TO_GROUP)
+        return objectmap.sourceids(self, UserToGroup)
 
     def get_members(self):
         objectmap = self.get_service('objectmap')
-        return objectmap.sources(self, USER_TO_GROUP)
+        return objectmap.sources(self, UserToGroup)
 
     def connect(self, *members):
         objectmap = self.get_service('objectmap')
         for member in members:
-            objectmap.connect(member, self, USER_TO_GROUP)
+            objectmap.connect(member, self, UserToGroup)
 
     def disconnect(self, *members):
         if not members:
             members = self.get_memberids()
         objectmap = self.get_service('objectmap')
         for member in members:
-            objectmap.disconnect(member, self, USER_TO_GROUP)
+            objectmap.disconnect(member, self, UserToGroup)
 
 @colander.deferred
 def login_validator(node, kw):
@@ -276,24 +279,24 @@ class User(Folder):
     def get_groupids(self, objectmap=None):
         if objectmap is None:
             objectmap = self.get_service('objectmap')
-        return objectmap.targetids(self, USER_TO_GROUP)
+        return objectmap.targetids(self, UserToGroup)
 
     def get_groups(self):
         objectmap = self.get_service('objectmap')
-        return objectmap.targets(self, USER_TO_GROUP)
+        return objectmap.targets(self, UserToGroup)
 
     def connect(self, *groups):
         objectmap = self.get_service('objectmap')
         for groupid in groups:
             group = self._resolve_group(groupid)
-            objectmap.connect(self, group, USER_TO_GROUP)
+            objectmap.connect(self, group, UserToGroup)
 
     def disconnect(self, *groups):
         if not groups:
             groups = self.get_groupids()
         objectmap = self.get_service('objectmap')
         for group in groups:
-            objectmap.disconnect(self, group, USER_TO_GROUP)
+            objectmap.disconnect(self, group, UserToGroup)
 
 @subscriber([IPrincipal, IObjectAddedEvent])
 def principal_added(principal, event):

@@ -32,9 +32,9 @@ Pathindex data structure of object map:
 
 >>> map = ObjectMap()
 
-For example if a object map with an otherwise empty pathindex has
-``add('/a/b/c')`` called on it, and the objectid for ``/a/b/c`` winds up being
-``1``, the path index will end up looking like this:
+If a object map with an otherwise empty pathindex has ``add('/a/b/c')``
+called on it, and the objectid for ``/a/b/c`` winds up being ``1``, the path
+index will end up looking like this:
 
 >>> map.add('/a/b/c')
 >>> map.pathindex
@@ -340,9 +340,9 @@ class ObjectMap(Persistent):
     # because it's not atypical for callers to want to modify the
     # underlying bucket while iterating over the returned set.  For example:
     #
-    # groups = objectmap.targetids(self, USER_TO_GROUP)
+    # groups = objectmap.targetids(self, UserToGroup)
     # for group in groups:
-    #    objectmap.disconnect(self, group, USER_TO_GROUP)
+    #    objectmap.disconnect(self, group, UserToGroup)
     #
     # if we don't make a copy, this kind of code will result in e.g.
     #
