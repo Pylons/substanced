@@ -48,7 +48,8 @@ class DocumentSchema(Schema):
 class DocumentType(IPropertied):
     pass
 
-@content(DocumentType, icon='icon-file', add_view='add_document')
+@content(DocumentType, icon='icon-file', add_view='add_document', 
+         name='Document')
 class Document(Persistent):
 
     __propschema__ = DocumentSchema()
