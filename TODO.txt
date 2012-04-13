@@ -31,5 +31,3 @@
 - Scaffold.
 
 - Multiple property sheets on single content object.
-
-- Configurable management prefix.

@@ -320,7 +320,10 @@ def includeme(config): # pragma: no cover
     config.add_static_view('deformstatic', 'deform:static', cache_max_age=3600)
     config.add_static_view('sdistatic', 'substanced.sdi:static', 
                            cache_max_age=3600)
-    config.add_route(MANAGE_ROUTE_NAME, '/manage*traverse')
+    manage_prefix = config.registry.settings.get(
+        'substanced.manage_prefix', '/manage')
+    manage_pattern = manage_prefix + '*traverse'
+    config.add_route(MANAGE_ROUTE_NAME, manage_pattern)
     config.set_request_property(mgmt_path, reify=True)
     config.set_request_property(get_user, name='user', reify=True)
     config.include('deform_bootstrap')
