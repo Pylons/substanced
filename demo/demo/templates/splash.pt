@@ -14,6 +14,7 @@
           (aka an "admin" interface)</li>
       <li>Has features which allow you to define your own content types for
           management and arbitrary application development purposes</li>
+      <li>Allows the application of object-level (aka "row-level") security to content objects.</li>
       <li>Has built-in indexing and searching facilities</li>
       <li>Has machinery for forming relationships between content objects</li>
     </ul>
