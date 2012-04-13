@@ -38,7 +38,7 @@ def get_add_views(request, context=None):
     return L
 
 @mgmt_view(context=IFolder, name='add', tab_title='Add', 
-           permission='add content', renderer='templates/add.pt')
+           permission='manage contents', renderer='templates/add.pt')
 def add_content(context, request):
     views = get_add_views(request, context)
     if len(views) == 1:
