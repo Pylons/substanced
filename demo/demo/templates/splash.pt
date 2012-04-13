@@ -1,0 +1,27 @@
+<div metal:use-macro="h.macros()['master']">
+  <div metal:fill-slot="main">
+    <h1>Substance D management interface demo</h1>
+
+    <p><a href="https://github.com/Pylons/substanced">Substance D</a> is an
+    application development environment built using the <a
+    href="http://pylonsproject.org">Pyramid</a> web framework.  It owes much
+    of its spirit to the <a href="http://www.zope.org">Zope 2</a> web
+    application server. It has the following features:
+    <ul>
+      <li>Uses <a href="http://zodb.org">ZODB</a> to store its content</li>
+      <li>Has built in users and groups management</li>
+      <li>Has a management interface that allows you to edit and add content
+          (aka an "admin" interface)</li>
+      <li>Has features which allow you to define your own content types for
+          management and arbitrary application development purposes</li>
+      <li>Has built-in indexing and searching facilities</li>
+      <li>Has machinery for forming relationships between content objects</li>
+    </ul>
+    To see it in action, click the button below and log in as <b>admin</b> with
+    the password <b>admin</b>.
+    <div style="margin-top: 1em;">
+       <a class="btn btn-primary" href="${request.application_url}${manage_prefix}">See the management interface</a>
+    </div>
+    </p>
+  </div>
+</div>

@@ -1,12 +1,8 @@
 from pyramid.view import view_config
 
-@view_config()
+@view_config(renderer='templates/splash.pt')
 def default_view(request):
-    response = request.response
-    response.body = """\
-    <html><head></head><body>
-    <a href="/manage">Go to management interface (log in as admin/admin)</a>
-    </body>
-    </html>"""
-    return response
+    manage_prefix = request.registry.settings.get('substanced.manage_prefix', 
+                                                  '/manage')
+    return {'manage_prefix': manage_prefix}
 
