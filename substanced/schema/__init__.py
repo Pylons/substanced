@@ -13,8 +13,10 @@ def csrf_value(node, kw):
 def csrf_validator(node, kw):
     def csrf_validate(node, value):
         if value != kw['request'].session.get_csrf_token():
-            raise colander.Invalid(node,
-                                   _('Invalid cross-site scripting token'))
+            raise colander.Invalid(
+                node,
+                _('Invalid cross-site scripting token'),
+                value)
     return csrf_validate
 
 class Schema(colander.Schema):
