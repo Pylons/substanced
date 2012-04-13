@@ -3,13 +3,29 @@
 
 - Make acl edit view not look weird at small resolutions.
 
-- Cut, copy, paste.
+- Cut, copy, paste, rename, import/export.
 
 - XML-RPC.
-
-- Undo last action.
 
 - Figure out a way to mutate ACLs when a principal referred to by one is
   deleted.  Maybe change ACL such that the principal id is replaced by an
   unobtainable object id.
 
+- Decide whether to split "manage contents" permissions out for folders into
+  add, delete, rename.
+
+- Folder contents sorting (by name, by type).
+
+- Catalog management (reindex, view index contents).
+
+- Object map management (view relationships, view paths, view objectids).
+
+- Database management (pack, see activity, see cache parameters, flush cache).
+
+- Figure out how to let people override generic add view.
+
+- Undo recent transactions (per folder?)
+
+- Path index CQE syntax.
+
+- Scaffold.
