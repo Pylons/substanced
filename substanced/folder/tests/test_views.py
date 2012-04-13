@@ -25,6 +25,26 @@ class Test_name_validator(unittest.TestCase):
         v = self._callFUT(node, kw)
         result = v(node, 'abc')
         self.assertEqual(result, None)
+
+class TestAddFolderView(unittest.TestCase):
+    def _makeOne(self, request):
+        from ..views import AddFolderView
+        return AddFolderView(request)
+
+    def _makeRequest(self, resource):
+        request = testing.DummyRequest()
+        request.registry.content = DummyContent(resource)
+        request.mgmt_path = lambda *arg: 'http://example.com'
+        request.context = testing.DummyResource()
+        return request
+
+    def test_add_success(self):
+        resource = testing.DummyResource()
+        request = self._makeRequest(resource)
+        inst = self._makeOne(request)
+        resp = inst.add_success({'name':'name'})
+        self.assertEqual(request.context['name'], resource)
+        self.assertEqual(resp.location, 'http://example.com')
          
 class DummyFolder(object):
     def __init__(self, exc=None):
@@ -34,3 +54,12 @@ class DummyFolder(object):
         if self.exc:
             raise self.exc
         return name
+
+class DummyContent(object):
+    def __init__(self, resource):
+        self.resource = resource
+
+    def create(self, iface, *arg, **kw):
+        return self.resource
+        
+        
