@@ -1,4 +1,23 @@
 <div metal:use-macro="h.macros()['master']">
+
+  <div metal:fill-slot="head-more">
+
+  <style type="text/css">
+    .blockquote {
+        color: #a5a4a4;
+        font-style: italic;
+        margin: 30px;
+        padding: 30px;
+    }
+    .blockquote:first-letter {
+        float: left;
+        margin: -9px 6px 0 0;
+        font-size: 35px;
+   }
+  </style>
+
+  </div>
+
   <div metal:fill-slot="main">
     <h1>Substance D management interface demo</h1>
 
@@ -23,6 +42,55 @@
     <div style="margin-top: 1em;">
        <a class="btn btn-primary" href="${request.application_url}${manage_prefix}">See the management interface</a>
     </div>
+
+    <div class="blockquote" style="margin-top:1em;">
+
+    <p>
+	The two hemispheres of my brain are competing?" Fred said.
+    </p>
+
+    <p>
+	"Yes."
+    </p>
+
+    <p>
+	"Why?"
+    </p>
+
+    <p>
+	"Substance D. It often causes that, functionally. This is what we
+	expected; this is what the tests confirm. Damage having taken place in
+	the normally dominant left hemisphere, the right hemisphere is attempting
+	to compensate for the impairment. But the twin functions do not fuse,
+	because this is an abnormal condition the body isn't prepared for. It
+	should never happen. "Cross-cuing", we call it. Related to splitbrain
+	phenomena. We could perform a right hemispherectomy, but--"
+    </p>
+
+    <p>
+	"Will this go away," Fred interrupted, "when I get off Substance D?"
+    </p>
+
+    <p>
+	"Probably," the psychologist on the left said, nodding. "It's a
+	functional impairment."
+    </p>
+
+    <p>
+	The other man said, "It may be organic damage. It may be
+	permanent. Time'll tell, and only after you are off Substance D for a
+	long while. And off entirely."
+    </p>
+
+    <p>
+	"What?" Fred said. He did not understand the answer-- was it yes or no?
+	Was he damaged forever or not? Which had they said?
+    </p>
+
+    <p>
+    -- <b>Phillip K. Dick, A Scanner Darkly</b>
+    </p>
+
     </p>
   </div>
 </div>
