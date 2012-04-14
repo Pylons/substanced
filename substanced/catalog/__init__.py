@@ -133,9 +133,9 @@ class Catalog(_Catalog):
     def refresh(self, registry=None, output=None):
         """\
         Refresh the set of persistent indexes by comparing them against the
-        indexes added via ``config.add_catalog.index``.  Add any indexes that
+        indexes added via ``config.add_catalog_index``.  Add any indexes that
         haven't yet been added from that list, and remove any that no longer
-        exist.
+        exist in that list.
 
         ``registry`` should be a Pyramid registry object.  If it is not
         passed, we attempt to obtain the current threadlocal Pyramid
