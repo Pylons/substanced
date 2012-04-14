@@ -5,7 +5,10 @@ from logging import getLogger
 from pyramid.view import view_defaults
 
 from ..interfaces import ICatalog
-from ..sdi import mgmt_view
+from ..sdi import (
+    mgmt_view,
+    check_csrf_token,
+    )
 
 logger = getLogger(__name__)
 
@@ -26,6 +29,7 @@ class ManageCatalog(object):
 
     @mgmt_view(request_method='POST')
     def POST(self):
+        check_csrf_token(self.request)
         self.context.reindex(output=logger.info)
         self.request.session.flash('Catalog reindexed')
         return HTTPFound(location=self.request.mgmt_path(
