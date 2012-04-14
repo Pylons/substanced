@@ -102,3 +102,14 @@ Other Helpers
 .. autoclass:: PathIndex
    :members:
 
+:mod:`substanced.objectmap` API
+--------------------------------
+
+.. automodule:: substanced.objectmap
+
+.. autoclass:: ObjectMap
+   :members:
+
+.. autofunction:: includeme
+
+
