@@ -82,14 +82,15 @@ def groupname_validator(node, kw):
         exists,
         )
 
-class MembersWidget(deform.widget.Widget):
-    def serialize(self, field, cstruct, readonly=False):
-        result = render('templates/members.pt', {'cstruct':cstruct})
-        return result
-
-    def deserialize(self, field, pstruct):
-        return colander.null
-
+@colander.deferred
+def members_widget(node, kw):
+    request = kw['request']
+    principals = find_service(request.context, 'principals')
+    values = [(str(oid_of(user)), name) for name, user in 
+              principals['users'].items()]
+    widget = deform_bootstrap.widget.ChosenMultipleWidget(values=values)
+    return widget
+    
 class GroupSchema(Schema):
     name = colander.SchemaNode(
         colander.String(),
@@ -102,8 +103,9 @@ class GroupSchema(Schema):
         )
     members = colander.SchemaNode(
         deform.Set(allow_empty=True),
-        widget=MembersWidget(),
+        widget=members_widget,
         missing=colander.null,
+        preparer=lambda users: set(map(int, users)),
         )
 
 @content(IGroup, icon='icon-th-list', add_view='add_group', name='Group')
@@ -115,12 +117,21 @@ class Group(Folder):
         Folder.__init__(self)
         self.description = description
 
+    def _resolve_member(self, member_or_memberid):
+        objectmap = self.get_service('objectmap')
+        if oid_of(member_or_memberid, None) is None:
+            # it's a group id
+            member = objectmap.object_for(member_or_memberid)
+        else:
+            member = member_or_memberid
+        return member
+
     def get_properties(self):
         props = {}
         props['description'] = self.description
         props['name'] = self.__name__
-        members = [ x.__name__ for x in self.get_members() ]
-        props['members'] = members # readonly
+        member_strs = map(str, self.get_memberids())
+        props['members'] = member_strs
         return props
 
     def set_properties(self, struct):
@@ -131,6 +142,8 @@ class Group(Folder):
         if newname != oldname:
             parent = self.__parent__
             parent.rename(oldname, newname)
+        self.disconnect()
+        self.connect(*struct['members'])
 
     def get_memberids(self):
         objectmap = self.get_service('objectmap')
@@ -142,15 +155,19 @@ class Group(Folder):
 
     def connect(self, *members):
         objectmap = self.get_service('objectmap')
-        for member in members:
-            objectmap.connect(member, self, UserToGroup)
+        for memberid in members:
+            member = self._resolve_member(memberid)
+            if member is not None:
+                objectmap.connect(member, self, UserToGroup)
 
     def disconnect(self, *members):
         if not members:
             members = self.get_memberids()
         objectmap = self.get_service('objectmap')
-        for member in members:
-            objectmap.disconnect(member, self, UserToGroup)
+        for memberid in members:
+            member = self._resolve_member(memberid)
+            if member is not None:
+                objectmap.disconnect(member, self, UserToGroup)
 
 @colander.deferred
 def login_validator(node, kw):
@@ -177,7 +194,7 @@ def login_validator(node, kw):
                                    value)
         
     return colander.All(
-        colander.Length(min=4, max=100),
+        colander.Length(min=1, max=100),
         exists,
         )
 
@@ -254,18 +271,6 @@ class User(Folder):
             return True
         return False
 
-    def set_properties(self, struct):
-        password = struct['password']
-        if password != NO_CHANGE:
-            self.password = self.pwd_manager.encode(password)
-        for attr in ('email', 'security_question', 'security_answer'):
-            setattr(self, attr, struct[attr])
-        login = struct['login']
-        if login != self.__name__:
-            self.__parent__.rename(self.__name__, login)
-        self.disconnect()
-        self.connect(*struct['groups'])
-
     def get_properties(self):
         props = {}
         for attr in ('email', 'security_question', 'security_answer'):
@@ -275,6 +280,20 @@ class User(Folder):
         group_strs = map(str, self.get_groupids())
         props['groups'] = group_strs
         return props
+
+    def set_properties(self, struct):
+        password = struct['password']
+        if password != NO_CHANGE:
+            self.password = self.pwd_manager.encode(password)
+        for attr in ('email', 'security_question', 'security_answer'):
+            setattr(self, attr, struct[attr])
+        newname = struct['login']
+        oldname = self.__name__
+        if newname != oldname:
+            parent = self.__parent__
+            parent.rename(oldname, newname)
+        self.disconnect()
+        self.connect(*struct['groups'])
 
     def get_groupids(self, objectmap=None):
         if objectmap is None:
@@ -289,14 +308,17 @@ class User(Folder):
         objectmap = self.get_service('objectmap')
         for groupid in groups:
             group = self._resolve_group(groupid)
-            objectmap.connect(self, group, UserToGroup)
+            if group is not None:
+                objectmap.connect(self, group, UserToGroup)
 
     def disconnect(self, *groups):
         if not groups:
             groups = self.get_groupids()
         objectmap = self.get_service('objectmap')
-        for group in groups:
-            objectmap.disconnect(self, group, UserToGroup)
+        for groupid in groups:
+            group = self._resolve_group(groupid)
+            if group is not None:
+                objectmap.disconnect(self, group, UserToGroup)
 
 @subscriber([IPrincipal, IObjectAddedEvent])
 def principal_added(principal, event):

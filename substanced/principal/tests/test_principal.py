@@ -75,27 +75,6 @@ class Test_groupname_validator(unittest.TestCase):
         v = self._makeOne(node, kw)
         self.assertRaises(colander.Invalid, v, node, 'abc')
 
-class TestMembersWidget(unittest.TestCase):
-    def setUp(self):
-        self.config = testing.setUp()
-
-    def tearDown(self):
-        testing.tearDown()
-        
-    def _makeOne(self):
-        from .. import MembersWidget
-        return MembersWidget()
-
-    def test_serialize(self):
-        inst = self._makeOne()
-        result = inst.serialize(None, None)
-        self.assertTrue('no members' in result.lower())
-
-    def test_deserialize(self):
-        inst = self._makeOne()
-        result = inst.deserialize(None, None)
-        self.assertTrue(result is colander.null)
-
 class TestGroup(unittest.TestCase):
     def _makeOne(self, description=''):
         from .. import Group
@@ -122,7 +101,7 @@ class TestGroup(unittest.TestCase):
         inst = self._makeOne()
         parent = self._makeParent()
         parent['oldname'] = inst
-        inst.set_properties({'description':'desc', 'name':'name'})
+        inst.set_properties({'description':'desc', 'name':'name', 'members':()})
         self.assertEqual(inst.description, 'desc')
         self.assertTrue('name' in parent)
 
@@ -174,6 +153,9 @@ class DummyObjectMap(object):
         self.result = result
         self.connections = []
         self.disconnections = []
+
+    def object_for(self, oid):
+        return oid
 
     def sourceids(self, object, reftype):
         return self.result
