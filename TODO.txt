@@ -31,3 +31,5 @@
 - Scaffold.
 
 - Multiple property sheets on single content object.
+
+- Ownership.
