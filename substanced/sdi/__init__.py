@@ -319,12 +319,13 @@ def get_batchinfo(sequence, request, url=None, default_size=15):
                 end=end,
                 last=last)
 
+YEAR = 86400 * 365
 
 def includeme(config): # pragma: no cover
     config.add_directive('add_mgmt_view', add_mgmt_view, action_wrap=False)
-    config.add_static_view('deformstatic', 'deform:static', cache_max_age=3600)
+    config.add_static_view('deformstatic', 'deform:static', cache_max_age=YEAR)
     config.add_static_view('sdistatic', 'substanced.sdi:static', 
-                           cache_max_age=3600)
+                           cache_max_age=YEAR)
     manage_prefix = config.registry.settings.get(
         'substanced.manage_prefix', '/manage')
     manage_pattern = manage_prefix + '*traverse'
