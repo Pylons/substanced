@@ -4,6 +4,7 @@ from zope.interface import Interface
 import colander
 import deform
 import deform.widget
+import deform_bootstrap.widget
 
 from pyramid.security import (
     Deny,
@@ -186,7 +187,7 @@ def groups_widget(node, kw):
     principals = find_service(request.context, 'principals')
     values = [(str(oid_of(group)), name) for name, group in 
               principals['groups'].items()]
-    widget = deform.widget.CheckboxChoiceWidget(values=values)
+    widget = deform_bootstrap.widget.ChosenMultipleWidget(values=values)
     return widget
 
 class UserSchema(Schema):
