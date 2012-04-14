@@ -77,14 +77,30 @@
     </div>
 
     <div class="span3">
-      <input type="text" name="principal" />
+      <select data-placeholder="Choose a Principal"
+              name="principal" id="principal" class="chzn-select">
+         <option value=""></option>
+         <optgroup label="Groups">
+           <option tal:repeat="(group_id, group_name) groups"
+                   value="${group_id}">${group_name}</option>
+         </optgroup>
+         <optgroup label="Users">
+           <option tal:repeat="(user_id, user_name) users"
+                   value="${user_id}">${user_name}</option>
+         </optgroup>
+      </select>
+      <script type="text/javascript">
+        $('#principal').chosen()
+      </script>
     </div>
+
     <div class="span3">
       <select name="permission">
         <option tal:repeat="permission permissions"
                 value="${permission}">${permission}</option>
       </select>
     </div>
+
     <div class="span2">
       <input type="submit" name="form.add" value="Add" />
     </div>

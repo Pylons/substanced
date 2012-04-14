@@ -32,6 +32,8 @@ def get_context_workflow(context):
 @mgmt_view(name='acl_edit', permission='change acls', 
            renderer='templates/acl.pt', tab_title='Security')
 def acl_edit_view(context, request):
+    principal_service = find_service(context, 'principals')
+    objectmap = find_service(context, 'objectmap')
 
     acl = original_acl = getattr(context, '__acl__', [])
     if acl and acl[-1] == NO_INHERIT:
@@ -69,14 +71,16 @@ def acl_edit_view(context, request):
     elif 'form.add' in request.POST:
         check_csrf_token(request)
         verb = request.POST['verb']
-        principal = request.POST['principal']
-        principals = find_service(context, 'principals')
-        principal_id = None
-        if principal in principals['users']:
-            principal_id = oid_of(principals['users'][principal])
-        elif principal in principals['groups']:
-            principal_id = oid_of(principals['groups'][principal])
-        if principal_id is not None:
+        principal_id_str = request.POST['principal']
+
+        try:
+            principal_id = int(principal_id_str)
+        except ValueError:
+            principal_id = None
+            
+        if principal_id is None:
+            request.session.flash('No principal selected', 'error')
+        elif objectmap.object_for(principal_id) is not None:
             permission = request.POST['permission']
             if permission == '-- ALL --':
                 permissions = ALL_PERMISSIONS
@@ -87,7 +91,7 @@ def acl_edit_view(context, request):
             acl = new
             request.flash_undo('ACE added')
         else:
-            request.session.flash('Unknown user or group %s' % principal, 
+            request.session.flash('Unknown user or group when adding ACE',
                                   'error')
 
     elif 'form.inherit' in request.POST:
@@ -194,11 +198,17 @@ def acl_edit_view(context, request):
             permissions.append(name)
     permissions.sort()
 
+    users = principal_service['users'].values()
+    groups = principal_service['groups'].values()
+
     return dict(
         parent_acl=parent_acl or (),
         local_acl=local_acl,
         permissions=permissions,
         inheriting=inheriting,
         security_state=security_state,
-        security_states=security_states)
+        security_states=security_states,
+        users = [ (oid_of(user), user.__name__) for user in users ],
+        groups = [ (oid_of(group), group.__name__) for group in groups ],
+        )
 
