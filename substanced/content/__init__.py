@@ -22,12 +22,13 @@ def addbase(iface1, iface2):
         return True
     return False
 
-class ContentCategory(object):
-    def __init__(self, category_iface):
+class ContentRegistry(object):
+    def __init__(self, category_iface=IContent):
         self.category_iface = category_iface
         self.factories = {}
 
     def add(self, content_iface, factory, **meta):
+        addbase(content_iface, self.category_iface)
         self.factories[content_iface] = factory
         for k, v in meta.items():
             content_iface.setTaggedValue(k, v)
@@ -67,34 +68,6 @@ class ContentCategory(object):
                 return maybe
         return default
 
-class ContentCategories(object):
-    def __init__(self):
-        self.categories = {}
-
-    def add(self, content_iface, factory, **meta):
-        category_iface = meta.get('category')
-        if category_iface is None:
-            category_iface = IContent
-        addbase(content_iface, category_iface)
-        category = self.categories.setdefault(category_iface,
-                                              ContentCategory(category_iface))
-        category.add(content_iface, factory, **meta)
-
-    def __getitem__(self, category_iface):
-        return self.categories[category_iface]
-
-    def create(self, content_iface, *arg, **kw):
-        return self.categories[IContent].create(content_iface, *arg, **kw)
-
-    def all(self, context=_marker, **meta):
-        return self.categories[IContent].all(context, **meta)
-
-    def first(self, context, **meta):
-        return self.categories[IContent].first(context, **meta)
-
-    def metadata(self, context, name, default=None):
-        return self.categories[IContent].metadata(context, name, default)
-    
 # venusian decorator that marks a class as a content class
 class content(object):
     venusian = venusian
@@ -116,17 +89,7 @@ def add_content_type(config, content_iface, factory, **meta):
         raise ConfigurationError(
             'The provided "content_iface" argument (%r) is not an '
             'interface object (it does not inherit from '
-            'zope.interface.Interface' % type)
-
-    category_iface = meta.get('category')
-
-    if category_iface is not None:
-
-        if not IInterface.providedBy(category_iface):
-            raise ConfigurationError(
-                'The provided "category" argument (%r) is not an '
-                'interface object (it does not inherit from '
-                'zope.interface.Interface' % type)
+            'zope.interface.Interface)' % type)
 
     if not content_iface.implementedBy(factory):
         # was not called by decorator
@@ -135,7 +98,7 @@ def add_content_type(config, content_iface, factory, **meta):
     def register_factory():
         config.registry.content.add(content_iface, factory, **meta)
 
-    discrim = ('sd-content-type', content_iface, category_iface)
+    discrim = ('sd-content-type', content_iface)
     
     intr = config.introspectable(
         'substance d content types',
@@ -143,23 +106,18 @@ def add_content_type(config, content_iface, factory, **meta):
         'substance d content type',
         )
     intr['meta'] = meta
-    intr['category_iface'] = category_iface
     intr['content_iface'] = content_iface
     intr['factory'] = factory
     config.action(discrim, callable=register_factory, introspectables=(intr,))
     
 
 def includeme(config): # pragma: no cover
-    config.registry.content = ContentCategories()
+    config.registry.content = ContentRegistry()
     config.add_directive('add_content_type', add_content_type)
 
 # usage:
-# registry.content[IContent].create(IFoo, 'a', bar=1)
-# registry.content.create(IFoo, a', bar=2)
-# registry.content.[IContent].all(context)
+# registry.content.create(IFoo, 'a', bar=2)
 # registry.content.all(context)
-# registry.content.[IContent].all()
 # registry.content.all()
-# registry.content[IContent].first(context)
 # registry.content.first(context)
-
+# registry.content.metadata(**match)
