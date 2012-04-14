@@ -1,0 +1,20 @@
+<div metal:use-macro="h.macros()['master']">
+
+  <div metal:fill-slot="main">
+
+    <h2>Manage Catalog</h2>
+
+           # of items in catalog: ${cataloglen}
+
+     <form action="./manage_catalog" method="POST">
+       <input type="hidden" value="${request.session.get_csrf_token()}"
+              name="csrf_token"/>
+       <div class="form-actions">
+           <input type="submit" class="btn btn-primary" 
+                  value="Reindex" name="reindex"/>
+       </div>
+     </form>
+
+   </div>
+
+</div>

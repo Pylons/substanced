@@ -5,6 +5,9 @@ import urlparse
 
 from zope.interface.interfaces import IInterface
 
+from pyramid.config.views import viewdefaults
+from pyramid.config.util import action_method
+
 import venusian
 
 from pyramid.authentication import SessionAuthenticationPolicy
@@ -37,6 +40,8 @@ def check_csrf_token(request):
     if request.params['csrf_token'] != request.session.get_csrf_token():
         raise HTTPBadRequest('incorrect CSRF token')
 
+@viewdefaults
+@action_method
 def add_mgmt_view(
         config, view=None, name="", permission=None, request_method=None,
         request_param=None, containment=None, attr=None, renderer=None, 
@@ -108,7 +113,7 @@ class _default(object):
         return '(default)'
 
 default = _default()
-    
+
 class mgmt_view(view_config):
     """ A class :term:`decorator` which, when applied to a class, will
     provide defaults for all view configurations that use the class.  This
@@ -316,7 +321,7 @@ def get_batchinfo(sequence, request, url=None, default_size=15):
 
 
 def includeme(config): # pragma: no cover
-    config.add_directive('add_mgmt_view', add_mgmt_view)
+    config.add_directive('add_mgmt_view', add_mgmt_view, action_wrap=False)
     config.add_static_view('deformstatic', 'deform:static', cache_max_age=3600)
     config.add_static_view('sdistatic', 'substanced.sdi:static', 
                            cache_max_age=3600)
