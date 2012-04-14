@@ -171,6 +171,15 @@ Other Helpers
    :members:
    :inherited-members:
 
+:mod:`substanced.evolution` API
+--------------------------------
+
+.. automodule:: substanced.evolution
+
+.. autofunction:: add_evolution_package
+
+.. autofunction:: includeme
+
 :mod:`substanced.objectmap` API
 --------------------------------
 
