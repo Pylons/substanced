@@ -1,35 +1,73 @@
-- Allow more than one permission to be assigned to a principal in the acl
-  edit view.
+UI-Only
+-------
 
-- Make acl edit view not look weird at small resolutions.
+- Make acl edit view not look weird at smaller resolutions.
+
+- Allow folder contents UI ("Contents" tab) sorting by name and by type.
+
+UI-Plus-Guts
+------------
+
+- Allow more than one permission to be assigned to a principal in the acl
+  edit view (aka the "Security" tab).
+
+- Object map management UI (view relationships, view paths, view objectids).
+
+- Database management UI (pack, see activity, see cache parameters, flush
+  cache).
+
+- Improve catalog management UI.  We currently allow someone to reindex the
+  entire catalog via the "Manage" tab of a catalog.  Instead, we should allow
+  them to reindex individual persistent indices or all persistent indices.
+  We should also allow them to, separately, refresh the indexes in persistent
+  space based on the current state of the registry resulting from
+  "add_catalog_index".
 
 - Cut, copy, paste, rename, import/export.
-
-- XML-RPC.
-
-- Figure out a way to mutate ACLs when a principal referred to by one is
-  deleted.  Maybe change ACL such that the principal id is replaced by an
-  unobtainable object id.
-
-- Decide whether to split "manage contents" permissions out for folders into
-  add, delete, rename.
-
-- Folder contents sorting (by name, by type).
-
-- Catalog management (reindex, view index contents).
-
-- Object map management (view relationships, view paths, view objectids).
-
-- Database management (pack, see activity, see cache parameters, flush cache).
 
 - Figure out how to let people override generic add view.
 
 - Undo recent transactions (per folder?)
 
-- Path index CQE syntax.
-
-- Scaffold.
-
 - Multiple property sheets on single content object.
 
 - Ownership.
+
+- Forgot password / change password.
+
+Guts-Only
+---------
+
+- Create a scaffold.
+
+- Path index CQE syntax.
+
+- Substance D ACLs contain object identifiers which refer to principals.
+  Currently, when a principal is deleted, ACLs which refer to the principal
+  are not adjusted.  This is both a security issue and a sanity issue.  The
+  object id of a deleted principal is put back into the set of object ids
+  that are grantable to future objects.  As a result, some other principal
+  may wind up with an object id that used to belong to a deleted principal,
+  and he may inappropriately be granted access due to stale ACLs that
+  possesses that object id.  Some object that is not a principal might wind
+  up with that object id, and undefined things will happen.
+
+  Here's what would be nice: when an ACL is changed or added, using the
+  object map, form relationships between the principal objects it names and
+  the ACL-bearing object.  When a principal is deleted, change the ACL of all
+  such-related objects so that the deleted principal id in the ACL is
+  replaced by an unobtainable object id.
+
+  Note that this bug/feature has existed in Zope for 13 years, and it hasn't
+  seemed to have raised much ire, but it always bugged me.
+
+- Decide whether to split "manage contents" permissions out for folders into
+  add, delete, rename.
+
+Nice-to-Have Features
+---------------------
+
+- XML-RPC.
+
+- Workflow.
+
