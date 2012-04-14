@@ -77,3 +77,6 @@ Nice-to-Have Features
 
 - Workflow.
 
+- Drag and drop ACE reordering in ACL edit view.
+
+- Ability to add and edit principals in existing ACEs in ACL edit view.
