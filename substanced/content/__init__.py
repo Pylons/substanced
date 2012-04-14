@@ -75,8 +75,7 @@ class ContentCategories(object):
         category_iface = meta.get('category')
         if category_iface is None:
             category_iface = IContent
-        if category_iface is not None:
-            addbase(content_iface, category_iface)
+        addbase(content_iface, category_iface)
         category = self.categories.setdefault(category_iface,
                                               ContentCategory(category_iface))
         category.add(content_iface, factory, **meta)
