@@ -10,9 +10,6 @@ UI-Only
 UI-Plus-Guts
 ------------
 
-- Allow more than one permission to be assigned to a principal in the acl
-  edit view (aka the "Security" tab).
-
 - Object map management UI (view relationships, view paths, view objectids).
 
 - Database management UI (pack, see activity, see cache parameters, flush

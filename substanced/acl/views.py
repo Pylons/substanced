@@ -81,15 +81,15 @@ def acl_edit_view(context, request):
         if principal_id is None:
             request.session.flash('No principal selected', 'error')
         elif objectmap.object_for(principal_id) is not None:
-            permission = request.POST['permission']
-            if permission == '-- ALL --':
+            permissions = request.POST.getall('permissions')
+            if not permissions:
+                permissions = ()
+            if '-- ALL --' in permissions:
                 permissions = ALL_PERMISSIONS
-            else:
-                permissions = (permission,)
             new = acl[:]
             new.append((verb, principal_id, permissions))
             acl = new
-            request.flash_undo('ACE added')
+            request.flash_undo('New ACE added')
         else:
             request.session.flash('Unknown user or group when adding ACE',
                                   'error')

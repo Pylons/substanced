@@ -95,10 +95,15 @@
     </div>
 
     <div class="span3">
-      <select name="permission">
+      <select name="permissions" data-placeholder="Choose Permissions"
+              id="permissions" class="chzn-select" multiple="multiple">
+        <option value=""></option>
         <option tal:repeat="permission permissions"
                 value="${permission}">${permission}</option>
       </select>
+      <script type="text/javascript">
+        $('#permissions').chosen()
+      </script>
     </div>
 
     <div class="span2">
