@@ -9,9 +9,9 @@ from ..util import (
     postorder,
     oid_of,
     )
-from ..principal import NO_INHERIT
+from . import NO_INHERIT
 
-from . import (
+from ..sdi import (
     mgmt_view,
     check_csrf_token,
     )

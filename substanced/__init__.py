@@ -2,6 +2,7 @@ def includeme(config): # pragma: no cover
     config.include('pyramid_zodbconn')
     config.include('substanced.sdi')
     config.include('substanced.content')
+    config.include('substanced.acl')
     config.include('substanced.objectmap')
     config.include('substanced.catalog')
     config.include('substanced.site')

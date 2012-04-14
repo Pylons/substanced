@@ -14,10 +14,8 @@ from ..objectmap import ObjectMap
 from ..catalog import Catalog
 from ..schema import Schema
 from ..folder import Folder
-from ..principal import (
-    Principals,
-    NO_INHERIT,
-    )
+from ..principal import Principals
+from ..acl import NO_INHERIT
 from ..content import content
 from ..util import oid_of
 

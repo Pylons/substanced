@@ -6,11 +6,6 @@ import deform
 import deform.widget
 import deform_bootstrap.widget
 
-from pyramid.security import (
-    Deny,
-    Everyone,
-    ALL_PERMISSIONS,
-    )
 from pyramid.events import subscriber
 
 from ..interfaces import (
@@ -28,8 +23,6 @@ from ..schema import Schema
 from ..service import find_service
 from ..folder import Folder
 from ..util import oid_of
-
-NO_INHERIT = (Deny, Everyone, ALL_PERMISSIONS) # API
 
 class UserToGroup(Interface): # reference type
     pass
