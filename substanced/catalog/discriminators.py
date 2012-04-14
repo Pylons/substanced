@@ -1,5 +1,4 @@
 import datetime
-import inspect
 
 from zope.interface import providedBy
 from zope.interface.declarations import Declaration
@@ -9,44 +8,43 @@ from pyramid.security import principals_allowed_by_permission
 
 from ..util import coarse_datetime_repr
 
-def get_title(object, default):
+def get_title(obj, default):
     """ Useful as a FieldIndex discriminator.  Expects a ``title`` attribute
     of cataloged objects; if one is found it should be a string.  The
     discriminator lowercases the result (if it's a string) to accomodate
     sorting."""
-    title = getattr(object, 'title', '')
+    title = getattr(obj, 'title', '')
     if isinstance(title, basestring):
         # lowercase for alphabetic sorting
         title = title.lower()
     return title
 
-def get_interfaces(object, default):
+def get_interfaces(obj, default):
     """ Useful as KeywordIndex discriminator.  Return a set of all interfaces
-    implemented by the object, including inherited interfaces, its class and
-    all of its inherited base classes (except for ``object``)."""
+    implemented by the object, including inherited interfaces and its class.
+    """
     # we unwind all derived and immediate interfaces using spec.flattened()
     # (providedBy would just give us the immediate interfaces)
-    provided_by = list(providedBy(object))
+    provided_by = list(providedBy(obj))
     spec = Declaration(provided_by)
-    ifaces = list(spec.flattened())
-    return set(ifaces).union(set(inspect.getmro(object.__class__)))
+    ifaces = list(spec.flattened()) + [obj.__class__]
+    return set(ifaces)
 
-def get_containment(object, defaults):
+def get_containment(obj, defaults):
     """ Useful as KeywordIndex discriminator.  Return a set of all interfaces
     implemented by the object *and its containment ancestors*, including
-    inherited interfaces, their classes and all of their inherited base
-    classes (except for ``object``)."""
+    inherited interfaces, and their classes."""
     ifaces = set()
-    for ancestor in lineage(object):
+    for ancestor in lineage(obj):
         ifaces.update(get_interfaces(ancestor, ()))
     return ifaces
 
-def get_textrepr(object, default):
+def get_textrepr(obj, default):
     """ Useful as a TextIndex discriminator.  Expects a ``texts`` attribute
     of cataloged objects; if one is found it should be a string or a sequence
     of strings.  If it's a sequence of strings, the first string in the
     sequence is weighted more heavily than the others in the sequence."""
-    texts = getattr(object, 'texts', None)
+    texts = getattr(obj, 'texts', None)
     if texts is None:
         return default
     if isinstance(texts, basestring):
@@ -62,27 +60,27 @@ def get_textrepr(object, default):
     parts.extend(texts[1:])
     return ' '.join(parts)
     
-def _get_date_or_datetime(object, attr, default):
-    d = getattr(object, attr, None)
+def _get_date_or_datetime(obj, attr, default):
+    d = getattr(obj, attr, None)
     if isinstance(d, datetime.datetime) or isinstance(d, datetime.date):
         return coarse_datetime_repr(d)
     return default
 
-def get_creation_date(object, default):
+def get_creation_date(obj, default):
     """ Useful as a FieldIndex discriminator.  Expects a ``created``
     attribute of cataloged objects; if one is found it should be a ``date``
     or ``datetime`` instance.  The discriminator makes the result more coarse
     than datetime precision, creating an integer that has effective
     ten-second precision."""
-    return _get_date_or_datetime(object, 'created', default)
+    return _get_date_or_datetime(obj, 'created', default)
 
-def get_modified_date(object, default):
+def get_modified_date(obj, default):
     """ Useful as a FieldIndex discriminator.  Expects a ``modified``
     attribute of cataloged objects; if one is found it should be a ``date``
     or ``datetime`` instance.  The discriminator makes the result more coarse
     than datetime precision, creating an integer that has effective
     ten-second precision."""
-    return _get_date_or_datetime(object, 'modified', default)
+    return _get_date_or_datetime(obj, 'modified', default)
 
 class NoWay(object):
     pass
@@ -91,7 +89,7 @@ def get_allowed_to_view(obj, default):
     """ Useful as a KeywordIndex discriminator.  Looks up the principals
     allowed by the ``view`` permission against the object and indexes them if
     any are found."""
-    principals = principals_allowed_by_permission(object, 'view')
+    principals = principals_allowed_by_permission(obj, 'view')
     if not principals:
         # An empty value tells the catalog to match anything, whereas when
         # there are no principals with permission to view we want for there
