@@ -92,16 +92,6 @@ class TestGetModifiedDate(unittest.TestCase, _TestGetDate):
     def _decorate(self, context, val):
         context.modified = val
 
-class TestGetPath(unittest.TestCase):
-    def _callFUT(self, object, default):
-        from ..discriminators import get_path
-        return get_path(object, default)
-
-    def test_it(self):
-        context = testing.DummyModel()
-        result = self._callFUT(context, None)
-        self.assertEqual(result, '/')
-
 class TestGetInterfaces(unittest.TestCase):
     def _callFUT(self, object, default):
         from ..discriminators import get_interfaces

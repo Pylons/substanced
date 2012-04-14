@@ -1,5 +1,3 @@
-from pyramid.traversal import resource_path
-
 import datetime
 from zope.interface import providedBy
 from zope.interface.declarations import Declaration
@@ -29,9 +27,6 @@ def get_containment(object, defaults):
     for ancestor in lineage(object):
         ifaces.update(get_interfaces(ancestor, ()))
     return ifaces
-
-def get_path(object, default):
-    return resource_path(object)
 
 def get_textrepr(object, default):
     """ Weighted value for text index """
