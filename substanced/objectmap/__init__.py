@@ -101,6 +101,7 @@ class ObjectMap(Persistent):
         self.referencemap = ReferenceMap()
 
     def new_objectid(self):
+        """ Obtain an unused integer object identifier """
         while True:
             if self._v_nextid is None:
                 self._v_nextid = self._randrange(self.family.minint, 
@@ -109,13 +110,14 @@ class ObjectMap(Persistent):
             objectid = self._v_nextid
             self._v_nextid += 1
 
-            if objectid not in self.objectid_to_path:
+            # object id zero is reserved as "irresolveable"
+            if objectid != 0 and not objectid in self.objectid_to_path:
                 return objectid
 
             self._v_nextid = None
 
     def objectid_for(self, obj_or_path_tuple):
-        """ Returns an objectid or None given an object or a path tuple """
+        """ Returns an objectid or ``None``, given an object or a path tuple"""
         if isinstance(obj_or_path_tuple, tuple):
             path_tuple = obj_or_path_tuple
         elif hasattr(obj_or_path_tuple, '__parent__'):
@@ -127,11 +129,11 @@ class ObjectMap(Persistent):
         return self.path_to_objectid.get(path_tuple)
 
     def path_for(self, objectid):
-        """ Returns an path or None given an objectid """
+        """ Returns an path or ``None`` given an object id """
         return self.objectid_to_path.get(objectid)
 
     def object_for(self, objectid_or_path_tuple, context=None):
-        """ Returns an object or None given an objectid or a path tuple """
+        """ Returns an object or ``None`` given an object id or a path tuple"""
         if isinstance(objectid_or_path_tuple, int):
             path_tuple = self.objectid_to_path.get(objectid_or_path_tuple)
         elif isinstance(objectid_or_path_tuple, tuple):
@@ -149,6 +151,9 @@ class ObjectMap(Persistent):
         return find_resource(context, path_tuple)
             
     def add(self, obj, path_tuple):
+        """ Add a new object to the object map at the location specified by
+        ``path_tuple`` (must be the path of the object in the object graph as
+        a tuple, as returned by Pyramid's ``resource_path_tuple`` function)."""
         if not isinstance(path_tuple, tuple):
             raise ValueError('path_tuple argument must be a tuple')
 
@@ -178,6 +183,10 @@ class ObjectMap(Persistent):
         return objectid
 
     def remove(self, obj_objectid_or_path_tuple, references=True):
+        """ Remove an object from the object map give an object, an object id
+        or a path tuple.  If ``references`` is True, also remove any
+        references added via ``connect``, otherwise leave them there
+        (e.g. when moving an object)."""
         if hasattr(obj_objectid_or_path_tuple, '__parent__'):
             path_tuple = resource_path_tuple(obj_objectid_or_path_tuple)
         elif isinstance(obj_objectid_or_path_tuple, int):
@@ -283,6 +292,11 @@ class ObjectMap(Persistent):
         return result
 
     def pathlookup(self, obj_or_path_tuple, depth=None, include_origin=True):
+        """ Return a set of objectids under a given path given an object or a
+        path tuple.  If ``depth`` is None, return all object ids under the
+        path.  If ``depth`` is an integer, use that depth instead.  If
+        ``include_origin`` is ``True``, include the object identifier of the
+        object that was passed, otherwise omit it from the returned set."""
         path_tuple = self._get_path_tuple(obj_or_path_tuple)
         omap = self.pathindex.get(path_tuple)
 
@@ -329,10 +343,14 @@ class ObjectMap(Persistent):
         return oid
 
     def connect(self, source, target, reftype):
+        """ Connect a source object or objectid to a target object or
+        objectid using reference type ``reftype``"""
         sourceid, targetid = self._refids_for(source, target)
         self.referencemap.connect(sourceid, targetid, reftype)
 
     def disconnect(self, source, target, reftype):
+        """ Disconnect a source object or objectid from a target object or
+        objectid using reference type ``reftype``"""
         sourceid, targetid = self._refids_for(source, target)
         self.referencemap.disconnect(sourceid, targetid, reftype)
 
@@ -350,18 +368,26 @@ class ObjectMap(Persistent):
     # RuntimeError: the bucket being iterated changed size
     
     def sourceids(self, obj, reftype):
+        """ Return a set of object identifiers of the objects connected to
+        ``obj`` a a source using reference type ``reftype``"""
         oid = self._refid_for(obj)
         return self.family.IF.Set(self.referencemap.sourceids(oid, reftype))
 
     def targetids(self, obj, reftype):
+        """ Return a set of object identifiers of the objects connected to
+        ``obj`` a a target using reference type ``reftype``"""
         oid = self._refid_for(obj)
         return self.family.IF.Set(self.referencemap.targetids(oid, reftype))
 
     def sources(self, obj, reftype):
+        """ Return a generator which will return the objects connected to
+        ``obj`` as a source using reference type ``reftype``"""
         for oid in self.sourceids(obj, reftype):
             yield self.object_for(oid)
 
     def targets(self, obj, reftype):
+        """ Return a generator which will return the objects connected to
+        ``obj`` as a target using reference type ``reftype``"""
         for oid in self.targetids(obj, reftype):
             yield self.object_for(oid)
 

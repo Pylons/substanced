@@ -70,6 +70,8 @@ class ContentRegistry(object):
 
 # venusian decorator that marks a class as a content class
 class content(object):
+    """ Use as a decorator for a content factory (usually a class).  Accepts
+    a content interface and a set of meta keywords."""
     venusian = venusian
     def __init__(self, content_iface, **meta):
         self.content_iface = content_iface
@@ -85,6 +87,14 @@ class content(object):
         return wrapped
     
 def add_content_type(config, content_iface, factory, **meta):
+    """
+    Configurator method which adds a content type.  Call via
+    ``config.add_content_type`` during Pyramid configuration phase.
+    ``content_iface`` is an interface representing the content type.
+    ``factory`` is a class or function which produces a content instance.
+    ``**meta`` is an arbitrary set of keywords associated with the content
+    type in the content registry.
+    """
     if not IInterface.providedBy(content_iface):
         raise ConfigurationError(
             'The provided "content_iface" argument (%r) is not an '

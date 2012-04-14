@@ -23,7 +23,8 @@ class TestObjectMap(unittest.TestCase):
             return val
         inst._randrange = randrange
         result = inst.new_objectid()
-        self.assertEqual(result, 0)
+        # cant get 0 back, it's irresolveable
+        self.assertEqual(result, 1)
         
     def test_new_objectid_notempty(self):
         inst = self._makeOne()
@@ -33,9 +34,9 @@ class TestObjectMap(unittest.TestCase):
             times[0] = times[0] + 1
             return val
         inst._randrange = randrange
-        inst.objectid_to_path[0] = True
+        inst.objectid_to_path[1] = True
         result = inst.new_objectid()
-        self.assertEqual(result, 1)
+        self.assertEqual(result, 2)
 
     def test_objectid_for_object(self):
         obj = testing.DummyResource()

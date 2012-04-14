@@ -92,16 +92,6 @@ class TestGetModifiedDate(unittest.TestCase, _TestGetDate):
     def _decorate(self, context, val):
         context.modified = val
 
-class TestGetPath(unittest.TestCase):
-    def _callFUT(self, object, default):
-        from ..discriminators import get_path
-        return get_path(object, default)
-
-    def test_it(self):
-        context = testing.DummyModel()
-        result = self._callFUT(context, None)
-        self.assertEqual(result, '/')
-
 class TestGetInterfaces(unittest.TestCase):
     def _callFUT(self, object, default):
         from ..discriminators import get_interfaces
@@ -116,7 +106,11 @@ class TestGetInterfaces(unittest.TestCase):
         alsoProvides(context, Dummy1)
         alsoProvides(context, Dummy2)
         result = self._callFUT(context, None)
-        self.assertEqual(sorted(result), [Dummy1, Dummy2, Interface])
+        self.assertEqual(len(result), 4)
+        self.assertTrue(Dummy1 in result)
+        self.assertTrue(Dummy2 in result)
+        self.assertTrue(Interface in result)
+        self.assertTrue(testing.DummyModel in result)
 
 class TestGetContainment(unittest.TestCase):
     def test_it(self):
@@ -131,7 +125,11 @@ class TestGetContainment(unittest.TestCase):
         alsoProvides(context, Dummy2)
         root['foo'] = context
         result = get_containment(context, None)
-        self.assertEqual(sorted(result), [Dummy1, Dummy2, Interface])
+        self.assertEqual(len(result), 4)
+        self.assertTrue(Dummy1 in result)
+        self.assertTrue(Dummy2 in result)
+        self.assertTrue(Interface in result)
+        self.assertTrue(testing.DummyModel in result) 
 
 class TestGetTitle(unittest.TestCase):
     def _callFUT(self, object, default):

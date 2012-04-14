@@ -12,7 +12,8 @@ from ..service import find_service
 
 @implementer(ICatalogIndex)
 class PathIndex(CatalogIndex):
-    """ Uses the objectmap to apply a query """
+    """ Uses the objectmap to apply a query to retrieve object identifiers at
+    or under a path"""
     family = BTrees.family32
     include_origin = True
     depth = None

@@ -35,7 +35,7 @@ install_requires = [
     'cryptacular',
     ]
 
-docs_extras = ['Sphinx']
+docs_extras = ['Sphinx', 'repoze.sphinx.autointerface']
 testing_extras = ['nose', 'coverage']
 
 setup(name='substanced',
