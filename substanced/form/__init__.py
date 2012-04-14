@@ -50,9 +50,14 @@ resource_registry = deform.widget.ResourceRegistry(use_defaults=False)
 resource_registry.registry = default_resources
 
 class Form(deform.form.Form):
+    """ Subclass of ``deform.form.Form`` which uses a custom resource
+    registry designed for Substance D. XXX point at deform docs. """
     default_resource_registry = resource_registry
 
 class FormView(object):
+    """ A class which can be used as a view which introspects a schema to
+    present the form.  XXX describe better using ``pyramid_deform``
+    documentation."""
     form_class = Form
     buttons = ()
     schema = None

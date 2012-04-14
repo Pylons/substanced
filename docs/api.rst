@@ -196,6 +196,17 @@ Other Helpers
 
 .. autofunction:: includeme
 
+:mod:`substanced.form` API
+----------------------------
+
+.. automodule:: substanced.form
+
+.. autoclass:: Form
+   :members:
+
+.. autoclass:: FormView
+   :members:
+
 :mod:`substanced.objectmap` API
 --------------------------------
 
