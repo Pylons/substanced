@@ -109,7 +109,8 @@ class ObjectMap(Persistent):
             objectid = self._v_nextid
             self._v_nextid += 1
 
-            if objectid not in self.objectid_to_path:
+            # object id zero is reserved as "irresolveable"
+            if objectid != 0 and not objectid in self.objectid_to_path:
                 return objectid
 
             self._v_nextid = None
