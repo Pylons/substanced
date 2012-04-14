@@ -68,21 +68,19 @@ class TestCatalog(unittest.TestCase):
         L = []
         transaction = DummyTransaction()
         inst = self._makeOne()
+        inst.transaction = transaction
         objectmap = DummyObjectMap({1:[a, (u'', u'a')]})
         site = _makeSite(catalog=inst, objectmap=objectmap)
         site['a'] = a
         inst.objectids = [1]
         inst.reindex_doc = lambda objectid, model: L.append((objectid, model))
         out = []
-        inst.reindex(transaction=transaction, output=out.append)
+        inst.reindex(output=out.append)
         self.assertEqual(L, [(1, a)])
         self.assertEqual(out,
-                         ['refreshing indexes',
-                          'refreshed',
-                          '*** committing ***',
-                          "reindexing /a",
+                          ["reindexing /a",
                           '*** committing ***'])
-        self.assertEqual(transaction.committed, 2)
+        self.assertEqual(transaction.committed, 1)
 
     def test_reindex_with_missing_path(self):
         a = testing.DummyModel()
@@ -92,21 +90,19 @@ class TestCatalog(unittest.TestCase):
             {1: [a, (u'', u'a')], 2:[None, (u'', u'b')]}
             )
         inst = self._makeOne()
+        inst.transaction = transaction
         site = _makeSite(catalog=inst, objectmap=objectmap)
         site['a'] = a
         inst.objectids = [1, 2]
         inst.reindex_doc = lambda objectid, model: L.append((objectid, model))
         out = []
-        inst.reindex(transaction=transaction, output=out.append)
+        inst.reindex(output=out.append)
         self.assertEqual(L, [(1, a)])
         self.assertEqual(out,
-                         ['refreshing indexes',
-                          'refreshed',
-                          '*** committing ***',
-                          "reindexing /a",
+                          ["reindexing /a",
                           "error: object at path /b not found",
                           '*** committing ***'])
-        self.assertEqual(transaction.committed, 2)
+        self.assertEqual(transaction.committed, 1)
 
     def test_reindex_with_missing_objectid(self):
         a = testing.DummyModel()
@@ -114,19 +110,17 @@ class TestCatalog(unittest.TestCase):
         transaction = DummyTransaction()
         objectmap = DummyObjectMap()
         inst = self._makeOne()
+        inst.transaction = transaction
         site = _makeSite(catalog=inst, objectmap=objectmap)
         site['a'] = a
         inst.objectids = [1]
         out = []
-        inst.reindex(transaction=transaction, output=out.append)
+        inst.reindex(output=out.append)
         self.assertEqual(L, [])
         self.assertEqual(out,
-                         ['refreshing indexes',
-                          'refreshed',
-                          '*** committing ***',
-                          "error: no path for objectid 1 in object map",
+                          ["error: no path for objectid 1 in object map",
                           '*** committing ***'])
-        self.assertEqual(transaction.committed, 2)
+        self.assertEqual(transaction.committed, 1)
         
         
     def test_reindex_pathre(self):
@@ -136,6 +130,7 @@ class TestCatalog(unittest.TestCase):
         objectmap = DummyObjectMap({1: [a, (u'', u'a')], 2: [b, (u'', u'b')]})
         transaction = DummyTransaction()
         inst = self._makeOne()
+        inst.transaction = transaction
         site = _makeSite(catalog=inst, objectmap=objectmap)
         site['a'] = a
         site['b'] = b
@@ -143,18 +138,14 @@ class TestCatalog(unittest.TestCase):
         inst.reindex_doc = lambda objectid, model: L.append((objectid, model))
         out = []
         inst.reindex(
-            transaction=transaction,
             path_re=re.compile('/a'), 
             output=out.append
             )
         self.assertEqual(L, [(1, a)])
         self.assertEqual(out,
-                         ['refreshing indexes',
-                          'refreshed',
-                          '*** committing ***',
-                          'reindexing /a',
+                          ['reindexing /a',
                           '*** committing ***'])
-        self.assertEqual(transaction.committed, 2)
+        self.assertEqual(transaction.committed, 1)
 
     def test_reindex_dryrun(self):
         a = testing.DummyModel()
@@ -163,22 +154,20 @@ class TestCatalog(unittest.TestCase):
         objectmap = DummyObjectMap({1: [a, (u'', u'a')], 2: [b, (u'', u'b')]})
         transaction = DummyTransaction()
         inst = self._makeOne()
+        inst.transaction = transaction
         site = _makeSite(catalog=inst, objectmap=objectmap)
         site['a'] = a
         site['b'] = b
         inst.objectids = [1,2]
         inst.reindex_doc = lambda objectid, model: L.append((objectid, model))
         out = []
-        inst.reindex(transaction=transaction, dry_run=True, output=out.append)
+        inst.reindex(dry_run=True, output=out.append)
         self.assertEqual(sorted(L), [(1, a), (2, b)])
         self.assertEqual(out,
-                         ['refreshing indexes',
-                          'refreshed',
-                          '*** aborting ***',
-                          'reindexing /a',
+                         ['reindexing /a',
                           'reindexing /b',
                           '*** aborting ***'])
-        self.assertEqual(transaction.aborted, 2)
+        self.assertEqual(transaction.aborted, 1)
         self.assertEqual(transaction.committed, 0)
 
     def test_reindex_with_indexes(self):
@@ -187,6 +176,7 @@ class TestCatalog(unittest.TestCase):
         objectmap = DummyObjectMap({1: [a, (u'', u'a')]})
         transaction = DummyTransaction()
         inst = self._makeOne()
+        inst.transaction = transaction
         site = _makeSite(catalog=inst, objectmap=objectmap)
         site['a'] = a
         inst.objectids = [1]
@@ -195,16 +185,12 @@ class TestCatalog(unittest.TestCase):
         self.config.registry._substanced_indexes = {'index':index}
         index.reindex_doc = lambda objectid, model: L.append((objectid, model))
         out = []
-        inst.reindex(transaction=transaction, indexes=('index',), 
-                     output=out.append)
+        inst.reindex(indexes=('index',),  output=out.append)
         self.assertEqual(out,
-                         ['refreshing indexes',
-                          'refreshed',
-                          '*** committing ***',
-                          "reindexing only indexes ('index',)",
+                          ["reindexing only indexes ('index',)",
                           'reindexing /a',
                           '*** committing ***'])
-        self.assertEqual(transaction.committed, 2)
+        self.assertEqual(transaction.committed, 1)
         self.assertEqual(L, [(1,a)])
 
     def test_refresh_add_unmentioned(self):

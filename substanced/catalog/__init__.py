@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__) # API
 @content(ICatalog, icon='icon-search')
 class Catalog(_Catalog):
     family = BTrees.family32
+    transaction = transaction
     def __init__(self, family=None):
         _Catalog.__init__(self, family)
         self.objectids = self.family.IF.TreeSet()
@@ -55,21 +56,46 @@ class Catalog(_Catalog):
         if not docid in self.objectids:
             self.objectids.insert(docid)
 
-    def reindex(self, path_re=None, commit_interval=200, 
-                dry_run=False, output=None, transaction=transaction, 
-                indexes=None, registry=None):
+    def reindex(self, dry_run=False, commit_interval=200, indexes=None, 
+                path_re=None, output=None):
+
+        """\
+        Reindex all objects in the catalog using the existing set of
+        indexes. 
+
+        If ``dry_run`` is ``True``, do no actual work but send what would be
+        changed to the logger.
+
+        ``commit_interval`` controls the number of objects indexed between
+        each call to ``transaction.commit()`` (to control memory
+        consumption).
+
+        ``indexes``, if not ``None``, should be a list of index names that
+        should be reindexed.  If ``indexes`` is ``None``, all indexes are
+        reindexed.
+
+        ``path_re``, if it is not ``None`` should be a regular expression
+        object that will be matched against each object's path.  If the
+        regular expression matches, the object will be reindexed, if it does
+        not, it won't.
+
+        ``output``, if passed should be one of ``None``, ``False`` or a
+        function.  If it is a function, the function should accept a single
+        message argument that will be used to record the actions taken during
+        the reindex.  If ``False`` is passed, no output is done.  If ``None``
+        is passed (the default), the output will wind up in the
+        ``substanced.catalog`` Python logger output at ``info`` level.
+        """
+        if output is None: # pragma: no cover
+            output = logger.info
 
         def commit_or_abort():
             if dry_run:
                 output and output('*** aborting ***')
-                transaction.abort()
+                self.transaction.abort()
             else:
                 output and output('*** committing ***')
-                transaction.commit()
-
-        self.refresh(output=output, registry=registry)
-        
-        commit_or_abort()
+                self.transaction.commit()
 
         if indexes is not None:
             output and output('reindexing only indexes %s' % str(indexes))
@@ -101,9 +127,30 @@ class Catalog(_Catalog):
             if i % commit_interval == 0: # pragma: no cover
                 commit_or_abort()
             i+=1
-        commit_or_abort()
+        if i:
+            commit_or_abort()
 
-    def refresh(self, output=None, registry=None):
+    def refresh(self, registry=None, output=None):
+        """\
+        Refresh the set of persistent indexes by comparing them against the
+        indexes added via ``config.add_catalog.index``.  Add any indexes that
+        haven't yet been added from that list, and remove any that no longer
+        exist.
+
+        ``registry`` should be a Pyramid registry object.  If it is not
+        passed, we attempt to obtain the current threadlocal Pyramid
+        registry.
+
+        ``output``, if passed should be one of ``None``, ``False`` or a
+        function.  If it is a function, the function should accept a single
+        message argument that will be used to record the actions taken during
+        the reindex.  If ``False`` is passed, no output is done.  If ``None``
+        is passed (the default), the output will wind up in the
+        ``substanced.catalog`` Python logger output at ``info`` level.
+        """
+        if output is None: # pragma: no cover
+            output = logger.info
+            
         output and output('refreshing indexes')
 
         if registry is None:
