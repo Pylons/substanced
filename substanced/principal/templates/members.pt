@@ -1,9 +1,0 @@
-<div>
-  <tal:block condition="not cstruct">
-    <h3> No members </h3>
-  </tal:block>
-
-  <tal:block condition="cstruct">
-    <div tal:repeat="member cstruct">${member}</div>
-  </tal:block>
-</div>
