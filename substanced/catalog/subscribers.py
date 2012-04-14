@@ -18,8 +18,11 @@ from ..util import (
 
 @subscriber([Interface, IObjectAddedEvent])
 def object_added(obj, event):
-    """ Depends upon substance.objectmap.object_will_be_added to be fired
-    before this gets fired to assign an __objectid__ to all nodes"""
+    """ Index an object and and its children in the closest catalog; an
+    IObjectAddedEvent event subscriber.  Depends upon
+    substance.objectmap.object_will_be_added to have been fired
+    before this gets fired to assign an __objectid__ to the object.
+    """
     catalog = find_service(obj, 'catalog')
     if catalog is None:
         return
@@ -30,6 +33,8 @@ def object_added(obj, event):
 
 @subscriber([Interface, IObjectWillBeRemovedEvent])
 def object_will_be_removed(obj, event):
+    """ Unindex an object and its children in the closest catalog; an
+    IObjectWillBeRemovedEvent event subscriber"""
     objectmap = find_service(obj, 'objectmap')
     catalog = find_service(obj, 'catalog')
     if objectmap is None or catalog is None:
@@ -40,7 +45,7 @@ def object_will_be_removed(obj, event):
 
 @subscriber([Interface, IObjectModifiedEvent])
 def object_modified(obj, event):
-    """ Reindex a single piece of content (non-recursive); an
+    """ Reindex a single object (non-recursive) in the closest catalog; an
     ObjectModifedEvent event subscriber """
     objectid = oid_of(obj)
     catalog = find_service(obj, 'catalog')

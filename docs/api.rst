@@ -12,8 +12,6 @@
 
 .. automodule:: substanced.catalog
 
-.. autofunction:: includeme
-
 .. autoclass:: Catalog
    :members:
    :inherited-members:
@@ -27,6 +25,10 @@
    .. automethod:: get
 
    Retrieve an index or return failobj.
+
+.. autofunction:: includeme
+
+XXX: request.search, request.query
 
 :mod:`substanced.catalog.discriminators` API
 --------------------------------------------
@@ -120,6 +122,17 @@ Other Helpers
 
 .. autoclass:: PathIndex
    :members:
+
+:mod:`substanced.catalog.subscribers` API
+-----------------------------------------
+
+.. automodule:: substanced.catalog.subscribers
+
+.. autofunction:: object_added
+
+.. autofunction:: object_will_be_removed
+
+.. autofunction:: object_modified
 
 :mod:`substanced.objectmap` API
 --------------------------------
