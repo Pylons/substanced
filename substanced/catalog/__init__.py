@@ -17,7 +17,7 @@ from ..interfaces import (
 from ..content import content
 from ..service import find_service
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__) # API
 
 @content(ICatalog, icon='icon-search')
 class Catalog(_Catalog):
