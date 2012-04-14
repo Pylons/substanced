@@ -69,11 +69,11 @@ class PathIndex(CatalogIndex):
 # API below, do not remove
 
 from repoze.catalog.indexes.field import CatalogFieldIndex
-FieldIndex = CatalogFieldIndex
+FieldIndex = CatalogFieldIndex # pyflakes
 from repoze.catalog.indexes.facet import CatalogFacetIndex
-FacetIndex = CatalogFacetIndex
+FacetIndex = CatalogFacetIndex # pyflakes
 from repoze.catalog.indexes.keyword import CatalogKeywordIndex
-KeywordIndex = CatalogKeywordIndex
+KeywordIndex = CatalogKeywordIndex # pyflakes
 from repoze.catalog.indexes.text import CatalogTextIndex
-TextIndex = CatalogTextIndex
+TextIndex = CatalogTextIndex # pyflakes
 
