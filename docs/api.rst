@@ -28,6 +28,25 @@
 
    Retrieve an index or return failobj.
 
+:mod:`substanced.catalog.discriminators` API
+--------------------------------------------
+
+.. automodule:: substanced.catalog.discriminators
+
+.. autofunction:: get_title
+
+.. autofunction:: get_interfaces
+
+.. autofunction:: get_containment
+
+.. autofunction:: get_textrepr
+
+.. autofunction:: get_creation_date
+
+.. autofunction:: get_modified_date
+
+.. autofunction:: get_allowed_to_view
+
 :mod:`repoze.catalog.query` API
 -------------------------------
 

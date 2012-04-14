@@ -106,7 +106,11 @@ class TestGetInterfaces(unittest.TestCase):
         alsoProvides(context, Dummy1)
         alsoProvides(context, Dummy2)
         result = self._callFUT(context, None)
-        self.assertEqual(sorted(result), [Dummy1, Dummy2, Interface])
+        self.assertEqual(len(result), 4)
+        self.assertTrue(Dummy1 in result)
+        self.assertTrue(Dummy2 in result)
+        self.assertTrue(Interface in result)
+        self.assertTrue(testing.DummyModel in result)
 
 class TestGetContainment(unittest.TestCase):
     def test_it(self):
@@ -121,7 +125,11 @@ class TestGetContainment(unittest.TestCase):
         alsoProvides(context, Dummy2)
         root['foo'] = context
         result = get_containment(context, None)
-        self.assertEqual(sorted(result), [Dummy1, Dummy2, Interface])
+        self.assertEqual(len(result), 4)
+        self.assertTrue(Dummy1 in result)
+        self.assertTrue(Dummy2 in result)
+        self.assertTrue(Interface in result)
+        self.assertTrue(testing.DummyModel in result) 
 
 class TestGetTitle(unittest.TestCase):
     def _callFUT(self, object, default):
