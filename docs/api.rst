@@ -134,6 +134,43 @@ Other Helpers
 
 .. autofunction:: object_modified
 
+:mod:`substanced.content` API
+-----------------------------
+
+.. automodule:: substanced.content
+
+.. autoclass:: content
+   :members:
+
+.. autofunction:: add_content_type
+
+.. autofunction:: includeme
+
+:mod:`substanced.event` API
+---------------------------
+
+.. automodule:: substanced.event
+
+.. autoclass:: ObjectAddedEvent
+   :members:
+   :inherited-members:
+
+.. autoclass:: ObjectWillBeAddedEvent
+   :members:
+   :inherited-members:
+
+.. autoclass:: ObjectRemovedEvent
+   :members:
+   :inherited-members:
+
+.. autoclass:: ObjectWillBeRemovedEvent
+   :members:
+   :inherited-members:
+
+.. autoclass:: ObjectModifiedEvent
+   :members:
+   :inherited-members:
+
 :mod:`substanced.objectmap` API
 --------------------------------
 

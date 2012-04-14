@@ -16,11 +16,11 @@ class _ObjectEvent(object):
 
 @implementer(IObjectAddedEvent)
 class ObjectAddedEvent(_ObjectEvent):
-    pass
+    """ An event sent just after an object has been added to a folder.  """
 
 @implementer(IObjectWillBeAddedEvent)
 class ObjectWillBeAddedEvent(_ObjectEvent):
-    pass
+    """ An event sent just before an object has been added to a folder.  """
 
 class _ObjectRemovalEvent(object):
     def __init__(self, object, parent, name, moving=False):
@@ -31,13 +31,14 @@ class _ObjectRemovalEvent(object):
 
 @implementer(IObjectRemovedEvent)
 class ObjectRemovedEvent(_ObjectRemovalEvent):
-    pass
+    """ An event sent just after an object has been removed from a folder."""
 
 @implementer(IObjectWillBeRemovedEvent)
 class ObjectWillBeRemovedEvent(_ObjectRemovalEvent):
-    pass
+    """ An event sent just before an object has been removed from a folder."""
 
 @implementer(IObjectModifiedEvent)
 class ObjectModifiedEvent(object): # pragma: no cover
+    """ An event sent when an object has been modified."""
     def __init__(self, object):
         self.object = object
