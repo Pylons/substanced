@@ -52,65 +52,139 @@ class Folder(Persistent):
         self.data = OOBTree(data)
         self._num_objects = Length(len(data))
 
+    def get_service(self, service_name):
+        """ Return a service named by ``service_name`` in this folder's
+        ``__services__`` folder *or any parent service folder* or ``None`` if
+        no such service exists."""
+        return find_service(self, service_name)
+
+    def add_service(self, name, obj):
+        """ Add a service to this folder's ``__services__`` folder named
+        ``name``."""
+        services = self.get(SERVICES_NAME)
+        if services is None:
+            services = Folder()
+            self.add(SERVICES_NAME, services, send_events=False, 
+                     allow_services=True)
+        services.add(name, obj, send_events=False)
+
     def keys(self):
-        """ See IFolder.
+        """ Return an iterable sequence of object names present in the folder.
+
+        Respect ``order``, if set.
         """
         return self.order
 
-    def get_service(self, service_name):
-        return find_service(self, service_name)
-
     def __iter__(self):
+        """ An alias for ``keys``
+        """
         return iter(self.order)
 
     def values(self):
-        """ See IFolder.
+        """ Return an iterable sequence of the values present in the folder.
+
+        Respect ``order``, if set.
         """
         if self._order is not None:
             return [self.data[name] for name in self.order]
         return self.data.values()
 
     def items(self):
-        """ See IFolder.
+        """ Return an iterable sequence of (name, value) pairs in the folder.
+
+        Respect ``order``, if set.
         """
         if self._order is not None:
             return [(name, self.data[name]) for name in self.order]
         return self.data.items()
 
     def __len__(self):
-        """ See IFolder.
+        """ Return the number of objects in the folder.
         """
         return self._num_objects()
 
     def __nonzero__(self):
-        """ See IFolder.
+        """ Return ``True`` unconditionally.
         """
         return True
 
     def __getitem__(self, name):
-        """ See IFolder.
+        """ Return the object named ``name`` added to this folder or raise
+        ``KeyError`` if no such object exists.  ``name`` must be a Unicode
+        object or directly decodeable to Unicode.
         """
         name = unicode(name)
         return self.data[name]
 
     def get(self, name, default=None):
-        """ See IFolder.
+        """ Return the object named by ``name`` or the default.
+
+        ``name`` must be a Unicode object or a bytestring object.
+
+        If ``name`` is a bytestring object, it must be decodable using the
+        system default encoding or the UTF-8 encoding.
         """
         name = unicode(name)
         return self.data.get(name, default)
 
     def __contains__(self, name):
-        """ See IFolder.
+        """ Does the container contains an object named by name?
+
+        ``name`` must be a Unicode object or a bytestring object.
+
+        If ``name`` is a bytestring object, it must be decodable using the
+        system default encoding or the UTF-8 encoding.
         """
         name = unicode(name)
         return self.data.has_key(name)
 
     def __setitem__(self, name, other):
-        """ See IFolder.
+        """ Set object ``other' into this folder under the name ``name``.
+
+        ``name`` must be a Unicode object or a bytestring object.
+
+        If ``name`` is a bytestring object, it must be decodable using the
+        system default encoding or the UTF-8 encoding.
+
+        ``name`` cannot be the empty string.
+
+        When ``other`` is seated into this folder, it will also be
+        decorated with a ``__parent__`` attribute (a reference to the
+        folder into which it is being seated) and ``__name__``
+        attribute (the name passed in to this function.
+
+        If a value already exists in the foldr under the name ``name``, raise
+        :exc:`KeyError`.
+
+        When this method is called, emit an
+        :class:`substanced.event.ObjectWillBeAddedEvent` event before the
+        object obtains a ``__name__`` or ``__parent__`` value.  Emit an
+        :class:`substanced.event.ObjectAddedEvent` after the object obtains a
+        ``__name__`` and ``__parent__`` value.
         """
         return self.add(name, other)
 
     def check_name(self, name, allow_services=False):
+        """
+
+        Check the ``name`` passed to ensure that it's addable to the folder.
+        Returns the name decoded to Unicode if it passes all addable checks.
+        It's not addable if:
+        
+        -  an object by the name already exists in the folder
+
+        - the name is not decodeable to Unicode.
+
+        - the name starts with ``@@`` (conflicts with explicit view names).
+
+        - the name has slashes in it (WSGI limitation).
+
+        - the name is empty.
+
+        If any of these conditions are untrue, raise a :exc:`ValueError`.  If
+        the name passed is ``__services__``, and ``allow_services`` is not
+        ``True``, also raise a :exc:`ValueError`.
+        """
         if not isinstance(name, basestring):
             raise ValueError("Name must be a string rather than a %s" %
                              name.__class__.__name__)
@@ -138,7 +212,11 @@ class Folder(Persistent):
         return name
     
     def add(self, name, other, send_events=True, allow_services=False):
-        """ See IFolder.
+        """ Same as ``__setitem__``.
+
+        If ``send_events`` is false, suppress the sending of folder events.
+        If ``allow_services`` is True, allow the name ``__services__`` to be
+        added.
         """
         name = self.check_name(name, allow_services)
 
@@ -159,25 +237,64 @@ class Folder(Persistent):
             event = ObjectAddedEvent(other, self, name)
             self._notify(event)
 
-    def add_service(self, name, obj):
-        services = self.get(SERVICES_NAME)
-        if services is None:
-            services = Folder()
-            self.add(SERVICES_NAME, services, send_events=False, 
-                     allow_services=True)
-        services.add(name, obj, send_events=False)
+    def pop(self, name, default=marker):
+        """ Remove the item stored in the under ``name`` and return it.
+
+        If ``name`` doesn't exist in the folder, and ``default`` **is not**
+        passed, raise a :exc:`KeyError`.
+
+        If ``name`` doesn't exist in the folder, and ``default`` **is**
+        passed, return ``default``.
+
+        When the object stored under ``name`` is removed from this folder,
+        remove its ``__parent__`` and ``__name__`` values.
+
+        When this method is called, emit an
+        :class:`substanced.event.ObjectWillBeRemovedEvent` event before the
+        object loses its ``__name__`` or ``__parent__`` values.  Emit an
+        :class:`substanced.event.ObjectRemovedEvent` after the object loses its
+        ``__name__`` and ``__parent__`` value,
+        """
+        try:
+            result = self.remove(name)
+        except KeyError:
+            if default is marker:
+                raise
+            return default
+        return result
 
     def _notify(self, event):
         reg = get_current_registry()
         reg.subscribers((event.object, event), None)
 
     def __delitem__(self, name):
-        """ See IFolder.
+        """ Remove the object from this folder stored under ``name``.
+
+        ``name`` must be a Unicode object or a bytestring object.
+
+        If ``name`` is a bytestring object, it must be decodable using the
+        system default encoding or the UTF-8 encoding.
+
+        If no object is stored in the folder under ``name``, raise a
+        :exc:`KeyError`.
+
+        When the object stored under ``name`` is removed from this folder,
+        remove its ``__parent__`` and ``__name__`` values.
+
+        When this method is called, emit an
+        :class:`substanced.event.ObjectWillBeRemovedEvent` event before the
+        object loses its ``__name__`` or ``__parent__`` values.  Emit an
+        :class:`substanced.event.ObjectRemovedEvent` after the object loses
+        its ``__name__`` and ``__parent__`` value,
         """
         return self.remove(name)
 
     def remove(self, name, send_events=True, moving=False):
-        """ See IFolder.
+        """ Same thing as ``__delitem__``.
+
+        If ``send_events`` is false, suppress the sending of folder events.
+        If ``moving`` is True, the events sent will indicate that a move is
+        in process.
         """
         name = unicode(name)
         other = self.data[name]
@@ -205,6 +322,16 @@ class Folder(Persistent):
         return other
 
     def move(self, name, other, newname=None):
+        """
+        Move a subobject named ``name`` from this folder to the folder
+        represented by ``other``.  If ``newname`` is not none, it is used as
+        the target object name; otherwise the existing subobject name is
+        used.
+
+        This operation is done in terms of a remove and an add.  The Removed
+        and WillBeRemoved events sent will indicate that the object is
+        moving.
+        """
         if newname is None:
             newname = name
         ob = self.remove(name, moving=True)
@@ -212,18 +339,14 @@ class Folder(Persistent):
         return ob
 
     def rename(self, oldname, newname):
-        return self.move(oldname, self, newname)
-
-    def pop(self, name, default=marker):
-        """ See IFolder.
         """
-        try:
-            result = self.remove(name)
-        except KeyError:
-            if default is marker:
-                raise
-            return default
-        return result
+        Rename a subobject from oldname to newname.
+
+        This operation is done in terms of a remove and an add.  The Removed
+        and WillBeRemoved events sent will indicate that the object is
+        moving.
+        """
+        return self.move(oldname, self, newname)
 
     def __repr__(self):
         klass = self.__class__

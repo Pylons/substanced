@@ -180,6 +180,22 @@ Other Helpers
 
 .. autofunction:: includeme
 
+:mod:`substanced.folder` API
+----------------------------
+
+.. automodule:: substanced.folder
+
+.. autoclass:: Folder
+   :members:
+
+   .. attribute:: order
+
+     A tuple of name values. If set, controls the order in which names should
+     be returned from ``__iter__()``, ``keys()``, ``values()``, and
+     ``items()``.  If not set, use an effectively random order.
+
+.. autofunction:: includeme
+
 :mod:`substanced.objectmap` API
 --------------------------------
 
