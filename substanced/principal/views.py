@@ -40,8 +40,9 @@ class AddGroupView(FormView):
     def add_success(self, appstruct):
         registry = self.request.registry
         name = appstruct.pop('name')
-        appstruct.pop('members')
+        members = appstruct.pop('members')
         group = registry.content.create(IGroup, **appstruct)
         self.request.context[name] = group
+        group.connect(*members)
         return HTTPFound(self.request.mgmt_path(group, '@@properties'))
     

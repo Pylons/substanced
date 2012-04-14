@@ -12,7 +12,6 @@ from pyramid.security import (
     ALL_PERMISSIONS,
     )
 from pyramid.events import subscriber
-from pyramid.renderers import render
 
 from ..interfaces import (
     IUser,
