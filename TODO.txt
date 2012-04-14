@@ -35,6 +35,8 @@ UI-Plus-Guts
 
 - Forgot password / change password.
 
+- Allow services to be added to services folder.
+
 Guts-Only
 ---------
 
@@ -58,14 +60,16 @@ Guts-Only
   such-related objects so that the deleted principal id in the ACL is
   replaced by an unobtainable object id.
 
-  Note that this bug/feature has existed in Zope for 13 years, and it hasn't
-  seemed to have raised much ire, but it always bugged me.
+  Note that a variant of this bug/feature has existed in Zope for 13 years,
+  and it hasn't seemed to have raised much ire, but it always bugged me.
 
 - Decide whether to split "manage contents" permissions out for folders into
   add, delete, rename.
 
 - ACL edit view currently retatalogs an object based on the presence or
   absence of an "allowed" index.  This is wrong.
+
+- Bake ACLs into the object map.
 
 Nice-to-Have Features
 ---------------------
