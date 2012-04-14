@@ -64,6 +64,9 @@ Guts-Only
 - Decide whether to split "manage contents" permissions out for folders into
   add, delete, rename.
 
+- ACL edit view currently retatalogs an object based on the presence or
+  absence of an "allowed" index.  This is wrong.
+
 Nice-to-Have Features
 ---------------------
 
