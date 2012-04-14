@@ -5,6 +5,8 @@ UI-Only
 
 - Allow folder contents UI ("Contents" tab) sorting by name and by type.
 
+- Make batching in contents view use bootstrap batching UI elements.
+
 UI-Plus-Guts
 ------------
 
@@ -23,9 +25,7 @@ UI-Plus-Guts
   space based on the current state of the registry resulting from
   "add_catalog_index".
 
-- Cut, copy, paste, rename, import/export.
-
-- Figure out how to let people override generic add view.
+- Cut, copy, paste, rename, import/export from contents view.
 
 - Undo recent transactions (per folder?)
 
@@ -33,12 +33,14 @@ UI-Plus-Guts
 
 - Ownership.
 
-- Forgot password / change password.
+- Forgot password / change password interactions.
 
 - Allow services to be added to services folder.
 
 Guts-Only
 ---------
+
+- Figure out how to let people override generic add view.
 
 - Create a scaffold.
 
