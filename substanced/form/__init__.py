@@ -3,8 +3,57 @@ import deform.form
 import deform.exception
 import deform.widget
 
+# assume jquery is already loaded in our widget resource list
+
+default_resources = {
+    'jquery': {
+        None:{},
+        },
+    'jqueryui': {
+        None:{
+            'js':'scripts/jquery-ui-1.8.11.custom.min.js',
+            'css':'css/ui-lightness/jquery-ui-1.8.11.custom.css',
+            },
+        },
+    'jquery.form': {
+        None:{
+            'js':'scripts/jquery.form.js',
+            },
+        },
+    'jquery.maskedinput': {
+        None:{
+            'js':'scripts/jquery.maskedinput-1.2.2.min.js',
+            },
+        },
+    'datetimepicker': {
+        None:{
+            'js':'scripts/jquery-ui-timepicker-addon.js',
+            'css':'css/jquery-ui-timepicker-addon.css',
+            },
+        },
+    'deform': {
+        None:{
+            'js':('scripts/jquery.form.js', 'scripts/deform.js'),
+            'css':'css/form.css'
+
+            },
+        },
+    'tinymce': {
+        None:{
+            'js':'tinymce/jscripts/tiny_mce/tiny_mce.js',
+            },
+        },
+    }
+
+
+resource_registry = deform.widget.ResourceRegistry(use_defaults=False)
+resource_registry.registry = default_resources
+
+class Form(deform.form.Form):
+    default_resource_registry = resource_registry
+
 class FormView(object):
-    form_class = deform.form.Form
+    form_class = Form
     buttons = ()
     schema = None
 
