@@ -8,15 +8,12 @@ from ..sdi import (
     check_csrf_token,
     )
 
-from . import logger
-
 @view_defaults(
     name='manage_catalog',
     context=ICatalog,
     renderer='templates/manage_catalog.pt',
     permission='manage catalog')
 class ManageCatalog(object):
-    logger = logger
     def __init__(self, context, request):
         self.context = context
         self.request = request
@@ -29,8 +26,16 @@ class ManageCatalog(object):
     @mgmt_view(request_method='POST')
     def POST(self):
         check_csrf_token(self.request)
-        self.context.reindex(output=self.logger.info)
-        self.request.session.flash('Catalog reindexed')
-        return HTTPFound(location=self.request.mgmt_path(
-            self.context, '@@manage_catalog'))
+        location=self.request.mgmt_path(self.context, '@@manage_catalog')
+        if 'reindex' in self.request.POST:
+            self.context.reindex()
+            self.request.session.flash('Catalog reindexed')
+            return HTTPFound(location=location)
+        elif 'refresh' in self.request.POST:
+            self.context.refresh(registry=self.request.registry)
+            self.request.session.flash('Catalog refreshed')
+            return HTTPFound(location=location)
+        else:
+            self.request.session.flash('Unknown command', 'error')
+            return HTTPFound(location=location)
 
