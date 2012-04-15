@@ -43,7 +43,8 @@ content must have these properties:
 
    If a resource constructor is not a class, you might need to do add an
    interface declaration on the actual class or the instance that is
-   returned. XXX, bleh, TMI?
+   returned. XXX, bleh, we should just wrap the factory in another function
+   that applies the interface to a returned object.
 
 Here's an example which defines a content resource constructor as a class:
 
@@ -167,43 +168,46 @@ instance, types can be enumerated:
 ``request.registry.content.all()`` will return all type objects you've
 defined and scanned.
 
-.. Introspecting Content
-.. ---------------------
+Metadata
+--------
 
-.. You can check if a resource is of a particular type by using
-.. ``request.registry.content.is_type``:
+A content's type can be associated with metadata about that type, including
+the content type's name, its icon in the SDI management interface, an add
+view name, and other things.  Pass keyword arguments to the ``@content``
+decorator or ``config.add_content_type`` to specify metadata.
 
-.. .. code-block:: python
+Names
+~~~~~
 
-..    # in a module named blog.views
+You can associate a content type registration with a name that shows up when
+someone attempts to add such a piece of content using the SDI management
+interface "Add" tab by passing a ``name`` keyword argument to ``@content``
+or ``config.add_content_type``.
 
-..    from .resources import BlogEntryType
+.. code-block:: python
 
-..    @view_config(name='is_blog_entry', renderer='string')
-..    def check(request):
-..        if request.registry.content.is_type(request.context, BlogEntryType):
-..            return "It's a blog entry type"
-..        return "It's not a blog entry type"
+   # in a module named blog.resources
 
-.. A resource object might be associated with more than one type.  You can get a
-.. sequence of content types that are provided by a resource by calling
-.. ``request.registry.content.provides``:
+   from persistent import Persistent
+   from substanced.content import (
+       Type,
+       content,
+       )     
 
-.. .. code-block:: python
+   class BlogEntryType(Type):
+       pass
 
-..    # in a module named blog.views
+   @content(BlogEntryType, name='Blog Entry')
+   class BlogEntry(Persistent):
+       def __init__(self, title, body):
+           self.title = title
+           self.body = body
 
-..    from .resources import BlogEntryType
-
-..    @view_config(name='is_blog_entry', renderer='string')
-..    def check(request):
-..        types = request.registry.content.provides(request.context)
-..        if BlogEntryType in types:
-..            return "It's a blog entry type"
-..        return "It's not a blog entry type"
+Once you've done this, the "Add" tab in the SDI management interface will
+show your content as addable using this name instead of the type name.
 
 Icons
------
+~~~~~
 
 You can associate a content type registration with a management view icon by
 passing an ``icon`` keyword argument to ``@content`` or ``add_content_type``.
@@ -235,17 +239,12 @@ the icon next to it in the contents view of the management interface and in
 the breadcrumb list.  The available icon names are listed at
 http://twitter.github.com/bootstrap/base-css.html#icons .
 
-Categories
-----------
+Add Views
+~~~~~~~~~
 
-Using categories is a nice way to let you populate the management UI with
-choices.  For example, if you register several types in a given category, you
-can easily get a listing of them to put into a dropdown of constructable
-items on an "add form".  They won't be listed in highly generic SDI add
-menus, but they'll be available for your own use as necessary.
-
-You can categorize types into particular "buckets" by passing a ``category``
-argument to the ``@content`` decorator:
+You can associate a content type with view that will allow the type to be
+added by passing the name of the add view as a keyword argument to
+``@content`` or ``add_content_type``.
 
 .. code-block:: python
 
@@ -257,68 +256,27 @@ argument to the ``@content`` decorator:
        content,
        )     
 
-   class BlogTypes(Type):
-       pass
-
    class BlogEntryType(Type):
        pass
 
-   class BlogPictureType(Type):
-       pass
-
-   @content(BlogEntryType, category=BlogTypes)
+   @content(BlogEntryType, add_view='add_blog_entry')
    class BlogEntry(Persistent):
        def __init__(self, title, body):
            self.title = title
            self.body = body
 
-   @content(BlogPictureType, category=BlogTypes)
-   class BlogPicture(Persistent):
-       def __init__(self, title, data):
-           self.title = title
-           self.data = data
+Once you've done this, if the button is clicked in the "Add" tab for this
+content type, the related view will be presented to the user.
 
-In the above example, ``BlogPictureType`` is the content type, and
-``BlogTypes`` is the categorization type.
+Obtaining Metadata About a Content Object's Type
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Once you've categorized content like this, you can make use of the categories
-in the ``create`` and ``all`` APIs:
+``request.registry.content.metadata(blogentry, 'icon')``
 
-.. code-block:: python
+  Will return the icon for the blogentry's content type or ``None`` if it
+  does not exist.
 
-   # in a module named blog.views
+``request.registry.content.metadata(document, 'icon', 'icon-file')``
 
-   from pyramid.httpexceptions import HTTPFound
-   from .resources import BlogType, BlogEntryType
-
-   @view_config(name='add_blog_entry', request_method='POST')
-   def add_blogentry(request):
-       title = request.POST['title']
-       body = request.POST['body']
-       entry = request.registry.content[BlogType].create(
-                                 BlogEntryType, title, body)
-       context['title] = entry
-       return HTTPFound(request.resource_url(entry))
-
-.. code-block:: python
-
-   # in a module named blog.views
-
-   from .resources import BlogType
-
-   @view_config(name='show_blog_types', renderer='show_types.pt')
-   def show_types(request):
-       blog_types = request.registry.content[BlogTypes].all()
-       return {'blog_types':blog_types}
-
-Content types defined with a ``category`` will not show up in "bare" calls to
-``all()``:
-
-.. code-block:: python
-
-   # in a module named blog.views
-
-   @view_config(name='show_blog_types', renderer='show_types.pt')
-   def show_types(request):
-       all_types = request.registry.content.all() # won't return BlogTypes
-       return {'all_types':all_types}
+  Will return the icon for the blogentry's content type or ``icon-file`` if
+  it does not exist.
