@@ -10,10 +10,11 @@ UI-Only
 UI-Plus-Guts
 ------------
 
-- Object map management UI (view relationships, view paths, view objectids).
+- Create object map management UI (view relationships, view paths, view
+  objectids).
 
-- Database management UI (pack, see activity, see cache parameters, flush
-  cache).
+- Improve database management UI ("Manage DB") in site package (see activity,
+  see cache parameters, flush cache).
 
 - Improve catalog management UI.  We currently allow someone to reindex the
   entire catalog via the "Manage" tab of a catalog.  Instead, we should allow
@@ -22,17 +23,18 @@ UI-Plus-Guts
   space based on the current state of the registry resulting from
   "add_catalog_index".
 
-- Cut, copy, paste, rename, import/export from contents view.
+- Allow cut, copy, paste, rename, (import/export?) from contents view.
 
-- Undo recent transactions (per folder?)
+- Add Undo tab to Site (or per folder?) which will allow admins to undo recent
+  transactions.
 
-- Multiple property sheets on single content object.
+- Allow multiple property sheets on single content object.
 
-- Ownership.
+- Stamp created objects with creator information?
 
 - Forgot password / change password interactions.
 
-- Allow services to be added to services folder.
+- Allow services to be added to services folder via add view UIs.
 
 Guts-Only
 ---------
