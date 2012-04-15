@@ -48,7 +48,7 @@ if 'sphinx-build' in ' '.join(sys.argv): # protect against dumb importers
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.intersphinx',
-    'repoze.sphinx.autointerface',
+#    'repoze.sphinx.autointerface',
     ]
 
 # Looks for pyramid's objects
