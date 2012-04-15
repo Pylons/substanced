@@ -5,6 +5,8 @@ from zope.interface import (
     Interface,
     alsoProvides,
     taggedValue,
+    directlyProvidedBy,
+    implementer,
     )
 
 from ..interfaces import IContent
@@ -178,8 +180,9 @@ class Test_add_content_type(unittest.TestCase):
             self._callFUT,
             None, object(), None, category=IDummy)
 
-    def test_success(self):
-        def factory(): pass
+    def test_success_function(self):
+        dummy = Dummy()
+        def factory(): return dummy
         config = DummyConfig()
         config.registry.content = DummyContentRegistry()
         class IFoo(Interface):
@@ -192,8 +195,64 @@ class Test_add_content_type(unittest.TestCase):
             )
         config.actions[0][1]['callable']()
         self.assertEqual(
-            config.registry.content.added,
-            [((IFoo, factory), {'category':ICategory})])
+            config.registry.content.added[0][1]['category'], ICategory)
+        self.assertEqual(
+            config.registry.content.added[0][0][0], IFoo)
+        self.assertEqual(
+            config.registry.content.added[0][0][1](), dummy)
+        self.assertTrue(IFoo.providedBy(dummy))
+
+    def test_success_class(self):
+        config = DummyConfig()
+        config.registry.content = DummyContentRegistry()
+        class Foo(object):
+            pass
+        class IFoo(Interface):
+            pass
+        self._callFUT(config, IFoo, Foo, category=ICategory)
+        self.assertEqual(len(config.actions), 1)
+        self.assertEqual(
+            config.actions[0][0],
+            (('sd-content-type', IFoo,),)
+            )
+        config.actions[0][1]['callable']()
+        self.assertEqual(
+            config.registry.content.added[0][1]['category'], ICategory)
+        self.assertEqual(
+            config.registry.content.added[0][0][0], IFoo)
+        content = config.registry.content.added[0][0][1]()
+        self.assertEqual(content.__class__, Foo)
+        self.assertTrue(IFoo.providedBy(content))
+        
+class Test_provides_factory(unittest.TestCase):
+    def _callFUT(self, factory, content_iface):
+        from . import provides_factory
+        return provides_factory(factory, content_iface)
+
+    def test_content_already_provides(self):
+        @implementer(IDummy)
+        class Foo(object):
+            pass
+        foo = Foo()
+        def factory():
+            return foo
+        newfactory = self._callFUT(factory, IDummy)
+        self.assertFalse(newfactory is factory)
+        ob = newfactory()
+        self.assertTrue(IDummy.providedBy(ob))
+        self.assertFalse(IDummy in directlyProvidedBy(ob))
+
+    def test_content_provides_added(self):
+        class Foo(object):
+            pass
+        foo = Foo()
+        def factory():
+            return foo
+        newfactory = self._callFUT(factory, IDummy)
+        self.assertFalse(newfactory is factory)
+        ob = newfactory()
+        self.assertTrue(IDummy.providedBy(ob))
+        self.assertTrue(IDummy in directlyProvidedBy(ob))
 
 class DummyContentRegistry(object):
     def __init__(self):

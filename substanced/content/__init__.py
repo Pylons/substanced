@@ -1,6 +1,9 @@
+import inspect
+
 from zope.interface.interfaces import IInterface
 from zope.interface import (
     providedBy,
+    alsoProvides,
     Interface,
     implementer,
     )
@@ -104,6 +107,9 @@ def add_content_type(config, content_iface, factory, **meta):
     if not content_iface.implementedBy(factory):
         # was not called by decorator
         implementer(content_iface)(factory)
+
+    if not inspect.isclass(factory):
+        factory = provides_factory(factory, content_iface)
     
     def register_factory():
         config.registry.content.add(content_iface, factory, **meta)
@@ -119,7 +125,20 @@ def add_content_type(config, content_iface, factory, **meta):
     intr['content_iface'] = content_iface
     intr['factory'] = factory
     config.action(discrim, callable=register_factory, introspectables=(intr,))
-    
+
+def provides_factory(factory, content_iface):
+    """ Wrap a function factory in something that applies the provides
+    interface to the created object as necessary"""
+    def add_provides(*arg, **kw):
+        inst = factory(*arg, **kw)
+        if not content_iface.providedBy(inst):
+            alsoProvides(inst, content_iface)
+        return inst
+    for attr in ('__doc__', '__name__', '__module__'):
+        if hasattr(factory, attr):
+            setattr(add_provides, attr, getattr(factory, attr))
+    add_provides.__orig__ = factory
+    return add_provides
 
 def includeme(config): # pragma: no cover
     config.registry.content = ContentRegistry()

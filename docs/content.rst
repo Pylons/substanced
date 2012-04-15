@@ -39,13 +39,6 @@ content must have these properties:
   type is defined as a class that inherits from the
   :class:`substanced.content.Type` class.
 
-.. note::
-
-   If a resource constructor is not a class, you might need to do add an
-   interface declaration on the actual class or the instance that is
-   returned. XXX, bleh, we should just wrap the factory in another function
-   that applies the interface to a returned object.
-
 Here's an example which defines a content resource constructor as a class:
 
 .. code-block:: python
@@ -91,6 +84,14 @@ instead:
    @content(BlogEntryType)
    def make_blog_entry(title, body):
        return BlogEntry(title, body)
+
+.. note::
+
+   If a resource factory is not a class, Substance D will wrap the factory in
+   something that applies the type to the object returned from the factory
+   using ``zope.interface.alsoProvides``.  In the above case,
+   ``zope.interface.directlyProvides(content, BlogEntryType)`` will be
+   done after ``content``  is returned from ``make_blog_entry``.
 
 In order to activate a ``@content`` decorator, it must be *scanned* using the
 Pyramid ``config.scan()`` machinery:

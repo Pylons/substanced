@@ -69,9 +69,6 @@ Guts-Only
 
 - Bake ACLs into the object map.
 
-- Wrap factories that are functions which produce content in something that
-  attaches the category interface directly to its result.
-
 Nice-to-Have Features
 ---------------------
 
