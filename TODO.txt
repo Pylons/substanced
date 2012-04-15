@@ -30,6 +30,8 @@ UI-Plus-Guts
 
 - Stamp created objects with creator information?
 
+- Stamp created objects with created date info?
+
 - Forgot password / change password interactions.
 
 - Allow services to be added to services folder via add view UIs.
