@@ -5,6 +5,9 @@ UI-Only
 
 - Allow folder contents UI ("Contents" tab) sorting by name and by type.
 
+- Put content items into two or three columns instead of one on contents
+  view.
+
 UI-Plus-Guts
 ------------
 
