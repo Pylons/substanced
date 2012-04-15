@@ -1,25 +1,26 @@
 Defining Content
 ================
 
-"Resource" is the term that Substance D uses to describe an object placed in
-the *resource tree*.  The SDI management interface is a set of views imposed
-upon the resource tree that allow you to add, delete, and otherwise manage
-resources.
+:term:`Resource` is the term that Substance D uses to describe an object
+placed in the :term:`resource tree`.  
 
-Ideally, all resources in your resource tree will be "content". "Content" is
-the term that Substance D uses to describe resource objects that are
-particularly well-behaved when they appear in the SDI management interface.
+Ideally, all resources in your resource tree will be
+:term:`content`. "Content" is the term that Substance D uses to describe
+resource objects that are particularly well-behaved when they appear in the
+SDI management interface.  The Substance D management interface (aka
+:term:`SDI`) is a set of views imposed upon the resource tree that allow you
+to add, delete, change and otherwise manage resources.
 
 You can convince the management interface that your particular resources are
 content.  To define a resource as content, you need to associate a resource
-with a *content type*.
+with a :term:`content type`.
 
 Registering Content
 -------------------
 
-In order to add new content to the system, you need to associate a resource
-constructor with a content *type*.  A resource constructor that generates
-content must have these properties:
+In order to add new content to the system, you need to associate a
+:term:`resource factory` with a :term:`content type`.  A resource factory
+that generates content must have these properties:
 
 - It must be a class, or a factory function that returns an instance of a
   resource class.
@@ -39,7 +40,7 @@ content must have these properties:
   type is defined as a class that inherits from the
   :class:`substanced.content.Type` class.
 
-Here's an example which defines a content resource constructor as a class:
+Here's an example which defines a content resource factory as a class:
 
 .. code-block:: python
 
@@ -87,11 +88,11 @@ instead:
 
 .. note::
 
-   If a resource factory is not a class, Substance D will wrap the factory in
-   something that applies the type to the object returned from the factory
-   using ``zope.interface.alsoProvides``.  In the above case,
-   ``zope.interface.directlyProvides(content, BlogEntryType)`` will be
-   done after ``content``  is returned from ``make_blog_entry``.
+   When a resource factory is not a class, Substance D will wrap the resource
+   factory in something that applies the type to the resource object returned
+   from the factory using ``zope.interface.alsoProvides``.  In the above
+   case, ``zope.interface.directlyProvides(resource, BlogEntryType)`` will be
+   done after the resource object is returned from ``make_blog_entry``.
 
 In order to activate a ``@content`` decorator, it must be *scanned* using the
 Pyramid ``config.scan()`` machinery:
@@ -149,7 +150,7 @@ view that lives in your application:
 
 The arguments passed to ``request.registry.content.create`` must start with
 the content type, and must be followed with whatever arguments are required
-by the resource constructor.
+by the resource factory.
 
 Creating an instance of content this way isn't particularly more useful than
 creating an instance of the resource object directly by calling its class
@@ -226,14 +227,11 @@ passing an ``icon`` keyword argument to ``@content`` or ``add_content_type``.
    class BlogEntryType(Type):
        pass
 
+   @content(BlogEntryType, icon='icon-file')
    class BlogEntry(Persistent):
        def __init__(self, title, body):
            self.title = title
            self.body = body
-
-   @content(BlogEntryType, icon='icon-file')
-   def make_blog_entry(title, body):
-       return BlogEntry(title, body)
 
 Once you've done this, content you add to a folder in the sytem will display
 the icon next to it in the contents view of the management interface and in
