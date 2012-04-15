@@ -123,7 +123,7 @@ class Group(Folder):
         self.description = description
 
     def _resolve_member(self, member_or_memberid):
-        objectmap = self.get_service('objectmap')
+        objectmap = self.find_service('objectmap')
         if oid_of(member_or_memberid, None) is None:
             # it's a group id
             member = objectmap.object_for(member_or_memberid)
@@ -152,19 +152,19 @@ class Group(Folder):
 
     def get_memberids(self):
         """ Returns a sequence of member ids which belong to this group. """
-        objectmap = self.get_service('objectmap')
+        objectmap = self.find_service('objectmap')
         return objectmap.sourceids(self, UserToGroup)
 
     def get_members(self):
         """ Returns a generator of member objects which belong to this group. 
         """
-        objectmap = self.get_service('objectmap')
+        objectmap = self.find_service('objectmap')
         return objectmap.sources(self, UserToGroup)
 
     def connect(self, *members):
         """ Connect this group to one or more user objects or user 
         objectids."""
-        objectmap = self.get_service('objectmap')
+        objectmap = self.find_service('objectmap')
         for memberid in members:
             member = self._resolve_member(memberid)
             if member is not None:
@@ -175,7 +175,7 @@ class Group(Folder):
         objectids."""
         if not members:
             members = self.get_memberids()
-        objectmap = self.get_service('objectmap')
+        objectmap = self.find_service('objectmap')
         for memberid in members:
             member = self._resolve_member(memberid)
             if member is not None:
@@ -273,7 +273,7 @@ class User(Folder):
         self.security_answer = security_answer
 
     def _resolve_group(self, group_or_groupid):
-        objectmap = self.get_service('objectmap')
+        objectmap = self.find_service('objectmap')
         if oid_of(group_or_groupid, None) is None:
             # it's a group id
             group = objectmap.object_for(group_or_groupid)
@@ -316,19 +316,19 @@ class User(Folder):
     def get_groupids(self, objectmap=None):
         """ Returns a sequence of group ids which this user is a member of. """
         if objectmap is None:
-            objectmap = self.get_service('objectmap')
+            objectmap = self.find_service('objectmap')
         return objectmap.targetids(self, UserToGroup)
 
     def get_groups(self):
         """ Returns a generator of group objects which this user is a member
         of."""
-        objectmap = self.get_service('objectmap')
+        objectmap = self.find_service('objectmap')
         return objectmap.targets(self, UserToGroup)
 
     def connect(self, *groups):
         """ Connect this user to one or more group objects or group 
         objectids."""
-        objectmap = self.get_service('objectmap')
+        objectmap = self.find_service('objectmap')
         for groupid in groups:
             group = self._resolve_group(groupid)
             if group is not None:
@@ -339,7 +339,7 @@ class User(Folder):
         objectids."""
         if not groups:
             groups = self.get_groupids()
-        objectmap = self.get_service('objectmap')
+        objectmap = self.find_service('objectmap')
         for groupid in groups:
             group = self._resolve_group(groupid)
             if group is not None:

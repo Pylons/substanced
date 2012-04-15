@@ -432,17 +432,17 @@ class TestFolder(unittest.TestCase):
         folder[name] = DummyModel()
         self.failUnless(folder[name])
 
-    def test_get_service_missing(self):
+    def test_find_service_missing(self):
         inst = self._makeOne()
-        self.assertEqual(inst.get_service('abc'), None)
+        self.assertEqual(inst.find_service('abc'), None)
 
-    def test_get_service_found(self):
+    def test_find_service_found(self):
         inst = self._makeOne()
         inst2 = self._makeOne()
         inst3 = self._makeOne()
         inst.add('__services__', inst2, allow_services=True)
         inst2['abc'] = inst3
-        self.assertEqual(inst.get_service('abc'), inst3)
+        self.assertEqual(inst.find_service('abc'), inst3)
         
 class DummyModel:
     pass

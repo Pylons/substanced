@@ -52,7 +52,7 @@ class Folder(Persistent):
         self.data = OOBTree(data)
         self._num_objects = Length(len(data))
 
-    def get_service(self, service_name):
+    def find_service(self, service_name):
         """ Return a service named by ``service_name`` in this folder's
         ``__services__`` folder *or any parent service folder* or ``None`` if
         no such service exists."""
