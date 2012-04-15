@@ -5,8 +5,6 @@ UI-Only
 
 - Allow folder contents UI ("Contents" tab) sorting by name and by type.
 
-- Make batching in contents view use bootstrap batching UI elements.
-
 UI-Plus-Guts
 ------------
 
@@ -23,7 +21,7 @@ UI-Plus-Guts
 - Allow cut, copy, paste, rename, (import/export?) from contents view.
 
 - Add Undo tab to Site (or per folder?) which will allow admins to undo recent
-  transactions.
+  transactions.  Implied: add transaction notes to all transactions.
 
 - Allow multiple property sheets on single content object.
 
@@ -40,7 +38,8 @@ Guts-Only
 
 - Create a scaffold.
 
-- Path index CQE syntax.
+- Define path index CQE syntax (currently path indexes can only be queried
+  using query instance syntax).
 
 - Substance D ACLs contain object identifiers which refer to principals.
   Currently, when a principal is deleted, ACLs which refer to the principal
@@ -49,8 +48,8 @@ Guts-Only
   that are grantable to future objects.  As a result, some other principal
   may wind up with an object id that used to belong to a deleted principal,
   and he may inappropriately be granted access due to stale ACLs that
-  possesses that object id.  Some object that is not a principal might wind
-  up with that object id, and undefined things will happen.
+  possesses that object id.  Or some other object that is not a principal
+  might wind up with that object id, and undefined things will happen.
 
   Here's what would be nice: when an ACL is changed or added, using the
   object map, form relationships between the principal objects it names and

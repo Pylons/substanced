@@ -16,15 +16,15 @@
 
 <fieldset>
 
-      <tr id="pagination-buttons" tal:condition="batchinfo['required']">
-        <td colspan="4">
-          <a tal:omit-tag="not batchinfo['first_url']" href="${batchinfo['first_url']}">first</a>
-          <a tal:omit-tag="not batchinfo['prev_url']" href="${batchinfo['prev_url']}">prev</a>
-          <span id="batch-num-disp" >&nbsp;batch ${batchinfo['num']+1} of ${batchinfo['last']+1}&nbsp;</span>
-          <a tal:omit-tag="not batchinfo['next_url']" href="${batchinfo['next_url']}">next</a>
-          <a tal:omit-tag="not batchinfo['last_url']" href="${batchinfo['last_url']}">last</a>
-        </td>
-      </tr>
+      <div class="pagination" tal:condition="batchinfo['required']">
+        <ul>
+          <li tal:attributes="class not batchinfo['first_url'] and 'disabled'" ><a href="${batchinfo['first_url']}">&laquo;</a></li>
+          <li tal:attributes="class not batchinfo['prev_url'] and 'disabled'"><a href="${batchinfo['prev_url']}">&larr;</a></li>
+          <li class="disabled"><a href="#">page ${batchinfo['num']+1} of ${batchinfo['last']+1}</a></li>
+          <li tal:attributes="class not batchinfo['next_url'] and 'disabled'"><a  href="${batchinfo['next_url']}">&rarr;</a></li>
+          <li tal:attributes="class not batchinfo['last_url'] and 'disabled'" ><a href="${batchinfo['last_url']}">&raquo;</a></li>
+        </ul>
+      </div>
 
   <h2 tal:condition="not batchinfo['batch']">No items</h2>
 
