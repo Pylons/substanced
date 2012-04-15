@@ -71,7 +71,7 @@ def get_creation_date(obj, default):
     attribute of cataloged objects; if one is found it should be a ``date``
     or ``datetime`` instance.  The discriminator makes the result more coarse
     than datetime precision, creating an integer that has effective
-    ten-second precision."""
+    hundred-second precision."""
     return _get_date_or_datetime(obj, 'created', default)
 
 def get_modified_date(obj, default):

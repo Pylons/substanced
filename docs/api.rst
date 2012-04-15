@@ -218,3 +218,78 @@ Other Helpers
 .. autofunction:: includeme
 
 
+:mod:`substanced.principal` API
+--------------------------------
+
+.. automodule:: substanced.principal
+
+.. autoclass:: UserToGroup
+   :members:
+
+.. autoclass:: Principals
+   :members:
+
+.. autoclass:: Users
+   :members:
+
+.. autoclass:: Groups
+   :members:
+
+.. autoclass:: GroupSchema
+   :members:
+
+.. autoclass:: Group
+   :members:
+
+.. autoclass:: UserSchema
+   :members:
+
+.. autoclass:: User
+   :members:
+
+.. autofunction:: principal_added
+
+.. autofunction:: groupfinder
+
+.. autofunction:: includeme
+
+:mod:`substanced.schema` API
+----------------------------
+
+.. automodule:: substanced.schema
+
+.. autoclass:: Schema
+   :members:
+
+:mod:`substanced.service` API
+-----------------------------
+
+.. automodule:: substanced.service
+
+.. autoclass:: find_service
+   :members:
+
+:mod:`substanced.site` API
+--------------------------
+
+.. automodule:: substanced.site
+
+.. autoclass:: Site
+   :members:
+
+.. autofunction:: includeme
+
+:mod:`substanced.util` API
+--------------------------
+
+.. automodule:: substanced.util
+
+.. autofunction:: coarse_datetime_repr
+
+.. autofunction:: postorder
+
+.. autofunction:: oid_of
+
+.. autofunction:: dotted_name
+
+

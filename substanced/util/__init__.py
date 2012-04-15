@@ -14,7 +14,7 @@ def coarse_datetime_repr(date):
     return int(timetime) // 100
 
 def postorder(startnode):
-    """ Yields deepest nodes first """
+    """ Walks over nodes in a folder recursively. Yields deepest nodes first."""
     def visit(node):
         if IFolder.providedBy(node):
             for child in node.values():
@@ -24,6 +24,10 @@ def postorder(startnode):
     return visit(startnode)
 
 def oid_of(obj, default=_marker):
+    """ Return the object identifer of ``obj``.  If ``obj`` has no object
+    identifier, raise an AttributeError exception unless ``default`` was
+    passed a value; if ``default`` was passed a value, return the default in
+    that case."""
     try:
         return obj.__objectid__
     except AttributeError:
@@ -32,4 +36,5 @@ def oid_of(obj, default=_marker):
         return default
 
 def dotted_name(g):
+    """ Return the Python dotted name of a globally defined Python object. """
     return '%s.%s' % (g.__module__, g.__name__)

@@ -20,6 +20,7 @@ from ..content import content
 from ..util import oid_of
 
 class SiteSchema(Schema):
+    """ The schema representing site properties. """
     title = colander.SchemaNode(colander.String(),
                                 missing=colander.null)
     description = colander.SchemaNode(colander.String(),
@@ -27,6 +28,10 @@ class SiteSchema(Schema):
 
 @content(ISite, icon='icon-home')
 class Site(Folder):
+    """ An object representing the root of a Substance D site.  Contains
+    ``objectmap``, ``catalog``, and ``principals`` services.  Initialize with
+    an initial login name and password: the resulting user will be granted
+    all permissions."""
     
     __propschema__ = SiteSchema()
     
@@ -53,6 +58,8 @@ class Site(Folder):
     @classmethod
     def root_factory(cls, request, transaction=transaction, 
                      get_connection=get_connection):
+        """ A classmethod which can be used as a Pyramid ``root_factory``.
+        It accepts a request and returns an instance of Site."""
         # this is a classmethod so that it works when Site is subclassed.
         conn = get_connection(request)
         zodb_root = conn.root()

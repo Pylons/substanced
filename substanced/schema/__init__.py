@@ -21,7 +21,7 @@ def csrf_validator(node, kw):
 
 class Schema(colander.Schema):
     """
-    A schema base class which generates and validates a CSRF token
+    A ``colander.Schema`` subclass which generates and validates a CSRF token
     automatically.  You must use it like so:
 
     .. code-block:: python
@@ -41,7 +41,9 @@ class Schema(colander.Schema):
             schema = MySchema().bind(request=request)
 
       In order for the CRSFSchema to work, you must configure a *session
-      factory* in your Pyramid application.
+      factory* in your Pyramid application.  This is usually done by
+      Substance D itself, but may not be done for you in extremely custom
+      configurations.
     """
     _csrf_token_ = colander.SchemaNode(
         colander.String(),

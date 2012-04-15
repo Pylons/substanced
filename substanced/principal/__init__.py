@@ -24,11 +24,16 @@ from ..service import find_service
 from ..folder import Folder
 from ..util import oid_of
 
-class UserToGroup(Interface): # reference type
-    pass
+class UserToGroup(Interface):
+    """ The reference type used to store users-to-groups references in the
+    object map"""
 
 @content(IPrincipals, icon='icon-lock')
 class Principals(Folder):
+    """ Object representing a collection of principals.  Inherits from
+    :class:`substanced.folder.Folder`.  Contains ``users``, an instance of
+    :class:`substanced.principal.Users`, and ``groups``, an instance of
+    :class:`substanced.principal.Groups`."""
     def __init__(self):
         Folder.__init__(self)
         self['users'] = Users()
@@ -36,6 +41,9 @@ class Principals(Folder):
 
 @content(IUsers, icon='icon-list-alt')
 class Users(Folder):
+    """ Object representing a collection of users.  Inherits from
+    :class:`substanced.folder.Folder`.  Contains
+    :class:`substanced.principal.User` objects."""
     def add_user(self, login, password):
         user = User(password)
         self[login] = user
@@ -43,7 +51,9 @@ class Users(Folder):
 
 @content(IGroups, icon='icon-list-alt')
 class Groups(Folder):
-    pass
+    """ Object representing a collection of groups.  Inherits from
+    :class:`substanced.folder.Folder`.  Contains
+    :class:`substanced.principal.Group` objects."""
 
 @colander.deferred
 def groupname_validator(node, kw):
@@ -84,6 +94,8 @@ def members_widget(node, kw):
     return widget
     
 class GroupSchema(Schema):
+    """ The property schema for :class:`substanced.principal.Group`
+    objects."""
     name = colander.SchemaNode(
         colander.String(),
         validator=groupname_validator,
@@ -102,6 +114,7 @@ class GroupSchema(Schema):
 
 @content(IGroup, icon='icon-th-list', add_view='add_group', name='Group')
 class Group(Folder):
+    """ Represents a group.  """
     __tab_order__ = ('properties',)
     __propschema__ = GroupSchema()
 
@@ -138,14 +151,19 @@ class Group(Folder):
         self.connect(*struct['members'])
 
     def get_memberids(self):
+        """ Returns a sequence of member ids which belong to this group. """
         objectmap = self.get_service('objectmap')
         return objectmap.sourceids(self, UserToGroup)
 
     def get_members(self):
+        """ Returns a generator of member objects which belong to this group. 
+        """
         objectmap = self.get_service('objectmap')
         return objectmap.sources(self, UserToGroup)
 
     def connect(self, *members):
+        """ Connect this group to one or more user objects or user 
+        objectids."""
         objectmap = self.get_service('objectmap')
         for memberid in members:
             member = self._resolve_member(memberid)
@@ -153,6 +171,8 @@ class Group(Folder):
                 objectmap.connect(member, self, UserToGroup)
 
     def disconnect(self, *members):
+        """ Disconnect this group from one or more user objects or user 
+        objectids."""
         if not members:
             members = self.get_memberids()
         objectmap = self.get_service('objectmap')
@@ -200,6 +220,8 @@ def groups_widget(node, kw):
     return widget
 
 class UserSchema(Schema):
+    """ The property schema for :class:`substanced.principal.User`
+    objects."""
     login = colander.SchemaNode(
         colander.String(),
         validator=login_validator,
@@ -235,6 +257,7 @@ NO_CHANGE = u'\ufffd' * 8
 
 @content(IUser, icon='icon-user', add_view='add_user', name='User')
 class User(Folder):
+    """ Represents a user.  """
 
     __tab_order__ = ('properties',)
     __propschema__ = UserSchema()
@@ -259,6 +282,9 @@ class User(Folder):
         return group
 
     def check_password(self, password):
+        """ Checks if the plaintext password passed as ``password`` matches
+        this user's stored, encrypted passowrd.  Returns ``True`` or
+        ``False``."""
         if self.pwd_manager.check(self.password, password):
             return True
         return False
@@ -288,15 +314,20 @@ class User(Folder):
         self.connect(*struct['groups'])
 
     def get_groupids(self, objectmap=None):
+        """ Returns a sequence of group ids which this user is a member of. """
         if objectmap is None:
             objectmap = self.get_service('objectmap')
         return objectmap.targetids(self, UserToGroup)
 
     def get_groups(self):
+        """ Returns a generator of group objects which this user is a member
+        of."""
         objectmap = self.get_service('objectmap')
         return objectmap.targets(self, UserToGroup)
 
     def connect(self, *groups):
+        """ Connect this user to one or more group objects or group 
+        objectids."""
         objectmap = self.get_service('objectmap')
         for groupid in groups:
             group = self._resolve_group(groupid)
@@ -304,6 +335,8 @@ class User(Folder):
                 objectmap.connect(self, group, UserToGroup)
 
     def disconnect(self, *groups):
+        """ Disconnect this user from one or more group objects or group 
+        objectids."""
         if not groups:
             groups = self.get_groupids()
         objectmap = self.get_service('objectmap')
@@ -314,6 +347,8 @@ class User(Folder):
 
 @subscriber([IPrincipal, IObjectAddedEvent])
 def principal_added(principal, event):
+    """ Prevent same-named users and groups from being added to the system.
+    An :class:`substanced.event.IObjectAddedEvent` subscriber."""
     # disallow same-named groups and users for human sanity (not because
     # same-named users and groups are disallowed by the system)
     principal_name = principal.__name__
@@ -335,6 +370,8 @@ def principal_added(principal, event):
             )
     
 def groupfinder(userid, request):
+    """ A Pyramid authentication policy groupfinder callback that uses the
+    Substance D principal system to find groups."""
     context = request.context
     objectmap = find_service(context, 'objectmap')
     if objectmap is None:

@@ -17,6 +17,6 @@ class Test_add_evolution_package(unittest.TestCase):
         config.registry = registry
         self._callFUT(config, 'package')
         self.assertEqual(L, [((ZODBEvolutionManager, IEvolutionManager), 
-                              {'name': 'kuiuecomm.evolution'})])
+                              {'name': 'package'})])
         
         
