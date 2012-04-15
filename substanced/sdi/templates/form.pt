@@ -4,13 +4,13 @@
     <!-- CSS -->
     <tal:block repeat="reqt css_links|[]">
       <link rel="stylesheet" 
-            href="${request.static_url('deform:static/%s' % reqt)}" 
+            href="${request.static_url(reqt)}" 
             type="text/css" />
      </tal:block>
     <!-- JavaScript -->
     <tal:block repeat="reqt js_links|[]">
       <script type="text/javascript"
-              src="${request.static_url('deform:static/%s' % reqt)}"
+              src="${request.static_url(reqt)}"
        ></script>
     </tal:block>
   </div>

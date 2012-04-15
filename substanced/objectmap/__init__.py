@@ -20,8 +20,8 @@ from ..util import (
     )
 
 from ..interfaces import (
-    IObjectWillBeAddedEvent,
-    IObjectRemovedEvent,
+    IObjectWillBeAdded,
+    IObjectRemoved,
     IObjectMap,
     )
 
@@ -488,12 +488,12 @@ def node_path_tuple(resource):
     return tuple(reversed([getattr(loc, '__name__', '') for 
                            loc in lineage(resource)]))
     
-@subscriber([Interface, IObjectWillBeAddedEvent])
+@subscriber([Interface, IObjectWillBeAdded])
 def object_will_be_added(obj, event):
     """ Objects added to folders must always have an __objectid__.  This must
-     be an IObjectWillBeAdded event subscriber so that a resulting object
-     will have an __objectid__ within the (more convenient) IObjectAddedEvent
-     fired later."""
+     be an :class:`substanced.event.ObjectWillBeAdded` event subscriber
+     so that a resulting object will have an __objectid__ within the (more
+     convenient) :class:`substanced.event.ObjectAdded` fired later."""
     parent = event.parent
     objectmap = find_service(parent, 'objectmap')
     if objectmap is None:
@@ -511,9 +511,9 @@ def object_will_be_added(obj, event):
         path_tuple = basepath + (name,) + node_path[1:]
         objectmap.add(node, path_tuple) # gives node an object id
 
-@subscriber([Interface, IObjectRemovedEvent])
+@subscriber([Interface, IObjectRemoved])
 def object_removed(obj, event):
-    """ IObjectRemovedEvent subscriber.
+    """ :class:`substanced.event.ObjectRemoved` event subscriber.
     """
     parent = event.parent
     moving = event.moving

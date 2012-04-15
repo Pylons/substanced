@@ -15,7 +15,7 @@ from ..interfaces import (
     IGroups,
     IPrincipal,
     IPrincipals,
-    IObjectAddedEvent,
+    IObjectAdded,
     )
 
 from ..content import content
@@ -345,10 +345,10 @@ class User(Folder):
             if group is not None:
                 objectmap.disconnect(self, group, UserToGroup)
 
-@subscriber([IPrincipal, IObjectAddedEvent])
+@subscriber([IPrincipal, IObjectAdded])
 def principal_added(principal, event):
     """ Prevent same-named users and groups from being added to the system.
-    An :class:`substanced.event.IObjectAddedEvent` subscriber."""
+    An :class:`substanced.event.IObjectAdded` event subscriber."""
     # disallow same-named groups and users for human sanity (not because
     # same-named users and groups are disallowed by the system)
     principal_name = principal.__name__

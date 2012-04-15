@@ -4,7 +4,7 @@ from ..interfaces import IPropertied
 from ..form import FormView
 
 from . import mgmt_view
-from ..event import ObjectModifiedEvent
+from ..event import ObjectModified
 
 @mgmt_view(context=IPropertied, name='properties', renderer='templates/form.pt',
            tab_title='Properties', permission='edit properties')
@@ -23,7 +23,7 @@ class PropertiesView(FormView):
         else:
             self.context.__dict__.update(appstruct)
             self.context._p_changed = True
-        event = ObjectModifiedEvent(self.context)
+        event = ObjectModified(self.context)
         self.request.registry.subscribers((self.context, event), None)
         self.request.flash_undo('Updated properties')
         return HTTPFound(self.request.mgmt_path(self.context, '@@properties'))

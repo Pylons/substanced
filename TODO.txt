@@ -76,6 +76,9 @@ Guts-Only
 
 - Bake ACLs into the object map.
 
+- Emit an ObjectMoving event rather than removed event with a moving flag,
+  then an add event?
+
 Nice-to-Have Features
 ---------------------
 

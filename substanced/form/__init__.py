@@ -3,7 +3,8 @@ import deform.form
 import deform.exception
 import deform.widget
 
-# assume jquery is already loaded in our widget resource list
+# assume jquery is already loaded in our widget resource list, use asset
+# specs instead of relative paths
 
 default_resources = {
     'jquery': {
@@ -11,36 +12,39 @@ default_resources = {
         },
     'jqueryui': {
         None:{
-            'js':'scripts/jquery-ui-1.8.11.custom.min.js',
-            'css':'css/ui-lightness/jquery-ui-1.8.11.custom.css',
+            'js':'deform:static/scripts/jquery-ui-1.8.11.custom.min.js',
+            'css':'deform:static/css/ui-lightness/jquery-ui-1.8.11.custom.css',
             },
         },
     'jquery.form': {
         None:{
-            'js':'scripts/jquery.form.js',
+            'js':'deform:static/scripts/jquery.form.js',
             },
         },
     'jquery.maskedinput': {
         None:{
-            'js':'scripts/jquery.maskedinput-1.2.2.min.js',
+            'js':'deform:static/scripts/jquery.maskedinput-1.2.2.min.js',
             },
         },
     'datetimepicker': {
         None:{
-            'js':'scripts/jquery-ui-timepicker-addon.js',
-            'css':'css/jquery-ui-timepicker-addon.css',
+            'js':'deform:static/scripts/jquery-ui-timepicker-addon.js',
+            'css':'deform:static/css/jquery-ui-timepicker-addon.css',
             },
         },
     'deform': {
         None:{
-            'js':('scripts/jquery.form.js', 'scripts/deform.js'),
-            'css':'css/form.css'
+            'js':('deform:static/scripts/jquery.form.js', 
+                  'deform:static/scripts/deform.js',
+                  'deform_bootstrap:static/deform_bootstrap.js'),
+            'css':('deform:static/css/form.css',
+                   'deform_bootstrap:static/deform_bootstrap.css')
 
             },
         },
     'tinymce': {
         None:{
-            'js':'tinymce/jscripts/tiny_mce/tiny_mce.js',
+            'js':'deform:static/tinymce/jscripts/tiny_mce/tiny_mce.js',
             },
         },
     }
