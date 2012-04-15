@@ -51,3 +51,6 @@ Glossary
      ``substanced.manage_prefix`` key in your ``development.ini`` or
      ``production.ini`` configuration files.
 
+   Service
+     A persistent object in the :term:`resource tree` that exposes an API to
+     application developers.  For example, the ``objectmap`` service.
