@@ -4,10 +4,7 @@ from pyramid.view import view_defaults
 from pyramid_zodbconn import get_connection
 
 from ..interfaces import ISite
-from ..sdi import (
-    mgmt_view,
-    check_csrf_token,
-    )
+from ..sdi import mgmt_view
 
 @view_defaults(
     name='manage_db',
@@ -23,9 +20,8 @@ class ManageDatabase(object):
     def view(self):
         return {}
 
-    @mgmt_view(request_method='POST', request_param='pack')
+    @mgmt_view(request_method='POST', request_param='pack', check_csrf=True)
     def pack(self):
-        check_csrf_token(self.request)
         conn = get_connection(self.request)
         try:
             days = int(self.request.POST['days'])

@@ -120,7 +120,6 @@ class Test_delete_folder_contents(unittest.TestCase):
         request = testing.DummyRequest()
         request.mgmt_path = lambda *arg: '/manage'
         request.registry.content = DummyContent()
-        request.params['csrf_token'] = request.session.get_csrf_token()
         request.flash_undo = request.session.flash
         return request
 

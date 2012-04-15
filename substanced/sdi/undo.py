@@ -7,10 +7,7 @@ from pyramid.renderers import render
 from pyramid.httpexceptions import HTTPFound
 from pyramid.security import has_permission
 
-from . import (
-    mgmt_view,
-    check_csrf_token,
-    )
+from . import mgmt_view
 
 class FlashUndo(object):
     def __init__(self, request):
@@ -34,9 +31,9 @@ class FlashUndo(object):
             msg = button
         request.session.flash(msg)
 
-@mgmt_view(name='undo_one', permission='undo', tab_condition=False)
+@mgmt_view(name='undo_one', permission='undo', tab_condition=False, 
+           check_csrf=True)
 def undo_one(request):
-    check_csrf_token(request)
     needle = 'hash:' + request.params['hash']
     undo = None
     conn = get_connection(request)

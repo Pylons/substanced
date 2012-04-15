@@ -8,7 +8,6 @@ from ..form import FormView
 from ..sdi import (
     mgmt_view,
     get_batchinfo,
-    check_csrf_token,
     )
 
 from ..interfaces import (
@@ -72,10 +71,9 @@ def folder_contents(context, request):
     batchinfo = get_batchinfo(L, request, url=request.url)
     return dict(batchinfo=batchinfo)
 
-@mgmt_view(context=IFolder, name='delete_folder_contents',
-           permission='manage contents', tab_condition=False)
+@mgmt_view(context=IFolder, name='delete_folder_contents',request_method='POST',
+           permission='manage contents', tab_condition=False, check_csrf=True)
 def delete_folder_contents(context, request):
-    check_csrf_token(request)
     todelete = request.POST.getall('delete')
     deleted = 0
     for name in todelete:

@@ -18,7 +18,6 @@ class TestManageCatalog(unittest.TestCase):
         context = DummyCatalog()
         request = testing.DummyRequest()
         request.mgmt_path = lambda *arg: '/manage'
-        request.params['csrf_token'] = request.session.get_csrf_token()
         inst = self._makeOne(context, request)
         result = inst.reindex()
         self.assertEqual(result.location, '/manage')
@@ -28,7 +27,6 @@ class TestManageCatalog(unittest.TestCase):
         context = DummyCatalog()
         request = testing.DummyRequest()
         request.mgmt_path = lambda *arg: '/manage'
-        request.params['csrf_token'] = request.session.get_csrf_token()
         inst = self._makeOne(context, request)
         result = inst.refresh()
         self.assertEqual(result.location, '/manage')

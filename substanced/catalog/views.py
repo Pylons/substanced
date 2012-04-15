@@ -3,10 +3,7 @@ from pyramid.httpexceptions import HTTPFound
 from pyramid.view import view_defaults
 
 from ..interfaces import ICatalog
-from ..sdi import (
-    mgmt_view,
-    check_csrf_token,
-    )
+from ..sdi import mgmt_view
 
 @view_defaults(
     name='manage_catalog',
@@ -25,16 +22,14 @@ class ManageCatalog(object):
         cataloglen = len(self.context.objectids)
         return dict(cataloglen=cataloglen)
 
-    @mgmt_view(request_method='POST', request_param='reindex')
+    @mgmt_view(request_method='POST', request_param='reindex', check_csrf=True)
     def reindex(self):
-        check_csrf_token(self.request)
         self.context.reindex()
         self.request.session.flash('Catalog reindexed')
         return HTTPFound(location=self.redir_location)
 
-    @mgmt_view(request_method='POST', request_param='refresh')
+    @mgmt_view(request_method='POST', request_param='refresh', check_csrf=True)
     def refresh(self):
-        check_csrf_token(self.request)
         self.context.refresh(registry=self.request.registry)
         self.request.session.flash('Catalog refreshed')
         return HTTPFound(location=self.redir_location)

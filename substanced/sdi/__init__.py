@@ -36,8 +36,8 @@ def as_sorted_tuple(val):
     val = tuple(sorted(val))
     return val
 
-def check_csrf_token(request):
-    if request.params['csrf_token'] != request.session.get_csrf_token():
+def check_csrf_token(request, token='csrf_token'):
+    if request.params[token] != request.session.get_csrf_token():
         raise HTTPBadRequest('incorrect CSRF token')
 
 @viewdefaults
@@ -48,7 +48,7 @@ def add_mgmt_view(
         wrapper=None, xhr=False, accept=None, header=None, path_info=None, 
         custom_predicates=(), context=None, decorator=None, mapper=None, 
         http_cache=None, match_param=None, request_type=None, tab_title=None,
-        tab_condition=None,
+        tab_condition=None, check_csrf=True, csrf_token='csrf_token',
         ):
     view = config.maybe_dotted(view)
     context = config.maybe_dotted(context)
@@ -62,6 +62,12 @@ def add_mgmt_view(
             # GET implies HEAD too
             request_method = as_sorted_tuple(request_method + ('HEAD',))
         
+    if check_csrf:
+        def _check_csrf_token(context, request):
+            check_csrf_token(request, csrf_token)
+            return True
+        custom_predicates = tuple(custom_predicates) + (_check_csrf_token,)
+    
     route_name = MANAGE_ROUTE_NAME
     view_discriminator = [
         'view', context, name, request_type, IView, containment,
@@ -77,7 +83,7 @@ def add_mgmt_view(
             attr, config.object_description(view))
     else:
         view_desc = config.object_description(view)
-    
+
     config.add_view(
         view=view, name=name, permission=permission, route_name=route_name,
         request_method=request_method, request_param=request_param,
@@ -93,6 +99,8 @@ def add_mgmt_view(
         'sdi views', discriminator, view_desc, 'sdi view')
     intr['tab_title'] = tab_title
     intr['tab_condition'] = tab_condition
+    intr['check_csrf'] = check_csrf
+    intr['csrf_token'] = csrf_token
     intr.relate('views', view_discriminator)
     config.action(discriminator, introspectables=(intr,))
 
@@ -131,7 +139,8 @@ class mgmt_view(view_config):
                  header=default, path_info=default,
                  custom_predicates=default, context=default,
                  decorator=default, mapper=default, http_cache=default,
-                 match_param=default, tab_title=default, tab_condition=default):
+                 match_param=default, tab_title=default, tab_condition=default,
+                 check_csrf=False, csrf_token='csrf_token'):
         L = locals()
         if (context is not default) or (for_ is not default):
             L['context'] = context or for_
