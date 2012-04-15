@@ -40,3 +40,14 @@ Glossary
      object.  A content type also has metadata like an icon, an add view
      name, and other things.
 
+   Management view
+     A :term:`view configuration` that is only invoked when a user visits a
+     URL prepended with the :term:`manage prefix`.
+
+   Manage prefix
+     The prepended portion of the URL (usually ``/manage``) which signifies
+     that view lookup should be done only amongst the set of views registered
+     as :term:`management view` types.  This can be changed by setting the
+     ``substanced.manage_prefix`` key in your ``development.ini`` or
+     ``production.ini`` configuration files.
+

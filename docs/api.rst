@@ -261,6 +261,15 @@ Other Helpers
 .. autoclass:: Schema
    :members:
 
+:mod:`substanced.sdi` API
+----------------------------
+
+.. automodule:: substanced.sdi
+
+.. autofunction:: add_mgmt_view
+
+.. autoclass:: mgmt_view
+
 :mod:`substanced.service` API
 -----------------------------
 

@@ -36,6 +36,8 @@ Narrative Documentation
 
    intro.rst
    content.rst
+   mgmtview.rst
+
 
 API Documentation
 -----------------
