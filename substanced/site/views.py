@@ -20,11 +20,11 @@ class ManageDatabase(object):
         self.request = request
 
     @mgmt_view(request_method='GET', tab_title='Manage DB')
-    def GET(self):
+    def view(self):
         return {}
 
-    @mgmt_view(request_method='POST')
-    def POST(self):
+    @mgmt_view(request_method='POST', request_param='pack')
+    def pack(self):
         check_csrf_token(self.request)
         conn = get_connection(self.request)
         try:
@@ -32,7 +32,7 @@ class ManageDatabase(object):
         except:
             self.request.session.flash('Invalid number of days', 'error')
         conn.db().pack(days=days)
-        self.request.session.flash('Database packed')
+        self.request.session.flash('Database packed to %s days' % days)
         return HTTPFound(location=self.request.mgmt_path(
             self.context, '@@manage_db'))
 
