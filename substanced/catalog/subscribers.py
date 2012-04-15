@@ -5,9 +5,9 @@ from pyramid.events import subscriber
 
 from ..interfaces import (
     ICatalogable,
-    IObjectAddedEvent,
-    IObjectWillBeRemovedEvent,
-    IObjectModifiedEvent,
+    IObjectAdded,
+    IObjectWillBeRemoved,
+    IObjectModified,
     )
     
 from ..service import find_service
@@ -16,10 +16,10 @@ from ..util import (
     oid_of,
     )
 
-@subscriber([Interface, IObjectAddedEvent])
+@subscriber([Interface, IObjectAdded])
 def object_added(obj, event):
     """ Index an object and and its children in the closest catalog; an
-    IObjectAddedEvent event subscriber.  Depends upon
+    IObjectAdded event subscriber.  Depends upon
     substance.objectmap.object_will_be_added to have been fired
     before this gets fired to assign an __objectid__ to the object.
     """
@@ -31,10 +31,10 @@ def object_added(obj, event):
             objectid = oid_of(node)
             objectid = catalog.index_doc(objectid, node)
 
-@subscriber([Interface, IObjectWillBeRemovedEvent])
+@subscriber([Interface, IObjectWillBeRemoved])
 def object_will_be_removed(obj, event):
     """ Unindex an object and its children in the closest catalog; an
-    IObjectWillBeRemovedEvent event subscriber"""
+    :class:`substanced.event.ObjectWillBeRemoved` event subscriber"""
     objectmap = find_service(obj, 'objectmap')
     catalog = find_service(obj, 'catalog')
     if objectmap is None or catalog is None:
@@ -43,10 +43,10 @@ def object_will_be_removed(obj, event):
     for oid in BTrees.family32.IF.intersection(objectids, catalog.objectids):
         catalog.unindex_doc(oid)
 
-@subscriber([Interface, IObjectModifiedEvent])
+@subscriber([Interface, IObjectModified])
 def object_modified(obj, event):
     """ Reindex a single object (non-recursive) in the closest catalog; an
-    ObjectModifedEvent event subscriber """
+    :class:`substanced.event.ObjectModifed` event subscriber """
     objectid = oid_of(obj)
     catalog = find_service(obj, 'catalog')
     if catalog is not None:

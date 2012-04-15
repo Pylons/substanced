@@ -151,23 +151,23 @@ Other Helpers
 
 .. automodule:: substanced.event
 
-.. autoclass:: ObjectAddedEvent
+.. autoclass:: ObjectAdded
    :members:
    :inherited-members:
 
-.. autoclass:: ObjectWillBeAddedEvent
+.. autoclass:: ObjectWillBeAdded
    :members:
    :inherited-members:
 
-.. autoclass:: ObjectRemovedEvent
+.. autoclass:: ObjectRemoved
    :members:
    :inherited-members:
 
-.. autoclass:: ObjectWillBeRemovedEvent
+.. autoclass:: ObjectWillBeRemoved
    :members:
    :inherited-members:
 
-.. autoclass:: ObjectModifiedEvent
+.. autoclass:: ObjectModified
    :members:
    :inherited-members:
 

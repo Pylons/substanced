@@ -11,10 +11,10 @@ from ..interfaces import (
     )
 
 from ..event import (
-    ObjectAddedEvent,
-    ObjectWillBeAddedEvent,
-    ObjectRemovedEvent,
-    ObjectWillBeRemovedEvent,
+    ObjectAdded,
+    ObjectWillBeAdded,
+    ObjectRemoved,
+    ObjectWillBeRemoved,
     )
 
 from ..content import content
@@ -157,9 +157,9 @@ class Folder(Persistent):
         :exc:`KeyError`.
 
         When this method is called, emit an
-        :class:`substanced.event.ObjectWillBeAddedEvent` event before the
+        :class:`substanced.event.ObjectWillBeAdded` event before the
         object obtains a ``__name__`` or ``__parent__`` value.  Emit an
-        :class:`substanced.event.ObjectAddedEvent` after the object obtains a
+        :class:`substanced.event.ObjectAdded` after the object obtains a
         ``__name__`` and ``__parent__`` value.
         """
         return self.add(name, other)
@@ -221,7 +221,7 @@ class Folder(Persistent):
         name = self.check_name(name, allow_services)
 
         if send_events:
-            event = ObjectWillBeAddedEvent(other, self, name)
+            event = ObjectWillBeAdded(other, self, name)
             self._notify(event)
             
         other.__parent__ = self
@@ -234,7 +234,7 @@ class Folder(Persistent):
             self._order += (name,)
 
         if send_events:
-            event = ObjectAddedEvent(other, self, name)
+            event = ObjectAdded(other, self, name)
             self._notify(event)
 
     def pop(self, name, default=marker):
@@ -250,9 +250,9 @@ class Folder(Persistent):
         remove its ``__parent__`` and ``__name__`` values.
 
         When this method is called, emit an
-        :class:`substanced.event.ObjectWillBeRemovedEvent` event before the
+        :class:`substanced.event.ObjectWillBeRemoved` event before the
         object loses its ``__name__`` or ``__parent__`` values.  Emit an
-        :class:`substanced.event.ObjectRemovedEvent` after the object loses its
+        :class:`substanced.event.ObjectRemoved` after the object loses its
         ``__name__`` and ``__parent__`` value,
         """
         try:
@@ -282,9 +282,9 @@ class Folder(Persistent):
         remove its ``__parent__`` and ``__name__`` values.
 
         When this method is called, emit an
-        :class:`substanced.event.ObjectWillBeRemovedEvent` event before the
+        :class:`substanced.event.ObjectWillBeRemoved` event before the
         object loses its ``__name__`` or ``__parent__`` values.  Emit an
-        :class:`substanced.event.ObjectRemovedEvent` after the object loses
+        :class:`substanced.event.ObjectRemoved` after the object loses
         its ``__name__`` and ``__parent__`` value,
         """
         return self.remove(name)
@@ -300,7 +300,7 @@ class Folder(Persistent):
         other = self.data[name]
 
         if send_events:
-            event = ObjectWillBeRemovedEvent(other, self, name, moving)
+            event = ObjectWillBeRemoved(other, self, name, moving)
             self._notify(event)
 
         if hasattr(other, '__parent__'):
@@ -316,7 +316,7 @@ class Folder(Persistent):
             self._order = tuple([x for x in self._order if x != name])
 
         if send_events:
-            event = ObjectRemovedEvent(other, self, name, moving)
+            event = ObjectRemoved(other, self, name, moving)
             self._notify(event)
 
         return other

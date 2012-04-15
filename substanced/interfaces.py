@@ -101,20 +101,20 @@ class ISite(IPropertied):
 class ISearch(Interface):
     """ Adapter for searching the catalog """
 
-class IObjectWillBeAddedEvent(IObjectEvent):
+class IObjectWillBeAdded(IObjectEvent):
     """ An event type sent when an before an object is added """
     object = Attribute('The object being added')
     parent = Attribute('The folder to which the object is being added')
     name = Attribute('The name which the object is being added to the folder '
                      'with')
 
-class IObjectAddedEvent(IObjectEvent):
+class IObjectAdded(IObjectEvent):
     """ An event type sent when an object is added """
     object = Attribute('The object being added')
     parent = Attribute('The folder to which the object is being added')
     name = Attribute('The name of the object within the folder')
 
-class IObjectWillBeRemovedEvent(IObjectEvent):
+class IObjectWillBeRemoved(IObjectEvent):
     """ An event type sent before an object is removed """
     object = Attribute('The object being removed')
     parent = Attribute('The folder from which the object is being removed')
@@ -122,7 +122,7 @@ class IObjectWillBeRemovedEvent(IObjectEvent):
     moving = Attribute('Boolean indicating that this removal is part of an '
                        'object move')
 
-class IObjectRemovedEvent(IObjectEvent):
+class IObjectRemoved(IObjectEvent):
     """ An event type sent when an object is removed """
     object = Attribute('The object being removed')
     parent = Attribute('The folder from which the object is being removed')
@@ -130,7 +130,7 @@ class IObjectRemovedEvent(IObjectEvent):
     moving = Attribute('Boolean indicating that this removal is part of an '
                        'object move')
 
-class IObjectModifiedEvent(IObjectEvent):
+class IObjectModified(IObjectEvent):
     """ May be sent when an object is modified """
     object = Attribute('The object being modified')
 
@@ -211,9 +211,9 @@ class IFolder(Interface):
         If a value already exists in the foldr under the name ``name``, raise
         :exc:`KeyError`.
 
-        When this method is called, emit an ``IObjectWillBeAddedEvent`` event
+        When this method is called, emit an ``IObjectWillBeAdded`` event
         before the object obtains a ``__name__`` or ``__parent__`` value.
-        Emit an ``IObjectAddedEvent`` after the object obtains a ``__name__``
+        Emit an ``IObjectAdded`` event after the object obtains a ``__name__``
         and ``__parent__`` value.
         """
 
@@ -243,9 +243,9 @@ class IFolder(Interface):
         When the object stored under ``name`` is removed from this folder,
         remove its ``__parent__`` and ``__name__`` values.
 
-        When this method is called, emit an ``IObjectWillBeRemovedEvent`` event
+        When this method is called, emit an ``IObjectWillBeRemoved`` event
         before the object loses its ``__name__`` or ``__parent__`` values.
-        Emit an ``ObjectRemovedEvent`` after the object loses its ``__name__``
+        Emit an ``ObjectRemoved`` after the object loses its ``__name__``
         and ``__parent__`` value,
         """
 
@@ -263,9 +263,9 @@ class IFolder(Interface):
         When the object stored under ``name`` is removed from this folder,
         remove its ``__parent__`` and ``__name__`` values.
 
-        When this method is called, emit an ``IObjectWillBeRemovedEvent`` event
+        When this method is called, emit an ``IObjectWillBeRemoved`` event
         before the object loses its ``__name__`` or ``__parent__`` values.
-        Emit an ``IObjectRemovedEvent`` after the object loses its ``__name__``
+        Emit an ``IObjectRemoved`` after the object loses its ``__name__``
         and ``__parent__`` value,
         """
 
