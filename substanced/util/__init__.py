@@ -35,6 +35,17 @@ def oid_of(obj, default=_marker):
             raise
         return default
 
+def acl_of(obj, default=_marker):
+    """ Return the ACL of ``obj``.  If ``obj`` has no ACL, raise an
+    AttributeError exception unless ``default`` was passed a value; if
+    ``default`` was passed a value, return the default in that case."""
+    try:
+        return obj.__acl__
+    except AttributeError:
+        if default is _marker:
+            raise
+        return default
+
 def dotted_name(g):
     """ Return the Python dotted name of a globally defined Python object. """
     return '%s.%s' % (g.__module__, g.__name__)

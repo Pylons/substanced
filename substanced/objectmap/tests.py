@@ -2,6 +2,7 @@ import unittest
 from pyramid import testing
 from zope.interface import alsoProvides
 from pyramid.traversal import resource_path_tuple
+from pyramid.security import Deny, Allow, Everyone
 
 class TestObjectMap(unittest.TestCase):
     def setUp(self):
@@ -138,6 +139,14 @@ class TestObjectMap(unittest.TestCase):
         inst = self._makeOne()
         self.assertRaises(AttributeError, inst.add, 'a', (u'',))
 
+    def test_add_with_acl(self):
+        inst = self._makeOne()
+        inst._v_nextid = 1
+        obj = testing.DummyResource()
+        obj.__acl__ = [('Allow', 'fred', 'view')]
+        inst.add(obj, (u'',))
+        self.assertEqual(inst.objectid_to_acl[1], (('Allow', 'fred', 'view'),))
+        
     def test_remove_not_an_int_or_tuple(self):
         inst = self._makeOne()
         self.assertRaises(ValueError, inst.remove, 'a')
@@ -150,6 +159,16 @@ class TestObjectMap(unittest.TestCase):
         obj = testing.DummyResource()
         inst.remove(obj)
         self.assertEqual(dict(inst.objectid_to_path), {})
+
+    def test_remove_with_acl(self):
+        inst = self._makeOne()
+        inst.objectid_to_path[1] = (u'',)
+        inst.objectid_to_acl[1] = (('Allow', 'fred', 'view'),)
+        inst.path_to_objectid[(u'',)] = 1
+        inst.pathindex[(u'',)] = {0:[1]}
+        obj = testing.DummyResource()
+        inst.remove(obj)
+        self.assertEqual(dict(inst.objectid_to_acl), {})
         
     def test_remove_no_omap(self):
         inst = self._makeOne()
@@ -276,7 +295,79 @@ class TestObjectMap(unittest.TestCase):
             inst.add(thing, thing.path_tuple)
         result = inst.navgen(a, 0)
         self.assertEqual(result, [])
-        
+
+    def test_functional_acls_allow(self):
+        inst = self._makeOne()
+        root = resource('/')
+        # root has no ACL
+        a = resource('/a')
+        a.__acl__ = [(Allow, 'fred', 'edit'), (Allow, 'group', 'edit')]
+        ab = resource('/a/b')
+        ab.__acl__ = [(Deny, 'bob', 'edit')]
+        abc = resource('/a/b/c')
+        abc.__acl__ = [(Allow, 'group', 'edit')]
+        z = resource('/z')
+        for thing in root, a, ab, abc, z:
+            inst.add(thing, thing.path_tuple)
+        r = inst.acls_allow(
+            [root.__objectid__],
+            ('bob', 'bob'),
+            'edit')
+        self.assertEqual(list(r), []) 
+        r = inst.acls_allow(
+            [root.__objectid__],
+            ('fred', 'bob'), 
+            'edit')
+        self.assertEqual(list(r), []) 
+        r = inst.acls_allow(
+            [a.__objectid__, root.__objectid__],
+            ('fred', 'bob'),
+            'edit')
+        self.assertEqual(list(r), [a.__objectid__])
+        r = inst.acls_allow(
+            [a.__objectid__, root.__objectid__, ab.__objectid__], 
+            ('fred', 'bob'), 
+            'edit')
+        self.assertEqual(list(r), [a.__objectid__]) 
+        r = inst.acls_allow(
+            [a.__objectid__, root.__objectid__, ab.__objectid__, 
+             z.__objectid__], 
+            ('fred', 'bob'), 
+            'edit')
+        self.assertEqual(list(r), [a.__objectid__]) 
+        r = inst.acls_allow(
+            [a.__objectid__, root.__objectid__, ab.__objectid__, 
+             abc.__objectid__, z.__objectid__], 
+            ('fred', 'bob'), 
+            'edit')
+        self.assertEqual(list(r), [a.__objectid__]) 
+        r = inst.acls_allow(
+            [a.__objectid__, root.__objectid__, ab.__objectid__, 
+             abc.__objectid__, z.__objectid__], 
+            ('fred', 'bob', 'group',), 
+            'edit')
+        self.assertEqual(
+            set(r),
+            set([a.__objectid__, abc.__objectid__])) 
+        r = inst.acls_allow(
+            [a.__objectid__, root.__objectid__, ab.__objectid__, 
+             abc.__objectid__, z.__objectid__], 
+            'group', 
+            'edit')
+        self.assertEqual(
+            set(r),
+            set([a.__objectid__, abc.__objectid__,ab.__objectid__])
+            )
+        r = inst.acls_allow(
+            [a.__objectid__, root.__objectid__, ab.__objectid__, 
+             abc.__objectid__, z.__objectid__], 
+            'bob', 
+            'edit')
+        self.assertEqual(list(r), [])
+        r = inst.acls_allow(a.__objectid__, 'fred', 'edit')
+        self.assertEqual(list(r), [a.__objectid__])
+        self.assertRaises(KeyError, inst.acls_allow, 0, 'fred', 'edit')
+       
     def test_functional(self):
 
         def l(path, depth=None, include_origin=True):

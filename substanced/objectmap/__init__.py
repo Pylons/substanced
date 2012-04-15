@@ -7,6 +7,7 @@ import BTrees
 
 from pyramid.events import subscriber
 from pyramid.location import lineage
+from pyramid.security import Allow
 from pyramid.traversal import (
     resource_path_tuple,
     find_resource,
@@ -17,6 +18,7 @@ from ..service import find_service
 from ..util import (
     postorder,
     oid_of,
+    acl_of,
     )
 
 from ..interfaces import (
@@ -97,6 +99,7 @@ class ObjectMap(Persistent):
     def __init__(self):
         self.objectid_to_path = self.family.IO.BTree()
         self.path_to_objectid = self.family.OI.BTree()
+        self.objectid_to_acl = self.family.IO.BTree()
         self.pathindex = self.family.OO.BTree()
         self.referencemap = ReferenceMap()
 
@@ -170,6 +173,10 @@ class ObjectMap(Persistent):
 
         self.path_to_objectid[path_tuple] = objectid
         self.objectid_to_path[objectid] = path_tuple
+
+        acl = acl_of(obj, None)
+        if acl is not None:
+            self.objectid_to_acl[objectid] = tuple(acl)
 
         pathlen = len(path_tuple)
 
@@ -251,6 +258,10 @@ class ObjectMap(Persistent):
                 if not oidset2:
                     del omap2[i]
 
+        for oid in removed:
+            if oid in self.objectid_to_acl:
+                del self.objectid_to_acl[oid]
+
         if references:
             self.referencemap.remove(removed)
 
@@ -291,6 +302,50 @@ class ObjectMap(Persistent):
                     )
         return result
 
+    def acls_allow(self, oids, principals, permission):
+        if not hasattr(principals, '__iter__'):
+            principals = (principals,)
+        if not hasattr(oids, '__iter__'):
+            oids = (oids,)
+        result = self.family.IF.Set()
+        noacl = set()
+        for oid in oids:
+            acl_stack = []
+            path_tuple = self.objectid_to_path[oid]
+            pathlen = len(path_tuple)
+            for x in reversed(range(pathlen)): # /a/b/c, /a/b, /a, /
+                els = path_tuple[:x+1]
+                subid = self.path_to_objectid.get(els)
+                if subid is None or subid in noacl:
+                    continue
+                acl = self.objectid_to_acl.get(subid)
+                if acl is not None:
+                    acl_stack.append(acl)
+                else:
+                    noacl.add(subid)
+            if acl_stack:
+                ok = self._check_acls(acl_stack, principals, permission)
+            else:
+                ok = False # default deny
+            if ok:
+                result.insert(oid)
+        return result
+
+    def _check_acls(self, acls, principals, permission):
+        for acl in acls:
+            for ace in acl: # walking towards root from branch
+                ace_action, ace_principal, ace_permissions = ace
+                if ace_principal in principals:
+                    if not hasattr(ace_permissions, '__iter__'):
+                        ace_permissions = [ace_permissions]
+                    if permission in ace_permissions:
+                        if ace_action == Allow:
+                            return True
+                        else:
+                            # deny of any means deny all of everything
+                            return False
+        return False # default deny
+                    
     def pathlookup(self, obj_or_path_tuple, depth=None, include_origin=True):
         """ Return a set of objectids under a given path given an object or a
         path tuple.  If ``depth`` is None, return all object ids under the
@@ -304,7 +359,7 @@ class ObjectMap(Persistent):
 
         if omap is None:
             return result
-        
+
         if depth is None:
             for d, oidset in omap.items():
                 
