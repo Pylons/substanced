@@ -21,7 +21,7 @@ class ManageCatalog(object):
             self.context, '@@manage_catalog')
 
     @mgmt_view(request_method='GET', tab_title='Manage')
-    def GET(self):
+    def view(self):
         cataloglen = len(self.context.objectids)
         return dict(cataloglen=cataloglen)
 

@@ -6,28 +6,42 @@ class TestManageCatalog(unittest.TestCase):
         from ..views import ManageCatalog
         return ManageCatalog(context, request)
 
-    def test_GET(self):
+    def test_view(self):
         context = DummyCatalog()
         request = testing.DummyRequest()
+        request.mgmt_path = lambda *arg: '/manage'
         inst = self._makeOne(context, request)
-        result = inst.GET()
+        result = inst.view()
         self.assertEqual(result['cataloglen'], 0)
 
-    def test_POST(self):
-        from .. import logger
+    def test_reindex(self):
         context = DummyCatalog()
         request = testing.DummyRequest()
         request.mgmt_path = lambda *arg: '/manage'
         request.params['csrf_token'] = request.session.get_csrf_token()
         inst = self._makeOne(context, request)
-        result = inst.POST()
+        result = inst.reindex()
         self.assertEqual(result.location, '/manage')
-        self.assertEqual(context.output, logger.info)
+        self.assertEqual(context.reindexed, True)
 
+    def test_refresh(self):
+        context = DummyCatalog()
+        request = testing.DummyRequest()
+        request.mgmt_path = lambda *arg: '/manage'
+        request.params['csrf_token'] = request.session.get_csrf_token()
+        inst = self._makeOne(context, request)
+        result = inst.refresh()
+        self.assertEqual(result.location, '/manage')
+        self.assertEqual(context.refreshed, True)
+        
 class DummyCatalog(object):
     def __init__(self):
         self.objectids = ()
 
-    def reindex(self, output=None):
-        self.output = output
+    def reindex(self):
+        self.reindexed = True
+
+    def refresh(self, registry):
+        self.refreshed = True
+        
         
