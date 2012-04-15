@@ -4,11 +4,78 @@ Substance D
 Overview
 --------
 
-A Zope2-like system built using the :term:`Pyramid` web application
-framework.  It is a package which provides integration between the Pyramid
-web application framework, :term:`ZODB`, and the ``repoze.catalog`` package.
+An application development environment built using the :term:`Pyramid` web
+application framework.  It is a package which provides integration between
+the Pyramid web application framework, :term:`ZODB`, the ``repoze.catalog``,
+``repoze.evolution``, ``deform`` and ``colander`` packages.
+
+Substance D owes much of its spirit to the Zope 2 application server.
 
 It will run under CPython 2.6, and 2.7.  
+
+Installation
+------------
+
+Install using setuptools, e.g. (within a virtualenv)::
+
+  $ easy_install substanced
+
+Setup
+-----
+
+Once ``substanced`` is installed, you must use the ``config.include``
+mechanism to include it into your Pyramid project's configuration.  In your
+Pyramid project's ``__init__.py``:
+
+.. code-block:: python
+   :linenos:
+
+   config = Configurator(.....)
+   config.include('substanced')
+
+Alternately you can use the ``pyramid.includes`` configuration value in your
+``.ini`` file:
+
+.. code-block:: ini
+   :linenos:
+
+   [app:myapp]
+   pyramid.includes = substanced
+
+See the demonstration application running at http://substanced.repoze.org for
+a demonstration of the Substance D management interface.  The package that
+contains the code for that demo is available at
+https://github.com/Pylons/substanced/tree/master/demo .
+
+More Information
+----------------
+
+.. toctree::
+   :maxdepth: 1
+
+   content.rst
+   api.rst
+   glossary.rst
+
+
+Reporting Bugs / Development Versions
+-------------------------------------
+
+Visit http://github.com/Pylons/substanced to download development or
+tagged versions.
+
+Visit http://github.com/Pylons/substanced/issues to report bugs.
+
+Indices and tables
+------------------
+
+* :ref:`glossary`
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
+
+Inspiration
+-----------
 
 .. pull-quote::
 
@@ -40,75 +107,3 @@ It will run under CPython 2.6, and 2.7.
 
     -- Phillip K. Dick, A Scanner Darkly
 
-Installation
-------------
-
-Install using setuptools, e.g. (within a virtualenv)::
-
-  $ easy_install substanced
-
-Setup
------
-
-Once ``substanced`` is installed, you must use the ``config.include``
-mechanism to include it into your Pyramid project's configuration.  In your
-Pyramid project's ``__init__.py``:
-
-.. code-block:: python
-   :linenos:
-
-   config = Configurator(.....)
-   config.include('substanced')
-
-Alternately you can use the ``pyramid.includes`` configuration value in your
-``.ini`` file:
-
-.. code-block:: ini
-   :linenos:
-
-   [app:myapp]
-   pyramid.includes = substanced
-
-Using
------
-
-.. pull-quote::
-
-   Unlike other drugs, Substance D had --apparently-- only one source. It was
-   synthetic, not organic; therefore, it came from a lab. It could be
-   synthesized, and already had been in federal experiments. But the
-   constituents were themselves derived from complex substances almost
-   equally difficult to synthesize. Theoretically it could be manufactured by
-   anyone who had, first, the formula and, second, the technological capacity
-   to set up a factory. But in practice the cost was out of reach. Also,
-   those who had invented it and were making it available sold it too cheaply
-   for effective competition.
-
-   -- Phillip K. Dick, A Scanner Darkly
-
-More Information
-----------------
-
-.. toctree::
-   :maxdepth: 1
-
-   content.rst
-   api.rst
-   glossary.rst
-
-
-Reporting Bugs / Development Versions
--------------------------------------
-
-Visit http://github.com/Pylons/pyramid_catalog to download development or
-tagged versions.
-
-Visit http://github.com/Pylons/pyramid_catalog/issues to report bugs.
-
-Indices and tables
-------------------
-
-* :ref:`glossary`
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
