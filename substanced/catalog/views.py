@@ -17,7 +17,7 @@ class ManageCatalog(object):
     def __init__(self, context, request):
         self.context = context
         self.request = request
-        self.redir_location=self.request.mgmt_path(
+        self.redir_location = self.request.mgmt_path(
             self.context, '@@manage_catalog')
 
     @mgmt_view(request_method='GET', tab_title='Manage')
