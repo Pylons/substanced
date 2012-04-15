@@ -1,3 +1,5 @@
-repoze.sphinx.autointerface
 repoze.lru
+repoze.evolution
+repoze.catalog
+
 
