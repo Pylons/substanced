@@ -8,7 +8,12 @@ from pyramid.paster import (
     bootstrap,
     )
 
-from pyramid.traversal import traverse
+from pyramid.traversal import (
+    traverse,
+    resource_path,
+    )
+
+from substanced.service import find_service
 
 def main():
     parser = OptionParser(description=__doc__)
@@ -39,21 +44,23 @@ def main():
     else:
         path_re = None
 
-    def output(msg):
-        print msg
-
     kw = {}
     if options.indexes:
         kw['indexes'] = options.indexes
 
     setup_logging(config_uri)
     env = bootstrap(config_uri)
-    root = env['root']
+    site = env['root']
     if options.site:
-        root = traverse(root, options.site)
+        site = traverse(site, options.site)
 
-    root.catalog.reindex(path_re=path_re, commit_interval=commit_interval,
-                         dry_run=options.dry_run, output=output, **kw)
+    catalog = find_service(site, 'catalog')
+
+    if catalog is None:
+        raise KeyError('No catalog service found at ' % resource_path(site))
+
+    catalog.reindex(path_re=path_re, commit_interval=commit_interval,
+                    dry_run=options.dry_run, **kw)
 
 if __name__ == '__main__':
     main()
