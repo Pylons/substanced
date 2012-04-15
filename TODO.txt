@@ -36,6 +36,9 @@ UI-Plus-Guts
 
 - Allow services to be added to services folder via add view UIs.
 
+- Allow reordering of resources in folder contents view when the folder is
+  ordered.
+
 Guts-Only
 ---------
 
