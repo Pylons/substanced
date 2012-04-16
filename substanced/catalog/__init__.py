@@ -7,10 +7,7 @@ import BTrees
 from repoze.catalog.catalog import Catalog as _Catalog
 
 from pyramid.threadlocal import get_current_registry
-from pyramid.traversal import (
-    resource_path,
-    find_resource,
-    )
+from pyramid.traversal import resource_path
 from pyramid.security import effective_principals
 from pyramid.interfaces import IAuthorizationPolicy
 
