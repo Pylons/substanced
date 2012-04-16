@@ -7,7 +7,8 @@ import deform.widget
 
 from substanced.interfaces import (
     IFolder,
-    IPropertied
+    IPropertied,
+    ICatalogable,
     )
 from substanced.schema import Schema
 from substanced.content import content
@@ -45,7 +46,7 @@ class DocumentSchema(Schema):
         widget=deform.widget.RichTextWidget()
         )
 
-class DocumentType(IPropertied):
+class DocumentType(IPropertied, ICatalogable):
     pass
 
 @content(DocumentType, icon='icon-file', add_view='add_document', 
@@ -57,6 +58,9 @@ class Document(Persistent):
     def __init__(self, title, body):
         self.title = title
         self.body = body
+
+    def texts(self): # for indexing
+        return self.title, self.body
         
     def get_properties(self):
         return dict(name=self.__name__, body=self.body, title=self.title)
