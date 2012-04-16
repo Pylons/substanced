@@ -22,7 +22,7 @@ def macros():
 def breadcrumbs(request):
     breadcrumbs = []
     for resource in reversed(list(lineage(request.context))):
-        if not has_permission('view', resource, request):
+        if not has_permission('sdi.view', resource, request):
             return []
         url = request.mgmt_path(resource)
         name = resource.__name__ or 'Home'

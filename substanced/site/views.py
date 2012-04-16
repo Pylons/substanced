@@ -10,7 +10,7 @@ from ..sdi import mgmt_view
     name='manage_db',
     context=ISite,
     renderer='templates/manage_db.pt',
-    permission='manage database')
+    permission='sdi.manage-database')
 class ManageDatabase(object):
     def __init__(self, context, request):
         self.context = context

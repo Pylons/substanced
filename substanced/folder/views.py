@@ -36,7 +36,7 @@ class AddFolderSchema(Schema):
         )
 
 @mgmt_view(context=IFolder, name='add_folder', tab_condition=False,
-           permission='add content', 
+           permission='sdi.add-content', 
            renderer='substanced.sdi:templates/form.pt')
 class AddFolderView(FormView):
     title = 'Add Folder'
@@ -54,14 +54,14 @@ class AddFolderView(FormView):
 
 @mgmt_view(context=IFolder, name='contents', 
            renderer='substanced.sdi:templates/contents.pt',
-           permission='view')
+           permission='sdi.view')
 def folder_contents(context, request):
-    can_manage = has_permission('manage contents', context, request)
+    can_manage = has_permission('sdi.manage-contents', context, request)
     L = []
     for k, v in context.items():
         viewable = False
         url = request.mgmt_path(v)
-        if has_permission('view', v, request):
+        if has_permission('sdi.view', v, request):
             viewable = True
         icon = request.registry.content.metadata(v, 'icon')
         deletable = can_manage and k != SERVICES_NAME
@@ -72,7 +72,8 @@ def folder_contents(context, request):
     return dict(batchinfo=batchinfo)
 
 @mgmt_view(context=IFolder, name='delete_folder_contents',request_method='POST',
-           permission='manage contents', tab_condition=False, check_csrf=True)
+           permission='sdi.manage-contents', tab_condition=False, 
+           check_csrf=True)
 def delete_folder_contents(context, request):
     todelete = request.POST.getall('delete')
     deleted = 0

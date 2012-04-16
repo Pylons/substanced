@@ -72,7 +72,7 @@ class Document(Persistent):
 
     
 @mgmt_view(context=IFolder, name='add_document', tab_title='Add Document', 
-           permission='add content', 
+           permission='sdi.add-content', 
            renderer='substanced.sdi:templates/form.pt', tab_condition=False)
 class AddDocumentView(FormView):
     title = 'Add Document'

@@ -9,7 +9,7 @@ from ..sdi import mgmt_view
     name='manage_catalog',
     context=ICatalog,
     renderer='templates/manage_catalog.pt',
-    permission='manage catalog')
+    permission='sdi.manage-catalog')
 class ManageCatalog(object):
     def __init__(self, context, request):
         self.context = context

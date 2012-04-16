@@ -54,6 +54,10 @@ class Groups(Folder):
     """ Object representing a collection of groups.  Inherits from
     :class:`substanced.folder.Folder`.  Contains
     :class:`substanced.principal.Group` objects."""
+    def add_group(self, name):
+        group = Group()
+        self[name] = group
+        return group
 
 @colander.deferred
 def groupname_validator(node, kw):
@@ -118,7 +122,7 @@ class Group(Folder):
     __tab_order__ = ('properties',)
     __propschema__ = GroupSchema()
 
-    def __init__(self, description):
+    def __init__(self, description=''):
         Folder.__init__(self)
         self.description = description
 

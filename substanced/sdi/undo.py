@@ -17,7 +17,7 @@ class FlashUndo(object):
         request = self.request
         conn = get_connection(request)
         db = conn.db()
-        has_perm = has_permission('undo', request.context, request)
+        has_perm = has_permission('sdi.undo', request.context, request)
         if db.supportsUndo() and has_perm:
             hsh = str(id(request)) + str(hash(msg))
             t = transaction.get()
@@ -31,7 +31,7 @@ class FlashUndo(object):
             msg = button
         request.session.flash(msg)
 
-@mgmt_view(name='undo_one', permission='undo', tab_condition=False, 
+@mgmt_view(name='undo_one', permission='sdi.undo', tab_condition=False, 
            check_csrf=True)
 def undo_one(request):
     needle = 'hash:' + request.params['hash']

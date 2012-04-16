@@ -47,11 +47,13 @@ class Site(Folder):
         self.add_service('catalog', catalog)
         self.add_service('principals', principals)
         user = principals['users'].add_user(initial_login, initial_password)
+        group = principals['groups'].add_group('admininstrators')
+        group.connect(user)
         catalog.refresh()
         objectmap.add(self, ('',))
-        self.__acl__ = [(Allow, oid_of(user), ALL_PERMISSIONS)]
+        self.__acl__ = [(Allow, oid_of(group), ALL_PERMISSIONS)]
         self['__services__'].__acl__ = [
-            (Allow, oid_of(user), ALL_PERMISSIONS),
+            (Allow, oid_of(group), ALL_PERMISSIONS),
             NO_INHERIT,
             ]
 

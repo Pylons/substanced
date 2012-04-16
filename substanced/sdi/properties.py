@@ -7,7 +7,7 @@ from . import mgmt_view
 from ..event import ObjectModified
 
 @mgmt_view(context=IPropertied, name='properties', renderer='templates/form.pt',
-           tab_title='Properties', permission='edit properties')
+           tab_title='Properties', permission='sdi.edit-properties')
 class PropertiesView(FormView):
 
     buttons = ('save',)

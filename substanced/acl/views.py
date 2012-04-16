@@ -29,7 +29,7 @@ def get_context_workflow(context):
     """
     return
 
-@mgmt_view(name='acl_edit', permission='change acls', 
+@mgmt_view(name='acl_edit', permission='sdi.change-acls', 
            renderer='templates/acl.pt', tab_title='Security')
 def acl_edit_view(context, request):
     principal_service = find_service(context, 'principals')

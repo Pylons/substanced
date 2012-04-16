@@ -14,7 +14,7 @@ from . import (
     GroupSchema,
     )
 
-@mgmt_view(context=IUsers, name='add_user', permission='add user', 
+@mgmt_view(context=IUsers, name='add_user', permission='sdi.add-user', 
            renderer='substanced.sdi:templates/form.pt', tab_condition=False)
 class AddUserView(FormView):
     title = 'Add User'
@@ -30,7 +30,7 @@ class AddUserView(FormView):
         user.connect(*groups)
         return HTTPFound(self.request.mgmt_path(user, '@@properties'))
 
-@mgmt_view(context=IGroups, name='add_group', permission='add group', 
+@mgmt_view(context=IGroups, name='add_group', permission='sdi.add-group', 
            renderer='substanced.sdi:templates/form.pt', tab_condition=False)
 class AddGroupView(FormView):
     title = 'Add Group'
