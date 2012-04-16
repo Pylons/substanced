@@ -229,8 +229,8 @@ class TestSearch(unittest.TestCase):
         from .. import Search
         return Search
 
-    def _makeOne(self, context):
-        adapter = self._getTargetClass()(context)
+    def _makeOne(self, context, permission_checker=None):
+        adapter = self._getTargetClass()(context, permission_checker)
         return adapter
 
     def test_query(self):
@@ -283,7 +283,86 @@ class TestSearch(unittest.TestCase):
         num, objectids, resolver = adapter.query(q)
         self.assertEqual(resolver(123), None)
 
+    def test_query_with_permission_checker_returns_true(self):
+        ob = object()
+        objectmap = DummyObjectMap({1:[ob, (u'',)]})
+        catalog = DummyCatalog((1, [1]))
+        site = _makeSite(objectmap=objectmap, catalog=catalog)
+        def permitted(ob):
+            return True
+        adapter = self._makeOne(site, permitted)
+        q = DummyQuery()
+        num, objectids, resolver = adapter.query(q)
+        self.assertEqual(num, 1)
+        self.assertEqual(list(objectids), [1])
+        self.assertEqual(resolver(1), ob)
+
+    def test_query_with_permission_checker_returns_false(self):
+        ob = object()
+        objectmap = DummyObjectMap({1:[ob, (u'',)]})
+        catalog = DummyCatalog((1, [1]))
+        site = _makeSite(objectmap=objectmap, catalog=catalog)
+        def permitted(ob):
+            return False
+        adapter = self._makeOne(site, permitted)
+        q = DummyQuery()
+        num, objectids, resolver = adapter.query(q)
+        self.assertEqual(num, 0)
+        self.assertEqual(list(objectids), [])
+        
+    def test_query_with_permission_checker_unfound_model(self):
+        catalog = DummyCatalog((1, [1]))
+        objectmap = DummyObjectMap({1:[None, (u'', u'a')]})
+        site = _makeSite(catalog=catalog, objectmap=objectmap)
+        def permitted(ob): return True
+        adapter = self._makeOne(site, permitted)
+        q = DummyQuery()
+        num, objectids, resolver = adapter.query(q)
+        self.assertEqual(num, 0)
+        self.assertEqual(list(objectids), [])
+
+    def test_search_with_permission_checker_returns_true(self):
+        ob = object()
+        objectmap = DummyObjectMap({1:[ob, (u'',)]})
+        catalog = DummyCatalog((1, [1]))
+        site = _makeSite(objectmap=objectmap, catalog=catalog)
+        def permitted(ob):
+            return True
+        adapter = self._makeOne(site, permitted)
+        num, objectids, resolver = adapter.search()
+        self.assertEqual(num, 1)
+        self.assertEqual(list(objectids), [1])
+        self.assertEqual(resolver(1), ob)
+
+    def test_search_with_permission_checker_returns_false(self):
+        ob = object()
+        objectmap = DummyObjectMap({1:[ob, (u'',)]})
+        catalog = DummyCatalog((1, [1]))
+        site = _makeSite(objectmap=objectmap, catalog=catalog)
+        def permitted(ob):
+            return False
+        adapter = self._makeOne(site, permitted)
+        num, objectids, resolver = adapter.search()
+        self.assertEqual(num, 0)
+        self.assertEqual(list(objectids), [])
+        
+    def test_search_with_permission_checker_unfound_model(self):
+        catalog = DummyCatalog((1, [1]))
+        objectmap = DummyObjectMap({1:[None, (u'', u'a')]})
+        site = _makeSite(catalog=catalog, objectmap=objectmap)
+        def permitted(ob): return True
+        adapter = self._makeOne(site, permitted)
+        num, objectids, resolver = adapter.search()
+        self.assertEqual(num, 0)
+        self.assertEqual(list(objectids), [])
+        
 class Test_query_catalog(unittest.TestCase):
+    def setUp(self):
+        self.config = testing.setUp()
+
+    def tearDown(self):
+        testing.tearDown()
+
     def _makeOne(self, request):
         from .. import query_catalog
         return query_catalog(request)
@@ -296,7 +375,48 @@ class Test_query_catalog(unittest.TestCase):
         result = inst('q', a=1)
         self.assertEqual(result, True)
 
+    def test_it_with_permitted_no_auth_policy(self):
+        request = testing.DummyRequest()
+        request.context = testing.DummyResource()
+        inst = self._makeOne(request)
+        inst.Search = DummySearch(True)
+        inst('q', a=1, permitted='view')
+        self.assertFalse(inst.Search.checker)
+
+    def test_with_permitted_with_auth_policy(self):
+        self.config.testing_securitypolicy(permissive=True)
+        request = testing.DummyRequest()
+        request.context = testing.DummyResource()
+        inst = self._makeOne(request)
+        inst.Search = DummySearch(True)
+        inst('q', a=1, permitted='view')
+        self.assertTrue(inst.Search.checker(request.context))
+
+    def test_with_permitted_with_auth_policy_nonpermissive(self):
+        self.config.testing_securitypolicy(permissive=False)
+        request = testing.DummyRequest()
+        request.context = testing.DummyResource()
+        inst = self._makeOne(request)
+        inst.Search = DummySearch(True)
+        inst('q', a=1, permitted='view')
+        self.assertFalse(inst.Search.checker(request.context))
+        
+    def test_it_with_permitted_permitted_has_iter(self):
+        self.config.testing_securitypolicy(permissive=True)
+        request = testing.DummyRequest()
+        request.context = testing.DummyResource()
+        inst = self._makeOne(request)
+        inst.Search = DummySearch(True)
+        inst('q', a=1, permitted=(['bob'], 'view'))
+        self.assertTrue(inst.Search.checker(request.context))
+        
 class Test_search_catalog(unittest.TestCase):
+    def setUp(self):
+        self.config = testing.setUp()
+
+    def tearDown(self):
+        testing.tearDown()
+        
     def _makeOne(self, request):
         from .. import search_catalog
         return search_catalog(request)
@@ -308,12 +428,48 @@ class Test_search_catalog(unittest.TestCase):
         inst.Search = DummySearch(True)
         result = inst(a=1)
         self.assertEqual(result, True)
+
+    def test_it_with_permitted_no_auth_policy(self):
+        request = testing.DummyRequest()
+        request.context = testing.DummyResource()
+        inst = self._makeOne(request)
+        inst.Search = DummySearch(True)
+        inst(a=1, permitted='view')
+        self.assertFalse(inst.Search.checker)
+
+    def test_with_permitted_with_auth_policy(self):
+        self.config.testing_securitypolicy(permissive=True)
+        request = testing.DummyRequest()
+        request.context = testing.DummyResource()
+        inst = self._makeOne(request)
+        inst.Search = DummySearch(True)
+        inst(a=1, permitted='view')
+        self.assertTrue(inst.Search.checker(request.context))
+
+    def test_with_permitted_with_auth_policy_nonpermissive(self):
+        self.config.testing_securitypolicy(permissive=False)
+        request = testing.DummyRequest()
+        request.context = testing.DummyResource()
+        inst = self._makeOne(request)
+        inst.Search = DummySearch(True)
+        inst(a=1, permitted='view')
+        self.assertFalse(inst.Search.checker(request.context))
+        
+    def test_it_with_permitted_permitted_has_iter(self):
+        self.config.testing_securitypolicy(permissive=True)
+        request = testing.DummyRequest()
+        request.context = testing.DummyResource()
+        inst = self._makeOne(request)
+        inst.Search = DummySearch(True)
+        inst(a=1, permitted=(['bob'], 'view'))
+        self.assertTrue(inst.Search.checker(request.context))
         
 class DummySearch(object):
     def __init__(self, result):
         self.result = result
 
-    def __call__(self, context):
+    def __call__(self, context, checker=None):
+        self.checker = checker
         return self
 
     def query(self, *arg, **kw):

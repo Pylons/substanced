@@ -7,7 +7,12 @@ import BTrees
 from repoze.catalog.catalog import Catalog as _Catalog
 
 from pyramid.threadlocal import get_current_registry
-from pyramid.traversal import resource_path
+from pyramid.traversal import (
+    resource_path,
+    find_resource,
+    )
+from pyramid.security import effective_principals
+from pyramid.interfaces import IAuthorizationPolicy
 
 from ..interfaces import (
     ISearch,
@@ -177,8 +182,10 @@ class Catalog(_Catalog):
 
 class Search(object):
     """ Catalog query helper """
-    def __init__(self, context):
+    family = BTrees.family32
+    def __init__(self, context, permission_checker=None):
         self.context = context
+        self.permission_checker = permission_checker
         self.catalog = find_service(self.context, 'catalog')
         self.objectmap = find_service(self.context, 'objectmap')
 
@@ -187,14 +194,30 @@ class Search(object):
         if resource is None:
             logger.warn('Resource for objectid %s missing' % (objectid,))
         return resource
-        
+
+    def allowed(self, oids):
+        checker = self.permission_checker
+        result = self.family.IF.Set()
+        resolver = self.resolver
+        for oid in oids:
+            ob = resolver(oid)
+            if ob is None:
+                continue
+            if checker(ob):
+                result.insert(oid)
+        return len(result), result
+
     def query(self, q, **kw):
-        num, objectids = self.catalog.query(q, **kw)
-        return num, objectids, self.resolver
+        num, oids = self.catalog.query(q, **kw)
+        if self.permission_checker is not None:
+            num, oids = self.allowed(oids)
+        return num, oids, self.resolver
 
     def search(self, **kw):
-        num, objectids = self.catalog.search(**kw)
-        return num, objectids, self.resolver
+        num, oids = self.catalog.search(**kw)
+        if self.permission_checker:
+            num, oids = self.allowed(oids)
+        return num, oids, self.resolver
     
 def _add_catalog_index(config, name, index): # pragma: no cover
     def register():
@@ -209,13 +232,31 @@ class _catalog_request_api(object):
         self.request = request
         self.context = request.context
 
+    def _get_permission_checker(self, kw):
+        permitted = kw.pop('permitted', None)
+        if permitted is not None:
+            authz_policy = self.request.registry.queryUtility(
+                IAuthorizationPolicy)
+            if authz_policy is None:
+                return None
+            if hasattr(permitted, '__iter__'):
+                principals, permission = permitted
+            else:
+                principals = effective_principals(self.request)
+                permission =  permitted
+            def permitted(ob):
+                return authz_policy.permits(ob, principals, permission)
+        return permitted
+
 class query_catalog(_catalog_request_api):
     def __call__(self, *arg, **kw):
-        return self.Search(self.context).query(*arg, **kw)
+        checker = self._get_permission_checker(kw)
+        return self.Search(self.context, checker).query(*arg, **kw)
 
 class search_catalog(_catalog_request_api):
     def __call__(self, **kw):
-        return self.Search(self.context).search(**kw)
+        checker = self._get_permission_checker(kw)
+        return self.Search(self.context, checker).search(**kw)
 
 def includeme(config): # pragma: no cover
     from zope.interface import Interface
