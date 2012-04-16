@@ -83,7 +83,6 @@ class SearchSchema(Schema):
            permission='sdi.manage-catalog', 
            renderer='templates/searchform.pt', tab_title='Search')
 class SearchCatalogView(FormView):
-    title = 'Search Catalog'
     schema = SearchSchema(title='Expression')
     buttons = ('search',)
     catalog_results = None
@@ -119,7 +118,7 @@ class SearchCatalogView(FormView):
             except Exception as e:
                 logger.exception('During search')
                 cls_name = e.__class__.__name__
-                msg = 'Could not parse query.. %s: %s' % (cls_name, e.args[0])
+                msg = 'Query failed (%s: %s)' % (cls_name, e.args[0])
                 self.request.session.flash(msg, 'error')
             else:
                 searchresults = list([(x, res(x)) for x in oids])
