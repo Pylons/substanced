@@ -122,17 +122,6 @@ class Test_object_modified(unittest.TestCase):
         self._callFUT(model, event)
         self.assertEqual(catalog.reindexed, [(1, model)])
 
-    def test_uncatalogable_object(self):
-        objectmap = DummyObjectMap()
-        catalog = DummyCatalog()
-        site = _makeSite(objectmap=objectmap, catalog=catalog)
-        model = testing.DummyResource()
-        model.__objectid__ = 1
-        site['model'] = model
-        event = DummyEvent(site)
-        self._callFUT(model, event)
-        self.assertEqual(catalog.reindexed, [])
-        
 class DummyCatalog(dict):
     def __init__(self):
         from BTrees.IIBTree import IITreeSet

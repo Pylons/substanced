@@ -67,6 +67,8 @@ class PathIndex(CatalogIndex):
         else:
             return self.family.IF.Set()
 
+    applyEq = apply
+
 # API below, do not remove
 
 from repoze.catalog.indexes.field import CatalogFieldIndex

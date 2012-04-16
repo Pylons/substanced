@@ -43,13 +43,12 @@ def object_will_be_removed(obj, event):
     for oid in BTrees.family32.IF.intersection(objectids, catalog.objectids):
         catalog.unindex_doc(oid)
 
-@subscriber([Interface, IObjectModified])
+@subscriber([ICatalogable, IObjectModified])
 def object_modified(obj, event):
     """ Reindex a single object (non-recursive) in the closest catalog; an
     :class:`substanced.event.ObjectModifed` event subscriber """
-    objectid = oid_of(obj)
     catalog = find_service(obj, 'catalog')
     if catalog is not None:
-        if ICatalogable.providedBy(obj):
-            catalog.reindex_doc(objectid, obj)
+        objectid = oid_of(obj)
+        catalog.reindex_doc(objectid, obj)
 
