@@ -7,6 +7,7 @@ from zope.interface import (
     Interface,
     implementer,
     )
+from zope.interface.interface import InterfaceClass
 
 import venusian
 
@@ -33,17 +34,22 @@ class ContentRegistry(object):
     def add(self, content_iface, factory, **meta):
         addbase(content_iface, self.category_iface)
         self.factories[content_iface] = factory
+        if 'name' in meta:
+            name = meta.pop('name')
+            self.factories[name] = factory
         for k, v in meta.items():
             content_iface.setTaggedValue(k, v)
-        
-    def create(self, content_iface, *arg, **kw):
-        return self.factories[content_iface](*arg, **kw)
+
+    def create(self, content_type, *arg, **kw):
+        return self.factories[content_type](*arg, **kw)
 
     def all(self, context=_marker, **meta):
         if context is _marker:
-            candidates = self.factories.keys()
+            candidates = [i for i in self.factories.keys()
+                            if IInterface.providedBy(i)]
         else:
-            candidates = [i for i in providedBy(context) if i in self.factories]
+            candidates = [i for i in providedBy(context) if i in self.factories
+                            and IInterface.providedBy(i)]
         if not meta:
             return candidates
         matches_meta = []
@@ -76,20 +82,21 @@ class content(object):
     """ Use as a decorator for a content factory (usually a class).  Accepts
     a content interface and a set of meta keywords."""
     venusian = venusian
-    def __init__(self, content_iface, **meta):
-        self.content_iface = content_iface
+    def __init__(self, content_type, **meta):
+        self.content_type = content_type
         self.meta = meta
 
     def __call__(self, wrapped):
-        implementer(self.content_iface)(wrapped)
+        if IInterface.providedBy(self.content_type):
+            implementer(self.content_type)(wrapped)
         def callback(context, name, ob):
             config = context.config.with_package(info.module)
-            config.add_content_type(self.content_iface, wrapped, **self.meta)
+            config.add_content_type(self.content_type, wrapped, **self.meta)
         info = self.venusian.attach(wrapped, callback, category='substanced')
         self.meta['_info'] = info.codeinfo # fbo "action_method"
         return wrapped
     
-def add_content_type(config, content_iface, factory, **meta):
+def add_content_type(config, content_type, factory, **meta):
     """
     Configurator method which adds a content type.  Call via
     ``config.add_content_type`` during Pyramid configuration phase.
@@ -98,11 +105,17 @@ def add_content_type(config, content_iface, factory, **meta):
     ``**meta`` is an arbitrary set of keywords associated with the content
     type in the content registry.
     """
-    if not IInterface.providedBy(content_iface):
+    if IInterface.providedBy(content_type):
+        content_iface = content_type
+    elif isinstance(content_type, basestring):
+        meta['name'] = content_type
+        content_iface = InterfaceClass(content_type, ())
+    else:
         raise ConfigurationError(
-            'The provided "content_iface" argument (%r) is not an '
-            'interface object (it does not inherit from '
-            'zope.interface.Interface)' % type)
+            'The provided "content_type" argument (%r) is not a '
+            'string or an interface (it does not inherit from '
+            'zope.interface.Interface)' % content_type
+            )
 
     if not content_iface.implementedBy(factory):
         # was not called by decorator
@@ -114,6 +127,8 @@ def add_content_type(config, content_iface, factory, **meta):
     def register_factory():
         config.registry.content.add(content_iface, factory, **meta)
 
+    if 'IFolder' in repr(content_iface):
+        import pdb; pdb.set_trace()
     discrim = ('sd-content-type', content_iface)
     
     intr = config.introspectable(
