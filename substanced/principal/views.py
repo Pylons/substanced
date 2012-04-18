@@ -12,6 +12,7 @@ from ..interfaces import (
 from . import (
     UserSchema,
     GroupSchema,
+    UserPasswordSchema,
     )
 
 @mgmt_view(context=IUsers, name='add_user', permission='sdi.add-user', 
@@ -45,4 +46,18 @@ class AddGroupView(FormView):
         self.request.context[name] = group
         group.connect(*members)
         return HTTPFound(self.request.mgmt_path(group, '@@properties'))
-    
+
+@mgmt_view(context=IUser, name='change_password', tab_title='Change Password',
+           permission='sdi.change-password',
+           renderer='substanced.sdi:templates/form.pt')
+class ChangePasswordView(FormView):
+    title = 'Change Password'
+    schema = UserPasswordSchema()
+    buttons = ('change',)
+
+    def change_success(self, appstruct):
+        user = self.request.context
+        password = appstruct['password']
+        user.set_password(password)
+        self.request.session.flash('Password changed')
+        return HTTPFound(self.request.mgmt_path(user, '@@change_password'))

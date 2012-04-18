@@ -257,6 +257,30 @@ class UserSchema(Schema):
         preparer=lambda groups: set(map(int, groups)),
         )
 
+@colander.deferred
+def password_validator(node, kw):
+    """ Returns a ``colander.Function`` validator that uses the context (user)
+    to validate the password."""
+    context = kw['request'].context
+    return colander.Function(
+        lambda pwd: context.check_password(pwd),
+        'Invalid password'
+        )
+
+class UserPasswordSchema(Schema):
+    """ The schema for validating password change requests."""
+    old_password = colander.SchemaNode(
+        colander.String(),
+        validator=password_validator,
+        widget = deform.widget.PasswordWidget(),
+        )
+    password = colander.SchemaNode(
+        colander.String(),
+        title='New Password',
+        validator=colander.Length(min=3, max=100),
+        widget = deform.widget.CheckedPasswordWidget(),
+        )
+
 NO_CHANGE = u'\ufffd' * 8
 
 @content(IUser, icon='icon-user', add_view='add_user', name='User')
@@ -292,6 +316,9 @@ class User(Folder):
         if self.pwd_manager.check(self.password, password):
             return True
         return False
+
+    def set_password(self, password):
+        self.password = self.pwd_manager.encode(password)
 
     def get_properties(self):
         props = {}
