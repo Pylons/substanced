@@ -50,7 +50,10 @@
               <!-- <li><a href="#contact">Contact</a></li> -->
             </ul>
            <p class="navbar-text pull-right">
-             <span tal:condition="request.user">${request.user.__name__} <a href="${request.mgmt_path(request.root, '@@logout')}">(logout)</a></span>
+             <span tal:condition="request.user">
+               <a href="${request.mgmt_path(request.user, '')}">${request.user.__name__}</a>
+               <a href="${request.mgmt_path(request.root, '@@logout')}">(logout)</a>
+             </span>
              <span tal:condition="not request.user">Not logged in</span>
            </p>
           </div><!--/.nav-collapse -->
