@@ -6,6 +6,6 @@ from pyramid.security import (
 
 NO_INHERIT = (Deny, Everyone, ALL_PERMISSIONS) # API
 
-def includeme(config):
+def includeme(config): # pragma: no cover
     config.scan('substanced.acl.views')
     
