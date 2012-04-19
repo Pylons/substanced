@@ -38,32 +38,24 @@ class Test_principals_widget(unittest.TestCase):
         return principals_widget(node, kw)
 
     def test_it(self):
-        from ...interfaces import IFolder
-        request = testing.DummyRequest()
-        context = testing.DummyResource(__provides__=IFolder)
-        services = testing.DummyResource()
-        users = testing.DummyResource()
-        groups = testing.DummyResource()
+        from ...testing import make_site
+        site = make_site()
         group = testing.DummyResource()
         group.__objectid__ = 1
         user = testing.DummyResource()
         user.__objectid__ = 2
+        groups = site['__services__']['principals']['groups']
         groups['group'] = group
-        users['users'] = user
-        principals = testing.DummyResource()
-        principals['groups'] = groups
-        principals['users'] = users
-        services['principals'] = principals
-        context['__services__'] = services
-        services['principals'] = principals
-        context['__services__'] = services
-        request.context = context
+        users = site['__services__']['principals']['users']
+        users['user'] = user
+        request = testing.DummyRequest()
+        request.context = site
         kw = dict(request=request)
         widget = self._makeOne(None, kw)
         self.assertEqual(
             widget.values,
             ({'values': [('1', 'group')], 'label': 'Groups'},
-             {'values': [('2', 'users')], 'label': 'Users'})
+             {'values': [('2', 'user')], 'label': 'Users'})
             )
 
 class TestSearchCatalogView(unittest.TestCase):

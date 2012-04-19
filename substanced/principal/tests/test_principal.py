@@ -23,8 +23,20 @@ class TestUsers(unittest.TestCase):
 
     def test_add_user(self):
         inst = self._makeOne()
-        inst.add_user('login', 'password')
+        user = inst.add_user('login', 'password')
         self.assertTrue('login' in inst)
+        self.assertEqual(user.__name__, 'login')
+
+class TestGroups(unittest.TestCase):
+    def _makeOne(self):
+        from .. import Groups
+        return Groups()
+
+    def test_add_group(self):
+        inst = self._makeOne()
+        group = inst.add_group('groupname')
+        self.assertTrue('groupname' in inst)
+        self.assertEqual(group.__name__, 'groupname')
 
 class Test_groupname_validator(unittest.TestCase):
     def _makeOne(self, node, kw):
@@ -74,6 +86,23 @@ class Test_groupname_validator(unittest.TestCase):
         node = object()
         v = self._makeOne(node, kw)
         self.assertRaises(colander.Invalid, v, node, 'abc')
+
+class Test_members_widget(unittest.TestCase):
+    def _makeOne(self, node, kw):
+        from .. import members_widget
+        return members_widget(node, kw)
+
+    def test_it(self):
+        from ...testing import make_site
+        site = make_site()
+        user = testing.DummyResource()
+        user.__objectid__ = 1
+        site['__services__']['principals']['users']['user'] = user
+        request = testing.DummyRequest()
+        request.context = site
+        kw = dict(request=request)
+        result = self._makeOne(None, kw)
+        self.assertEqual(result.values, [('1', 'user')])
 
 class TestGroup(unittest.TestCase):
     def _makeOne(self, description=''):
