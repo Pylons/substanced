@@ -53,7 +53,7 @@ class AddFolderView(FormView):
 # TODO: rename, cut, copy, paste
 
 @mgmt_view(context=IFolder, name='contents', 
-           renderer='substanced.sdi:templates/contents.pt',
+           renderer='templates/contents.pt',
            permission='sdi.view')
 def folder_contents(context, request):
     can_manage = has_permission('sdi.manage-contents', context, request)
