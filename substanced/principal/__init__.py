@@ -195,14 +195,14 @@ def login_validator(node, kw):
             try:
                 context.check_name(value)
             except Exception as e:
-                raise colander.Invalid(node, e.message, value)
+                raise colander.Invalid(node, e.args[0], value)
         else:
             users = principals['users']
             if value != context.__name__:
                 try:
                     users.check_name(value)
                 except Exception as e:
-                    raise colander.Invalid(node, e.message, value)
+                    raise colander.Invalid(node, e.args[0], value)
 
         groups = principals['groups']
         if value in groups:

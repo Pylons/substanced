@@ -163,6 +163,89 @@ class TestGroup(unittest.TestCase):
         inst.disconnect(1, 2)
         self.assertEqual(parent.objectmap.disconnections,
                          [(1, inst, UserToGroup), (2, inst, UserToGroup)])
+
+class Test_login_validator(unittest.TestCase):
+    def _makeOne(self, node, kw):
+        from .. import login_validator
+        return login_validator(node, kw)
+
+    def test_adding_check_name_fails(self):
+        from ...testing import make_site
+        site = make_site()
+        user = testing.DummyResource()
+        user.__objectid__ = 1
+        def check_name(v): raise ValueError(v)
+        user.check_name = check_name
+        site['__services__']['principals']['users']['user'] = user
+        request = testing.DummyRequest()
+        request.context = user
+        kw = dict(request=request)
+        inst = self._makeOne(None, kw)
+        self.assertRaises(colander.Invalid, inst, None, 'name')
+
+    def test_not_adding_check_name_fails(self):
+        from ...testing import make_site
+        from ...interfaces import IUser
+        site = make_site()
+        user = testing.DummyResource(__provides__=IUser)
+        user.__objectid__ = 1
+        def check_name(v): raise ValueError(v)
+        user.check_name = check_name
+        site['__services__']['principals']['users']['user'] = user
+        request = testing.DummyRequest()
+        request.context = user
+        kw = dict(request=request)
+        inst = self._makeOne(None, kw)
+        self.assertRaises(colander.Invalid, inst, None, 'newname')
+
+    def test_not_adding_newname_same_as_old(self):
+        from ...testing import make_site
+        from ...interfaces import IUser
+        site = make_site()
+        user = testing.DummyResource(__provides__=IUser)
+        user.__objectid__ = 1
+        def check_name(v): raise ValueError(v)
+        user.check_name = check_name
+        site['__services__']['principals']['users']['user'] = user
+        request = testing.DummyRequest()
+        request.context = user
+        kw = dict(request=request)
+        inst = self._makeOne(None, kw)
+        self.assertEqual(inst(None, 'user'), None)
+
+    def test_groupname_exists(self):
+        from ...testing import make_site
+        from ...interfaces import IUser
+        site = make_site()
+        user = testing.DummyResource(__provides__=IUser)
+        user.__objectid__ = 1
+        def check_name(v): raise ValueError(v)
+        user.check_name = check_name
+        site['__services__']['principals']['users']['user'] = user
+        site['__services__']['principals']['groups']['group'] = user
+        request = testing.DummyRequest()
+        request.context = user
+        kw = dict(request=request)
+        inst = self._makeOne(None, kw)
+        self.assertRaises(colander.Invalid, inst, None, 'group')
+
+class Test_groups_widget(unittest.TestCase):
+    def _makeOne(self, node, kw):
+        from .. import groups_widget
+        return groups_widget(node, kw)
+
+    def test_it(self):
+        from ...testing import make_site
+        site = make_site()
+        group = testing.DummyResource()
+        group.__objectid__ = 1
+        site['__services__']['principals']['groups']['group'] = group
+        request = testing.DummyRequest()
+        request.context = site
+        kw = dict(request=request)
+        result = self._makeOne(None, kw)
+        self.assertEqual(result.values, [('1', 'group')])
+
         
 from ...interfaces import IFolder
 
