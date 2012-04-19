@@ -46,6 +46,11 @@ class TestGetTextRepr(unittest.TestCase):
         textrepr = self._callFUT(context, None)
         self.assertEqual(textrepr, 'title')
 
+    def test_callable(self):
+        context = testing.DummyModel()
+        context.texts = lambda: 'title'
+        textrepr = self._callFUT(context, None)
+        self.assertEqual(textrepr, 'title')
         
 class _TestGetDate(object):
 
