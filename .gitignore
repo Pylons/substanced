@@ -4,6 +4,7 @@
 *$py.class
 *~
 .coverage
+substanced/coverage.xml
 build/
 dist/
 .tox/
