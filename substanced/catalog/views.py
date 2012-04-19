@@ -86,6 +86,7 @@ class SearchCatalogView(FormView):
     schema = SearchSchema(title='Expression')
     buttons = ('search',)
     catalog_results = None
+    logger = logger
 
     def search_success(self, appstruct):
         """ Accept a CQE expression and a permitted value and return a 
@@ -97,11 +98,8 @@ class SearchCatalogView(FormView):
             )
 
     def show(self, form):
-        try:
-            appstruct = self.request.session.pop('catalogsearch.appstruct',
-                                                 colander.null)
-        except KeyError:
-            appstruct = colander.null # work around pyramid_redis_sessions bug
+        appstruct = self.request.session.pop('catalogsearch.appstruct',
+                                             colander.null)
         searchresults = ()
         if appstruct:
             permitted = appstruct['permitted']
@@ -116,7 +114,7 @@ class SearchCatalogView(FormView):
                 n, oids, res = self.request.query_catalog(
                     expr, permitted=permitted)
             except Exception as e:
-                logger.exception('During search')
+                self.logger.exception('During search')
                 cls_name = e.__class__.__name__
                 msg = 'Query failed (%s: %s)' % (cls_name, e.args[0])
                 self.request.session.flash(msg, 'error')
