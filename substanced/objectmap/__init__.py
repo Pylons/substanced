@@ -108,6 +108,11 @@ class ObjectMap(Persistent):
                                                  self.family.maxint)
 
             objectid = self._v_nextid
+
+            if objectid > self.family.maxint:
+                self._v_nextid = None
+                continue
+                
             self._v_nextid += 1
 
             # object id zero is reserved as "irresolveable"
