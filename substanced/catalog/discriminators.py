@@ -47,6 +47,8 @@ def get_textrepr(obj, default):
     texts = getattr(obj, 'texts', None)
     if texts is None:
         return default
+    if callable(texts):
+        texts = texts()
     if isinstance(texts, basestring):
         texts = [texts]
     texts = list(texts)

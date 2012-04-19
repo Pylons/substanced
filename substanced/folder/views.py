@@ -22,7 +22,7 @@ def name_validator(node, kw):
         try:
             context.check_name(value)
         except Exception as e:
-            raise colander.Invalid(node, e.message, value)
+            raise colander.Invalid(node, e.args[0], value)
         
     return colander.All(
         colander.Length(min=1, max=100),

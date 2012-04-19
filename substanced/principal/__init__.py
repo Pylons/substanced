@@ -44,8 +44,8 @@ class Users(Folder):
     """ Object representing a collection of users.  Inherits from
     :class:`substanced.folder.Folder`.  Contains
     :class:`substanced.principal.User` objects."""
-    def add_user(self, login, password):
-        user = User(password)
+    def add_user(self, login, password, email=''):
+        user = User(password, email)
         self[login] = user
         return user
 
@@ -69,14 +69,14 @@ def groupname_validator(node, kw):
             try:
                 context.check_name(value)
             except Exception as e:
-                raise colander.Invalid(node, e.message, value)
+                raise colander.Invalid(node, e.args[0], value)
         else:
             groups = principals['groups']
             if value != context.__name__:
                 try:
                     groups.check_name(value)
                 except Exception as e:
-                    raise colander.Invalid(node, e.message, value)
+                    raise colander.Invalid(node, e.args[0], value)
 
         users = principals['users']
         if value in users:
@@ -235,29 +235,12 @@ class UserSchema(Schema):
         validator=colander.All(colander.Email(), colander.Length(max=100)),
         missing='',
         )
-    password = colander.SchemaNode(
-        colander.String(),
-        validator=colander.Length(min=3, max=100),
-        widget = deform.widget.CheckedPasswordWidget(),
-        )
-    security_question = colander.SchemaNode(
-        colander.String(),
-        validator=colander.Length(max=200),
-        missing='',
-        )
-    security_answer = colander.SchemaNode(
-        colander.String(),
-        validator=colander.Length(max=200),
-        missing='',
-        )
     groups = colander.SchemaNode(
         deform.Set(allow_empty=True),
         widget=groups_widget,
         missing=colander.null,
         preparer=lambda groups: set(map(int, groups)),
         )
-
-NO_CHANGE = u'\ufffd' * 8
 
 @content(IUser, icon='icon-user', add_view='add_user', name='User')
 class User(Folder):
@@ -268,13 +251,10 @@ class User(Folder):
 
     pwd_manager = BCRYPTPasswordManager()
 
-    def __init__(self, password, email='', security_question='',
-                 security_answer=''):
+    def __init__(self, password, email=''):
         Folder.__init__(self)
         self.password = self.pwd_manager.encode(password)
         self.email = email
-        self.security_question = security_question
-        self.security_answer = security_answer
 
     def _resolve_group(self, group_or_groupid):
         objectmap = self.find_service('objectmap')
@@ -293,22 +273,18 @@ class User(Folder):
             return True
         return False
 
+    def set_password(self, password):
+        self.password = self.pwd_manager.encode(password)
+
     def get_properties(self):
         props = {}
-        for attr in ('email', 'security_question', 'security_answer'):
-            props[attr] = getattr(self, attr)
-        props['password'] = NO_CHANGE
+        props['email'] = self.email
         props['login'] = self.__name__
-        group_strs = map(str, self.get_groupids())
-        props['groups'] = group_strs
+        props['groups'] = map(str, self.get_groupids())
         return props
 
     def set_properties(self, struct):
-        password = struct['password']
-        if password != NO_CHANGE:
-            self.password = self.pwd_manager.encode(password)
-        for attr in ('email', 'security_question', 'security_answer'):
-            setattr(self, attr, struct[attr])
+        self.email = struct['email']
         newname = struct['login']
         oldname = self.__name__
         if newname != oldname:
