@@ -139,7 +139,7 @@ class TestSearchCatalogView(unittest.TestCase):
         self.assertEqual(result, {'searchresults': (),
                                   'form':'form'})
         self.assertEqual(request.session['_f_error'],
-                         ['Could not parse query.. ValueError: hello'])
+                         ['Query failed (ValueError: hello)'])
 
 class DummyForm(object):
     def render(self, appstruct):
