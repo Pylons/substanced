@@ -9,3 +9,4 @@ def includeme(config): # pragma: no cover
     config.include('substanced.evolution')
     config.include('substanced.folder')
     config.include('substanced.principal')
+    config.include('substanced.undo')

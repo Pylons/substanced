@@ -7,7 +7,7 @@ from pyramid.renderers import render
 from pyramid.httpexceptions import HTTPFound
 from pyramid.security import has_permission
 
-from . import mgmt_view
+from ..sdi import mgmt_view
 
 class FlashUndo(object):
     def __init__(self, request):
@@ -56,5 +56,7 @@ def undo_one(request):
             request.session.flash(msg, 'error')
     return HTTPFound(request.referrer or request.mgmt_path(request.context))
             
-def includeme(config):
+def includeme(config): # pragma: no cover
     config.set_request_property(FlashUndo, name='flash_undo', reify=True)
+    config.scan('substanced.undo')
+    

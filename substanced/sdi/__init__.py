@@ -352,5 +352,4 @@ def includeme(config): # pragma: no cover
     authz_policy = ACLAuthorizationPolicy()
     config.set_authentication_policy(authn_policy)
     config.set_authorization_policy(authz_policy)
-    config.include('substanced.sdi.undo')
     config.scan('substanced.sdi')
