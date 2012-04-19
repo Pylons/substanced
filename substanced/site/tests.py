@@ -21,11 +21,11 @@ class Test_root_factory(unittest.TestCase):
         self.assertRaises(ConfigurationError, self._callFUT, request, txn, gc)
 
     def test_without_app_root_with_initial_password(self):
-        def object_added(obj, event):
-            obj.__objectid__ = 1
+        from ..objectmap import object_will_be_added
         from zope.interface import Interface
-        from substanced.event import IObjectAdded
-        self.config.add_subscriber(object_added, [Interface, IObjectAdded])
+        from substanced.event import IObjectWillBeAdded
+        self.config.add_subscriber(
+            object_will_be_added, [Interface,IObjectWillBeAdded])
         # ^^^ to get user.__objectid__ set up right
         txn = DummyTransaction()
         root = {}
