@@ -10,17 +10,21 @@ from pyramid.security import has_permission
 from ..sdi import mgmt_view
 
 class FlashUndo(object):
+    
+    get_connection = get_connection # testing
+    transaction = transaction # testing
+    
     def __init__(self, request):
         self.request = request
 
-    def __call__(self, msg):
+    def __call__(self, msg, queue='', allow_duplicate=True):
         request = self.request
-        conn = get_connection(request)
+        conn = self.get_connection(request)
         db = conn.db()
         has_perm = has_permission('sdi.undo', request.context, request)
         if db.supportsUndo() and has_perm:
             hsh = str(id(request)) + str(hash(msg))
-            t = transaction.get()
+            t = self.transaction.get()
             t.note(msg)
             t.note('hash:'+hsh)
             csrf_token = request.session.get_csrf_token()
@@ -29,7 +33,7 @@ class FlashUndo(object):
             vars = {'msg':msg, 'url':url}
             button= render('templates/undobutton.pt', vars, request=request)
             msg = button
-        request.session.flash(msg)
+        request.session.flash(msg, queue, allow_duplicate=allow_duplicate)
 
 @mgmt_view(name='undo_one', permission='sdi.undo', tab_condition=False, 
            check_csrf=True)
