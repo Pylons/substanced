@@ -16,10 +16,7 @@ from pyramid.authorization import ACLAuthorizationPolicy
 from pyramid.security import authenticated_userid
 from pyramid.compat import is_nonstr_iter
 from pyramid.traversal import resource_path_tuple
-from pyramid.httpexceptions import (
-    HTTPFound,
-    HTTPBadRequest,
-    )
+from pyramid.httpexceptions import HTTPBadRequest
 from pyramid.session import UnencryptedCookieSessionFactoryConfig
 from pyramid.interfaces import IView
 from pyramid.request import Request
@@ -164,15 +161,6 @@ class mgmt_view(object):
 
         settings['_info'] = info.codeinfo # fbo "action_method"
         return wrapped
-
-@mgmt_view(tab_title='manage_main')
-def manage_main(request):
-    view_data = get_mgmt_views(request)
-    if not view_data:
-        request.session['came_from'] = request.url
-        return HTTPFound(location=request.mgmt_path(request.root, '@@login'))
-    view_name = view_data[0]['view_name']
-    return HTTPFound(request.mgmt_path(request.context, '@@%s' % view_name))
 
 def get_user(request):
     userid = authenticated_userid(request)

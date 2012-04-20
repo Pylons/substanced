@@ -9,6 +9,7 @@ from pyramid.security import (
 
 from . import (
     mgmt_view,
+    get_mgmt_views,
     check_csrf_token,
     )
 from ..service import find_service
@@ -55,3 +56,13 @@ def logout(request):
     headers = forget(request)
     return HTTPFound(location = request.mgmt_path(request.context),
                      headers = headers)
+
+@mgmt_view(tab_title='manage_main')
+def manage_main(request):
+    view_data = get_mgmt_views(request)
+    if not view_data:
+        request.session['came_from'] = request.url
+        return HTTPFound(location=request.mgmt_path(request.root, '@@login'))
+    view_name = view_data[0]['view_name']
+    return HTTPFound(request.mgmt_path(request.context, '@@%s' % view_name))
+
