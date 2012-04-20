@@ -37,8 +37,16 @@ default_resources = {
             'js':('deform:static/scripts/jquery.form.js', 
                   'deform:static/scripts/deform.js',
                   'deform_bootstrap:static/deform_bootstrap.js'),
-            'css':('deform:static/css/form.css',
-                   'deform_bootstrap:static/deform_bootstrap.css')
+            'css':'deform:static/css/form.css',
+# Don't depend on deform_bootstrap.css, it uses less, and its .less includes
+# 1) the bootstrap css, 2) the datepicker css and 3) the chosen css.
+# We already depend on the bootstrap and chosen css sitewide.  We don't yet
+# depend on the datepicker css, but when we do, we'll also just add it
+# sitewide.  Rationale: the deform_bootstrap css when included causes the
+# halfling images to go missing and it makes the CSS harder to debug due
+# to all the repetition with the sitewide-loaded bootstrap CSS.  I should fix
+# at least the halflings images portion of this and submit a patch upstream .
+#                   'deform_bootstrap:static/deform_bootstrap.css')
 
             },
         },
