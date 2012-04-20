@@ -74,10 +74,18 @@ Guts-Only
 - ACL edit view currently retatalogs an object based on the presence or
   absence of an "allowed" index.  This is wrong.
 
-- Bake ACLs into the object map.
-
 - Emit an ObjectMoving event rather than removed event with a moving flag,
   then an add event?
+
+- Use family64 for objectmap and catalog BTrees/Sets.
+
+- Get rid of ISite?  Use presence of __services__ to denote site?
+
+- Get rid of __propschema__ convenience?
+
+- Add a change_acl API that sends an event when an ACL is changed.
+
+- Undo of catalog reindex doesnt?
 
 Nice-to-Have Features
 ---------------------
