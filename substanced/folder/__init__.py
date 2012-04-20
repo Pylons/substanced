@@ -363,7 +363,7 @@ class Folder(Persistent):
 
         This operation is done in terms of a remove and an add.  The Removed
         and WillBeRemoved events will be sent for the old object, and the
-        WillBeAdded and Add events will be sent for the new object.e
+        WillBeAdded and Add events will be sent for the new object.
         """
         if name in self:
             del self[name]
