@@ -11,7 +11,7 @@ from ..sdi import mgmt_view
 
 class FlashUndo(object):
     
-    get_connection = get_connection # testing
+    get_connection = staticmethod(get_connection) # testing
     transaction = transaction # testing
     
     def __init__(self, request):
