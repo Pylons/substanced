@@ -58,7 +58,88 @@ def merge_url_qs(url, **kw):
         (segments.scheme, segments.netloc, segments.path, qs, segments.fragment)
         )
 
-def get_batchinfo(sequence, request, url=None, default_size=15):
+def get_batchinfo(seq, request, url=None, default_size=15):
+    """
+    Given a sequence named ``seq``, and a Pyramid request, return a
+    dictionary with the following elements:
+
+    ``batch``
+
+      A list representing a slice of ``seq``.  It will contain number of
+      elements in ``request.params['batch_size']`` (or ``default_size`` if
+      such a key does not exist in request.params).  The slice will begin at
+      ``request.params['batch_num']`` or zero if such a key does not exist in
+      ``request.params``.
+
+    ``required``
+    
+      ``True`` if either ``next_url`` or ``prev_url`` are ``True`` (meaning
+      batching is required).
+
+    ``size``
+
+      The value obtained from ``request.params['batch_size']`` (or
+      ``default_size`` if no ``batch_size`` parameter exists in
+      ``request.params``).
+
+    ``num``
+
+      The value obtained from ``request.params['batch_num']`` (or ``0`` if no
+      ``batch_num`` parameter exists in ``request.params``).
+
+    ``start``
+
+      This is the *item number* at which the current batch starts.  For
+      example, if it's batch number 2 of a set of batches of size 5, this
+      number would be 10 (it's indexed at one).
+
+    ``end``
+
+      This is the *item number* at which the current batch ends.  For
+      example, if it's batch number 2 of a set of batches of size 5, this
+      number would be 15 (it's indexed at one).
+
+    ``last``
+
+      This is the *batch number* of the last batch based on the
+      ``batch_size`` and the length of ``seq``.
+        
+    ``first_url``
+
+      The URL of the first batch.  This will be a URL with ``batch_num`` and
+      ``batch_size`` in its query string.  The base URL will be taken from
+      the ``url`` value passed to this function.  If a ``url`` value is not
+      passed to this function, the URL will be taken from ``request.url``.
+      This value will be ``None`` if the current ``batch_num`` is 0.
+    
+    ``prev_url``
+
+      The URL of the previous batch.  This will be a URL with ``batch_num``
+      and ``batch_size`` in its query string.  The base URL will be taken
+      from the ``url`` value passed to this function.  If a ``url`` value is
+      not passed to this function, the URL will be taken from
+      ``request.url``.  This value will be ``None`` if there is no previous
+      batch.
+
+    ``next_url``
+
+      The URL of the next batch.  This will be a URL with ``batch_num`` and
+      ``batch_size`` in its query string.  The base URL will be taken from
+      the ``url`` value passed to this function.  If a ``url`` value is not
+      passed to this function, the URL will be taken from ``request.url``.
+      This value will be ``None`` if there is no next batch.
+        
+    ``last_url``
+
+      The URL of the next batch.  This will be a URL with ``batch_num`` and
+      ``batch_size`` in its query string.  The base URL will be taken from
+      the ``url`` value passed to this function.  If a ``url`` value is not
+      passed to this function, the URL will be taken from ``request.url``.
+      This value will be ``None`` if there is no next batch.
+
+    The ``seq`` passed must define ``__len__`` and ``__slice__`` methods.
+    
+    """
     if url is None:
         url = request.url
         
@@ -68,12 +149,12 @@ def get_batchinfo(sequence, request, url=None, default_size=15):
     if size:
         start = num * size
         end = start + size
-        batch = sequence[start:end]
-        last = int(math.ceil(len(sequence) / float(size)) - 1)
+        batch = seq[start:end]
+        last = int(math.ceil(len(seq) / float(size)) - 1)
     else:
         start = 0
         end = 0
-        batch = sequence
+        batch = seq
         last = 0
         
     first_url = None
@@ -85,35 +166,22 @@ def get_batchinfo(sequence, request, url=None, default_size=15):
         first_url = merge_url_qs(url, batch_size=size, batch_num=0)
     if start >= size:
         prev_url = merge_url_qs(url, batch_size=size, batch_num=num-1)
-    if len(sequence) > end:
+    if len(seq) > end:
         next_url = merge_url_qs(url, batch_size=size, batch_num=num+1)
     if size and (num < last):
         last_url = merge_url_qs(url, batch_size=size, batch_num=last)
     
-    first_off = prev_off = next_off = last_off = ''
-    
-    if first_url is None:
-        first_off = 'off'
-    if prev_url is None:
-        prev_off = 'off'
-    if next_url is None:
-        next_off = 'off'
-    if last_url is None:
-        last_off = 'off'
-        
-    return dict(batch=batch,
-                required=prev_url or next_url,
-                size=size,
-                num=num,
-                first_url=first_url,
-                prev_url=prev_url,
-                next_url=next_url,
-                last_url=last_url,
-                first_off=first_off,
-                prev_off=prev_off,
-                next_off=next_off,
-                last_off=last_off,
-                start=start,
-                end=end,
-                last=last)
+    return dict(
+        batch=batch,
+        required=prev_url or next_url,
+        size=size,
+        num=num,
+        first_url=first_url,
+        prev_url=prev_url,
+        next_url=next_url,
+        last_url=last_url,
+        start=start,
+        end=end,
+        last=last
+        )
 
