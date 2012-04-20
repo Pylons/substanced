@@ -34,16 +34,6 @@ class AddUserView(FormView):
         user.connect(*groups)
         return HTTPFound(self.request.mgmt_path(user, '@@properties'))
 
-@colander.deferred
-def password_validator(node, kw):
-    """ Returns a ``colander.Function`` validator that uses the context (user)
-    to validate the password."""
-    context = kw['request'].context
-    return colander.Function(
-        lambda pwd: context.check_password(pwd),
-        'Invalid password'
-        )
-
 @mgmt_view(context=IGroups, name='add_group', permission='sdi.add-group', 
            renderer='substanced.sdi:templates/form.pt', tab_condition=False)
 class AddGroupView(FormView):
@@ -59,6 +49,16 @@ class AddGroupView(FormView):
         self.request.context[name] = group
         group.connect(*members)
         return HTTPFound(self.request.mgmt_path(group, '@@properties'))
+
+@colander.deferred
+def password_validator(node, kw):
+    """ Returns a ``colander.Function`` validator that uses the context (user)
+    to validate the password."""
+    context = kw['request'].context
+    return colander.Function(
+        lambda pwd: context.check_password(pwd),
+        'Invalid password'
+        )
 
 class UserPasswordSchema(Schema):
     """ The schema for validating password change requests."""

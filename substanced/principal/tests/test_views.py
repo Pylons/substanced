@@ -1,4 +1,5 @@
 import unittest
+import colander
 from pyramid import testing
 
 class TestAddUserView(unittest.TestCase):
@@ -41,6 +42,33 @@ class TestAddGroupView(unittest.TestCase):
         resp = inst.add_success({'name':'name', 'members':(1,)})
         self.assertEqual(request.context['name'], resource)
         self.assertEqual(resp.location, 'http://example.com')
+
+class Test_password_validator(unittest.TestCase):
+    def _makeOne(self, node, kw):
+        from ..views import password_validator
+        return password_validator(node, kw)
+
+    def test_it_success(self):
+        request = testing.DummyRequest()
+        context = testing.DummyResource()
+        request.context = context
+        def check_password(pwd):
+            return True
+        context.check_password = check_password
+        kw = dict(request=request)
+        inst = self._makeOne(None, kw)
+        self.assertEqual(inst(None, 'pwd'), None)
+
+    def test_it_failure(self):
+        request = testing.DummyRequest()
+        context = testing.DummyResource()
+        request.context = context
+        def check_password(pwd):
+            return False
+        context.check_password = check_password
+        kw = dict(request=request)
+        inst = self._makeOne(None, kw)
+        self.assertRaises(colander.Invalid, inst, None, 'pwd')
         
 class DummyPrincipal(object):
     def connect(self, *args):
