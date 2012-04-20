@@ -65,7 +65,7 @@ def get_batchinfo(seq, request, url=None, default_size=15):
 
     ``batch``
 
-      A list representing a slice of ``seq``.  It will contain number of
+      A list representing a slice of ``seq``.  It will contain the number of
       elements in ``request.params['batch_size']`` (or ``default_size`` if
       such a key does not exist in request.params).  The slice will begin at
       ``request.params['batch_num']`` or zero if such a key does not exist in
