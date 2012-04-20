@@ -21,12 +21,10 @@ from pyramid.httpexceptions import (
     HTTPBadRequest,
     )
 from pyramid.session import UnencryptedCookieSessionFactoryConfig
-from pyramid.view import view_config
 from pyramid.interfaces import IView
 from pyramid.request import Request
 
 from ..service import find_service
-from ..principal import groupfinder
 
 MANAGE_ROUTE_NAME = 'substanced_manage'
 
@@ -122,7 +120,7 @@ class _default(object):
 
 default = _default()
 
-class mgmt_view(view_config):
+class mgmt_view(object):
     """ A class :term:`decorator` which, when applied to a class, will
     provide defaults for all view configurations that use the class.  This
     decorator accepts all the arguments accepted by
@@ -348,6 +346,7 @@ def includeme(config): # pragma: no cover
             'You must set a substanced.secret key in your .ini file')
     session_factory = UnencryptedCookieSessionFactoryConfig(secret)
     config.set_session_factory(session_factory)
+    from ..principal import groupfinder
     authn_policy = SessionAuthenticationPolicy(callback=groupfinder)
     authz_policy = ACLAuthorizationPolicy()
     config.set_authentication_policy(authn_policy)
