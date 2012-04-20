@@ -57,6 +57,13 @@ class Site(Folder):
             NO_INHERIT,
             ]
 
+    def get_properties(self):
+        return dict(title=self.title, description=self.description)
+
+    def set_properties(self, struct):
+        self.__dict__.update(struct)
+        self._p_changed = True
+
     @classmethod
     def root_factory(cls, request, transaction=transaction, 
                      get_connection=get_connection):

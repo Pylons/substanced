@@ -19,16 +19,12 @@ class IPropertied(Interface):
 
     def get_properties():
         """ Returns a data structure representing the current property state
-        according to the attached __propschema__ (usually a dictionary).
-        This method definition is optional.  If it is not defined, the
-        __dict__ of the propertied object will be used."""
+        according to the attached __propschema__ (usually a dictionary)."""
 
     def set_properties(struct):
         """ Persists a data structure representing the property state
         represented by ``struct`` (usually a dictionary).  The data structure
-        will have already been validated against the __propschema__.  This
-        method definition is optional.  If it is not defined, the __dict__ of
-        the propertied object will be updated."""
+        will have already been validated against the __propschema__."""
         
 class IObjectMap(Interface):
     """ A map of objects to paths and a reference engine """
