@@ -1,17 +1,16 @@
-from pyramid import testing
+from .objectmap import ObjectMap
+from .folder import Folder
 
 def make_site():
-    from .interfaces import IFolder
-    context = testing.DummyResource(__provides__=IFolder)
-    services = testing.DummyResource()
-    users = testing.DummyResource()
-    groups = testing.DummyResource()
-    principals = testing.DummyResource()
+    context = Folder()
+    services = Folder()
+    users = Folder()
+    groups = Folder()
+    principals = Folder()
     principals['groups'] = groups
     principals['users'] = users
     services['principals'] = principals
-    context['__services__'] = services
-    services['principals'] = principals
-    context['__services__'] = services
+    services['objectmap'] = ObjectMap()
+    context.add('__services__', services, allow_services=True)
     return context
 

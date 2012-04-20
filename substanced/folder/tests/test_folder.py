@@ -357,6 +357,24 @@ class TestFolder(unittest.TestCase):
         folder.remove('a')
         self.assertEqual(folder.order, ['b'])
 
+    def test_replace_existing(self):
+        folder = self._makeOne()
+        other = self._makeOne()
+        model = DummyModel()
+        folder['a'] = model
+        folder.replace('a', other)
+        self.assertEqual(folder['a'], other)
+        self.assertEqual(other.__name__, 'a')
+        self.assertEqual(other.__parent__, folder)
+
+    def test_replace_nonexisting(self):
+        folder = self._makeOne()
+        other = self._makeOne()
+        folder.replace('a', other)
+        self.assertEqual(folder['a'], other)
+        self.assertEqual(other.__name__, 'a')
+        self.assertEqual(other.__parent__, folder)
+        
     def test_pop_success(self):
         from ...interfaces import IObjectEvent
         from ...interfaces import IObjectRemoved

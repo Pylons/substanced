@@ -269,9 +269,7 @@ class User(Folder):
         """ Checks if the plaintext password passed as ``password`` matches
         this user's stored, encrypted passowrd.  Returns ``True`` or
         ``False``."""
-        if self.pwd_manager.check(self.password, password):
-            return True
-        return False
+        return self.pwd_manager.check(self.password, password)
 
     def set_password(self, password):
         self.password = self.pwd_manager.encode(password)

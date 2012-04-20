@@ -6,7 +6,7 @@ from zope.interface import (
     )
 
 class IContent(Interface):
-    """" Marker interface representing an object that has a content type """
+    """ Marker interface representing an object that has a content type """
 
 class ICatalogable(Interface):
     """ Marker interface describing catalogable content.  An object must
@@ -297,6 +297,17 @@ class IFolder(Interface):
         and WillBeRemoved events sent will indicate that the object is
         moving.
         """
+    def replace(name, newobject):
+        """ Replace an existing object named ``name`` in this folder with a
+        new object ``newobject``.  If there isn't an object named ``name`` in
+        this folder, an exception will *not* be raised; instead, the new
+        object will just be added.
+
+        This operation is done in terms of a remove and an add.  The Removed
+        and WillBeRemoved events will be sent for the old object, and the
+        WillBeAdded and Add events will be sent for the new object.e
+        """
+        
         
 class IPrincipal(IPropertied):
     """ Marker interface representing a user or group """

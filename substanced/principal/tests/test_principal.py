@@ -189,9 +189,11 @@ class Test_login_validator(unittest.TestCase):
         site = make_site()
         user = testing.DummyResource(__provides__=IUser)
         user.__objectid__ = 1
-        def check_name(v): raise ValueError(v)
-        user.check_name = check_name
-        site['__services__']['principals']['users']['user'] = user
+        def check_name(*arg):
+            raise ValueError('a')
+        users = site['__services__']['principals']['users']
+        users['user'] = user
+        users.check_name = check_name
         request = testing.DummyRequest()
         request.context = user
         kw = dict(request=request)
@@ -246,6 +248,116 @@ class Test_groups_widget(unittest.TestCase):
         result = self._makeOne(None, kw)
         self.assertEqual(result.values, [('1', 'group')])
 
+class TestUser(unittest.TestCase):
+    def _makeOne(self, password, email=''):
+        from .. import User
+        return User(password, email)
+
+    def test_check_password(self):
+        inst = self._makeOne('abc')
+        self.assertTrue(inst.check_password('abc'))
+        self.assertFalse(inst.check_password('abcdef'))
+
+    def test_set_password(self):
+        inst = self._makeOne('abc')
+        inst.set_password('abcdef')
+        self.assertTrue(inst.pwd_manager.check(inst.password, 'abcdef'))
+
+    def test_get_properties(self):
+        inst = self._makeOne('abc', 'email')
+        inst.__name__ = 'fred'
+        inst.get_groupids = lambda: [1,2]
+        self.assertEqual(inst.get_properties(),
+                         {'email':'email', 'login':'fred', 'groups':['1', '2']})
+        
+    def test_set_properties_newname_same_as_old(self):
+        from ...testing import make_site
+        parent = make_site()
+        inst = self._makeOne('abc', 'email')
+        parent['login'] = inst
+        inst.get_groupids = lambda: [1,2]
+        inst.set_properties({'login':'abc', 'email':'email2', 'groups':()})
+        self.assertEqual(inst.__name__, 'abc')
+        self.assertEqual(inst.email, 'email2')
+
+    def test_set_properties_newname_different(self):
+        from ...testing import make_site
+        parent = make_site()
+        inst = self._makeOne('abc', 'email')
+        parent['login'] = inst
+        inst.get_groupids = lambda: [1,2]
+        inst.set_properties({'login':'newname', 'email':'email2', 'groups':()})
+        self.assertTrue('newname' in parent)
+        self.assertEqual(inst.__name__, 'newname')
+        self.assertEqual(inst.email, 'email2')
+
+    def test_set_properties_newgroups(self):
+        from ...testing import make_site
+        parent = make_site()
+        inst = self._makeOne('abc', 'email')
+        parent['login'] = inst
+        inst.get_groupids = lambda: [1,2]
+        connect_called = []
+        def connect(*args):
+            connect_called.append(True)
+            self.assertEqual(args, (1,))
+        inst.connect = connect
+        inst.set_properties(
+            {'login':'newname', 'email':'email2', 'groups':(1,)})
+        self.assertTrue(connect_called)
+
+    def test_get_groupids(self):
+        from ...testing import make_site
+        parent = make_site()
+        parent['__services__'].replace('objectmap', DummyObjectMap(True))
+        inst = self._makeOne('abc')
+        parent['foo'] = inst
+        self.assertEqual(inst.get_groupids(), True)
+
+    def test_get_groups(self):
+        from ...testing import make_site
+        parent = make_site()
+        parent['__services__'].replace('objectmap', DummyObjectMap(True))
+        inst = self._makeOne('abc')
+        parent['foo'] = inst
+        self.assertEqual(inst.get_groups(), True)
+
+    def test_connect(self):
+        from .. import UserToGroup
+        from ...testing import make_site
+        parent = make_site()
+        omap = DummyObjectMap(True)
+        parent['__services__'].replace('objectmap', omap)
+        inst = self._makeOne('abc')
+        parent['foo'] = inst
+        inst.connect(1, 2)
+        self.assertEqual(omap.connections,
+                         [(inst, 1, UserToGroup), (inst, 2, UserToGroup)])
+
+    def test_disconnect_no_groups(self):
+        from .. import UserToGroup
+        from ...testing import make_site
+        parent = make_site()
+        omap = DummyObjectMap(True)
+        parent['__services__'].replace('objectmap', omap)
+        inst = self._makeOne('abc')
+        inst.get_groupids = lambda: (1, 2)
+        parent['foo'] = inst
+        inst.disconnect()
+        self.assertEqual(omap.disconnections,
+                         [(inst, 1, UserToGroup), (inst, 2, UserToGroup)])
+        
+    def test_disconnect_with_groups(self):
+        from .. import UserToGroup
+        from ...testing import make_site
+        parent = make_site()
+        omap = DummyObjectMap(True)
+        parent['__services__'].replace('objectmap', omap)
+        inst = self._makeOne('abc')
+        parent['foo'] = inst
+        inst.disconnect(1,2)
+        self.assertEqual(omap.disconnections,
+                         [(inst, 1, UserToGroup), (inst, 2, UserToGroup)])
         
 from ...interfaces import IFolder
 
@@ -272,7 +384,13 @@ class DummyObjectMap(object):
     def sourceids(self, object, reftype):
         return self.result
 
+    def targetids(self, object, reftype):
+        return self.result
+
     def sources(self, object, reftype):
+        return self.result
+
+    def targets(self, object, reftype):
         return self.result
 
     def connect(self, source, target, reftype):

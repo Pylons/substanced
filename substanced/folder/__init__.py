@@ -108,6 +108,13 @@ class Folder(Persistent):
         """
         return True
 
+    def __repr__(self):
+        klass = self.__class__
+        classname = '%s.%s' % (klass.__module__, klass.__name__)
+        return '<%s object %r at %#x>' % (classname,
+                                          self.__name__,
+                                          id(self))
+
     def __getitem__(self, name):
         """ Return the object named ``name`` added to this folder or raise
         ``KeyError`` if no such object exists.  ``name`` must be a Unicode
@@ -348,12 +355,19 @@ class Folder(Persistent):
         """
         return self.move(oldname, self, newname)
 
-    def __repr__(self):
-        klass = self.__class__
-        classname = '%s.%s' % (klass.__module__, klass.__name__)
-        return '<%s object %r at %#x>' % (classname,
-                                          self.__name__,
-                                          id(self))
+    def replace(self, name, newobject):
+        """ Replace an existing object named ``name`` in this folder with a
+        new object ``newobject``.  If there isn't an object named ``name`` in
+        this folder, an exception will *not* be raised; instead, the new
+        object will just be added.
+
+        This operation is done in terms of a remove and an add.  The Removed
+        and WillBeRemoved events will be sent for the old object, and the
+        WillBeAdded and Add events will be sent for the new object.e
+        """
+        if name in self:
+            del self[name]
+        self[name] = newobject
 
 def includeme(config): # pragma: no cover
     config.scan('substanced.folder')
