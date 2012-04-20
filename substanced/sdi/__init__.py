@@ -237,6 +237,40 @@ def get_mgmt_views(request, context=None, names=None):
                 
     return selected + sorted(extra, key=operator.itemgetter('tab_title'))
 
+def get_add_views(request, context=None):
+    registry = request.registry
+    if context is None:
+        context = request.context
+    introspector = registry.introspector
+
+    candidates = {}
+    
+    for data in introspector.get_category('substance d content types'): 
+        intr = data['introspectable']
+        meta = intr['meta']
+        viewname = meta.get('add_view')
+        if viewname:
+            type_name = meta.get('name', intr['content_iface'].__name__)
+            icon = meta.get('icon', '')
+            data = dict(type_name=type_name, icon=icon)
+            candidates[viewname] = data
+
+    candidate_names = candidates.keys()
+    views = get_mgmt_views(request, context, names=candidate_names)
+
+    L = []
+
+    for view in views:
+        view_name = view['view_name']
+        url = request.mgmt_path(context, '@@' + view_name)
+        data = candidates[view_name]
+        data['url'] = url
+        L.append(data)
+
+    L.sort(key=operator.itemgetter('type_name'))
+
+    return L
+
 def merge_url(url, **kw):
     segments = urlparse.urlsplit(url)
     extra_qs = [ '%s=%s' % (k, v) for (k, v) in 

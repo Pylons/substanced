@@ -8,8 +8,8 @@ from ..form import FormView
 from ..sdi import (
     mgmt_view,
     get_batchinfo,
+    get_add_views,
     )
-from ..sdi.add import get_add_views
 
 from ..interfaces import (
     IFolder,

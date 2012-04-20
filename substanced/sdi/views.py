@@ -2,6 +2,7 @@ from pyramid.httpexceptions import (
     HTTPForbidden,
     HTTPFound
     )
+
 from pyramid.security import (
     remember,
     forget,
@@ -10,10 +11,14 @@ from pyramid.security import (
 from . import (
     mgmt_view,
     get_mgmt_views,
+    get_add_views,
     check_csrf_token,
     )
+
 from ..service import find_service
 from ..util import oid_of
+from ..interfaces import IFolder
+
 
 @mgmt_view(name='login', renderer='templates/login.pt', tab_condition=False)
 @mgmt_view(renderer='templates/login.pt', context=HTTPForbidden, 
@@ -65,4 +70,14 @@ def manage_main(request):
         return HTTPFound(location=request.mgmt_path(request.root, '@@login'))
     view_name = view_data[0]['view_name']
     return HTTPFound(request.mgmt_path(request.context, '@@%s' % view_name))
+
+
+@mgmt_view(context=IFolder, name='add', tab_title='Add', 
+           permission='sdi.manage-contents', renderer='templates/add.pt',
+           tab_condition=False)
+def add_content(context, request):
+    views = get_add_views(request, context)
+    if len(views) == 1:
+        return HTTPFound(location=views[0]['url'])
+    return {'views':views}
 
