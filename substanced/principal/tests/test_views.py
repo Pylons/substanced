@@ -69,10 +69,29 @@ class Test_password_validator(unittest.TestCase):
         kw = dict(request=request)
         inst = self._makeOne(None, kw)
         self.assertRaises(colander.Invalid, inst, None, 'pwd')
-        
+
+class TestChangePasswordView(unittest.TestCase):
+    def _makeOne(self, request):
+        from ..views import ChangePasswordView
+        return ChangePasswordView(request)
+
+    def test_add_success(self):
+        context = DummyPrincipal()
+        request = testing.DummyRequest()
+        request.mgmt_path = lambda *arg: 'http://example.com'
+        request.context = context
+        inst = self._makeOne(request)
+        resp = inst.change_success({'password':'password'})
+        self.assertEqual(context.password, 'password')
+        self.assertEqual(resp.location, 'http://example.com')
+        self.assertTrue(request.session['_f_success'])
+
 class DummyPrincipal(object):
     def connect(self, *args):
         self.connected = args
+
+    def set_password(self, password):
+        self.password = password
 
 class DummyContent(object):
     def __init__(self, resource):

@@ -87,5 +87,5 @@ class ChangePasswordView(FormView):
         user = self.request.context
         password = appstruct['password']
         user.set_password(password)
-        self.request.session.flash('Password changed')
+        self.request.session.flash('Password changed', 'success')
         return HTTPFound(self.request.mgmt_path(user, '@@change_password'))
