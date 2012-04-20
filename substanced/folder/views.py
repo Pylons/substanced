@@ -9,6 +9,7 @@ from ..sdi import (
     mgmt_view,
     get_batchinfo,
     )
+from ..sdi.add import get_add_views
 
 from ..interfaces import (
     IFolder,
@@ -35,7 +36,9 @@ class AddFolderSchema(Schema):
         validator=name_validator,
         )
 
-@mgmt_view(context=IFolder, name='add_folder', tab_condition=False,
+@mgmt_view(context=IFolder,
+           name='add_folder',
+           tab_condition=False,
            permission='sdi.add-content', 
            renderer='substanced.sdi:templates/form.pt')
 class AddFolderView(FormView):
@@ -52,44 +55,61 @@ class AddFolderView(FormView):
 
 # TODO: rename, cut, copy, paste
 
-@mgmt_view(context=IFolder, name='contents', 
-           renderer='templates/contents.pt',
-           permission='sdi.view')
-def folder_contents(context, request):
-    can_manage = has_permission('sdi.manage-contents', context, request)
-    L = []
-    for k, v in context.items():
-        viewable = False
-        url = request.mgmt_path(v)
-        if has_permission('sdi.view', v, request):
-            viewable = True
-        icon = request.registry.content.metadata(v, 'icon')
-        deletable = can_manage and k != SERVICES_NAME
-        data = dict(name=k, deletable=deletable, viewable=viewable, url=url, 
-                    icon=icon)
-        L.append(data)
-    batchinfo = get_batchinfo(L, request, url=request.url)
-    return dict(batchinfo=batchinfo)
+class FolderContentsViews(object):
 
-@mgmt_view(context=IFolder, name='delete_folder_contents',request_method='POST',
-           permission='sdi.manage-contents', tab_condition=False, 
-           check_csrf=True)
-def delete_folder_contents(context, request):
-    todelete = request.POST.getall('delete')
-    deleted = 0
-    for name in todelete:
-        v = context.get(name)
-        if v is not None:
-            del context[name]
-            deleted += 1
-    if not deleted:
-        msg = 'No items deleted'
-        request.session.flash(msg)
-    elif deleted == 1:
-        msg = 'Deleted 1 item'
-        request.flash_undo(msg)
-    else:
-        msg = 'Deleted %s items' % deleted
-        request.flash_undo(msg)
-    return HTTPFound(request.mgmt_path(context, '@@contents'))
+    get_add_views = staticmethod(get_add_views) # for testing
+
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+
+    @mgmt_view(context=IFolder,
+               name='contents', 
+               renderer='templates/contents.pt',
+               permission='sdi.view')
+    def show(self):
+        context = self.context
+        request = self.request
+        can_manage = has_permission('sdi.manage-contents', context, request)
+        L = []
+        for k, v in context.items():
+            viewable = False
+            url = request.mgmt_path(v)
+            if has_permission('sdi.view', v, request):
+                viewable = True
+            icon = request.registry.content.metadata(v, 'icon')
+            deletable = can_manage and k != SERVICES_NAME
+            data = dict(name=k, deletable=deletable, viewable=viewable,
+                        url=url, icon=icon)
+            L.append(data)
+        addables = self.get_add_views(request, context)
+        batchinfo = get_batchinfo(L, request, url=request.url)
+        return dict(batchinfo=batchinfo, addables=addables)
+
+    @mgmt_view(context=IFolder,
+               name='delete_folder_contents',
+               request_method='POST',
+               permission='sdi.manage-contents',
+               tab_condition=False, 
+               check_csrf=True)
+    def delete(self):
+        request = self.request
+        context = self.context
+        todelete = request.POST.getall('delete')
+        deleted = 0
+        for name in todelete:
+            v = context.get(name)
+            if v is not None:
+                del context[name]
+                deleted += 1
+        if not deleted:
+            msg = 'No items deleted'
+            request.session.flash(msg)
+        elif deleted == 1:
+            msg = 'Deleted 1 item'
+            request.flash_undo(msg)
+        else:
+            msg = 'Deleted %s items' % deleted
+            request.flash_undo(msg)
+        return HTTPFound(request.mgmt_path(context, '@@contents'))
 

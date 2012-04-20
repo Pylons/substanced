@@ -46,29 +46,32 @@ class TestAddFolderView(unittest.TestCase):
         self.assertEqual(request.context['name'], resource)
         self.assertEqual(resp.location, 'http://example.com')
 
-class Test_folder_contents(unittest.TestCase):
+class TestFolderContentsViews(unittest.TestCase):
     def setUp(self):
         self.config = testing.setUp()
 
     def tearDown(self):
         testing.tearDown()
         
-    def _callFUT(self, context, request):
-        from ..views import folder_contents
-        return folder_contents(context, request)
+    def _makeOne(self, context, request):
+        from ..views import FolderContentsViews
+        return FolderContentsViews(context, request)
 
     def _makeRequest(self):
         request = testing.DummyRequest()
         request.mgmt_path = lambda *arg: '/manage'
         request.registry.content = DummyContent()
+        request.flash_undo = request.session.flash
         return request
-    
-    def test_no_permissions(self):
+
+    def test_show_no_permissions(self):
         self.config.testing_securitypolicy(permissive=False)
         context = testing.DummyResource()
         context['a'] = testing.DummyResource()
         request = self._makeRequest()
-        result = self._callFUT(context, request)
+        inst = self._makeOne(context, request)
+        inst.get_add_views = lambda *arg: ()
+        result = inst.show()
         batchinfo = result['batchinfo']
         batch = batchinfo['batch']
         self.assertEqual(len(batch), 1)
@@ -79,12 +82,14 @@ class Test_folder_contents(unittest.TestCase):
         self.assertEqual(item['icon'], 'icon')
         self.assertEqual(item['name'], 'a')
 
-    def test_all_permissions(self):
+    def test_show_all_permissions(self):
         self.config.testing_securitypolicy(permissive=True)
         context = testing.DummyResource()
         context['a'] = testing.DummyResource()
         request = self._makeRequest()
-        result = self._callFUT(context, request)
+        inst = self._makeOne(context, request)
+        inst.get_add_views = lambda *arg: ()
+        result = inst.show()
         batchinfo = result['batchinfo']
         batch = batchinfo['batch']
         self.assertEqual(len(batch), 1)
@@ -95,12 +100,14 @@ class Test_folder_contents(unittest.TestCase):
         self.assertEqual(item['icon'], 'icon')
         self.assertEqual(item['name'], 'a')
 
-    def test_all_permissions_services_name(self):
+    def test_show_all_permissions_services_name(self):
         self.config.testing_securitypolicy(permissive=True)
         context = testing.DummyResource()
         context['__services__'] = testing.DummyResource()
         request = self._makeRequest()
-        result = self._callFUT(context, request)
+        inst = self._makeOne(context, request)
+        inst.get_add_views = lambda *arg: ()
+        result = inst.show()
         batchinfo = result['batchinfo']
         batch = batchinfo['batch']
         self.assertEqual(len(batch), 1)
@@ -111,54 +118,46 @@ class Test_folder_contents(unittest.TestCase):
         self.assertEqual(item['icon'], 'icon')
         self.assertEqual(item['name'], '__services__')
 
-class Test_delete_folder_contents(unittest.TestCase):
-    def _callFUT(self, context, request):
-        from ..views import delete_folder_contents
-        return delete_folder_contents(context, request)
-
-    def _makeRequest(self):
-        request = testing.DummyRequest()
-        request.mgmt_path = lambda *arg: '/manage'
-        request.registry.content = DummyContent()
-        request.flash_undo = request.session.flash
-        return request
-
-    def test_none_deleted(self):
+    def test_delete_none_deleted(self):
         context = testing.DummyResource()
         request = self._makeRequest()
         request.POST = DummyPost()
-        result = self._callFUT(context, request)
+        inst = self._makeOne(context, request)
+        result = inst.delete()
         self.assertEqual(request.session['_f_'], ['No items deleted'])
         self.assertEqual(result.location, '/manage')
 
-    def test_one_deleted(self):
+    def test_delete_one_deleted(self):
         context = testing.DummyResource()
         context['a'] = testing.DummyResource()
         request = self._makeRequest()
         request.POST = DummyPost(('a',))
-        result = self._callFUT(context, request)
+        inst = self._makeOne(context, request)
+        result = inst.delete()
         self.assertEqual(request.session['_f_'], ['Deleted 1 item'])
         self.assertEqual(result.location, '/manage')
         self.assertFalse('a' in context)
 
-    def test_multiple_deleted(self):
+    def test_delete_multiple_deleted(self):
         context = testing.DummyResource()
         context['a'] = testing.DummyResource()
         context['b'] = testing.DummyResource()
         request = self._makeRequest()
         request.POST = DummyPost(('a', 'b'))
-        result = self._callFUT(context, request)
+        inst = self._makeOne(context, request)
+        result = inst.delete()
         self.assertEqual(request.session['_f_'], ['Deleted 2 items'])
         self.assertEqual(result.location, '/manage')
         self.assertFalse('a' in context)
         self.assertFalse('b' in context)
 
-    def test_undeletable_item(self):
+    def test_delete_undeletable_item(self):
         context = testing.DummyResource()
         context['a'] = testing.DummyResource()
         request = self._makeRequest()
         request.POST = DummyPost(('a', 'b'))
-        result = self._callFUT(context, request)
+        inst = self._makeOne(context, request)
+        result = inst.delete()
         self.assertEqual(request.session['_f_'], ['Deleted 1 item'])
         self.assertEqual(result.location, '/manage')
         self.assertFalse('a' in context)

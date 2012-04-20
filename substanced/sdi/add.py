@@ -4,8 +4,8 @@ from pyramid.httpexceptions import HTTPFound
 
 from ..interfaces import IFolder
 
-from . import mgmt_view
-from . import get_mgmt_views
+from ..sdi import mgmt_view
+from ..sdi import get_mgmt_views
 
 def get_add_views(request, context=None):
     registry = request.registry
@@ -20,8 +20,10 @@ def get_add_views(request, context=None):
         meta = intr['meta']
         viewname = meta.get('add_view')
         if viewname:
-            typename = meta.get('name', intr['content_iface'].__name__)
-            candidates[viewname] = typename
+            type_name = meta.get('name', intr['content_iface'].__name__)
+            icon = meta.get('icon', '')
+            data = dict(type_name=type_name, icon=icon)
+            candidates[viewname] = data
 
     candidate_names = candidates.keys()
     views = get_mgmt_views(request, context, names=candidate_names)
@@ -31,14 +33,17 @@ def get_add_views(request, context=None):
     for view in views:
         view_name = view['view_name']
         url = request.mgmt_path(context, '@@' + view_name)
-        L.append({'type_name':candidates[view_name], 'url':url})
+        data = candidates[view_name]
+        data['url'] = url
+        L.append(data)
 
     L.sort(key=operator.itemgetter('type_name'))
 
     return L
 
 @mgmt_view(context=IFolder, name='add', tab_title='Add', 
-           permission='sdi.manage-contents', renderer='templates/add.pt')
+           permission='sdi.manage-contents', renderer='templates/add.pt',
+           tab_condition=False)
 def add_content(context, request):
     views = get_add_views(request, context)
     if len(views) == 1:

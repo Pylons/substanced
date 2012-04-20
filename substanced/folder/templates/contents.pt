@@ -68,6 +68,18 @@
             value="delete">
           Delete
         </button>
+        <div class="btn-group pull-right" tal:condition="addables">
+          <a class="btn btn-info" 
+             href="${request.mgmt_path(context, '@@add')}"><i 
+             class="icon-plus-sign icon-white"></i>Add</a>
+          <a class="btn btn-info dropdown-toggle" 
+              data-toggle="dropdown" href="#"><span class="caret"></span></a>
+          <ul class="dropdown-menu">
+            <li tal:repeat="addable addables">
+               <a href="${addable['url']}"><i 
+              class="${addable['icon']}"></i> ${addable['type_name']}</a></li>
+          </ul>
+        </div>
     </div>
 
 </fieldset>
