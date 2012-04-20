@@ -7,9 +7,9 @@ from ..schema import Schema
 from ..form import FormView
 from ..sdi import (
     mgmt_view,
-    get_batchinfo,
     get_add_views,
     )
+from ..util import get_batchinfo
 
 from ..interfaces import (
     IFolder,
