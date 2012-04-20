@@ -49,13 +49,17 @@
               <!-- <li><a href="#about">About</a></li> -->
               <!-- <li><a href="#contact">Contact</a></li> -->
             </ul>
-           <p class="navbar-text pull-right">
-             <span tal:condition="request.user">
-               <a href="${request.mgmt_path(request.user, '')}">${request.user.__name__}</a>
-               <a href="${request.mgmt_path(request.root, '@@logout')}">(logout)</a>
-             </span>
-             <span tal:condition="not request.user">Not logged in</span>
-           </p>
+           <div class="nav pull-right">
+             <div class="btn-group" tal:condition="request.user">
+               <a class="btn btn-primary" href="${request.mgmt_path(request.user)}"><i class="icon-user icon-white"></i>${request.user.__name__}</a>
+               <a class="btn btn-primary dropdown-toggle" data-toggle="dropdown" href="#"><span class="caret"></span></a>
+               <ul class="dropdown-menu">
+                 <li><a href="${request.mgmt_path(request.user, '')}"><i class="icon-pencil"></i> Account</a></li>
+                 <li><a href="${request.mgmt_path(request.root, '@@logout')}"><i class="icon-stop"></i> Log Out</a></li>
+               </ul>
+             </div>
+             <span class="navbar-text" tal:condition="not request.user">Not logged in</span>
+           </div>
           </div><!--/.nav-collapse -->
         </div>
       </div>
