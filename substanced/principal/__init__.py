@@ -333,6 +333,7 @@ def principal_added(principal, event):
     principals = find_service(principal, 'principals')
     
     if IUser.providedBy(principal):
+        # its a user
         groups = principals['groups']
         if principal_name in groups:
             raise ValueError(
@@ -340,6 +341,7 @@ def principal_added(principal, event):
                 'group name %s' % principal_name
                 )
     else:
+        # its a group
         users = principals['users']
         if principal_name in users:
             raise ValueError(

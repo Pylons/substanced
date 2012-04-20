@@ -358,6 +358,98 @@ class TestUser(unittest.TestCase):
         inst.disconnect(1,2)
         self.assertEqual(omap.disconnections,
                          [(inst, 1, UserToGroup), (inst, 2, UserToGroup)])
+
+    def test__resolve_group_with_oid(self):
+        from ...testing import make_site
+        parent = make_site()
+        omap = DummyObjectMap(True)
+        parent['__services__'].replace('objectmap', omap)
+        inst = self._makeOne('abc')
+        g1 = testing.DummyResource()
+        g1.__objectid__ = 1
+        self.assertEqual(inst._resolve_group(g1), g1)
+
+class Test_principal_added(unittest.TestCase):
+    def _callFUT(self, principal, event):
+        from .. import principal_added
+        return principal_added(principal, event)
+
+    def test_user_not_in_groups(self):
+        from ...testing import make_site
+        from ...interfaces import IUser
+        site = make_site()
+        user = testing.DummyResource(__provides__=IUser)
+        site['user'] = user
+        self._callFUT(user, None) # doesnt blow up
+
+    def test_user_in_groups(self):
+        from ...testing import make_site
+        from ...interfaces import IUser
+        site = make_site()
+        groups = site['__services__']['principals']['groups']
+        groups['user'] = testing.DummyResource()
+        user = testing.DummyResource(__provides__=IUser)
+        site['user'] = user
+        self.assertRaises(ValueError, self._callFUT, user, None)
+
+    def test_group_not_in_users(self):
+        from ...testing import make_site
+        site = make_site()
+        group = testing.DummyResource()
+        site['groups'] = group
+        self._callFUT(group, None) # doesnt blow up
+
+    def test_group_in_users(self):
+        from ...testing import make_site
+        site = make_site()
+        users = site['__services__']['principals']['users']
+        users['group'] = testing.DummyResource()
+        group = testing.DummyResource()
+        site['group'] = group
+        self.assertRaises(ValueError, self._callFUT, group, None)
+
+class Test_groupfinder(unittest.TestCase):
+    def _callFUT(self, userid, request):
+        from .. import groupfinder
+        return groupfinder(userid, request)
+
+    def test_with_no_objectmap(self):
+        from ...interfaces import IFolder
+        request = testing.DummyRequest()
+        context = testing.DummyResource(__provides__=IFolder)
+        services = testing.DummyResource()
+        context['__services__'] = services
+        request.context = context
+        result = self._callFUT(1, request)
+        self.assertEqual(result, None)
+    
+    def test_with_objectmap_no_user(self):
+        from ...interfaces import IFolder
+        request = testing.DummyRequest()
+        context = testing.DummyResource(__provides__=IFolder)
+        omap = testing.DummyResource()
+        omap.object_for = lambda *arg: None
+        services = testing.DummyResource()
+        services['objectmap'] = omap
+        context['__services__'] = services
+        request.context = context
+        result = self._callFUT(1, request)
+        self.assertEqual(result, None)
+        
+    def test_garden_path(self):
+        from ...interfaces import IFolder
+        request = testing.DummyRequest()
+        context = testing.DummyResource(__provides__=IFolder)
+        omap = testing.DummyResource()
+        user = testing.DummyResource()
+        user.get_groupids = lambda *arg: (1,2)
+        omap.object_for = lambda *arg: user
+        services = testing.DummyResource()
+        services['objectmap'] = omap
+        context['__services__'] = services
+        request.context = context
+        result = self._callFUT(1, request)
+        self.assertEqual(result, (1,2))
         
 from ...interfaces import IFolder
 
