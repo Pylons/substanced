@@ -62,5 +62,5 @@ def undo_one(request):
             
 def includeme(config): # pragma: no cover
     config.set_request_property(FlashUndo, name='flash_undo', reify=True)
-    config.scan('substanced.undo')
+    config.scan('.')
     

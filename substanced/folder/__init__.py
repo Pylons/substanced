@@ -370,5 +370,5 @@ class Folder(Persistent):
         self[name] = newobject
 
 def includeme(config): # pragma: no cover
-    config.scan('substanced.folder')
+    config.scan('.')
 

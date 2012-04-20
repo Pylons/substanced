@@ -5,8 +5,8 @@ import urlparse
 
 from zope.interface.interfaces import IInterface
 
-from pyramid.config.views import viewdefaults
-from pyramid.config.util import action_method
+from pyramid.config.views import viewdefaults # XXX not an API
+from pyramid.config.util import action_method # XXX not an API
 
 import venusian
 
@@ -352,4 +352,4 @@ def includeme(config): # pragma: no cover
     authz_policy = ACLAuthorizationPolicy()
     config.set_authentication_policy(authn_policy)
     config.set_authorization_policy(authz_policy)
-    config.scan('substanced.sdi')
+    config.scan('.')

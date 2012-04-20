@@ -362,5 +362,5 @@ def groupfinder(userid, request):
     return user.get_groupids(objectmap)
 
 def includeme(config): # pragma: no cover
-    config.scan('substanced.principal')
+    config.scan('.')
     

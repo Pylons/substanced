@@ -81,5 +81,5 @@ class Site(Folder):
 
 def includeme(config): # pragma: no cover
     config.add_content_type(ISite, Site)
-    config.scan('substanced.site.views')
+    config.scan('.views')
     

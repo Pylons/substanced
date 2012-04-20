@@ -529,5 +529,5 @@ def object_removed(obj, event):
     objectmap.remove(objectid, references=not moving)
 
 def includeme(config): # pragma: no cover
-    config.scan('substanced.objectmap')
+    config.scan('.')
     
