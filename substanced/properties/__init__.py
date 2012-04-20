@@ -28,6 +28,6 @@ class PropertiesView(FormView):
         appstruct = self.context.get_properties()
         return {'form':form.render(appstruct=appstruct)}
 
-def includeme(config):
+def includeme(config): # pragma: no cover
     config.scan('.')
     
