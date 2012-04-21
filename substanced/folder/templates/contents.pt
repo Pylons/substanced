@@ -14,52 +14,61 @@
   <div metal:fill-slot="main">
      <form action="@@delete_folder_contents" method="POST">
 
-<fieldset>
+      <fieldset>
 
       <div class="pagination" tal:condition="batchinfo['required']">
-        <ul>
-          <li tal:attributes="class not batchinfo['first_url'] and 'disabled'" ><a href="${batchinfo['first_url']}">&laquo;</a></li>
-          <li tal:attributes="class not batchinfo['prev_url'] and 'disabled'"><a href="${batchinfo['prev_url']}">&larr;</a></li>
-          <li class="disabled"><a href="#">page ${batchinfo['num']+1} of ${batchinfo['last']+1}</a></li>
-          <li tal:attributes="class not batchinfo['next_url'] and 'disabled'"><a  href="${batchinfo['next_url']}">&rarr;</a></li>
-          <li tal:attributes="class not batchinfo['last_url'] and 'disabled'" ><a href="${batchinfo['last_url']}">&raquo;</a></li>
+        <ul tal:define="first_url batchinfo['first_url'];
+                        prev_url batchinfo['prev_url'];
+                        next_url batchinfo['next_url'];
+                        last_url batchinfo['last_url'];
+                        num batchinfo['num'];
+                        last batchinfo['last'];">
+          <li tal:attributes="class not first_url and 'disabled'" ><a 
+                 href="${first_url}">&laquo;</a></li>
+          <li tal:attributes="class not prev_url and 'disabled'"><a 
+                 href="${prev_url}">&larr;</a></li>
+          <li class="disabled"><a href="#">page ${num+1} of ${last+1}</a></li>
+          <li tal:attributes="class not next_url and 'disabled'"><a  
+                 href="${next_url}">&rarr;</a></li>
+          <li tal:attributes="class not last_url and 'disabled'" ><a 
+                href="${last_url}">&raquo;</a></li>
         </ul>
       </div>
 
-  <h2 tal:condition="not batchinfo['batch']">No items</h2>
+      <h2 tal:condition="not batchinfo['batch']">No items</h2>
 
-  <div tal:define="batch batchinfo['batch']"
-       tal:condition="batch">
+      <div tal:define="batch batchinfo['batch']"
+           tal:condition="batch">
 
-    <label class="checkbox" for="selectall">
-       <input type="checkbox" onclick="toggleChecked(this.checked)"/>
-       -- all --
-    </label>
+        <label class="checkbox" for="selectall">
+          <input type="checkbox" onclick="toggleChecked(this.checked)"/>
+          -- all --
+        </label>
 
-    <div id="choices">
+        <div id="choices">
 
-      <tal:loop tal:repeat="choice batch">
-        <tal:block condition="choice['viewable']">
-          <label class="checkbox" for="delete-${repeat.choice.index}">
-            <i class="${choice['icon']}"> </i>
-            <input tal:attributes="disabled not choice['deletable']"
-                   type="checkbox"
-                   name="delete"
-                   value="${choice['name']}"
-                   id="delete-${repeat.choice.index}"/>
-            <a href="${choice['url']}">${choice['name']}</a>
-          </label>
-        </tal:block>
-      </tal:loop>
+          <tal:loop tal:repeat="choice batch">
+            <tal:block condition="choice['viewable']">
+              <label class="checkbox" for="delete-${repeat.choice.index}">
+                <i class="${choice['icon']}"> </i>
+                <input tal:attributes="disabled not choice['deletable']"
+                       type="checkbox"
+                       name="delete"
+                       value="${choice['name']}"
+                       id="delete-${repeat.choice.index}"/>
+                <a href="${choice['url']}">${choice['name']}</a>
+              </label>
+            </tal:block>
+          </tal:loop>
 
-    </div>
+        </div>
 
-  </div>
+      </div>
 
-   <input type="hidden" name="csrf_token" 
-          value="${request.session.get_csrf_token()}"/>
+      <input type="hidden" name="csrf_token" 
+             value="${request.session.get_csrf_token()}"/>
 
-    <div class="form-actions">
+      <div class="form-actions">
         <button
             id="delete"
             name="form.delete"
@@ -80,9 +89,9 @@
               class="${addable['icon']}"></i> ${addable['type_name']}</a></li>
           </ul>
         </div>
-    </div>
+      </div>
 
-</fieldset>
+      </fieldset>
      </form>
 
   </div>
