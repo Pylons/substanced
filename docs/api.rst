@@ -301,7 +301,7 @@ Other Helpers
 
 .. autofunction:: dotted_name
 
-.. autofunction:: get_batchinfo
+.. autoclass:: Batch
 
 .. autofunction:: merge_url_qs
 
