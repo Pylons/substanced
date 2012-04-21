@@ -42,9 +42,9 @@ def dotted_name(g):
     return '%s.%s' % (g.__module__, g.__name__)
 
 def merge_url_qs(url, **kw):
-    """ Merge the query string elements of a URL with the ones in **kw.  If
-    any query string element exists in ``url`` that also exists in ``**kw``,
-    replace it."""
+    """ Merge the query string elements of a URL with the ones in ``kw``.
+    If any query string element exists in ``url`` that also exists in
+    ``kw``, replace it."""
     segments = urlparse.urlsplit(url)
     extra_qs = [ '%s=%s' % (k, v) for (k, v) in 
                  urlparse.parse_qsl(segments.query, keep_blank_values=1) 
