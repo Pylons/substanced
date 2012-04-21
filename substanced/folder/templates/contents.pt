@@ -16,29 +16,24 @@
 
       <fieldset>
 
-      <div class="pagination" tal:condition="batchinfo['required']">
-        <ul tal:define="first_url batchinfo['first_url'];
-                        prev_url batchinfo['prev_url'];
-                        next_url batchinfo['next_url'];
-                        last_url batchinfo['last_url'];
-                        num batchinfo['num'];
-                        last batchinfo['last'];">
-          <li tal:attributes="class not first_url and 'disabled'" ><a 
-                 href="${first_url}">&laquo;</a></li>
-          <li tal:attributes="class not prev_url and 'disabled'"><a 
-                 href="${prev_url}">&larr;</a></li>
-          <li class="disabled"><a href="#">page ${num+1} of ${last+1}</a></li>
-          <li tal:attributes="class not next_url and 'disabled'"><a  
-                 href="${next_url}">&rarr;</a></li>
-          <li tal:attributes="class not last_url and 'disabled'" ><a 
-                href="${last_url}">&raquo;</a></li>
+      <div class="pagination" tal:condition="batch.required">
+        <ul>
+          <li tal:attributes="class not batch.first_url and 'disabled'" ><a 
+                 href="${batch.first_url}">&laquo;</a></li>
+          <li tal:attributes="class not batch.prev_url and 'disabled'"><a 
+                 href="${batch.prev_url}">&larr;</a></li>
+          <li class="disabled"><a 
+               href="#">page ${batch.num+1} of ${batch.last+1}</a></li>
+          <li tal:attributes="class not batch.next_url and 'disabled'"><a  
+                 href="${batch.next_url}">&rarr;</a></li>
+          <li tal:attributes="class not batch.last_url and 'disabled'" ><a 
+                href="${batch.last_url}">&raquo;</a></li>
         </ul>
       </div>
 
-      <h2 tal:condition="not batchinfo['batch']">No items</h2>
+      <h2 tal:condition="not batch.items">No items</h2>
 
-      <div tal:define="batch batchinfo['batch']"
-           tal:condition="batch">
+      <div tal:condition="batch.items">
 
         <label class="checkbox" for="selectall">
           <input type="checkbox" onclick="toggleChecked(this.checked)"/>
@@ -47,7 +42,7 @@
 
         <div id="choices">
 
-          <tal:loop tal:repeat="choice batch">
+          <tal:loop tal:repeat="choice batch.items">
             <tal:block condition="choice['viewable']">
               <label class="checkbox" for="delete-${repeat.choice.index}">
                 <i class="${choice['icon']}"> </i>

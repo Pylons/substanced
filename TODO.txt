@@ -87,9 +87,6 @@ Guts-Only
 
 - Undo of catalog reindex doesnt?
 
-- Fix batching index-at-one bug inconsistency between batch numbers and item
-  numbers.
-
 Nice-to-Have Features
 ---------------------
 

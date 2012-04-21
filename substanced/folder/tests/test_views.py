@@ -72,10 +72,9 @@ class TestFolderContentsViews(unittest.TestCase):
         inst = self._makeOne(context, request)
         inst.get_add_views = lambda *arg: ()
         result = inst.show()
-        batchinfo = result['batchinfo']
-        batch = batchinfo['batch']
-        self.assertEqual(len(batch), 1)
-        item = batch[0]
+        batch = result['batch']
+        self.assertEqual(len(batch.items), 1)
+        item = batch.items[0]
         self.assertEqual(item['url'], '/manage')
         self.assertFalse(item['viewable'])
         self.assertFalse(item['deletable'])
@@ -90,10 +89,9 @@ class TestFolderContentsViews(unittest.TestCase):
         inst = self._makeOne(context, request)
         inst.get_add_views = lambda *arg: ()
         result = inst.show()
-        batchinfo = result['batchinfo']
-        batch = batchinfo['batch']
-        self.assertEqual(len(batch), 1)
-        item = batch[0]
+        batch = result['batch']
+        self.assertEqual(len(batch.items), 1)
+        item = batch.items[0]
         self.assertEqual(item['url'], '/manage')
         self.assertTrue(item['viewable'])
         self.assertTrue(item['deletable'])
@@ -108,10 +106,9 @@ class TestFolderContentsViews(unittest.TestCase):
         inst = self._makeOne(context, request)
         inst.get_add_views = lambda *arg: ()
         result = inst.show()
-        batchinfo = result['batchinfo']
-        batch = batchinfo['batch']
-        self.assertEqual(len(batch), 1)
-        item = batch[0]
+        batch = result['batch']
+        self.assertEqual(len(batch.items), 1)
+        item = batch.items[0]
         self.assertEqual(item['url'], '/manage')
         self.assertTrue(item['viewable'])
         self.assertFalse(item['deletable'])

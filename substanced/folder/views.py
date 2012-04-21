@@ -9,7 +9,7 @@ from ..sdi import (
     mgmt_view,
     get_add_views,
     )
-from ..util import get_batchinfo
+from ..util import Batch
 
 from ..interfaces import (
     IFolder,
@@ -83,8 +83,8 @@ class FolderContentsViews(object):
                         url=url, icon=icon)
             L.append(data)
         addables = self.get_add_views(request, context)
-        batchinfo = get_batchinfo(L, request, url=request.url)
-        return dict(batchinfo=batchinfo, addables=addables)
+        batch = Batch(L, request)
+        return dict(batch=batch, addables=addables)
 
     @mgmt_view(context=IFolder,
                name='delete_folder_contents',
