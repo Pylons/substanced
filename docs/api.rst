@@ -275,8 +275,7 @@ Other Helpers
 
 .. automodule:: substanced.service
 
-.. autoclass:: find_service
-   :members:
+.. autofunction:: find_service
 
 :mod:`substanced.site` API
 --------------------------
