@@ -14,9 +14,9 @@ requires = [
     'pyramid_tm',
     ]
 
-setup(name='demo',
+setup(name='simple',
       version='0.0',
-      description='demo',
+      description='simple',
       long_description=README + '\n\n' +  CHANGES,
       classifiers=[
         "Programming Language :: Python",
@@ -27,16 +27,16 @@ setup(name='demo',
       author='',
       author_email='',
       url='',
-      keywords='web pyramid pylons',
+      keywords='web pyramid pylons substanced',
       packages=find_packages(),
       include_package_data=True,
       zip_safe=False,
       install_requires=requires,
       tests_require=requires,
-      test_suite="demo",
+      test_suite="simple",
       entry_points = """\
       [paste.app_factory]
-      main = demo:main
+      main = simple:main
       """,
       )
 
