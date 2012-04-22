@@ -192,8 +192,6 @@ def get_mgmt_views(request, context=None, names=None):
                 continue
         for intr in related:
             view_name = intr['name']
-            if view_name == '' and tab_title == 'manage_main':
-                continue # manage_main view
             if names is not None and not view_name in names:
                 continue
             if intr.category_name == 'views' and not view_name in L:
@@ -218,22 +216,19 @@ def get_mgmt_views(request, context=None, names=None):
                     {'view_name':view_name,
                      'tab_title':tab_title or view_name.capitalize()}
                     )
-    selected = []
-    extra = []
+    ordered = []
     
     if hasattr(context, '__tab_order__'):
         tab_order = context.__tab_order__
-        for view_data in L:
-            for view_name in tab_order:
-                if view_name == view_data['view_name']:
-                    selected.append(view_data)
-                    break
-            else:
-                extra.append(view_data)
-    else:
-        extra = L
-                
-    return selected + sorted(extra, key=operator.itemgetter('tab_title'))
+        ordered_names_available = [ y for y in tab_order if y in
+                                    [ x['view_name'] for x in L ] ]
+        for ordered_name in ordered_names_available:
+            for view_data in L:
+                if view_data['view_name'] == ordered_name:
+                    L.remove(view_data)
+                    ordered.append(view_data)
+                    
+    return ordered + sorted(L, key=operator.itemgetter('tab_title'))
 
 def get_add_views(request, context=None):
     registry = request.registry

@@ -74,7 +74,7 @@ class FolderContentsViews(object):
         L = []
         for k, v in context.items():
             viewable = False
-            url = request.mgmt_path(v)
+            url = request.mgmt_path(v, '@@manage_main')
             if has_permission('sdi.view', v, request):
                 viewable = True
             icon = request.registry.content.metadata(v, 'icon')

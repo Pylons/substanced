@@ -62,15 +62,17 @@ def logout(request):
     return HTTPFound(location = request.mgmt_path(request.context),
                      headers = headers)
 
-@mgmt_view(tab_title='manage_main')
+@mgmt_view(tab_condition=False)
+@mgmt_view(name='manage_main', tab_condition=False)
 def manage_main(request):
     view_data = get_mgmt_views(request)
     if not view_data:
         request.session['came_from'] = request.url
         return HTTPFound(location=request.mgmt_path(request.root, '@@login'))
     view_name = view_data[0]['view_name']
-    return HTTPFound(request.mgmt_path(request.context, '@@%s' % view_name))
-
+    return HTTPFound(
+        location=request.mgmt_path(request.context, '@@%s' % view_name)
+        )
 
 @mgmt_view(context=IFolder, name='add', tab_title='Add', 
            permission='sdi.manage-contents', renderer='templates/add.pt',
