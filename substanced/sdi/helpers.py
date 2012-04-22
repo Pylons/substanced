@@ -24,7 +24,7 @@ def breadcrumbs(request):
     for resource in reversed(list(lineage(request.context))):
         if not has_permission('sdi.view', resource, request):
             return []
-        url = request.mgmt_path(resource)
+        url = request.mgmt_path(resource, '@@manage_main')
         name = resource.__name__ or 'Home'
         icon = request.registry.content.metadata(resource, 'icon')
         active = resource is request.context and 'active' or None
