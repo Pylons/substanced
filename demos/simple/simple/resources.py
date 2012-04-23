@@ -1,5 +1,5 @@
 import mimetypes
-
+import StringIO
 import colander
 import deform.widget
 
@@ -17,12 +17,11 @@ from substanced.interfaces import (
 from substanced.schema import Schema
 from substanced.content import content
 from substanced.sdi import mgmt_view
-from substanced.form import FormView
-
-from .form import (
-    SessionTempStore,
-    chunks,
+from substanced.form import (
+    FormView,
+    FileUploadTempStore,
     )
+from substanced.util import chunks
 
 def make_name_validator(content_type):
     @colander.deferred
@@ -34,12 +33,12 @@ def make_name_validator(content_type):
                     try:
                         context.__parent__.check_name(value)
                     except Exception as e:
-                        raise colander.Invalid(node, e.message, value)
+                        raise colander.Invalid(node, e.args[0], value)
             else:
                 try:
                     context.check_name(value)
                 except Exception as e:
-                    raise colander.Invalid(node, e.message, value)
+                    raise colander.Invalid(node, e.args[0], value)
 
         return exists
     return name_validator
@@ -60,8 +59,12 @@ class DocumentSchema(Schema):
         widget=deform.widget.RichTextWidget()
         )
 
-@content(DocumentType, icon='icon-align-left', add_view='add_document', 
-         name='Document')
+@content(
+    DocumentType,
+    icon='icon-align-left',
+    add_view='add_document', 
+    name='Document',
+    )
 class Document(Persistent):
 
     __propschema__ = DocumentSchema()
@@ -86,9 +89,14 @@ class Document(Persistent):
         self.title = struct['title']
 
     
-@mgmt_view(context=IFolder, name='add_document', tab_title='Add Document', 
-           permission='sdi.add-content', 
-           renderer='substanced.sdi:templates/form.pt', tab_condition=False)
+@mgmt_view(
+    context=IFolder,
+    name='add_document',
+    tab_title='Add Document', 
+    permission='sdi.add-content', 
+    renderer='substanced.sdi:templates/form.pt',
+    tab_condition=False,
+    )
 class AddDocumentView(FormView):
     title = 'Add Document'
     schema = DocumentSchema()
@@ -101,39 +109,59 @@ class AddDocumentView(FormView):
         self.request.context[name] = document
         return HTTPFound(self.request.mgmt_path(document, '@@properties'))
 
-
 class FileType(IPropertied, ICatalogable):
     pass
     
 @colander.deferred
 def upload_widget(node, kw):
     request = kw['request']
-    tmpstore = SessionTempStore(request)
+    tmpstore = FileUploadTempStore(request)
     return deform.widget.FileUploadWidget(tmpstore)
 
 class FileSchema(Schema):
+    file = colander.SchemaNode(
+        deform.schema.FileData(),
+        widget = upload_widget,
+        missing = colander.null,
+        )
     name = colander.SchemaNode(
         colander.String(),
         validator = make_name_validator(FileType),
-        )
-    stream = colander.SchemaNode(
-        deform.schema.FileData(),
-        widget = upload_widget,
-        title = 'File',
+        missing = colander.null,
         )
     mimetype = colander.SchemaNode(
         colander.String(),
-        missing=colander.null,
+        missing = colander.null,
         )
 
-@content(FileType, name='File', icon='icon-file', add_view='add_file')
+@colander.deferred
+def name_or_file(node, kw):
+    def _name_or_file(node, struct):
+        if not struct['file'] and not struct['name']:
+            raise colander.Invalid('One of name or file is required')
+        if not struct['name']:
+            if struct['file'] and struct['file'].get('filename'):
+                filename = struct['file']['filename']
+                curried_name_validator = make_name_validator(FileType)
+                real_name_validator = curried_name_validator(node, kw)
+                real_name_validator(node['file'], filename)
+    return _name_or_file
+
+fileschema = FileSchema(validator=name_or_file)
+
+@content(
+    FileType,
+    name='File',
+    icon='icon-file',
+    add_view='add_file',
+    )
 class File(Persistent):
 
-    # prevent download tab from sorting first (it would show the file
-    # when manage_main clicked)
-    __tab_order__ = ('properties', 'acl_edit', 'download')
+    # prevent view tab from sorting first (it would display the file when
+    # manage_main clicked)
+    __tab_order__ = ('properties', 'acl_edit', 'view')
 
-    __propschema__ = FileSchema()
+    __propschema__ = fileschema
 
     def __init__(self, stream, mimetype='application/octet-stream'):
         self.mimetype = mimetype
@@ -146,20 +174,34 @@ class File(Persistent):
             uid=str(self.__objectid__),
             filename=self.__name__,
             )
-        return dict(name=self.__name__, file=filedata, mimetype=self.mimetype)
+        return dict(
+            name=self.__name__,
+            file=filedata,
+            mimetype=self.mimetype
+            )
 
     def set_properties(self, struct):
         newname = struct['name']
+        file = struct['file']
+        mimetype = struct['mimetype']
+        if file and file.get('fp'):
+            fp = file['fp']
+            fp.seek(0)
+            self.upload(fp)
+            filename = file['filename']
+            mimetype = mimetypes.guess_type(filename, strict=False)[0]
+            if not newname:
+                newname = filename
+        if not mimetype:
+            mimetype = 'application/octet-stream'
+        self.mimetype = mimetype
         oldname = self.__name__
-        if newname != oldname:
-            parent = self.__parent__
-            parent.rename(oldname, newname)
-        if struct['fp']:
-            self.upload(struct['fp'])
-            self.mimetype = mimetypes.guess_type(
-                struct['filename'], strict=False)[0]
+        if newname and newname != oldname:
+            self.__parent__.rename(oldname, newname)
         
     def upload(self, stream):
+        if not stream:
+            stream = StringIO.StringIO()
         fp = self.blob.open('w')
         size = 0
         for chunk in chunks(stream):
@@ -168,42 +210,61 @@ class File(Persistent):
         fp.close()
         self.size = size
 
-@mgmt_view(context=IFolder,
-           name='add_file',
-           tab_title='Add File', 
-           permission='sdi.add-content', 
-           renderer='substanced.sdi:templates/form.pt',
-           tab_condition=False)
+@mgmt_view(
+    context=IFolder,
+    name='add_file',
+    tab_title='Add File', 
+    permission='sdi.add-content', 
+    renderer='substanced.sdi:templates/form.pt',
+    tab_condition=False
+    )
 class AddFileView(FormView):
-    title = 'Add Document'
-    schema = FileSchema()
+    title = 'Add File'
+    schema = fileschema
     buttons = ('add',)
 
     def add_success(self, appstruct):
         registry = self.request.registry
         name = appstruct.pop('name')
-        filedata = appstruct.pop('stream')
-        stream = filedata['fp']
+        filedata = appstruct.pop('file')
+        stream = None
+        filename = None
+        if filedata:
+            filename = filedata['filename']
+            stream = filedata['fp']
+            if stream:
+                stream.seek(0)
+            else:
+                stream = None
         mimetype = appstruct['mimetype']
+        name = filename or name
         if not mimetype:
-            mimetype = mimetypes.guess_type(
-                filedata['filename'], strict=False)[0]
+            mimetype = mimetypes.guess_type(name, strict=False)[0]
+            if mimetype is None:
+                mimetype = 'application/octet-stream'
         fileob = registry.content.create(FileType, stream, mimetype)
         self.request.context[name] = fileob
         return HTTPFound(self.request.mgmt_path(fileob, '@@properties'))
 
-@mgmt_view(context=FileType,
-           name='download',
-           tab_title='Download',
-           permission='sdi.view')
-def download_tab(context, request):
+@mgmt_view(
+    context=FileType,
+    name='view',
+    tab_title='View',
+    permission='sdi.view'
+    )
+def view_tab(context, request):
     return HTTPFound(location=request.mgmt_path(context))
     
-@mgmt_view(context=FileType,
-           name='', 
-           permission='sdi.view',
-           tab_condition=False)
-def download_file(context, request):
-    return FileResponse(context.blob.committed(), request=request,
-                        content_type=context.mimetype)
+@mgmt_view(
+    context=FileType,
+    name='', 
+    permission='sdi.view',
+    tab_condition=False
+    )
+def view_file(context, request):
+    return FileResponse(
+        context.blob.committed(),
+        request=request,
+        content_type=str(context.mimetype),
+        )
     

@@ -207,6 +207,9 @@ Other Helpers
 .. autoclass:: FormView
    :members:
 
+.. autoclass:: FileUploadTempStore
+   :members:
+
 :mod:`substanced.objectmap` API
 --------------------------------
 
@@ -304,4 +307,5 @@ Other Helpers
 
 .. autofunction:: merge_url_qs
 
+.. autofunction:: chunks
 

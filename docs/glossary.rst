@@ -54,3 +54,14 @@ Glossary
    Service
      A persistent object in the :term:`resource tree` that exposes an API to
      application developers.  For example, the ``objectmap`` service.
+
+   Deform
+     A form library that draws and validates forms based on :term:`Colander`
+     schemas.  See http://docs.pylonsproject.org/projects/deform/en/latest/
+     for more information.
+
+   Colander
+     A schema library which can be used used to describe arbitrary data
+     structures.  See
+     http://docs.pylonsproject.org/projects/colander/en/latest/ for more
+     information.

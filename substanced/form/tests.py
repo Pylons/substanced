@@ -139,8 +139,9 @@ class TestFileUploadTempStore(unittest.TestCase):
         here = os.path.dirname(__file__)
         thisfile = os.path.join(here, 'tests.py')
         inst['a'] = {'fp':open(thisfile, 'rb')}
-        self.assertTrue(inst.tempstore['a']['fp'].startswith(self.tempdir))
-        self.assertTrue(open(inst.tempstore['a']['fp'], 'rb').read(),
+        self.assertTrue(inst.tempstore['a']['randid'])
+        fn = os.path.join(self.tempdir, inst.tempstore['a']['randid'])
+        self.assertTrue(open(fn).read(),
                         open(thisfile, 'rb').read())
         self.assertTrue(request.session._changed)
 
@@ -149,20 +150,21 @@ class TestFileUploadTempStore(unittest.TestCase):
         inst = self._makeOne(request)
         self.assertEqual(inst.get('a', True), True)
 
-    def test_get_nonbasestring_fp(self):
+    def test_get_no_randid(self):
         request = self._makeRequest()
         inst = self._makeOne(request)
         inst.tempstore['a'] = {'fp':True}
         self.assertEqual(inst.get('a'), {'fp':True})
 
-    def test_get_basestring_fp(self):
+    def test_get_with_randid(self):
         request = self._makeRequest()
         inst = self._makeOne(request)
-        here = os.path.dirname(__file__)
-        thisfile = os.path.join(here, 'tests.py')
-        inst.tempstore['a'] = {'fp':thisfile}
+        fn = os.path.join(self.tempdir, '1234')
+        with open(fn, 'wb') as f:
+            f.write('abc')
+        inst.tempstore['a'] = {'randid':'1234'}
         self.assertEqual(inst.get('a')['fp'].read(),
-                         open(thisfile, 'rb').read())
+                         open(fn, 'rb').read())
 
     def test___getitem___notfound(self):
         request = self._makeRequest()

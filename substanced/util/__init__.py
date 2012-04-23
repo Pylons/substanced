@@ -194,3 +194,11 @@ class Batch(object):
         self.last_url = last_url
         self.last = last
 
+def chunks(stream, chunk_size=10000):
+    """ Return a generator that will iterate over a stream (a filelike
+    object) ``chunk_size`` bytes at a time."""
+    while True:
+        chunk = stream.read(chunk_size)
+        if not chunk:
+            break
+        yield chunk

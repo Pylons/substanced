@@ -8,6 +8,8 @@ import deform.widget
 
 from pyramid.exceptions import ConfigurationError
 
+from ..util import chunks
+
 # assume jquery is already loaded in our widget resource list, use asset
 # specs instead of relative paths
 
@@ -131,6 +133,19 @@ class FormView(object):
 _marker = object()
 
 class FileUploadTempStore(object):
+    """ A Deform ``FileUploadTempStore`` implementation that stores file
+    upload data in the Pyramid session and on disk.  The request passed to
+    its constructor must be a fully-initialized Pyramid request (it have a
+    ``registry`` attribute, which must have a ``settings`` attribute, which
+    must be a dictionary).  The ``substanced.form.tempdir`` variable in the
+    ``settings`` dictionary must be set to the path of an existing directory
+    on disk.  This directory will temporarily store file upload data on
+    behalf of Deform and Substance D when a form containing a file upload
+    widget fails validation.
+
+    See the :term:`Deform` documentation for more information about
+    ``FileUploadTempStore`` objects.
+    """
     def __init__(self, request):
         try:
             self.tempdir = request.registry.settings['substanced.form.tempdir']
@@ -151,7 +166,8 @@ class FileUploadTempStore(object):
         return name in self.tempstore
 
     def __setitem__(self, name, data):
-        stream = data.get('fp', None)
+        newdata = data.copy()
+        stream = newdata.pop('fp', None)
 
         if stream is not None:
             while True:
@@ -160,12 +176,12 @@ class FileUploadTempStore(object):
                 if not os.path.exists(fn):
                     # XXX race condition
                     fp = open(fn, 'w+b')
+                    newdata['randid'] = randid
                     break
             for chunk in chunks(stream):
                 fp.write(chunk)
-            data['fp'] = fn
 
-        self.tempstore[name] = data
+        self.tempstore[name] = newdata
         self.session.changed()
 
     def get(self, name, default=None):
@@ -174,18 +190,19 @@ class FileUploadTempStore(object):
         if data is None:
             return default
 
-        data = data.copy()
+        newdata = data.copy()
             
-        fp = data.get('fp', None)
+        randid = newdata.get('randid')
 
-        if isinstance(fp, basestring):
+        if randid is not None:
+
+            fn = os.path.join(self.tempdir, randid)
             try:
-                fp = open(fp, 'rb')
-            except IOError: # pragma: no cover
-                fp = None
-            data['fp'] = fp
+                newdata['fp'] = open(fn, 'rb')
+            except IOError:
+                pass
 
-        return data
+        return newdata
 
     def __getitem__(self, name):
         data = self.get(name, _marker)
@@ -193,9 +210,3 @@ class FileUploadTempStore(object):
             raise KeyError(name)
         return data
 
-def chunks(stream, chunk_size=10000):
-    while True:
-        chunk = stream.read(chunk_size)
-        if not chunk:
-            break
-        yield chunk
