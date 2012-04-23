@@ -11,7 +11,7 @@ from pyramid.events import (
     )
 
 from . import get_mgmt_views # API used by templates
-get_mgmt_views = get_mgmt_views
+get_mgmt_views = get_mgmt_views # pyflakes
 
 from ..interfaces import ISite
 
