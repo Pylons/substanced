@@ -1,7 +1,12 @@
+import binascii
+import os
+
 import deform
 import deform.form
 import deform.exception
 import deform.widget
+
+from pyramid.exceptions import ConfigurationError
 
 # assume jquery is already loaded in our widget resource list, use asset
 # specs instead of relative paths
@@ -123,3 +128,74 @@ class FormView(object):
             'form':form.render(),
             }
 
+_marker = object()
+
+class FileUploadTempStore(object):
+    def __init__(self, request):
+        try:
+            self.tempdir = request.registry.settings['substanced.form.tempdir']
+        except KeyError:
+            raise ConfigurationError(
+                'To use FileUploadTempStore, you must set a  '
+                '"substanced.form.tempdir" key in your .ini settings. It '
+                'points to a directory which will temporarily '
+                'hold uploaded files when form validation fails.')
+        self.request = request
+        self.session = request.session
+        self.tempstore = self.session.setdefault('substanced.tempstore', {})
+        
+    def preview_url(self, uid):
+        return None
+
+    def __contains__(self, name):
+        return name in self.tempstore
+
+    def __setitem__(self, name, data):
+        stream = data.get('fp', None)
+
+        if stream is not None:
+            while True:
+                randid = binascii.hexlify(os.urandom(20))
+                fn = os.path.join(self.tempdir, randid)
+                if not os.path.exists(fn):
+                    # XXX race condition
+                    fp = open(fn, 'w+b')
+                    break
+            for chunk in chunks(stream):
+                fp.write(chunk)
+            data['fp'] = fn
+
+        self.tempstore[name] = data
+        self.session.changed()
+
+    def get(self, name, default=None):
+        data = self.tempstore.get(name)
+
+        if data is None:
+            return default
+
+        data = data.copy()
+            
+        fp = data.get('fp', None)
+
+        if isinstance(fp, basestring):
+            try:
+                fp = open(fp, 'rb')
+            except IOError: # pragma: no cover
+                fp = None
+            data['fp'] = fp
+
+        return data
+
+    def __getitem__(self, name):
+        data = self.get(name, _marker)
+        if data is _marker:
+            raise KeyError(name)
+        return data
+
+def chunks(stream, chunk_size=10000):
+    while True:
+        chunk = stream.read(chunk_size)
+        if not chunk:
+            break
+        yield chunk

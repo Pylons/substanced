@@ -1,5 +1,9 @@
+import os
+import tempfile
+import shutil
 import unittest
 from pyramid import testing
+from pyramid.exceptions import ConfigurationError
 
 class TestFormView(unittest.TestCase):
     def _getTargetClass(self):
@@ -80,6 +84,97 @@ class TestFormView(unittest.TestCase):
                          {'css_links': (), 'js_links': (), 'form': 'failure'})
 
 
+class TestFileUploadTempStore(unittest.TestCase):
+    def setUp(self):
+        self.tempdir = tempfile.mkdtemp()
+
+    def tearDown(self):
+        shutil.rmtree(self.tempdir)
+        
+    def _getTargetClass(self):
+        from . import FileUploadTempStore
+        return FileUploadTempStore
+
+    def _makeOne(self, request):
+        return self._getTargetClass()(request)
+
+    def _makeRequest(self):
+        request = testing.DummyRequest()
+        request.registry.settings = {}
+        request.registry.settings['substanced.form.tempdir'] = self.tempdir
+        request.session = DummySession()
+        return request
+
+    def test_no_tempdir_in_settings(self):
+        request = testing.DummyRequest()
+        request.registry.settings = {}
+        self.assertRaises(ConfigurationError, self._makeOne, request)
+
+    def test_preview_url(self):
+        request = self._makeRequest()
+        inst = self._makeOne(request)
+        self.assertEqual(inst.preview_url(None), None)
+
+    def test_contains_true(self):
+        request = self._makeRequest()
+        inst = self._makeOne(request)
+        inst.tempstore['a'] = 1
+        self.assertTrue('a' in inst)
+        
+    def test_contains_false(self):
+        request = self._makeRequest()
+        inst = self._makeOne(request)
+        self.assertFalse('a' in inst)
+
+    def test_setitem_stream_None(self):
+        request = self._makeRequest()
+        inst = self._makeOne(request)
+        inst['a'] = {}
+        self.assertEqual(inst.tempstore['a'], {})
+        self.assertTrue(request.session._changed)
+
+    def test_setitem_stream_file(self):
+        request = self._makeRequest()
+        inst = self._makeOne(request)
+        here = os.path.dirname(__file__)
+        thisfile = os.path.join(here, 'tests.py')
+        inst['a'] = {'fp':open(thisfile, 'rb')}
+        self.assertTrue(inst.tempstore['a']['fp'].startswith(self.tempdir))
+        self.assertTrue(open(inst.tempstore['a']['fp'], 'rb').read(),
+                        open(thisfile, 'rb').read())
+        self.assertTrue(request.session._changed)
+
+    def test_get_data_None(self):
+        request = self._makeRequest()
+        inst = self._makeOne(request)
+        self.assertEqual(inst.get('a', True), True)
+
+    def test_get_nonbasestring_fp(self):
+        request = self._makeRequest()
+        inst = self._makeOne(request)
+        inst.tempstore['a'] = {'fp':True}
+        self.assertEqual(inst.get('a'), {'fp':True})
+
+    def test_get_basestring_fp(self):
+        request = self._makeRequest()
+        inst = self._makeOne(request)
+        here = os.path.dirname(__file__)
+        thisfile = os.path.join(here, 'tests.py')
+        inst.tempstore['a'] = {'fp':thisfile}
+        self.assertEqual(inst.get('a')['fp'].read(),
+                         open(thisfile, 'rb').read())
+
+    def test___getitem___notfound(self):
+        request = self._makeRequest()
+        inst = self._makeOne(request)
+        self.assertRaises(KeyError, inst.__getitem__, 'a')
+        
+    def test___getitem___found(self):
+        request = self._makeRequest()
+        inst = self._makeOne(request)
+        inst.tempstore['a'] = {}
+        self.assertEqual(inst['a'], {})
+
 class DummyForm(object):
     def __init__(self, schema, buttons=None, use_ajax=False, ajax_options=''):
         self.schema = schema
@@ -110,3 +205,8 @@ class DummyButton(object):
     def __init__(self, name):
         self.name = name
         
+class DummySession(dict):
+    _changed = False
+    def changed(self):
+        self._changed = True
+
