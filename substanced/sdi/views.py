@@ -62,6 +62,29 @@ def logout(request):
     return HTTPFound(location = request.mgmt_path(request.context),
                      headers = headers)
 
+@mgmt_view(name='resetpassword', tab_condition=False,
+           renderer='templates/resetpassword.pt')
+def reset_password(context, request):
+    """ Allows an unauthenticated user to request a password reset."""
+    login = ''
+    if 'form.submitted' in request.params:
+        try:
+            check_csrf_token(request)
+        except:
+            request.session.flash('Failed login (CSRF)', 'error')
+        else:
+            login = request.params['login']
+            principals = find_service(context, 'principals')
+            users = principals['users']
+            user = users.get(login)
+            if user is not None:
+                user.email_password_reset(request)
+                request.session.flash('Emailed temporary password', 'success')
+                home = request.mgmt_path(request.root)
+                return HTTPFound(location=home)
+            request.session.flash('Invalid username', 'error')
+    return {'login': login}
+
 @mgmt_view(tab_title='manage_main')
 def manage_main(request):
     view_data = get_mgmt_views(request)
@@ -70,7 +93,6 @@ def manage_main(request):
         return HTTPFound(location=request.mgmt_path(request.root, '@@login'))
     view_name = view_data[0]['view_name']
     return HTTPFound(request.mgmt_path(request.context, '@@%s' % view_name))
-
 
 @mgmt_view(context=IFolder, name='add', tab_title='Add', 
            permission='sdi.manage-contents', renderer='templates/add.pt',
