@@ -38,7 +38,7 @@ that generates content must have these properties:
   introspected by various Substance D UI elements such as "add forms", and
   queries by the management interface for the icon name of a resource.  The
   type is defined as a class that inherits from the
-  :class:`substanced.content.Type` class.
+  :class:`substanced.content.Type` class, or as a string.
 
 Here's an example which defines a content resource factory as a class:
 
@@ -56,6 +56,24 @@ Here's an example which defines a content resource factory as a class:
        pass
 
    @content(BlogEntryType)
+   class BlogEntry(Persistent):
+       def __init__(self, title, body):
+           self.title = title
+           self.body = body
+
+Here's an example of defining a content resource factory with the type given
+as a string instead of a Type instance:
+
+.. code-block:: python
+
+   # in a module named blog.resources
+
+   from persistent import Persistent
+   from substanced.content import (
+       content,
+       )     
+
+   @content('BlogEntryType')
    class BlogEntry(Persistent):
        def __init__(self, title, body):
            self.title = title

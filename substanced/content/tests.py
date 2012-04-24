@@ -57,11 +57,23 @@ class TestContentRegistry(unittest.TestCase):
         inst.add(IFoo, True, icon='fred')
         self.assertEqual(inst.factories[IFoo], True)
         self.assertEqual(IFoo.getTaggedValue('icon'), 'fred')
-        
+
+    def test_add_with_name(self):
+        inst = self._makeOne(ICategory)
+        class IFoo(Interface):
+            pass
+        inst.add(IFoo, True, name='bar')
+        self.assertEqual(inst.factories['bar'], True)
+
     def test_create(self):
         inst = self._makeOne(ICategory)
         inst.factories[IDummy] = lambda a: a
         self.assertEqual(inst.create(IDummy, 'a'), 'a')
+
+    def test_create_with_name(self):
+        inst = self._makeOne(ICategory)
+        inst.factories['dummy'] = lambda a: a
+        self.assertEqual(inst.create('dummy', 'a'), 'a')
 
     def test_all_no_context(self):
         inst = self._makeOne(ICategory)
@@ -156,6 +168,17 @@ class Test_content(unittest.TestCase):
         ct = config.content_types
         self.assertEqual(len(ct), 1)
 
+    def test_decorates_class_with_name(self):
+        decorator = self._makeOne('foo')
+        venusian = DummyVenusian()
+        decorator.venusian = venusian
+        decorator.venusian.info.scope = 'class'
+        wrapped = decorator(Special)
+        self.assertTrue(wrapped is Special)
+        config = call_venusian(venusian)
+        ct = config.content_types
+        self.assertEqual(len(ct), 1)
+
     def test_decorates_function(self):
         decorator = self._makeOne(ISpecial)
         venusian = DummyVenusian()
@@ -223,6 +246,28 @@ class Test_add_content_type(unittest.TestCase):
         content = config.registry.content.added[0][0][1]()
         self.assertEqual(content.__class__, Foo)
         self.assertTrue(IFoo.providedBy(content))
+
+    def test_success_class_with_name(self):
+        config = DummyConfig()
+        config.registry.content = DummyContentRegistry()
+        class Foo(object):
+            pass
+        self._callFUT(config, 'foo', Foo, category=ICategory)
+        self.assertEqual(len(config.actions), 1)
+        self.assertEqual('sd-content-type', config.actions[0][0][0][0])
+        self.assertEqual('<InterfaceClass substanced.content.foo>',
+            repr(config.actions[0][0][0][1]))
+        config.actions[0][1]['callable']()
+        self.assertEqual(
+            config.registry.content.added[0][1]['category'], ICategory)
+        content_iface = config.registry.content.added[0][0][0]
+        self.assertEqual(
+            repr(content_iface),
+            '<InterfaceClass substanced.content.foo>')
+        content = config.registry.content.added[0][0][1]()
+        self.assertEqual(content.__class__, Foo)
+        self.assertTrue(content_iface.providedBy(content))
+
         
 class Test_provides_factory(unittest.TestCase):
     def _callFUT(self, factory, content_iface):
