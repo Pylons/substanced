@@ -28,6 +28,7 @@ from ..interfaces import (
     IPrincipal,
     IPrincipals,
     IObjectAdded,
+    IObjectWillBeRemoved,
     IPasswordResets,
     IPasswordReset,
     )
@@ -389,8 +390,20 @@ class PasswordReset(Persistent):
             raise ValueError('No user associated with this password reset')
         user = sources[0]
         user.set_password(password)
-        # suicide
+        self.commit_suicide()
+
+    def commit_suicide(self):
         del self.__parent__[self.__name__]
+
+@subscriber([IUser, IObjectWillBeRemoved])
+def user_will_be_removed(user, event):
+    """ Remove all password reset objects associated with a user when the user
+    is removed """
+    objectmap = find_service(event.object, 'objectmap')
+    if objectmap is not None:
+        resets = objectmap.targets(user, UserToPasswordReset)
+        for reset in resets:
+            reset.commit_suicide()
 
 @subscriber([IPrincipal, IObjectAdded])
 def principal_added(principal, event):

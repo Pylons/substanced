@@ -20,11 +20,17 @@ from . import (
     GroupSchema,
     )
 
+class AddUserSchema(UserSchema):
+    password = colander.SchemaNode(
+        colander.String(),
+        widget = deform.widget.CheckedPasswordWidget(),
+        )
+
 @mgmt_view(context=IUsers, name='add_user', permission='sdi.add-user', 
            renderer='substanced.sdi:templates/form.pt', tab_condition=False)
 class AddUserView(FormView):
     title = 'Add User'
-    schema = UserSchema()
+    schema = AddUserSchema()
     buttons = ('add',)
 
     def add_success(self, appstruct):
