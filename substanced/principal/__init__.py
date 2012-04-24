@@ -7,6 +7,10 @@ import deform.widget
 import deform_bootstrap.widget
 
 from pyramid.events import subscriber
+from pyramid.renderers import render
+
+from pyramid_mailer import get_mailer
+from pyramid_mailer.message import Message
 
 from ..interfaces import (
     IUser,
@@ -273,6 +277,32 @@ class User(Folder):
 
     def set_password(self, password):
         self.password = self.pwd_manager.encode(password)
+
+    def _gen_random_password(self):
+        """ Generates a random password to be used in conjunction with
+        ``self.email_password_reset``.
+        """
+        import random
+        import string
+        length = random.choice(range(10, 16))
+        chars = string.letters + string.digits
+        return ''.join(random.choice(chars) for _ in range(length))
+
+    def email_password_reset(self, request):
+        """ Sends a password reset email."""
+        root = request.root
+        sitename = getattr(root, 'title', 'Management Interface')
+        loginurl = request.application_url + request.mgmt_path(root, '@@login')
+        password = self._gen_random_password()
+        self.set_password(password)
+        message = Message(
+            subject = 'Your temporary password for %s' % sitename,
+            recipients = [self.email],
+            body = render('templates/resetpassword_email.pt',
+                          dict(password=password, loginurl=loginurl))
+            )
+        mailer = get_mailer(request)
+        mailer.send(message)
 
     def get_properties(self):
         props = {}

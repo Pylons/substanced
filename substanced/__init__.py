@@ -1,5 +1,6 @@
 def includeme(config): # pragma: no cover
     config.include('pyramid_zodbconn')
+    config.include('pyramid_mailer')
     config.include('.sdi')
     config.include('.content')
     config.include('.acl')

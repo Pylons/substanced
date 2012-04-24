@@ -62,6 +62,29 @@ def logout(request):
     return HTTPFound(location = request.mgmt_path(request.context),
                      headers = headers)
 
+@mgmt_view(name='resetpassword', tab_condition=False,
+           renderer='templates/resetpassword.pt')
+def reset_password(context, request):
+    """ Allows an unauthenticated user to request a password reset."""
+    login = ''
+    if 'form.submitted' in request.params:
+        try:
+            check_csrf_token(request)
+        except:
+            request.session.flash('Failed login (CSRF)', 'error')
+        else:
+            login = request.params['login']
+            principals = find_service(context, 'principals')
+            users = principals['users']
+            user = users.get(login)
+            if user is not None:
+                user.email_password_reset(request)
+                request.session.flash('Emailed temporary password', 'success')
+                home = request.mgmt_path(request.root)
+                return HTTPFound(location=home)
+            request.session.flash('Invalid username', 'error')
+    return {'login': login}
+
 @mgmt_view(tab_condition=False)
 @mgmt_view(name='manage_main', tab_condition=False)
 def manage_main(request):
