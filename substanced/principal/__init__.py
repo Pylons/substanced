@@ -47,8 +47,9 @@ class UserToGroup(Interface):
 class Principals(Folder):
     """ Object representing a collection of principals.  Inherits from
     :class:`substanced.folder.Folder`.  Contains ``users``, an instance of
-    :class:`substanced.principal.Users`, and ``groups``, an instance of
-    :class:`substanced.principal.Groups`."""
+    :class:`substanced.principal.Users`, ``groups``, an instance of
+    :class:`substanced.principal.Groups`, and ``resets`` an instance of
+    :class:`substanced.principal.PasswordResets`"""
     def __init__(self):
         Folder.__init__(self)
         self['users'] = Users()
@@ -358,7 +359,7 @@ class User(Folder):
 class UserToPasswordReset(object):
     pass
 
-@content(IPasswordResets, icon='icon-star')
+@content(IPasswordResets, icon='icon-tags')
 class PasswordResets(Folder):
     """ Object representing the current set of password reset requests """
     def _gen_random_token(self):
@@ -375,12 +376,12 @@ class PasswordResets(Folder):
                 break
         reset = PasswordReset()
         self[token] = reset
-        reset.__acl__ = [(Allow, Everyone, 'sdi.view')]
+        reset.__acl__ = [(Allow, Everyone, ('sdi.view',))]
         objectmap = self.find_service('objectmap')
         objectmap.connect(user, reset, UserToPasswordReset)
         return reset
 
-@content(IPasswordReset, icon='icon-question-mark')
+@content(IPasswordReset, icon='icon-tag')
 class PasswordReset(Persistent):
     """ Object representing the a single password reset request """
     def reset_password(self, password):
