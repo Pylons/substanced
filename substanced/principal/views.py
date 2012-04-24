@@ -154,6 +154,6 @@ class ResetView(FormView):
         request = self.request
         context = self.request.context
         context.reset_password(appstruct['new_password'])
-        request.session.flash('Password reset, now please log in', 'success')
+        request.session.flash('Password reset, you may now log in', 'success')
         home = request.mgmt_path(request.root)
         return HTTPFound(location=home)
