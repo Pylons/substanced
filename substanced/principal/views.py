@@ -131,7 +131,7 @@ class ResetRequestView(FormView):
         users = principals['users']
         user = users[login]
         user.email_password_reset(request)
-        request.session.flash('Emailed reset instructions', 'success')
+        request.session.flash('Emailed password reset instructions', 'success')
         home = request.mgmt_path(request.root)
         return HTTPFound(location=home)
         
