@@ -1,6 +1,8 @@
 from pyramid.security import (
     NO_PERMISSION_REQUIRED,
     ALL_PERMISSIONS,
+    Everyone,
+    Authenticated,
     )
 
 from ..interfaces import ICatalogable
@@ -72,15 +74,18 @@ def acl_edit_view(context, request):
         check_csrf_token(request)
         verb = request.POST['verb']
         principal_id_str = request.POST['principal']
-
-        try:
-            principal_id = int(principal_id_str)
-        except ValueError:
-            principal_id = None
-            
+        if principal_id_str in (Everyone, Authenticated):
+            principal_id = principal_id_str
+            principal = principal_id_str
+        else:
+            try:
+                principal_id = int(principal_id_str)
+            except ValueError:
+                principal_id = None
+            principal = objectmap.object_for(principal_id)
         if principal_id is None:
             request.session.flash('No principal selected', 'error')
-        elif objectmap.object_for(principal_id) is not None:
+        elif principal is not None:
             permissions = request.POST.getall('permissions')
             if not permissions:
                 permissions = ()
@@ -147,6 +152,18 @@ def acl_edit_view(context, request):
         
     parent = context.__parent__
     parent_acl = []
+
+    def get_principal_name(principal_id):
+        if principal_id  in (Everyone, Authenticated):
+            pname = principal_id
+        else:
+            principal = objectmap.object_for(principal_id)
+            if principal is None:
+                pname = '<deleted principal>'
+            else:
+                pname = principal.__name__
+        return pname
+        
     while parent is not None:
         p_acl = getattr(parent, '__acl__', ())
         stop = False
@@ -155,11 +172,7 @@ def acl_edit_view(context, request):
                 stop = True
             else:
                 principal_id = ace[1]
-                principal = objectmap.object_for(principal_id)
-                if principal is None:
-                    pname = '<deleted principal>'
-                else:
-                    pname = principal.__name__
+                pname = get_principal_name(principal_id)
                 if ace[2] == ALL_PERMISSIONS:
                     perms =  ('-- ALL --',)
                 else:
@@ -181,12 +194,7 @@ def acl_edit_view(context, request):
             break
         if permissions == ALL_PERMISSIONS:
             permissions = ('-- ALL --',)
-        principal = objectmap.object_for(principal_id)
-        if principal is None:
-            pname = '<deleted principal>'
-        else:
-            pname = principal.__name__
-            
+        pname = get_principal_name(principal_id)
         new_ace = (l_ace[0], pname, permissions)
         local_acl.append(new_ace)
 
@@ -199,7 +207,10 @@ def acl_edit_view(context, request):
     permissions.sort()
 
     users = principal_service['users'].values()
+    users = [ (oid_of(user), user.__name__) for user in users ]
     groups = principal_service['groups'].values()
+    groups = [ (oid_of(group), group.__name__) for group in groups ]
+    groups = [ (Everyone, Everyone), (Authenticated, Authenticated) ] + groups
 
     return dict(
         parent_acl=parent_acl or (),
@@ -208,7 +219,7 @@ def acl_edit_view(context, request):
         inheriting=inheriting,
         security_state=security_state,
         security_states=security_states,
-        users = [ (oid_of(user), user.__name__) for user in users ],
-        groups = [ (oid_of(group), group.__name__) for group in groups ],
+        users=users,
+        groups=groups,
         )
 
