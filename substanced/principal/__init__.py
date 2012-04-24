@@ -1,3 +1,7 @@
+import random
+import string
+
+from persistent import Persistent
 from cryptacular.bcrypt import BCRYPTPasswordManager
 from zope.interface import Interface
 
@@ -8,6 +12,10 @@ import deform_bootstrap.widget
 
 from pyramid.events import subscriber
 from pyramid.renderers import render
+from pyramid.security import (
+    Allow,
+    Everyone,
+    )
 
 from pyramid_mailer import get_mailer
 from pyramid_mailer.message import Message
@@ -20,6 +28,8 @@ from ..interfaces import (
     IPrincipal,
     IPrincipals,
     IObjectAdded,
+    IPasswordResets,
+    IPasswordReset,
     )
 
 from ..content import content
@@ -42,6 +52,7 @@ class Principals(Folder):
         Folder.__init__(self)
         self['users'] = Users()
         self['groups'] = Groups()
+        self['resets'] = PasswordResets()
 
 @content(IUsers, icon='icon-list-alt')
 class Users(Folder):
@@ -237,7 +248,6 @@ class UserSchema(Schema):
     email = colander.SchemaNode(
         colander.String(),
         validator=colander.All(colander.Email(), colander.Length(max=100)),
-        missing='',
         )
     groups = colander.SchemaNode(
         deform.Set(allow_empty=True),
@@ -255,7 +265,7 @@ class User(Folder):
 
     pwd_manager = BCRYPTPasswordManager()
 
-    def __init__(self, password, email=''):
+    def __init__(self, password, email):
         Folder.__init__(self)
         self.password = self.pwd_manager.encode(password)
         self.email = email
@@ -278,28 +288,19 @@ class User(Folder):
     def set_password(self, password):
         self.password = self.pwd_manager.encode(password)
 
-    def _gen_random_password(self):
-        """ Generates a random password to be used in conjunction with
-        ``self.email_password_reset``.
-        """
-        import random
-        import string
-        length = random.choice(range(10, 16))
-        chars = string.letters + string.digits
-        return ''.join(random.choice(chars) for _ in range(length))
-
     def email_password_reset(self, request):
         """ Sends a password reset email."""
         root = request.root
-        sitename = getattr(root, 'title', 'Management Interface')
-        loginurl = request.application_url + request.mgmt_path(root, '@@login')
-        password = self._gen_random_password()
-        self.set_password(password)
+        sitename = getattr(root, 'title', None) or 'Substance D'
+        principals = find_service(self, 'principals')
+        resets = principals['resets']
+        reset = resets.add_reset(self)
+        reseturl = request.application_url + request.mgmt_path(reset)
         message = Message(
-            subject = 'Your temporary password for %s' % sitename,
+            subject = 'Account information for %s' % sitename,
             recipients = [self.email],
             body = render('templates/resetpassword_email.pt',
-                          dict(password=password, loginurl=loginurl))
+                          dict(reseturl=reseturl))
             )
         mailer = get_mailer(request)
         mailer.send(message)
@@ -352,6 +353,44 @@ class User(Folder):
             group = self._resolve_group(groupid)
             if group is not None:
                 objectmap.disconnect(self, group, UserToGroup)
+
+class UserToPasswordReset(object):
+    pass
+
+@content(IPasswordResets, icon='icon-star')
+class PasswordResets(Folder):
+    """ Object representing the current set of password reset requests """
+    def _gen_random_token(self):
+        """ Generates a random token to be used by ``self.add_reset``.
+        """
+        length = random.choice(range(10, 16))
+        chars = string.letters + string.digits
+        return ''.join(random.choice(chars) for _ in range(length))
+
+    def add_reset(self, user):
+        while 1:
+            token = self._gen_random_token()
+            if not token in self:
+                break
+        reset = PasswordReset()
+        self[token] = reset
+        reset.__acl__ = [(Allow, Everyone, 'sdi.view')]
+        objectmap = self.find_service('objectmap')
+        objectmap.connect(user, reset, UserToPasswordReset)
+        return reset
+
+@content(IPasswordReset, icon='icon-question-mark')
+class PasswordReset(Persistent):
+    """ Object representing the a single password reset request """
+    def reset_password(self, password):
+        objectmap = find_service(self, 'objectmap')
+        sources = list(objectmap.sources(self, UserToPasswordReset))
+        if not sources:
+            raise ValueError('No user associated with this password reset')
+        user = sources[0]
+        user.set_password(password)
+        # suicide
+        del self.__parent__[self.__name__]
 
 @subscriber([IPrincipal, IObjectAdded])
 def principal_added(principal, event):

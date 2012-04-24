@@ -9,9 +9,9 @@ class TestSite(unittest.TestCase):
     def tearDown(self):
         testing.tearDown()
 
-    def _makeOne(self, initial_login, initial_password):
+    def _makeOne(self, initial_login, initial_email, initial_password):
         from . import Site
-        return Site(initial_login, initial_password)
+        return Site(initial_login, initial_email, initial_password)
 
     def _setupEvents(self):
         from ..objectmap import object_will_be_added
@@ -23,12 +23,12 @@ class TestSite(unittest.TestCase):
 
     def test_ctor(self):
         self._setupEvents()
-        inst = self._makeOne('login', 'password')
+        inst = self._makeOne('login', 'email', 'password')
         self.assertTrue('__services__' in inst)
 
     def test_get_properties(self):
         self._setupEvents()
-        inst = self._makeOne('login', 'password')
+        inst = self._makeOne('login', 'email', 'password')
         inst.title = 'title'
         inst.description = 'description'
         self.assertEqual(inst.get_properties(),
@@ -36,7 +36,7 @@ class TestSite(unittest.TestCase):
 
     def test_set_properties(self):
         self._setupEvents()
-        inst = self._makeOne('login', 'password')
+        inst = self._makeOne('login', 'email', 'password')
         inst.title = 'title'
         inst.description = 'description'
         inst.set_properties(dict(title='t', description='d'))

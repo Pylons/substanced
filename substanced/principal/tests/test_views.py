@@ -86,12 +86,40 @@ class TestChangePasswordView(unittest.TestCase):
         self.assertEqual(resp.location, 'http://example.com')
         self.assertTrue(request.session['_f_success'])
 
+class TestRequestResetView(unittest.TestCase):
+    def _makeOne(self, request):
+        from ..views import ResetRequestView
+        return ResetRequestView(request)
+
+    def _makeRequest(self):
+        request = testing.DummyRequest()
+        request.mgmt_path = lambda *arg : 'http://example.com'
+        return request
+
+    def _makeSite(self):
+        from ...testing import make_site
+        return make_site()
+
+    def test_send_success(self):
+        site = self._makeSite()
+        user = DummyPrincipal()
+        site['__services__']['principals']['users']['user'] = user
+        request = self._makeRequest()
+        request.context = site
+        inst = self._makeOne(request)
+        resp = inst.send_success({'login':'user'})
+        self.assertEqual(resp.location, 'http://example.com')
+        self.assertTrue(user.emailed_password_reset)
+
 class DummyPrincipal(object):
     def connect(self, *args):
         self.connected = args
 
     def set_password(self, password):
         self.password = password
+
+    def email_password_reset(self, request):
+        self.emailed_password_reset = True
 
 class DummyContent(object):
     def __init__(self, resource):

@@ -323,6 +323,13 @@ class IGroups(Interface):
 class IPrincipals(Interface):
     """ Marker interface representing a container of users and groups """
 
+class IPasswordResets(Interface):
+    """ Marker interface representing a collection of password reset requests
+    """
+
+class IPasswordReset(Interface):
+    """ Marker interface represent a password reset request """
+
 marker = object()
 
 SERVICES_NAME = '__services__'

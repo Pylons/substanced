@@ -6,11 +6,13 @@ from pyramid.httpexceptions import HTTPFound
 from ..form import FormView
 from ..sdi import mgmt_view
 from ..schema import Schema
+from ..service import find_service
 from ..interfaces import (
     IUsers,
     IUser,
     IGroups,
     IGroup,
+    IPasswordReset,
     )
 
 from . import (
@@ -89,3 +91,63 @@ class ChangePasswordView(FormView):
         user.set_password(password)
         self.request.session.flash('Password changed', 'success')
         return HTTPFound(self.request.mgmt_path(user, '@@change_password'))
+
+@colander.deferred
+def login_validator(node, kw):
+    request = kw['request']
+    context = request.context
+    def _login_validator(node, value):
+        principals = find_service(context, 'principals')
+        users = principals['users']
+        if users.get(value) is None:
+            raise colander.Invalid(node, 'No such user %s' % value)
+    return _login_validator
+
+class ResetRequestSchema(Schema):
+    """ The schema for validating password reset requests."""
+    login = colander.SchemaNode(
+        colander.String(),
+        validator = login_validator,
+        )
+
+@mgmt_view(name='resetpassword', tab_condition=False,
+           renderer='substanced.sdi:templates/form.pt')
+class ResetRequestView(FormView):
+    title = 'Request Password Reset'
+    schema = ResetRequestSchema()
+    buttons = ('send',)
+
+    def send_success(self, appstruct):
+        request = self.request
+        context = self.request.context
+        login = appstruct['login']
+        principals = find_service(context, 'principals')
+        users = principals['users']
+        user = users[login]
+        user.email_password_reset(request)
+        request.session.flash('Emailed reset instructions', 'success')
+        home = request.mgmt_path(request.root)
+        return HTTPFound(location=home)
+        
+class ResetSchema(Schema):
+    """ The schema for validating password reset requests."""
+    new_password = colander.SchemaNode(
+        colander.String(),
+        validator = colander.Length(min=3, max=100),
+        widget = deform.widget.CheckedPasswordWidget(),
+        )
+
+@mgmt_view(context=IPasswordReset, name='', tab_condition=False,
+           renderer='substanced.sdi:templates/form.pt')
+class ResetView(FormView):
+    title = 'Reset Password'
+    schema = ResetSchema()
+    buttons = ('reset',)
+    
+    def reset_success(self, appstruct):
+        request = self.request
+        context = self.request.context
+        context.reset_password(appstruct['new_password'])
+        request.session.flash('Password reset, now please log in', 'success')
+        home = request.mgmt_path(request.root)
+        return HTTPFound(location=home)

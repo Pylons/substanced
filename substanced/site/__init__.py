@@ -4,6 +4,7 @@ import colander
 from pyramid.exceptions import ConfigurationError
 from pyramid.security import (
     Allow,
+    Everyone,
     ALL_PERMISSIONS,
     )
 
@@ -38,7 +39,7 @@ class Site(Folder):
     title = ''
     description = ''
 
-    def __init__(self, initial_login, initial_password):
+    def __init__(self, initial_login, initial_email, initial_password):
         Folder.__init__(self)
         objectmap = ObjectMap()
         catalog = Catalog()
@@ -46,7 +47,9 @@ class Site(Folder):
         self.add_service('objectmap', objectmap)
         self.add_service('catalog', catalog)
         self.add_service('principals', principals)
-        user = principals['users'].add_user(initial_login, initial_password)
+        user = principals['users'].add_user(
+            initial_login, initial_password, initial_email
+            )
         group = principals['groups'].add_group('admininstrators')
         group.connect(user)
         catalog.refresh()
@@ -73,15 +76,18 @@ class Site(Folder):
         conn = get_connection(request)
         zodb_root = conn.root()
         if not 'app_root' in zodb_root:
-            password = request.registry.settings.get(
+            settings = request.registry.settings
+            password = settings.get(
                 'substanced.initial_password')
             if password is None:
                 raise ConfigurationError(
                     'You must set a substanced.initial_password '
                     'in your configuration file')
-            username = request.registry.settings.get(
+            username = settings.get(
                 'substanced.initial_login', 'admin')
-            app_root = cls(username, password)
+            email = settings.get(
+                'substanced.initial_email', 'admin@example.com')
+            app_root = cls(username, email, password)
             zodb_root['app_root'] = app_root
             transaction.commit()
         return zodb_root['app_root']
