@@ -166,6 +166,12 @@ class TestFileUploadTempStore(unittest.TestCase):
         self.assertEqual(inst.get('a')['fp'].read(),
                          open(fn, 'rb').read())
 
+    def test_get_with_randid_file_doesntexist(self):
+        request = self._makeRequest()
+        inst = self._makeOne(request)
+        inst.tempstore['a'] = {'randid':'1234'}
+        self.assertFalse('fp' in inst.get('a'))
+
     def test___getitem___notfound(self):
         request = self._makeRequest()
         inst = self._makeOne(request)
