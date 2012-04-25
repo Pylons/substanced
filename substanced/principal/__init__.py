@@ -398,7 +398,7 @@ class PasswordReset(Persistent):
 def user_will_be_removed(user, event):
     """ Remove all password reset objects associated with a user when the user
     is removed """
-    objectmap = find_service(event.object, 'objectmap')
+    objectmap = find_service(user, 'objectmap')
     if objectmap is not None:
         resets = objectmap.targets(user, UserToPasswordReset)
         for reset in resets:

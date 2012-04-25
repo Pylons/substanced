@@ -516,6 +516,27 @@ class TestPasswordReset(unittest.TestCase):
         inst.reset_password('password')
         self.assertEqual(user.password, 'password')
         self.assertFalse('reset' in parent)
+
+class Test_user_will_be_removed(unittest.TestCase):
+    def _callFUT(self, user, event):
+        from .. import user_will_be_removed
+        return user_will_be_removed(user, event)
+
+    def test_it(self):
+        from ...interfaces import IFolder
+        parent = testing.DummyResource(__provides__=IFolder)
+        user = testing.DummyResource()
+        reset = testing.DummyResource()
+        def commit_suicide():
+            reset.committed = True
+        reset.commit_suicide = commit_suicide
+        objectmap = DummyObjectMap((reset,))
+        services = testing.DummyResource()
+        parent['__services__'] = services
+        parent['user'] = user
+        services['objectmap'] = objectmap
+        self._callFUT(user, None)
+        self.assertTrue(reset.committed)
         
 from ...interfaces import IFolder
 
