@@ -387,8 +387,6 @@ class PasswordReset(Persistent):
     def reset_password(self, password):
         objectmap = find_service(self, 'objectmap')
         sources = list(objectmap.sources(self, UserToPasswordReset))
-        if not sources:
-            raise ValueError('No user associated with this password reset')
         user = sources[0]
         user.set_password(password)
         self.commit_suicide()

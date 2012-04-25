@@ -494,6 +494,28 @@ class TestPasswordResets(unittest.TestCase):
             [(user, reset, UserToPasswordReset)])
         self.assertTrue(reset.__acl__)
         self.assertEqual(len(inst), 2)
+
+class TestPasswordReset(unittest.TestCase):
+    def _makeOne(self):
+        from .. import PasswordReset
+        return PasswordReset()
+
+    def test_reset_password(self):
+        from ...interfaces import IFolder
+        parent = testing.DummyResource(__provides__=IFolder)
+        user = testing.DummyResource()
+        def set_password(password):
+            user.password = password
+        user.set_password = set_password
+        objectmap = DummyObjectMap((user,))
+        inst = self._makeOne()
+        parent['reset'] = inst
+        services = testing.DummyResource()
+        parent['__services__'] = services
+        services['objectmap'] = objectmap
+        inst.reset_password('password')
+        self.assertEqual(user.password, 'password')
+        self.assertFalse('reset' in parent)
         
 from ...interfaces import IFolder
 
