@@ -474,6 +474,26 @@ class Test_groupfinder(unittest.TestCase):
         request.context = context
         result = self._callFUT(1, request)
         self.assertEqual(result, (1,2))
+
+class TestPasswordResets(unittest.TestCase):
+    def _makeOne(self):
+        from .. import PasswordResets
+        return PasswordResets()
+
+    def test_add_reset(self):
+        from .. import UserToPasswordReset
+        inst = self._makeOne()
+        objectmap = DummyObjectMap()
+        services = testing.DummyResource()
+        inst.add('__services__', services, allow_services=True)
+        services['objectmap'] = objectmap
+        user = testing.DummyResource()
+        reset = inst.add_reset(user)
+        self.assertEqual(
+            objectmap.connections,
+            [(user, reset, UserToPasswordReset)])
+        self.assertTrue(reset.__acl__)
+        self.assertEqual(len(inst), 2)
         
 from ...interfaces import IFolder
 
