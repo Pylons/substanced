@@ -101,7 +101,7 @@ class TestFileUploadTempStore(unittest.TestCase):
     def _makeRequest(self):
         request = testing.DummyRequest()
         request.registry.settings = {}
-        request.registry.settings['substanced.form.tempdir'] = self.tempdir
+        request.registry.settings['substanced.uploads_tempdir'] = self.tempdir
         request.session = DummySession()
         return request
 
