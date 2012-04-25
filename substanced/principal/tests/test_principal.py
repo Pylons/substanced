@@ -249,6 +249,12 @@ class Test_groups_widget(unittest.TestCase):
         self.assertEqual(result.values, [('1', 'group')])
 
 class TestUser(unittest.TestCase):
+    def setUp(self):
+        self.config = testing.setUp()
+
+    def tearDown(self):
+        testing.tearDown()
+        
     def _makeOne(self, password, email=''):
         from .. import User
         return User(password, email)
@@ -262,6 +268,24 @@ class TestUser(unittest.TestCase):
         inst = self._makeOne('abc')
         inst.set_password('abcdef')
         self.assertTrue(inst.pwd_manager.check(inst.password, 'abcdef'))
+
+    def test_email_password_reset(self):
+        from ...testing import make_site
+        from pyramid_mailer import get_mailer
+        site = make_site()
+        principals = site['__services__']['principals']
+        resets = principals['resets'] = testing.DummyResource()
+        def add_reset(user):
+            self.assertEqual(user, inst)
+        resets.add_reset = add_reset
+        request = testing.DummyRequest()
+        request.mgmt_path = lambda *arg: '/mgmt'
+        request.root = site
+        self.config.include('pyramid_mailer.testing')
+        inst = self._makeOne('password')
+        principals['users']['user'] = inst
+        inst.email_password_reset(request)
+        self.assertTrue(get_mailer(request).outbox)
 
     def test_get_properties(self):
         inst = self._makeOne('abc', 'email')
