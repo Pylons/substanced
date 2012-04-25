@@ -105,7 +105,7 @@ def login_validator(node, kw):
     def _login_validator(node, value):
         principals = find_service(context, 'principals')
         users = principals['users']
-        if users.get(value) is None:
+        if not value in users:
             raise colander.Invalid(node, 'No such user %s' % value)
     return _login_validator
 

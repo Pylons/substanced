@@ -111,6 +111,39 @@ class TestRequestResetView(unittest.TestCase):
         self.assertEqual(resp.location, 'http://example.com')
         self.assertTrue(user.emailed_password_reset)
 
+class Test_login_validator(unittest.TestCase):
+    def _makeOne(self, node, kw):
+        from ..views import login_validator
+        return login_validator(node, kw)
+
+    def _makeSite(self):
+        from ...interfaces import IFolder
+        site = testing.DummyResource(__provides__=IFolder)
+        services = testing.DummyResource()
+        principals = testing.DummyResource()
+        users = testing.DummyResource()
+        site['__services__'] = services
+        services['principals'] = principals
+        principals['users'] = users
+        return site
+
+    def test_no_such_user(self):
+        import colander
+        request = testing.DummyRequest()
+        site = self._makeSite()
+        request.context = site
+        inst = self._makeOne(None, dict(request=request))
+        self.assertRaises(colander.Invalid, inst, None, 'fred')
+
+    def test_user_exists(self):
+        request = testing.DummyRequest()
+        site = self._makeSite()
+        request.context = site
+        fred = testing.DummyResource()
+        site['__services__']['principals']['users']['fred'] = fred
+        inst = self._makeOne(None, dict(request=request))
+        self.assertEqual(inst(None, 'fred'), None)
+
 class DummyPrincipal(object):
     def connect(self, *args):
         self.connected = args
