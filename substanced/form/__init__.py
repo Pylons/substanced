@@ -137,7 +137,7 @@ class FileUploadTempStore(object):
     upload data in the Pyramid session and on disk.  The request passed to
     its constructor must be a fully-initialized Pyramid request (it have a
     ``registry`` attribute, which must have a ``settings`` attribute, which
-    must be a dictionary).  The ``substanced.form.tempdir`` variable in the
+    must be a dictionary).  The ``substanced.uploads_tempdir`` variable in the
     ``settings`` dictionary must be set to the path of an existing directory
     on disk.  This directory will temporarily store file upload data on
     behalf of Deform and Substance D when a form containing a file upload
@@ -148,11 +148,11 @@ class FileUploadTempStore(object):
     """
     def __init__(self, request):
         try:
-            self.tempdir = request.registry.settings['substanced.form.tempdir']
+            self.tempdir=request.registry.settings['substanced.uploads_tempdir']
         except KeyError:
             raise ConfigurationError(
                 'To use FileUploadTempStore, you must set a  '
-                '"substanced.form.tempdir" key in your .ini settings. It '
+                '"substanced.uploads_tempdir" key in your .ini settings. It '
                 'points to a directory which will temporarily '
                 'hold uploaded files when form validation fails.')
         self.request = request

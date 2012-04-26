@@ -105,7 +105,7 @@ def login_validator(node, kw):
     def _login_validator(node, value):
         principals = find_service(context, 'principals')
         users = principals['users']
-        if users.get(value) is None:
+        if not value in users:
             raise colander.Invalid(node, 'No such user %s' % value)
     return _login_validator
 
@@ -131,7 +131,7 @@ class ResetRequestView(FormView):
         users = principals['users']
         user = users[login]
         user.email_password_reset(request)
-        request.session.flash('Emailed reset instructions', 'success')
+        request.session.flash('Emailed password reset instructions', 'success')
         home = request.mgmt_path(request.root)
         return HTTPFound(location=home)
         
@@ -154,6 +154,6 @@ class ResetView(FormView):
         request = self.request
         context = self.request.context
         context.reset_password(appstruct['new_password'])
-        request.session.flash('Password reset, now please log in', 'success')
+        request.session.flash('Password reset, you may now log in', 'success')
         home = request.mgmt_path(request.root)
         return HTTPFound(location=home)

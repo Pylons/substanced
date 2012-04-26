@@ -47,8 +47,9 @@ class UserToGroup(Interface):
 class Principals(Folder):
     """ Object representing a collection of principals.  Inherits from
     :class:`substanced.folder.Folder`.  Contains ``users``, an instance of
-    :class:`substanced.principal.Users`, and ``groups``, an instance of
-    :class:`substanced.principal.Groups`."""
+    :class:`substanced.principal.Users`, ``groups``, an instance of
+    :class:`substanced.principal.Groups`, and ``resets`` an instance of
+    :class:`substanced.principal.PasswordResets`"""
     def __init__(self):
         Folder.__init__(self)
         self['users'] = Users()
@@ -358,7 +359,7 @@ class User(Folder):
 class UserToPasswordReset(object):
     pass
 
-@content(IPasswordResets, icon='icon-star')
+@content(IPasswordResets, icon='icon-tags')
 class PasswordResets(Folder):
     """ Object representing the current set of password reset requests """
     def _gen_random_token(self):
@@ -375,19 +376,17 @@ class PasswordResets(Folder):
                 break
         reset = PasswordReset()
         self[token] = reset
-        reset.__acl__ = [(Allow, Everyone, 'sdi.view')]
+        reset.__acl__ = [(Allow, Everyone, ('sdi.view',))]
         objectmap = self.find_service('objectmap')
         objectmap.connect(user, reset, UserToPasswordReset)
         return reset
 
-@content(IPasswordReset, icon='icon-question-mark')
+@content(IPasswordReset, icon='icon-tag')
 class PasswordReset(Persistent):
     """ Object representing the a single password reset request """
     def reset_password(self, password):
         objectmap = find_service(self, 'objectmap')
         sources = list(objectmap.sources(self, UserToPasswordReset))
-        if not sources:
-            raise ValueError('No user associated with this password reset')
         user = sources[0]
         user.set_password(password)
         self.commit_suicide()
@@ -399,7 +398,7 @@ class PasswordReset(Persistent):
 def user_will_be_removed(user, event):
     """ Remove all password reset objects associated with a user when the user
     is removed """
-    objectmap = find_service(event.object, 'objectmap')
+    objectmap = find_service(user, 'objectmap')
     if objectmap is not None:
         resets = objectmap.targets(user, UserToPasswordReset)
         for reset in resets:

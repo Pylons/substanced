@@ -249,6 +249,12 @@ class Test_groups_widget(unittest.TestCase):
         self.assertEqual(result.values, [('1', 'group')])
 
 class TestUser(unittest.TestCase):
+    def setUp(self):
+        self.config = testing.setUp()
+
+    def tearDown(self):
+        testing.tearDown()
+        
     def _makeOne(self, password, email=''):
         from .. import User
         return User(password, email)
@@ -262,6 +268,24 @@ class TestUser(unittest.TestCase):
         inst = self._makeOne('abc')
         inst.set_password('abcdef')
         self.assertTrue(inst.pwd_manager.check(inst.password, 'abcdef'))
+
+    def test_email_password_reset(self):
+        from ...testing import make_site
+        from pyramid_mailer import get_mailer
+        site = make_site()
+        principals = site['__services__']['principals']
+        resets = principals['resets'] = testing.DummyResource()
+        def add_reset(user):
+            self.assertEqual(user, inst)
+        resets.add_reset = add_reset
+        request = testing.DummyRequest()
+        request.mgmt_path = lambda *arg: '/mgmt'
+        request.root = site
+        self.config.include('pyramid_mailer.testing')
+        inst = self._makeOne('password')
+        principals['users']['user'] = inst
+        inst.email_password_reset(request)
+        self.assertTrue(get_mailer(request).outbox)
 
     def test_get_properties(self):
         inst = self._makeOne('abc', 'email')
@@ -450,6 +474,69 @@ class Test_groupfinder(unittest.TestCase):
         request.context = context
         result = self._callFUT(1, request)
         self.assertEqual(result, (1,2))
+
+class TestPasswordResets(unittest.TestCase):
+    def _makeOne(self):
+        from .. import PasswordResets
+        return PasswordResets()
+
+    def test_add_reset(self):
+        from .. import UserToPasswordReset
+        inst = self._makeOne()
+        objectmap = DummyObjectMap()
+        services = testing.DummyResource()
+        inst.add('__services__', services, allow_services=True)
+        services['objectmap'] = objectmap
+        user = testing.DummyResource()
+        reset = inst.add_reset(user)
+        self.assertEqual(
+            objectmap.connections,
+            [(user, reset, UserToPasswordReset)])
+        self.assertTrue(reset.__acl__)
+        self.assertEqual(len(inst), 2)
+
+class TestPasswordReset(unittest.TestCase):
+    def _makeOne(self):
+        from .. import PasswordReset
+        return PasswordReset()
+
+    def test_reset_password(self):
+        from ...interfaces import IFolder
+        parent = testing.DummyResource(__provides__=IFolder)
+        user = testing.DummyResource()
+        def set_password(password):
+            user.password = password
+        user.set_password = set_password
+        objectmap = DummyObjectMap((user,))
+        inst = self._makeOne()
+        parent['reset'] = inst
+        services = testing.DummyResource()
+        parent['__services__'] = services
+        services['objectmap'] = objectmap
+        inst.reset_password('password')
+        self.assertEqual(user.password, 'password')
+        self.assertFalse('reset' in parent)
+
+class Test_user_will_be_removed(unittest.TestCase):
+    def _callFUT(self, user, event):
+        from .. import user_will_be_removed
+        return user_will_be_removed(user, event)
+
+    def test_it(self):
+        from ...interfaces import IFolder
+        parent = testing.DummyResource(__provides__=IFolder)
+        user = testing.DummyResource()
+        reset = testing.DummyResource()
+        def commit_suicide():
+            reset.committed = True
+        reset.commit_suicide = commit_suicide
+        objectmap = DummyObjectMap((reset,))
+        services = testing.DummyResource()
+        parent['__services__'] = services
+        parent['user'] = user
+        services['objectmap'] = objectmap
+        self._callFUT(user, None)
+        self.assertTrue(reset.committed)
         
 from ...interfaces import IFolder
 

@@ -101,7 +101,7 @@ class TestFileUploadTempStore(unittest.TestCase):
     def _makeRequest(self):
         request = testing.DummyRequest()
         request.registry.settings = {}
-        request.registry.settings['substanced.form.tempdir'] = self.tempdir
+        request.registry.settings['substanced.uploads_tempdir'] = self.tempdir
         request.session = DummySession()
         return request
 
@@ -165,6 +165,12 @@ class TestFileUploadTempStore(unittest.TestCase):
         inst.tempstore['a'] = {'randid':'1234'}
         self.assertEqual(inst.get('a')['fp'].read(),
                          open(fn, 'rb').read())
+
+    def test_get_with_randid_file_doesntexist(self):
+        request = self._makeRequest()
+        inst = self._makeOne(request)
+        inst.tempstore['a'] = {'randid':'1234'}
+        self.assertFalse('fp' in inst.get('a'))
 
     def test___getitem___notfound(self):
         request = self._makeRequest()
