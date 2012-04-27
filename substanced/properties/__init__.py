@@ -8,7 +8,7 @@ from ..event import ObjectModified
 @mgmt_view(
     context=IPropertied,
     name='properties',
-    renderer='templates/propertysheet.pt',
+    renderer='templates/propertysheets.pt',
     tab_title='Properties',
     permission='sdi.edit-properties'
     )

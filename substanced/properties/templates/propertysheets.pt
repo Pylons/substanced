@@ -21,7 +21,7 @@
         tal:define="tabs view.sheet_names"
         tal:condition="tabs">
       <li tal:repeat="tab tabs"
-          tal:attributes="class request.active_sheet_name == tab and 'active' or None"><a href="${request.mgmt_path(request.context, '@@properties', tab)}">${tab.capitalize()}</a>
+          tal:attributes="class view.active_sheet_name == tab and 'active' or None"><a href="${request.mgmt_path(request.context, '@@properties', tab)}">${tab.capitalize()}</a>
       </li>
     </ul>
 
