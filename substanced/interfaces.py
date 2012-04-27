@@ -13,15 +13,18 @@ class ICatalogable(Interface):
     implement this interface to have its attributes indexed """
 
 class IPropertied(Interface):
+    """ Marker interface denoting that a piece of content has property sheets.
+    """
+class IPropertySheet(Interface):
     """ Interface for objects with a set of properties defined by a Colander
     schema"""
-    __propschema__ = Attribute('Colander schema which denotes property schema')
+    schema = Attribute('Colander schema which denotes property schema')
 
-    def get_properties():
+    def get():
         """ Returns a data structure representing the current property state
         according to the attached __propschema__ (usually a dictionary)."""
 
-    def set_properties(struct):
+    def set(struct):
         """ Persists a data structure representing the property state
         represented by ``struct`` (usually a dictionary).  The data structure
         will have already been validated against the __propschema__."""

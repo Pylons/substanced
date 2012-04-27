@@ -27,6 +27,21 @@ class SiteSchema(Schema):
     description = colander.SchemaNode(colander.String(),
                                       missing=colander.null)
 
+class SiteProperties(object):
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+        self.schema = SiteSchema().bind(request=request)
+
+    def get(self):
+        context = self.context
+        return dict(title=context.title, description=context.description)
+
+    def set(self, struct):
+        context = self.context
+        context.__dict__.update(struct)
+        context._p_changed = True
+
 @content(ISite, icon='icon-home')
 class Site(Folder):
     """ An object representing the root of a Substance D site.  Contains
@@ -34,7 +49,7 @@ class Site(Folder):
     an initial login name and password: the resulting user will be granted
     all permissions."""
     
-    __propschema__ = SiteSchema()
+    __propsheets__ = (('', SiteProperties), )
     
     title = ''
     description = ''
@@ -59,13 +74,6 @@ class Site(Folder):
             (Allow, oid_of(group), ALL_PERMISSIONS),
             NO_INHERIT,
             ]
-
-    def get_properties(self):
-        return dict(title=self.title, description=self.description)
-
-    def set_properties(self, struct):
-        self.__dict__.update(struct)
-        self._p_changed = True
 
     @classmethod
     def root_factory(cls, request, transaction=transaction, 

@@ -59,6 +59,26 @@ class DocumentSchema(Schema):
         widget=deform.widget.RichTextWidget()
         )
 
+class DocumentPropertySheet(object):
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+        self.schema = DocumentSchema().bind(request=request)
+        
+    def get(self):
+        context = self.context
+        return dict(name=self.__name__, body=context.body, title=context.title)
+
+    def set(self, struct):
+        context = self.context
+        newname = struct['name']
+        oldname = context.__name__
+        if newname != oldname:
+            parent = context.__parent__
+            parent.rename(oldname, newname)
+        context.body = struct['body']
+        context.title = struct['title']
+
 @content(
     DocumentType,
     icon='icon-align-left',
@@ -67,7 +87,7 @@ class DocumentSchema(Schema):
     )
 class Document(Persistent):
 
-    __propschema__ = DocumentSchema()
+    __propsheets__ = ( ('', DocumentSchema()), )
 
     def __init__(self, title, body):
         self.title = title
@@ -76,19 +96,6 @@ class Document(Persistent):
     def texts(self): # for indexing
         return self.title, self.body
         
-    def get_properties(self):
-        return dict(name=self.__name__, body=self.body, title=self.title)
-
-    def set_properties(self, struct):
-        newname = struct['name']
-        oldname = self.__name__
-        if newname != oldname:
-            parent = self.__parent__
-            parent.rename(oldname, newname)
-        self.body = struct['body']
-        self.title = struct['title']
-
-    
 @mgmt_view(
     context=IFolder,
     name='add_document',
@@ -147,8 +154,45 @@ def name_or_file(node, kw):
                 real_name_validator(node['file'], filename)
     return _name_or_file
 
-fileschema = FileSchema(validator=name_or_file)
+class FilePropertySheet(object):
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+        self.schema = FileSchema(validator=name_or_file).bind(request=request)
 
+    def get(self):
+        context = self.context
+        filedata = dict(
+            fp=None,
+            uid=str(context.__objectid__),
+            filename=context.__name__,
+            )
+        return dict(
+            name=context.__name__,
+            file=filedata,
+            mimetype=self.mimetype
+            )
+
+    def set(self, struct):
+        context = self.context
+        newname = struct['name']
+        file = struct['file']
+        mimetype = struct['mimetype']
+        if file and file.get('fp'):
+            fp = file['fp']
+            fp.seek(0)
+            context.upload(fp)
+            filename = file['filename']
+            mimetype = mimetypes.guess_type(filename, strict=False)[0]
+            if not newname:
+                newname = filename
+        if not mimetype:
+            mimetype = 'application/octet-stream'
+        context.mimetype = mimetype
+        oldname = context.__name__
+        if newname and newname != oldname:
+            context.__parent__.rename(oldname, newname)
+        
 @content(
     FileType,
     name='File',
@@ -160,45 +204,13 @@ class File(Persistent):
     # prevent view tab from sorting first (it would display the file when
     # manage_main clicked)
     __tab_order__ = ('properties', 'acl_edit', 'view')
-
-    __propschema__ = fileschema
+    __propsheets__ = ( ('', FilePropertySheet), )
 
     def __init__(self, stream, mimetype='application/octet-stream'):
         self.mimetype = mimetype
         self.blob = Blob()
         self.upload(stream)
            
-    def get_properties(self):
-        filedata = dict(
-            fp=None,
-            uid=str(self.__objectid__),
-            filename=self.__name__,
-            )
-        return dict(
-            name=self.__name__,
-            file=filedata,
-            mimetype=self.mimetype
-            )
-
-    def set_properties(self, struct):
-        newname = struct['name']
-        file = struct['file']
-        mimetype = struct['mimetype']
-        if file and file.get('fp'):
-            fp = file['fp']
-            fp.seek(0)
-            self.upload(fp)
-            filename = file['filename']
-            mimetype = mimetypes.guess_type(filename, strict=False)[0]
-            if not newname:
-                newname = filename
-        if not mimetype:
-            mimetype = 'application/octet-stream'
-        self.mimetype = mimetype
-        oldname = self.__name__
-        if newname and newname != oldname:
-            self.__parent__.rename(oldname, newname)
-        
     def upload(self, stream):
         if not stream:
             stream = StringIO.StringIO()
@@ -220,7 +232,7 @@ class File(Persistent):
     )
 class AddFileView(FormView):
     title = 'Add File'
-    schema = fileschema
+    schema = FileSchema(validator=name_or_file)
     buttons = ('add',)
 
     def add_success(self, appstruct):

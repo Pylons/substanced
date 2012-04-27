@@ -133,11 +133,39 @@ class GroupSchema(Schema):
         preparer=lambda users: set(map(int, users)),
         )
 
+class GroupPropertySheet(object):
+    
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+        self.schema = GroupSchema().bind(request=request)
+        
+    def get(self):
+        context = self.context
+        props = {}
+        props['description'] = context.description
+        props['name'] = context.__name__
+        member_strs = map(str, context.get_memberids())
+        props['members'] = member_strs
+        return props
+
+    def set(self, struct):
+        context = self.context
+        if struct['description']:
+            context.description = struct['description']
+        newname = struct['name']
+        oldname = context.__name__
+        if newname != oldname:
+            parent = context.__parent__
+            parent.rename(oldname, newname)
+        context.disconnect()
+        context.connect(*struct['members'])
+
 @content(IGroup, icon='icon-th-list', add_view='add_group', name='Group')
 class Group(Folder):
     """ Represents a group.  """
     __tab_order__ = ('properties',)
-    __propschema__ = GroupSchema()
+    __propsheets__ = (('', GroupPropertySheet),)
 
     def __init__(self, description=''):
         Folder.__init__(self)
@@ -151,25 +179,6 @@ class Group(Folder):
         else:
             member = member_or_memberid
         return member
-
-    def get_properties(self):
-        props = {}
-        props['description'] = self.description
-        props['name'] = self.__name__
-        member_strs = map(str, self.get_memberids())
-        props['members'] = member_strs
-        return props
-
-    def set_properties(self, struct):
-        if struct['description']:
-            self.description = struct['description']
-        newname = struct['name']
-        oldname = self.__name__
-        if newname != oldname:
-            parent = self.__parent__
-            parent.rename(oldname, newname)
-        self.disconnect()
-        self.connect(*struct['members'])
 
     def get_memberids(self):
         """ Returns a sequence of member ids which belong to this group. """
@@ -258,12 +267,37 @@ class UserSchema(Schema):
         preparer=lambda groups: set(map(int, groups)),
         )
 
+class UserPropertySheet(object):
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+        self.schema = UserSchema().bind(request=request)
+        
+    def get(self):
+        context = self.context
+        props = {}
+        props['email'] = context.email
+        props['login'] = context.__name__
+        props['groups'] = map(str, context.get_groupids())
+        return props
+
+    def set(self, struct):
+        context = self.context
+        context.email = struct['email']
+        newname = struct['login']
+        oldname = context.__name__
+        if newname != oldname:
+            parent = context.__parent__
+            parent.rename(oldname, newname)
+        context.disconnect()
+        context.connect(*struct['groups'])
+
 @content(IUser, icon='icon-user', add_view='add_user', name='User')
 class User(Folder):
     """ Represents a user.  """
 
     __tab_order__ = ('properties',)
-    __propschema__ = UserSchema()
+    __propsheets = (('', UserPropertySheet),)
 
     pwd_manager = BCRYPTPasswordManager()
 
@@ -306,23 +340,6 @@ class User(Folder):
             )
         mailer = get_mailer(request)
         mailer.send(message)
-
-    def get_properties(self):
-        props = {}
-        props['email'] = self.email
-        props['login'] = self.__name__
-        props['groups'] = map(str, self.get_groupids())
-        return props
-
-    def set_properties(self, struct):
-        self.email = struct['email']
-        newname = struct['login']
-        oldname = self.__name__
-        if newname != oldname:
-            parent = self.__parent__
-            parent.rename(oldname, newname)
-        self.disconnect()
-        self.connect(*struct['groups'])
 
     def get_groupids(self, objectmap=None):
         """ Returns a sequence of group ids which this user is a member of. """
