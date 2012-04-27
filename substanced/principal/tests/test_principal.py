@@ -535,8 +535,16 @@ class Test_user_will_be_removed(unittest.TestCase):
         parent['__services__'] = services
         parent['user'] = user
         services['objectmap'] = objectmap
-        self._callFUT(user, None)
+        event = testing.DummyResource()
+        event.moving = False
+        self._callFUT(user, event)
         self.assertTrue(reset.committed)
+
+    def test_it_moving(self):
+        user = None
+        event = testing.DummyResource()
+        event.moving = True
+        self.assertEqual(None, self._callFUT(user, event))
         
 from ...interfaces import IFolder
 

@@ -25,12 +25,17 @@ default_resources = {
         },
     'jquery.form': {
         None:{
-            'js':'deform:static/scripts/jquery.form.js',
+            'js':'deform:static/scripts/jquery.form-3.09.js',
             },
         },
     'jquery.maskedinput': {
         None:{
             'js':'deform:static/scripts/jquery.maskedinput-1.2.2.min.js',
+            },
+        },
+    'jquery.maskMoney': {
+        None:{
+            'js':'deform:static/scripts/jquery.maskMoney-1.4.1.js',
             },
         },
     'datetimepicker': {
@@ -41,7 +46,7 @@ default_resources = {
         },
     'deform': {
         None:{
-            'js':('deform:static/scripts/jquery.form.js', 
+            'js':('deform:static/scripts/jquery.form-3.09.js', 
                   'deform:static/scripts/deform.js',
                   'deform_bootstrap:static/deform_bootstrap.js'),
             'css':'deform:static/css/form.css',
