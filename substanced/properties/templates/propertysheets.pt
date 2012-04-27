@@ -19,7 +19,7 @@
 
     <ul class="nav nav-tabs" 
         tal:define="tabs view.sheet_names"
-        tal:condition="tabs">
+        tal:condition="len(tabs) > 1">
       <li tal:repeat="tab tabs"
           tal:attributes="class view.active_sheet_name == tab and 'active' or None"><a href="${request.mgmt_path(request.context, '@@properties', tab)}">${tab.capitalize()}</a>
       </li>
