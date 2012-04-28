@@ -162,7 +162,9 @@ class GroupPropertySheet(PropertySheet):
 class Group(Folder):
     """ Represents a group.  """
     __tab_order__ = ('properties',)
-    __propsheets__ = (('', GroupPropertySheet),)
+    __propsheets__ = (
+        ('', GroupPropertySheet),
+        )
 
     def __init__(self, description=''):
         Folder.__init__(self)
@@ -291,7 +293,9 @@ class User(Folder):
     """ Represents a user.  """
 
     __tab_order__ = ('properties',)
-    __propsheets = (('', UserPropertySheet),)
+    __propsheets__ = (
+        ('', UserPropertySheet),
+        )
 
     pwd_manager = BCRYPTPasswordManager()
 

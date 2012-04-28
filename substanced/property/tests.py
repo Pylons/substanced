@@ -109,8 +109,8 @@ class DummyForm(object):
     def __init__(self):
         self.rendered = []
         
-    def render(self, appstruct):
-        self.rendered.append(appstruct)
+    def render(self, appstruct=None, readonly=False):
+        self.rendered.append((appstruct, readonly))
 
 class DummySchema(object):
     def bind(self, **kw):

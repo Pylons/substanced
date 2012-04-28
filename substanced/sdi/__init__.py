@@ -187,35 +187,40 @@ def get_mgmt_views(request, context=None, names=None):
         sdi_intr = data['introspectable']
         tab_title = sdi_intr['tab_title']
         tab_condition = sdi_intr['tab_condition']
-        if tab_condition is not None and names is None:
-            if tab_condition is False or not tab_condition(request):
-                continue
-        for intr in related:
-            view_name = intr['name']
+        def is_view(intr):
+            return intr.category_name == 'views'
+        for view_intr in filter(is_view, related):
+            # NB: in reality, the above loop will execute exactly once because
+            # each "sdi view" is associated with exactly one pyramid view
+            view_name = view_intr['name']
+            req.path_info = request.mgmt_path(context, view_name)
             if names is not None and not view_name in names:
                 continue
-            if intr.category_name == 'views' and not view_name in L:
-                derived = intr['derived_callable']
-                # do a passable job at figuring out whether, if we visit the
-                # url implied by this view, we'll be permitted to view it and
-                # something reasonable will show up
-                if IInterface.providedBy(intr['context']):
-                    if not intr['context'].providedBy(context):
-                        continue
-                elif intr['context'] and not isinstance(
-                        context, intr['context']):
+            # do a passable job at figuring out whether, if we visit the
+            # url implied by this view, we'll be permitted to view it and
+            # something reasonable will show up
+            intr_context = view_intr['context']
+            if IInterface.providedBy(intr_context):
+                if not intr_context.providedBy(context):
                     continue
-                req.path_info = request.mgmt_path(context, view_name)
-                if hasattr(derived, '__predicated__'):
-                    if not derived.__predicated__(context, req):
-                        continue
-                if hasattr(derived, '__permitted__'):
-                    if not derived.__permitted__(context, req):
-                        continue
-                L.append(
-                    {'view_name':view_name,
-                     'tab_title':tab_title or view_name.capitalize()}
-                    )
+            elif intr_context and not isinstance(context, intr_context):
+                continue
+            if tab_condition is not None and names is None:
+                if tab_condition is False or not tab_condition(
+                    context, request):
+                    continue
+            derived = view_intr['derived_callable']
+            if hasattr(derived, '__predicated__'):
+                if not derived.__predicated__(context, req):
+                    continue
+            if hasattr(derived, '__permitted__'):
+                if not derived.__permitted__(context, req):
+                    continue
+            L.append(
+                {'view_name':view_name,
+                 'tab_title':tab_title or view_name.capitalize()}
+                )
+
     ordered = []
     
     if hasattr(context, '__tab_order__'):
