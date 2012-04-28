@@ -104,6 +104,73 @@ class Test_members_widget(unittest.TestCase):
         result = self._makeOne(None, kw)
         self.assertEqual(result.values, [('1', 'user')])
 
+class TestGroupPropertysheet(unittest.TestCase):
+    def _makeOne(self, context, request):
+        from .. import GroupPropertySheet
+        return GroupPropertySheet(context, request)
+
+    def _makeParent(self):
+        parent = DummyFolder()
+        parent['__services__'] = DummyFolder()
+        objectmap = DummyObjectMap()
+        parent['__services__']['objectmap'] = objectmap
+        parent.objectmap = objectmap
+        return parent
+
+    def test_get(self):
+        context = testing.DummyResource()
+        context.__name__ = 'name'
+        context.get_memberids = lambda: [1]
+        context.description = 'desc'
+        request = testing.DummyRequest()
+        inst = self._makeOne(context, request)
+        props = inst.get()
+        self.assertEqual(props['description'], 'desc')
+        self.assertEqual(props['members'], ['1'])
+        self.assertEqual(props['name'], 'name')
+
+    def test_set_newname_different_than_oldname(self):
+        context = testing.DummyResource()
+        request = testing.DummyRequest()
+        parent = self._makeParent()
+        parent['oldname'] = context
+        def rename(old, new):
+            self.assertEqual(old, 'oldname')
+            self.assertEqual(new, 'name')
+            context.renamed = True
+        parent.rename = rename
+        def disconnect():
+            context.disconnected = True
+        def connect(*members):
+            self.assertEqual(members, (1,))
+            context.connected = True
+        context.disconnect = disconnect
+        context.connect = connect
+        inst = self._makeOne(context, request)
+        inst.set({'description':'desc', 'name':'name', 'members':(1,)})
+        self.assertEqual(context.description, 'desc')
+        self.assertTrue(context.renamed)
+        self.assertTrue(context.disconnected)
+        self.assertTrue(context.connected)
+
+    def test_set_newname_same_as_oldname(self):
+        context = testing.DummyResource()
+        request = testing.DummyRequest()
+        parent = self._makeParent()
+        parent['oldname'] = context
+        def disconnect():
+            context.disconnected = True
+        def connect(*members):
+            self.assertEqual(members, (1,))
+            context.connected = True
+        context.disconnect = disconnect
+        context.connect = connect
+        inst = self._makeOne(context, request)
+        inst.set({'description':'desc', 'name':'name', 'members':(1,)})
+        self.assertEqual(context.description, 'desc')
+        self.assertTrue(context.disconnected)
+        self.assertTrue(context.connected)
+
 class TestGroup(unittest.TestCase):
     def _makeOne(self, description=''):
         from .. import Group
@@ -116,23 +183,6 @@ class TestGroup(unittest.TestCase):
         parent['__services__']['objectmap'] = objectmap
         parent.objectmap = objectmap
         return parent
-
-    def test_get_properties(self):
-        inst = self._makeOne('desc')
-        parent = self._makeParent()
-        parent['name'] = inst
-        props = inst.get_properties()
-        self.assertEqual(props['description'], 'desc')
-        self.assertEqual(props['members'], [])
-        self.assertEqual(props['name'], 'name')
-
-    def test_set_properties(self):
-        inst = self._makeOne()
-        parent = self._makeParent()
-        parent['oldname'] = inst
-        inst.set_properties({'description':'desc', 'name':'name', 'members':()})
-        self.assertEqual(inst.description, 'desc')
-        self.assertTrue('name' in parent)
 
     def test_get_memberids(self):
         parent = self._makeParent()

@@ -138,7 +138,9 @@ class GroupPropertySheet(object):
     def __init__(self, context, request):
         self.context = context
         self.request = request
-        self.schema = GroupSchema().bind(request=request)
+
+    def get_schema(self):
+        return GroupSchema().bind(request=self.request)
         
     def get(self):
         context = self.context
@@ -271,7 +273,9 @@ class UserPropertySheet(object):
     def __init__(self, context, request):
         self.context = context
         self.request = request
-        self.schema = UserSchema().bind(request=request)
+
+    def get_schema(self):
+        return UserSchema().bind(request=self.request)
         
     def get(self):
         context = self.context

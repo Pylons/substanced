@@ -28,7 +28,7 @@ class PropertySheetsView(FormView):
             active_sheet_name, factory = self.context.__propsheets__[0]
         self.active_sheet_name = active_sheet_name
         self.active_sheet = factory(self.context, self.request)
-        self.schema = self.active_sheet.schema
+        self.schema = self.active_sheet.get_schema()
         self.sheet_names = [ x[0] for x in self.context.__propsheets__ ]
 
     def save_success(self, appstruct):

@@ -54,7 +54,9 @@ class DocumentPropertySheet(object):
     def __init__(self, context, request):
         self.context = context
         self.request = request
-        self.schema = DocumentSchema().bind(request=request)
+
+    def get_schema(self):
+        return DocumentSchema().bind(request=self.request)
         
     def get(self):
         context = self.context
@@ -78,7 +80,7 @@ class DocumentPropertySheet(object):
     )
 class Document(Persistent):
     __propsheets__ = (
-        ('', DocumentPropertySheet),
+        ('Basic', DocumentPropertySheet),
         )
 
     def __init__(self, title, body):
@@ -108,18 +110,13 @@ class FilePropertiesSchema(Schema):
         missing = colander.null,
         )
 
-class FileUploadSchema(Schema):
-    file = colander.SchemaNode(
-        deform.schema.FileData(),
-        widget = upload_widget,
-        missing = colander.null,
-        )
-
 class FilePropertySheet(object):
     def __init__(self, context, request):
         self.context = context
         self.request = request
-        self.schema = FilePropertiesSchema().bind(request=request)
+
+    def get_schema(self):
+        return FilePropertiesSchema().bind(request=self.request)
 
     def get(self):
         context = self.context
@@ -139,11 +136,20 @@ class FilePropertySheet(object):
         if newname and newname != oldname:
             context.__parent__.rename(oldname, newname)
 
+class FileUploadSchema(Schema):
+    file = colander.SchemaNode(
+        deform.schema.FileData(),
+        widget = upload_widget,
+        missing = colander.null,
+        )
+
 class FileUploadPropertySheet(object):
     def __init__(self, context, request):
         self.context = context
         self.request = request
-        self.schema = FileUploadSchema().bind(request=request)
+
+    def get_schema(self):
+        return FileUploadSchema().bind(request=self.request)
 
     def get(self):
         context = self.context
@@ -174,8 +180,8 @@ class File(Persistent):
     # manage_main clicked)
     __tab_order__ = ('properties', 'acl_edit', 'view')
     __propsheets__ = (
-        ('basics', FilePropertySheet),
-        ('upload', FileUploadPropertySheet),
+        ('Basic', FilePropertySheet),
+        ('Upload', FileUploadPropertySheet),
         )
 
     def __init__(self, stream, mimetype='application/octet-stream'):

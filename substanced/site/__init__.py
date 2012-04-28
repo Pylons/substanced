@@ -4,7 +4,6 @@ import colander
 from pyramid.exceptions import ConfigurationError
 from pyramid.security import (
     Allow,
-    Everyone,
     ALL_PERMISSIONS,
     )
 
@@ -27,11 +26,13 @@ class SiteSchema(Schema):
     description = colander.SchemaNode(colander.String(),
                                       missing=colander.null)
 
-class SiteProperties(object):
+class SitePropertySheet(object):
     def __init__(self, context, request):
         self.context = context
         self.request = request
-        self.schema = SiteSchema().bind(request=request)
+
+    def get_schema(self):
+        return SiteSchema().bind(request=self.request)
 
     def get(self):
         context = self.context
@@ -49,7 +50,9 @@ class Site(Folder):
     an initial login name and password: the resulting user will be granted
     all permissions."""
     
-    __propsheets__ = (('', SiteProperties), )
+    __propsheets__ = (
+        ('', SitePropertySheet),
+        )
     
     title = ''
     description = ''
