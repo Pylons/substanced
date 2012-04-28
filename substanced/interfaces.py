@@ -33,7 +33,7 @@ class IPropertySheet(Interface):
         and persist it to the context.  The data structure will have already
         been validated against the propertysheet schema."""
 
-    def after_set(self):
+    def after_set():
         """ Perform operations after a successful set. The default
         propertysheet implementation sends an ObjectModified event and
         flashes an undo message"""
