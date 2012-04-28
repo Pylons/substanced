@@ -29,9 +29,7 @@ class TestPropertiesView(unittest.TestCase):
 
     def test_save_success(self):
         request = testing.DummyRequest()
-        request.flash_undo = lambda *arg: None
         request.mgmt_path = lambda *arg: '/mgmt'
-        request.registry = DummyRegistry()
         resource = testing.DummyResource()
         resource.__propsheets__ = [('name', DummyPropertySheet)]
         request.context = resource
@@ -39,7 +37,7 @@ class TestPropertiesView(unittest.TestCase):
         response = inst.save_success({'a':1})
         self.assertEqual(response.location, '/mgmt')
         self.assertEqual(inst.active_sheet.struct, {'a': 1})
-        self.assertTrue(request.registry.subscribed)
+        self.assertTrue(inst.active_sheet.after)
 
     def test_show(self):
         request = testing.DummyRequest()
@@ -51,6 +49,54 @@ class TestPropertiesView(unittest.TestCase):
         result = inst.show(form)
         self.assertTrue(form.rendered)
         self.assertEqual(result['form'], None)
+
+class TestPropertySheet(unittest.TestCase):
+    def _makeOne(self, context, request):
+        from . import PropertySheet
+        return PropertySheet(context, request)
+
+    def test_get_schema(self):
+        context = testing.DummyResource()
+        request = testing.DummyRequest()
+        inst = self._makeOne(context, request)
+        schema = DummySchema()
+        inst.schema = schema
+        self.assertEqual(inst.get_schema(), schema)
+        self.assertEqual(schema.bound, {'request':request})
+        
+    def test_get(self):
+        context = testing.DummyResource()
+        request = testing.DummyRequest()
+        inst = self._makeOne(context, request)
+        context.title = 'title'
+        context.description = 'description'
+        vals = inst.get()
+        self.assertEqual(vals['title'], 'title')
+        self.assertEqual(vals['description'], 'description')
+
+    def test_set(self):
+        context = testing.DummyResource()
+        request = testing.DummyRequest()
+        inst = self._makeOne(context, request)
+        context.title = 'title'
+        context.description = 'description'
+        inst.set(dict(title='t', description='d'))
+        self.assertEqual(context.title, 't')
+        self.assertEqual(context.description, 'd')
+
+    def test_after_set(self):
+        request = testing.DummyRequest()
+        request.registry = DummyRegistry()
+        def flash_undo(msg, category):
+            self.assertEqual(msg, 'Updated properties')
+            self.assertEqual(category, 'success')
+            context.flashed = True
+        request.flash_undo = flash_undo
+        context = testing.DummyResource()
+        inst = self._makeOne(context, request)
+        inst.after_set()
+        self.assertTrue(request.registry.subscribed)
+        self.assertTrue(context.flashed)
 
 class DummyRegistry(object):
     def __init__(self):
@@ -65,7 +111,11 @@ class DummyForm(object):
         
     def render(self, appstruct):
         self.rendered.append(appstruct)
-        
+
+class DummySchema(object):
+    def bind(self, **kw):
+        self.bound = kw
+        return self
         
 class DummyPropertySheet(object):
     def __init__(self, context, request):
@@ -77,6 +127,9 @@ class DummyPropertySheet(object):
 
     def set(self, struct):
         self.struct = struct
+
+    def after_set(self):
+        self.after = True
 
     def get_schema(self):
         return 'schema'

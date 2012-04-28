@@ -18,6 +18,7 @@ from ..principal import Principals
 from ..acl import NO_INHERIT
 from ..content import content
 from ..util import oid_of
+from ..properties import PropertySheet
 
 class SiteSchema(Schema):
     """ The schema representing site properties. """
@@ -26,22 +27,8 @@ class SiteSchema(Schema):
     description = colander.SchemaNode(colander.String(),
                                       missing=colander.null)
 
-class SitePropertySheet(object):
-    def __init__(self, context, request):
-        self.context = context
-        self.request = request
-
-    def get_schema(self):
-        return SiteSchema().bind(request=self.request)
-
-    def get(self):
-        context = self.context
-        return dict(title=context.title, description=context.description)
-
-    def set(self, struct):
-        context = self.context
-        context.__dict__.update(struct)
-        context._p_changed = True
+class SitePropertySheet(PropertySheet):
+    schema = SiteSchema()
 
 @content(ISite, icon='icon-home')
 class Site(Folder):

@@ -13,6 +13,7 @@ from substanced.schema import Schema
 from substanced.content import content
 from substanced.form import FileUploadTempStore
 from substanced.util import chunks
+from substanced.properties import PropertySheet
 
 def make_name_validator(content_type):
     @colander.deferred
@@ -50,14 +51,13 @@ class DocumentSchema(Schema):
         widget=deform.widget.RichTextWidget()
         )
 
-class DocumentPropertySheet(object):
+class DocumentPropertySheet(PropertySheet):
+    schema = DocumentSchema()
+    
     def __init__(self, context, request):
         self.context = context
         self.request = request
 
-    def get_schema(self):
-        return DocumentSchema().bind(request=self.request)
-        
     def get(self):
         context = self.context
         return dict(name=self.__name__, body=context.body, title=context.title)
@@ -110,13 +110,8 @@ class FilePropertiesSchema(Schema):
         missing = colander.null,
         )
 
-class FilePropertySheet(object):
-    def __init__(self, context, request):
-        self.context = context
-        self.request = request
-
-    def get_schema(self):
-        return FilePropertiesSchema().bind(request=self.request)
+class FilePropertySheet(PropertySheet):
+    schema = FilePropertiesSchema()
 
     def get(self):
         context = self.context
@@ -140,17 +135,11 @@ class FileUploadSchema(Schema):
     file = colander.SchemaNode(
         deform.schema.FileData(),
         widget = upload_widget,
-        missing = colander.null,
         )
 
-class FileUploadPropertySheet(object):
-    def __init__(self, context, request):
-        self.context = context
-        self.request = request
-
-    def get_schema(self):
-        return FileUploadSchema().bind(request=self.request)
-
+class FileUploadPropertySheet(PropertySheet):
+    schema = FileUploadSchema()
+    
     def get(self):
         context = self.context
         filedata = dict(
@@ -163,7 +152,7 @@ class FileUploadPropertySheet(object):
     def set(self, struct):
         context = self.context
         file = struct['file']
-        if file and file.get('fp'):
+        if file.get('fp'):
             fp = file['fp']
             fp.seek(0)
             context.upload(fp)

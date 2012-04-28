@@ -38,6 +38,7 @@ from ..schema import Schema
 from ..service import find_service
 from ..folder import Folder
 from ..util import oid_of
+from ..properties import PropertySheet
 
 class UserToGroup(Interface):
     """ The reference type used to store users-to-groups references in the
@@ -133,15 +134,9 @@ class GroupSchema(Schema):
         preparer=lambda users: set(map(int, users)),
         )
 
-class GroupPropertySheet(object):
+class GroupPropertySheet(PropertySheet):
+    schema = GroupSchema()
     
-    def __init__(self, context, request):
-        self.context = context
-        self.request = request
-
-    def get_schema(self):
-        return GroupSchema().bind(request=self.request)
-        
     def get(self):
         context = self.context
         props = {}
@@ -269,14 +264,9 @@ class UserSchema(Schema):
         preparer=lambda groups: set(map(int, groups)),
         )
 
-class UserPropertySheet(object):
-    def __init__(self, context, request):
-        self.context = context
-        self.request = request
-
-    def get_schema(self):
-        return UserSchema().bind(request=self.request)
-        
+class UserPropertySheet(PropertySheet):
+    schema = UserSchema()
+    
     def get(self):
         context = self.context
         props = {}

@@ -205,12 +205,22 @@ class TestGroup(unittest.TestCase):
         self.assertEqual(parent.objectmap.connections,
                          [(1, inst, UserToGroup), (2, inst, UserToGroup)])
 
-    def test_disconnect(self):
+    def test_disconnect_with_members(self):
         from .. import UserToGroup
         parent = self._makeParent()
         inst = self._makeOne()
         parent['name'] = inst
         inst.disconnect(1, 2)
+        self.assertEqual(parent.objectmap.disconnections,
+                         [(1, inst, UserToGroup), (2, inst, UserToGroup)])
+
+    def test_disconnect_no_members(self):
+        from .. import UserToGroup
+        parent = self._makeParent()
+        inst = self._makeOne()
+        inst.get_memberids = lambda: (1,2)
+        parent['name'] = inst
+        inst.disconnect()
         self.assertEqual(parent.objectmap.disconnections,
                          [(1, inst, UserToGroup), (2, inst, UserToGroup)])
 

@@ -13,7 +13,6 @@ from ..event import ObjectModified
     permission='sdi.edit-properties'
     )
 class PropertySheetsView(FormView):
-
     buttons = ('save',)
     
     def __init__(self, request):
@@ -33,15 +32,35 @@ class PropertySheetsView(FormView):
 
     def save_success(self, appstruct):
         self.active_sheet.set(appstruct)
-        event = ObjectModified(self.context)
-        self.request.registry.subscribers((self.context, event), None)
-        self.request.flash_undo('Updated properties', 'success')
+        self.active_sheet.after_set()
         return HTTPFound(self.request.mgmt_path(
             self.context, '@@properties', self.active_sheet_name))
 
     def show(self, form):
         appstruct = self.active_sheet.get()
         return {'form':form.render(appstruct=appstruct)}
+
+class PropertySheet(object):
+    """ Convenience base class for concrete property sheet implementations """
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+
+    def get_schema(self):
+        return self.schema.bind(request=self.request)
+
+    def get(self):
+        context = self.context
+        return dict(context.__dict__)
+
+    def set(self, struct):
+        for k in struct:
+            setattr(self.context, k, struct[k])
+
+    def after_set(self):
+        event = ObjectModified(self.context)
+        self.request.registry.subscribers((self.context, event), None)
+        self.request.flash_undo('Updated properties', 'success')
 
 def includeme(config): # pragma: no cover
     config.scan('.')

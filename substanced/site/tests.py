@@ -2,30 +2,6 @@ import unittest
 from pyramid import testing
 from pyramid.exceptions import ConfigurationError
 
-class TestSitePropertySheet(unittest.TestCase):
-    def _makeOne(self, context, request):
-        from . import SitePropertySheet
-        return SitePropertySheet(context, request)
-    
-    def test_get(self):
-        context = testing.DummyResource()
-        request = testing.DummyRequest()
-        inst = self._makeOne(context, request)
-        context.title = 'title'
-        context.description = 'description'
-        self.assertEqual(inst.get(),
-                         dict(title='title', description='description'))
-
-    def test_set(self):
-        context = testing.DummyResource()
-        request = testing.DummyRequest()
-        inst = self._makeOne(context, request)
-        context.title = 'title'
-        context.description = 'description'
-        inst.set(dict(title='t', description='d'))
-        self.assertEqual(context.title, 't')
-        self.assertEqual(context.description, 'd')
-
 class TestSite(unittest.TestCase):
     def setUp(self):
         self.config = testing.setUp()
