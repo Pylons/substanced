@@ -17,13 +17,18 @@
 
   <div metal:fill-slot="main">
 
-    <ul class="nav nav-tabs" 
-        tal:define="tabs view.sheet_names"
-        tal:condition="len(tabs) > 1">
-      <li tal:repeat="tab tabs"
-          tal:attributes="class view.active_sheet_name == tab and 'active' or None"><a href="${request.mgmt_path(request.context, '@@properties', tab)}">${tab.capitalize()}</a>
-      </li>
-    </ul>
+    <div class="tabbable tabs-top" 
+         style="font-size:50%">
+
+      <ul class="nav nav-pills" 
+          tal:define="tabs view.sheet_names"
+          tal:condition="len(tabs) > 1">
+        <li tal:repeat="tab tabs"
+            tal:attributes="class view.active_sheet_name == tab and 'active' or None"><a href="${request.mgmt_path(request.context, '@@properties', tab)}">${tab.capitalize()}</a>
+        </li>
+      </ul>
+      
+    </div>
 
     <div id="form" tal:content="structure form"/>
 
