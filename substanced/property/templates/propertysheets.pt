@@ -17,8 +17,7 @@
 
   <div metal:fill-slot="main">
 
-    <div class="tabbable tabs-top" 
-         style="font-size:50%">
+    <div class="tabbable tabs-top">
 
       <ul class="nav nav-pills" 
           tal:define="tabs view.sheet_names"
