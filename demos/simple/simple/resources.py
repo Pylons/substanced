@@ -13,7 +13,7 @@ from substanced.schema import Schema
 from substanced.content import content
 from substanced.form import FileUploadTempStore
 from substanced.util import chunks
-from substanced.properties import PropertySheet
+from substanced.property import PropertySheet
 
 def make_name_validator(content_type):
     @colander.deferred

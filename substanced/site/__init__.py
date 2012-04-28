@@ -18,7 +18,7 @@ from ..principal import Principals
 from ..acl import NO_INHERIT
 from ..content import content
 from ..util import oid_of
-from ..properties import PropertySheet
+from ..property import PropertySheet
 
 class SiteSchema(Schema):
     """ The schema representing site properties. """

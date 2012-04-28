@@ -38,7 +38,7 @@ from ..schema import Schema
 from ..service import find_service
 from ..folder import Folder
 from ..util import oid_of
-from ..properties import PropertySheet
+from ..property import PropertySheet
 
 class UserToGroup(Interface):
     """ The reference type used to store users-to-groups references in the

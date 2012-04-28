@@ -11,5 +11,5 @@ def includeme(config): # pragma: no cover
     config.include('.folder')
     config.include('.principal')
     config.include('.undo')
-    config.include('.properties')
+    config.include('.property')
     
