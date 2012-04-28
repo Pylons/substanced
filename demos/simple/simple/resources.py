@@ -103,11 +103,10 @@ class FilePropertiesSchema(Schema):
     name = colander.SchemaNode(
         colander.String(),
         validator = make_name_validator(FileType),
-        missing = colander.null,
         )
     mimetype = colander.SchemaNode(
         colander.String(),
-        missing = colander.null,
+        missing = 'application/octet-stream',
         )
 
 class FilePropertySheet(PropertySheet):
@@ -124,8 +123,6 @@ class FilePropertySheet(PropertySheet):
         context = self.context
         newname = struct['name']
         mimetype = struct['mimetype']
-        if not mimetype:
-            mimetype = 'application/octet-stream'
         context.mimetype = mimetype
         oldname = context.__name__
         if newname and newname != oldname:

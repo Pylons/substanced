@@ -59,7 +59,8 @@ class AddFileSchema(FilePropertiesSchema):
     )
 class AddFileView(FormView):
     title = 'Add File'
-    schema = AddFileSchema(validator=name_or_file)
+    schema = AddFileSchema(validator=name_or_file).clone()
+    schema['name'].missing = colander.null
     buttons = ('add',)
 
     def add_success(self, appstruct):
@@ -77,7 +78,7 @@ class AddFileView(FormView):
                 stream = None
         mimetype = appstruct['mimetype']
         name = filename or name
-        if not mimetype:
+        if not mimetype or mimetype == 'application/octet-stream':
             mimetype = mimetypes.guess_type(name, strict=False)[0]
             if mimetype is None:
                 mimetype = 'application/octet-stream'
