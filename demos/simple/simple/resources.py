@@ -142,7 +142,7 @@ class FileUploadPropertySheet(PropertySheet):
         filedata = dict(
             fp=None,
             uid=str(context.__objectid__),
-            filename=context.__name__,
+            filename='',
             )
         return dict(file=filedata)
     
