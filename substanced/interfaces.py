@@ -18,17 +18,26 @@ class IPropertied(Interface):
 class IPropertySheet(Interface):
     """ Interface for objects with a set of properties defined by a Colander
     schema"""
-    schema = Attribute('Colander schema which denotes property schema')
+    context = Attribute('The context of the property sheet (a resource)')
+    request = Attribute('The current request')
+
+    def get_schema():
+        """ Return a (bound) colander schema """
 
     def get():
-        """ Returns a data structure representing the current property state
-        according to the attached __propschema__ (usually a dictionary)."""
+        """ Return a dictionary representing the current property state
+        compatible with the schema for serialization"""
 
     def set(struct):
-        """ Persists a data structure representing the property state
-        represented by ``struct`` (usually a dictionary).  The data structure
-        will have already been validated against the __propschema__."""
-        
+        """ Accept ``struct`` (a dictionary representing the property state)
+        and persist it to the context.  The data structure will have already
+        been validated against the propertysheet schema."""
+
+    def after_set(self):
+        """ Perform operations after a successful set. The default
+        propertysheet implementation sends an ObjectModified event and
+        flashes an undo message"""
+    
 class IObjectMap(Interface):
     """ A map of objects to paths and a reference engine """
     def objectid_for(obj_or_path_tuple):

@@ -1,6 +1,11 @@
+from zope.interface import implementer
+
 from pyramid.httpexceptions import HTTPFound
 
-from ..interfaces import IPropertied
+from ..interfaces import (
+    IPropertied,
+    IPropertySheet,
+    )
 from ..form import FormView
 from ..sdi import mgmt_view
 from ..event import ObjectModified
@@ -40,6 +45,7 @@ class PropertySheetsView(FormView):
         appstruct = self.active_sheet.get()
         return {'form':form.render(appstruct=appstruct)}
 
+@implementer(IPropertySheet)
 class PropertySheet(object):
     """ Convenience base class for concrete property sheet implementations """
     def __init__(self, context, request):
