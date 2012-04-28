@@ -17,7 +17,8 @@ class IPropertied(Interface):
     """
 class IPropertySheet(Interface):
     """ Interface for objects with a set of properties defined by a Colander
-    schema"""
+    schema.  The class :class:`substanced.properties.PropertySheet` (which is
+    meant to be subclassed for specialization) implements this interface."""
     context = Attribute('The context of the property sheet (a resource)')
     request = Attribute('The current request')
 

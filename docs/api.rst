@@ -256,6 +256,13 @@ Other Helpers
 
 .. autofunction:: includeme
 
+:mod:`substanced.properties` API
+--------------------------------
+
+.. automodule:: substanced.properties
+
+.. autoclass:: PropertySheet
+
 :mod:`substanced.schema` API
 ----------------------------
 
@@ -309,3 +316,12 @@ Other Helpers
 
 .. autofunction:: chunks
 
+:mod:`substanced.interfaces`
+----------------------------
+
+These represent interfaces implemented by various Substance D objects.
+
+.. automodule:: substanced.interfaces
+
+.. autointerface:: IPropertySheet
+   :members:
