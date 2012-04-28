@@ -256,10 +256,10 @@ Other Helpers
 
 .. autofunction:: includeme
 
-:mod:`substanced.properties` API
+:mod:`substanced.property` API
 --------------------------------
 
-.. automodule:: substanced.properties
+.. automodule:: substanced.property
 
 .. autoclass:: PropertySheet
 
