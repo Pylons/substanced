@@ -2,6 +2,30 @@ import unittest
 from pyramid import testing
 from pyramid.exceptions import ConfigurationError
 
+class TestSitePropertySheet(unittest.TestCase):
+    def _makeOne(self, context, request):
+        from . import SitePropertySheet
+        return SitePropertySheet(context, request)
+    
+    def test_get(self):
+        context = testing.DummyResource()
+        request = testing.DummyRequest()
+        inst = self._makeOne(context, request)
+        context.title = 'title'
+        context.description = 'description'
+        self.assertEqual(inst.get(),
+                         dict(title='title', description='description'))
+
+    def test_set(self):
+        context = testing.DummyResource()
+        request = testing.DummyRequest()
+        inst = self._makeOne(context, request)
+        context.title = 'title'
+        context.description = 'description'
+        inst.set(dict(title='t', description='d'))
+        self.assertEqual(context.title, 't')
+        self.assertEqual(context.description, 'd')
+
 class TestSite(unittest.TestCase):
     def setUp(self):
         self.config = testing.setUp()
@@ -26,23 +50,6 @@ class TestSite(unittest.TestCase):
         inst = self._makeOne('login', 'email', 'password')
         self.assertTrue('__services__' in inst)
 
-    def test_get_properties(self):
-        self._setupEvents()
-        inst = self._makeOne('login', 'email', 'password')
-        inst.title = 'title'
-        inst.description = 'description'
-        self.assertEqual(inst.get_properties(),
-                         dict(title='title', description='description'))
-
-    def test_set_properties(self):
-        self._setupEvents()
-        inst = self._makeOne('login', 'email', 'password')
-        inst.title = 'title'
-        inst.description = 'description'
-        inst.set_properties(dict(title='t', description='d'))
-        self.assertEqual(inst.title, 't')
-        self.assertEqual(inst.description, 'd')
-        
     def _call_root_factory(self, request, transaction, get_connection):
         from . import Site
         return Site.root_factory(request, transaction, get_connection)

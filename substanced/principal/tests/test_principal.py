@@ -298,6 +298,63 @@ class Test_groups_widget(unittest.TestCase):
         result = self._makeOne(None, kw)
         self.assertEqual(result.values, [('1', 'group')])
 
+class TestUserPropertySheet(unittest.TestCase):
+    def _makeOne(self, context, request):
+        from .. import UserPropertySheet
+        return UserPropertySheet(context, request)
+
+    def test_get(self):
+        context = testing.DummyResource()
+        context.__name__ = 'fred'
+        context.email = 'email'
+        context.get_groupids = lambda: [1,2]
+        request = testing.DummyRequest()
+        inst = self._makeOne(context, request)
+        self.assertEqual(inst.get(),
+                         {'email':'email', 'login':'fred', 'groups':['1', '2']})
+        
+    def test_set_newname_different_than_oldname(self):
+        context = testing.DummyResource()
+        request = testing.DummyRequest()
+        parent = testing.DummyResource()
+        parent['oldname'] = context
+        def rename(old, new):
+            self.assertEqual(old, 'oldname')
+            self.assertEqual(new, 'name')
+            context.renamed = True
+        parent.rename = rename
+        def disconnect():
+            context.disconnected = True
+        def connect(*members):
+            self.assertEqual(members, (1,))
+            context.connected = True
+        context.disconnect = disconnect
+        context.connect = connect
+        inst = self._makeOne(context, request)
+        inst.set({'email':'email', 'login':'name', 'groups':(1,)})
+        self.assertEqual(context.email, 'email')
+        self.assertTrue(context.renamed)
+        self.assertTrue(context.disconnected)
+        self.assertTrue(context.connected)
+
+    def test_set_newname_same_as_oldname(self):
+        context = testing.DummyResource()
+        request = testing.DummyRequest()
+        parent = testing.DummyResource()
+        parent['name'] = context
+        def disconnect():
+            context.disconnected = True
+        def connect(*members):
+            self.assertEqual(members, (1,))
+            context.connected = True
+        context.disconnect = disconnect
+        context.connect = connect
+        inst = self._makeOne(context, request)
+        inst.set({'email':'email', 'login':'name', 'groups':(1,)})
+        self.assertEqual(context.email, 'email')
+        self.assertTrue(context.disconnected)
+        self.assertTrue(context.connected)
+
 class TestUser(unittest.TestCase):
     def setUp(self):
         self.config = testing.setUp()
@@ -336,49 +393,6 @@ class TestUser(unittest.TestCase):
         principals['users']['user'] = inst
         inst.email_password_reset(request)
         self.assertTrue(get_mailer(request).outbox)
-
-    def test_get_properties(self):
-        inst = self._makeOne('abc', 'email')
-        inst.__name__ = 'fred'
-        inst.get_groupids = lambda: [1,2]
-        self.assertEqual(inst.get_properties(),
-                         {'email':'email', 'login':'fred', 'groups':['1', '2']})
-        
-    def test_set_properties_newname_same_as_old(self):
-        from ...testing import make_site
-        parent = make_site()
-        inst = self._makeOne('abc', 'email')
-        parent['login'] = inst
-        inst.get_groupids = lambda: [1,2]
-        inst.set_properties({'login':'abc', 'email':'email2', 'groups':()})
-        self.assertEqual(inst.__name__, 'abc')
-        self.assertEqual(inst.email, 'email2')
-
-    def test_set_properties_newname_different(self):
-        from ...testing import make_site
-        parent = make_site()
-        inst = self._makeOne('abc', 'email')
-        parent['login'] = inst
-        inst.get_groupids = lambda: [1,2]
-        inst.set_properties({'login':'newname', 'email':'email2', 'groups':()})
-        self.assertTrue('newname' in parent)
-        self.assertEqual(inst.__name__, 'newname')
-        self.assertEqual(inst.email, 'email2')
-
-    def test_set_properties_newgroups(self):
-        from ...testing import make_site
-        parent = make_site()
-        inst = self._makeOne('abc', 'email')
-        parent['login'] = inst
-        inst.get_groupids = lambda: [1,2]
-        connect_called = []
-        def connect(*args):
-            connect_called.append(True)
-            self.assertEqual(args, (1,))
-        inst.connect = connect
-        inst.set_properties(
-            {'login':'newname', 'email':'email2', 'groups':(1,)})
-        self.assertTrue(connect_called)
 
     def test_get_groupids(self):
         from ...testing import make_site
