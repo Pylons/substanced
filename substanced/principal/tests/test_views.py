@@ -9,6 +9,7 @@ class TestAddUserView(unittest.TestCase):
 
     def _makeRequest(self, resource):
         request = testing.DummyRequest()
+        request.registry = testing.DummyResource()
         request.registry.content = DummyContent(resource)
         request.mgmt_path = lambda *arg: 'http://example.com'
         request.context = testing.DummyResource()
@@ -30,6 +31,7 @@ class TestAddGroupView(unittest.TestCase):
 
     def _makeRequest(self, resource):
         request = testing.DummyRequest()
+        request.registry = testing.DummyResource()
         request.registry.content = DummyContent(resource)
         request.mgmt_path = lambda *arg: 'http://example.com'
         request.context = testing.DummyResource()

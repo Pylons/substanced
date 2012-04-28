@@ -222,9 +222,10 @@ def get_mgmt_views(request, context=None, names=None):
                 )
 
     ordered = []
+
+    tab_order = request.registry.content.metadata(context, 'tab_order')
     
-    if hasattr(context, '__tab_order__'):
-        tab_order = context.__tab_order__
+    if tab_order is not None:
         ordered_names_available = [ y for y in tab_order if y in
                                     [ x['view_name'] for x in L ] ]
         for ordered_name in ordered_names_available:

@@ -158,14 +158,18 @@ class GroupPropertySheet(PropertySheet):
         context.disconnect()
         context.connect(*struct['members'])
 
-@content(IGroup, icon='icon-th-list', add_view='add_group', name='Group')
-class Group(Folder):
-    """ Represents a group.  """
-    __tab_order__ = ('properties',)
-    __propsheets__ = (
+@content(
+    IGroup,
+    icon='icon-th-list',
+    add_view='add_group',
+    name='Group',
+    tab_order=('properties',),
+    propertysheets = (
         ('', GroupPropertySheet),
         )
-
+    )
+class Group(Folder):
+    """ Represents a group.  """
     def __init__(self, description=''):
         Folder.__init__(self)
         self.description = description
@@ -288,14 +292,18 @@ class UserPropertySheet(PropertySheet):
         context.disconnect()
         context.connect(*struct['groups'])
 
-@content(IUser, icon='icon-user', add_view='add_user', name='User')
-class User(Folder):
-    """ Represents a user.  """
-
-    __tab_order__ = ('properties',)
-    __propsheets__ = (
+@content(
+    IUser,
+    icon='icon-user',
+    add_view='add_user',
+    name='User',
+    tab_order=('properties',),
+    propertysheets = (
         ('', UserPropertySheet),
         )
+    )
+class User(Folder):
+    """ Represents a user.  """
 
     pwd_manager = BCRYPTPasswordManager()
 

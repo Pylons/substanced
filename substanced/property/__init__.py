@@ -15,7 +15,9 @@ from ..sdi import mgmt_view
 from ..event import ObjectModified
 
 def has_permission_to_view_any_propertysheet(context, request):
-    sheet_factories = [ x[1] for x in context.__propsheets__ ]
+    candidates = request.registry.content.metadata(
+        context, 'propertysheets', [])
+    sheet_factories = [ x[1] for x in candidates ]
     for sheet_factory in sheet_factories:
         permissions = getattr(sheet_factory, 'permissions', None)
         if not permissions:
@@ -69,7 +71,9 @@ class PropertySheetsView(FormView):
 
     def viewable_sheet_factories(self):
         L = []
-        for name, factory in self.context.__propsheets__:
+        candidates = self.request.registry.content.metadata(
+            self.context, 'propertysheets', [])
+        for name, factory in candidates:
             if not self.has_permission_to('view', factory):
                 continue
             L.append((name, factory))

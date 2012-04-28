@@ -8,8 +8,9 @@ class TestPropertiesView(unittest.TestCase):
 
     def test_ctor_no_subpath(self):
         request = testing.DummyRequest()
+        request.registry = testing.DummyResource()
+        request.registry.content = DummyContent([('name', DummyPropertySheet)])
         resource = testing.DummyResource()
-        resource.__propsheets__ = [('name', DummyPropertySheet)]
         request.context = resource
         inst = self._makeOne(request)
         self.assertEqual(inst.active_sheet_name, 'name')
@@ -19,8 +20,10 @@ class TestPropertiesView(unittest.TestCase):
     def test_ctor_with_subpath(self):
         request = testing.DummyRequest()
         request.subpath = ('othername',)
+        request.registry = testing.DummyResource()
+        request.registry.content = DummyContent(
+            [('othername', DummyPropertySheet)])
         resource = testing.DummyResource()
-        resource.__propsheets__ = [('othername', DummyPropertySheet)]
         request.context = resource
         inst = self._makeOne(request)
         self.assertEqual(inst.active_sheet_name, 'othername')
@@ -30,8 +33,10 @@ class TestPropertiesView(unittest.TestCase):
     def test_save_success(self):
         request = testing.DummyRequest()
         request.mgmt_path = lambda *arg: '/mgmt'
+        request.registry = testing.DummyResource()
+        request.registry.content = DummyContent(
+            [('name', DummyPropertySheet)])
         resource = testing.DummyResource()
-        resource.__propsheets__ = [('name', DummyPropertySheet)]
         request.context = resource
         inst = self._makeOne(request)
         response = inst.save_success({'a':1})
@@ -41,8 +46,10 @@ class TestPropertiesView(unittest.TestCase):
 
     def test_show(self):
         request = testing.DummyRequest()
+        request.registry = testing.DummyResource()
+        request.registry.content = DummyContent(
+            [('name', DummyPropertySheet)])
         resource = testing.DummyResource()
-        resource.__propsheets__ = [('name', DummyPropertySheet)]
         request.context = resource
         inst = self._makeOne(request)
         form = DummyForm()
@@ -133,3 +140,11 @@ class DummyPropertySheet(object):
 
     def get_schema(self):
         return 'schema'
+
+class DummyContent(object):
+    def __init__(self, result):
+        self.result = result
+
+    def metadata(self, context, name, default=None):
+        return self.result
+    

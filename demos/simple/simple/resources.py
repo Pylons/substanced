@@ -77,12 +77,11 @@ class DocumentPropertySheet(PropertySheet):
     icon='icon-align-left',
     add_view='add_document', 
     name='Document',
-    )
-class Document(Persistent):
-    __propsheets__ = (
+    propertysheets = (
         ('Basic', DocumentPropertySheet),
         )
-
+    )
+class Document(Persistent):
     def __init__(self, title, body):
         self.title = title
         self.body = body
@@ -159,16 +158,15 @@ class FileUploadPropertySheet(PropertySheet):
     name='File',
     icon='icon-file',
     add_view='add_file',
-    )
-class File(Persistent):
-
     # prevent view tab from sorting first (it would display the file when
     # manage_main clicked)
-    __tab_order__ = ('properties', 'acl_edit', 'view')
-    __propsheets__ = (
+    tab_order = ('properties', 'acl_edit', 'view'),
+    propertysheets = (
         ('Basic', FilePropertySheet),
         ('Upload', FileUploadPropertySheet),
         )
+    )
+class File(Persistent):
 
     def __init__(self, stream, mimetype='application/octet-stream'):
         self.mimetype = mimetype

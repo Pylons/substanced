@@ -30,16 +30,18 @@ class SiteSchema(Schema):
 class SitePropertySheet(PropertySheet):
     schema = SiteSchema()
 
-@content(ISite, icon='icon-home')
+@content(
+    ISite,
+    icon='icon-home',
+    propertysheets = (
+        ('', SitePropertySheet),
+        )
+    )
 class Site(Folder):
     """ An object representing the root of a Substance D site.  Contains
     ``objectmap``, ``catalog``, and ``principals`` services.  Initialize with
     an initial login name and password: the resulting user will be granted
     all permissions."""
-    
-    __propsheets__ = (
-        ('', SitePropertySheet),
-        )
     
     title = ''
     description = ''
@@ -91,6 +93,5 @@ class Site(Folder):
         return zodb_root['app_root']
 
 def includeme(config): # pragma: no cover
-    config.add_content_type(ISite, Site)
-    config.scan('.views')
+    config.scan('.')
     
