@@ -16,6 +16,17 @@ class TestPropertiesView(unittest.TestCase):
         self.assertTrue(inst.schema, 'schema')
         self.assertEqual(inst.sheet_names, ['name'])
 
+    def test_ctor_with_subpath(self):
+        request = testing.DummyRequest()
+        request.subpath = ('othername',)
+        resource = testing.DummyResource()
+        resource.__propsheets__ = [('othername', DummyPropertySheet)]
+        request.context = resource
+        inst = self._makeOne(request)
+        self.assertEqual(inst.active_sheet_name, 'othername')
+        self.assertTrue(inst.schema, 'schema')
+        self.assertEqual(inst.sheet_names, ['othername'])
+
     def test_save_success(self):
         request = testing.DummyRequest()
         request.flash_undo = lambda *arg: None
