@@ -54,7 +54,11 @@ class DocumentPropertySheet(PropertySheet):
 
     def get(self):
         context = self.context
-        return dict(name=self.__name__, body=context.body, title=context.title)
+        return dict(
+            name=context.__name__,
+            body=context.body,
+            title=context.title
+            )
 
     def set(self, struct):
         context = self.context
@@ -70,7 +74,6 @@ class DocumentPropertySheet(PropertySheet):
     'Document',
     icon='icon-align-left',
     add_view='add_document', 
-    name='Document',
     propertysheets = (
         ('Basic', DocumentPropertySheet),
         ),

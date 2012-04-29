@@ -3,10 +3,7 @@ import string
 
 from persistent import Persistent
 from cryptacular.bcrypt import BCRYPTPasswordManager
-from zope.interface import (
-    Interface,
-    implementer,
-    )
+from zope.interface import Interface
 
 import colander
 import deform
@@ -47,8 +44,11 @@ class UserToGroup(Interface):
     """ The reference type used to store users-to-groups references in the
     object map"""
 
-@content('Principals', icon='icon-lock')
-@implementer(IPrincipals)
+@content(
+    IPrincipals,
+    name='Principals',
+    icon='icon-lock'
+    )
 class Principals(Folder):
     """ Object representing a collection of principals.  Inherits from
     :class:`substanced.folder.Folder`.  Contains ``users``, an instance of
@@ -61,8 +61,11 @@ class Principals(Folder):
         self['groups'] = Groups()
         self['resets'] = PasswordResets()
 
-@content('Users', icon='icon-list-alt')
-@implementer(IUsers)
+@content(
+    IUsers,
+    name='Users',
+    icon='icon-list-alt'
+    )
 class Users(Folder):
     """ Object representing a collection of users.  Inherits from
     :class:`substanced.folder.Folder`.  Contains
@@ -72,8 +75,11 @@ class Users(Folder):
         self[login] = user
         return user
 
-@content('Groups', icon='icon-list-alt')
-@implementer(IGroups)
+@content(
+    IGroups,
+    name='Groups',
+    icon='icon-list-alt'
+    )
 class Groups(Folder):
     """ Object representing a collection of groups.  Inherits from
     :class:`substanced.folder.Folder`.  Contains
@@ -165,16 +171,15 @@ class GroupPropertySheet(PropertySheet):
         context.connect(*struct['members'])
 
 @content(
-    'Group',
+    IGroup,
+    name='Group',
     icon='icon-th-list',
     add_view='add_group',
-    name='Group',
     tab_order=('properties',),
     propertysheets = (
         ('', GroupPropertySheet),
         )
     )
-@implementer(IGroup)
 class Group(Folder):
     """ Represents a group.  """
     def __init__(self, description=''):
@@ -300,16 +305,15 @@ class UserPropertySheet(PropertySheet):
         context.connect(*struct['groups'])
 
 @content(
-    'User',
+    IUser,
+    name='User',
     icon='icon-user',
     add_view='add_user',
-    name='User',
     tab_order=('properties',),
     propertysheets = (
         ('', UserPropertySheet),
         )
     )
-@implementer(IUser)
 class User(Folder):
     """ Represents a user.  """
 
@@ -390,8 +394,11 @@ class User(Folder):
 class UserToPasswordReset(object):
     pass
 
-@content('Password Resets', icon='icon-tags')
-@implementer(IPasswordResets)
+@content(
+    IPasswordResets,
+    name='Password Resets',
+    icon='icon-tags'
+    )
 class PasswordResets(Folder):
     """ Object representing the current set of password reset requests """
     def _gen_random_token(self):
@@ -413,8 +420,11 @@ class PasswordResets(Folder):
         objectmap.connect(user, reset, UserToPasswordReset)
         return reset
 
-@content('Password Reset', icon='icon-tag')
-@implementer(IPasswordReset)
+@content(
+    IPasswordReset,
+    name='Password Reset',
+    icon='icon-tag'
+    )
 class PasswordReset(Persistent):
     """ Object representing the a single password reset request """
     def reset_password(self, password):

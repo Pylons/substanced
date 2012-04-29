@@ -7,8 +7,8 @@ from ..interfaces import ISite
 from ..sdi import mgmt_view
 
 @view_defaults(
-    name='manage_db',
     context=ISite,
+    name='manage_db',
     renderer='templates/manage_db.pt',
     permission='sdi.manage-database')
 class ManageDatabase(object):

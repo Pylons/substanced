@@ -22,7 +22,11 @@ from ..folder import Folder
 
 logger = logging.getLogger(__name__) # API
 
-@content(ICatalog, icon='icon-search')
+@content(
+    ICatalog,
+    name='Catalog',
+    icon='icon-search'
+    )
 class Catalog(Folder, _Catalog):
     family = BTrees.family32
     transaction = transaction

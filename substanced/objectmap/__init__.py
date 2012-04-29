@@ -86,7 +86,11 @@ there's a child at '/a/b/c').
 
 _marker = object()
 
-@content(IObjectMap, icon='icon-asterisk')
+@content(
+    IObjectMap,
+    name='Object Map',
+    icon='icon-asterisk'
+    )
 class ObjectMap(Persistent):
     
     _v_nextid = None

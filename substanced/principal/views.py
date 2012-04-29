@@ -26,8 +26,13 @@ class AddUserSchema(UserSchema):
         widget = deform.widget.CheckedPasswordWidget(),
         )
 
-@mgmt_view(context=IUsers, name='add_user', permission='sdi.add-user', 
-           renderer='substanced.sdi:templates/form.pt', tab_condition=False)
+@mgmt_view(
+    context=IUsers,
+    name='add_user',
+    permission='sdi.add-user', 
+    renderer='substanced.sdi:templates/form.pt',
+    tab_condition=False
+    )
 class AddUserView(FormView):
     title = 'Add User'
     schema = AddUserSchema()
@@ -42,8 +47,13 @@ class AddUserView(FormView):
         user.connect(*groups)
         return HTTPFound(self.request.mgmt_path(user, '@@properties'))
 
-@mgmt_view(context=IGroups, name='add_group', permission='sdi.add-group', 
-           renderer='substanced.sdi:templates/form.pt', tab_condition=False)
+@mgmt_view(
+    context=IGroups,
+    name='add_group',
+    permission='sdi.add-group', 
+    renderer='substanced.sdi:templates/form.pt',
+    tab_condition=False
+    )
 class AddGroupView(FormView):
     title = 'Add Group'
     schema = GroupSchema()
@@ -83,9 +93,13 @@ class UserPasswordSchema(Schema):
         )
 
 
-@mgmt_view(context=IUser, name='change_password', tab_title='Change Password',
-           permission='sdi.change-password',
-           renderer='substanced.sdi:templates/form.pt')
+@mgmt_view(
+    context=IUser,
+    name='change_password',
+    tab_title='Change Password',
+    permission='sdi.change-password',
+    renderer='substanced.sdi:templates/form.pt'
+    )
 class ChangePasswordView(FormView):
     title = 'Change Password'
     schema = UserPasswordSchema()
@@ -116,8 +130,11 @@ class ResetRequestSchema(Schema):
         validator = login_validator,
         )
 
-@mgmt_view(name='resetpassword', tab_condition=False,
-           renderer='substanced.sdi:templates/form.pt')
+@mgmt_view(
+    name='resetpassword',
+    tab_condition=False,
+    renderer='substanced.sdi:templates/form.pt'
+    )
 class ResetRequestView(FormView):
     title = 'Request Password Reset'
     schema = ResetRequestSchema()
@@ -143,8 +160,12 @@ class ResetSchema(Schema):
         widget = deform.widget.CheckedPasswordWidget(),
         )
 
-@mgmt_view(context=IPasswordReset, name='', tab_condition=False,
-           renderer='substanced.sdi:templates/form.pt')
+@mgmt_view(
+    context=IPasswordReset,
+    name='',
+    tab_condition=False,
+    renderer='substanced.sdi:templates/form.pt'
+    )
 class ResetView(FormView):
     title = 'Reset Password'
     schema = ResetSchema()
