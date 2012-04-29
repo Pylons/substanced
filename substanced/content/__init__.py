@@ -82,6 +82,9 @@ class ContentRegistry(object):
                 return maybe
         return default
 
+    def istype(self, context, type):
+        return type in getattr(context, '__content_types__', [])
+
 # venusian decorator that marks a class as a content class
 class content(object):
     """ Use as a decorator for a content factory (usually a class).  Accepts

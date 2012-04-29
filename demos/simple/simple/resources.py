@@ -14,9 +14,10 @@ from substanced.property import PropertySheet
 def make_name_validator(content_type):
     @colander.deferred
     def name_validator(node, kw):
-        context = kw['request'].context
+        request = kw['request']
+        context = request.context
         def exists(node, value):
-            if content_type in context.__content_types__:
+            if request.registry.content.istype(context, content_type):
                 if value != context.__name__:
                     try:
                         context.__parent__.check_name(value)
@@ -146,7 +147,6 @@ class FileUploadPropertySheet(PropertySheet):
         
 @content(
     'File',
-    name='File',
     icon='icon-file',
     add_view='add_file',
     # prevent view tab from sorting first (it would display the file when
