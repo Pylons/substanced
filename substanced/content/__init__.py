@@ -1,9 +1,12 @@
 import inspect
 
+from zope.interface.interfaces import IInterface
+
 from zope.interface import (
     alsoProvides,
     Interface,
     implementer,
+    implementedBy,
     )
 
 import venusian
@@ -85,6 +88,26 @@ class ContentRegistry(object):
     def istype(self, context, type):
         return type in getattr(context, '__content_types__', [])
 
+def _get_meta_interfaces(content_type, factory, meta):
+    interfaces = set(implementedBy(factory))
+    interfaces.add(IContent)
+
+    extra_interfaces = set(meta.get('interfaces', []))
+    interfaces.update(extra_interfaces)
+
+    if IInterface.providedBy(content_type):
+        interfaces.add(content_type)
+
+    if meta.get('catalog'):
+        interfaces.add(ICatalogable)
+
+    if meta.get('propertysheets') is not None:
+        interfaces.add(IPropertied)
+
+    interfaces.discard(Interface)
+
+    return interfaces
+    
 # venusian decorator that marks a class as a content class
 class content(object):
     """ Use as a decorator for a content factory (usually a class).  Accepts
@@ -95,13 +118,16 @@ class content(object):
         self.meta = meta
 
     def __call__(self, wrapped):
+        interfaces = _get_meta_interfaces(self.content_type, wrapped, self.meta)
+        implementer(*interfaces)(wrapped)
+        set_content_type(wrapped, self.content_type)
         def callback(context, name, ob):
             config = context.config.with_package(info.module)
             config.add_content_type(self.content_type, wrapped, **self.meta)
         info = self.venusian.attach(wrapped, callback, category='substanced')
         self.meta['_info'] = info.codeinfo # fbo "action_method"
         return wrapped
-    
+
 def add_content_type(config, content_type, factory, **meta):
     """
     Configurator method which adds a content type.  Call via
@@ -120,28 +146,22 @@ def add_content_type(config, content_type, factory, **meta):
     - If ``meta`` contains the keyword ``catalog`` and its value is true, the
       object will be tracked in the Substance D catalog.
 
+    - If ``meta`` contains the keyword ``interfaces``, its value must be a
+      sequence of interface objects.  These interfaces will be applied to the
+      content object (or if the factory is a class, to its class).
+
     Other keywords will just be stored, and have no special meaning.
     """
-    interfaces = meta.get('interfaces', [])
+    # NB: it's intentional that if this function is called by the ``content``
+    # decorator that we reset the implemented interfaces; it's idempotent and
+    # this is for benefit of someone who is not using the decorator.
+    interfaces = _get_meta_interfaces(content_type, factory, meta)
+    implementer(*interfaces)(factory)
+    set_content_type(factory, content_type)
 
-    if not IContent in interfaces:
-        interfaces.append(IContent)
-
-    if meta.get('catalog'):
-        if not ICatalogable in interfaces:
-            interfaces.append(ICatalogable)
-
-    if meta.get('propertysheets') is not None:
-        if not IPropertied in interfaces:
-            interfaces.append(IPropertied)
-
-    if inspect.isclass(factory):
-        implementer(interfaces)(factory)
-        set_content_type(factory, content_type)
-        
-    else:
+    if not inspect.isclass(factory):
         factory = provides_factory(factory, content_type, interfaces)
-    
+
     def register_factory():
         config.registry.content.add(content_type, factory, **meta)
 
@@ -149,12 +169,13 @@ def add_content_type(config, content_type, factory, **meta):
     
     intr = config.introspectable(
         'substance d content types',
-        discrim, content_type,
+        discrim,
+        content_type,
         'substance d content type',
         )
     intr['meta'] = meta
     intr['content_type'] = content_type
-    intr['interfaces'] = tuple(interfaces)
+    intr['interfaces'] = interfaces
     intr['factory'] = factory
     config.action(discrim, callable=register_factory, introspectables=(intr,))
 

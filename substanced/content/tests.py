@@ -206,7 +206,7 @@ class Test_add_content_type(unittest.TestCase):
         self._callFUT(config, 'foo', Foo, catalog=True)
         self.assertEqual(len(config.actions), 1)
         ifaces = config.actions[0][1]['introspectables'][0]['interfaces']
-        self.assertEqual(ifaces, (IContent, ICatalogable))
+        self.assertEqual(ifaces, set((IContent, ICatalogable)))
 
     def test_with_propertysheets_flag(self):
         from ..interfaces import IContent, IPropertied
@@ -217,7 +217,32 @@ class Test_add_content_type(unittest.TestCase):
         self._callFUT(config, 'foo', Foo, propertysheets=())
         self.assertEqual(len(config.actions), 1)
         ifaces = config.actions[0][1]['introspectables'][0]['interfaces']
-        self.assertEqual(ifaces, (IContent, IPropertied))
+        self.assertEqual(ifaces, set((IContent, IPropertied)))
+
+    def test_content_type_is_interface(self):
+        config = DummyConfig()
+        config.registry.content = DummyContentRegistry()
+        class IFoo(Interface):
+            pass
+        class Foo(object):
+            pass
+        self._callFUT(config, IFoo, Foo)
+        self.assertEqual(len(config.actions), 1)
+        ifaces = config.actions[0][1]['introspectables'][0]['interfaces']
+        self.assertEqual(ifaces, set((IContent, IFoo)))
+        
+    def test_factory_implements_interface(self):
+        config = DummyConfig()
+        config.registry.content = DummyContentRegistry()
+        class IFoo(Interface):
+            pass
+        @implementer(IFoo)
+        class Foo(object):
+            pass
+        self._callFUT(config, 'foo', Foo)
+        self.assertEqual(len(config.actions), 1)
+        ifaces = config.actions[0][1]['introspectables'][0]['interfaces']
+        self.assertEqual(ifaces, set((IContent, IFoo)))
         
 class Test_provides_factory(unittest.TestCase):
     def _callFUT(self, factory, content_type, interfaces):
