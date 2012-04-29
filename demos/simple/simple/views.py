@@ -15,11 +15,10 @@ from substanced.interfaces import (
     )
 
 from .resources import (
+    File,
     FilePropertiesSchema,
     DocumentSchema,
     upload_widget,
-    FileType,
-    DocumentType,
     make_name_validator,
     )
 
@@ -37,7 +36,7 @@ def name_or_file(node, kw):
         if not struct['name']:
             if struct['file'] and struct['file'].get('filename'):
                 filename = struct['file']['filename']
-                curried_name_validator = make_name_validator(FileType)
+                curried_name_validator = make_name_validator('File')
                 real_name_validator = curried_name_validator(node, kw)
                 real_name_validator(node['file'], filename)
     return _name_or_file
@@ -82,12 +81,12 @@ class AddFileView(FormView):
             mimetype = mimetypes.guess_type(name, strict=False)[0]
             if mimetype is None:
                 mimetype = 'application/octet-stream'
-        fileob = registry.content.create(FileType, stream, mimetype)
+        fileob = registry.content.create('File', stream, mimetype)
         self.request.context[name] = fileob
         return HTTPFound(self.request.mgmt_path(fileob, '@@properties'))
 
 @mgmt_view(
-    context=FileType,
+    context=File,
     name='view',
     tab_title='View',
     permission='sdi.view'
@@ -96,7 +95,7 @@ def view_tab(context, request):
     return HTTPFound(location=request.mgmt_path(context))
     
 @mgmt_view(
-    context=FileType,
+    context=File,
     name='', 
     permission='sdi.view',
     tab_condition=False
@@ -124,7 +123,7 @@ class AddDocumentView(FormView):
     def add_success(self, appstruct):
         registry = self.request.registry
         name = appstruct.pop('name')
-        document = registry.content.create(DocumentType, **appstruct)
+        document = registry.content.create('Document', **appstruct)
         self.request.context[name] = document
         return HTTPFound(self.request.mgmt_path(document, '@@properties'))
 

@@ -5,10 +5,6 @@ import deform.widget
 from persistent import Persistent
 from ZODB.blob import Blob
 
-from substanced.interfaces import (
-    IPropertied,
-    ICatalogable,
-    )
 from substanced.schema import Schema
 from substanced.content import content
 from substanced.form import FileUploadTempStore
@@ -20,7 +16,7 @@ def make_name_validator(content_type):
     def name_validator(node, kw):
         context = kw['request'].context
         def exists(node, value):
-            if content_type.providedBy(context):
+            if content_type in context.__content_types__:
                 if value != context.__name__:
                     try:
                         context.__parent__.check_name(value)
@@ -35,13 +31,10 @@ def make_name_validator(content_type):
         return exists
     return name_validator
 
-class DocumentType(IPropertied, ICatalogable):
-    pass
-
 class DocumentSchema(Schema):
     name = colander.SchemaNode(
         colander.String(),
-        validator = make_name_validator(DocumentType),
+        validator = make_name_validator('Document'),
         )
     title = colander.SchemaNode(
         colander.String(),
@@ -73,13 +66,14 @@ class DocumentPropertySheet(PropertySheet):
         context.title = struct['title']
 
 @content(
-    DocumentType,
+    'Document',
     icon='icon-align-left',
     add_view='add_document', 
     name='Document',
     propertysheets = (
         ('Basic', DocumentPropertySheet),
-        )
+        ),
+    catalog=True,
     )
 class Document(Persistent):
     def __init__(self, title, body):
@@ -89,9 +83,6 @@ class Document(Persistent):
     def texts(self): # for indexing
         return self.title, self.body
         
-class FileType(IPropertied, ICatalogable):
-    pass
-    
 @colander.deferred
 def upload_widget(node, kw):
     request = kw['request']
@@ -101,7 +92,7 @@ def upload_widget(node, kw):
 class FilePropertiesSchema(Schema):
     name = colander.SchemaNode(
         colander.String(),
-        validator = make_name_validator(FileType),
+        validator = make_name_validator('File'),
         )
     mimetype = colander.SchemaNode(
         colander.String(),
@@ -154,7 +145,7 @@ class FileUploadPropertySheet(PropertySheet):
             context.upload(fp)
         
 @content(
-    FileType,
+    'File',
     name='File',
     icon='icon-file',
     add_view='add_file',
@@ -164,7 +155,8 @@ class FileUploadPropertySheet(PropertySheet):
     propertysheets = (
         ('Basic', FilePropertySheet),
         ('Upload', FileUploadPropertySheet),
-        )
+        ),
+    catalog = True,
     )
 class File(Persistent):
 

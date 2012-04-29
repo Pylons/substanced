@@ -37,133 +37,119 @@ class Test_addbase(unittest.TestCase):
         self.failUnless(IContent in IBar.__iro__)
 
 class TestContentRegistry(unittest.TestCase):
-    def _makeOne(self, category_iface):
+    def _makeOne(self):
         from . import ContentRegistry
-        return ContentRegistry(category_iface)
+        return ContentRegistry()
 
     def test_add(self):
-        class IHere(Interface):
-            pass
-        inst = self._makeOne(ICategory)
-        inst.add(IHere, True)
-        self.assertEqual(inst.factories[IHere], True)
-        self.assertTrue(ICategory in IHere.__iro__)
-        self.assertTrue(ICategory in IHere.__bases__)
+        inst = self._makeOne()
+        inst.add('here', True)
+        self.assertEqual(inst.factories['here'], True)
+        self.assertEqual(inst.meta['here'], {})
 
     def test_add_with_meta(self):
-        inst = self._makeOne(ICategory)
-        class IFoo(Interface):
-            pass
-        inst.add(IFoo, True, icon='fred')
-        self.assertEqual(inst.factories[IFoo], True)
-        self.assertEqual(IFoo.getTaggedValue('icon'), 'fred')
+        inst = self._makeOne()
+        inst.add('foo', True, icon='fred')
+        self.assertEqual(inst.factories['foo'], True)
+        self.assertEqual(inst.meta['foo'], {'icon':'fred'})
         
     def test_create(self):
-        inst = self._makeOne(ICategory)
-        inst.factories[IDummy] = lambda a: a
-        self.assertEqual(inst.create(IDummy, 'a'), 'a')
+        inst = self._makeOne()
+        inst.factories['dummy'] = lambda a: a
+        self.assertEqual(inst.create('dummy', 'a'), 'a')
 
     def test_all_no_context(self):
-        inst = self._makeOne(ICategory)
-        inst.factories[IDummy] = True
-        self.assertEqual(inst.all(), [IDummy])
+        inst = self._makeOne()
+        inst.factories['dummy'] = True
+        self.assertEqual(inst.all(), ['dummy'])
 
     def test_all_with_context(self):
-        inst = self._makeOne(ICategory)
-        inst.factories[IDummy] = True
-        inst.factories[ICategory] = True
+        inst = self._makeOne()
+        inst.factories['dummy'] = True
+        inst.factories['category'] = True
         dummy = Dummy()
-        alsoProvides(dummy, IDummy)
-        alsoProvides(dummy, ICategory)
-        self.assertEqual(inst.all(dummy), [IDummy, ICategory])
+        dummy.__content_types__ = ('dummy', 'category')
+        self.assertEqual(inst.all(dummy), ['dummy', 'category'])
 
     def test_all_with_context_noprovides(self):
-        inst = self._makeOne(ICategory)
-        inst.factories[IDummy] = True
+        inst = self._makeOne()
+        inst.factories['dummy'] = True
         dummy = Dummy()
         self.assertEqual(inst.all(dummy), [])
 
     def test_all_with_meta_matching(self):
-        class IFoo(Interface):
-            pass
-        IFoo.setTaggedValue('a', 1)
-        inst = self._makeOne(ICategory)
-        inst.factories[IFoo] = True
-        self.assertEqual(inst.all(a=1), [IFoo])
+        inst = self._makeOne()
+        inst.factories['foo'] = True
+        inst.meta['foo'] = {'a':1}
+        self.assertEqual(inst.all(a=1), ['foo'])
 
     def test_all_with_meta_not_matching(self):
-        class IFoo(Interface):
-            pass
-        IFoo.setTaggedValue('a', 1)
-        inst = self._makeOne(ICategory)
-        inst.factories[IFoo] = True
+        inst = self._makeOne()
+        inst.factories['foo'] = True
+        inst.meta['foo'] = {'a':1}
         self.assertEqual(inst.all(a=2), [])
 
     def test_all_with_meta_not_matching_missing(self):
-        class IFoo(Interface):
-            pass
-        inst = self._makeOne(ICategory)
-        inst.factories[IFoo] = True
+        inst = self._makeOne()
+        inst.factories['foo'] = True
         self.assertEqual(inst.all(a=2), [])
         
     def test_first(self):
-        inst = self._makeOne(ICategory)
-        inst.factories[IDummy] = True
-        inst.factories[ICategory] = True
+        inst = self._makeOne()
+        inst.factories['dummy'] = True
+        inst.factories['category'] = True
         dummy = Dummy()
-        alsoProvides(dummy, IDummy)
-        alsoProvides(dummy, ICategory)
-        self.assertEqual(inst.first(dummy), IDummy)
+        dummy.__content_types__ = ('dummy', 'category')
+        self.assertEqual(inst.first(dummy), 'dummy')
 
     def test_first_noprovides(self):
-        inst = self._makeOne(ICategory)
-        inst.factories[IDummy] = True
+        inst = self._makeOne()
+        inst.factories['dummy'] = True
         dummy = Dummy()
         self.assertRaises(ValueError, inst.first, dummy)
 
     def test_metadata(self):
-        inst = self._makeOne(ICategory)
-        inst.factories[IDummy] = True
-        inst.factories[ICategory] = True
+        inst = self._makeOne()
+        inst.factories['dummy'] = True
+        inst.factories['category'] = True
+        inst.meta['dummy'] = {'icon':'icon-name'}
         dummy = Dummy()
-        alsoProvides(dummy, IDummy)
-        alsoProvides(dummy, ICategory)
+        dummy.__content_types__ = ('dummy', 'category')
         self.assertEqual(inst.metadata(dummy, 'icon'), 'icon-name')
 
     def test_metadata_notfound(self):
-        inst = self._makeOne(ICategory)
-        inst.factories[IDummy] = True
-        inst.factories[ICategory] = True
+        inst = self._makeOne()
+        inst.factories['dummy'] = True
+        inst.factories['category'] = True
+        inst.meta['dummy'] = {'icon':'icon-name'}
         dummy = Dummy()
-        alsoProvides(dummy, IDummy)
-        alsoProvides(dummy, ICategory)
+        dummy.__content_types__ = ('dummy', 'category')
         self.assertEqual(inst.metadata(dummy, 'doesntexist'), None)
         
 class Test_content(unittest.TestCase):
-    def _makeOne(self, iface):
+    def _makeOne(self, content_type):
         from ..content import content
-        return content(iface)
+        return content(content_type)
 
     def test_decorates_class(self):
-        decorator = self._makeOne(ISpecial)
+        decorator = self._makeOne('special')
         venusian = DummyVenusian()
         decorator.venusian = venusian
         decorator.venusian.info.scope = 'class'
-        wrapped = decorator(Special)
-        self.assertTrue(wrapped is Special)
-        self.assertTrue(ISpecial.implementedBy(Special))
+        wrapped = decorator(Dummy)
+        self.assertTrue(wrapped is Dummy)
         config = call_venusian(venusian)
         ct = config.content_types
         self.assertEqual(len(ct), 1)
 
     def test_decorates_function(self):
-        decorator = self._makeOne(ISpecial)
+        decorator = self._makeOne('special')
         venusian = DummyVenusian()
         decorator.venusian = venusian
         decorator.venusian.info.scope = 'class'
-        wrapped = decorator(special)
-        self.assertTrue(wrapped is special)
-        self.assertTrue(ISpecial.implementedBy(special))
+        def dummy(): pass
+        wrapped = decorator(dummy)
+        self.assertTrue(wrapped is dummy)
         config = call_venusian(venusian)
         ct = config.content_types
         self.assertEqual(len(ct), 1)
@@ -173,82 +159,107 @@ class Test_add_content_type(unittest.TestCase):
         from . import add_content_type
         return add_content_type(*arg, **kw)
 
-    def test_content_iface_not_IInterface(self):
-        from pyramid.exceptions import ConfigurationError
-        self.assertRaises(
-            ConfigurationError,
-            self._callFUT,
-            None, object(), None, category=IDummy)
-
     def test_success_function(self):
         dummy = Dummy()
         def factory(): return dummy
         config = DummyConfig()
         config.registry.content = DummyContentRegistry()
-        class IFoo(Interface):
-            pass
-        self._callFUT(config, IFoo, factory, category=ICategory)
+        self._callFUT(config, 'foo', factory, category=ICategory)
         self.assertEqual(len(config.actions), 1)
         self.assertEqual(
             config.actions[0][0],
-            (('sd-content-type', IFoo,),)
+            (('sd-content-type', 'foo',),)
             )
         config.actions[0][1]['callable']()
         self.assertEqual(
             config.registry.content.added[0][1]['category'], ICategory)
         self.assertEqual(
-            config.registry.content.added[0][0][0], IFoo)
+            config.registry.content.added[0][0][0], 'foo')
         self.assertEqual(
             config.registry.content.added[0][0][1](), dummy)
-        self.assertTrue(IFoo.providedBy(dummy))
 
     def test_success_class(self):
         config = DummyConfig()
         config.registry.content = DummyContentRegistry()
         class Foo(object):
             pass
-        class IFoo(Interface):
-            pass
-        self._callFUT(config, IFoo, Foo, category=ICategory)
+        self._callFUT(config, 'foo', Foo, category=ICategory)
         self.assertEqual(len(config.actions), 1)
         self.assertEqual(
             config.actions[0][0],
-            (('sd-content-type', IFoo,),)
+            (('sd-content-type', 'foo',),)
             )
         config.actions[0][1]['callable']()
         self.assertEqual(
             config.registry.content.added[0][1]['category'], ICategory)
         self.assertEqual(
-            config.registry.content.added[0][0][0], IFoo)
+            config.registry.content.added[0][0][0], 'foo')
         content = config.registry.content.added[0][0][1]()
         self.assertEqual(content.__class__, Foo)
-        self.assertTrue(IFoo.providedBy(content))
+
+    def test_with_catalog_flag(self):
+        from ..interfaces import IContent, ICatalogable
+        config = DummyConfig()
+        config.registry.content = DummyContentRegistry()
+        class Foo(object):
+            pass
+        self._callFUT(config, 'foo', Foo, catalog=True)
+        self.assertEqual(len(config.actions), 1)
+        ifaces = config.actions[0][1]['introspectables'][0]['interfaces']
+        self.assertEqual(ifaces, (IContent, ICatalogable))
+
+    def test_with_propertysheets_flag(self):
+        from ..interfaces import IContent, IPropertied
+        config = DummyConfig()
+        config.registry.content = DummyContentRegistry()
+        class Foo(object):
+            pass
+        self._callFUT(config, 'foo', Foo, propertysheets=())
+        self.assertEqual(len(config.actions), 1)
+        ifaces = config.actions[0][1]['introspectables'][0]['interfaces']
+        self.assertEqual(ifaces, (IContent, IPropertied))
         
 class Test_provides_factory(unittest.TestCase):
-    def _callFUT(self, factory, content_iface):
+    def _callFUT(self, factory, content_type, interfaces):
         from . import provides_factory
-        return provides_factory(factory, content_iface)
+        return provides_factory(factory, content_type, interfaces)
 
-    def test_content_already_provides(self):
+    def test_content_already_provides_content_type(self):
+        class Foo(object):
+            __content_types__ = ('dummy',)
+        newfactory = self._callFUT(Foo, 'dummy', ())
+        ob = newfactory()
+        self.assertTrue(ob.__class__ is Foo)
+        self.assertEqual(ob.__content_types__, ('dummy',))
+
+    def test_content_doesnt_yet_provide_content_type(self):
+        class Foo(object):
+            pass
+        newfactory = self._callFUT(Foo, 'dummy', ())
+        ob = newfactory()
+        self.assertTrue(ob.__class__ is Foo)
+        self.assertEqual(ob.__content_types__, ('dummy',))
+
+    def test_content_already_provides_interface(self):
         @implementer(IDummy)
         class Foo(object):
             pass
         foo = Foo()
         def factory():
             return foo
-        newfactory = self._callFUT(factory, IDummy)
+        newfactory = self._callFUT(factory, 'dummy', (IDummy,))
         self.assertFalse(newfactory is factory)
         ob = newfactory()
         self.assertTrue(IDummy.providedBy(ob))
         self.assertFalse(IDummy in directlyProvidedBy(ob))
 
-    def test_content_provides_added(self):
+    def test_content_doesnt_yet_provide_interface(self):
         class Foo(object):
             pass
         foo = Foo()
         def factory():
             return foo
-        newfactory = self._callFUT(factory, IDummy)
+        newfactory = self._callFUT(factory, 'dummy', (IDummy,))
         self.assertFalse(newfactory is factory)
         ob = newfactory()
         self.assertTrue(IDummy.providedBy(ob))
@@ -314,11 +325,3 @@ class DummyVenusian(object):
         self.attachments.append((wrapped, callback, category))
         return self.info
 
-# use these special objects only in "content" decorator tests; the decorator
-# uses "implementer", which mutates them.
-
-class ISpecial(Interface): pass
-
-class Special(object): pass
-
-def special(): pass

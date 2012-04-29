@@ -1,8 +1,6 @@
 import inspect
 
-from zope.interface.interfaces import IInterface
 from zope.interface import (
-    providedBy,
     alsoProvides,
     Interface,
     implementer,
@@ -10,10 +8,11 @@ from zope.interface import (
 
 import venusian
 
-from pyramid.exceptions import ConfigurationError
-
-from ..interfaces import IContent
-from ..util import dotted_name
+from ..interfaces import (
+    IContent,
+    ICatalogable,
+    IPropertied,
+    )
 
 _marker = object()
 
@@ -25,36 +24,48 @@ def addbase(iface1, iface2):
         return True
     return False
 
-class ContentRegistry(object):
-    def __init__(self, category_iface=IContent):
-        self.category_iface = category_iface
-        self.factories = {}
+def get_content_types(context):
+    return getattr(context, '__content_types__', ())
 
-    def add(self, content_iface, factory, **meta):
-        addbase(content_iface, self.category_iface)
-        self.factories[content_iface] = factory
-        for k, v in meta.items():
-            content_iface.setTaggedValue(k, v)
+def set_content_type(factory, type):
+    content_types = getattr(factory, '__content_types__', ())
+    if not type in content_types:
+        content_types = tuple(content_types) + (type,)
+    factory.__content_types__ = content_types
+
+class ContentRegistry(object):
+    def __init__(self):
+        self.factories = {}
+        self.meta = {}
+
+    def add(self, content_type, factory, **meta):
+        self.factories[content_type] = factory
+        self.meta[content_type] = meta
         
-    def create(self, content_iface, *arg, **kw):
-        return self.factories[content_iface](*arg, **kw)
+    def create(self, content_type, *arg, **kw):
+        return self.factories[content_type](*arg, **kw)
 
     def all(self, context=_marker, **meta):
         if context is _marker:
             candidates = self.factories.keys()
         else:
-            candidates = [i for i in providedBy(context) if i in self.factories]
+            candidates = [
+                t for t in get_content_types(context) if t in self.factories]
+
         if not meta:
             return candidates
+        
         matches_meta = []
+
         for candidate in candidates:
             ok = True
             for k, v in meta.items():
-                if not candidate.queryTaggedValue(k) == v:
+                if not self.meta.get(candidate, {}).get(k) == v:
                     ok = False
                     break
             if ok:
                 matches_meta.append(candidate)
+                
         return matches_meta
 
     def first(self, context, **meta):
@@ -64,9 +75,9 @@ class ContentRegistry(object):
         return matching[0]
 
     def metadata(self, context, name, default=None):
-        content_ifaces = self.all(context)
-        for iface in content_ifaces:
-            maybe = iface.queryTaggedValue(name, default)
+        content_types = self.all(context)
+        for typ in content_types:
+            maybe = self.meta.get(typ, {}).get(name, default)
             if maybe is not None:
                 return maybe
         return default
@@ -76,63 +87,83 @@ class content(object):
     """ Use as a decorator for a content factory (usually a class).  Accepts
     a content interface and a set of meta keywords."""
     venusian = venusian
-    def __init__(self, content_iface, **meta):
-        self.content_iface = content_iface
+    def __init__(self, content_type, **meta):
+        self.content_type = content_type
         self.meta = meta
 
     def __call__(self, wrapped):
-        implementer(self.content_iface)(wrapped)
         def callback(context, name, ob):
             config = context.config.with_package(info.module)
-            config.add_content_type(self.content_iface, wrapped, **self.meta)
+            config.add_content_type(self.content_type, wrapped, **self.meta)
         info = self.venusian.attach(wrapped, callback, category='substanced')
         self.meta['_info'] = info.codeinfo # fbo "action_method"
         return wrapped
     
-def add_content_type(config, content_iface, factory, **meta):
+def add_content_type(config, content_type, factory, **meta):
     """
     Configurator method which adds a content type.  Call via
     ``config.add_content_type`` during Pyramid configuration phase.
-    ``content_iface`` is an interface representing the content type.
-    ``factory`` is a class or function which produces a content instance.
-    ``**meta`` is an arbitrary set of keywords associated with the content
-    type in the content registry.
+    ``content_type`` is a hashable object (usually a string) representing the
+    content type.  ``factory`` is a class or function which produces a
+    content instance.  ``**meta`` is an arbitrary set of keywords associated
+    with the content type in the content registry.
+
+    Some of the keywords in ``**meta`` have special meaning:
+
+    - If ``meta`` contains the keyword ``propertysheets``, the content type
+      will obtain a tab in the SDI that allows users to manage its
+      properties.
+
+    - If ``meta`` contains the keyword ``catalog`` and its value is true, the
+      object will be tracked in the Substance D catalog.
+
+    Other keywords will just be stored, and have no special meaning.
     """
-    if not IInterface.providedBy(content_iface):
-        raise ConfigurationError(
-            'The provided "content_iface" argument (%r) is not an '
-            'interface object (it does not inherit from '
-            'zope.interface.Interface)' % type)
+    interfaces = meta.get('interfaces', [])
 
-    if not content_iface.implementedBy(factory):
-        # was not called by decorator
-        implementer(content_iface)(factory)
+    if not IContent in interfaces:
+        interfaces.append(IContent)
 
-    if not inspect.isclass(factory):
-        factory = provides_factory(factory, content_iface)
+    if meta.get('catalog'):
+        if not ICatalogable in interfaces:
+            interfaces.append(ICatalogable)
+
+    if meta.get('propertysheets') is not None:
+        if not IPropertied in interfaces:
+            interfaces.append(IPropertied)
+
+    if inspect.isclass(factory):
+        implementer(interfaces)(factory)
+        set_content_type(factory, content_type)
+        
+    else:
+        factory = provides_factory(factory, content_type, interfaces)
     
     def register_factory():
-        config.registry.content.add(content_iface, factory, **meta)
+        config.registry.content.add(content_type, factory, **meta)
 
-    discrim = ('sd-content-type', content_iface)
+    discrim = ('sd-content-type', content_type)
     
     intr = config.introspectable(
         'substance d content types',
-        discrim, dotted_name(content_iface),
+        discrim, content_type,
         'substance d content type',
         )
     intr['meta'] = meta
-    intr['content_iface'] = content_iface
+    intr['content_type'] = content_type
+    intr['interfaces'] = tuple(interfaces)
     intr['factory'] = factory
     config.action(discrim, callable=register_factory, introspectables=(intr,))
 
-def provides_factory(factory, content_iface):
+def provides_factory(factory, content_type, interfaces):
     """ Wrap a function factory in something that applies the provides
-    interface to the created object as necessary"""
+    interfaces to the created object as necessary"""
     def add_provides(*arg, **kw):
         inst = factory(*arg, **kw)
-        if not content_iface.providedBy(inst):
-            alsoProvides(inst, content_iface)
+        for interface in interfaces:
+            if not interface.providedBy(inst):
+                alsoProvides(inst, interface)
+        set_content_type(inst, content_type)
         return inst
     for attr in ('__doc__', '__name__', '__module__'):
         if hasattr(factory, attr):

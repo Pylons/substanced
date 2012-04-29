@@ -249,7 +249,7 @@ def get_add_views(request, context=None):
         meta = intr['meta']
         viewname = meta.get('add_view')
         if viewname:
-            type_name = meta.get('name', intr['content_iface'].__name__)
+            type_name = meta.get('name', intr['content_type'])
             icon = meta.get('icon', '')
             data = dict(type_name=type_name, icon=icon)
             candidates[viewname] = data

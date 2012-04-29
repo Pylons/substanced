@@ -1,6 +1,8 @@
 import transaction
 import colander
 
+from zope.interface import implementer
+
 from pyramid.exceptions import ConfigurationError
 from pyramid.security import (
     Allow,
@@ -9,7 +11,6 @@ from pyramid.security import (
 
 from pyramid_zodbconn import get_connection
 
-from ..interfaces import ISite
 from ..objectmap import ObjectMap
 from ..catalog import Catalog
 from ..schema import Schema
@@ -19,6 +20,7 @@ from ..acl import NO_INHERIT
 from ..content import content
 from ..util import oid_of
 from ..property import PropertySheet
+from ..interfaces import ISite
 
 class SiteSchema(Schema):
     """ The schema representing site properties. """
@@ -31,12 +33,13 @@ class SitePropertySheet(PropertySheet):
     schema = SiteSchema()
 
 @content(
-    ISite,
+    'Site',
     icon='icon-home',
     propertysheets = (
         ('', SitePropertySheet),
         )
     )
+@implementer(ISite)
 class Site(Folder):
     """ An object representing the root of a Substance D site.  Contains
     ``objectmap``, ``catalog``, and ``principals`` services.  Initialize with

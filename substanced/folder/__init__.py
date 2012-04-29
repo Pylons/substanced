@@ -1,3 +1,4 @@
+from zope.interface import implementer
 from pyramid.threadlocal import get_current_registry
 
 from persistent import Persistent
@@ -23,6 +24,7 @@ from ..service import find_service
 
 @content(IFolder, icon='icon-folder-close', add_view='add_folder', 
          name='Folder')
+@implementer(IFolder)
 class Folder(Persistent):
     """ A folder implementation which acts much like a Python dictionary.
 
