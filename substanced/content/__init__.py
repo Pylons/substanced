@@ -19,8 +19,6 @@ from ..interfaces import (
 
 _marker = object()
 
-Type = Interface # API
-
 def addbase(iface1, iface2):
     if not iface2 in iface1.__iro__:
         iface1.__bases__ += (iface2,)
@@ -30,11 +28,11 @@ def addbase(iface1, iface2):
 def get_content_types(context):
     return getattr(context, '__content_types__', ())
 
-def set_content_type(factory, type):
-    content_types = getattr(factory, '__content_types__', ())
+def set_content_type(context, type):
+    content_types = getattr(context, '__content_types__', ())
     if not type in content_types:
         content_types = tuple(content_types) + (type,)
-    factory.__content_types__ = content_types
+    context.__content_types__ = content_types
 
 class ContentRegistry(object):
     def __init__(self):
@@ -85,8 +83,8 @@ class ContentRegistry(object):
                 return maybe
         return default
 
-    def istype(self, context, type):
-        return type in getattr(context, '__content_types__', [])
+    def istype(self, context, content_type):
+        return content_type in getattr(context, '__content_types__', [])
 
 def _get_meta_interfaces(content_type, factory, meta):
     interfaces = set(implementedBy(factory))
