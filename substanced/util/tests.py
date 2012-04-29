@@ -183,6 +183,28 @@ class TestBatch(unittest.TestCase):
         self.assertEqual(inst.items, seq)
         self.assertEqual(inst.size, 15)
 
+    def test_it_multicolumn_toggle_text(self):
+        seq = [1,2,3,4,5,6]
+        request = testing.DummyRequest()
+        request.params['multicolumn'] = 'True'
+        inst = self._makeOne(seq, request)
+        self.assertEqual(inst.toggle_text, 'Single column')
+
+    def test_it_not_multicolumn_toggle_text(self):
+        seq = [1,2,3,4,5,6]
+        request = testing.DummyRequest()
+        request.params['multicolumn'] = 'False'
+        inst = self._makeOne(seq, request)
+        self.assertEqual(inst.toggle_text, 'Multi-column')
+
+    def test_it_make_columns(self):
+        seq = [1,2,3,4,5,6]
+        request = testing.DummyRequest()
+        inst = self._makeOne(seq, request)
+        cols = inst.make_columns(column_size=2, num_columns=3)
+        expected = [ [1,2], [3,4], [5,6] ]
+        self.assertEqual(cols, expected)
+
 class Test_merge_url_qs(unittest.TestCase):
     def _callFUT(self, url, **kw):
         from . import merge_url_qs
