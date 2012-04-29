@@ -80,7 +80,7 @@ class ContentRegistry(object):
     def metadata(self, context, name, default=None):
         content_types = self.all(context)
         for typ in content_types:
-            maybe = self.meta.get(typ, {}).get(name, default)
+            maybe = self.meta.get(typ, {}).get(name)
             if maybe is not None:
                 return maybe
         return default
