@@ -3,6 +3,7 @@ from zope.interface import implementer
 from pyramid.httpexceptions import (
     HTTPFound,
     HTTPForbidden,
+    HTTPNotFound,
     )
 from pyramid.security import has_permission
 
@@ -46,7 +47,7 @@ class PropertySheetsView(FormView):
         self.context = request.context
         viewable_sheet_factories = self.viewable_sheet_factories()
         if not viewable_sheet_factories:
-            raise HTTPForbidden('No viewable property sheets')
+            raise HTTPNotFound('No viewable property sheets')
         subpath = request.subpath
         active_factory = None
         if subpath:
