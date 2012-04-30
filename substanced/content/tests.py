@@ -3,38 +3,12 @@ import unittest
 
 from zope.interface import (
     Interface,
-    alsoProvides,
     taggedValue,
     directlyProvidedBy,
     implementer,
     )
 
-from ..interfaces import IContent
-
-class IFoo(Interface):
-    pass
-
-class IBar(IFoo):
-    pass
-
-class Test_addbase(unittest.TestCase):
-    def tearDown(self):
-        # prevent whining from tests when unsubscribe happens
-        IBar.__bases__ = (IFoo,)
-        
-    def _callFUT(self, I1, I2):
-        from . import addbase
-        return addbase(I1, I2)
-
-    def test_already_in_iro(self):
-        result = self._callFUT(IBar, IFoo)
-        self.assertEqual(result, False)
-        
-    def test_not_in_iro(self):
-        result = self._callFUT(IBar, IContent)
-        self.assertEqual(result, True)
-        self.failUnless(IContent in IBar.__bases__)
-        self.failUnless(IContent in IBar.__iro__)
+from pyramid.exceptions import ConfigurationError
 
 class TestContentRegistry(unittest.TestCase):
     def _makeOne(self):
@@ -58,55 +32,28 @@ class TestContentRegistry(unittest.TestCase):
         inst.factories['dummy'] = lambda a: a
         self.assertEqual(inst.create('dummy', 'a'), 'a')
 
-    def test_all_no_context(self):
+    def test_istype_true(self):
         inst = self._makeOne()
-        inst.factories['dummy'] = True
-        self.assertEqual(inst.all(), ['dummy'])
-
-    def test_all_with_context(self):
-        inst = self._makeOne()
-        inst.factories['dummy'] = True
-        inst.factories['category'] = True
         dummy = Dummy()
-        dummy.__content_types__ = ('dummy', 'category')
-        self.assertEqual(inst.all(dummy), ['dummy', 'category'])
-
-    def test_all_with_context_noprovides(self):
-        inst = self._makeOne()
-        inst.factories['dummy'] = True
-        dummy = Dummy()
-        self.assertEqual(inst.all(dummy), [])
-
-    def test_all_with_meta_matching(self):
-        inst = self._makeOne()
-        inst.factories['foo'] = True
-        inst.meta['foo'] = {'a':1}
-        self.assertEqual(inst.all(a=1), ['foo'])
-
-    def test_all_with_meta_not_matching(self):
-        inst = self._makeOne()
-        inst.factories['foo'] = True
-        inst.meta['foo'] = {'a':1}
-        self.assertEqual(inst.all(a=2), [])
-
-    def test_all_with_meta_not_matching_missing(self):
-        inst = self._makeOne()
-        inst.factories['foo'] = True
-        self.assertEqual(inst.all(a=2), [])
+        dummy.__content_type__ = 'dummy'
+        self.assertTrue(inst.istype(dummy, 'dummy'))
         
-    def test_first(self):
+    def test_istype_false(self):
         inst = self._makeOne()
-        inst.factories['dummy'] = True
-        inst.factories['category'] = True
         dummy = Dummy()
-        dummy.__content_types__ = ('dummy', 'category')
-        self.assertEqual(inst.first(dummy), 'dummy')
+        dummy.__content_type__ = 'notdummy'
+        self.assertFalse(inst.istype(dummy, 'dummy'))
 
-    def test_first_noprovides(self):
+    def test_typeof(self):
         inst = self._makeOne()
-        inst.factories['dummy'] = True
         dummy = Dummy()
-        self.assertRaises(ValueError, inst.first, dummy)
+        dummy.__content_type__ = 'dummy'
+        self.assertEqual(inst.typeof(dummy), 'dummy')
+
+    def test_typeof_ct_missing(self):
+        inst = self._makeOne()
+        dummy = Dummy()
+        self.assertEqual(inst.typeof(dummy), None)
 
     def test_metadata(self):
         inst = self._makeOne()
@@ -114,7 +61,7 @@ class TestContentRegistry(unittest.TestCase):
         inst.factories['category'] = True
         inst.meta['dummy'] = {'icon':'icon-name'}
         dummy = Dummy()
-        dummy.__content_types__ = ('dummy', 'category')
+        dummy.__content_type__ = 'dummy'
         self.assertEqual(inst.metadata(dummy, 'icon'), 'icon-name')
 
     def test_metadata_notfound(self):
@@ -123,8 +70,14 @@ class TestContentRegistry(unittest.TestCase):
         inst.factories['category'] = True
         inst.meta['dummy'] = {'icon':'icon-name'}
         dummy = Dummy()
-        dummy.__content_types__ = ('dummy', 'category')
+        dummy.__content_type__ = 'dummy'
         self.assertEqual(inst.metadata(dummy, 'doesntexist'), None)
+
+    def test_all(self):
+        inst = self._makeOne()
+        inst.factories['dummy'] = True
+        inst.factories['category'] = True
+        self.assertEqual(sorted(inst.all()), ['category', 'dummy'])
         
 class Test_content(unittest.TestCase):
     def _makeOne(self, content_type):
@@ -136,6 +89,8 @@ class Test_content(unittest.TestCase):
         venusian = DummyVenusian()
         decorator.venusian = venusian
         decorator.venusian.info.scope = 'class'
+        class Dummy(object):
+            pass
         wrapped = decorator(Dummy)
         self.assertTrue(wrapped is Dummy)
         config = call_venusian(venusian)
@@ -153,11 +108,19 @@ class Test_content(unittest.TestCase):
         config = call_venusian(venusian)
         ct = config.content_types
         self.assertEqual(len(ct), 1)
-        
+
 class Test_add_content_type(unittest.TestCase):
     def _callFUT(self, *arg, **kw):
         from . import add_content_type
         return add_content_type(*arg, **kw)
+
+    def test_fail_content_type_already_set(self):
+        class Dummy(object):
+            __content_type__ = 'dummy'
+        config = DummyConfig()
+        config.registry.content = DummyContentRegistry()
+        self.assertRaises(ConfigurationError, self._callFUT,
+                          config, 'foo', Dummy)
 
     def test_success_function(self):
         dummy = Dummy()
@@ -220,6 +183,7 @@ class Test_add_content_type(unittest.TestCase):
         self.assertEqual(ifaces, set((IContent, IPropertied)))
 
     def test_content_type_is_interface(self):
+        from ..interfaces import IContent
         config = DummyConfig()
         config.registry.content = DummyContentRegistry()
         class IFoo(Interface):
@@ -232,6 +196,7 @@ class Test_add_content_type(unittest.TestCase):
         self.assertEqual(ifaces, set((IContent, IFoo)))
         
     def test_factory_implements_interface(self):
+        from ..interfaces import IContent
         config = DummyConfig()
         config.registry.content = DummyContentRegistry()
         class IFoo(Interface):
@@ -249,36 +214,23 @@ class Test_provides_factory(unittest.TestCase):
         from . import provides_factory
         return provides_factory(factory, content_type, interfaces)
 
-    def test_content_already_provides_content_type(self):
+    def test_content_factory_function_ct_already_assigned(self):
         class Foo(object):
-            __content_types__ = ('dummy',)
-        newfactory = self._callFUT(Foo, 'dummy', ())
+            __content_type__ = 'dummy'
+        newfactory = self._callFUT(Foo, 'notdummy', ())
         ob = newfactory()
         self.assertTrue(ob.__class__ is Foo)
-        self.assertEqual(ob.__content_types__, ('dummy',))
+        self.assertEqual(ob.__content_type__, 'notdummy')
 
-    def test_content_doesnt_yet_provide_content_type(self):
+    def test_content_factory_function_type(self):
         class Foo(object):
             pass
         newfactory = self._callFUT(Foo, 'dummy', ())
         ob = newfactory()
         self.assertTrue(ob.__class__ is Foo)
-        self.assertEqual(ob.__content_types__, ('dummy',))
+        self.assertEqual(ob.__content_type__, 'dummy')
 
-    def test_content_already_provides_interface(self):
-        @implementer(IDummy)
-        class Foo(object):
-            pass
-        foo = Foo()
-        def factory():
-            return foo
-        newfactory = self._callFUT(factory, 'dummy', (IDummy,))
-        self.assertFalse(newfactory is factory)
-        ob = newfactory()
-        self.assertTrue(IDummy.providedBy(ob))
-        self.assertFalse(IDummy in directlyProvidedBy(ob))
-
-    def test_content_doesnt_yet_provide_interface(self):
+    def test_content_factory_function_interfaces(self):
         class Foo(object):
             pass
         foo = Foo()

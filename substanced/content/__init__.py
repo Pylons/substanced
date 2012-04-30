@@ -1,5 +1,7 @@
 import inspect
 
+from pyramid.exceptions import ConfigurationError
+
 from zope.interface.interfaces import IInterface
 
 from zope.interface import (
@@ -19,20 +21,16 @@ from ..interfaces import (
 
 _marker = object()
 
-def addbase(iface1, iface2):
-    if not iface2 in iface1.__iro__:
-        iface1.__bases__ += (iface2,)
-        return True
-    return False
+def get_content_type(context):
+    return getattr(context, '__content_type__', None)
 
-def get_content_types(context):
-    return getattr(context, '__content_types__', ())
-
-def set_content_type(context, type):
-    content_types = getattr(context, '__content_types__', ())
-    if not type in content_types:
-        content_types = tuple(content_types) + (type,)
-    context.__content_types__ = content_types
+def set_content_type(context, content_type):
+    has_type = context.__dict__.get('__content_type__')
+    if has_type is not None:
+        raise ConfigurationError(
+            'The context %s already has a content type (%s)' % (
+                context, has_type))
+    context.__content_type__ = content_type
 
 class ContentRegistry(object):
     def __init__(self):
@@ -42,49 +40,25 @@ class ContentRegistry(object):
     def add(self, content_type, factory, **meta):
         self.factories[content_type] = factory
         self.meta[content_type] = meta
+
+    def all(self):
+        return list(self.factories.keys())
         
     def create(self, content_type, *arg, **kw):
         return self.factories[content_type](*arg, **kw)
 
-    def all(self, context=_marker, **meta):
-        if context is _marker:
-            candidates = self.factories.keys()
-        else:
-            candidates = [
-                t for t in get_content_types(context) if t in self.factories]
-
-        if not meta:
-            return candidates
-        
-        matches_meta = []
-
-        for candidate in candidates:
-            ok = True
-            for k, v in meta.items():
-                if not self.meta.get(candidate, {}).get(k) == v:
-                    ok = False
-                    break
-            if ok:
-                matches_meta.append(candidate)
-                
-        return matches_meta
-
-    def first(self, context, **meta):
-        matching = self.all(context, **meta)
-        if not matching:
-            raise ValueError('No match!')
-        return matching[0]
-
     def metadata(self, context, name, default=None):
-        content_types = self.all(context)
-        for typ in content_types:
-            maybe = self.meta.get(typ, {}).get(name)
-            if maybe is not None:
-                return maybe
+        content_type = self.typeof(context)
+        maybe = self.meta.get(content_type, {}).get(name)
+        if maybe is not None:
+            return maybe
         return default
 
+    def typeof(self, context):
+        return get_content_type(context)
+
     def istype(self, context, content_type):
-        return content_type in getattr(context, '__content_types__', [])
+        return content_type == get_content_type(context)
 
 def _get_meta_interfaces(content_type, factory, meta):
     interfaces = set(implementedBy(factory))
@@ -118,7 +92,6 @@ class content(object):
     def __call__(self, wrapped):
         interfaces = _get_meta_interfaces(self.content_type, wrapped, self.meta)
         implementer(*interfaces)(wrapped)
-        set_content_type(wrapped, self.content_type)
         def callback(context, name, ob):
             config = context.config.with_package(info.module)
             config.add_content_type(self.content_type, wrapped, **self.meta)
@@ -145,8 +118,9 @@ def add_content_type(config, content_type, factory, **meta):
       object will be tracked in the Substance D catalog.
 
     - If ``meta`` contains the keyword ``interfaces``, its value must be a
-      sequence of interface objects.  These interfaces will be applied to the
-      content object (or if the factory is a class, to its class).
+      sequence of :term:`interface` objects.  These interfaces will be
+      applied to the content object (or if the factory is a class, to its
+      class).
 
     Other keywords will just be stored, and have no special meaning.
     """
@@ -155,6 +129,7 @@ def add_content_type(config, content_type, factory, **meta):
     # this is for benefit of someone who is not using the decorator.
     interfaces = _get_meta_interfaces(content_type, factory, meta)
     implementer(*interfaces)(factory)
+
     set_content_type(factory, content_type)
 
     if not inspect.isclass(factory):
@@ -182,9 +157,7 @@ def provides_factory(factory, content_type, interfaces):
     interfaces to the created object as necessary"""
     def add_provides(*arg, **kw):
         inst = factory(*arg, **kw)
-        for interface in interfaces:
-            if not interface.providedBy(inst):
-                alsoProvides(inst, interface)
+        alsoProvides(inst, *interfaces)
         set_content_type(inst, content_type)
         return inst
     for attr in ('__doc__', '__name__', '__module__'):
@@ -197,9 +170,3 @@ def includeme(config): # pragma: no cover
     config.registry.content = ContentRegistry()
     config.add_directive('add_content_type', add_content_type)
 
-# usage:
-# registry.content.create(IFoo, 'a', bar=2)
-# registry.content.all(context)
-# registry.content.all()
-# registry.content.first(context)
-# registry.content.metadata(**match)

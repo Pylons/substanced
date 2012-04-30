@@ -36,9 +36,8 @@ that generates content must have these properties:
 - It must have a *type*.  A type acts as a globally unique categorization
   marker, and allows the content to be constructed, enumerated, and
   introspected by various Substance D UI elements such as "add forms", and
-  queries by the management interface for the icon name of a resource.  The
-  type is defined as a class that inherits from the
-  :class:`substanced.content.Type` class.
+  queries by the management interface for the icon name of a resource.  A
+  type can be any hashable Python object, but it's most often a string.
 
 Here's an example which defines a content resource factory as a class:
 
@@ -47,15 +46,9 @@ Here's an example which defines a content resource factory as a class:
    # in a module named blog.resources
 
    from persistent import Persistent
-   from substanced.content import (
-       Type,
-       content,
-       )     
+   from substanced.content import content
 
-   class BlogEntryType(Type):
-       pass
-
-   @content(BlogEntryType)
+   @content('Blog Entry')
    class BlogEntry(Persistent):
        def __init__(self, title, body):
            self.title = title
@@ -69,30 +62,24 @@ instead:
    # in a module named blog.resources
 
    from persistent import Persistent
-   from substanced.content import (
-       Type,
-       content,
-       )     
-
-   class BlogEntryType(Type):
-       pass
+   from substanced.content import content
 
    class BlogEntry(Persistent):
        def __init__(self, title, body):
            self.title = title
            self.body = body
 
-   @content(BlogEntryType)
+   @content('Blog Entry')
    def make_blog_entry(title, body):
        return BlogEntry(title, body)
 
 .. note::
 
    When a resource factory is not a class, Substance D will wrap the resource
-   factory in something that applies the type to the resource object returned
-   from the factory using ``zope.interface.alsoProvides``.  In the above
-   case, ``zope.interface.directlyProvides(resource, BlogEntryType)`` will be
-   done after the resource object is returned from ``make_blog_entry``.
+   factory in something that changes the resource object returned from the
+   factory.  In the above case, the BlogEntry instance returned from
+   ``make_blog_entry`` will be changed; its ``__content_type__`` attribute
+   will be mutated.
 
 In order to activate a ``@content`` decorator, it must be *scanned* using the
 Pyramid ``config.scan()`` machinery:
@@ -118,12 +105,12 @@ content resource imperatively at configuration time using the
    # in a module named blog.__init__
 
    from pyramid.config import Configurator
-   from .resources import BlogEntryType, BlogEntry
+   from .resources import BlogEntry
 
    def main(global_config, **settings):
        config = Configurator()
        config.include('substanced')
-       config.add_content_type(BlogEntryType, BlogEntry)
+       config.add_content_type('Blog Entry', BlogEntry)
 
 This does the same thing as using the ``@content`` decorator, but you don't
 need to ``scan()`` your resources if you use ``add_content_type`` instead of
@@ -138,13 +125,12 @@ view that lives in your application:
    # in a module named blog.views
 
    from pyramid.httpexceptions import HTTPFound
-   from .resources import BlogEntryType
 
    @view_config(name='add_blog_entry', request_method='POST')
    def add_blogentry(request):
        title = request.POST['title']
        body = request.POST['body']
-       entry = request.registry.content.create(BlogEntryType, title, body)
+       entry = request.registry.content.create('Blog Entry', title, body)
        context['title] = entry
        return HTTPFound(request.resource_url(entry))
 
@@ -167,8 +153,8 @@ instance, types can be enumerated:
        all_types = request.registry.content.all()
        return {'all_types':all_types}
 
-``request.registry.content.all()`` will return all type objects you've
-defined and scanned.
+``request.registry.content.all()`` will return all the types you've defined
+and scanned.
 
 Metadata
 --------
@@ -191,15 +177,9 @@ or ``config.add_content_type``.
    # in a module named blog.resources
 
    from persistent import Persistent
-   from substanced.content import (
-       Type,
-       content,
-       )     
+   from substanced.content import content
 
-   class BlogEntryType(Type):
-       pass
-
-   @content(BlogEntryType, name='Blog Entry')
+   @content('Blog Entry', name='Cool Blog Entry')
    class BlogEntry(Persistent):
        def __init__(self, title, body):
            self.title = title
@@ -219,15 +199,9 @@ passing an ``icon`` keyword argument to ``@content`` or ``add_content_type``.
    # in a module named blog.resources
 
    from persistent import Persistent
-   from substanced.content import (
-       Type,
-       content,
-       )     
+   from substanced.content import content
 
-   class BlogEntryType(Type):
-       pass
-
-   @content(BlogEntryType, icon='icon-file')
+   @content('Blog Entry', icon='icon-file')
    class BlogEntry(Persistent):
        def __init__(self, title, body):
            self.title = title
@@ -250,15 +224,9 @@ added by passing the name of the add view as a keyword argument to
    # in a module named blog.resources
 
    from persistent import Persistent
-   from substanced.content import (
-       Type,
-       content,
-       )     
+   from substanced.content import content
 
-   class BlogEntryType(Type):
-       pass
-
-   @content(BlogEntryType, add_view='add_blog_entry')
+   @content('Blog Entry', add_view='add_blog_entry')
    class BlogEntry(Persistent):
        def __init__(self, title, body):
            self.title = title
@@ -275,7 +243,7 @@ Obtaining Metadata About a Content Object's Type
   Will return the icon for the blogentry's content type or ``None`` if it
   does not exist.
 
-``request.registry.content.metadata(document, 'icon', 'icon-file')``
+``request.registry.content.metadata(blogentry, 'icon', 'icon-file')``
 
   Will return the icon for the blogentry's content type or ``icon-file`` if
   it does not exist.
