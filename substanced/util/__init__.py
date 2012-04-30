@@ -142,10 +142,31 @@ class Batch(object):
       ``True`` if either ``next_url`` or ``prev_url`` are ``True`` (meaning
       batching is required).
 
+    ``multicolumn``
+
+      ``True`` if the current view should be rendered in multiple columns.
+
+    ``toggle_url``
+
+      The URL to be used for the multicolumn/single column toggle button. The
+      ``batch_size``, ``batch_num``, and ``multicolumn`` parameters are
+      converted to their multicolumn or single column equivalents. If a user
+      is viewing items 40-80 in multiple columns, the toggle will switch to
+      items 40-50 in a single column. If a user is viewing items 50-60 in a
+      single column, the toggle will switch to items 40-80 in multiple columns.
+
+    ``toggle_text``
+
+      The text to display on the multi-column/single column toggle.
+
     The ``seq`` passed must define ``__len__`` and ``__slice__`` methods.
+
+    ``make_columns``
+
+    A method to split ``items`` into a nested list representing columns.
     
     """
-    def __init__(self, seq, request, url=None, default_size=15):
+    def __init__(self, seq, request, url=None, default_size=10, toggle_size=40):
         if url is None:
             url = request.url
 
@@ -163,6 +184,17 @@ class Batch(object):
         if size < 1:
             size = default_size
 
+        multicolumn = request.params.get('multicolumn', '') == 'True'
+
+        # create multicolumn/single column toggle attributes
+        if multicolumn:
+            toggle_num = size * num / default_size
+            toggle_size = default_size
+            toggle_text = 'Single column'
+        else:
+            toggle_num = size * num / toggle_size
+            toggle_text = 'Multi-column'
+
         start = num * size
         end = start + size
         items = seq[start:end]
@@ -173,6 +205,7 @@ class Batch(object):
         prev_url = None
         next_url = None
         last_url = None
+        toggle_url = None
 
         if num:
             first_url = merge_url_qs(url, batch_size=size, batch_num=0)
@@ -183,16 +216,37 @@ class Batch(object):
         if size and (num < last):
             last_url = merge_url_qs(url, batch_size=size, batch_num=last)
 
+        if prev_url or next_url:
+            toggle_url = merge_url_qs(
+                url,
+                batch_size=toggle_size,
+                batch_num=toggle_num,
+                multicolumn=not multicolumn,
+                )
+
         self.items = items
         self.num = num
         self.size = size
         self.length = length
         self.required = bool(prev_url or next_url)
+        self.multicolumn = multicolumn
+        self.toggle_url = toggle_url
+        self.toggle_text = toggle_text
         self.first_url = first_url
         self.prev_url = prev_url
         self.next_url = next_url
         self.last_url = last_url
         self.last = last
+
+    def make_columns(self, column_size=10, num_columns=4):
+        """ Break ``self.items`` into a nested list representing columns."""
+        columns = []
+        for i in range(num_columns):
+            start = i * column_size
+            end = start + column_size
+            part = self.items[start:end]
+            columns.append(part)
+        return columns
 
 def chunks(stream, chunk_size=10000):
     """ Return a generator that will iterate over a stream (a filelike
