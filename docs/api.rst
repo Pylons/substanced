@@ -278,6 +278,8 @@ Other Helpers
 
 .. autofunction:: add_mgmt_view
 
+.. autofunction:: add_permission
+
 .. autoclass:: mgmt_view
 
 :mod:`substanced.service` API

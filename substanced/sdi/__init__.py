@@ -273,8 +273,13 @@ def get_add_views(request, context=None):
 YEAR = 86400 * 365
 
 def add_permission(config, permission_name):
-    # register a free-standing permission (without associating it with a view),
-    # so it shows up in the ACL dropdown.
+    """ A configurator directive which registers a free-standing permission
+    (without associating it with a view), so it shows up in the ACL
+    dropdown. Usage example::
+
+      config = Configurator()
+      config.add_permission('view')
+    """
     intr = config.introspectable('permissions', permission_name,
                                  permission_name, 'permission')
     intr['value'] = permission_name
