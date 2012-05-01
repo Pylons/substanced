@@ -177,6 +177,8 @@ def acl_edit_view(context, request):
                     perms =  ('-- ALL --',)
                 else:
                     perms = ace[2]
+                if not hasattr(perms, '__iter__'):
+                    perms = (perms,)
                 new_ace = (ace[0], pname, perms)
                 parent_acl.append(new_ace)
         if stop:
@@ -194,6 +196,8 @@ def acl_edit_view(context, request):
             break
         if permissions == ALL_PERMISSIONS:
             permissions = ('-- ALL --',)
+        if not hasattr(permissions, '__iter__'):
+            permissions = (permissions,)
         pname = get_principal_name(principal_id)
         new_ace = (l_ace[0], pname, permissions)
         local_acl.append(new_ace)
