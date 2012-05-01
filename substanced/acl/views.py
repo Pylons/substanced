@@ -76,29 +76,34 @@ def acl_edit_view(context, request):
         principal_id_str = request.POST['principal']
         if principal_id_str in (Everyone, Authenticated):
             principal_id = principal_id_str
-            principal = principal_id_str
         else:
             try:
                 principal_id = int(principal_id_str)
             except ValueError:
                 principal_id = None
-            principal = objectmap.object_for(principal_id)
+                
         if principal_id is None:
             request.session.flash('No principal selected', 'error')
-        elif principal is not None:
-            permissions = request.POST.getall('permissions')
-            if not permissions:
-                permissions = ()
-            if '-- ALL --' in permissions:
-                permissions = ALL_PERMISSIONS
-            new = acl[:]
-            new.append((verb, principal_id, permissions))
-            acl = new
-            request.flash_undo('New ACE added')
+            
         else:
-            request.session.flash('Unknown user or group when adding ACE',
-                                  'error')
-
+            if principal_id not in (Everyone, Authenticated):
+                if objectmap.object_for(principal_id) is None:
+                    request.session.flash(
+                        'Unknown user or group when adding ACE',
+                        'error')
+                    principal_id = None
+                    
+            if principal_id is not None:
+                permissions = request.POST.getall('permissions')
+                if not permissions:
+                    permissions = ()
+                if '-- ALL --' in permissions:
+                    permissions = ALL_PERMISSIONS
+                new = acl[:]
+                new.append((verb, principal_id, permissions))
+                acl = new
+                request.flash_undo('New ACE added')
+                
     elif 'form.inherit' in request.POST:
         check_csrf_token(request)
         no_inherit = request.POST['inherit'] == 'disabled'
