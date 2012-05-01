@@ -5,9 +5,6 @@ UI-Only
 
 - Allow folder contents UI ("Contents" tab) sorting by name and by type.
 
-- Put content items into two or three columns instead of one on contents
-  view.
-
 UI-Plus-Guts
 ------------
 
@@ -26,13 +23,9 @@ UI-Plus-Guts
 - Add Undo tab to Site (or per folder?) which will allow admins to undo recent
   transactions.  Implied: add transaction notes to all transactions.
 
-- Allow multiple property sheets on single content object.
-
 - Stamp created objects with creator information?
 
 - Stamp created objects with created date info?
-
-- Forgot password / change password interactions.
 
 - Allow services to be added to services folder via add view UIs.
 
@@ -81,11 +74,11 @@ Guts-Only
 
 - Get rid of ISite?  Use presence of __services__ to denote site?
 
-- Get rid of __propschema__ convenience?
-
 - Add a change_acl API that sends an event when an ACL is changed.
 
 - Undo of catalog reindex doesnt?
+
+- Refactor ACL view.
 
 Nice-to-Have Features
 ---------------------
