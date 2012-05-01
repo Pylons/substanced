@@ -59,28 +59,31 @@ class Test_principals_widget(unittest.TestCase):
             )
 
 class TestSearchCatalogView(unittest.TestCase):
-    def _makeOne(self, request):
+    def _makeOne(self, context, request):
         from ..views import SearchCatalogView
-        return SearchCatalogView(request)
+        return SearchCatalogView(context, request)
 
     def test_search_success(self):
         request = testing.DummyRequest()
+        context = testing.DummyResource()
         request.mgmt_path = lambda *arg, **kw: '/mg'
-        inst = self._makeOne(request)
+        inst = self._makeOne(context, request)
         resp = inst.search_success({'a':1})
         self.assertEqual(request.session['catalogsearch.appstruct'], {'a':1})
         self.assertEqual(resp.location, '/mg')
 
     def test_show_no_appstruct(self):
         request = testing.DummyRequest()
+        context = testing.DummyResource()
         form = DummyForm()
-        inst = self._makeOne(request)
+        inst = self._makeOne(context, request)
         result = inst.show(form)
         self.assertEqual(result, {'searchresults': (),
                                   'form':'form'})
 
     def test_show_with_appstruct_no_permission(self):
         request = testing.DummyRequest()
+        context = testing.DummyResource()
         appstruct = {'cqe_expression':'abc',
                      'permitted':{'permission':'', 'principals':()}
                      }
@@ -91,7 +94,7 @@ class TestSearchCatalogView(unittest.TestCase):
             return 0, (), None
         request.query_catalog = query
         form = DummyForm()
-        inst = self._makeOne(request)
+        inst = self._makeOne(context, request)
         result = inst.show(form)
         self.assertEqual(result, {'searchresults': [('', 'No results')],
                                   'form':'form'})
@@ -99,6 +102,7 @@ class TestSearchCatalogView(unittest.TestCase):
 
     def test_show_with_appstruct_permission(self):
         request = testing.DummyRequest()
+        context = testing.DummyResource()
         appstruct = {'cqe_expression':'abc',
                      'permitted':{'permission':'view', 'principals':()}
                      }
@@ -109,7 +113,7 @@ class TestSearchCatalogView(unittest.TestCase):
             return 0, (), None
         request.query_catalog = query
         form = DummyForm()
-        inst = self._makeOne(request)
+        inst = self._makeOne(context, request)
         result = inst.show(form)
         self.assertEqual(result, {'searchresults': [('', 'No results')],
                                   'form':'form'})
@@ -117,6 +121,7 @@ class TestSearchCatalogView(unittest.TestCase):
 
     def test_show_with_appstruct_query_exception(self):
         request = testing.DummyRequest()
+        context = testing.DummyResource()
         appstruct = {'cqe_expression':'abc',
                      'permitted':{'permission':'view', 'principals':()}
                      }
@@ -125,7 +130,7 @@ class TestSearchCatalogView(unittest.TestCase):
             raise ValueError('hello')
         request.query_catalog = query
         form = DummyForm()
-        inst = self._makeOne(request)
+        inst = self._makeOne(context, request)
         inst.logger = DummyLogger()
         result = inst.show(form)
         self.assertEqual(result, {'searchresults': (),

@@ -92,7 +92,7 @@ class SearchCatalogView(FormView):
         """ Accept a CQE expression and a permitted value and return a 
         sequence of object renderings """
         self.request.session['catalogsearch.appstruct'] = appstruct
-        context = self.request.context
+        context = self.context
         return HTTPFound(
             location=self.request.mgmt_path(context, '@@search_catalog')
             )

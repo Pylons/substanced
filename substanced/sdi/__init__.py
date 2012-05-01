@@ -272,13 +272,22 @@ def get_add_views(request, context=None):
 
 YEAR = 86400 * 365
 
+def add_permission(config, permission_name):
+    # register a free-standing permission (without associating it with a view),
+    # so it shows up in the ACL dropdown.
+    intr = config.introspectable('permissions', permission_name,
+                                 permission_name, 'permission')
+    intr['value'] = permission_name
+    config.action(None, introspectables=(intr,))
+
 def includeme(config): # pragma: no cover
     config.add_directive('add_mgmt_view', add_mgmt_view, action_wrap=False)
+    config.add_directive('add_permission', add_permission)
     config.add_static_view('deformstatic', 'deform:static', cache_max_age=YEAR)
     config.add_static_view('sdistatic', 'substanced.sdi:static', 
                            cache_max_age=YEAR)
-    manage_prefix = config.registry.settings.get(
-        'substanced.manage_prefix', '/manage')
+    settings = config.registry.settings
+    manage_prefix = settings.get('substanced.manage_prefix', '/manage')
     manage_pattern = manage_prefix + '*traverse'
     config.add_route(MANAGE_ROUTE_NAME, manage_pattern)
     config.set_request_property(mgmt_path, reify=True)
@@ -295,4 +304,5 @@ def includeme(config): # pragma: no cover
     authz_policy = ACLAuthorizationPolicy()
     config.set_authentication_policy(authn_policy)
     config.set_authorization_policy(authz_policy)
+    config.add_permission('sdi.edit-properties') # used by property machinery
     config.scan('.')

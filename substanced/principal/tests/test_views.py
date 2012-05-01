@@ -3,46 +3,46 @@ import colander
 from pyramid import testing
 
 class TestAddUserView(unittest.TestCase):
-    def _makeOne(self, request):
+    def _makeOne(self, context, request):
         from ..views import AddUserView
-        return AddUserView(request)
+        return AddUserView(context, request)
 
     def _makeRequest(self, resource):
         request = testing.DummyRequest()
         request.registry = testing.DummyResource()
         request.registry.content = DummyContent(resource)
         request.mgmt_path = lambda *arg: 'http://example.com'
-        request.context = testing.DummyResource()
         return request
 
     def test_add_success(self):
         resource = DummyPrincipal()
         request = self._makeRequest(resource)
-        inst = self._makeOne(request)
+        context = testing.DummyResource()
+        inst = self._makeOne(context, request)
         resp = inst.add_success({'login':'name', 'groups':(1,)})
-        self.assertEqual(request.context['name'], resource)
+        self.assertEqual(context['name'], resource)
         self.assertEqual(resp.location, 'http://example.com')
         self.assertEqual(resource.connected, (1,))
 
 class TestAddGroupView(unittest.TestCase):
-    def _makeOne(self, request):
+    def _makeOne(self, context, request):
         from ..views import AddGroupView
-        return AddGroupView(request)
+        return AddGroupView(context, request)
 
     def _makeRequest(self, resource):
         request = testing.DummyRequest()
         request.registry = testing.DummyResource()
         request.registry.content = DummyContent(resource)
         request.mgmt_path = lambda *arg: 'http://example.com'
-        request.context = testing.DummyResource()
         return request
 
     def test_add_success(self):
         resource = DummyPrincipal()
         request = self._makeRequest(resource)
-        inst = self._makeOne(request)
+        context = testing.DummyResource()
+        inst = self._makeOne(context, request)
         resp = inst.add_success({'name':'name', 'members':(1,)})
-        self.assertEqual(request.context['name'], resource)
+        self.assertEqual(context['name'], resource)
         self.assertEqual(resp.location, 'http://example.com')
 
 class Test_password_validator(unittest.TestCase):
@@ -53,45 +53,42 @@ class Test_password_validator(unittest.TestCase):
     def test_it_success(self):
         request = testing.DummyRequest()
         context = testing.DummyResource()
-        request.context = context
         def check_password(pwd):
             return True
         context.check_password = check_password
-        kw = dict(request=request)
+        kw = dict(request=request, context=context)
         inst = self._makeOne(None, kw)
         self.assertEqual(inst(None, 'pwd'), None)
 
     def test_it_failure(self):
         request = testing.DummyRequest()
         context = testing.DummyResource()
-        request.context = context
         def check_password(pwd):
             return False
         context.check_password = check_password
-        kw = dict(request=request)
+        kw = dict(request=request, context=context)
         inst = self._makeOne(None, kw)
         self.assertRaises(colander.Invalid, inst, None, 'pwd')
 
 class TestChangePasswordView(unittest.TestCase):
-    def _makeOne(self, request):
+    def _makeOne(self, context, request):
         from ..views import ChangePasswordView
-        return ChangePasswordView(request)
+        return ChangePasswordView(context, request)
 
     def test_add_success(self):
         context = DummyPrincipal()
         request = testing.DummyRequest()
         request.mgmt_path = lambda *arg: 'http://example.com'
-        request.context = context
-        inst = self._makeOne(request)
+        inst = self._makeOne(context, request)
         resp = inst.change_success({'password':'password'})
         self.assertEqual(context.password, 'password')
         self.assertEqual(resp.location, 'http://example.com')
         self.assertTrue(request.session['_f_success'])
 
 class TestRequestResetView(unittest.TestCase):
-    def _makeOne(self, request):
+    def _makeOne(self, context, request):
         from ..views import ResetRequestView
-        return ResetRequestView(request)
+        return ResetRequestView(context, request)
 
     def _makeRequest(self):
         request = testing.DummyRequest()
@@ -107,16 +104,15 @@ class TestRequestResetView(unittest.TestCase):
         user = DummyPrincipal()
         site['__services__']['principals']['users']['user'] = user
         request = self._makeRequest()
-        request.context = site
-        inst = self._makeOne(request)
+        inst = self._makeOne(site, request)
         resp = inst.send_success({'login':'user'})
         self.assertEqual(resp.location, 'http://example.com')
         self.assertTrue(user.emailed_password_reset)
 
 class TestResetView(unittest.TestCase):
-    def _makeOne(self, request):
+    def _makeOne(self, context, request):
         from ..views import ResetView
-        return ResetView(request)
+        return ResetView(context, request)
 
     def _makeRequest(self):
         request = testing.DummyRequest()
@@ -129,8 +125,7 @@ class TestResetView(unittest.TestCase):
             self.assertEqual(password, 'thepassword')
         context.reset_password = reset_password
         request = self._makeRequest()
-        request.context = context
-        inst = self._makeOne(request)
+        inst = self._makeOne(context, request)
         resp = inst.reset_success({'new_password':'thepassword'})
         self.assertEqual(resp.location, 'http://example.com')
     
@@ -155,17 +150,15 @@ class Test_login_validator(unittest.TestCase):
         import colander
         request = testing.DummyRequest()
         site = self._makeSite()
-        request.context = site
-        inst = self._makeOne(None, dict(request=request))
+        inst = self._makeOne(None, dict(request=request, context=site))
         self.assertRaises(colander.Invalid, inst, None, 'fred')
 
     def test_user_exists(self):
         request = testing.DummyRequest()
         site = self._makeSite()
-        request.context = site
         fred = testing.DummyResource()
         site['__services__']['principals']['users']['fred'] = fred
-        inst = self._makeOne(None, dict(request=request))
+        inst = self._makeOne(None, dict(request=request, context=site))
         self.assertEqual(inst(None, 'fred'), None)
 
 class DummyPrincipal(object):

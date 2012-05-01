@@ -43,7 +43,7 @@ class AddUserView(FormView):
         name = appstruct.pop('login')
         groups = appstruct.pop('groups')
         user = registry.content.create(IUser, **appstruct)
-        self.request.context[name] = user
+        self.context[name] = user
         user.connect(*groups)
         return HTTPFound(self.request.mgmt_path(user, '@@properties'))
 
@@ -64,7 +64,7 @@ class AddGroupView(FormView):
         name = appstruct.pop('name')
         members = appstruct.pop('members')
         group = registry.content.create(IGroup, **appstruct)
-        self.request.context[name] = group
+        self.context[name] = group
         group.connect(*members)
         return HTTPFound(self.request.mgmt_path(group, '@@properties'))
 
@@ -72,7 +72,7 @@ class AddGroupView(FormView):
 def password_validator(node, kw):
     """ Returns a ``colander.Function`` validator that uses the context (user)
     to validate the password."""
-    context = kw['request'].context
+    context = kw['context']
     return colander.Function(
         lambda pwd: context.check_password(pwd),
         'Invalid password'
@@ -106,7 +106,7 @@ class ChangePasswordView(FormView):
     buttons = ('change',)
 
     def change_success(self, appstruct):
-        user = self.request.context
+        user = self.context
         password = appstruct['password']
         user.set_password(password)
         self.request.session.flash('Password changed', 'success')
@@ -114,8 +114,7 @@ class ChangePasswordView(FormView):
 
 @colander.deferred
 def login_validator(node, kw):
-    request = kw['request']
-    context = request.context
+    context = kw['context']
     def _login_validator(node, value):
         principals = find_service(context, 'principals')
         users = principals['users']
@@ -142,7 +141,7 @@ class ResetRequestView(FormView):
 
     def send_success(self, appstruct):
         request = self.request
-        context = self.request.context
+        context = self.context
         login = appstruct['login']
         principals = find_service(context, 'principals')
         users = principals['users']
@@ -173,7 +172,7 @@ class ResetView(FormView):
     
     def reset_success(self, appstruct):
         request = self.request
-        context = self.request.context
+        context = self.context
         context.reset_password(appstruct['new_password'])
         request.session.flash('Password reset, you may now log in', 'success')
         home = request.mgmt_path(request.root)

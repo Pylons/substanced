@@ -86,13 +86,15 @@ class FormView(object):
     buttons = ()
     schema = None
 
-    def __init__(self, request):
+    def __init__(self, context, request):
+        self.context = context
         self.request = request
 
     def __call__(self):
         use_ajax = getattr(self, 'use_ajax', False)
         ajax_options = getattr(self, 'ajax_options', '{}')
-        self.schema = self.schema.bind(request=self.request)
+        self.schema = self.schema.bind(
+            request=self.request, context=self.context)
         form = self.form_class(self.schema, buttons=self.buttons,
                                use_ajax=use_ajax, ajax_options=ajax_options)
         self.before(form)

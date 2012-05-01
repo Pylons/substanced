@@ -198,12 +198,13 @@ def acl_edit_view(context, request):
         new_ace = (l_ace[0], pname, permissions)
         local_acl.append(new_ace)
 
-    permissions = ['-- ALL --']
+    permissions = set(['-- ALL --'])
     introspector = request.registry.introspector
     for data in introspector.get_category('permissions'): 
         name = data['introspectable']['value']
         if name != NO_PERMISSION_REQUIRED:
-            permissions.append(name)
+            permissions.add(name)
+    permissions = list(permissions)
     permissions.sort()
 
     users = principal_service['users'].values()

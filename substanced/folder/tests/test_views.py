@@ -27,23 +27,23 @@ class Test_name_validator(unittest.TestCase):
         self.assertEqual(result, None)
 
 class TestAddFolderView(unittest.TestCase):
-    def _makeOne(self, request):
+    def _makeOne(self, context, request):
         from ..views import AddFolderView
-        return AddFolderView(request)
+        return AddFolderView(context, request)
 
     def _makeRequest(self, resource):
         request = testing.DummyRequest()
         request.registry.content = DummyContent(resource)
         request.mgmt_path = lambda *arg: 'http://example.com'
-        request.context = testing.DummyResource()
         return request
 
     def test_add_success(self):
         resource = testing.DummyResource()
         request = self._makeRequest(resource)
-        inst = self._makeOne(request)
+        context = testing.DummyResource()
+        inst = self._makeOne(context, request)
         resp = inst.add_success({'name':'name'})
-        self.assertEqual(request.context['name'], resource)
+        self.assertEqual(context['name'], resource)
         self.assertEqual(resp.location, 'http://example.com')
 
 class TestFolderContentsViews(unittest.TestCase):

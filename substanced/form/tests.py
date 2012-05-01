@@ -10,15 +10,16 @@ class TestFormView(unittest.TestCase):
         from . import FormView
         return FormView
         
-    def _makeOne(self, request):
+    def _makeOne(self, context, request):
         klass = self._getTargetClass()
-        inst = klass(request)
+        inst = klass(context, request)
         return inst
 
     def test___call__show(self):
         schema = DummySchema()
         request = testing.DummyRequest()
-        inst = self._makeOne(request)
+        context = testing.DummyResource()
+        inst = self._makeOne(context, request)
         inst.schema = schema
         inst.form_class = DummyForm
         result = inst()
@@ -29,7 +30,8 @@ class TestFormView(unittest.TestCase):
         from webob import Response
         schema = DummySchema()
         request = testing.DummyRequest()
-        inst = self._makeOne(request)
+        context = testing.DummyResource()
+        inst = self._makeOne(context, request)
         inst.schema = schema
         inst.form_class = DummyForm
         response = Response()
@@ -40,8 +42,9 @@ class TestFormView(unittest.TestCase):
     def test___call__button_in_request(self):
         schema = DummySchema()
         request = testing.DummyRequest()
+        context = testing.DummyResource()
         request.POST['submit'] = True
-        inst = self._makeOne(request)
+        inst = self._makeOne(context, request)
         inst.schema = schema
         inst.buttons = (DummyButton('submit'), )
         inst.submit_success = lambda *x: 'success'
@@ -52,8 +55,9 @@ class TestFormView(unittest.TestCase):
     def test___call__button_in_request_fail(self):
         schema = DummySchema()
         request = testing.DummyRequest()
+        context = testing.DummyResource()
         request.POST['submit'] = True
-        inst = self._makeOne(request)
+        inst = self._makeOne(context, request)
         inst.schema = schema
         inst.buttons = (DummyButton('submit'), )
         import deform.exception
@@ -68,8 +72,9 @@ class TestFormView(unittest.TestCase):
     def test___call__button_in_request_fail_no_failure_handler(self):
         schema = DummySchema()
         request = testing.DummyRequest()
+        context = testing.DummyResource()
         request.POST['submit'] = True
-        inst = self._makeOne(request)
+        inst = self._makeOne(context, request)
         inst.schema = schema
         inst.buttons = (DummyButton('submit'), )
         import deform.exception

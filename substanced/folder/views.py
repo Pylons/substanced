@@ -50,7 +50,7 @@ class AddFolderView(FormView):
         registry = self.request.registry
         name = appstruct['name']
         folder = registry.content.create(IFolder)
-        self.request.context[name] = folder
+        self.context[name] = folder
         return HTTPFound(location=self.request.mgmt_path(folder, '@@contents'))
 
 # TODO: rename, cut, copy, paste

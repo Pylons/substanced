@@ -7,12 +7,8 @@ from pyramid.response import FileResponse
 from pyramid.view import view_config
 
 from substanced.sdi import mgmt_view
-from substanced.form import (
-    FormView
-    )
-from substanced.interfaces import (
-    IFolder
-    )
+from substanced.form import FormView
+from substanced.interfaces import IFolder
 
 from .resources import (
     File,
@@ -82,7 +78,7 @@ class AddFileView(FormView):
             if mimetype is None:
                 mimetype = 'application/octet-stream'
         fileob = registry.content.create('File', stream, mimetype)
-        self.request.context[name] = fileob
+        self.context[name] = fileob
         return HTTPFound(self.request.mgmt_path(fileob, '@@properties'))
 
 @mgmt_view(
@@ -124,6 +120,6 @@ class AddDocumentView(FormView):
         registry = self.request.registry
         name = appstruct.pop('name')
         document = registry.content.create('Document', **appstruct)
-        self.request.context[name] = document
+        self.context[name] = document
         return HTTPFound(self.request.mgmt_path(document, '@@properties'))
 
