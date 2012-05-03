@@ -1,4 +1,4 @@
-<div metal:use-macro="h.macros()['master']">
+<div metal:use-macro="sdi_h.macros()['master']">
 
  <div metal:fill-slot="main">
 

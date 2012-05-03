@@ -38,5 +38,5 @@ def get_site_title(request):
 
 @subscriber(BeforeRender)
 def add_renderer_globals(event):
-   event['h'] = sys.modules[__name__]
+   event['sdi_h'] = sys.modules[__name__]
 
