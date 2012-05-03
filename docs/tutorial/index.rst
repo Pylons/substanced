@@ -10,3 +10,8 @@ document it.
 - python setup.py docs
 
 - Make sure you cd to the setup.py before running it
+
+TODO
+====
+
+- Get exception handling middleware by step02

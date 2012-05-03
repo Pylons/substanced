@@ -1,12 +1,10 @@
 from pyramid.config import Configurator
-from pyramid.response import Response
 
-# This acts as the view function
-def hello_world(request):
-    return Response('hello!')
+from substanced.site import Site
 
 
 def main(global_config, **settings):
-    config = Configurator()
-    config.add_view(hello_world)
+    config = Configurator(settings=settings, root_factory=Site.root_factory)
+    config.include('substanced')
+    config.scan()
     return config.make_wsgi_app()
