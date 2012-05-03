@@ -57,9 +57,9 @@ following features:
 
 Substance D is built upon on the following technologies:
 
-- `ZODB <http://zodb.org>`_ .
+- `ZODB <http://zodb.org>`_
 
-- `Pyramid <http://pylonsproject.org>`_.
+- `Pyramid <http://pylonsproject.org>`_
 
 - `repoze.catalog <http://docs.repoze.org/catalog>`_
 
