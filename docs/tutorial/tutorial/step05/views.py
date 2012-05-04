@@ -9,11 +9,10 @@ from .resources import (
     DocumentSchema,
     )
 
-# Q: What is the "context" for the site root?
 @view_config(renderer='templates/splash.pt')
 def splash_view(request):
-    manage_prefix = request.registry.settings.get(
-        'substanced.manage_prefix', '/manage')
+    manage_prefix = request.registry.settings.get('substanced.manage_prefix',
+                                                  '/manage')
     return {'manage_prefix': manage_prefix}
 
 @mgmt_view(
