@@ -1,0 +1,11 @@
+<div metal:use-macro="sdi_h.macros()['master']">
+    <div metal:fill-slot="main">
+        <h1>Substance D management interface demo</h1>
+        <p>Log in as <code>admin:admin</code></p>
+        <p>
+            <a class="btn btn-primary"
+               href="${request.application_url}${manage_prefix}">See the
+                management interface</a>
+        </p>
+    </div>
+</div>

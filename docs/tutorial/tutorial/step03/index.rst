@@ -1,5 +1,7 @@
 
 Shows
-=====
+======
 
-- Simplest content type
+- Substance D bootstrapping, minimum
+
+- Link to the SDI
