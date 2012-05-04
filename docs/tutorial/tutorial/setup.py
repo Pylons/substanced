@@ -31,9 +31,5 @@ setup(name='tutorial',
       install_requires=requires,
       tests_require=requires,
       test_suite="tutorial",
-      entry_points = """\
-      [paste.app_factory]
-      main = tutorial:main
-      """,
       )
 

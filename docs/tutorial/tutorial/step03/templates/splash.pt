@@ -1,0 +1,5 @@
+<div metal:use-macro="sdi_h.macros()['master']">
+    <div metal:fill-slot="main">
+        <h1>Substance D management interface demo</h1>
+    </div>
+</div>
