@@ -37,10 +37,6 @@ def oid_of(obj, default=_marker):
             raise
         return default
 
-def dotted_name(g):
-    """ Return the Python dotted name of a globally defined Python object. """
-    return '%s.%s' % (g.__module__, g.__name__)
-
 def merge_url_qs(url, **kw):
     """ Merge the query string elements of a URL with the ones in ``kw``.
     If any query string element exists in ``url`` that also exists in
