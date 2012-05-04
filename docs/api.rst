@@ -310,8 +310,6 @@ Other Helpers
 
 .. autofunction:: oid_of
 
-.. autofunction:: dotted_name
-
 .. autoclass:: Batch
 
 .. autofunction:: merge_url_qs
