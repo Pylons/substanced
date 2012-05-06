@@ -62,9 +62,6 @@ filenode = colander.SchemaNode(
 
 class FileUploadSchema(Schema):
     file = filenode.clone()
-    temp = colander.SchemaNode(
-        colander.String(),
-        )
 
 class FileUploadPropertySheet(PropertySheet):
     schema = FileUploadSchema()
