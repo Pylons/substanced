@@ -193,7 +193,7 @@ class TestFileUploadTempStore(unittest.TestCase):
         inst.session['substanced.tempstore']['a'] = {}
         self.assertEqual(inst['a'], {})
 
-    def test_clear(self):
+    def test_clear_exists(self):
         request = self._makeRequest()
         inst = self._makeOne(request)
         tmpfile = os.path.join(self.tempdir, 'abc')
@@ -203,6 +203,12 @@ class TestFileUploadTempStore(unittest.TestCase):
         inst['a'] = {'randid':'abc'}
         inst.clear()
         self.failIf(os.path.exists(tmpfile))
+
+    def test_clear_doesntexist(self):
+        request = self._makeRequest()
+        inst = self._makeOne(request)
+        inst['a'] = {'randid':'abc'}
+        inst.clear() # doesn't choke
 
 class DummyForm(object):
     def __init__(self, schema, buttons=None, use_ajax=False, ajax_options=''):
