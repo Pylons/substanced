@@ -42,7 +42,7 @@ class FilePropertySheet(PropertySheet):
         context = self.context
         return dict(
             name=context.__name__,
-            mimetype=context.mimetype
+            mimetype=context.mimetype,
             )
 
     def set(self, struct):
@@ -134,7 +134,7 @@ class File(Persistent):
         return response
 
     def get_size(self):
-        os.stat(self.blob.committed()).st_size
+        return os.stat(self.blob.committed()).st_size
 
-def includeme(config):
+def includeme(config): # pragma: no cover
     config.scan('.')
