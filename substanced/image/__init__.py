@@ -15,7 +15,7 @@ from ..file import (
 class ImageUploadTempStore(FileUploadTempStore):
     def preview_url(self, uid):
         root = self.request.root
-        return self.request.mgmt_path(root, '@@preview_uploaded_image', uid)
+        return self.request.mgmt_path(root, '@@preview_image_upload', uid)
 
 @colander.deferred
 def image_upload_widget(node, kw):
@@ -53,6 +53,6 @@ class ImageUploadPropertySheet(FileUploadPropertySheet):
 class Image(File):
     pass
 
-def includeme(config):
+def includeme(config): # pragma: no cover
     config.scan('.')
 
