@@ -13,3 +13,5 @@ def includeme(config): # pragma: no cover
     config.include('.undo')
     config.include('.property')
     config.include('.widget')
+    config.include('.file')
+    
