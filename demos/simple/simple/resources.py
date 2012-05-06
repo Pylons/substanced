@@ -7,31 +7,29 @@ from substanced.schema import Schema
 from substanced.content import content
 from substanced.property import PropertySheet
 
-def make_name_validator(content_type):
-    @colander.deferred
-    def name_validator(node, kw):
-        request = kw['request']
-        context = request.context
-        def exists(node, value):
-            if request.registry.content.istype(context, content_type):
-                if value != context.__name__:
-                    try:
-                        context.__parent__.check_name(value)
-                    except Exception as e:
-                        raise colander.Invalid(node, e.args[0], value)
-            else:
+@colander.deferred
+def name_validator(node, kw):
+    request = kw['request']
+    context = request.context
+    def exists(node, value):
+        if request.registry.content.istype(context, 'Document'):
+            if value != context.__name__:
                 try:
-                    context.check_name(value)
+                    context.__parent__.check_name(value)
                 except Exception as e:
                     raise colander.Invalid(node, e.args[0], value)
+        else:
+            try:
+                context.check_name(value)
+            except Exception as e:
+                raise colander.Invalid(node, e.args[0], value)
 
-        return exists
-    return name_validator
+    return exists
 
 class DocumentSchema(Schema):
     name = colander.SchemaNode(
         colander.String(),
-        validator = make_name_validator('Document'),
+        validator = name_validator,
         )
     title = colander.SchemaNode(
         colander.String(),
