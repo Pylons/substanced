@@ -1,6 +1,8 @@
+import os
 import StringIO
 import colander
 import unittest
+import pkg_resources
 from pyramid import testing
 
 class Test_view_file(unittest.TestCase):
@@ -123,6 +125,40 @@ class TestAddFileView(unittest.TestCase):
         result = inst.add_success(appstruct)
         self.assertEqual(result.location, '/mgmt')
         self.assertEqual(context['abc'], created)
+
+class Test_preview_image_upload(unittest.TestCase):
+    def setUp(self):
+        testing.setUp()
+
+    def tearDown(self):
+        testing.tearDown()
+
+    def _callFUT(self, request):
+        from ..views import preview_image_upload
+        return preview_image_upload(request)
+
+    def test_without_fp(self):
+        here = os.path.dirname(__file__)
+        request = testing.DummyRequest()
+        request.subpath = ('abc',)
+        request.registry.settings['substanced.uploads_tempdir'] = here
+        response = self._callFUT(request)
+        self.assertEqual(response.content_type, 'image/gif')
+        fn = pkg_resources.resource_filename(
+            'substanced.file', 'static/onepixel.gif')
+        self.assertEqual(response.body, open(fn, 'rb').read())
+
+    def test_with_fp(self):
+        here = os.path.dirname(__file__)
+        request = testing.DummyRequest()
+        request.subpath = ('abc',)
+        request.registry.settings['substanced.uploads_tempdir'] = here
+        fp = StringIO.StringIO('abc')
+        request.session['substanced.tempstore'] = {
+            'abc':{'fp':fp, 'filename':'foo.jpg'}}
+        response = self._callFUT(request)
+        self.assertEqual(response.content_type, 'image/jpeg')
+        self.assertEqual(response.body, 'abc')
         
 class DummyContent(object):
     def __init__(self, result):

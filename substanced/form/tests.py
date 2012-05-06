@@ -117,8 +117,9 @@ class TestFileUploadTempStore(unittest.TestCase):
 
     def test_preview_url(self):
         request = self._makeRequest()
+        request.mgmt_path = lambda *arg: '/mgmt'
         inst = self._makeOne(request)
-        self.assertEqual(inst.preview_url(None), None)
+        self.assertEqual(inst.preview_url(None), '/mgmt')
 
     def test_contains_true(self):
         request = self._makeRequest()
@@ -223,7 +224,5 @@ class DummyButton(object):
         self.name = name
         
 class DummySession(dict):
-    _changed = False
-    def changed(self):
-        self._changed = True
+    pass
 

@@ -166,7 +166,8 @@ class FileUploadTempStore(object):
         self.session = request.session
         
     def preview_url(self, uid):
-        return None
+        root = self.request.root
+        return self.request.mgmt_path(root, '@@preview_image_upload', uid)
 
     def __contains__(self, name):
         return name in self.session.get('substanced.tempstore', {})

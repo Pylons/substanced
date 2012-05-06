@@ -73,13 +73,30 @@ class TestFileUploadPropertySheet(unittest.TestCase):
         from .. import FileUploadPropertySheet
         return FileUploadPropertySheet(context, request)
     
-    def test_get(self):
+    def test_get_not_an_image(self):
         context = testing.DummyResource()
         context.__objectid__ = 'oid'
+        context.get_size = lambda *arg: 80
+        context.mimetype = 'application/octet-stream'
         request = testing.DummyRequest()
         request.mgmt_path = lambda *arg: '/manage'
         inst = self._makeOne(context, request)
-        file = {'fp':None, 'uid':'oid', 'filename':'','preview_url':'/manage'}
+        file = {'fp':None, 'uid':'oid', 'filename':'', 'size':80}
+        self.assertEqual(
+            inst.get(),
+            {'file':file}
+            )
+
+    def test_get_is_an_image(self):
+        context = testing.DummyResource()
+        context.__objectid__ = 'oid'
+        context.get_size = lambda *arg: 80
+        context.mimetype = 'image/foo'
+        request = testing.DummyRequest()
+        request.mgmt_path = lambda *arg: '/manage'
+        inst = self._makeOne(context, request)
+        file = {'fp':None, 'uid':'oid', 'filename':'','preview_url':'/manage',
+                'size':80}
         self.assertEqual(
             inst.get(),
             {'file':file}

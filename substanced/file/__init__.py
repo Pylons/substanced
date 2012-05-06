@@ -24,6 +24,7 @@ def file_upload_widget(node, kw):
     request = kw['request']
     tmpstore = FileUploadTempStore(request)
     widget = deform.widget.FileUploadWidget(tmpstore)
+    widget.template = 'substanced.file:templates/file_upload.pt'
     return widget
 
 class FilePropertiesSchema(Schema):
@@ -61,6 +62,9 @@ filenode = colander.SchemaNode(
 
 class FileUploadSchema(Schema):
     file = filenode.clone()
+    temp = colander.SchemaNode(
+        colander.String(),
+        )
 
 class FileUploadPropertySheet(PropertySheet):
     schema = FileUploadSchema()
@@ -73,8 +77,10 @@ class FileUploadPropertySheet(PropertySheet):
             fp=None,
             uid=uid,
             filename='',
+            size = context.get_size(),
             )
-        filedata['preview_url'] = request.mgmt_path(context)
+        if context.mimetype.startswith('image/'):
+            filedata['preview_url'] = request.mgmt_path(context)
         return dict(file=filedata)
     
     def set(self, struct):

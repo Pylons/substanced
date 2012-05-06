@@ -7,7 +7,6 @@ def main(global_config, **settings):
     config = Configurator(settings=settings, root_factory=Site.root_factory)
     config.include('substanced')
     config.include('substanced.file')
-    config.include('substanced.image')
     config.include('.catalog')
     config.scan()
     return config.make_wsgi_app()

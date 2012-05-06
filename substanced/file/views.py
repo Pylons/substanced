@@ -1,15 +1,18 @@
+import pkg_resources
+import mimetypes
 import colander
 import deform.schema
 
 from pyramid.httpexceptions import HTTPFound
+from pyramid.response import Response
 
-from substanced.sdi import mgmt_view
-from substanced.form import FormView
-
+from ..sdi import mgmt_view
+from ..form import FormView
 from ..util import _make_name_validator
 
 from . import (
     FilePropertiesSchema,
+    FileUploadTempStore,
     file_upload_widget,
     )
 
@@ -95,3 +98,25 @@ class AddFileView(FormView):
         fileob = self._makeob(stream)
         self.context[name] = fileob
         return HTTPFound(self.request.mgmt_path(fileob, '@@properties'))
+
+onepixel = pkg_resources.resource_filename(
+    'substanced.file', 'static/onepixel.gif')
+
+# this doesn't require a permission, because it's based on session data
+# which the user would have to put there anyway
+@mgmt_view(name='preview_image_upload', tab_condition=False)
+def preview_image_upload(request):
+    uid = request.subpath[0]
+    tempstore = FileUploadTempStore(request)
+    filedata = tempstore.get(uid, {})
+    fp = filedata.get('fp')
+    filename = ''
+    if fp is not None:
+        fp.seek(0)
+        filename = filedata['filename']
+    mimetype = mimetypes.guess_type(filename, strict=False)[0]
+    if not mimetype or not mimetype.startswith('image/'):
+        mimetype = 'image/gif'
+        fp = open(onepixel, 'rb')
+    response = Response(content_type=mimetype, app_iter=fp)
+    return response

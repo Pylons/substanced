@@ -6,7 +6,7 @@
 
     <input type="hidden" name="uid" value="${cstruct['uid']}"
            id="${field.oid}-uid"/>
-    <span tal:content="cstruct.filename"
+    <span tal:content="cstruct['filename']"
           id="${field.oid}-filename"/>
 
   </div>
