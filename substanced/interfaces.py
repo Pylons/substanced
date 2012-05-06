@@ -367,9 +367,6 @@ class IFile(Interface):
         """ Return the size in bytes of the data in the blob associated with
         the file"""
 
-class IImage(IFile):
-    pass
-
 marker = object()
 
 SERVICES_NAME = '__services__'
