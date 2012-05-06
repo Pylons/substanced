@@ -196,6 +196,17 @@ class FileUploadTempStore(object):
         existing[name] = data
         self.session['substanced.tempstore'] = existing
 
+    def clear(self):
+        data = self.session.pop('substanced.tempstore', {})
+        for k, v in data.items():
+            if 'randid' in v:
+                randid = v['randid']
+                fn = os.path.join(self.tempdir, randid)
+                try:
+                    os.remove(fn)
+                except OSError:
+                    pass
+
     def get(self, name, default=None):
         data = self.session.get('substanced.tempstore', {}).get(name)
 

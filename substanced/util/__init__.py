@@ -1,3 +1,4 @@
+import colander
 import calendar
 import math
 import urlparse
@@ -252,3 +253,31 @@ def chunks(stream, chunk_size=10000):
         if not chunk:
             break
         yield chunk
+
+def _make_name_validator(content_type):
+    # Return a deferred colander validator which checks if the name present
+    # as ``value`` conflicts with any other name in a container.  It is meant
+    # to be useful for both add and edit views.  Thus, if the context is the
+    # ``content_type``, its parent is used as the container but if the
+    # context is not of that type, the context itself is used as the container.
+    # Not yet an API (pretty complex).
+    @colander.deferred
+    def name_validator(node, kw):
+        request = kw['request']
+        context = kw['context']
+        def exists(node, value):
+            if request.registry.content.istype(context, content_type):
+                if value != context.__name__:
+                    try:
+                        context.__parent__.check_name(value)
+                    except Exception as e:
+                        raise colander.Invalid(node, e.args[0], value)
+            else:
+                try:
+                    context.check_name(value)
+                except Exception as e:
+                    raise colander.Invalid(node, e.args[0], value)
+
+        return exists
+    return name_validator
+
