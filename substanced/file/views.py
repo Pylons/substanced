@@ -47,13 +47,18 @@ class AddFileSchema(FilePropertiesSchema):
 def name_or_file(node, kw):
     def _name_or_file(node, struct):
         if not struct['file'] and not struct['name']:
-            raise colander.Invalid('One of name or file is required')
+            raise colander.Invalid(node, 'One of name or file is required')
         if not struct['name']:
-            if struct['file'] and struct['file'].get('filename'):
-                filename = struct['file']['filename']
+            filename = struct['file'].get('filename')
+            if filename:
                 curried_name_validator = _make_name_validator(IFile)
                 real_name_validator = curried_name_validator(node, kw)
                 real_name_validator(node['file'], filename)
+            else:
+                raise colander.Invalid(
+                    node,
+                    'If no name is supplied, a file must be supplied.'
+                    )
     return _name_or_file
 
 @mgmt_view(
@@ -72,8 +77,8 @@ class AddFileView(FormView):
     buttons = ('add',)
 
     def add_success(self, appstruct):
-        name = appstruct.pop('name')
-        filedata = appstruct.pop('file')
+        name = appstruct['name']
+        filedata = appstruct['file']
         stream = None
         filename = None
         if filedata:
