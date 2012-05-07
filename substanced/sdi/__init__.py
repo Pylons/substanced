@@ -254,7 +254,7 @@ def get_add_views(request, context=None):
             if addable_here is not None:
                 if not content_type in addable_here:
                     continue
-            type_name = meta.get('name', intr['content_type'])
+            type_name = meta.get('name', content_type)
             icon = meta.get('icon', '')
             data = dict(type_name=type_name, icon=icon)
             candidates[viewname] = data
