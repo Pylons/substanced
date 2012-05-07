@@ -247,8 +247,19 @@ def get_add_views(request, context=None):
     for data in introspector.get_category('substance d content types'): 
         intr = data['introspectable']
         meta = intr['meta']
+        content_type = intr['content_type']
         viewname = meta.get('add_view')
         if viewname:
+            addable_in = intr.get('addable_in')
+            if addable_in is not None:
+                if not any(
+                    [registry.content.istype(context, t) for t in addable_in]
+                    ):
+                    continue
+            addable_here = getattr(context, '__addable__', None)
+            if addable_here is not None:
+                if not content_type in addable_here:
+                    continue
             type_name = meta.get('name', intr['content_type'])
             icon = meta.get('icon', '')
             data = dict(type_name=type_name, icon=icon)
