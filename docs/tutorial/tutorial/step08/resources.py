@@ -1,4 +1,5 @@
 import colander
+import deform.widget
 
 from persistent import Persistent
 
@@ -15,6 +16,10 @@ class DocumentSchema(Schema):
     title = colander.SchemaNode(
         colander.String(),
     )
+    body = colander.SchemaNode(
+        colander.String(),
+        widget=deform.widget.RichTextWidget()
+    )
 
 class DocumentBasicPropertySheet(PropertySheet):
     schema = DocumentSchema()
@@ -27,7 +32,8 @@ class DocumentBasicPropertySheet(PropertySheet):
         context = self.context
         return dict(
             name=context.__name__,
-            title=context.title
+            title=context.title,
+            body=context.body
         )
 
     def set(self, struct):
@@ -38,6 +44,7 @@ class DocumentBasicPropertySheet(PropertySheet):
             parent = context.__parent__
             parent.rename(oldname, newname)
         context.title = struct['title']
+        context.body = struct['body']
 
 @content(
     IDocument,
@@ -46,8 +53,13 @@ class DocumentBasicPropertySheet(PropertySheet):
     add_view='add_document',
     propertysheets = (
         ('Basic', DocumentBasicPropertySheet),
-        )
+        ),
+    catalog=True,
     )
 class Document(Persistent):
-    def __init__(self, title):
+    def __init__(self, title, body):
         self.title = title
+        self.body = body
+
+    def texts(self): # for indexing
+        return self.title, self.body

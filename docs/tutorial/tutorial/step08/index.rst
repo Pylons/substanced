@@ -2,12 +2,10 @@
 Shows
 =====
 
-- List documents in retail view
+- Support indexing
 
-- Split views into mgmt and retail
+- Add "body" to the Document property sheet
 
-- Introduce interfaces
+- catalog=True on Document
 
-- Main site view is registered against SiteEntry
-
-- View registered for IDocument
+- Reminder: blow away your Data.*

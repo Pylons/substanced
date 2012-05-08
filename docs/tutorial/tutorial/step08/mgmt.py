@@ -6,9 +6,8 @@ from substanced.interfaces import (
     IFolder,
     )
 
-from .resources import (
-    DocumentSchema,
-    )
+from .interfaces import IDocument
+from .resources import DocumentSchema
 
 @mgmt_view(
     context=IFolder,
@@ -26,7 +25,8 @@ class AddDocumentView(FormView):
     def add_success(self, appstruct):
         registry = self.request.registry
         name = appstruct.pop('name')
-        document = registry.content.create('Document', **appstruct)
+        document = registry.content.create(IDocument,
+                                           **appstruct)
         self.context[name] = document
         return HTTPFound(self.request.mgmt_path(document, '@@properties'))
 
