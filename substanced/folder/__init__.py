@@ -49,6 +49,8 @@ class Folder(Persistent):
     order = property(_get_order, _set_order, _del_order)
 
     def __init__(self, data=None):
+        """ Constructor.  Data may be an initial dictionary mapping object
+        name to object. """
         if data is None:
             data = {}
         self.data = OOBTree(data)

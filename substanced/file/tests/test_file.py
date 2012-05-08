@@ -108,12 +108,28 @@ class TestFileUploadPropertySheet(unittest.TestCase):
         inst = self._makeOne(context, request)
         inst.set({'file':{}})
 
-    def test_set_with_name_change(self):
+    def test_set_with_fp_and_filename(self):
         fp = StringIO.StringIO('abc')
         fp.seek(2)
-        def upload(_fp, set_mimetype=False):
+        def upload(_fp, mimetype_hint=None):
             self.assertEqual(_fp, fp)
-            self.assertTrue(set_mimetype)
+            self.assertEqual(mimetype_hint, 'foo.pt')
+            context.uploaded = True
+        context = testing.DummyResource()
+        context.upload = upload
+        request = testing.DummyRequest()
+        inst = self._makeOne(context, request)
+        inst.set({'file':{'fp':fp, 'filename':'foo.pt'}})
+        self.assertTrue(context.uploaded)
+        self.assertEqual(fp.tell(), 0)
+
+    def test_set_with_fp_no_filename(self):
+        from .. import USE_MAGIC
+        fp = StringIO.StringIO('abc')
+        fp.seek(2)
+        def upload(_fp, mimetype_hint=None):
+            self.assertEqual(_fp, fp)
+            self.assertEqual(mimetype_hint, USE_MAGIC)
             context.uploaded = True
         context = testing.DummyResource()
         context.upload = upload
@@ -150,9 +166,18 @@ class TestFile(unittest.TestCase):
         inst = self._makeOne(None, None)
         self.assertEqual(inst.mimetype, 'application/octet-stream')
     
-    def test_ctor_with_stream(self):
+    def test_ctor_with_stream_mimetype_None(self):
         stream = StringIO.StringIO('abc')
         inst = self._makeOne(stream, None)
+        self.assertEqual(inst.mimetype, 'application/octet-stream')
+        fp = inst.blob.open('r')
+        fp.seek(0)
+        self.assertEqual(fp.read(), 'abc')
+
+    def test_ctor_with_stream_mimetype_USE_MAGIC(self):
+        from .. import USE_MAGIC
+        stream = StringIO.StringIO('abc')
+        inst = self._makeOne(stream, USE_MAGIC)
         self.assertEqual(inst.mimetype, 'text/plain')
         fp = inst.blob.open('r')
         fp.seek(0)
@@ -181,12 +206,27 @@ class TestFile(unittest.TestCase):
         inst.upload(stream)
         self.assertEqual(inst.blob.open('r').read(), 'abc')
         
-    def test_upload_stream_set_mimetype_true(self):
+    def test_upload_stream_mimetype_hint_USE_MAGIC(self):
+        from .. import USE_MAGIC
         stream = StringIO.StringIO('abc')
         inst = self._makeOne(None, None)
         self.assertEqual(inst.mimetype, 'application/octet-stream')
-        inst.upload(stream, set_mimetype=True)
+        inst.upload(stream, mimetype_hint=USE_MAGIC)
         self.assertEqual(inst.mimetype, 'text/plain')
+        
+    def test_upload_stream_mimetype_hint_filename(self):
+        stream = StringIO.StringIO('abc')
+        inst = self._makeOne(None, None)
+        self.assertEqual(inst.mimetype, 'application/octet-stream')
+        inst.upload(stream, mimetype_hint='foo.gif')
+        self.assertEqual(inst.mimetype, 'image/gif')
+
+    def test_upload_stream_mimetype_hint_None(self):
+        stream = StringIO.StringIO('abc')
+        inst = self._makeOne(None, None)
+        self.assertEqual(inst.mimetype, 'application/octet-stream')
+        inst.upload(stream, mimetype_hint=None)
+        self.assertEqual(inst.mimetype, 'application/octet-stream')
 
     def test_get_response_no_ct(self):
         inst = self._makeOne(None, 'text/plain')

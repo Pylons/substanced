@@ -20,10 +20,16 @@ Install using setuptools, e.g. (within a virtualenv)::
 
   $ easy_install substanced
 
-Substance D depends on the ``python-magic`` library, which works without
-extra help on Linux systems, but requires special depdency installations on
-Mac OS and Windows systems.  You'll need to follow these steps on those
-platforms:
+.. _optional_dependencies:
+
+Optional Dependencies
+---------------------
+
+Use of the :attr:`substanced.file.USE_MAGIC` constant for gessing file types
+from stream content requires the ``python-magic`` library, which works
+without extra help on Linux systems, but requires special dependency
+installations on Mac OS and Windows systems.  You'll need to follow these
+steps on those platforms to use this feature:
 
 Mac OS X
 
