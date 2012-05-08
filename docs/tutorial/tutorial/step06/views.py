@@ -15,14 +15,11 @@ class SplashView(Layout):
     def __init__(self, context, request):
         self.context = context
         self.request = request
-        settings = request.registry.settings
-        self.manage_prefix = settings.get('substanced.manage_prefix',
-                                          '/manage')
 
-    @view_config(renderer='templates/splash.pt')
-    def splash_view(self):
+    @view_config(renderer='templates/siteroot_view.pt')
+    def siteroot_view(self):
+        self.title = 'Welcome to My Site'
         return {}
-
 
 @mgmt_view(
     context=IFolder,
