@@ -1,0 +1,10 @@
+<div metal:use-macro="view.macros['layout']">
+    <div metal:fill-slot="main">
+        <h1>${view.title}</h1>
+
+        <div class="container-fluid">
+            <p>This is the view of an <code>IDocument</code></p>
+        </div>
+
+    </div>
+</div>
