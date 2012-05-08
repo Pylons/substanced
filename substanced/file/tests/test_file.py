@@ -221,6 +221,13 @@ class TestFile(unittest.TestCase):
         inst.upload(stream, mimetype_hint='foo.gif')
         self.assertEqual(inst.mimetype, 'image/gif')
 
+    def test_upload_stream_mimetype_hint_filename_unknown_extension(self):
+        stream = StringIO.StringIO('abc')
+        inst = self._makeOne(None, None)
+        self.assertEqual(inst.mimetype, 'application/octet-stream')
+        inst.upload(stream, mimetype_hint='foo')
+        self.assertEqual(inst.mimetype, 'application/octet-stream')
+
     def test_upload_stream_mimetype_hint_None(self):
         stream = StringIO.StringIO('abc')
         inst = self._makeOne(None, None)

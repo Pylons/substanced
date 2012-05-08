@@ -203,7 +203,7 @@ class File(Persistent):
             if mimetype_hint is not None:
                 mimetype, _ = mimetypes.guess_type(mimetype_hint, strict=False)
                 if mimetype is None:
-                    mimetype = 'application-octet/stream'
+                    mimetype = 'application/octet-stream'
                 self.mimetype = mimetype
         for chunk in chunks(stream):
             if use_magic and first:
