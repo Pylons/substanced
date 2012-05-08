@@ -28,7 +28,8 @@
 
             <ul class="nav">
                 <li>
-                    <a href="${request.application_url}">Home</a></li>
+                    <a href="${request.application_url}">Home</a>
+                </li>
             </ul>
             <ul class="nav pull-right">
                 <li>

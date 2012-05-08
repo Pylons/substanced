@@ -1,0 +1,16 @@
+<div metal:use-macro="view.macros['layout']">
+    <div metal:fill-slot="main">
+        <h1>${view.title}</h1>
+
+        <div class="container-fluid">
+            <ul>
+                <li tal:repeat="doc documents">
+                    <a href="${doc.url}">
+                        ${doc.title}
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+    </div>
+</div>

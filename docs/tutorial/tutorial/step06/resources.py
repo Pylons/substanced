@@ -14,12 +14,6 @@ class DocumentSchema(Schema):
         colander.String(),
     )
 
-class DocumentAdvancedSchema(Schema):
-    age = colander.SchemaNode(
-        colander.Integer(),
-        missing="0",
-    )
-
 class DocumentBasicPropertySheet(PropertySheet):
     schema = DocumentSchema()
 
@@ -43,31 +37,14 @@ class DocumentBasicPropertySheet(PropertySheet):
             parent.rename(oldname, newname)
         context.title = struct['title']
 
-class DocumentAdvancedPropertySheet(PropertySheet):
-    schema = DocumentAdvancedSchema()
-
-    def __init__(self, context, request):
-        self.context = context
-        self.request = request
-
-    def get(self):
-        return dict(
-            age=self.context.age
-        )
-
-    def set(self, struct):
-        self.context.age = struct['age']
-
 @content(
     'Document',
     icon='icon-align-left',
     add_view='add_document',
     propertysheets = (
         ('Basic', DocumentBasicPropertySheet),
-        ('Advanced', DocumentAdvancedPropertySheet),
         )
     )
 class Document(Persistent):
-    def __init__(self, title, age=0):
+    def __init__(self, title):
         self.title = title
-        self.age = age
