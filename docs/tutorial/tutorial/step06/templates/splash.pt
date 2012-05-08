@@ -1,0 +1,5 @@
+<div metal:use-macro="view.macros['layout']">
+    <div metal:fill-slot="main">
+        <h1>Substance D management interface demo</h1>
+    </div>
+</div>
