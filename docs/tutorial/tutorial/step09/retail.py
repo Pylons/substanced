@@ -5,7 +5,10 @@ from substanced.interfaces import (
     ISite
     )
 
-from .interfaces import IDocument
+from .interfaces import (
+    IDocument,
+    ITopic
+)
 from .layout import Layout
 
 class SplashView(Layout):
@@ -17,6 +20,12 @@ class SplashView(Layout):
     def documents(self):
         search_catalog = self.request.search_catalog
         count, docids, resolver = search_catalog(interfaces=(IDocument,))
+        return [resolver(docid) for docid in docids]
+
+    @property
+    def topics(self):
+        search_catalog = self.request.search_catalog
+        count, docids, resolver = search_catalog(interfaces=(ITopic,))
         return [resolver(docid) for docid in docids]
 
     @view_config(renderer='templates/siteroot_view.pt',
@@ -45,5 +54,35 @@ class SplashView(Layout):
     def document_view(self):
         self.title = self.context.title
 
-        return dict(body=self.context.body)
+        topic = self.context.topic
+
+        return dict(body=self.context.body, topic=topic)
+
+    @view_config(renderer='templates/topics_list.pt',
+                 name='topics')
+    def topics_list(self):
+        self.title = 'My Topics'
+
+        topics = []
+        for topic in self.topics:
+            topics.append(
+                    {'url': resource_url(topic,
+                                         self.request),
+                     'title': topic.title,
+                     })
+
+        return dict(topics=topics)
+
+    @view_config(renderer='templates/topic_view.pt',
+                 context=ITopic)
+    def topic_view(self):
+        self.title = self.context.title
+
+        documents = self.documents
+
+        # TODO this is just temporary until I wire up widget
+        from substanced.util import oid_of
+        oid = oid_of(self.context)
+
+        return dict(oid=oid, documents=documents)
 

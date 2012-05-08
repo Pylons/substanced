@@ -3,7 +3,11 @@
         <h1>${view.title}</h1>
 
         <div class="container-fluid">
-            ${structure: body}, topic: ${topic}
+            OID: ${oid} is used by the following documents:
+            <ul tal:repeat="document documents">
+                <li>${document.title}</li>
+            </ul>
+
         </div>
 
     </div>

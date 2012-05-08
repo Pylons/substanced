@@ -34,6 +34,10 @@
                     <a href="${request.application_url}/documents">
                         Documents</a>
                 </li>
+                <li>
+                    <a href="${request.application_url}/topics">
+                        Topics</a>
+                </li>
             </ul>
             <ul class="nav pull-right">
                 <li>

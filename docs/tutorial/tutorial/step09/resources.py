@@ -6,6 +6,7 @@ from persistent import Persistent
 from substanced.schema import Schema
 from substanced.content import content
 from substanced.property import PropertySheet
+from substanced.service import find_service
 
 from .interfaces import (
     IDocument,
@@ -23,6 +24,9 @@ class DocumentSchema(Schema):
         colander.String(),
         widget=deform.widget.RichTextWidget()
     )
+    topic = colander.SchemaNode(
+        colander.Int(),
+    )
 
 class DocumentBasicPropertySheet(PropertySheet):
     schema = DocumentSchema()
@@ -33,10 +37,12 @@ class DocumentBasicPropertySheet(PropertySheet):
 
     def get(self):
         context = self.context
+        topic = context.topic
         return dict(
             name=context.__name__,
             title=context.title,
-            body=context.body
+            body=context.body,
+            topic=context.topic
         )
 
     def set(self, struct):
@@ -48,6 +54,12 @@ class DocumentBasicPropertySheet(PropertySheet):
             parent.rename(oldname, newname)
         context.title = struct['title']
         context.body = struct['body']
+
+        # Make the relationship to a topic
+        objectmap = find_service(context, 'objectmap')
+        objectid = struct['topic']
+        topic = objectmap.object_for(objectid)
+        objectmap.connect(context, topic, 'document-to-topic')
 
 @content(
     IDocument,
@@ -66,6 +78,16 @@ class Document(Persistent):
 
     def texts(self): # for indexing
         return self.title, self.body
+
+
+    @property
+    def topic(self):
+        objectmap = find_service(self, 'objectmap')
+        topics = list(objectmap.targets(self, 'document-to-topic'))
+        topic = 0
+        for t in topics:
+            topic = t
+        return topic
 
 # Topics
 class TopicSchema(Schema):
@@ -109,10 +131,16 @@ class TopicBasicPropertySheet(PropertySheet):
         ),
     catalog=True,
     )
+
 class Topic(Persistent):
     def __init__(self, title):
         self.title = title
 
     def texts(self): # for indexing
         return self.title
+
+    @property
+    def document(self):
+        objectmap = find_service(self, 'objectmap')
+        return objectmap.sources(self, 'document-to-topic')
 
