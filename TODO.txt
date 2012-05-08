@@ -8,6 +8,9 @@ UI-Only
 UI-Plus-Guts
 ------------
 
+- Create "addable here" API that manages the __addable__ attribute of a
+  folderish object.
+
 - Create object map management UI (view relationships, view paths, view
   objectids).
 

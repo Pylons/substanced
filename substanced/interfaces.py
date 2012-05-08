@@ -343,6 +343,30 @@ class IPasswordResets(Interface):
 class IPasswordReset(Interface):
     """ Marker interface represent a password reset request """
 
+class IFile(Interface):
+    """ An object representing file content """
+
+    blob = Attribute('The ZODB blob object holding the file content')
+
+    mimetype = Attribute('The mimetype of the file content')
+    
+    def upload(stream, set_mimetype=False):
+        """Passed a file pointer (or another stream-like object), replace the
+        current blob contents with the contents of the file pointer.  If
+        ``set_mimetype`` is ``True``, set the content mimetype (using the
+        ``magic`` library) based on the first few bytes of the stream."""
+        
+    def get_response(self, **kw):
+        """ Return a WebOb-compatible response object which uses the blob
+        content as the stream data and the mimetype of the file as the
+        content type.  The ``**kw`` arguments will be passed to the
+        ``pyramid.response.FileResponse`` constructor as its keyword
+        arguments."""
+
+    def get_size(self):
+        """ Return the size in bytes of the data in the blob associated with
+        the file"""
+
 marker = object()
 
 SERVICES_NAME = '__services__'

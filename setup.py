@@ -34,6 +34,7 @@ install_requires = [
     'pyramid_zodbconn',
     'pyramid_mailer',
     'cryptacular',
+    'python-magic',
     ]
 
 docs_extras = ['Sphinx', 'repoze.sphinx.autointerface']

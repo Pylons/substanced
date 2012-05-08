@@ -158,7 +158,7 @@ class TestPropertySheet(unittest.TestCase):
         schema = DummySchema()
         inst.schema = schema
         self.assertEqual(inst.get_schema(), schema)
-        self.assertEqual(schema.bound, {'request':request})
+        self.assertEqual(schema.bound, {'request':request, 'context':context})
         
     def test_get(self):
         context = testing.DummyResource()

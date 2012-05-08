@@ -164,13 +164,13 @@ class FileUploadTempStore(object):
                 'hold uploaded files when form validation fails.')
         self.request = request
         self.session = request.session
-        self.tempstore = self.session.setdefault('substanced.tempstore', {})
         
     def preview_url(self, uid):
-        return None
+        root = self.request.root
+        return self.request.mgmt_path(root, '@@preview_image_upload', uid)
 
     def __contains__(self, name):
-        return name in self.tempstore
+        return name in self.session.get('substanced.tempstore', {})
 
     def __setitem__(self, name, data):
         newdata = data.copy()
@@ -188,11 +188,28 @@ class FileUploadTempStore(object):
             for chunk in chunks(stream):
                 fp.write(chunk)
 
-        self.tempstore[name] = newdata
-        self.session.changed()
+        self._tempstore_set(name, newdata)
+
+    def _tempstore_set(self, name, data):
+        # cope with sessioning implementations that cant deal with
+        # in-place mutation of mutable values (temporarily?)
+        existing = self.session.get('substanced.tempstore', {})
+        existing[name] = data
+        self.session['substanced.tempstore'] = existing
+
+    def clear(self):
+        data = self.session.pop('substanced.tempstore', {})
+        for k, v in data.items():
+            if 'randid' in v:
+                randid = v['randid']
+                fn = os.path.join(self.tempdir, randid)
+                try:
+                    os.remove(fn)
+                except OSError:
+                    pass
 
     def get(self, name, default=None):
-        data = self.tempstore.get(name)
+        data = self.session.get('substanced.tempstore', {}).get(name)
 
         if data is None:
             return default

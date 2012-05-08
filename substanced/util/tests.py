@@ -1,4 +1,6 @@
 import unittest
+import colander
+
 from pyramid import testing
 
 from . import _marker
@@ -224,3 +226,72 @@ class Test_merge_url_qs(unittest.TestCase):
         url = 'http://example.com?c=3'
         result = self._callFUT(url, a=1, b=2)
         self.assertEqual(result, 'http://example.com?a=1&b=2&c=3')
+
+class Test__make_name_validator(unittest.TestCase):
+    def _makeOne(self, content_type):
+        from . import _make_name_validator
+        return _make_name_validator(content_type)
+
+    def setUp(self):
+        testing.setUp()
+
+    def tearDown(self):
+        testing.tearDown()
+    
+    def _makeKw(self):
+        request = testing.DummyRequest()
+        context = testing.DummyResource()
+        return dict(request=request, context=context)
+
+    def test_it_not_adding_with_exception(self):
+        kw = self._makeKw()
+        kw['request'].registry.content = DummyContent(True)
+        node = object()
+        factory = self._makeOne('Document')
+        validator = factory(node, kw)
+        self.assertRaises(colander.Invalid, validator, node, 'abc')
+
+    def test_it_not_adding_no_exception(self):
+        parent = testing.DummyResource()
+        def check_name(value):
+            self.assertEqual(value, 'abc')
+            parent.checked = True
+        parent.check_name = check_name
+        kw = self._makeKw()
+        kw['request'].registry.content = DummyContent(True)
+        kw['context'].__parent__ = parent
+        node = object()
+        factory = self._makeOne('Document')
+        validator = factory(node, kw)
+        validator(node, 'abc')
+        self.assertTrue(parent.checked)
+
+    def test_it_adding_with_exception(self):
+        kw = self._makeKw()
+        kw['request'].registry.content = DummyContent(False)
+        node = object()
+        factory = self._makeOne('Document')
+        validator = factory(node, kw)
+        self.assertRaises(colander.Invalid, validator, node, 'abc')
+
+    def test_it_adding_no_exception(self):
+        kw = self._makeKw()
+        context = kw['context']
+        def check_name(value):
+            self.assertEqual(value, 'abc')
+            context.checked = True
+        kw['request'].registry.content = DummyContent(False)
+        context.check_name = check_name
+        node = object()
+        factory = self._makeOne('Document')
+        validator = factory(node, kw)
+        validator(node, 'abc')
+        self.assertTrue(context.checked)
+
+class DummyContent(object):
+    def __init__(self, result):
+        self.result = result
+
+    def istype(self, *arg):
+        return self.result
+    

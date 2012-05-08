@@ -117,13 +117,15 @@ class TestFileUploadTempStore(unittest.TestCase):
 
     def test_preview_url(self):
         request = self._makeRequest()
+        request.mgmt_path = lambda *arg: '/mgmt'
         inst = self._makeOne(request)
-        self.assertEqual(inst.preview_url(None), None)
+        self.assertEqual(inst.preview_url(None), '/mgmt')
 
     def test_contains_true(self):
         request = self._makeRequest()
         inst = self._makeOne(request)
-        inst.tempstore['a'] = 1
+        inst.session['substanced.tempstore'] = {}
+        inst.session['substanced.tempstore']['a'] = 1
         self.assertTrue('a' in inst)
         
     def test_contains_false(self):
@@ -135,8 +137,7 @@ class TestFileUploadTempStore(unittest.TestCase):
         request = self._makeRequest()
         inst = self._makeOne(request)
         inst['a'] = {}
-        self.assertEqual(inst.tempstore['a'], {})
-        self.assertTrue(request.session._changed)
+        self.assertEqual(inst.session['substanced.tempstore']['a'], {})
 
     def test_setitem_stream_file(self):
         request = self._makeRequest()
@@ -144,11 +145,11 @@ class TestFileUploadTempStore(unittest.TestCase):
         here = os.path.dirname(__file__)
         thisfile = os.path.join(here, 'tests.py')
         inst['a'] = {'fp':open(thisfile, 'rb')}
-        self.assertTrue(inst.tempstore['a']['randid'])
-        fn = os.path.join(self.tempdir, inst.tempstore['a']['randid'])
+        randid = inst.session['substanced.tempstore']['a']['randid']
+        self.assertTrue(randid)
+        fn = os.path.join(self.tempdir, randid)
         self.assertTrue(open(fn).read(),
                         open(thisfile, 'rb').read())
-        self.assertTrue(request.session._changed)
 
     def test_get_data_None(self):
         request = self._makeRequest()
@@ -158,7 +159,8 @@ class TestFileUploadTempStore(unittest.TestCase):
     def test_get_no_randid(self):
         request = self._makeRequest()
         inst = self._makeOne(request)
-        inst.tempstore['a'] = {'fp':True}
+        inst.session['substanced.tempstore'] = {}
+        inst.session['substanced.tempstore']['a'] = {'fp':True}
         self.assertEqual(inst.get('a'), {'fp':True})
 
     def test_get_with_randid(self):
@@ -167,14 +169,16 @@ class TestFileUploadTempStore(unittest.TestCase):
         fn = os.path.join(self.tempdir, '1234')
         with open(fn, 'wb') as f:
             f.write('abc')
-        inst.tempstore['a'] = {'randid':'1234'}
+        inst.session['substanced.tempstore'] = {}
+        inst.session['substanced.tempstore']['a'] = {'randid':'1234'}
         self.assertEqual(inst.get('a')['fp'].read(),
                          open(fn, 'rb').read())
 
     def test_get_with_randid_file_doesntexist(self):
         request = self._makeRequest()
         inst = self._makeOne(request)
-        inst.tempstore['a'] = {'randid':'1234'}
+        inst.session['substanced.tempstore'] = {}
+        inst.session['substanced.tempstore']['a'] = {'randid':'1234'}
         self.assertFalse('fp' in inst.get('a'))
 
     def test___getitem___notfound(self):
@@ -185,8 +189,26 @@ class TestFileUploadTempStore(unittest.TestCase):
     def test___getitem___found(self):
         request = self._makeRequest()
         inst = self._makeOne(request)
-        inst.tempstore['a'] = {}
+        inst.session['substanced.tempstore'] = {}
+        inst.session['substanced.tempstore']['a'] = {}
         self.assertEqual(inst['a'], {})
+
+    def test_clear_exists(self):
+        request = self._makeRequest()
+        inst = self._makeOne(request)
+        tmpfile = os.path.join(self.tempdir, 'abc')
+        f = open(tmpfile, 'wb')
+        f.write('foo')
+        f.close()
+        inst['a'] = {'randid':'abc'}
+        inst.clear()
+        self.failIf(os.path.exists(tmpfile))
+
+    def test_clear_doesntexist(self):
+        request = self._makeRequest()
+        inst = self._makeOne(request)
+        inst['a'] = {'randid':'abc'}
+        inst.clear() # doesn't choke
 
 class DummyForm(object):
     def __init__(self, schema, buttons=None, use_ajax=False, ajax_options=''):
@@ -219,7 +241,5 @@ class DummyButton(object):
         self.name = name
         
 class DummySession(dict):
-    _changed = False
-    def changed(self):
-        self._changed = True
+    pass
 

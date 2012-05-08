@@ -110,7 +110,7 @@ class PropertySheet(object):
         self.request = request
 
     def get_schema(self):
-        return self.schema.bind(request=self.request)
+        return self.schema.bind(request=self.request, context=self.context)
 
     def get(self):
         context = self.context
