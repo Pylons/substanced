@@ -5,6 +5,7 @@ from substanced.form import FormView
 from substanced.interfaces import (
     IFolder,
     )
+from substanced.service import find_service
 
 from .interfaces import (
     IDocument,
