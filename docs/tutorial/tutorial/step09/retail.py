@@ -54,7 +54,18 @@ class SplashView(Layout):
     def document_view(self):
         self.title = self.context.title
 
-        topic = self.context.topic
+        objectid = -1099536351
+        from substanced.service import find_service
+        objectmap = find_service(self.context, 'objectmap')
+        rel = 'document-to-topic'
+        topic = objectmap.object_for(objectid)
+        print list(objectmap.sources(topic, rel))
+        print list(objectmap.targets(self.context, rel))
+        #objectmap.connect(self.context, topic, 'document-to-topic')
+
+
+
+
 
         return dict(body=self.context.body, topic=topic)
 

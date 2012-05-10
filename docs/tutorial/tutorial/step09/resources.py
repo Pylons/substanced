@@ -11,12 +11,29 @@ from substanced.service import find_service
 from .interfaces import (
     IDocument,
     ITopic
-)
+    )
+
+import deform_bootstrap.widget
+from substanced.util import oid_of
+@colander.deferred
+def principals_widget(node, kw):
+    request = kw['request']
+    principals = find_service(request.context, 'principals')
+    groups = [(str(oid_of(group)), name) for name, group in
+                                         principals['groups'].items()]
+    users = [(str(oid_of(user)), name) for name, user in
+                                       principals['users'].items()]
+    values = (
+            {'label':'Groups', 'values':groups},
+            {'label':'Users', 'values':users},
+        )
+    widget = deform_bootstrap.widget.ChosenOptGroupWidget(values=values)
+    return widget
 
 class DocumentSchema(Schema):
     name = colander.SchemaNode(
         colander.String(),
-        )
+    )
     title = colander.SchemaNode(
         colander.String(),
     )
@@ -24,12 +41,14 @@ class DocumentSchema(Schema):
         colander.String(),
         widget=deform.widget.RichTextWidget()
     )
-    topic = colander.SchemaNode(
+    principal = colander.SchemaNode(
         colander.Int(),
-    )
+        missing=colander.null,
+        widget = principals_widget,
+        )
+
 
 class DocumentBasicPropertySheet(PropertySheet):
-    schema = DocumentSchema()
 
     def __init__(self, context, request):
         self.context = context
@@ -56,17 +75,18 @@ class DocumentBasicPropertySheet(PropertySheet):
         context.body = struct['body']
 
         # Make the relationship to a topic
-        objectmap = find_service(context, 'objectmap')
-        objectid = struct['topic']
-        topic = objectmap.object_for(objectid)
-        objectmap.connect(context, topic, 'document-to-topic')
+        #objectmap = find_service(context, 'objectmap')
+        #objectid = struct['topic']
+        #topic = objectmap.object_for(objectid)
+        #objectmap.connect(context, topic, 'document-to-topic')
+
 
 @content(
     IDocument,
     name='Document',
     icon='icon-align-left',
     add_view='add_document',
-    propertysheets = (
+    propertysheets=(
         ('Basic', DocumentBasicPropertySheet),
         ),
     catalog=True,
@@ -82,12 +102,14 @@ class Document(Persistent):
 
     @property
     def topic(self):
-        objectmap = find_service(self, 'objectmap')
-        topics = list(objectmap.targets(self, 'document-to-topic'))
-        topic = 0
-        for t in topics:
-            topic = t
-        return topic
+        #objectmap = find_service(self, 'objectmap')
+        #topics = list(objectmap.targets(self, 'document-to-topic'))
+        #topic = 0
+        #for t in topics:
+        #    topic = t
+        #return topic
+
+        return None
 
 # Topics
 class TopicSchema(Schema):
@@ -97,6 +119,7 @@ class TopicSchema(Schema):
     title = colander.SchemaNode(
         colander.String(),
     )
+
 
 class TopicBasicPropertySheet(PropertySheet):
     schema = TopicSchema()
@@ -121,12 +144,13 @@ class TopicBasicPropertySheet(PropertySheet):
             parent.rename(oldname, newname)
         context.title = struct['title']
 
+
 @content(
     ITopic,
     name='Topic',
     icon='icon-align-left',
     add_view='add_topic',
-    propertysheets = (
+    propertysheets=(
         ('Basic', TopicBasicPropertySheet),
         ),
     catalog=True,
@@ -141,6 +165,7 @@ class Topic(Persistent):
 
     @property
     def document(self):
-        objectmap = find_service(self, 'objectmap')
-        return objectmap.sources(self, 'document-to-topic')
+        #objectmap = find_service(self, 'objectmap')
+        #return objectmap.sources(self, 'document-to-topic')
+        return None
 
