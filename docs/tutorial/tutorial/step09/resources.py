@@ -6,29 +6,11 @@ from persistent import Persistent
 from substanced.schema import Schema
 from substanced.content import content
 from substanced.property import PropertySheet
-from substanced.service import find_service
 
 from .interfaces import (
     IDocument,
     ITopic
     )
-
-import deform_bootstrap.widget
-from substanced.util import oid_of
-@colander.deferred
-def principals_widget(node, kw):
-    request = kw['request']
-    principals = find_service(request.context, 'principals')
-    groups = [(str(oid_of(group)), name) for name, group in
-                                         principals['groups'].items()]
-    users = [(str(oid_of(user)), name) for name, user in
-                                       principals['users'].items()]
-    values = (
-            {'label':'Groups', 'values':groups},
-            {'label':'Users', 'values':users},
-        )
-    widget = deform_bootstrap.widget.ChosenOptGroupWidget(values=values)
-    return widget
 
 class DocumentSchema(Schema):
     name = colander.SchemaNode(
@@ -41,14 +23,12 @@ class DocumentSchema(Schema):
         colander.String(),
         widget=deform.widget.RichTextWidget()
     )
-    principal = colander.SchemaNode(
+    topic = colander.SchemaNode(
         colander.Int(),
-        missing=colander.null,
-        widget = principals_widget,
-        )
-
+    )
 
 class DocumentBasicPropertySheet(PropertySheet):
+    schema = DocumentSchema()
 
     def __init__(self, context, request):
         self.context = context
@@ -56,7 +36,6 @@ class DocumentBasicPropertySheet(PropertySheet):
 
     def get(self):
         context = self.context
-        topic = context.topic
         return dict(
             name=context.__name__,
             title=context.title,
@@ -73,6 +52,7 @@ class DocumentBasicPropertySheet(PropertySheet):
             parent.rename(oldname, newname)
         context.title = struct['title']
         context.body = struct['body']
+        context.topic = struct['topic']
 
         # Make the relationship to a topic
         #objectmap = find_service(context, 'objectmap')
@@ -92,24 +72,13 @@ class DocumentBasicPropertySheet(PropertySheet):
     catalog=True,
     )
 class Document(Persistent):
-    def __init__(self, title, body):
+    def __init__(self, title, body, topic):
         self.title = title
         self.body = body
+        self.topic = topic
 
     def texts(self): # for indexing
         return self.title, self.body
-
-
-    @property
-    def topic(self):
-        #objectmap = find_service(self, 'objectmap')
-        #topics = list(objectmap.targets(self, 'document-to-topic'))
-        #topic = 0
-        #for t in topics:
-        #    topic = t
-        #return topic
-
-        return None
 
 # Topics
 class TopicSchema(Schema):

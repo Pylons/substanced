@@ -31,7 +31,6 @@ class AddDocumentView(FormView):
     def add_success(self, appstruct):
         registry = self.request.registry
         name = appstruct.pop('name')
-        #topic = appstruct.pop('topic')
         document = registry.content.create(IDocument,
                                            **appstruct)
 
