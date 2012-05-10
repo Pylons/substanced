@@ -350,11 +350,21 @@ class IFile(Interface):
 
     mimetype = Attribute('The mimetype of the file content')
     
-    def upload(stream, set_mimetype=False):
-        """Passed a file pointer (or another stream-like object), replace the
-        current blob contents with the contents of the file pointer.  If
-        ``set_mimetype`` is ``True``, set the content mimetype (using the
-        ``magic`` library) based on the first few bytes of the stream."""
+    def upload(stream, mimetype_hint=False):
+        """ Replace the current contents of this file's blob with the
+        contents of ``stream``.  ``mimetype_hint`` can be any of the
+        folliwing:
+
+        - ``None``, meaning don't reset the current mimetype.  This is the
+          default.
+
+        - A string containing a filename with an extension; the mimetype will
+          be derived from the extension in the filename.
+
+        - The constant :ref:`pyramid.file.USE_MAGIC`, which will derive the
+          content type using the ``python-magic`` library based on the
+          stream's actual content.
+        """
         
     def get_response(self, **kw):
         """ Return a WebOb-compatible response object which uses the blob

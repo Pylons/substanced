@@ -28,7 +28,7 @@
 
 .. autofunction:: includeme
 
-XXX: request.search, request.query
+XXX: request.search_catalog, request.query_catalog
 
 :mod:`substanced.catalog.discriminators` API
 --------------------------------------------
@@ -180,6 +180,31 @@ Other Helpers
 
 .. autofunction:: includeme
 
+:mod:`substanced.file` API
+-----------------------------
+
+.. automodule:: substanced.file
+
+.. attribute:: USE_MAGIC
+
+   A constant value used as an argument to various methods of the
+   :class:`substanced.file.File` class.
+
+.. autoclass:: File
+   :members:
+
+   .. automethod:: __init__
+
+   .. attribute:: blob
+
+      The ZODB blob object associated with this file.
+
+   .. attribute:: mimetype
+ 
+      The mimetype of this file object (a string).
+
+.. autofunction:: includeme
+
 :mod:`substanced.folder` API
 ----------------------------
 
@@ -187,6 +212,8 @@ Other Helpers
 
 .. autoclass:: Folder
    :members:
+
+   .. automethod:: __init__
 
    .. attribute:: order
 
@@ -209,6 +236,7 @@ Other Helpers
 
 .. autoclass:: FileUploadTempStore
    :members:
+
 
 :mod:`substanced.objectmap` API
 --------------------------------
@@ -316,6 +344,13 @@ Other Helpers
 
 .. autofunction:: chunks
 
+:mod:`substanced.widget` API
+----------------------------
+
+.. automodule:: substanced.widget
+
+.. autofunction:: includeme
+
 :mod:`substanced.interfaces`
 ----------------------------
 
@@ -325,3 +360,4 @@ These represent interfaces implemented by various Substance D objects.
 
 .. autointerface:: IPropertySheet
    :members:
+

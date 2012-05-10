@@ -1,12 +1,19 @@
 import os
+import warnings
 import colander
 import StringIO
+import mimetypes
 from persistent import Persistent
 from ZODB.blob import Blob
 
-import magic
-
 from pyramid.response import FileResponse
+
+try:
+    import magic
+except ImportError: # pragma: no cover
+    magic = None
+
+USE_MAGIC = object()
 
 import deform.widget
 import deform.schema
@@ -83,10 +90,11 @@ class FileUploadPropertySheet(PropertySheet):
     def set(self, struct):
         context = self.context
         file = struct['file']
+        filename = file.get('filename', USE_MAGIC)
         fp = file.get('fp')
         if fp:
             fp.seek(0)
-            context.upload(fp, set_mimetype=True)
+            context.upload(fp, mimetype_hint=filename)
 
     def after_set(self):
         PropertySheet.after_set(self)
@@ -110,18 +118,95 @@ class FileUploadPropertySheet(PropertySheet):
 class File(Persistent):
 
     def __init__(self, stream=None, mimetype=None):
+        """ The constructor of a File object.
+
+        ``stream`` should be a filelike object (an object with a ``read``
+        method that takes a size argument) or ``None``.  If stream is
+        ``None``, the blob attached to this file object is created empty.
+
+        ``mimetype`` may be any of the following:
+
+        - ``None``, meaning set this file object's mimetype to
+          ``application/octet-stream`` (the default).
+
+        - A mimetype string (e.g. ``image/gif``)
+
+        - The constant :attr:`substanced.file.USE_MAGIC`, which will
+          derive the mimetype from the stream content (if ``stream`` is also
+          supplied) using the ``python-magic`` library.
+
+          .. warning::
+
+             On non-Linux systems, successful use of
+             :attr:`substanced.file.USE_MAGIC` requires the installation
+             of additional dependencies.  See :ref:`optional_dependencies`.
+        """
         self.blob = Blob()
         self.mimetype = mimetype or 'application/octet-stream'
         if stream is not None:
-            self.upload(stream, set_mimetype=mimetype is None)
+            if mimetype is USE_MAGIC:
+                hint = USE_MAGIC
+            else:
+                hint = None
+            self.upload(stream, mimetype_hint=hint)
 
-    def upload(self, stream, set_mimetype=False):
+    def upload(self, stream, mimetype_hint=None):
+        """ Replace the current contents of this file's blob with the
+        contents of ``stream``.  ``stream`` must be a filelike object (it
+        must have a ``read`` method that takes a size argument).
+
+        ``mimetype_hint`` can be any of the following:
+
+        - ``None``, meaning don't reset the current mimetype.  This is the
+          default.  If you already know the file's mimetype, and you don't
+          want it divined from a filename or stream content, use ``None`` as
+          the ``mimetype_hint`` value, and set the ``mimetype`` attribute of
+          the file object directly before or after calling this method.
+
+        - A string containing a filename that has an extension; the mimetype
+          will be derived from the extension in the filename using the Python
+          ``mimetypes`` module, and the result will be set as the mimetype
+          attribute of this object.
+
+        - The constant :attr:`pyramid.file.USE_MAGIC`, which will derive
+          the mimetype using the ``python-magic`` library based on the
+          stream's actual content.  The result will be set as the mimetype
+          attribute of this object.
+
+          .. warning::
+
+             On non-Linux systems, successful use of
+             :attr:`substanced.file.USE_MAGIC` requires the installation
+             of additional dependencies.  See :ref:`optional_dependencies`.
+          
+        """
         if not stream:
             stream = StringIO.StringIO()
         fp = self.blob.open('w')
         first = True
+        use_magic = False
+        if mimetype_hint is USE_MAGIC:
+            use_magic = True
+            if magic is None: # pragma: no cover
+                warnings.warn(
+                    'The python-magic library does not have its requisite '
+                    'dependencies installed properly, therefore the '
+                    '"USE_MAGIC" flag passed to this method has been ignored '
+                    '(it has been converted to "None").  The mimetype of '
+                    'substanced.file.File objects created may be incorrect as '
+                    'a result.'
+                    )
+                use_magic = False
+                mimetype_hint = None
+
+        if not use_magic:
+            if mimetype_hint is not None:
+                mimetype, _ = mimetypes.guess_type(mimetype_hint, strict=False)
+                if mimetype is None:
+                    mimetype = 'application/octet-stream'
+                self.mimetype = mimetype
         for chunk in chunks(stream):
-            if set_mimetype and first:
+            if use_magic and first:
                 first = False
                 m = magic.Magic(mime=True)
                 mimetype = m.from_buffer(chunk)
@@ -130,6 +215,11 @@ class File(Persistent):
         fp.close()
 
     def get_response(self, **kw):
+        """ Return a WebOb-compatible response object which uses the blob
+        content as the stream data and the mimetype of the file as the
+        content type.  The ``**kw`` arguments will be passed to the
+        ``pyramid.response.FileResponse`` constructor as its keyword
+        arguments."""
         if not 'content_type' in kw:
             kw['content_type'] = self.mimetype
         path = self.blob.committed()
@@ -137,6 +227,8 @@ class File(Persistent):
         return response
 
     def get_size(self):
+        """ Return the size in bytes of the data in the blob associated with
+        the file"""
         return os.stat(self.blob.committed()).st_size
 
 def includeme(config): # pragma: no cover
