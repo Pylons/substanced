@@ -17,7 +17,7 @@ from .interfaces import (
 DocumentToTopic = 'document-to-topic'
 
 @colander.deferred
-def pepper_widget(node, kw):
+def topics_widget(node, kw):
     request = kw['request']
     search_catalog = request.search_catalog
     count, oids, resolver = search_catalog(interfaces=(ITopic,))
@@ -31,9 +31,6 @@ def pepper_widget(node, kw):
 
 
 class DocumentSchema(Schema):
-    name = colander.SchemaNode(
-        colander.String(),
-    )
     title = colander.SchemaNode(
         colander.String(),
     )
@@ -43,7 +40,7 @@ class DocumentSchema(Schema):
     )
     topic = colander.SchemaNode(
         colander.Int(),
-        widget=pepper_widget,
+        widget=topics_widget,
         missing=colander.null
     )
 
@@ -74,11 +71,6 @@ class DocumentBasicPropertySheet(PropertySheet):
 
     def set(self, struct):
         context = self.context
-        newname = struct['name']
-        oldname = context.__name__
-        if newname != oldname:
-            parent = context.__parent__
-            parent.rename(oldname, newname)
         context.title = struct['title']
         context.body = struct['body']
 
@@ -124,9 +116,6 @@ class Document(Persistent):
 
 # Topics
 class TopicSchema(Schema):
-    name = colander.SchemaNode(
-        colander.String(),
-    )
     title = colander.SchemaNode(
         colander.String(),
     )
@@ -148,11 +137,6 @@ class TopicBasicPropertySheet(PropertySheet):
 
     def set(self, struct):
         context = self.context
-        newname = struct['name']
-        oldname = context.__name__
-        if newname != oldname:
-            parent = context.__parent__
-            parent.rename(oldname, newname)
         context.title = struct['title']
 
 

@@ -1,3 +1,4 @@
+import colander
 from pyramid.httpexceptions import HTTPFound
 
 from substanced.sdi import mgmt_view
@@ -5,7 +6,6 @@ from substanced.form import FormView
 from substanced.interfaces import (
     IFolder,
     )
-from substanced.service import find_service
 
 from .interfaces import (
     IDocument,
@@ -13,8 +13,14 @@ from .interfaces import (
 )
 from .resources import (
     DocumentSchema,
-    TopicSchema
+    TopicSchema,
+    DocumentBasicPropertySheet,
+    TopicBasicPropertySheet,
 )
+
+name = colander.SchemaNode(
+    colander.String(),
+    )
 
 @mgmt_view(
     context=IFolder,
@@ -27,16 +33,16 @@ from .resources import (
 class AddDocumentView(FormView):
     title = 'Add Document'
     schema = DocumentSchema()
+    schema
     buttons = ('add',)
 
     def add_success(self, appstruct):
         registry = self.request.registry
-        name = appstruct.pop('name')
-        document = registry.content.create(IDocument,
-                                           **appstruct)
+        name = appstruct['title']
+        document = registry.content.create(IDocument, **appstruct)
         self.context[name] = document
-        document.connect(appstruct['topic'])
-
+        propsheet = DocumentBasicPropertySheet(document, self.request)
+        propsheet.set(appstruct)
         return HTTPFound(self.request.mgmt_path(document, '@@properties'))
 
 @mgmt_view(
@@ -54,9 +60,10 @@ class AddTopicView(FormView):
 
     def add_success(self, appstruct):
         registry = self.request.registry
-        name = appstruct.pop('name')
-        topic = registry.content.create(ITopic,
-                                           **appstruct)
+        name = appstruct['title']
+        topic = registry.content.create(ITopic, **appstruct)
         self.context[name] = topic
+        propsheet = TopicBasicPropertySheet(topic, self.request)
+        propsheet.set(appstruct)
         return HTTPFound(self.request.mgmt_path(topic, '@@properties'))
 
