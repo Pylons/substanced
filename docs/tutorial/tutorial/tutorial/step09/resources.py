@@ -19,7 +19,6 @@ DocumentToTopic = 'document-to-topic'
 
 @colander.deferred
 def pepper_widget(node, kw):
-    context = kw['context']
     request = kw['request']
     search_catalog = request.search_catalog
     count, oids, resolver = search_catalog(interfaces=(ITopic,))
@@ -27,7 +26,7 @@ def pepper_widget(node, kw):
     for oid in oids:
         title = resolver(oid).title
         values.append(
-            (oid, title)
+            (str(oid), title)
         )
     return ChosenSingleWidget(values=values)
 
