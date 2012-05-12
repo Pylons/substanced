@@ -134,7 +134,7 @@ class mgmt_view(object):
                  custom_predicates=default, context=default,
                  decorator=default, mapper=default, http_cache=default,
                  match_param=default, tab_title=default, tab_condition=default,
-                 check_csrf=False, csrf_token='csrf_token'):
+                 check_csrf=default, csrf_token=default):
         L = locals()
         if (context is not default) or (for_ is not default):
             L['context'] = context or for_

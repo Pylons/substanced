@@ -101,6 +101,7 @@ class Test_mgmt_path(unittest.TestCase):
         result = inst(context, 'a', b=1)
         self.assertEqual(result, '/path')
 
+
 class Test__default(unittest.TestCase):
     def _makeOne(self):
         from .. import _default
@@ -113,6 +114,103 @@ class Test__default(unittest.TestCase):
         inst = self._makeOne()
         self.assertEqual(repr(inst), '(default)')
         
+class Test_mgmt_view(unittest.TestCase):
+    def setUp(self):
+        testing.setUp()
+
+    def tearDown(self):
+        testing.tearDown()
+
+    def _getTargetClass(self):
+        from .. import mgmt_view
+        return mgmt_view
+
+    def _makeOne(self, *arg, **kw):
+        return self._getTargetClass()(*arg, **kw)
+
+    def test_create_defaults(self):
+        decorator = self._makeOne()
+        self.assertEqual(decorator.__dict__, {})
+
+    def test_create_context_trumps_for(self):
+        decorator = self._makeOne(context='123', for_='456')
+        self.assertEqual(decorator.context, '123')
+
+    def test_create_for_trumps_context_None(self):
+        decorator = self._makeOne(context=None, for_='456')
+        self.assertEqual(decorator.context, '456')
+
+    def test_create_nondefaults(self):
+        decorator = self._makeOne(
+            name=None, request_type=None, for_=None,
+            permission='foo', mapper='mapper',
+            decorator='decorator', match_param='match_param'
+            )
+        self.assertEqual(decorator.name, None)
+        self.assertEqual(decorator.request_type, None)
+        self.assertEqual(decorator.context, None)
+        self.assertEqual(decorator.permission, 'foo')
+        self.assertEqual(decorator.mapper, 'mapper')
+        self.assertEqual(decorator.decorator, 'decorator')
+        self.assertEqual(decorator.match_param, 'match_param')
+        
+    def test_call_function(self):
+        decorator = self._makeOne()
+        venusian = DummyVenusian()
+        decorator.venusian = venusian
+        def foo(): pass
+        wrapped = decorator(foo)
+        self.assertTrue(wrapped is foo)
+        context = testing.DummyResource()
+        context.config = DummyConfigurator()
+        venusian.callback(context, None, 'abc')
+        self.assertEqual(context.config.view, 'abc')
+
+    def test_call_class_no_attr(self):
+        decorator = self._makeOne()
+        info = DummyVenusianInfo(scope='class')
+        venusian = DummyVenusian(info)
+        decorator.venusian = venusian
+        def foo(): pass
+        wrapped = decorator(foo)
+        self.assertTrue(wrapped is foo)
+        context = testing.DummyResource()
+        context.config = DummyConfigurator()
+        venusian.callback(context, None, None)
+        self.assertEqual(context.config.settings['attr'], 'foo')
+
+    def test_call_class_with_attr(self):
+        decorator = self._makeOne(attr='bar')
+        info = DummyVenusianInfo(scope='class')
+        venusian = DummyVenusian(info)
+        decorator.venusian = venusian
+        def foo(): pass
+        wrapped = decorator(foo)
+        self.assertTrue(wrapped is foo)
+        context = testing.DummyResource()
+        context.config = DummyConfigurator()
+        venusian.callback(context, None, None)
+        self.assertEqual(context.config.settings['attr'], 'bar')
+
+class DummyVenusianInfo(object):
+    scope = None
+    codeinfo = None
+    module = None
+    def __init__(self, **kw):
+        self.__dict__.update(kw)
+    
+class DummyVenusian(object):
+    def __init__(self, info=None):
+        if info is None:
+            info = DummyVenusianInfo()
+        self.info = info
+        
+    def attach(self, wrapped, callback, category):
+        self.wrapped = wrapped
+        self.callback = callback
+        self.category = category
+        return self.info
+
 class DummyConfigurator(object):
     _ainfo = None
     def __init__(self):
@@ -128,6 +226,13 @@ class DummyConfigurator(object):
 
     def add_view(self, **kw):
         self._added = kw
+
+    def add_mgmt_view(self, view=None, **settings):
+        self.view = view
+        self.settings = settings
+
+    def with_package(self, other):
+        return self
 
     def introspectable(self, category, discrim, desc, name):
         self.desc = desc
