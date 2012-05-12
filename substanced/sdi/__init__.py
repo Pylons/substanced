@@ -9,15 +9,15 @@ from pyramid.config.util import action_method # XXX not an API
 import venusian
 
 from pyramid.authentication import SessionAuthenticationPolicy
-from pyramid.exceptions import ConfigurationError
 from pyramid.authorization import ACLAuthorizationPolicy
-from pyramid.security import authenticated_userid
 from pyramid.compat import is_nonstr_iter
-from pyramid.traversal import resource_path_tuple
+from pyramid.exceptions import ConfigurationError
 from pyramid.httpexceptions import HTTPBadRequest
-from pyramid.session import UnencryptedCookieSessionFactoryConfig
 from pyramid.interfaces import IView
+from pyramid.security import authenticated_userid
 from pyramid.request import Request
+from pyramid.session import UnencryptedCookieSessionFactoryConfig
+from pyramid.traversal import resource_path_tuple
 
 from ..service import find_service
 
@@ -30,7 +30,7 @@ def as_sorted_tuple(val):
     return val
 
 def check_csrf_token(request, token='csrf_token'):
-    if request.params[token] != request.session.get_csrf_token():
+    if request.params.get(token) != request.session.get_csrf_token():
         raise HTTPBadRequest('incorrect CSRF token')
 
 @viewdefaults
@@ -72,8 +72,7 @@ def add_mgmt_view(
     discriminator = ('sdi view',) + view_discriminator[1:]
 
     if inspect.isclass(view) and attr:
-        view_desc = 'method %r of %s' % (
-            attr, config.object_description(view))
+        view_desc = 'method %r of %s' % (attr, config.object_description(view))
     else:
         view_desc = config.object_description(view)
 
