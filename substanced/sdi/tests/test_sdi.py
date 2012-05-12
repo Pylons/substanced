@@ -100,6 +100,18 @@ class Test_mgmt_path(unittest.TestCase):
         inst = self._makeOne(request)
         result = inst(context, 'a', b=1)
         self.assertEqual(result, '/path')
+
+class Test__default(unittest.TestCase):
+    def _makeOne(self):
+        from .. import _default
+        return _default()
+
+    def test__nonzero__(self):
+        self.assertFalse(self._makeOne())
+
+    def test___repr__(self):
+        inst = self._makeOne()
+        self.assertEqual(repr(inst), '(default)')
         
 class DummyConfigurator(object):
     _ainfo = None
