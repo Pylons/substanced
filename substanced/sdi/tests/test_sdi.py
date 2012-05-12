@@ -81,6 +81,25 @@ class Test_add_mgmt_view(unittest.TestCase):
         self.assertEqual(config._intr['tab_condition'], 'tab_condition')
         self.assertEqual(config._intr['check_csrf'], True)
         self.assertEqual(config._intr['csrf_token'], 'csrf_token')
+
+class Test_mgmt_path(unittest.TestCase):
+    def _makeOne(self, request):
+        from .. import mgmt_path
+        return mgmt_path(request)
+
+    def test_it(self):
+        from .. import MANAGE_ROUTE_NAME
+        request = testing.DummyRequest()
+        context = testing.DummyResource()
+        def route_path(route_name, *arg, **kw):
+            self.assertEqual(route_name, MANAGE_ROUTE_NAME)
+            self.assertEqual(arg, ('a',))
+            self.assertEqual(kw, {'b':1, 'traverse':('',)})
+            return '/path'
+        request.route_path = route_path
+        inst = self._makeOne(request)
+        result = inst(context, 'a', b=1)
+        self.assertEqual(result, '/path')
         
 class DummyConfigurator(object):
     _ainfo = None
