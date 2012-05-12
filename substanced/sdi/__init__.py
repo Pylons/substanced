@@ -161,13 +161,6 @@ class mgmt_view(object):
         settings['_info'] = info.codeinfo # fbo "action_method"
         return wrapped
 
-def get_user(request):
-    userid = authenticated_userid(request)
-    if userid is None:
-        return None
-    objectmap = find_service(request.context, 'objectmap')
-    return objectmap.object_for(userid)
-
 def get_mgmt_views(request, context=None, names=None):
     registry = request.registry
     if context is None:
@@ -276,7 +269,12 @@ def get_add_views(request, context=None):
 
     return L
 
-YEAR = 86400 * 365
+def get_user(request):
+    userid = authenticated_userid(request)
+    if userid is None:
+        return None
+    objectmap = find_service(request.context, 'objectmap')
+    return objectmap.object_for(userid)
 
 def add_permission(config, permission_name):
     """ A configurator directive which registers a free-standing permission
@@ -294,6 +292,7 @@ def add_permission(config, permission_name):
 def includeme(config): # pragma: no cover
     config.add_directive('add_mgmt_view', add_mgmt_view, action_wrap=False)
     config.add_directive('add_permission', add_permission)
+    YEAR = 86400 * 365
     config.add_static_view('deformstatic', 'deform:static', cache_max_age=YEAR)
     config.add_static_view('sdistatic', 'substanced.sdi:static', 
                            cache_max_age=YEAR)

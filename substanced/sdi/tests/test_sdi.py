@@ -192,6 +192,263 @@ class Test_mgmt_view(unittest.TestCase):
         venusian.callback(context, None, None)
         self.assertEqual(context.config.settings['attr'], 'bar')
 
+class Test_get_mgmt_views(unittest.TestCase):
+    def setUp(self):
+        testing.setUp()
+
+    def tearDown(self):
+        testing.tearDown()
+        
+    def _callFUT(self, request, context=None, names=None):
+        from .. import get_mgmt_views
+        return get_mgmt_views(request, context, names)
+
+    def test_no_views_found(self):
+        request = testing.DummyRequest()
+        request.matched_route = None
+        request.registry.content = DummyContent()
+        request.registry.introspector = DummyIntrospector()
+        result = self._callFUT(request)
+        self.assertEqual(result, [])
+
+    def test_no_related_view(self):
+        request = testing.DummyRequest()
+        request.matched_route = None
+        request.registry.content = DummyContent()
+        intr = {}
+        intr['tab_title'] = None
+        intr['tab_condition'] = None
+        intr = DummyIntrospectable(related=(), introspectable=intr)
+        request.registry.introspector = DummyIntrospector((intr,))
+        result = self._callFUT(request)
+        self.assertEqual(result, [])
+
+    def test_one_related_view_gardenpath(self):
+        request = testing.DummyRequest()
+        request.matched_route = None
+        request.mgmt_path = lambda *arg: '/path'
+        request.registry.content = DummyContent()
+        view_intr = DummyIntrospectable()
+        view_intr.category_name = 'views'
+        view_intr['name'] = 'name'
+        view_intr['context'] = None
+        view_intr['derived_callable'] = None
+        intr = {}
+        intr['tab_title'] = None
+        intr['tab_condition'] = None
+        intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
+        request.registry.introspector = DummyIntrospector((intr,))
+        result = self._callFUT(request)
+        self.assertEqual(result, [{'view_name': 'name', 'tab_title': 'Name'}])
+
+    def test_one_related_view_somecontext_tabcondition_None(self):
+        from zope.interface import Interface
+        class IFoo(Interface):
+            pass
+        request = testing.DummyRequest()
+        request.matched_route = None
+        request.mgmt_path = lambda *arg: '/path'
+        request.registry.content = DummyContent()
+        view_intr = DummyIntrospectable()
+        view_intr.category_name = 'views'
+        view_intr['name'] = 'name'
+        view_intr['context'] = IFoo
+        view_intr['derived_callable'] = None
+        intr = {}
+        intr['tab_title'] = None
+        intr['tab_condition'] = None
+        intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
+        request.registry.introspector = DummyIntrospector((intr,))
+        result = self._callFUT(request)
+        self.assertEqual(result, [])
+
+    def test_one_related_view_instcontext_tabcondition_None(self):
+        class Foo(object):
+            pass
+        request = testing.DummyRequest()
+        request.matched_route = None
+        request.mgmt_path = lambda *arg: '/path'
+        request.registry.content = DummyContent()
+        view_intr = DummyIntrospectable()
+        view_intr.category_name = 'views'
+        view_intr['name'] = 'name'
+        view_intr['context'] = Foo
+        view_intr['derived_callable'] = None
+        intr = {}
+        intr['tab_title'] = None
+        intr['tab_condition'] = None
+        intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
+        request.registry.introspector = DummyIntrospector((intr,))
+        result = self._callFUT(request)
+        self.assertEqual(result, [])
+
+    def test_one_related_view_anycontext_tabcondition_False(self):
+        request = testing.DummyRequest()
+        request.matched_route = None
+        request.mgmt_path = lambda *arg: '/path'
+        request.registry.content = DummyContent()
+        view_intr = DummyIntrospectable()
+        view_intr.category_name = 'views'
+        view_intr['name'] = 'name'
+        view_intr['context'] = None
+        view_intr['derived_callable'] = None
+        intr = {}
+        intr['tab_title'] = None
+        intr['tab_condition'] = False
+        intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
+        request.registry.introspector = DummyIntrospector((intr,))
+        result = self._callFUT(request)
+        self.assertEqual(result, [])
+
+    def test_one_related_view_anycontext_tabcondition_callable(self):
+        request = testing.DummyRequest()
+        request.matched_route = None
+        request.mgmt_path = lambda *arg: '/path'
+        request.registry.content = DummyContent()
+        view_intr = DummyIntrospectable()
+        view_intr.category_name = 'views'
+        view_intr['name'] = 'name'
+        view_intr['context'] = None
+        view_intr['derived_callable'] = None
+        intr = {}
+        def tabcondition(context, request):
+            return False
+        intr['tab_title'] = None
+        intr['tab_condition'] = tabcondition
+        intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
+        request.registry.introspector = DummyIntrospector((intr,))
+        result = self._callFUT(request)
+        self.assertEqual(result, [])
+
+    def test_one_related_view_anycontext_tabcondition_None_not_in_names(self):
+        request = testing.DummyRequest()
+        request.matched_route = None
+        request.mgmt_path = lambda *arg: '/path'
+        request.registry.content = DummyContent()
+        view_intr = DummyIntrospectable()
+        view_intr.category_name = 'views'
+        view_intr['name'] = 'name'
+        view_intr['context'] = None
+        view_intr['derived_callable'] = None
+        intr = {}
+        intr['tab_title'] = None
+        intr['tab_condition'] = None
+        intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
+        request.registry.introspector = DummyIntrospector((intr,))
+        result = self._callFUT(request, names=('fred',))
+        self.assertEqual(result, [])
+
+    def test_one_related_view_anycontext_tabcondition_None_predicatefail(self):
+        request = testing.DummyRequest()
+        request.matched_route = None
+        request.mgmt_path = lambda *arg: '/path'
+        request.registry.content = DummyContent()
+        view_intr = DummyIntrospectable()
+        view_intr.category_name = 'views'
+        view_intr['name'] = 'name'
+        view_intr['context'] = None
+        class Thing(object):
+            def __predicated__(self, context, request):
+                return False
+        thing = Thing()
+        view_intr['derived_callable'] = thing
+        intr = {}
+        intr['tab_title'] = None
+        intr['tab_condition'] = None
+        intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
+        request.registry.introspector = DummyIntrospector((intr,))
+        result = self._callFUT(request)
+        self.assertEqual(result, [])
+
+    def test_one_related_view_anycontext_tabcondition_None_permissionfail(self):
+        request = testing.DummyRequest()
+        request.matched_route = None
+        request.mgmt_path = lambda *arg: '/path'
+        request.registry.content = DummyContent()
+        view_intr = DummyIntrospectable()
+        view_intr.category_name = 'views'
+        view_intr['name'] = 'name'
+        view_intr['context'] = None
+        class Thing(object):
+            def __permitted__(self, context, request):
+                return False
+        thing = Thing()
+        view_intr['derived_callable'] = thing
+        intr = {}
+        intr['tab_title'] = None
+        intr['tab_condition'] = None
+        intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
+        request.registry.introspector = DummyIntrospector((intr,))
+        result = self._callFUT(request)
+        self.assertEqual(result, [])
+
+    def test_one_related_view_gardenpath_tab_title_sorting(self):
+        request = testing.DummyRequest()
+        request.matched_route = None
+        request.mgmt_path = lambda *arg: '/path'
+        request.registry.content = DummyContent()
+        view_intr = DummyIntrospectable()
+        view_intr.category_name = 'views'
+        view_intr['name'] = 'name'
+        view_intr['context'] = None
+        view_intr['derived_callable'] = None
+        intr = {}
+        intr['tab_title'] = 'b'
+        intr['tab_condition'] = None
+        intr2 = {}
+        intr2['tab_title'] = 'a'
+        intr2['tab_condition'] = None
+        intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
+        intr2 = DummyIntrospectable(related=(view_intr,), introspectable=intr2)
+        request.registry.introspector = DummyIntrospector((intr, intr2))
+        result = self._callFUT(request)
+        self.assertEqual(result,
+                         [{'view_name': 'name', 'tab_title': 'a'},
+                          {'view_name': 'name', 'tab_title': 'b'}])
+
+    def test_one_related_view_gardenpath_with_taborder(self):
+        request = testing.DummyRequest()
+        request.matched_route = None
+        request.mgmt_path = lambda *arg: '/path'
+        request.registry.content = DummyContent(('b',))
+        view_intr1 = DummyIntrospectable()
+        view_intr1.category_name = 'views'
+        view_intr1['name'] = 'b'
+        view_intr1['context'] = None
+        view_intr1['derived_callable'] = None
+        view_intr2 = DummyIntrospectable()
+        view_intr2.category_name = 'views'
+        view_intr2['name'] = 'a'
+        view_intr2['context'] = None
+        view_intr2['derived_callable'] = None
+        intr = {}
+        intr['tab_title'] = 'b'
+        intr['tab_condition'] = None
+        intr2 = {}
+        intr2['tab_title'] = 'a'
+        intr2['tab_condition'] = None
+        intr = DummyIntrospectable(related=(view_intr1,), introspectable=intr)
+        intr2 = DummyIntrospectable(related=(view_intr2,), introspectable=intr2)
+        request.registry.introspector = DummyIntrospector((intr, intr2))
+        result = self._callFUT(request)
+        self.assertEqual(result,
+                         [{'view_name': 'b', 'tab_title': 'b'},
+                          {'view_name': 'a', 'tab_title': 'a'}])
+
+class DummyContent(object):
+    def __init__(self, result=None):
+        self.result = result
+        
+    def metadata(self, *arg, **kw):
+        return self.result
+
+class DummyIntrospector(object):
+    def __init__(self, result=()):
+        self.result = result
+        
+    def get_category(self, *arg):
+        return self.result
+
 class DummyVenusianInfo(object):
     scope = None
     codeinfo = None
@@ -242,8 +499,8 @@ class DummyConfigurator(object):
         self._actions.append((discriminator, introspectables))
     
 class DummyIntrospectable(dict):
-    def __init__(self):
-        dict.__init__(self)
+    def __init__(self, **kw):
+        dict.__init__(self, **kw)
         self.related = {}
         
     def relate(self, category, discrim):
