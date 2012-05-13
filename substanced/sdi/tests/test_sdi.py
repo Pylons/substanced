@@ -502,6 +502,35 @@ class Test_get_add_views(unittest.TestCase):
         result = self._callFUT(request, context)
         self.assertEqual(result, [])
 
+class Test_get_user(unittest.TestCase):
+    def _callFUT(self, request):
+        from .. import get_user
+        return get_user(request)
+
+    def setUp(self):
+        self.config = testing.setUp()
+
+    def tearDown(self):
+        testing.tearDown()
+
+    def test_userid_is_None(self):
+        self.config.testing_securitypolicy(permissive=False)
+        request = testing.DummyRequest()
+        self.assertEqual(self._callFUT(request), None)
+
+    def test_userid_is_not_None(self):
+        from ...interfaces import IFolder
+        self.config.testing_securitypolicy(permissive=True, userid='fred')
+        request = testing.DummyRequest()
+        context = testing.DummyResource(__provides__=IFolder)
+        services = testing.DummyResource()
+        objectmap = testing.DummyResource()
+        objectmap.object_for = lambda *arg: 'foo'
+        services['objectmap'] = objectmap
+        context['__services__'] = services
+        request.context = context
+        self.assertEqual(self._callFUT(request), 'foo')
+
 class DummyContent(object):
     def __init__(self, result=None):
         self.result = result
