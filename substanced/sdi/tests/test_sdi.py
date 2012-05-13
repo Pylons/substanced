@@ -531,6 +531,16 @@ class Test_get_user(unittest.TestCase):
         request.context = context
         self.assertEqual(self._callFUT(request), 'foo')
 
+class Test_add_permission(unittest.TestCase):
+    def _callFUT(self, config, permission_name):
+        from .. import add_permission
+        return add_permission(config, permission_name)
+    
+    def test_it(self):
+        config = DummyConfigurator()
+        self._callFUT(config, 'perm')
+        self.assertEqual(config._actions,  [(None, ({'value': 'perm'},))])
+
 class DummyContent(object):
     def __init__(self, result=None):
         self.result = result
