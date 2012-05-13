@@ -41,7 +41,7 @@ def add_mgmt_view(
         wrapper=None, xhr=False, accept=None, header=None, path_info=None, 
         custom_predicates=(), context=None, decorator=None, mapper=None, 
         http_cache=None, match_param=None, request_type=None, tab_title=None,
-        tab_condition=None, check_csrf=True, csrf_token='csrf_token',
+        tab_condition=None, check_csrf=False, csrf_token='csrf_token',
         ):
     view = config.maybe_dotted(view)
     context = config.maybe_dotted(context)
