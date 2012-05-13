@@ -219,7 +219,7 @@ class Test_get_mgmt_views(unittest.TestCase):
         intr['tab_title'] = None
         intr['tab_condition'] = None
         intr = DummyIntrospectable(related=(), introspectable=intr)
-        request.registry.introspector = DummyIntrospector((intr,))
+        request.registry.introspector = DummyIntrospector([(intr,)])
         result = self._callFUT(request)
         self.assertEqual(result, [])
 
@@ -237,7 +237,7 @@ class Test_get_mgmt_views(unittest.TestCase):
         intr['tab_title'] = None
         intr['tab_condition'] = None
         intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
-        request.registry.introspector = DummyIntrospector((intr,))
+        request.registry.introspector = DummyIntrospector([(intr,)])
         result = self._callFUT(request)
         self.assertEqual(result, [{'view_name': 'name', 'tab_title': 'Name'}])
 
@@ -258,7 +258,7 @@ class Test_get_mgmt_views(unittest.TestCase):
         intr['tab_title'] = None
         intr['tab_condition'] = None
         intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
-        request.registry.introspector = DummyIntrospector((intr,))
+        request.registry.introspector = DummyIntrospector([(intr,)])
         result = self._callFUT(request)
         self.assertEqual(result, [])
 
@@ -278,7 +278,7 @@ class Test_get_mgmt_views(unittest.TestCase):
         intr['tab_title'] = None
         intr['tab_condition'] = None
         intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
-        request.registry.introspector = DummyIntrospector((intr,))
+        request.registry.introspector = DummyIntrospector([(intr,)])
         result = self._callFUT(request)
         self.assertEqual(result, [])
 
@@ -296,7 +296,7 @@ class Test_get_mgmt_views(unittest.TestCase):
         intr['tab_title'] = None
         intr['tab_condition'] = False
         intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
-        request.registry.introspector = DummyIntrospector((intr,))
+        request.registry.introspector = DummyIntrospector([(intr,)])
         result = self._callFUT(request)
         self.assertEqual(result, [])
 
@@ -316,7 +316,7 @@ class Test_get_mgmt_views(unittest.TestCase):
         intr['tab_title'] = None
         intr['tab_condition'] = tabcondition
         intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
-        request.registry.introspector = DummyIntrospector((intr,))
+        request.registry.introspector = DummyIntrospector([(intr,)])
         result = self._callFUT(request)
         self.assertEqual(result, [])
 
@@ -334,7 +334,7 @@ class Test_get_mgmt_views(unittest.TestCase):
         intr['tab_title'] = None
         intr['tab_condition'] = None
         intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
-        request.registry.introspector = DummyIntrospector((intr,))
+        request.registry.introspector = DummyIntrospector([(intr,)])
         result = self._callFUT(request, names=('fred',))
         self.assertEqual(result, [])
 
@@ -356,7 +356,7 @@ class Test_get_mgmt_views(unittest.TestCase):
         intr['tab_title'] = None
         intr['tab_condition'] = None
         intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
-        request.registry.introspector = DummyIntrospector((intr,))
+        request.registry.introspector = DummyIntrospector([(intr,)])
         result = self._callFUT(request)
         self.assertEqual(result, [])
 
@@ -378,7 +378,7 @@ class Test_get_mgmt_views(unittest.TestCase):
         intr['tab_title'] = None
         intr['tab_condition'] = None
         intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
-        request.registry.introspector = DummyIntrospector((intr,))
+        request.registry.introspector = DummyIntrospector([(intr,)])
         result = self._callFUT(request)
         self.assertEqual(result, [])
 
@@ -400,7 +400,7 @@ class Test_get_mgmt_views(unittest.TestCase):
         intr2['tab_condition'] = None
         intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
         intr2 = DummyIntrospectable(related=(view_intr,), introspectable=intr2)
-        request.registry.introspector = DummyIntrospector((intr, intr2))
+        request.registry.introspector = DummyIntrospector([(intr, intr2)])
         result = self._callFUT(request)
         self.assertEqual(result,
                          [{'view_name': 'name', 'tab_title': 'a'},
@@ -429,11 +429,78 @@ class Test_get_mgmt_views(unittest.TestCase):
         intr2['tab_condition'] = None
         intr = DummyIntrospectable(related=(view_intr1,), introspectable=intr)
         intr2 = DummyIntrospectable(related=(view_intr2,), introspectable=intr2)
-        request.registry.introspector = DummyIntrospector((intr, intr2))
+        request.registry.introspector = DummyIntrospector([(intr, intr2)])
         result = self._callFUT(request)
         self.assertEqual(result,
                          [{'view_name': 'b', 'tab_title': 'b'},
                           {'view_name': 'a', 'tab_title': 'a'}])
+
+class Test_get_add_views(unittest.TestCase):
+    def _callFUT(self, request, context=None):
+        from .. import get_add_views
+        return get_add_views(request, context)
+
+    def setUp(self):
+        testing.setUp()
+
+    def tearDown(self):
+        testing.tearDown()
+
+    def test_no_content_types(self):
+        request = testing.DummyRequest()
+        request.matched_route = None
+        request.registry.content = DummyContent()
+        request.registry.introspector = DummyIntrospector()
+        result = self._callFUT(request)
+        self.assertEqual(result, [])
+
+    def test_one_content_type(self):
+        request = testing.DummyRequest()
+        request.matched_route = None
+        request.registry.content = DummyContent()
+        request.mgmt_path = lambda *arg: '/path'
+        ct_intr = {}
+        ct_intr['meta'] = {'add_view':'abc'}
+        ct_intr['content_type'] = 'Content'
+        ct_intr = DummyIntrospectable(introspectable=ct_intr)
+        view_intr1 = DummyIntrospectable()
+        view_intr1.category_name = 'views'
+        view_intr1['name'] = 'abc'
+        view_intr1['context'] = None
+        view_intr1['derived_callable'] = None
+        intr = {}
+        intr['tab_title'] = 'abc'
+        intr['tab_condition'] = None
+        intr = DummyIntrospectable(related=(view_intr1,), introspectable=intr)
+        request.registry.introspector = DummyIntrospector([(ct_intr,), (intr,)])
+        result = self._callFUT(request)
+        self.assertEqual(
+            result,
+            [{'url': '/path', 'type_name': 'Content', 'icon': ''}])
+
+    def test_one_content_type_not_addable(self):
+        request = testing.DummyRequest()
+        request.matched_route = None
+        request.registry.content = DummyContent()
+        request.mgmt_path = lambda *arg: '/path'
+        context = testing.DummyResource()
+        context.__addable__ = ('Not Content',)
+        ct_intr = {}
+        ct_intr['meta'] = {'add_view':'abc'}
+        ct_intr['content_type'] = 'Content'
+        ct_intr = DummyIntrospectable(introspectable=ct_intr)
+        view_intr1 = DummyIntrospectable()
+        view_intr1.category_name = 'views'
+        view_intr1['name'] = 'abc'
+        view_intr1['context'] = None
+        view_intr1['derived_callable'] = None
+        intr = {}
+        intr['tab_title'] = 'abc'
+        intr['tab_condition'] = None
+        intr = DummyIntrospectable(related=(view_intr1,), introspectable=intr)
+        request.registry.introspector = DummyIntrospector([(ct_intr,), (intr,)])
+        result = self._callFUT(request, context)
+        self.assertEqual(result, [])
 
 class DummyContent(object):
     def __init__(self, result=None):
@@ -443,11 +510,13 @@ class DummyContent(object):
         return self.result
 
 class DummyIntrospector(object):
-    def __init__(self, result=()):
-        self.result = result
+    def __init__(self, results=()):
+        self.results = list(results)
         
     def get_category(self, *arg):
-        return self.result
+        if self.results:
+            return self.results.pop(0)
+        return ()
 
 class DummyVenusianInfo(object):
     scope = None
