@@ -26,7 +26,7 @@ from ..interfaces import IFolder
 def login(context, request):
     login_url = request.mgmt_path(request.context, 'login')
     referrer = request.url
-    if login_url in referrer:
+    if login_url in referrer: # pragma: no cover
         # never use the login form itself as came_from
         referrer = request.mgmt_path(request.root) 
     came_from = request.session.setdefault('came_from', referrer)
