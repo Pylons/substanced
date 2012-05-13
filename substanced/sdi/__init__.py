@@ -278,8 +278,8 @@ def get_user(request):
 
 def add_permission(config, permission_name):
     """ A configurator directive which registers a free-standing permission
-    (without associating it with a view), so it shows up in the ACL
-    dropdown. Usage example::
+    (without associating it with a view), so it shows up in the Security tab
+    dropdown for permissions. Usage example::
 
       config = Configurator()
       config.add_permission('view')
