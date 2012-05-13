@@ -19,7 +19,6 @@ from ..service import find_service
 from ..util import oid_of
 from ..interfaces import IFolder
 
-
 @mgmt_view(name='login', renderer='templates/login.pt', tab_condition=False)
 @mgmt_view(renderer='templates/login.pt', context=HTTPForbidden, 
            tab_condition=False)
@@ -62,24 +61,36 @@ def logout(request):
     return HTTPFound(location = request.mgmt_path(request.context),
                      headers = headers)
 
-@mgmt_view(tab_condition=False)
-@mgmt_view(name='manage_main', tab_condition=False)
-def manage_main(request):
-    view_data = get_mgmt_views(request)
-    if not view_data:
-        request.session['came_from'] = request.url
-        return HTTPFound(location=request.mgmt_path(request.root, '@@login'))
-    view_name = view_data[0]['view_name']
-    return HTTPFound(
-        location=request.mgmt_path(request.context, '@@%s' % view_name)
-        )
+class ManagementViews(object):
+    # these defined as staticmethods only for test overriding
+    get_mgmt_views = staticmethod(get_mgmt_views)
+    get_add_views = staticmethod(get_add_views)
+    
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
 
-@mgmt_view(context=IFolder, name='add', tab_title='Add', 
-           permission='sdi.manage-contents', renderer='templates/add.pt',
-           tab_condition=False)
-def add_content(context, request):
-    views = get_add_views(request, context)
-    if len(views) == 1:
-        return HTTPFound(location=views[0]['url'])
-    return {'views':views}
+    @mgmt_view(tab_condition=False)
+    @mgmt_view(name='manage_main', tab_condition=False)
+    def manage_main(self):
+        request = self.request
+        view_data = self.get_mgmt_views(request)
+        if not view_data:
+            request.session['came_from'] = request.url
+            return HTTPFound(
+                location=request.mgmt_path(request.root, '@@login')
+                )
+        view_name = view_data[0]['view_name']
+        return HTTPFound(
+            location=request.mgmt_path(request.context, '@@%s' % view_name)
+            )
+
+    @mgmt_view(context=IFolder, name='add', tab_title='Add', 
+               permission='sdi.manage-contents', renderer='templates/add.pt',
+               tab_condition=False)
+    def add_content(self):
+        views = self.get_add_views(self.request, self.context)
+        if len(views) == 1:
+            return HTTPFound(location=views[0]['url'])
+        return {'views':views}
 

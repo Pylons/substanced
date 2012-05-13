@@ -75,7 +75,7 @@ class Test_add_renderer_globals(unittest.TestCase):
         e = {}
         self._callFUT(e)
         self.assertEqual(e['sdi_h'], helpers)
-        
+
 class DummyContent(object):
     def metadata(self, context, name, default=None):
         return default
