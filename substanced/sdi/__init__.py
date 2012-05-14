@@ -14,8 +14,8 @@ from pyramid.compat import is_nonstr_iter
 from pyramid.exceptions import ConfigurationError
 from pyramid.httpexceptions import HTTPBadRequest
 from pyramid.interfaces import IView
-from pyramid.security import authenticated_userid
 from pyramid.request import Request
+from pyramid.security import authenticated_userid
 from pyramid.session import UnencryptedCookieSessionFactoryConfig
 from pyramid.traversal import resource_path_tuple
 
