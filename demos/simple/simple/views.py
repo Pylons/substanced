@@ -24,8 +24,8 @@ def splash_view(request):
 #   "Retail" view for documents.
 #
 @view_config(
+    context=Document,
     renderer='templates/document.pt',
-    for_=Document,
     )
 def document_view(context, request):
     return {'title': context.title,
