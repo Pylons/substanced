@@ -210,10 +210,16 @@ def get_mgmt_views(request, context=None, names=None):
             if hasattr(derived, '__permitted__'):
                 if not derived.__permitted__(context, req):
                     continue
-            L.append(
-                {'view_name':view_name,
-                 'tab_title':tab_title or view_name.capitalize()}
-                )
+            if view_name == request.view_name:
+                css_class = 'active'
+            else:
+                css_class = None
+            L.append({'view_name': view_name,
+                      'title': tab_title or view_name.capitalize(),
+                      'class': css_class,
+                      'url': request.mgmt_path(request.context,
+                                               '@@%s' % view_name)
+                     })
 
     ordered = []
 
@@ -228,7 +234,7 @@ def get_mgmt_views(request, context=None, names=None):
                     L.remove(view_data)
                     ordered.append(view_data)
                     
-    return ordered + sorted(L, key=operator.itemgetter('tab_title'))
+    return ordered + sorted(L, key=operator.itemgetter('title'))
 
 def get_add_views(request, context=None):
     registry = request.registry
