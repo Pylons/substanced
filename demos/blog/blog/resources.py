@@ -58,7 +58,7 @@ def make_name_validator(content_type):
 def now_default(node, kw):
     return datetime.date.today()
 
-eastern = pytz.timezone('US/Eastern')
+eastern = pytz.timezone('America/New_York')
 
 class BlogEntrySchema(Schema):
     name = colander.SchemaNode(
