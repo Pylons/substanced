@@ -70,7 +70,7 @@ class BlogEntrySchema(Schema):
         )
     entry = colander.SchemaNode(
         colander.String(),
-        widget = deform.widget.TextAreaWidget(rows=20, cols=10),
+        widget = deform.widget.TextAreaWidget(rows=20, cols=70),
         )
     format = colander.SchemaNode(
         colander.String(),
