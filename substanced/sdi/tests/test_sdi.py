@@ -226,8 +226,9 @@ class Test_get_mgmt_views(unittest.TestCase):
     def test_one_related_view_gardenpath(self):
         request = testing.DummyRequest()
         request.matched_route = None
-        request.mgmt_path = lambda *arg: '/path'
+        request.mgmt_path = lambda context, view_name: '/path/%s' % view_name
         request.registry.content = DummyContent()
+        request.view_name = 'name'
         view_intr = DummyIntrospectable()
         view_intr.category_name = 'views'
         view_intr['name'] = 'name'
@@ -239,7 +240,11 @@ class Test_get_mgmt_views(unittest.TestCase):
         intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
         request.registry.introspector = DummyIntrospector([(intr,)])
         result = self._callFUT(request)
-        self.assertEqual(result, [{'view_name': 'name', 'tab_title': 'Name'}])
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]['view_name'], 'name')
+        self.assertEqual(result[0]['title'], 'Name')
+        self.assertEqual(result[0]['class'], 'active')
+        self.assertEqual(result[0]['url'], '/path/@@name')
 
     def test_one_related_view_somecontext_tabcondition_None(self):
         from zope.interface import Interface
@@ -247,7 +252,7 @@ class Test_get_mgmt_views(unittest.TestCase):
             pass
         request = testing.DummyRequest()
         request.matched_route = None
-        request.mgmt_path = lambda *arg: '/path'
+        request.mgmt_path = lambda context, view_name: '/path/%s' % view_name
         request.registry.content = DummyContent()
         view_intr = DummyIntrospectable()
         view_intr.category_name = 'views'
@@ -267,7 +272,7 @@ class Test_get_mgmt_views(unittest.TestCase):
             pass
         request = testing.DummyRequest()
         request.matched_route = None
-        request.mgmt_path = lambda *arg: '/path'
+        request.mgmt_path = lambda context, view_name: '/path/%s' % view_name
         request.registry.content = DummyContent()
         view_intr = DummyIntrospectable()
         view_intr.category_name = 'views'
@@ -285,7 +290,7 @@ class Test_get_mgmt_views(unittest.TestCase):
     def test_one_related_view_anycontext_tabcondition_False(self):
         request = testing.DummyRequest()
         request.matched_route = None
-        request.mgmt_path = lambda *arg: '/path'
+        request.mgmt_path = lambda context, view_name: '/path/%s' % view_name
         request.registry.content = DummyContent()
         view_intr = DummyIntrospectable()
         view_intr.category_name = 'views'
@@ -303,7 +308,7 @@ class Test_get_mgmt_views(unittest.TestCase):
     def test_one_related_view_anycontext_tabcondition_callable(self):
         request = testing.DummyRequest()
         request.matched_route = None
-        request.mgmt_path = lambda *arg: '/path'
+        request.mgmt_path = lambda context, view_name: '/path/%s' % view_name
         request.registry.content = DummyContent()
         view_intr = DummyIntrospectable()
         view_intr.category_name = 'views'
@@ -323,7 +328,7 @@ class Test_get_mgmt_views(unittest.TestCase):
     def test_one_related_view_anycontext_tabcondition_None_not_in_names(self):
         request = testing.DummyRequest()
         request.matched_route = None
-        request.mgmt_path = lambda *arg: '/path'
+        request.mgmt_path = lambda context, view_name: '/path/%s' % view_name
         request.registry.content = DummyContent()
         view_intr = DummyIntrospectable()
         view_intr.category_name = 'views'
@@ -341,7 +346,7 @@ class Test_get_mgmt_views(unittest.TestCase):
     def test_one_related_view_anycontext_tabcondition_None_predicatefail(self):
         request = testing.DummyRequest()
         request.matched_route = None
-        request.mgmt_path = lambda *arg: '/path'
+        request.mgmt_path = lambda context, view_name: '/path/%s' % view_name
         request.registry.content = DummyContent()
         view_intr = DummyIntrospectable()
         view_intr.category_name = 'views'
@@ -363,7 +368,7 @@ class Test_get_mgmt_views(unittest.TestCase):
     def test_one_related_view_anycontext_tabcondition_None_permissionfail(self):
         request = testing.DummyRequest()
         request.matched_route = None
-        request.mgmt_path = lambda *arg: '/path'
+        request.mgmt_path = lambda context, view_name: '/path/%s' % view_name
         request.registry.content = DummyContent()
         view_intr = DummyIntrospectable()
         view_intr.category_name = 'views'
@@ -385,7 +390,7 @@ class Test_get_mgmt_views(unittest.TestCase):
     def test_one_related_view_gardenpath_tab_title_sorting(self):
         request = testing.DummyRequest()
         request.matched_route = None
-        request.mgmt_path = lambda *arg: '/path'
+        request.mgmt_path = lambda context, view_name: '/path/%s' % view_name
         request.registry.content = DummyContent()
         view_intr = DummyIntrospectable()
         view_intr.category_name = 'views'
@@ -402,15 +407,22 @@ class Test_get_mgmt_views(unittest.TestCase):
         intr2 = DummyIntrospectable(related=(view_intr,), introspectable=intr2)
         request.registry.introspector = DummyIntrospector([(intr, intr2)])
         result = self._callFUT(request)
-        self.assertEqual(result,
-                         [{'view_name': 'name', 'tab_title': 'a'},
-                          {'view_name': 'name', 'tab_title': 'b'}])
+        self.assertEqual(len(result), 2)
+        self.assertEqual(result[0]['view_name'], 'name')
+        self.assertEqual(result[0]['title'], 'a')
+        self.assertEqual(result[0]['class'], None)
+        self.assertEqual(result[0]['url'], '/path/@@name')
+        self.assertEqual(result[1]['view_name'], 'name')
+        self.assertEqual(result[1]['title'], 'b')
+        self.assertEqual(result[1]['class'], None)
+        self.assertEqual(result[1]['url'], '/path/@@name')
 
     def test_one_related_view_gardenpath_with_taborder(self):
         request = testing.DummyRequest()
         request.matched_route = None
-        request.mgmt_path = lambda *arg: '/path'
+        request.mgmt_path = lambda context, view_name: '/path/%s' % view_name
         request.registry.content = DummyContent(('b',))
+        request.view_name = 'b'
         view_intr1 = DummyIntrospectable()
         view_intr1.category_name = 'views'
         view_intr1['name'] = 'b'
@@ -431,9 +443,15 @@ class Test_get_mgmt_views(unittest.TestCase):
         intr2 = DummyIntrospectable(related=(view_intr2,), introspectable=intr2)
         request.registry.introspector = DummyIntrospector([(intr, intr2)])
         result = self._callFUT(request)
-        self.assertEqual(result,
-                         [{'view_name': 'b', 'tab_title': 'b'},
-                          {'view_name': 'a', 'tab_title': 'a'}])
+        self.assertEqual(len(result), 2)
+        self.assertEqual(result[0]['view_name'], 'b')
+        self.assertEqual(result[0]['title'], 'b')
+        self.assertEqual(result[0]['class'], 'active')
+        self.assertEqual(result[0]['url'], '/path/@@b')
+        self.assertEqual(result[1]['view_name'], 'a')
+        self.assertEqual(result[1]['title'], 'a')
+        self.assertEqual(result[1]['class'], None)
+        self.assertEqual(result[1]['url'], '/path/@@a')
 
 class Test_get_add_views(unittest.TestCase):
     def _callFUT(self, request, context=None):

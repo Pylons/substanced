@@ -1,0 +1,11 @@
+<?DOCTYPE html?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      metal:define-macro="main">
+<head>
+ <metal:title metal:define-slot="head-title">TITLE</metal:title>
+</head>
+<body>
+ <metal:title metal:define-slot="body-title">TITLE</metal:title>
+ <metal:content metal:define-slot="body-content">CONTENT</metal:content>
+</body>
+</html>

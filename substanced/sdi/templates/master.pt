@@ -88,7 +88,8 @@
                 tal:define="tabs sdi_h.get_mgmt_views(request)"
                 tal:condition="tabs">
               <li tal:repeat="tab_data tabs"
-                  tal:attributes="class request.view_name==tab_data['view_name'] and 'active' or None"><a href="${request.mgmt_path(request.context, '@@%s' % tab_data['view_name'])}">${tab_data['tab_title']}</a>
+                  tal:attributes="class tab_data['class']">
+                  <a href="${tab_data['url']}">${tab_data['title']}</a>
               </li>
             </ul>
 

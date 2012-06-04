@@ -1,30 +1,29 @@
-import time
-import binascii
-import os
 import datetime
 import StringIO
+import time
 
-import pytz
-import colander
-import deform.schema
-
-from pyramid.security import (
-    Allow,
-    Everyone,
-    )
-
+from colander import DateTime
+from colander import deferred
+from colander import Invalid
+from colander import OneOf
+from colander import SchemaNode
+from colander import String
+from deform.schema import FileData
+from deform.widget import FileUploadWidget
+from deform.widget import SelectWidget
+from deform.widget import TextAreaWidget
 from persistent import Persistent
-from ZODB.blob import Blob
-
+from pytz import timezone
+from pyramid.security import Allow
+from pyramid.security import Everyone
 from substanced.content import content
 from substanced.schema import Schema
 from substanced.folder import Folder
 from substanced.form import FileUploadTempStore
 from substanced.property import PropertySheet
-from substanced.site import (
-    Site,
-    SitePropertySheet,
-    )
+from substanced.site import Site
+from substanced.site import SitePropertySheet
+from ZODB.blob import Blob
 
 from .interfaces import (
     IBlog,
@@ -34,7 +33,7 @@ from .interfaces import (
     )
 
 def make_name_validator(content_type):
-    @colander.deferred
+    @deferred
     def name_validator(node, kw):
         request = kw['request']
         context = request.context
@@ -44,42 +43,42 @@ def make_name_validator(content_type):
                     try:
                         context.__parent__.check_name(value)
                     except Exception as e:
-                        raise colander.Invalid(node, e.args[0], value)
+                        raise Invalid(node, e.args[0], value)
             else:
                 try:
                     context.check_name(value)
                 except Exception as e:
-                    raise colander.Invalid(node, e.args[0], value)
+                    raise Invalid(node, e.args[0], value)
 
         return exists
     return name_validator
 
-@colander.deferred
+@deferred
 def now_default(node, kw):
     return datetime.date.today()
 
-eastern = pytz.timezone('US/Eastern')
+eastern = timezone('America/New_York')
 
 class BlogEntrySchema(Schema):
-    name = colander.SchemaNode(
-        colander.String(),
+    name = SchemaNode(
+        String(),
         validator = make_name_validator(IBlogEntry),
         )
-    title = colander.SchemaNode(
-        colander.String(),
+    title = SchemaNode(
+        String(),
         )
-    entry = colander.SchemaNode(
-        colander.String(),
-        widget = deform.widget.TextAreaWidget(rows=20, cols=10),
+    entry = SchemaNode(
+        String(),
+        widget = TextAreaWidget(rows=20, cols=70),
         )
-    format = colander.SchemaNode(
-        colander.String(),
-        validator = colander.OneOf(['rst', 'html']),
-        widget = deform.widget.SelectWidget(
+    format = SchemaNode(
+        String(),
+        validator = OneOf(['rst', 'html']),
+        widget = SelectWidget(
             values=[('rst', 'rst'), ('html', 'html')]),
         )
-    pubdate = colander.SchemaNode(
-       colander.DateTime(default_tzinfo=eastern),
+    pubdate = SchemaNode(
+       DateTime(default_tzinfo=eastern),
        default = now_default,
        )
 
@@ -133,19 +132,19 @@ class BlogEntry(Folder):
 
 _marker = object()
 
-@colander.deferred
+@deferred
 def upload_widget(node, kw):
     request = kw['request']
     tmpstore = FileUploadTempStore(request)
-    return deform.widget.FileUploadWidget(tmpstore)
+    return FileUploadWidget(tmpstore)
 
 class FilePropertiesSchema(Schema):
-    name = colander.SchemaNode(
-        colander.String(),
+    name = SchemaNode(
+        String(),
         validator = make_name_validator(IFile),
         )
-    mimetype = colander.SchemaNode(
-        colander.String(),
+    mimetype = SchemaNode(
+        String(),
         missing = 'application/octet-stream',
         )
 
@@ -169,8 +168,8 @@ class FilePropertySheet(PropertySheet):
             context.__parent__.rename(oldname, newname)
 
 class FileUploadSchema(Schema):
-    file = colander.SchemaNode(
-        deform.schema.FileData(),
+    file = SchemaNode(
+        FileData(),
         widget = upload_widget,
         )
 
@@ -231,14 +230,14 @@ def chunks(stream, chunk_size=10000):
         yield chunk
 
 class CommentSchema(Schema):
-    commenter = colander.SchemaNode(
-       colander.String(),
+    commenter = SchemaNode(
+       String(),
        )
-    text = colander.SchemaNode(
-       colander.String(),
+    text = SchemaNode(
+       String(),
        )
-    pubdate = colander.SchemaNode(
-       colander.DateTime(),
+    pubdate = SchemaNode(
+       DateTime(),
        default = now_default,
        )
 
