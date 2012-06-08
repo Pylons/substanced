@@ -300,7 +300,7 @@ def includeme(config): # pragma: no cover
     config.add_directive('add_permission', add_permission)
     YEAR = 86400 * 365
     config.add_static_view('deformstatic', 'deform:static', cache_max_age=YEAR)
-    config.add_static_view('sdistatic', 'substanced.sdi:static', 
+    config.add_static_view('sdistatic', 'substanced.sdi:static',
                            cache_max_age=YEAR)
     settings = config.registry.settings
     manage_prefix = settings.get('substanced.manage_prefix', '/manage')
