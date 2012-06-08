@@ -94,5 +94,7 @@ class Site(Folder):
         return zodb_root['app_root']
 
 def includeme(config): # pragma: no cover
+    YEAR = 86400 * 365
+    config.add_static_view('sitestatic', 'substanced.site:static',
+                           cache_max_age=YEAR)
     config.scan('.')
-    
