@@ -32,12 +32,16 @@ class ManageDatabase(object):
         data_object_loads = []
 
         if am:
-            # we multiply datetime by 1000 to get JavaScript representatin of unix timestamp
+            # we multiply datetime by 1000 to get JavaScript representatin of
+            # unix timestamp
             # TODO: add timezone support
             for data in am.getActivityAnalysis():
-                data_connections.append([int(data['end']*1000), data['connections']])
-                data_object_stores.append([int(data['end']*1000), data['stores']])
-                data_object_loads.append([int(data['end']*1000), data['loads']])
+                data_connections.append(
+                    [int(data['end']*1000), data['connections']])
+                data_object_stores.append(
+                    [int(data['end']*1000), data['stores']])
+                data_object_loads.append(
+                    [int(data['end']*1000), data['loads']])
         return dict(db=db,
                     conn=conn,
                     data_connections=json.dumps(data_connections),
@@ -57,7 +61,8 @@ class ManageDatabase(object):
         return HTTPFound(location=self.request.mgmt_path(
             self.context, '@@manage_db'))
 
-    @mgmt_view(request_method='POST', request_param='flush_cache', check_csrf=True)
+    @mgmt_view(request_method='POST', request_param='flush_cache',
+               check_csrf=True)
     def flush_cache(self):
         conn = self.get_connection(self.request)
         conn.db().cacheMinimize()
