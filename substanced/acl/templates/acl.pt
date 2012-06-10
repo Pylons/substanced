@@ -54,67 +54,69 @@
      </td>
    </tr>
 
-  </tbody>
+   </tbody>
 
- </table>
+  </table>
 
  </tal:local>
 
  <h2> Add ACL </h2>
 
  <form action="@@acl_edit" method="post">
-
-  <div class="row">
-
-    <div class="span2">
-     <label class="radio inline">
+ <table class="table">
+   <tbody>
+    <tr>
+     <td width="15%">
+      <label class="radio">
        <input type="radio" id="allow_add" name="verb" value="Allow" 
-              checked="true"/> Allow
-     </label>
-     <label class="radio inline">
+            checked="true"/> Allow
+      </label>
+      <label class="radio">
        <input type="radio" id="deny_add" name="verb" value="Deny" /> Deny
-     </label>
-    </div>
+      </label>
+     </td>
 
-    <div class="span3">
+     <td width="25%">
       <select data-placeholder="Choose a Principal"
               name="principal" id="principal" class="chzn-select">
-         <option value=""></option>
-         <optgroup label="Groups">
-           <option tal:repeat="(group_id, group_name) groups"
-                   value="${group_id}">${group_name}</option>
-         </optgroup>
-         <optgroup label="Users">
-           <option tal:repeat="(user_id, user_name) users"
-                   value="${user_id}">${user_name}</option>
-         </optgroup>
+       <option value=""></option>
+       <optgroup label="Groups">
+         <option tal:repeat="(group_id, group_name) groups"
+                 value="${group_id}">${group_name}</option>
+       </optgroup>
+       <optgroup label="Users">
+         <option tal:repeat="(user_id, user_name) users"
+                 value="${user_id}">${user_name}</option>
+       </optgroup>
       </select>
       <script type="text/javascript">
         $('#principal').chosen()
       </script>
-    </div>
+     </td>
 
-    <div class="span3">
-      <select name="permissions" data-placeholder="Choose Permissions"
-              id="permissions" class="chzn-select" multiple="multiple">
-        <option value=""></option>
-        <option tal:repeat="permission permissions"
-                value="${permission}">${permission}</option>
-      </select>
-      <script type="text/javascript">
-        $('#permissions').chosen()
-      </script>
-    </div>
+     <td width="40%">
+       <select name="permissions" data-placeholder="Choose Permissions"
+               id="permissions" class="chzn-select" multiple="multiple">
+         <option value=""></option>
+         <option tal:repeat="permission permissions"
+                 value="${permission}">${permission}</option>
+       </select>
+       <script type="text/javascript">
+       $('#permissions').chosen()
+       </script>
+     </td>
 
-    <div class="span2">
-      <input type="submit" name="form.add" value="Add" />
-    </div>
+     <td width="15%">
+       <input type="submit" name="form.add" value="Add" />
 
        <input type="hidden" name="csrf_token" 
-            value="${request.session.get_csrf_token()}"/>
+              value="${request.session.get_csrf_token()}"/>
+     </td>
+    </tr>
 
-  </div>
-  </form>
+   </tbody>
+  </table>
+ </form>
 
  <tal:block condition="context is not request.root">
 
