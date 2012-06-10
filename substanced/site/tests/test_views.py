@@ -41,6 +41,17 @@ class TestManageDatabase(unittest.TestCase):
         self.assertEqual(conn._db.packed, 5)
         self.assertEqual(resp.location, '/')
 
+    def test_pack_invalid_days(self):
+        from pyramid.httpexceptions import HTTPFound
+        context = testing.DummyResource()
+        request = testing.DummyRequest()
+        inst = self._makeOne(context, request)
+        conn = DummyConnection(am=None)
+        inst.get_connection = lambda *arg: conn
+        request.POST['days'] = 'p'
+        request.mgmt_path = lambda *arg: '/'
+        self.assertRaises(HTTPFound, inst.pack)
+
     def test_flush_cache(self):
         context = testing.DummyResource()
         request = testing.DummyRequest()

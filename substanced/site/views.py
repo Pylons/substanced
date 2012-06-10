@@ -57,6 +57,8 @@ class ManageDatabase(object):
             days = int(self.request.POST['days'])
         except:
             self.request.session.flash('Invalid number of days', 'error')
+            raise HTTPFound(location=self.request.mgmt_path(
+                self.context, '@@manage_db'))
         conn = self.get_connection(self.request)
         conn.db().pack(days=days)
         self.request.session.flash('Database packed to %s days' % days)
