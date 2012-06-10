@@ -71,6 +71,8 @@
     <!-- TODO: add extreme detailed cache -->
 
     <h2>Activity</h2>
+    <div tal:condition="am">
+
     <div id="activity-graph" style="height: 300px; width: 600px"></div>
 
     <script src="${request.static_url('substanced.site:static/flotr2.min.js')}" type="text/javascript"></script>
@@ -107,6 +109,11 @@
         });
       });
     </script>
+
+    </div>
+    <div tal:condition="not am">
+       Database activity monitoring inactive
+    </div>
 
   </div>
 </div>

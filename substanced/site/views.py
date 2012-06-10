@@ -42,12 +42,14 @@ class ManageDatabase(object):
                     [int(data['end']*1000), data['stores']])
                 data_object_loads.append(
                     [int(data['end']*1000), data['loads']])
-        return dict(db=db,
-                    conn=conn,
-                    data_connections=json.dumps(data_connections),
-                    data_object_stores=json.dumps(data_object_stores),
-                    data_object_loads=json.dumps(data_object_loads),
-                    )
+        return dict(
+            am=am,
+            db=db,
+            conn=conn,
+            data_connections=json.dumps(data_connections),
+            data_object_stores=json.dumps(data_object_stores),
+            data_object_loads=json.dumps(data_object_loads),
+            )
 
     @mgmt_view(request_method='POST', request_param='pack', check_csrf=True)
     def pack(self):
