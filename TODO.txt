@@ -14,9 +14,6 @@ UI-Plus-Guts
 - Create object map management UI (view relationships, view paths, view
   objectids).
 
-- Improve database management UI ("Manage DB") in site package (see activity,
-  see cache parameters, flush cache).
-
 - Improve catalog management UI.  We currently allow someone to reindex the
   entire catalog via the "Manage" tab of a catalog.  Instead, we should allow
   them to reindex individual persistent indices or all persistent indices.
