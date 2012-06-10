@@ -10,11 +10,11 @@ class TestSite(unittest.TestCase):
         testing.tearDown()
 
     def _makeOne(self, initial_login, initial_email, initial_password):
-        from . import Site
+        from .. import Site
         return Site(initial_login, initial_email, initial_password)
 
     def _setupEvents(self):
-        from ..objectmap import object_will_be_added
+        from ...objectmap import object_will_be_added
         from zope.interface import Interface
         from substanced.event import IObjectWillBeAdded
         self.config.add_subscriber(
@@ -27,7 +27,7 @@ class TestSite(unittest.TestCase):
         self.assertTrue('__services__' in inst)
 
     def _call_root_factory(self, request, transaction, get_connection):
-        from . import Site
+        from .. import Site
         return Site.root_factory(request, transaction, get_connection)
 
     def test_without_app_root_no_initial_password(self):
