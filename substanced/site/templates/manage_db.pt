@@ -83,8 +83,8 @@
           {data: ${data_object_stores}, label: 'Object stores'},
           {data: ${data_object_loads}, label: 'Object loads'}
         ], {
-          legend : {
-            backgroundColor : '#D2E8FF' // Light blue 
+          legend: {
+            backgroundColor: '#D2E8FF' // Light blue
           },
           xaxis: {
             mode: "time",
@@ -95,16 +95,17 @@
             tickDecimals: 0,
             autoscaleMargin: 1
           },
-          bars : {
-            show : true,
-            horizontal : false,
-            barWidth : 100000,
-            lineWidth : 1,
-            shadowSize : 0
+          bars: {
+            show: true,
+            grouped: true,
+            horizontal: false,
+            barWidth: 100000,
+            lineWidth: 1,
+            shadowSize: 0
           },
-          grid : {
-            verticalLines : false,
-            horizontalLines : true
+          grid: {
+            verticalLines: false,
+            horizontalLines: true
           }
         });
       });
