@@ -100,3 +100,5 @@ Contributors
 - Chris McDonough, 2012/03/31
 
 - Eric Rasmussen, 2012/04/18
+
+- Domen Kožar, 2012/06/10
