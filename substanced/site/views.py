@@ -1,7 +1,4 @@
-try:
-    import simplejson as json
-except ImportError:
-    import json  # pragma: no cover
+import json
 
 from pyramid.httpexceptions import HTTPFound
 from pyramid.view import view_defaults
