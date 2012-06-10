@@ -1,0 +1,21 @@
+Running Tests
+-------------
+
+To run the full test suite (your system will need Python 2.6 and 2.7 to be
+installed):
+
+- Install "tox" (``easy_install tox``).
+
+- Run ``tox`` from within the top-level ``substanced`` directory.
+
+To run tests for a single version of Python:
+
+- Run ``setup.py dev`` (this will install ``coverage`` and ``nose``).
+
+- Run ``setup.py nosetests``.
+
+To run coverage tests for a single version of Python:
+
+- Run ``setup.py dev`` (this will install ``coverage`` and ``nose``).
+
+- Run ``setup.py nosetests --with-coverage``.
