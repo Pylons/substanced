@@ -58,7 +58,7 @@ class Site(Folder):
         user = principals['users'].add_user(
             initial_login, initial_password, initial_email
             )
-        group = principals['groups'].add_group('admininstrators')
+        group = principals['groups'].add_group('admins')
         group.connect(user)
         catalog.refresh()
         objectmap.add(self, ('',))
