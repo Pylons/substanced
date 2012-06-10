@@ -1,8 +1,6 @@
 UI-Only
 -------
 
-- Make acl edit view not look weird at smaller resolutions.
-
 - Allow folder contents UI ("Contents" tab) sorting by name and by type.
 
 UI-Plus-Guts
