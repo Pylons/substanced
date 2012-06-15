@@ -33,6 +33,8 @@ UI-Plus-Guts
 Guts-Only
 ---------
 
+- Basic scaffold (``pcreate`` template).
+
 - Figure out how to let people override generic add view.
 
 - Create a scaffold.
