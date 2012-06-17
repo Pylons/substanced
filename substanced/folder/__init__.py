@@ -20,7 +20,10 @@ from ..event import (
 
 from ..content import content
 
-from ..service import find_service
+from ..service import (
+    find_service,
+    find_services,
+    )
 
 @content(IFolder, icon='icon-folder-close', add_view='add_folder', 
          name='Folder')
@@ -59,8 +62,15 @@ class Folder(Persistent):
     def find_service(self, service_name):
         """ Return a service named by ``service_name`` in this folder's
         ``__services__`` folder *or any parent service folder* or ``None`` if
-        no such service exists."""
+        no such service exists.  A shortcut for
+        :func:`substanced.service.find_service`."""
         return find_service(self, service_name)
+
+    def find_services(self, service_name):
+        """ Returns a sequence of service objects named by ``service_name``
+        in this folder's lineage or an empty sequence if no such service
+        exists.  A shortcut for :func:`substanced.service.find_services`"""
+        return find_services(self, service_name)
 
     def add_service(self, name, obj):
         """ Add a service to this folder's ``__services__`` folder named

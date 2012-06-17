@@ -5,13 +5,29 @@ from ..interfaces import (
     SERVICES_NAME
     )
 
-def find_service(context, name):
-    """ Find a service named ``name`` in the lineage of ``context`` or return
-    ``None`` if no such-named service could be found."""
+def _find_services(context, name, one=False):
+    L = []
     for obj in lineage(context):
         if IFolder.providedBy(obj):
             services = obj.get(SERVICES_NAME)
             if services is not None:
                 if name in services:
-                    return services[name]
+                    service = services[name]
+                    if one:
+                        return service
+                    L.append(service)
+    if one:
+        return None
+    return L
+
+def find_service(context, name):
+    """ Find the first service named ``name`` in the lineage of ``context``
+    or return ``None`` if no such-named service could be found. """
+    return _find_services(context, name, one=True)
                 
+def find_services(context, name):
+    """Finds all services named ``name`` in the lineage of ``context`` and
+    returns a sequence containing those service objects. Returns an empty
+    sequence if no such-named service could be found."""
+    return _find_services(context, name)
+

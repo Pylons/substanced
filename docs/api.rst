@@ -317,6 +317,8 @@ Other Helpers
 
 .. autofunction:: find_service
 
+.. autofunction:: find_services
+
 :mod:`substanced.site` API
 --------------------------
 

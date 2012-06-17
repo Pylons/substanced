@@ -461,6 +461,18 @@ class TestFolder(unittest.TestCase):
         inst.add('__services__', inst2, allow_services=True)
         inst2['abc'] = inst3
         self.assertEqual(inst.find_service('abc'), inst3)
+
+    def test_find_services_missing(self):
+        inst = self._makeOne()
+        self.assertEqual(inst.find_services('abc'), [])
+
+    def test_find_services_found(self):
+        inst = self._makeOne()
+        inst2 = self._makeOne()
+        inst3 = self._makeOne()
+        inst.add('__services__', inst2, allow_services=True)
+        inst2['abc'] = inst3
+        self.assertEqual(inst.find_services('abc'), [inst3])
         
 class DummyModel:
     pass

@@ -67,7 +67,6 @@ API Documentation
 
    api.rst
 
-
 Reporting Bugs / Development Versions
 -------------------------------------
 
