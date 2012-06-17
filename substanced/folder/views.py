@@ -19,12 +19,13 @@ from ..interfaces import (
 @colander.deferred
 def name_validator(node, kw):
     context = kw['request'].context
+
     def namecheck(node, value):
         try:
             context.check_name(value)
         except Exception as e:
             raise colander.Invalid(node, e.args[0], value)
-        
+
     return colander.All(
         colander.Length(min=1, max=100),
         namecheck,
@@ -39,7 +40,7 @@ class AddFolderSchema(Schema):
 @mgmt_view(context=IFolder,
            name='add_folder',
            tab_condition=False,
-           permission='sdi.add-content', 
+           permission='sdi.add-content',
            renderer='substanced.sdi:templates/form.pt')
 class AddFolderView(FormView):
     title = 'Add Folder'

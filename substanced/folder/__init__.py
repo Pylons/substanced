@@ -22,7 +22,8 @@ from ..content import content
 
 from ..service import find_service
 
-@content(IFolder, icon='icon-folder-close', add_view='add_folder', 
+
+@content(IFolder, icon='icon-folder-close', add_view='add_folder',
          name='Folder')
 @implementer(IFolder)
 class Folder(Persistent):
@@ -37,13 +38,16 @@ class Folder(Persistent):
 
     # Default uses ordering of underlying BTree.
     _order = None
+
     def _get_order(self):
         if self._order is not None:
             return list(self._order)
         return self.data.keys()
+
     def _set_order(self, value):
         # XXX:  should we test against self.data.keys()?
         self._order = tuple([unicode(x) for x in value])
+
     def _del_order(self):
         del self._order
     order = property(_get_order, _set_order, _del_order)
@@ -68,7 +72,7 @@ class Folder(Persistent):
         services = self.get(SERVICES_NAME)
         if services is None:
             services = Folder()
-            self.add(SERVICES_NAME, services, send_events=False, 
+            self.add(SERVICES_NAME, services, send_events=False,
                      allow_services=True)
         services.add(name, obj, send_events=False)
 
@@ -147,7 +151,7 @@ class Folder(Persistent):
         system default encoding or the UTF-8 encoding.
         """
         name = unicode(name)
-        return self.data.has_key(name)
+        return name in self.data
 
     def __setitem__(self, name, other):
         """ Set object ``other' into this folder under the name ``name``.
@@ -181,7 +185,7 @@ class Folder(Persistent):
         Check the ``name`` passed to ensure that it's addable to the folder.
         Returns the name decoded to Unicode if it passes all addable checks.
         It's not addable if:
-        
+
         -  an object by the name already exists in the folder
 
         - the name is not decodeable to Unicode.
@@ -217,11 +221,11 @@ class Folder(Persistent):
             raise ValueError('Names which contain a slash ("/") are not '
                              'allowed')
 
-        if self.data.has_key(name):
+        if name in self.data:
             raise KeyError('An object named %s already exists' % name)
-        
+
         return name
-    
+
     def add(self, name, other, send_events=True, allow_services=False):
         """ Same as ``__setitem__``.
 
@@ -234,7 +238,7 @@ class Folder(Persistent):
         if send_events:
             event = ObjectWillBeAdded(other, self, name)
             self._notify(event)
-            
+
         other.__parent__ = self
         other.__name__ = name
 
@@ -373,6 +377,6 @@ class Folder(Persistent):
             del self[name]
         self[name] = newobject
 
+
 def includeme(config): # pragma: no cover
     config.scan('.')
-
