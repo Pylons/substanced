@@ -107,9 +107,9 @@ class FolderContentsViews(object):
             request.session.flash(msg)
         elif deleted == 1:
             msg = 'Deleted 1 item'
-            request.flash_undo(msg)
+            request.flash_with_undo(msg)
         else:
             msg = 'Deleted %s items' % deleted
-            request.flash_undo(msg)
+            request.flash_with_undo(msg)
         return HTTPFound(request.mgmt_path(context, '@@contents'))
 

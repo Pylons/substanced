@@ -61,7 +61,7 @@ class TestFolderContentsViews(unittest.TestCase):
         request = testing.DummyRequest()
         request.mgmt_path = lambda *arg: '/manage'
         request.registry.content = DummyContent()
-        request.flash_undo = request.session.flash
+        request.flash_with_undo = request.session.flash
         return request
 
     def test_show_no_permissions(self):

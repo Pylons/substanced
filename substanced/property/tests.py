@@ -183,11 +183,11 @@ class TestPropertySheet(unittest.TestCase):
     def test_after_set(self):
         request = testing.DummyRequest()
         request.registry = DummyRegistry()
-        def flash_undo(msg, category):
+        def flash_with_undo(msg, category):
             self.assertEqual(msg, 'Updated properties')
             self.assertEqual(category, 'success')
             context.flashed = True
-        request.flash_undo = flash_undo
+        request.flash_with_undo = flash_with_undo
         context = testing.DummyResource()
         inst = self._makeOne(context, request)
         inst.after_set()
