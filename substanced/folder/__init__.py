@@ -33,7 +33,6 @@ class Folder(Persistent):
 
     Keys must be Unicode strings; values must be arbitrary Python objects.
     """
-    __tab_order__ = ('contents',)
 
     __name__ = None
     __parent__ = None
@@ -132,7 +131,8 @@ class Folder(Persistent):
     def __getitem__(self, name):
         """ Return the object named ``name`` added to this folder or raise
         ``KeyError`` if no such object exists.  ``name`` must be a Unicode
-        object or directly decodeable to Unicode.
+        object or directly decodeable to Unicode using the system default
+        encoding.
         """
         name = unicode(name)
         return self.data[name]
@@ -143,7 +143,7 @@ class Folder(Persistent):
         ``name`` must be a Unicode object or a bytestring object.
 
         If ``name`` is a bytestring object, it must be decodable using the
-        system default encoding or the UTF-8 encoding.
+        system default encoding.
         """
         name = unicode(name)
         return self.data.get(name, default)
@@ -154,7 +154,7 @@ class Folder(Persistent):
         ``name`` must be a Unicode object or a bytestring object.
 
         If ``name`` is a bytestring object, it must be decodable using the
-        system default encoding or the UTF-8 encoding.
+        system default encoding.
         """
         name = unicode(name)
         return self.data.has_key(name)
@@ -165,7 +165,7 @@ class Folder(Persistent):
         ``name`` must be a Unicode object or a bytestring object.
 
         If ``name`` is a bytestring object, it must be decodable using the
-        system default encoding or the UTF-8 encoding.
+        system default encoding.
 
         ``name`` cannot be the empty string.
 
@@ -294,7 +294,7 @@ class Folder(Persistent):
         ``name`` must be a Unicode object or a bytestring object.
 
         If ``name`` is a bytestring object, it must be decodable using the
-        system default encoding or the UTF-8 encoding.
+        system default encoding.
 
         If no object is stored in the folder under ``name``, raise a
         :exc:`KeyError`.
