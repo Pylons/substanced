@@ -29,7 +29,9 @@ class PathIndex(CatalogIndex):
     include_origin = True
     depth = None
 
-    def __init__(self):
+    def __init__(self, family=None):
+        if family is not None:
+            self.family = family
         self._not_indexed = self.family.IF.Set()
 
     def index_doc(self, docid, obj):

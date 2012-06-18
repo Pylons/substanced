@@ -16,15 +16,20 @@ def _makeSite(**kw):
     return site
 
 class TestPathIndex(unittest.TestCase):
-    def _makeOne(self):
+    def _makeOne(self, family=None):
         from ..indexes import PathIndex
         from ...objectmap import ObjectMap
         objectmap = ObjectMap()
         catalog = DummyCatalog()
-        index = PathIndex()
+        index = PathIndex(family=family)
         index.__parent__ = catalog
         _makeSite(catalog=catalog, objectmap=objectmap)
         return index
+
+    def test_ctor_alternate_family(self):
+        import BTrees
+        inst = self._makeOne(family=BTrees.family32)
+        self.assertEqual(inst.family, BTrees.family32)
 
     def test_index_doc(self):
         inst = self._makeOne()
