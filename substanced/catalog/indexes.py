@@ -25,7 +25,7 @@ PATH_WITH_OPTIONS = re.compile(r'\[(.+?)\](.+?)$')
 class PathIndex(CatalogIndex):
     """ Uses the objectmap to apply a query to retrieve object identifiers at
     or under a path"""
-    family = BTrees.family32
+    family = BTrees.family64
     include_origin = True
     depth = None
 

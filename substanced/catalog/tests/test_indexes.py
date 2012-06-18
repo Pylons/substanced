@@ -1,8 +1,7 @@
 import unittest
 from pyramid import testing
 
-from BTrees.IIBTree import IITreeSet
-from BTrees.IFBTree import IFSet
+import BTrees
 
 def _makeSite(**kw):
     from ...interfaces import IFolder
@@ -27,7 +26,6 @@ class TestPathIndex(unittest.TestCase):
         return index
 
     def test_ctor_alternate_family(self):
-        import BTrees
         inst = self._makeOne(family=BTrees.family32)
         self.assertEqual(inst.family, BTrees.family32)
 
@@ -166,11 +164,12 @@ class TestPathIndex(unittest.TestCase):
         objectmap = inst.__parent__.__parent__['objectmap']
         objectmap._v_nextid = 1
         objectmap.add(obj, (u'',))
-        result = inst.apply_intersect(obj, IFSet([1]))
+        result = inst.apply_intersect(obj, objectmap.family.IF.Set([1]))
         self.assertEqual(list(result),  [1])
 
 class DummyCatalog(object):
+    family = BTrees.family64
     def __init__(self, objectids=None):
         if objectids is None:
-            objectids = IITreeSet()
+            objectids = self.family.II.TreeSet()
         self.objectids = objectids

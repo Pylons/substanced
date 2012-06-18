@@ -2,7 +2,8 @@ from zope.interface import implementer
 from pyramid.threadlocal import get_current_registry
 
 from persistent import Persistent
-from BTrees.OOBTree import OOBTree
+
+import BTrees
 from BTrees.Length import Length
 
 from ..interfaces import (
@@ -33,6 +34,7 @@ class Folder(Persistent):
 
     Keys must be Unicode strings; values must be arbitrary Python objects.
     """
+    family = BTrees.family64
 
     __name__ = None
     __parent__ = None
@@ -50,12 +52,14 @@ class Folder(Persistent):
         del self._order
     order = property(_get_order, _set_order, _del_order)
 
-    def __init__(self, data=None):
+    def __init__(self, data=None, family=None):
         """ Constructor.  Data may be an initial dictionary mapping object
         name to object. """
+        if family is not None:
+            self.family = family
         if data is None:
             data = {}
-        self.data = OOBTree(data)
+        self.data = self.family.OO.BTree(data)
         self._num_objects = Length(len(data))
 
     def find_service(self, service_name):

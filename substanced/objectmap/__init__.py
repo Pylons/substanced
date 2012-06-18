@@ -96,9 +96,11 @@ class ObjectMap(Persistent):
     _v_nextid = None
     _randrange = random.randrange
 
-    family = BTrees.family32
+    family = BTrees.family64
 
-    def __init__(self):
+    def __init__(self, family=None):
+        if family is not None:
+            self.family = family
         self.objectid_to_path = self.family.IO.BTree()
         self.path_to_objectid = self.family.OI.BTree()
         self.pathindex = self.family.OO.BTree()
@@ -402,7 +404,7 @@ class ObjectMap(Persistent):
 
 class ReferenceMap(Persistent):
     
-    family = BTrees.family32
+    family = BTrees.family64
     
     def __init__(self, refmap=None):
         if refmap is None:
@@ -436,7 +438,7 @@ class ReferenceMap(Persistent):
 
 class ReferenceSet(Persistent):
     
-    family = BTrees.family32
+    family = BTrees.family64
 
     def __init__(self):
         self.src2target = self.family.IO.BTree()

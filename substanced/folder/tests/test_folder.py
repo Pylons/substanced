@@ -15,9 +15,9 @@ class TestFolder(unittest.TestCase):
         from .. import Folder
         return Folder
 
-    def _makeOne(self, data=None):
+    def _makeOne(self, data=None, family=None):
         klass = self._getTargetClass()
-        return klass(data)
+        return klass(data, family=family)
 
     def test_klass_provides_IFolder(self):
         klass = self._getTargetClass()
@@ -28,6 +28,11 @@ class TestFolder(unittest.TestCase):
         from ...interfaces import IFolder
         inst = self._makeOne()
         verifyObject(IFolder, inst)
+
+    def test_ctor_alternate_family(self):
+        import BTrees
+        inst = self._makeOne(family=BTrees.family32)
+        self.assertEqual(inst.family, BTrees.family32)
 
     def _registerEventListener(self, listener, iface):
         self.config.registry.registerHandler(listener, (Interface, iface))

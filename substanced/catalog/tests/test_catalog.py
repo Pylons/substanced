@@ -21,7 +21,7 @@ def _makeSite(**kw):
     return site
 
 class TestCatalog(unittest.TestCase):
-    family = BTrees.family32
+    family = BTrees.family64
     
     def setUp(self):
         self.config = testing.setUp()
@@ -67,9 +67,8 @@ class TestCatalog(unittest.TestCase):
         self.failUnless(catalog.family is self.family)
 
     def test_ctor_explicit_family(self):
-        family = BTrees.family64
-        catalog = self._makeOne(family=family)
-        self.failUnless(catalog.family is family)
+        catalog = self._makeOne(family=BTrees.family32)
+        self.failUnless(catalog.family is BTrees.family32)
 
     def test_index_doc_indexes(self):
         catalog = self._makeOne()
@@ -782,6 +781,7 @@ class DummyObjectMap(object):
         return data[0]
 
 class DummyCatalogSearch(object):
+    family = BTrees.family64
     def __init__(self, result=(0, [])):
         self.result = result
 
@@ -793,7 +793,8 @@ class DummyCatalogSearch(object):
 
     def __call__(self, catalog, family=None):
         self.catalog = catalog
-        self.family = family
+        if family is not None:
+            self.family = family
         return self
 
 class DummyCatalog(dict):

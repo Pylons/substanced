@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__) # API
     )
 class Catalog(Folder):
     
-    family = BTrees.family32
+    family = BTrees.family64
     transaction = transaction
     
     def __init__(self, family=None):
@@ -152,7 +152,7 @@ class Search(object):
 
     CatalogSearch = CatalogSearch
     
-    family = BTrees.family32
+    family = BTrees.family64
     
     def __init__(self, context, permission_checker=None, family=None):
         self.context = context

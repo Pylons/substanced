@@ -74,7 +74,7 @@ class Test_object_will_be_removed(unittest.TestCase):
     def test_with_pathlookup(self):
         model = testing.DummyResource()
         catalog = DummyCatalog()
-        catalog.objectids = BTrees.family32.IF.Set([1,2])
+        catalog.objectids = catalog.family.IF.Set([1,2])
         objectmap = DummyObjectMap()
         site = _makeSite(objectmap=objectmap, catalog=catalog)
         site['model'] = model
@@ -86,7 +86,7 @@ class Test_object_will_be_removed(unittest.TestCase):
     def test_with_pathlookup_limited_by_objectids(self):
         model = testing.DummyResource()
         catalog = DummyCatalog()
-        catalog.objectids = BTrees.family32.IF.Set([1])
+        catalog.objectids = catalog.family.IF.Set([1])
         objectmap = DummyObjectMap()
         site = _makeSite(objectmap=objectmap, catalog=catalog)
         site['model'] = model
@@ -123,13 +123,15 @@ class Test_object_modified(unittest.TestCase):
         self.assertEqual(catalog.reindexed, [(1, model)])
 
 class DummyCatalog(dict):
+    
+    family = BTrees.family64
+    
     def __init__(self):
-        from BTrees.IIBTree import IITreeSet
         self.queries = []
         self.indexed = []
         self.unindexed = []
         self.reindexed = []
-        self.objectids = IITreeSet()
+        self.objectids = self.family.II.TreeSet()
 
     def index_doc(self, objectid, obj):
         self.indexed.append((objectid, obj))
@@ -141,8 +143,10 @@ class DummyCatalog(dict):
         self.reindexed.append((objectid, obj))
 
 class DummyObjectMap:
+    family = BTrees.family64
+    
     def pathlookup(self, obj):
-        return BTrees.family32.IF.Set([1,2])
+        return self.family.IF.Set([1,2])
 
 class DummyEvent(object):
     def __init__(self, parent):

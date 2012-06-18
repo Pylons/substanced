@@ -2,7 +2,6 @@ import unittest
 from pyramid import testing
 from zope.interface import alsoProvides
 from pyramid.traversal import resource_path_tuple
-import BTrees
 
 class TestObjectMap(unittest.TestCase):
     def setUp(self):
@@ -11,9 +10,14 @@ class TestObjectMap(unittest.TestCase):
     def tearDown(self):
         testing.tearDown()
         
-    def _makeOne(self):
+    def _makeOne(self, family=None):
         from . import ObjectMap
-        return ObjectMap()
+        return ObjectMap(family=family)
+
+    def test_ctor_alternate_family(self):
+        import BTrees
+        inst = self._makeOne(family=BTrees.family32)
+        self.assertEqual(inst.family, BTrees.family32)
 
     def test_new_objectid_empty(self):
         inst = self._makeOne()
@@ -41,7 +45,7 @@ class TestObjectMap(unittest.TestCase):
 
     def test_new_objectid_gt_maxint(self):
         inst = self._makeOne()
-        oob = BTrees.family32.maxint + 1
+        oob = inst.family.maxint + 1
         times = [oob, 5]
         def randrange(frm, to):
             val = times.pop(0)
