@@ -4,7 +4,7 @@ import transaction
 
 import BTrees
 
-from repoze.catalog.catalog import Catalog as _Catalog
+from hypatia.catalog import CatalogSearch
 
 from pyramid.threadlocal import get_current_registry
 from pyramid.traversal import resource_path
@@ -27,29 +27,37 @@ logger = logging.getLogger(__name__) # API
     name='Catalog',
     icon='icon-search'
     )
-class Catalog(Folder, _Catalog):
+class Catalog(Folder):
+    
     family = BTrees.family32
     transaction = transaction
+    
     def __init__(self, family=None):
         Folder.__init__(self)
-        _Catalog.__init__(self, family)
-        self.objectids = self.family.IF.TreeSet()
+        if family is not None:
+            self.family = family
+        self.clear_indexes()
 
-    def clear(self):
-        """ Clear all indexes in this catalog. """
-        _Catalog.clear(self)
+    def clear_indexes(self):
+        """ Clear all indexes in this catalog and clear self.objectids. """
+        for index in self.values():
+            index.clear()
         self.objectids = self.family.IF.TreeSet()
 
     def index_doc(self, docid, obj):
         """Register the document represented by ``obj`` in indexes of
         this catalog using objectid ``docid``."""
-        _Catalog.index_doc(self, docid, obj)
+        _assertint(docid)
+        for index in self.values():
+            index.index_doc(docid, obj)
         self.objectids.insert(docid)
 
     def unindex_doc(self, docid):
         """Unregister the document represented by docid from indexes of
         this catalog."""
-        _Catalog.unindex_doc(self, docid)
+        _assertint(docid)
+        for index in self.values():
+            index.unindex_doc(docid)
         try:
             self.objectids.remove(docid)
         except KeyError:
@@ -60,7 +68,9 @@ class Catalog(Folder, _Catalog):
         passed in as ``obj`` (typically just does the equivalent of
         ``unindex_doc``, then ``index_doc``, but specialized indexes
         can override the method that this API calls to do less work. """
-        _Catalog.reindex_doc(self, docid, obj)
+        _assertint(docid)
+        for index in self.values():
+            index.reindex_doc(docid, obj)
         if not docid in self.objectids:
             self.objectids.insert(docid)
 
@@ -185,12 +195,18 @@ class Catalog(Folder, _Catalog):
 
 class Search(object):
     """ Catalog query helper """
+
+    CatalogSearch = CatalogSearch
+    
     family = BTrees.family32
-    def __init__(self, context, permission_checker=None):
+    
+    def __init__(self, context, permission_checker=None, family=None):
         self.context = context
         self.permission_checker = permission_checker
         self.catalog = find_service(self.context, 'catalog')
         self.objectmap = find_service(self.context, 'objectmap')
+        if family is not None:
+            self.family = family
 
     def resolver(self, objectid):
         resource = self.objectmap.object_for(objectid)
@@ -211,13 +227,15 @@ class Search(object):
         return len(result), result
 
     def query(self, q, **kw):
-        num, oids = self.catalog.query(q, **kw)
+        num, oids = self.CatalogSearch(
+            self.catalog, family=self.family).query(q, **kw)
         if self.permission_checker is not None:
             num, oids = self.allowed(oids)
         return num, oids, self.resolver
 
     def search(self, **kw):
-        num, oids = self.catalog.search(**kw)
+        num, oids = self.CatalogSearch(
+            self.catalog, family=self.family).search(**kw)
         if self.permission_checker:
             num, oids = self.allowed(oids)
         return num, oids, self.resolver
@@ -260,6 +278,11 @@ class search_catalog(_catalog_request_api):
     def __call__(self, **kw):
         checker = self._get_permission_checker(kw)
         return self.Search(self.context, checker).search(**kw)
+
+def _assertint(docid):
+    if not isinstance(docid, int):
+        raise ValueError('%r is not an integer value; document ids must be '
+                         'integers' % docid)
 
 def includeme(config): # pragma: no cover
     from zope.interface import Interface

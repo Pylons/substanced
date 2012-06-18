@@ -25,11 +25,12 @@ except IOError:
 
 install_requires = [
     'pyramid',
+    'ZODB3',
+    'hypatia',
     'venusian',
     'deform',
     'colander',
     'deform_bootstrap',
-    'repoze.catalog',
     'repoze.evolution',
     'pyramid_zodbconn',
     'pyramid_mailer',

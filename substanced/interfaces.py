@@ -99,11 +99,6 @@ class IObjectMap(Interface):
         """ Return a set of objectids which have ``obj`` as a relationship
         source using ``reftype``.  ``obj`` can be an object or an object id."""
         
-class ICatalog(Interface):
-    """ A collection of indices """
-    objectids = Attribute(
-        'a sequence of objectids that are cataloged in this catalog')
-
 class ISite(IPropertied):
     """ Marker interface for something that is the root of a site """
 
@@ -201,6 +196,10 @@ class IFolder(Interface):
     def __len__():
         """ Return the number of subobjects in this folder.
         """
+
+    def __getitem__(name):
+        """ Return the object represented by ``name`` in this folder or raise
+        a KeyError if no such object exists. """
 
     def __setitem__(name, other):
         """ Set object ``other' into this folder under the name ``name``.
@@ -314,9 +313,59 @@ class IFolder(Interface):
 
         This operation is done in terms of a remove and an add.  The Removed
         and WillBeRemoved events will be sent for the old object, and the
-        WillBeAdded and Add events will be sent for the new object.e
+        WillBeAdded and Add events will be sent for the new object.
         """
         
+class ICatalog(IFolder):
+    """ A collection of indices """
+    objectids = Attribute(
+        'a sequence of objectids that are cataloged in this catalog')
+
+    def clear_indexes():
+        """ Clears all indexes in this collection """
+
+    def index_doc(docid, obj):
+        """ Indexes the object ``obj`` in all indexes in this collection using
+        docid ``docid``."""
+
+    def unindex_doc(docid):
+        """ Unindexes the object represented by docid ``docid`` in all
+        indexes in this collection."""
+
+    def reindex_doc(docid, obj):
+        """ Reindex the document referenced by ``docid`` using the object
+        passed in as ``obj`` (typically just does the equivalent of
+        ``unindex_doc``, then ``index_doc``, but specialized indexes
+        can override the method that this API calls to do less work). """
+
+    def reindex(dry_run=False, commit_interval=200, indexes=None, 
+                path_re=None, output=None):
+        """\
+        Reindex all objects in this collection of indexes.
+
+        If ``dry_run`` is ``True``, do no actual work but send what would be
+        changed to the logger.
+
+        ``commit_interval`` controls the number of objects indexed between
+        each call to ``transaction.commit()`` (to control memory
+        consumption).
+
+        ``indexes``, if not ``None``, should be a list of index names that
+        should be reindexed.  If ``indexes`` is ``None``, all indexes are
+        reindexed.
+
+        ``path_re``, if it is not ``None`` should be a regular expression
+        object that will be matched against each object's path.  If the
+        regular expression matches, the object will be reindexed, if it does
+        not, it won't.
+
+        ``output``, if passed should be one of ``None``, ``False`` or a
+        function.  If it is a function, the function should accept a single
+        message argument that will be used to record the actions taken during
+        the reindex.  If ``False`` is passed, no output is done.  If ``None``
+        is passed (the default), the output will wind up in the
+        ``substanced.catalog`` Python logger output at ``info`` level.
+        """
         
 class IPrincipal(IPropertied):
     """ Marker interface representing a user or group """

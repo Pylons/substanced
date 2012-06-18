@@ -2,8 +2,8 @@ import BTrees
 
 from zope.interface import implementer
 
-from repoze.catalog.indexes.common import CatalogIndex
-from repoze.catalog.interfaces import ICatalogIndex
+from hypatia.common import CatalogIndex
+from hypatia.interfaces import ICatalogIndex
 
 from pyramid.traversal import resource_path_tuple
 from pyramid.compat import url_unquote_text
@@ -71,12 +71,14 @@ class PathIndex(CatalogIndex):
 
 # API below, do not remove
 
-from repoze.catalog.indexes.field import CatalogFieldIndex
-FieldIndex = CatalogFieldIndex # pyflakes
-from repoze.catalog.indexes.facet import CatalogFacetIndex
-FacetIndex = CatalogFacetIndex # pyflakes
-from repoze.catalog.indexes.keyword import CatalogKeywordIndex
-KeywordIndex = CatalogKeywordIndex # pyflakes
-from repoze.catalog.indexes.text import CatalogTextIndex
-TextIndex = CatalogTextIndex # pyflakes
+from hypatia.field import FieldIndex
+from hypatia.facet import FacetIndex
+from hypatia.keyword import KeywordIndex
+from hypatia.text import TextIndex
+
+# pyflakes:
+FieldIndex = FieldIndex
+FacetIndex = FacetIndex
+KeywordIndex = KeywordIndex
+TextIndex = TextIndex
 
