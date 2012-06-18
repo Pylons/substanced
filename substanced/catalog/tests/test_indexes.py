@@ -114,17 +114,37 @@ class TestPathIndex(unittest.TestCase):
         inst = self._makeOne()
         obj = testing.DummyResource()
         result = inst._parse_path(obj)
-        self.assertEqual(result, (u'',))
+        self.assertEqual(result, ((u'',), None, True))
         
     def test__parse_path_path_tuple(self):
         inst = self._makeOne()
         result = inst._parse_path((u'',))
-        self.assertEqual(result, (u'',))
+        self.assertEqual(result, ((u'',), None, True))
 
     def test__parse_path_path_str(self):
         inst = self._makeOne()
         result = inst._parse_path('/')
-        self.assertEqual(result, (u'',))
+        self.assertEqual(result, ((u'',), None, True))
+
+    def test__parse_path_path_str_with_depth(self):
+        inst = self._makeOne()
+        result = inst._parse_path('[depth=2]/abc')
+        self.assertEqual(result, ((u'', u'abc'), 2, True))
+
+    def test__parse_path_path_str_with_origin_false(self):
+        inst = self._makeOne()
+        result = inst._parse_path('[include_origin=false]/abc')
+        self.assertEqual(result, ((u'', u'abc'), None, False))
+        
+    def test__parse_path_path_str_with_depth_and_origin(self):
+        inst = self._makeOne()
+        result = inst._parse_path('[depth=2,include_origin=false]/abc')
+        self.assertEqual(result, ((u'', u'abc'), 2, False))
+
+    def test__parse_path_path_str_with_depth_and_origin_no_val(self):
+        inst = self._makeOne()
+        result = inst._parse_path('[depth=2,include_origin]/abc')
+        self.assertEqual(result, ((u'', u'abc'), 2, True))
 
     def test__parse_path_path_invalid(self):
         inst = self._makeOne()
