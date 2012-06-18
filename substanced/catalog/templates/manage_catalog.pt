@@ -12,8 +12,6 @@
        <div class="form-actions">
            <input type="submit" class="btn btn-primary" 
                   value="Reindex objects" name="reindex"/>
-           <input type="submit" class="btn" 
-                  value="Refresh indexes" name="refresh"/>
        </div>
      </form>
 

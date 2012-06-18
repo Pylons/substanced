@@ -256,32 +256,6 @@ class TestCatalog(unittest.TestCase):
                           '*** committing ***'])
         self.assertEqual(transaction.committed, 1)
         self.assertEqual(L, [(1,a)])
-
-    def test_refresh_add_unmentioned(self):
-        inst = self._makeOne()
-        inst['index'] = DummyIndex()
-        registry = testing.DummyResource()
-        registry._substanced_indexes = {'index2':DummyIndex(), 
-                                        'index':DummyIndex()}
-        out = []
-        inst.refresh(output=out.append, registry=registry)
-        self.assertEqual(out,
-                         ['refreshing indexes',
-                         'added index2 index',
-                         'refreshed'])
-
-    def test_refresh_remove_unmentioned(self):
-        inst = self._makeOne()
-        inst['index'] = DummyIndex()
-        registry = testing.DummyResource()
-        registry._substanced_indexes = {}
-        out = []
-        inst.refresh(output=out.append, registry=registry)
-        self.assertEqual(out,
-                         ['refreshing indexes',
-                         'removed index index',
-                         'refreshed'])
-        
     
 class TestSearch(unittest.TestCase):
     def setUp(self):

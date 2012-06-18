@@ -40,27 +40,23 @@ class SitePropertySheet(PropertySheet):
     )
 class Site(Folder):
     """ An object representing the root of a Substance D site.  Contains
-    ``objectmap``, ``catalog``, and ``principals`` services.  Initialize with
-    an initial login name and password: the resulting user will be granted
-    all permissions."""
-    
+    ``objectmap`` and ``principals`` services.  Initialize with an initial
+    login name and password: the resulting user will be granted all
+    permissions."""
     title = ''
     description = ''
 
     def __init__(self, initial_login, initial_email, initial_password):
         Folder.__init__(self)
         objectmap = ObjectMap()
-        catalog = Catalog()
         principals = Principals()
         self.add_service('objectmap', objectmap)
-        self.add_service('catalog', catalog)
         self.add_service('principals', principals)
         user = principals['users'].add_user(
             initial_login, initial_password, initial_email
             )
         group = principals['groups'].add_group('admins')
         group.connect(user)
-        catalog.refresh()
         objectmap.add(self, ('',))
         self.__acl__ = [(Allow, oid_of(group), ALL_PERMISSIONS)]
         self['__services__'].__acl__ = [

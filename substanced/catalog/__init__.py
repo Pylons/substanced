@@ -6,7 +6,6 @@ import BTrees
 
 from hypatia.catalog import CatalogSearch
 
-from pyramid.threadlocal import get_current_registry
 from pyramid.traversal import resource_path
 from pyramid.security import effective_principals
 from pyramid.interfaces import IAuthorizationPolicy
@@ -148,51 +147,6 @@ class Catalog(Folder):
         if i:
             commit_or_abort()
 
-    def refresh(self, registry=None, output=None):
-        """\
-        Refresh the set of persistent indexes by comparing them against the
-        indexes added via ``config.add_catalog_index``.  Add any indexes that
-        haven't yet been added from that list, and remove any that no longer
-        exist in that list.
-
-        ``registry`` should be a Pyramid registry object.  If it is not
-        passed, we attempt to obtain the current threadlocal Pyramid
-        registry.
-
-        ``output``, if passed should be one of ``None``, ``False`` or a
-        function.  If it is a function, the function should accept a single
-        message argument that will be used to record the actions taken during
-        the reindex.  If ``False`` is passed, no output is done.  If ``None``
-        is passed (the default), the output will wind up in the
-        ``substanced.catalog`` Python logger output at ``info`` level.
-        """
-        if output is None: # pragma: no cover
-            output = logger.info
-            
-        output and output('refreshing indexes')
-
-        if registry is None:
-            registry = get_current_registry()
-
-        indexes = getattr(registry, '_substanced_indexes', {})
-        
-        # add mentioned indexes
-        for name, index in indexes.items():
-            if not name in self:
-                self[name] = index
-                output and output('added %s index' % (name,))
-
-        # remove unmentioned indexes
-        todel = set()
-        for name in self:
-            if not name in indexes:
-                todel.add(name)
-        for name in todel:
-            del self[name]
-            output and output('removed %s index' % (name,))
-
-        output and output('refreshed')
-
 class Search(object):
     """ Catalog query helper """
 
@@ -240,13 +194,6 @@ class Search(object):
             num, oids = self.allowed(oids)
         return num, oids, self.resolver
     
-def _add_catalog_index(config, name, index): # pragma: no cover
-    def register():
-        indexes = getattr(config.registry, '_substanced_indexes', {})
-        indexes[name] = index
-        config.registry._substanced_indexes = indexes
-    config.action(('catalog-index', name), callable=register)
-
 class _catalog_request_api(object):
     Search = Search
     def __init__(self, request):
@@ -287,7 +234,6 @@ def _assertint(docid):
 def includeme(config): # pragma: no cover
     from zope.interface import Interface
     config.registry.registerAdapter(Search, (Interface,), ISearch)
-    config.add_directive('add_catalog_index', _add_catalog_index)
     config.set_request_property(query_catalog, reify=True)
     config.set_request_property(search_catalog, reify=True)
     config.scan('.')

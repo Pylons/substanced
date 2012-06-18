@@ -37,12 +37,6 @@ class ManageCatalog(object):
         self.request.session.flash('Catalog reindexed')
         return HTTPFound(location=self.redir_location)
 
-    @mgmt_view(request_method='POST', request_param='refresh', check_csrf=True)
-    def refresh(self):
-        self.context.refresh(registry=self.request.registry)
-        self.request.session.flash('Catalog refreshed')
-        return HTTPFound(location=self.redir_location)
-
 @colander.deferred
 def principals_widget(node, kw):
     request = kw['request']

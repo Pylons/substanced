@@ -23,15 +23,6 @@ class TestManageCatalog(unittest.TestCase):
         self.assertEqual(result.location, '/manage')
         self.assertEqual(context.reindexed, True)
 
-    def test_refresh(self):
-        context = DummyCatalog()
-        request = testing.DummyRequest()
-        request.mgmt_path = lambda *arg: '/manage'
-        inst = self._makeOne(context, request)
-        result = inst.refresh()
-        self.assertEqual(result.location, '/manage')
-        self.assertEqual(context.refreshed, True)
-
 class Test_principals_widget(unittest.TestCase):
     def _makeOne(self, node, kw):
         from ..views import principals_widget
@@ -153,7 +144,3 @@ class DummyCatalog(object):
     def reindex(self):
         self.reindexed = True
 
-    def refresh(self, registry):
-        self.refreshed = True
-        
-        
