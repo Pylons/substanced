@@ -150,6 +150,10 @@ class TestPathIndex(unittest.TestCase):
         inst = self._makeOne()
         self.assertRaises(ValueError, inst._parse_path, None)
 
+    def test__parse_path_path_invalid_string_no_begin_slash(self):
+        inst = self._makeOne()
+        self.assertRaises(ValueError, inst._parse_path, 'abc/def')
+
     def test_apply_intersect(self):
         # ftest to make sure we have the right kind of Sets
         inst = self._makeOne()

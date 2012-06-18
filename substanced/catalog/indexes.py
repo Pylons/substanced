@@ -81,6 +81,7 @@ class PathIndex(CatalogIndex):
             
         if not path.startswith('/'):
             raise ValueError('Path must start with a slash')
+        
         tmp = filter(None, url_unquote_text(path).split(u'/'))
         path_tuple = (u'',) + tuple(tmp)
         return path_tuple, depth, include_origin
