@@ -13,12 +13,6 @@ from pyramid.settings import asbool
 
 from ..service import find_service
 
-# /foo -> stuff under /foo without depth or include_origin
-# [depth=2]/foo -> stuff under /foo with depth 2
-# [include_origin=false]/foo -> stuff under /foo without include_origin
-# [depth=2]/foo -> stuff under /foo with depth 2
-# [depth=2,include_origin=false]/foo -> combination of all options
-
 PATH_WITH_OPTIONS = re.compile(r'\[(.+?)\](.+?)$')
 
 @implementer(ICatalogIndex)
@@ -62,6 +56,10 @@ class PathIndex(CatalogIndex):
         return D
             
     def _parse_path_str(self, path_str):
+        # /foo -> stuff under /foo without depth or include_origin
+        # [depth=2]/foo -> stuff under /foo with depth 2
+        # [include_origin=false]/foo -> stuff under /foo without include_origin
+        # [depth=2,include_origin=false]/foo -> combination of all options
         if path_str.startswith('[') and ']' in path_str:
             optionstr, path = PATH_WITH_OPTIONS.match(
                 path_str).groups()
