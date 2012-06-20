@@ -4,7 +4,7 @@ import transaction
 
 import BTrees
 
-from hypatia.catalog import CatalogSearch
+from hypatia.catalog import CatalogQuery
 
 from pyramid.traversal import resource_path
 from pyramid.security import effective_principals
@@ -150,7 +150,7 @@ class Catalog(Folder):
 class Search(object):
     """ Catalog query helper """
 
-    CatalogSearch = CatalogSearch
+    CatalogQuery = CatalogQuery
     
     family = BTrees.family64
     
@@ -181,14 +181,14 @@ class Search(object):
         return len(result), result
 
     def query(self, q, **kw):
-        num, oids = self.CatalogSearch(
+        num, oids = self.CatalogQuery(
             self.catalog, family=self.family).query(q, **kw)
         if self.permission_checker is not None:
             num, oids = self.allowed(oids)
         return num, oids, self.resolver
 
     def search(self, **kw):
-        num, oids = self.CatalogSearch(
+        num, oids = self.CatalogQuery(
             self.catalog, family=self.family).search(**kw)
         if self.permission_checker:
             num, oids = self.allowed(oids)

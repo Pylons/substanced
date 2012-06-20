@@ -1,11 +1,12 @@
 import re
 
 import BTrees
+from persistent import Persistent
 
 from zope.interface import implementer
 
-from hypatia.common import CatalogIndex
-from hypatia.interfaces import ICatalogIndex
+from hypatia.util import BaseIndexMixin
+from hypatia.interfaces import IIndex
 
 from pyramid.traversal import resource_path_tuple
 from pyramid.compat import url_unquote_text
@@ -15,8 +16,8 @@ from ..service import find_service
 
 PATH_WITH_OPTIONS = re.compile(r'\[(.+?)\](.+?)$')
 
-@implementer(ICatalogIndex)
-class PathIndex(CatalogIndex):
+@implementer(IIndex)
+class PathIndex(BaseIndexMixin, Persistent):
     """ Uses the objectmap to apply a query to retrieve object identifiers at
     or under a path"""
     family = BTrees.family64
@@ -26,7 +27,13 @@ class PathIndex(CatalogIndex):
     def __init__(self, family=None):
         if family is not None:
             self.family = family
+        self.clear()
+
+    def clear(self):
         self._not_indexed = self.family.IF.Set()
+
+    def not_indexed(self):
+        return self._not_indexed
 
     def index_doc(self, docid, obj):
         pass
@@ -34,10 +41,13 @@ class PathIndex(CatalogIndex):
     def unindex_doc(self, docid):
         pass
 
+    def reindex_doc(self, docid, obj):
+        pass
+
     def docids(self):
         return self.__parent__.objectids
 
-    _indexed = docids
+    indexed = docids
 
     def search(self, path_tuple, depth=None, include_origin=True):
         objectmap = find_service(self.__parent__, 'objectmap')
@@ -122,7 +132,6 @@ class PathIndex(CatalogIndex):
     applyEq = apply
 
 # API below, do not remove
-
 from hypatia.field import FieldIndex
 from hypatia.facet import FacetIndex
 from hypatia.keyword import KeywordIndex

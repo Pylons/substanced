@@ -8,7 +8,7 @@ from zope.interface import (
     alsoProvides,
     )
 
-from hypatia.interfaces import ICatalogIndex
+from hypatia.interfaces import IIndex
 
 def _makeSite(**kw):
     from ...interfaces import IFolder
@@ -275,7 +275,7 @@ class TestSearch(unittest.TestCase):
         catalog = DummyCatalog()
         site = _makeSite(catalog=catalog)
         adapter = self._makeOne(site)
-        adapter.CatalogSearch = DummyCatalogSearch()
+        adapter.CatalogQuery = DummyCatalogQuery()
         q = DummyQuery()
         num, objectids, resolver = adapter.query(q)
         self.assertEqual(num, 0)
@@ -285,7 +285,7 @@ class TestSearch(unittest.TestCase):
         catalog = DummyCatalog()
         site = _makeSite(catalog=catalog)
         adapter = self._makeOne(site)
-        adapter.CatalogSearch = DummyCatalogSearch()
+        adapter.CatalogQuery = DummyCatalogQuery()
         num, objectids, resolver = adapter.search()
         self.assertEqual(num, 0)
         self.assertEqual(list(objectids), [])
@@ -296,7 +296,7 @@ class TestSearch(unittest.TestCase):
         catalog = DummyCatalog()
         site = _makeSite(objectmap=objectmap, catalog=catalog)
         adapter = self._makeOne(site)
-        adapter.CatalogSearch = DummyCatalogSearch((1, [1]))
+        adapter.CatalogQuery = DummyCatalogQuery((1, [1]))
         q = DummyQuery()
         num, objectids, resolver = adapter.query(q)
         self.assertEqual(num, 1)
@@ -308,7 +308,7 @@ class TestSearch(unittest.TestCase):
         objectmap = DummyObjectMap({1:[None, (u'', u'a')]})
         site = _makeSite(catalog=catalog, objectmap=objectmap)
         adapter = self._makeOne(site)
-        adapter.CatalogSearch = DummyCatalogSearch((1, [1]))
+        adapter.CatalogQuery = DummyCatalogQuery((1, [1]))
         q = DummyQuery()
         num, objectids, resolver = adapter.query(q)
         self.assertEqual(num, 1)
@@ -321,7 +321,7 @@ class TestSearch(unittest.TestCase):
         objectmap = DummyObjectMap({})
         site = _makeSite(catalog=catalog, objectmap=objectmap)
         adapter = self._makeOne(site)
-        adapter.CatalogSearch = DummyCatalogSearch()
+        adapter.CatalogQuery = DummyCatalogQuery()
         q = DummyQuery()
         num, objectids, resolver = adapter.query(q)
         self.assertEqual(resolver(123), None)
@@ -334,7 +334,7 @@ class TestSearch(unittest.TestCase):
         def permitted(ob):
             return True
         adapter = self._makeOne(site, permitted)
-        adapter.CatalogSearch = DummyCatalogSearch((1, [1]))
+        adapter.CatalogQuery = DummyCatalogQuery((1, [1]))
         q = DummyQuery()
         num, objectids, resolver = adapter.query(q)
         self.assertEqual(num, 1)
@@ -349,7 +349,7 @@ class TestSearch(unittest.TestCase):
         def permitted(ob):
             return False
         adapter = self._makeOne(site, permitted)
-        adapter.CatalogSearch = DummyCatalogSearch((1, [1]))
+        adapter.CatalogQuery = DummyCatalogQuery((1, [1]))
         q = DummyQuery()
         num, objectids, resolver = adapter.query(q)
         self.assertEqual(num, 0)
@@ -361,7 +361,7 @@ class TestSearch(unittest.TestCase):
         site = _makeSite(catalog=catalog, objectmap=objectmap)
         def permitted(ob): return True
         adapter = self._makeOne(site, permitted)
-        adapter.CatalogSearch = DummyCatalogSearch((1, [1]))
+        adapter.CatalogQuery = DummyCatalogQuery((1, [1]))
         q = DummyQuery()
         num, objectids, resolver = adapter.query(q)
         self.assertEqual(num, 0)
@@ -375,7 +375,7 @@ class TestSearch(unittest.TestCase):
         def permitted(ob):
             return True
         adapter = self._makeOne(site, permitted)
-        adapter.CatalogSearch = DummyCatalogSearch((1, [1]))
+        adapter.CatalogQuery = DummyCatalogQuery((1, [1]))
         num, objectids, resolver = adapter.search()
         self.assertEqual(num, 1)
         self.assertEqual(list(objectids), [1])
@@ -389,7 +389,7 @@ class TestSearch(unittest.TestCase):
         def permitted(ob):
             return False
         adapter = self._makeOne(site, permitted)
-        adapter.CatalogSearch = DummyCatalogSearch((1, [1]))
+        adapter.CatalogQuery = DummyCatalogQuery((1, [1]))
         num, objectids, resolver = adapter.search()
         self.assertEqual(num, 0)
         self.assertEqual(list(objectids), [])
@@ -400,7 +400,7 @@ class TestSearch(unittest.TestCase):
         site = _makeSite(catalog=catalog, objectmap=objectmap)
         def permitted(ob): return True
         adapter = self._makeOne(site, permitted)
-        adapter.CatalogSearch = DummyCatalogSearch((1, [1]))
+        adapter.CatalogQuery = DummyCatalogQuery((1, [1]))
         num, objectids, resolver = adapter.search()
         self.assertEqual(num, 0)
         self.assertEqual(list(objectids), [])
@@ -780,7 +780,7 @@ class DummyObjectMap(object):
             return
         return data[0]
 
-class DummyCatalogSearch(object):
+class DummyCatalogQuery(object):
     family = BTrees.family64
     def __init__(self, result=(0, [])):
         self.result = result
@@ -812,7 +812,7 @@ class DummyTransaction(object):
         self.aborted += 1
         
 
-@implementer(ICatalogIndex)
+@implementer(IIndex)
 class DummyIndex(object):
 
     value = None
