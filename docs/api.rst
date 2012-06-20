@@ -49,10 +49,10 @@ XXX: request.search_catalog, request.query_catalog
 
 .. autofunction:: get_allowed_to_view
 
-:mod:`repoze.catalog.query` API
+:mod:`hypatia.query` API
 -------------------------------
 
-.. module:: repoze.catalog.query
+.. module:: hypatia.query
 
 Comparators
 ~~~~~~~~~~~
