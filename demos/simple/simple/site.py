@@ -4,6 +4,7 @@ from substanced.catalog.indexes import (
     FieldIndex,
     TextIndex,
     KeywordIndex,
+    PathIndex,
     )
 
 from substanced.catalog.discriminators import (
@@ -22,5 +23,6 @@ class Site(_Site):
         catalog['title'] = FieldIndex(get_title)
         catalog['interfaces'] = KeywordIndex(get_interfaces)
         catalog['texts'] = TextIndex(get_textrepr)
+        catalog['path'] = PathIndex()
         self.add_service('catalog', catalog)
         
