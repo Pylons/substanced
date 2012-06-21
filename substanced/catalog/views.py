@@ -1,5 +1,6 @@
 import colander
 import deform_bootstrap.widget
+import deform.widget
 
 from pyramid.httpexceptions import HTTPFound
 
@@ -69,6 +70,7 @@ class Permitted(Schema):
 class SearchSchema(Schema):
     cqe_expression = colander.SchemaNode(
         colander.String(),
+        widget = deform.widget.TextAreaWidget(rows=10, cols=120),
         title='CQE Expression',
         )
     permitted = Permitted(title='Principals and Permission Filter')
