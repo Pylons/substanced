@@ -39,8 +39,8 @@ index will end up looking like this:
 >>> map.add('/a/b/c')
 >>> map.pathindex
 
-{(u'',):                  {3: set([1])}, 
- (u'', u'a'):             {2: set([1])}, 
+{(u'',):                  {3: set([1])},
+ (u'', u'a'):             {2: set([1])},
  (u'', u'a', u'b'):       {1: set([1])},
  (u'', u'a', u'b', u'c'): {0: set([1])}}
 
@@ -52,8 +52,8 @@ will look like this:
 >>> map.add('/a')
 >>> map.pathindex
 
-{(u'',):                  {1: set([2]), 3: set([1])}, 
- (u'', u'a'):             {0: set([2]), 2: set([1])}, 
+{(u'',):                  {1: set([2]), 3: set([1])},
+ (u'', u'a'):             {0: set([2]), 2: set([1])},
  (u'', u'a', u'b'):       {1: set([1])},
  (u'', u'a', u'b', u'c'): {0: set([1])}}
 
@@ -62,8 +62,8 @@ If we then add '/z' (and its objectid is 3):
 >>> map.add('/z')
 >>> map.pathindex
 
-{(u'',):                  {1: set([2, 3]), 3: set([1])}, 
- (u'', u'a'):             {0: set([2]), 2: set([1])}, 
+{(u'',):                  {1: set([2, 3]), 3: set([1])},
+ (u'', u'a'):             {0: set([2]), 2: set([1])},
  (u'', u'a', u'b'):       {1: set([1])},
  (u'', u'a', u'b', u'c'): {0: set([1])},
  (u'', u'z'):             {0: set([3])}}
