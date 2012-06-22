@@ -3,7 +3,8 @@ Step 02: Hello World in Substance D
 ===================================
 
 Substance D adds quite a bit atop Pyramid. In this step we do the
-minimum to bootstrap Substance D and let you start poking around.
+minimum to bootstrap Substance D, although poking around in Substance D
+is saved for the next step.
 
 Goals
 =====
@@ -50,18 +51,20 @@ Steps
 
 #. Open ``http://127.0.0.1:6543/`` in your browser.
 
+Analysis
+========
+
 At this point you'll see ``Hello, Little Dummy`` on your screen. But
 perhaps you also noticed that your ``step02`` directory grew some new
 files: ``Data.fs``, ``Data.fs.index``, etc. What's that all about?
 
-SDI, the Substance D Interface
-==============================
+- The ``development.ini`` file has a ``zodbconn.uri`` parameter that
+  configures the ``ZODB`` setup, as well as an inclusion of
+  ``pyramid_tm`` for transaction management
 
-#. Open ``http://127.0.0.1:6543/manage/`` in your browser.
+- The ``__init__.py`` uses ``root_factory=Site.root_factory`` to create
+  a persistent ``Site`` instance at the root of the resource tree
 
-#. Login with username ``admin`` and password ``admin``.
+- We tell the ``Configurator`` to include some settings from Substance
+  D, such as paths to static directories
 
-This is the management UI for Substance D, and a visualization of the
-content-oriented approach to building applications. As you click
-through and add content, the object database is storing your resources
-transactionally.

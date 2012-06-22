@@ -5,6 +5,7 @@ from pyramid.response import Response
 def hello_world(request):
     return Response('hello!')
 
+
 def main(global_config, **settings):
     config = Configurator()
     config.add_view(hello_world)

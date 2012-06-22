@@ -18,3 +18,5 @@ Steps
    setup.rst
    step01.rst
    step02.rst
+   step03.rst
+   step04.rst
