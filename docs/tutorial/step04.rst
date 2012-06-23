@@ -67,6 +67,8 @@ As is shown, a class becomes a content type definition via the
 
 We inject a Pyramid view into the SDI via the ``@mgmt_view`` decorator.
 In this case, our view is a form. In fact, a Substance D ``FormView``.
+Our new ``@mgmt_view`` is registered against an **interface**,
+which is a concept we will cover in a later step.
 
 As you can see, we have one code path that handles the add case
 (``add_success`` on the ``FormView``) and another for the edit case
@@ -74,6 +76,11 @@ As you can see, we have one code path that handles the add case
 but as it turns out, adding is often quite different than editing. In
 many cases, your application code can eliminate some of the repetition
 if warranted.
+
+You can have multiple property sheets associated with a content type in
+the SDI. That's the reason that ``propertysheets`` is a tuple: just
+list them in the order you want them to appear. Property sheets can be
+given security settings, hiding them from certain groups of users.
 
 Forms, form handling, schemas, etc. in Substance D are a little bit
 more work. The payoff is in less magicification of the frameworkiness.

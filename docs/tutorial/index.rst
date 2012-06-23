@@ -20,3 +20,4 @@ Steps
    step02.rst
    step03.rst
    step04.rst
+   step05.rst
