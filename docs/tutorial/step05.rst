@@ -26,3 +26,6 @@ Analysis
   supports ``IFolder`` (whether built-in container types or custom)
 
 - The view filtered out ``context.values`` which don't have a ``title``
+
+- Filling the ``head_more`` slot (TODO perhaps make this a separate
+  step?)
