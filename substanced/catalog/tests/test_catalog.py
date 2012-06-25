@@ -257,6 +257,8 @@ class TestCatalog(unittest.TestCase):
         self.assertEqual(L, [(1,a)])
     
 class TestSearch(unittest.TestCase):
+    family = BTrees.family64
+    
     def setUp(self):
         self.config = testing.setUp()
 
@@ -289,6 +291,31 @@ class TestSearch(unittest.TestCase):
         num, objectids, resolver = adapter.search()
         self.assertEqual(num, 0)
         self.assertEqual(list(objectids), [])
+        
+    def test_sort(self):
+        catalog = DummyCatalog()
+        site = _makeSite(catalog=catalog)
+        adapter = self._makeOne(site)
+        adapter.CatalogQuery = DummyCatalogQuery()
+        docids = self.family.IF.Set([1,2,3])
+        num, objectids, resolver = adapter.sort(docids, 'name')
+        self.assertEqual(num, 0)
+        self.assertEqual(list(objectids), [])
+        
+    def test_sort_with_permission_checker_returns_true(self):
+        ob = object()
+        objectmap = DummyObjectMap({1:[ob, (u'',)]})
+        catalog = DummyCatalog()
+        site = _makeSite(objectmap=objectmap, catalog=catalog)
+        def permitted(ob):
+            return True
+        adapter = self._makeOne(site, permitted)
+        docids = self.family.IF.Set([1])
+        adapter.CatalogQuery = DummyCatalogQuery((1, docids))
+        num, objectids, resolver = adapter.sort(docids, 'name')
+        self.assertEqual(num, 1)
+        self.assertEqual(list(objectids), [1])
+        self.assertEqual(resolver(1), ob)
         
     def test_query_peachy_keen(self):
         ob = object()
@@ -746,6 +773,60 @@ class Test_search_catalog(unittest.TestCase):
         inst.Search = DummySearch(True)
         inst(a=1, permitted=(['bob'], 'view'))
         self.assertTrue(inst.Search.checker(request.context))
+
+class Test_sort_oidset(unittest.TestCase):
+    def setUp(self):
+        self.config = testing.setUp()
+
+    def tearDown(self):
+        testing.tearDown()
+        
+    def _makeOne(self, request):
+        from .. import sort_oidset
+        return sort_oidset(request)
+
+    def test_it(self):
+        request = testing.DummyRequest()
+        request.context = testing.DummyResource()
+        inst = self._makeOne(request)
+        inst.Search = DummySearch(True)
+        result = inst(a=1)
+        self.assertEqual(result, True)
+
+    def test_it_with_permitted_no_auth_policy(self):
+        request = testing.DummyRequest()
+        request.context = testing.DummyResource()
+        inst = self._makeOne(request)
+        inst.Search = DummySearch(True)
+        inst(a=1, permitted='view')
+        self.assertFalse(inst.Search.checker)
+
+    def test_with_permitted_with_auth_policy(self):
+        self.config.testing_securitypolicy(permissive=True)
+        request = testing.DummyRequest()
+        request.context = testing.DummyResource()
+        inst = self._makeOne(request)
+        inst.Search = DummySearch(True)
+        inst(a=1, permitted='view')
+        self.assertTrue(inst.Search.checker(request.context))
+
+    def test_with_permitted_with_auth_policy_nonpermissive(self):
+        self.config.testing_securitypolicy(permissive=False)
+        request = testing.DummyRequest()
+        request.context = testing.DummyResource()
+        inst = self._makeOne(request)
+        inst.Search = DummySearch(True)
+        inst(a=1, permitted='view')
+        self.assertFalse(inst.Search.checker(request.context))
+        
+    def test_it_with_permitted_permitted_has_iter(self):
+        self.config.testing_securitypolicy(permissive=True)
+        request = testing.DummyRequest()
+        request.context = testing.DummyResource()
+        inst = self._makeOne(request)
+        inst.Search = DummySearch(True)
+        inst(a=1, permitted=(['bob'], 'view'))
+        self.assertTrue(inst.Search.checker(request.context))
         
 class DummySearch(object):
     def __init__(self, result):
@@ -759,6 +840,9 @@ class DummySearch(object):
         return self.result
 
     def search(self, **kw):
+        return self.result
+
+    def sort(self, *arg, **kw):
         return self.result
 
 class DummyQuery(object):
@@ -789,6 +873,9 @@ class DummyCatalogQuery(object):
         return self.result
 
     def search(self, **kw):
+        return self.result
+
+    def sort(self, *arg, **kw):
         return self.result
 
     def __call__(self, catalog, family=None):
