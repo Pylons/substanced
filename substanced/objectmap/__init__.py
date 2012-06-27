@@ -159,7 +159,7 @@ class ObjectMap(Persistent):
             context = self.__parent__
         return find_resource(context, path_tuple)
             
-    def add(self, obj, path_tuple):
+    def add(self, obj, path_tuple, replace_oid=False):
         """ Add a new object to the object map at the location specified by
         ``path_tuple`` (must be the path of the object in the object graph as
         a tuple, as returned by Pyramid's ``resource_path_tuple`` function)."""
@@ -168,7 +168,7 @@ class ObjectMap(Persistent):
 
         objectid = oid_of(obj, _marker)
 
-        if objectid is _marker:
+        if objectid is _marker or replace_oid:
             objectid = self.new_objectid()
             obj.__objectid__ = objectid
         elif objectid in self.objectid_to_path:
@@ -518,7 +518,7 @@ def object_will_be_added(obj, event):
     for node in postorder(obj):
         node_path = node_path_tuple(node)
         path_tuple = basepath + (name,) + node_path[1:]
-        objectmap.add(node, path_tuple) # gives node an object id
+        objectmap.add(node, path_tuple, replace_oid=event.is_duplicated) # gives node an object id
 
 @subscriber([Interface, IObjectRemoved])
 def object_removed(obj, event):

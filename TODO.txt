@@ -21,7 +21,7 @@ UI-Plus-Guts
   entire catalog via the "Manage" tab of a catalog.  Instead, we should allow
   them to reindex individual persistent indices or all persistent indices.
 
-- Allow cut, copy, paste, rename, (import/export?) from contents view.
+- import/export from contents view
 
 - Add Undo tab to Site (or per folder?) which will allow admins to undo recent
   transactions.  Implied: add transaction notes to all transactions.

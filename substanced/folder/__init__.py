@@ -1,3 +1,9 @@
+try:
+    from cStringIO import cStringIO as StringIO
+except ImportError:
+    from StringIO import StringIO
+import contextlib
+
 from zope.interface import implementer
 from pyramid.threadlocal import get_current_registry
 
@@ -226,17 +232,19 @@ class Folder(Persistent):
 
         return name
 
-    def add(self, name, other, send_events=True, allow_services=False):
+    def add(self, name, other, send_events=True,
+            allow_services=False, is_duplicated=False):
         """ Same as ``__setitem__``.
 
-        If ``send_events`` is false, suppress the sending of folder events.
+        If ``send_events`` is False, suppress the sending of folder events.
         If ``allow_services`` is True, allow the name ``__services__`` to be
-        added.
+        added. if ``is_duplicated`` is True, oids will be replaced in
+        objectmap.
         """
         name = self.check_name(name, allow_services)
 
         if send_events:
-            event = ObjectWillBeAdded(other, self, name)
+            event = ObjectWillBeAdded(other, self, name, is_duplicated)
             self._notify(event)
 
         other.__parent__ = self
@@ -335,6 +343,21 @@ class Folder(Persistent):
             self._notify(event)
 
         return other
+
+    def copy(self, name, other, newname=None):
+        """"""
+        if newname is None:
+            newname = name
+
+        with contextlib.closing(StringIO()) as sio:
+            obj = self.get(name)
+            obj._p_jar.exportFile(obj._p_oid, sio)
+            sio.seek(0)
+            new_obj = obj._p_jar.importFile(sio)
+            del new_obj.__parent__
+            del new_obj.__objectid__
+            obj = other.add(newname, new_obj, is_duplicated=True)
+            return obj
 
     def move(self, name, other, newname=None):
         """
