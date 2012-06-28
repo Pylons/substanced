@@ -344,6 +344,27 @@ class TestFolder(unittest.TestCase):
         self.assertFalse('a' in other)
         self.assertFalse('a' in folder)
 
+    def test_copy_no_newname(self):
+        folder = self._makeOne()
+        other = self._makeOne()
+        model = DummyExportableModel()
+        folder['a'] = model
+        folder.copy('a', other)
+        self.assertEqual(other['a'].__name__, 'a')
+        self.assertEqual(other['a'].__parent__, other)
+        self.assertTrue('a' in folder)
+        
+    def test_copy_newname(self):
+        folder = self._makeOne()
+        other = self._makeOne()
+        model = DummyExportableModel()
+        folder['a'] = model
+        folder.copy('a', other, 'b')
+        self.assertEqual(other['b'].__name__, 'b')
+        self.assertEqual(other['b'].__parent__, other)
+        self.assertFalse('a' in other)
+        self.assertTrue('a' in folder)
+
     def test_rename(self):
         folder = self._makeOne()
         model = DummyModel()
@@ -482,3 +503,22 @@ class TestFolder(unittest.TestCase):
 class DummyModel:
     pass
 
+class DummyExportImport(object):
+    def __init__(self, obj):
+        self.obj = obj
+
+    def exportFile(self, oid, f):
+        pass
+
+    def importFile(self, f):
+        import copy
+        new_obj = copy.deepcopy(self.obj)
+        new_obj.__objectid__ = 0
+        return new_obj
+
+class DummyExportableModel(object):
+    _p_oid = 0
+
+    @property
+    def _p_jar(self):
+        return DummyExportImport(self)
