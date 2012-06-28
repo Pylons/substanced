@@ -774,60 +774,6 @@ class Test_search_catalog(unittest.TestCase):
         inst(a=1, permitted=(['bob'], 'view'))
         self.assertTrue(inst.Search.checker(request.context))
 
-class Test_sort_oidset(unittest.TestCase):
-    def setUp(self):
-        self.config = testing.setUp()
-
-    def tearDown(self):
-        testing.tearDown()
-        
-    def _makeOne(self, request):
-        from .. import sort_oidset
-        return sort_oidset(request)
-
-    def test_it(self):
-        request = testing.DummyRequest()
-        request.context = testing.DummyResource()
-        inst = self._makeOne(request)
-        inst.Search = DummySearch(True)
-        result = inst(a=1)
-        self.assertEqual(result, True)
-
-    def test_it_with_permitted_no_auth_policy(self):
-        request = testing.DummyRequest()
-        request.context = testing.DummyResource()
-        inst = self._makeOne(request)
-        inst.Search = DummySearch(True)
-        inst(a=1, permitted='view')
-        self.assertFalse(inst.Search.checker)
-
-    def test_with_permitted_with_auth_policy(self):
-        self.config.testing_securitypolicy(permissive=True)
-        request = testing.DummyRequest()
-        request.context = testing.DummyResource()
-        inst = self._makeOne(request)
-        inst.Search = DummySearch(True)
-        inst(a=1, permitted='view')
-        self.assertTrue(inst.Search.checker(request.context))
-
-    def test_with_permitted_with_auth_policy_nonpermissive(self):
-        self.config.testing_securitypolicy(permissive=False)
-        request = testing.DummyRequest()
-        request.context = testing.DummyResource()
-        inst = self._makeOne(request)
-        inst.Search = DummySearch(True)
-        inst(a=1, permitted='view')
-        self.assertFalse(inst.Search.checker(request.context))
-        
-    def test_it_with_permitted_permitted_has_iter(self):
-        self.config.testing_securitypolicy(permissive=True)
-        request = testing.DummyRequest()
-        request.context = testing.DummyResource()
-        inst = self._makeOne(request)
-        inst.Search = DummySearch(True)
-        inst(a=1, permitted=(['bob'], 'view'))
-        self.assertTrue(inst.Search.checker(request.context))
-        
 class DummySearch(object):
     def __init__(self, result):
         self.result = result

@@ -233,11 +233,6 @@ class search_catalog(_catalog_request_api):
         checker = self._get_permission_checker(kw)
         return self.Search(self.context, checker).search(**kw)
 
-class sort_oidset(_catalog_request_api):
-    def __call__(self, *arg, **kw):
-        checker = self._get_permission_checker(kw)
-        return self.Search(self.context, checker).sort(*arg, **kw)
-
 def _assertint(docid):
     if not isinstance(docid, int):
         raise ValueError('%r is not an integer value; document ids must be '
@@ -248,6 +243,5 @@ def includeme(config): # pragma: no cover
     config.registry.registerAdapter(Search, (Interface,), ISearch)
     config.set_request_property(query_catalog, reify=True)
     config.set_request_property(search_catalog, reify=True)
-    config.set_request_property(sort_oidset, reify=True)
     config.scan('.')
     
