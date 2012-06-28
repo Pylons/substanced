@@ -123,7 +123,7 @@ class PropertySheet(object):
     def after_set(self):
         event = ObjectModified(self.context)
         self.request.registry.subscribers((self.context, event), None)
-        self.request.flash_undo('Updated properties', 'success')
+        self.request.flash_with_undo('Updated properties', 'success')
 
 def includeme(config): # pragma: no cover
     config.scan('.')
