@@ -73,8 +73,8 @@ add an item to object map with a path that already exists in the object
 map.
 
 If '/a' (objectid 2) is then removed, the pathindex is adjusted to remove
-references to the objectid represented by '/a' *and* any children (in this case,
-there's a child at '/a/b/c').
+references to the objectid represented by '/a' *and* any children
+(in this case, there's a child at '/a/b/c').
 
 >>> map.remove(2)
 >>> map.pathindex

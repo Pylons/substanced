@@ -213,7 +213,8 @@ class FolderContentsViews(object):
         tocopy = request.POST.getall('item-modify')
 
         if tocopy:
-            request.session['tocopy'] = [oid_of(context.get(name)) for name in tocopy]
+            request.session['tocopy'] = \
+                [oid_of(context.get(name)) for name in tocopy]
             request.session.flash('Choose where to copy the items:', 'info')
         else:
             request.session.flash('No items to copy')
@@ -263,7 +264,8 @@ class FolderContentsViews(object):
         tomove = request.POST.getall('item-modify')
 
         if tomove:
-            request.session['tomove'] = [oid_of(context.get(name)) for name in tomove]
+            request.session['tomove'] = \
+                [oid_of(context.get(name)) for name in tomove]
             request.session.flash('Choose where to move the items:', 'info')
         else:
             request.session.flash('No items to move')

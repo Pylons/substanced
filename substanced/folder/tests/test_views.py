@@ -254,7 +254,8 @@ class TestFolderContentsViews(unittest.TestCase):
         inst = self._makeOne(context, request)
         inst.duplicate()
         result = inst.duplicate()
-        self.assertEqual(request.session['_f_'], ['Duplicated 1 item', 'Duplicated 1 item'])
+        self.assertEqual(request.session['_f_'],
+                         ['Duplicated 1 item', 'Duplicated 1 item'])
         self.assertEqual(result.location, '/manage')
         self.assertTrue('a' in context)
         self.assertTrue('a-1' in context)
@@ -314,7 +315,8 @@ class TestFolderContentsViews(unittest.TestCase):
         request.POST = DummyPost(('foobar', 'foobar3'))
         inst = self._makeOne(context, request)
         result = inst.rename()
-        self.assertEqual(result, {'torename': [context['foobar'], context['foobar3']]})
+        self.assertEqual(result, {'torename': [context['foobar'],
+                                               context['foobar3']]})
 
     def test_rename_none(self):
         context = testing.DummyResource()
@@ -333,8 +335,9 @@ class TestFolderContentsViews(unittest.TestCase):
         context = Folder()
         context['foobar'] = testing.DummyResource()
         request = self._makeRequest()
-        request.POST = DummyPost(('foobar',), {'foobar': 'foobar2',
-                                               'form.rename_finish': 'rename_finish'})
+        request.POST = DummyPost(('foobar',),
+                                 {'foobar': 'foobar2',
+                                  'form.rename_finish': 'rename_finish'})
         inst = self._makeOne(context, request)
         result = inst.rename_finish()
         self.assertTrue('foobar2' in context)
@@ -347,9 +350,10 @@ class TestFolderContentsViews(unittest.TestCase):
         context['foobar1'] = testing.DummyResource()
         context['foobar2'] = testing.DummyResource()
         request = self._makeRequest()
-        request.POST = DummyPost(('foobar',), {'foobar': 'foobar0',
-                                               'foobar1': 'foobar11',
-                                               'form.rename_finish': 'rename_finish'})
+        request.POST = DummyPost(('foobar',),
+                                 {'foobar': 'foobar0',
+                                  'foobar1': 'foobar11',
+                                  'form.rename_finish': 'rename_finish'})
         inst = self._makeOne(context, request)
         result = inst.rename_finish()
         self.assertTrue('foobar2' in context)
@@ -375,9 +379,10 @@ class TestFolderContentsViews(unittest.TestCase):
         context['foobar'] = testing.DummyResource()
         context['foobar1'] = testing.DummyResource()
         request = self._makeRequest()
-        request.POST = DummyPost(('foobar',), {'foobar': 'foobar0',
-                                               'foobar1': 'foobar0',
-                                               'form.rename_finish': 'rename_finish'})
+        request.POST = DummyPost(('foobar',),
+                                 {'foobar': 'foobar0',
+                                  'foobar1': 'foobar0',
+                                  'form.rename_finish': 'rename_finish'})
         inst = self._makeOne(context, request)
         result = inst.rename_finish()
         self.assertFalse('foobar0' in context)
@@ -392,7 +397,8 @@ class TestFolderContentsViews(unittest.TestCase):
         request.POST = DummyPost(('foobar',))
         inst = self._makeOne(context, request)
         result = inst.copy()
-        self.assertEqual(request.session['_f_info'], ['Choose where to copy the items:'])
+        self.assertEqual(request.session['_f_info'],
+                         ['Choose where to copy the items:'])
         self.assertEqual(request.session['tocopy'], [123])
 
     def test_copy_none(self):
@@ -414,11 +420,12 @@ class TestFolderContentsViews(unittest.TestCase):
         context['foobar1'] = testing.DummyResource()
         context['foobar1'].__objectid__ = 456
         request = self._makeRequest()
-        request.POST = DummyPost(('foobar','foobar1'))
+        request.POST = DummyPost(('foobar', 'foobar1'))
         inst = self._makeOne(context, request)
         result = inst.copy()
-        self.assertEqual(request.session['_f_info'], ['Choose where to copy the items:'])
-        self.assertEqual(request.session['tocopy'], [123,456])
+        self.assertEqual(request.session['_f_info'],
+                         ['Choose where to copy the items:'])
+        self.assertEqual(request.session['tocopy'], [123, 456])
 
     def test_copy_finish_cancel(self):
         from .. import Folder
@@ -446,7 +453,8 @@ class TestFolderContentsViews(unittest.TestCase):
         inst = self._makeOne(context['target'], request)
         result = inst.copy_finish()
         self.assertEqual(request.session['_f_'], ['Copied 1 item'])
-        self.assertEqual(context['target'].added[0][1].__name__, context['foobar'].__name__)
+        self.assertEqual(context['target'].added[0][1].__name__,
+                         context['foobar'].__name__)
 
     def test_copy_finish_multi(self):
         from .. import Folder
@@ -456,14 +464,17 @@ class TestFolderContentsViews(unittest.TestCase):
         context['foobar1'] = DummyExportableResource()
         context['foobar2'] = testing.DummyResource()
         request = self._makeRequest()
-        request.session['tocopy'] = [123,456]
+        request.session['tocopy'] = [123, 456]
         request.POST = DummyPost(result2={'form.copy_finish': 'copy_finish'})
-        context['target'].oid_store = {123: context['foobar'], 456: context['foobar1']}
+        context['target'].oid_store = {123: context['foobar'],
+                                       456: context['foobar1']}
         inst = self._makeOne(context['target'], request)
         result = inst.copy_finish()
         self.assertEqual(request.session['_f_'], ['Copied 2 items'])
-        self.assertEqual(context['target'].added[0][1].__name__, context['foobar'].__name__)
-        self.assertEqual(context['target'].added[1][1].__name__, context['foobar1'].__name__)
+        self.assertEqual(context['target'].added[0][1].__name__,
+                         context['foobar'].__name__)
+        self.assertEqual(context['target'].added[1][1].__name__,
+                         context['foobar1'].__name__)
 
     def test_copy_finish_already_exists(self):
         from .. import Folder
@@ -479,7 +490,8 @@ class TestFolderContentsViews(unittest.TestCase):
         inst = self._makeOne(context['target'], request)
         result = inst.copy_finish()
         self.assertEqual(request.session['_f_'], ['Copied 1 item'])
-        self.assertEqual(context['target'].added[0][1].__name__, context['foobar'].__name__)
+        self.assertEqual(context['target'].added[0][1].__name__,
+                         context['foobar'].__name__)
 
     def test_move_one(self):
         from .. import Folder
@@ -491,7 +503,8 @@ class TestFolderContentsViews(unittest.TestCase):
         request.POST = DummyPost(('foobar',))
         inst = self._makeOne(context, request)
         result = inst.move()
-        self.assertEqual(request.session['_f_info'], ['Choose where to move the items:'])
+        self.assertEqual(request.session['_f_info'],
+                         ['Choose where to move the items:'])
         self.assertEqual(request.session['tomove'], [123])
 
     def test_move_none(self):
@@ -513,11 +526,12 @@ class TestFolderContentsViews(unittest.TestCase):
         context['foobar1'] = testing.DummyResource()
         context['foobar1'].__objectid__ = 456
         request = self._makeRequest()
-        request.POST = DummyPost(('foobar','foobar1'))
+        request.POST = DummyPost(('foobar', 'foobar1'))
         inst = self._makeOne(context, request)
         result = inst.move()
-        self.assertEqual(request.session['_f_info'], ['Choose where to move the items:'])
-        self.assertEqual(request.session['tomove'], [123,456])
+        self.assertEqual(request.session['_f_info'],
+                         ['Choose where to move the items:'])
+        self.assertEqual(request.session['tomove'], [123, 456])
 
     def test_move_finish_cancel(self):
         from .. import Folder
@@ -559,9 +573,10 @@ class TestFolderContentsViews(unittest.TestCase):
         foobar_name = context['foobar'].__name__
         foobar1_name = context['foobar1'].__name__
         request = self._makeRequest()
-        request.session['tomove'] = [123,456]
+        request.session['tomove'] = [123, 456]
         request.POST = DummyPost(result2={'form.move_finish': 'move_finish'})
-        context['target'].oid_store = {123: context['foobar'], 456: context['foobar1']}
+        context['target'].oid_store = {123: context['foobar'],
+                                       456: context['foobar1']}
         inst = self._makeOne(context['target'], request)
         result = inst.move_finish()
         self.assertEqual(request.session['_f_'], ['Moved 2 items'])
@@ -584,7 +599,8 @@ class TestFolderContentsViews(unittest.TestCase):
         inst = self._makeOne(context['target'], request)
         result = inst.move_finish()
         self.assertEqual(request.session['_f_'], ['Copied 1 item'])
-        self.assertEqual(context['target'].added[0][1].__name__, context['foobar'].__name__)
+        self.assertEqual(context['target'].added[0][1].__name__,
+                         context['foobar'].__name__)
 
 class DummyPost(dict):
     def __init__(self, result=(), result2=None):
