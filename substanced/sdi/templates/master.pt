@@ -121,6 +121,8 @@
 
     </div>
 
+    <more tal:omit-tag="" metal:define-slot="tail-more"></more>
+
   </body>
 
 </html>

@@ -10,7 +10,6 @@ from pyramid.security import (
 from pyramid_zodbconn import get_connection
 
 from ..objectmap import ObjectMap
-from ..catalog import Catalog
 from ..schema import Schema
 from ..folder import Folder
 from ..principal import Principals

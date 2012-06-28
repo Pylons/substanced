@@ -67,6 +67,14 @@ API Documentation
 
    api.rst
 
+Tutorial Documentation
+----------------------
+
+.. toctree::
+   :maxdepth: 1
+
+   tutorial/index.rst
+
 Reporting Bugs / Development Versions
 -------------------------------------
 

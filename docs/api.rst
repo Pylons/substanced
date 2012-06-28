@@ -28,7 +28,7 @@
 
 .. autofunction:: includeme
 
-XXX: request.search_catalog, request.query_catalog
+XXX: request.search_catalog, request.query_catalog, request.sort_oidset
 
 :mod:`substanced.catalog.discriminators` API
 --------------------------------------------
