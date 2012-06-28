@@ -66,8 +66,8 @@ class PathIndex(BaseIndexMixin, Persistent):
         return D
             
     def _parse_path_str(self, path_str):
-        # /foo -> stuff under /foo without depth or include_origin
-        # [depth=2]/foo -> stuff under /foo with depth 2
+        # /foo -> stuff under /foo with default depth and include_origin
+        # [depth=2]/foo -> stuff under /foo with depth 2 and default i_o
         # [include_origin=false]/foo -> stuff under /foo without include_origin
         # [depth=2,include_origin=false]/foo -> combination of all options
         if path_str.startswith('[') and ']' in path_str:
