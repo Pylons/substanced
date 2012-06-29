@@ -1,4 +1,3 @@
-import BTrees
 from zope.interface import Interface
 
 from pyramid.events import subscriber
@@ -10,7 +9,11 @@ from ..interfaces import (
     IObjectModified,
     )
     
-from ..service import find_service
+from ..service import (
+    find_services,
+    find_service,
+    )
+
 from ..util import (
     postorder,
     oid_of,
@@ -18,37 +21,42 @@ from ..util import (
 
 @subscriber([Interface, IObjectAdded])
 def object_added(obj, event):
-    """ Index an object and and its children in the closest catalog; an
-    IObjectAdded event subscriber.  Depends upon
-    substance.objectmap.object_will_be_added to have been fired
-    before this gets fired to assign an __objectid__ to the object.
+    """ An IObjectAdded event subscriber which indexes an object and and its
+    children in every catalog service in the lineage of the object. Depends
+    upon the fact that ``substanced.objectmap.object_will_be_added`` to
+    assign an ``__objectid__`` to the object and its children will have been
+    fired before this gets fired.
     """
-    catalog = find_service(obj, 'catalog')
-    if catalog is None:
+    catalogs = find_services(obj, 'catalog')
+    if not catalogs:
         return
     for node in postorder(obj):
         if ICatalogable.providedBy(node):
             objectid = oid_of(node)
-            objectid = catalog.index_doc(objectid, node)
+            for catalog in catalogs:
+                catalog.index_doc(objectid, node)
 
 @subscriber([Interface, IObjectWillBeRemoved])
 def object_will_be_removed(obj, event):
-    """ Unindex an object and its children in the closest catalog; an
-    :class:`substanced.event.ObjectWillBeRemoved` event subscriber"""
+    """ Unindex an object and its children from every catalog service object's
+    lineage; an :class:`substanced.event.ObjectWillBeRemoved` event
+    subscriber"""
     objectmap = find_service(obj, 'objectmap')
-    catalog = find_service(obj, 'catalog')
-    if objectmap is None or catalog is None:
+    catalogs = find_services(obj, 'catalog')
+    if objectmap is None or not catalogs:
         return
     objectids = objectmap.pathlookup(obj)
-    for oid in catalog.family.IF.intersection(objectids, catalog.objectids):
-        catalog.unindex_doc(oid)
+    for catalog in catalogs:
+        for oid in catalog.family.IF.intersection(objectids, catalog.objectids):
+            catalog.unindex_doc(oid)
 
 @subscriber([ICatalogable, IObjectModified])
 def object_modified(obj, event):
-    """ Reindex a single object (non-recursive) in the closest catalog; an
-    :class:`substanced.event.ObjectModifed` event subscriber """
-    catalog = find_service(obj, 'catalog')
-    if catalog is not None:
+    """ Reindex a single object (non-recursive) in every catalog service in
+    the object's lineage; an :class:`substanced.event.ObjectModifed` event
+    subscriber"""
+    catalogs = find_services(obj, 'catalog')
+    for catalog in catalogs:
         objectid = oid_of(obj)
         catalog.reindex_doc(objectid, obj)
 

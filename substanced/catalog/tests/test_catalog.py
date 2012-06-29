@@ -788,9 +788,6 @@ class DummySearch(object):
     def search(self, **kw):
         return self.result
 
-    def sort(self, *arg, **kw):
-        return self.result
-
 class DummyQuery(object):
     pass    
 

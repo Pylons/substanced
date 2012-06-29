@@ -53,6 +53,26 @@ class Test_object_added(unittest.TestCase):
         self._callFUT(model1, event)
         self.assertEqual(catalog.indexed, [(1, model2)])
 
+    def test_multiple_catalogs(self):
+        from ...interfaces import ICatalogable, IFolder
+        catalog1 = DummyCatalog()
+        catalog2 = DummyCatalog()
+        objectmap = DummyObjectMap()
+        inner_site = _makeSite(catalog=catalog2)
+        inner_site.__objectid__ = -1
+        outer_site = _makeSite(objectmap=objectmap, catalog=catalog1)
+        outer_site['inner'] = inner_site
+        model1 = testing.DummyResource(__provides__=(IFolder, ICatalogable))
+        model1.__objectid__ = 1
+        model2 = testing.DummyResource(__provides__=ICatalogable)
+        model2.__objectid__ = 2
+        model1['model2'] = model2
+        inner_site['model1'] = model1
+        event = DummyEvent(None)
+        self._callFUT(model1, event)
+        self.assertEqual(catalog1.indexed, [(2, model2), (1, model1)])
+        self.assertEqual(catalog2.indexed, [(2, model2), (1, model1)])
+
 class Test_object_will_be_removed(unittest.TestCase):
     def _callFUT(self, object, event):
         from ..subscribers import object_will_be_removed
@@ -94,6 +114,24 @@ class Test_object_will_be_removed(unittest.TestCase):
         event = DummyEvent(None)
         self._callFUT(model, event)
         self.assertEqual(catalog.unindexed, [1])
+
+    def test_multiple_catalogs(self):
+        model = testing.DummyResource()
+        catalog1 = DummyCatalog()
+        catalog1.objectids = catalog1.family.IF.Set([1])
+        catalog2 = DummyCatalog()
+        catalog2.objectids = catalog2.family.IF.Set([2])
+        objectmap = DummyObjectMap()
+        outer = _makeSite(objectmap=objectmap, catalog=catalog1)
+        inner = _makeSite(catalog=catalog2)
+        inner.__objectid__ = -1
+        inner['model'] = model
+        outer['inner'] = inner
+        model.__objectid__ = 1
+        event = DummyEvent(None)
+        self._callFUT(model, event)
+        self.assertEqual(catalog1.unindexed, [1])
+        self.assertEqual(catalog2.unindexed, [2])
         
 class Test_object_modified(unittest.TestCase):
     def _callFUT(self, object, event):
@@ -121,6 +159,24 @@ class Test_object_modified(unittest.TestCase):
         event = DummyEvent(site)
         self._callFUT(model, event)
         self.assertEqual(catalog.reindexed, [(1, model)])
+
+    def test_multiple_catalogs(self):
+        from ...interfaces import ICatalogable
+        objectmap = DummyObjectMap()
+        catalog1 = DummyCatalog()
+        catalog2 = DummyCatalog()
+        outer = _makeSite(objectmap=objectmap, catalog=catalog1)
+        inner = _makeSite(catalog=catalog2)
+        inner.__objectid__ = -1
+        outer['inner'] = inner
+        model = testing.DummyResource(__provides__=ICatalogable)
+        model.__objectid__ = 1
+        inner['model'] = model
+        outer['inner'] = inner
+        event = DummyEvent(None)
+        self._callFUT(model, event)
+        self.assertEqual(catalog1.reindexed, [(1, model)])
+        self.assertEqual(catalog2.reindexed, [(1, model)])
 
 class DummyCatalog(dict):
     

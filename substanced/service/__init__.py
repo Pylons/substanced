@@ -27,7 +27,9 @@ def find_service(context, name):
                 
 def find_services(context, name):
     """Finds all services named ``name`` in the lineage of ``context`` and
-    returns a sequence containing those service objects. Returns an empty
-    sequence if no such-named service could be found."""
+    returns a sequence containing those service objects. The sequence will
+    begin with the most deepest nested service and will end with the least
+    deeply nested service.  Returns an empty sequence if no such-named
+    service could be found."""
     return _find_services(context, name)
 
