@@ -10,7 +10,6 @@ import deform
 import deform.widget
 import deform_bootstrap.widget
 
-from pyramid.events import subscriber
 from pyramid.renderers import render
 from pyramid.security import (
     Allow,
@@ -25,10 +24,7 @@ from ..interfaces import (
     IGroup,
     IUsers,
     IGroups,
-    IPrincipal,
     IPrincipals,
-    IObjectAdded,
-    IObjectWillBeRemoved,
     IPasswordResets,
     IPasswordReset,
     )
@@ -437,44 +433,6 @@ class PasswordReset(Persistent):
     def commit_suicide(self):
         del self.__parent__[self.__name__]
 
-@subscriber([IUser, IObjectWillBeRemoved])
-def user_will_be_removed(user, event):
-    """ Remove all password reset objects associated with a user when the user
-    is removed """
-    if event.moving: # it's not really being removed
-        return
-    objectmap = find_service(user, 'objectmap')
-    if objectmap is not None:
-        resets = objectmap.targets(user, UserToPasswordReset)
-        for reset in resets:
-            reset.commit_suicide()
-
-@subscriber([IPrincipal, IObjectAdded])
-def principal_added(principal, event):
-    """ Prevent same-named users and groups from being added to the system.
-    An :class:`substanced.event.IObjectAdded` event subscriber."""
-    # disallow same-named groups and users for human sanity (not because
-    # same-named users and groups are disallowed by the system)
-    principal_name = principal.__name__
-    principals = find_service(principal, 'principals')
-    
-    if IUser.providedBy(principal):
-        # its a user
-        groups = principals['groups']
-        if principal_name in groups:
-            raise ValueError(
-                'Cannot add a user with a login name the same as the '
-                'group name %s' % principal_name
-                )
-    else:
-        # its a group
-        users = principals['users']
-        if principal_name in users:
-            raise ValueError(
-                'Cannot add a group with a name the same as the '
-                'user with the login name %s' % principal_name
-            )
-    
 def groupfinder(userid, request):
     """ A Pyramid authentication policy groupfinder callback that uses the
     Substance D principal system to find groups."""

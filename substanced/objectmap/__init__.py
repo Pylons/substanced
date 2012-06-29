@@ -1,11 +1,9 @@
 import random
-from zope.interface import Interface
 
 from persistent import Persistent
 
 import BTrees
 
-from pyramid.events import subscriber
 from pyramid.location import lineage
 from pyramid.traversal import (
     resource_path_tuple,
@@ -14,14 +12,16 @@ from pyramid.traversal import (
 
 from ..content import content
 from ..service import find_service
+from ..event import (
+    subscribe_will_be_added,
+    subscribe_removed,
+    )
 from ..util import (
     postorder,
     oid_of,
     )
 
 from ..interfaces import (
-    IObjectWillBeAdded,
-    IObjectRemoved,
     IObjectMap,
     )
 
@@ -499,12 +499,13 @@ def node_path_tuple(resource):
     return tuple(reversed([getattr(loc, '__name__', '') for 
                            loc in lineage(resource)]))
     
-@subscriber([Interface, IObjectWillBeAdded])
-def object_will_be_added(obj, event):
+@subscribe_will_be_added()
+def object_will_be_added(event):
     """ Objects added to folders must always have an __objectid__.  This must
      be an :class:`substanced.event.ObjectWillBeAdded` event subscriber
      so that a resulting object will have an __objectid__ within the (more
      convenient) :class:`substanced.event.ObjectAdded` fired later."""
+    obj = event.object
     parent = event.parent
     objectmap = find_service(parent, 'objectmap')
     if objectmap is None:
@@ -522,10 +523,11 @@ def object_will_be_added(obj, event):
         path_tuple = basepath + (name,) + node_path[1:]
         objectmap.add(node, path_tuple) # gives node an object id
 
-@subscriber([Interface, IObjectRemoved])
-def object_removed(obj, event):
+@subscribe_removed()
+def object_removed(event):
     """ :class:`substanced.event.ObjectRemoved` event subscriber.
     """
+    obj = event.object
     parent = event.parent
     moving = event.moving
     objectmap = find_service(parent, 'objectmap')

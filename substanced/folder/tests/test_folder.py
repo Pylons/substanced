@@ -35,7 +35,8 @@ class TestFolder(unittest.TestCase):
         self.assertEqual(inst.family, BTrees.family32)
 
     def _registerEventListener(self, listener, iface):
-        self.config.registry.registerHandler(listener, (Interface, iface))
+        self.config.registry.registerHandler(
+            listener, (iface, Interface, Interface))
 
     def test_keys(self):
         folder = self._makeOne({'a':1, 'b':2})
@@ -111,7 +112,7 @@ class TestFolder(unittest.TestCase):
         from ...interfaces import IObjectWillBeAdded
         from ...interfaces import IObjectAdded
         events = []
-        def listener(object, event):
+        def listener(event, obj, container):
             events.append(event)
         self._registerEventListener(listener, IObjectEvent)
         dummy = DummyModel()
@@ -159,7 +160,7 @@ class TestFolder(unittest.TestCase):
         from ...interfaces import IObjectWillBeAdded
         from ...interfaces import IObjectAdded
         events = []
-        def listener(object, event):
+        def listener(event, obj, container):
             events.append(event)
         self._registerEventListener(listener, IObjectEvent)
         dummy = DummyModel()
@@ -181,7 +182,7 @@ class TestFolder(unittest.TestCase):
     def test_add_suppress_events(self):
         from ...interfaces import IObjectEvent
         events = []
-        def listener(object, event):
+        def listener(event, obj, container):
             events.append(event) #pragma NO COVER
         self._registerEventListener(listener, IObjectEvent)
         dummy = DummyModel()
@@ -212,7 +213,7 @@ class TestFolder(unittest.TestCase):
         from ...interfaces import IObjectRemoved
         from ...interfaces import IObjectWillBeRemoved
         events = []
-        def listener(object, event):
+        def listener(event, obj, container):
             events.append(event)
         self._registerEventListener(listener, IObjectEvent)
         dummy = DummyModel()
@@ -250,7 +251,7 @@ class TestFolder(unittest.TestCase):
         from ...interfaces import IObjectRemoved
         from ...interfaces import IObjectWillBeRemoved
         events = []
-        def listener(object, event):
+        def listener(event, obj, container):
             events.append(event)
         self._registerEventListener(listener, IObjectEvent)
         dummy = DummyModel()
@@ -278,7 +279,7 @@ class TestFolder(unittest.TestCase):
     def test_remove_suppress_events(self):
         from ...interfaces import IObjectEvent
         events = []
-        def listener(object, event):
+        def listener(event, obj, container):
             events.append(event) #pragma NO COVER
         self._registerEventListener(listener, IObjectEvent)
         dummy = DummyModel()
@@ -297,7 +298,7 @@ class TestFolder(unittest.TestCase):
         from ...interfaces import IObjectRemoved
         from ...interfaces import IObjectWillBeRemoved
         events = []
-        def listener(object, event):
+        def listener(event, obj, container):
             events.append(event) #pragma NO COVER
         self._registerEventListener(listener, IObjectEvent)
         dummy = DummyModel()
@@ -388,7 +389,7 @@ class TestFolder(unittest.TestCase):
         dummy.__parent__ = None
         dummy.__name__ = None
         events = []
-        def listener(object, event):
+        def listener(event, obj, container):
             events.append(event)
         self._registerEventListener(listener, IObjectEvent)
         folder = self._makeOne({'a':dummy})

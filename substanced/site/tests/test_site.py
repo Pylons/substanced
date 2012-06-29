@@ -17,8 +17,10 @@ class TestSite(unittest.TestCase):
         from ...objectmap import object_will_be_added
         from zope.interface import Interface
         from substanced.event import IObjectWillBeAdded
+        def wrapper(event, obj, container):
+            return object_will_be_added(event)
         self.config.add_subscriber(
-            object_will_be_added, [Interface,IObjectWillBeAdded])
+            wrapper, [IObjectWillBeAdded, Interface, Interface])
         # ^^^ to get user.__objectid__ set up right
 
     def test_ctor(self):

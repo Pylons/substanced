@@ -1,4 +1,9 @@
-from zope.interface import implementer
+import venusian
+
+from zope.interface import (
+    implementer,
+    Interface,
+    )
 
 from .interfaces import (
     IObjectAdded,
@@ -42,3 +47,55 @@ class ObjectModified(object): # pragma: no cover
     """ An event sent when an object has been modified."""
     def __init__(self, object):
         self.object = object
+
+# subscriber decorators, e.g.
+# @subscribe_added(MyContent)
+# def foo(event):
+#     ....
+
+class _FolderEventSubscriber(object):
+    venusian = venusian
+
+    def __init__(self, obj=None, container=None):
+        if obj is None:
+            obj = Interface
+        if container is None:
+            container = Interface
+        self.obj = obj
+        self.container = container
+
+    def register(self, scanner, name, wrapped):
+        def wrapper(event, obj, container):
+            return wrapped(event)
+        scanner.config.add_subscriber(wrapper,
+                                      [self.event, self.obj, self.container])
+
+    def __call__(self, wrapped):
+        self.venusian.attach(wrapped, self.register, category='substanced')
+        return wrapped
+
+class subscribe_added(_FolderEventSubscriber):
+    """ Decorator for registering an object added event subscriber
+    (a subscriber for ObjectAdded)."""
+    event = IObjectAdded
+
+class subscribe_removed(_FolderEventSubscriber):
+    """ Decorator for registering an object removed event subscriber
+    (a subscriber for ObjectRemoved)."""
+    event = IObjectRemoved
+
+class subscribe_will_be_added(_FolderEventSubscriber):
+    """ Decorator for registering an object will-be-added event subscriber
+    (a subscriber for ObjectWillBeAdded)."""
+    event = IObjectWillBeAdded
+
+class subscribe_will_be_removed(_FolderEventSubscriber):
+    """ Decorator for registering an object will-be-removed event subscriber
+    (a subscriber for ObjectWillBeRemoved)."""
+    event = IObjectWillBeRemoved
+
+class subscribe_modified(_FolderEventSubscriber):
+    """ Decorator for registering an object will-be-removed event subscriber
+    (a subscriber for ObjectModified)."""
+    event = IObjectModified
+

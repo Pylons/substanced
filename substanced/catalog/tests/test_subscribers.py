@@ -16,13 +16,14 @@ def _makeSite(**kw):
     return site
 
 class Test_object_added(unittest.TestCase):
-    def _callFUT(self, object, event):
+    def _callFUT(self, event):
         from ..subscribers import object_added
-        return object_added(object, event)
+        return object_added(event)
 
     def test_no_catalog(self):
         model = testing.DummyResource()
-        self._callFUT(model, None) # doesnt blow up
+        event = testing.DummyResource(object=model)
+        self._callFUT(event) # doesnt blow up
 
     def test_catalogable_objects(self):
         from ...interfaces import ICatalogable, IFolder
@@ -35,8 +36,8 @@ class Test_object_added(unittest.TestCase):
         model2.__objectid__ = 2
         model1['model2'] = model2
         site['model1'] = model1
-        event = DummyEvent(None)
-        self._callFUT(model1, event)
+        event = DummyEvent(model1, None)
+        self._callFUT(event)
         self.assertEqual(catalog.indexed, [(2, model2), (1, model1)])
         
     def test_catalogable_objects_disjoint(self):
@@ -49,8 +50,8 @@ class Test_object_added(unittest.TestCase):
         model2.__objectid__ = 1
         model1['model2'] = model2
         site['model1'] = model1
-        event = DummyEvent(None)
-        self._callFUT(model1, event)
+        event = DummyEvent(model1, None)
+        self._callFUT(event)
         self.assertEqual(catalog.indexed, [(1, model2)])
 
     def test_multiple_catalogs(self):
@@ -68,19 +69,20 @@ class Test_object_added(unittest.TestCase):
         model2.__objectid__ = 2
         model1['model2'] = model2
         inner_site['model1'] = model1
-        event = DummyEvent(None)
-        self._callFUT(model1, event)
+        event = DummyEvent(model1, None)
+        self._callFUT(event)
         self.assertEqual(catalog1.indexed, [(2, model2), (1, model1)])
         self.assertEqual(catalog2.indexed, [(2, model2), (1, model1)])
 
 class Test_object_will_be_removed(unittest.TestCase):
-    def _callFUT(self, object, event):
+    def _callFUT(self, event):
         from ..subscribers import object_will_be_removed
-        return object_will_be_removed(object, event)
+        return object_will_be_removed(event)
 
     def test_no_objectmap(self):
         model = testing.DummyResource()
-        self._callFUT(model, None) # doesnt blow up
+        event = testing.DummyResource(object=model)
+        self._callFUT(event) # doesnt blow up
 
     def test_no_catalog(self):
         model = testing.DummyResource()
@@ -88,8 +90,8 @@ class Test_object_will_be_removed(unittest.TestCase):
         site = _makeSite(objectmap=objectmap)
         site['model'] = model
         model.__objectid__ = 1
-        event = DummyEvent(None)
-        self._callFUT(model, event) # doesnt blow up
+        event = DummyEvent(model, None)
+        self._callFUT(event) # doesnt blow up
 
     def test_with_pathlookup(self):
         model = testing.DummyResource()
@@ -99,8 +101,8 @@ class Test_object_will_be_removed(unittest.TestCase):
         site = _makeSite(objectmap=objectmap, catalog=catalog)
         site['model'] = model
         model.__objectid__ = 1
-        event = DummyEvent(None)
-        self._callFUT(model, event)
+        event = DummyEvent(model, None)
+        self._callFUT(event)
         self.assertEqual(catalog.unindexed, [1,2])
 
     def test_with_pathlookup_limited_by_objectids(self):
@@ -111,8 +113,8 @@ class Test_object_will_be_removed(unittest.TestCase):
         site = _makeSite(objectmap=objectmap, catalog=catalog)
         site['model'] = model
         model.__objectid__ = 1
-        event = DummyEvent(None)
-        self._callFUT(model, event)
+        event = DummyEvent(model, None)
+        self._callFUT(event)
         self.assertEqual(catalog.unindexed, [1])
 
     def test_multiple_catalogs(self):
@@ -128,15 +130,15 @@ class Test_object_will_be_removed(unittest.TestCase):
         inner['model'] = model
         outer['inner'] = inner
         model.__objectid__ = 1
-        event = DummyEvent(None)
-        self._callFUT(model, event)
+        event = DummyEvent(model, None)
+        self._callFUT(event)
         self.assertEqual(catalog1.unindexed, [1])
         self.assertEqual(catalog2.unindexed, [2])
         
 class Test_object_modified(unittest.TestCase):
-    def _callFUT(self, object, event):
+    def _callFUT(self, event):
         from ..subscribers import object_modified
-        return object_modified(object, event)
+        return object_modified(event)
 
     def test_no_catalog(self):
         from ...interfaces import ICatalogable
@@ -145,8 +147,8 @@ class Test_object_modified(unittest.TestCase):
         model = testing.DummyResource(__provides__=ICatalogable)
         model.__objectid__ = 1
         site['model'] = model
-        event = DummyEvent(site)
-        self._callFUT(model, event) # doesnt blow up
+        event = DummyEvent(model, site)
+        self._callFUT(event) # doesnt blow up
         
     def test_catalogable_object(self):
         from ...interfaces import ICatalogable
@@ -156,8 +158,8 @@ class Test_object_modified(unittest.TestCase):
         model = testing.DummyResource(__provides__=ICatalogable)
         model.__objectid__ = 1
         site['model'] = model
-        event = DummyEvent(site)
-        self._callFUT(model, event)
+        event = DummyEvent(model, site)
+        self._callFUT(event)
         self.assertEqual(catalog.reindexed, [(1, model)])
 
     def test_multiple_catalogs(self):
@@ -173,8 +175,8 @@ class Test_object_modified(unittest.TestCase):
         model.__objectid__ = 1
         inner['model'] = model
         outer['inner'] = inner
-        event = DummyEvent(None)
-        self._callFUT(model, event)
+        event = DummyEvent(model, None)
+        self._callFUT(event)
         self.assertEqual(catalog1.reindexed, [(1, model)])
         self.assertEqual(catalog2.reindexed, [(1, model)])
 
@@ -205,6 +207,7 @@ class DummyObjectMap:
         return self.family.IF.Set([1,2])
 
 class DummyEvent(object):
-    def __init__(self, parent):
+    def __init__(self, object, parent):
+        self.object = object
         self.parent = parent
         

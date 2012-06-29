@@ -1,12 +1,11 @@
-from zope.interface import Interface
-
-from pyramid.events import subscriber
-
 from ..interfaces import (
     ICatalogable,
-    IObjectAdded,
-    IObjectWillBeRemoved,
-    IObjectModified,
+    )
+
+from ..event import (
+    subscribe_added,
+    subscribe_will_be_removed,
+    subscribe_modified,
     )
     
 from ..service import (
@@ -19,14 +18,15 @@ from ..util import (
     oid_of,
     )
 
-@subscriber([Interface, IObjectAdded])
-def object_added(obj, event):
+@subscribe_added()
+def object_added(event):
     """ An IObjectAdded event subscriber which indexes an object and and its
     children in every catalog service in the lineage of the object. Depends
     upon the fact that ``substanced.objectmap.object_will_be_added`` to
     assign an ``__objectid__`` to the object and its children will have been
     fired before this gets fired.
     """
+    obj = event.object
     catalogs = find_services(obj, 'catalog')
     if not catalogs:
         return
@@ -36,11 +36,12 @@ def object_added(obj, event):
             for catalog in catalogs:
                 catalog.index_doc(objectid, node)
 
-@subscriber([Interface, IObjectWillBeRemoved])
-def object_will_be_removed(obj, event):
+@subscribe_will_be_removed()
+def object_will_be_removed(event):
     """ Unindex an object and its children from every catalog service object's
     lineage; an :class:`substanced.event.ObjectWillBeRemoved` event
     subscriber"""
+    obj = event.object
     objectmap = find_service(obj, 'objectmap')
     catalogs = find_services(obj, 'catalog')
     if objectmap is None or not catalogs:
@@ -50,11 +51,12 @@ def object_will_be_removed(obj, event):
         for oid in catalog.family.IF.intersection(objectids, catalog.objectids):
             catalog.unindex_doc(oid)
 
-@subscriber([ICatalogable, IObjectModified])
-def object_modified(obj, event):
+@subscribe_modified()
+def object_modified(event):
     """ Reindex a single object (non-recursive) in every catalog service in
     the object's lineage; an :class:`substanced.event.ObjectModifed` event
     subscriber"""
+    obj = event.object
     catalogs = find_services(obj, 'catalog')
     for catalog in catalogs:
         objectid = oid_of(obj)

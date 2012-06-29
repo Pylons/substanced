@@ -171,6 +171,26 @@ Other Helpers
    :members:
    :inherited-members:
 
+.. autoclass:: subscribe_added
+   :members:
+   :inherited-members:
+
+.. autoclass:: subscribe_removed
+   :members:
+   :inherited-members:
+
+.. autoclass:: subscribe_will_be_added
+   :members:
+   :inherited-members:
+
+.. autoclass:: subscribe_will_be_removed
+   :members:
+   :inherited-members:
+
+.. autoclass:: subscribe_modified
+   :members:
+   :inherited-members:
+
 :mod:`substanced.evolution` API
 --------------------------------
 
@@ -277,8 +297,6 @@ Other Helpers
 
 .. autoclass:: User
    :members:
-
-.. autofunction:: principal_added
 
 .. autofunction:: groupfinder
 

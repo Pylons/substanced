@@ -290,7 +290,7 @@ class Folder(Persistent):
 
     def _notify(self, event):
         reg = get_current_registry()
-        reg.subscribers((event.object, event), None)
+        reg.subscribers((event, event.object, self), None)
 
     def __delitem__(self, name):
         """ Remove the object from this folder stored under ``name``.

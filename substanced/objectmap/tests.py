@@ -693,14 +693,14 @@ class TestReferenceMap(unittest.TestCase):
         self.assertEqual(L, [[1,2], [1,2]])
 
 class Test_object_will_be_added(unittest.TestCase):
-    def _callFUT(self, object, event):
+    def _callFUT(self, event):
         from . import object_will_be_added
-        return object_will_be_added(object, event)
+        return object_will_be_added(event)
 
     def test_no_objectmap(self):
         model = testing.DummyResource()
-        event = DummyEvent(None)
-        self._callFUT(model, event) # doesnt blow up
+        event = DummyEvent(model, None)
+        self._callFUT(event) # doesnt blow up
 
     def test_added_object_has_children(self):
         from ..interfaces import IFolder
@@ -709,9 +709,9 @@ class Test_object_will_be_added(unittest.TestCase):
         one = testing.DummyModel(__provides__=IFolder)
         two = testing.DummyModel(__provides__=IFolder)
         one['two'] = two
-        event = DummyEvent(site)
+        event = DummyEvent(one, site)
         event.name = 'one'
-        self._callFUT(one, event)
+        self._callFUT(event)
         self.assertEqual(
             objectmap.added,
             [(two, ('', 'one', 'two')), (one, ('', 'one'))]
@@ -724,10 +724,10 @@ class Test_object_will_be_added(unittest.TestCase):
         one = testing.DummyModel(__provides__=IFolder)
         two = testing.DummyModel(__provides__=IFolder)
         one['two'] = two
-        event = DummyEvent(site)
+        event = DummyEvent(one, site)
         event.name = 'one'
         del one.__name__
-        self._callFUT(one, event)
+        self._callFUT(event)
         self.assertEqual(
             objectmap.added,
             [(two, ('', 'one', 'two')), (one, ('', 'one'))]
@@ -742,9 +742,9 @@ class Test_object_will_be_added(unittest.TestCase):
         inter = testing.DummyModel()
         site['inter'] = inter
         one['two'] = two
-        event = DummyEvent(inter)
+        event = DummyEvent(one, inter)
         event.name = 'one'
-        self._callFUT(one, event)
+        self._callFUT(event)
         self.assertEqual(
             objectmap.added,
             [(two, ('', 'inter', 'one', 'two')), (one, ('', 'inter', 'one'))]
@@ -763,26 +763,26 @@ class Test_object_will_be_added(unittest.TestCase):
         one['two'] = two
         self.assertEqual(resource_path_tuple(one), 
                          ('', 'bogusparent2', 'one'))
-        event = DummyEvent(site)
-        self.assertRaises(ValueError, self._callFUT, one, event)
+        event = DummyEvent(one, site)
+        self.assertRaises(ValueError, self._callFUT, event)
 
 class Test_object_removed(unittest.TestCase):
-    def _callFUT(self, object, event):
+    def _callFUT(self, event):
         from . import object_removed
-        return object_removed(object, event)
+        return object_removed(event)
 
     def test_no_objectmap(self):
         model = testing.DummyResource()
-        event = DummyEvent(None)
-        self._callFUT(model, event) # doesnt blow up
+        event = DummyEvent(model, None)
+        self._callFUT(event) # doesnt blow up
 
     def test_it(self):
         model = testing.DummyResource()
         model.__objectid__ = 1
         objectmap = DummyObjectMap()
         site = _makeSite(objectmap=objectmap)
-        event = DummyEvent(site)
-        self._callFUT(model, event)
+        event = DummyEvent(model, site)
+        self._callFUT(event)
         self.assertEqual(objectmap.removed, [1])
         self.assertTrue(objectmap.references_removed)
 
@@ -791,8 +791,8 @@ class Test_object_removed(unittest.TestCase):
         model.__objectid__ = 1
         objectmap = DummyObjectMap()
         site = _makeSite(objectmap=objectmap)
-        event = DummyEvent(site, moving=True)
-        self._callFUT(model, event)
+        event = DummyEvent(model, site, moving=True)
+        self._callFUT(event)
         self.assertEqual(objectmap.removed, [1])
         self.assertFalse(objectmap.references_removed)
         
@@ -830,7 +830,8 @@ class DummyObjectMap:
         return [objectid]
 
 class DummyEvent(object):
-    def __init__(self, parent, moving=False):
+    def __init__(self, object, parent, moving=False):
+        self.object = object
         self.parent = parent
         self.moving = moving
 
