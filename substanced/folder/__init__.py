@@ -229,18 +229,18 @@ class Folder(Persistent):
         return name
 
     def add(self, name, other, send_events=True,
-            allow_services=False, is_duplicated=False):
+            allow_services=False, duplicating=False):
         """ Same as ``__setitem__``.
 
         If ``send_events`` is False, suppress the sending of folder events.
         If ``allow_services`` is True, allow the name ``__services__`` to be
-        added. if ``is_duplicated`` is True, oids will be replaced in
+        added. if ``duplicating`` is True, oids will be replaced in
         objectmap.
         """
         name = self.check_name(name, allow_services)
 
         if send_events:
-            event = ObjectWillBeAdded(other, self, name, is_duplicated)
+            event = ObjectWillBeAdded(other, self, name, duplicating)
             self._notify(event)
 
         other.__parent__ = self
@@ -356,7 +356,7 @@ class Folder(Persistent):
             f.seek(0)
             new_obj = obj._p_jar.importFile(f)
             del new_obj.__parent__
-            obj = other.add(newname, new_obj, is_duplicated=True)
+            obj = other.add(newname, new_obj, duplicating=True)
             return obj
 
     def move(self, name, other, newname=None):

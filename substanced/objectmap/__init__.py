@@ -518,7 +518,7 @@ def object_will_be_added(obj, event):
     for node in postorder(obj):
         node_path = node_path_tuple(node)
         path_tuple = basepath + (name,) + node_path[1:]
-        objectmap.add(node, path_tuple, replace_oid=event.is_duplicated) # gives node an object id
+        objectmap.add(node, path_tuple, replace_oid=event.duplicating) # gives node an object id
 
 @subscriber([Interface, IObjectRemoved])
 def object_removed(obj, event):

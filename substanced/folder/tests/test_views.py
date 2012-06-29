@@ -330,7 +330,7 @@ class TestFolderContentsViews(unittest.TestCase):
         self.assertEqual(request.session['_f_'], ['No items renamed'])
         self.assertEqual(result.location, '/manage')
 
-    def test_rename_finish_success(self):
+    def test_rename_finish(self):
         from .. import Folder
         context = Folder()
         context['foobar'] = testing.DummyResource()
