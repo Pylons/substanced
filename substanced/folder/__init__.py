@@ -1,8 +1,4 @@
-try:
-    from cStringIO import cStringIO as StringIO
-except ImportError:
-    from StringIO import StringIO
-import contextlib
+import tempfile
 
 from zope.interface import implementer
 from pyramid.threadlocal import get_current_registry
@@ -345,17 +341,21 @@ class Folder(Persistent):
         return other
 
     def copy(self, name, other, newname=None):
-        """"""
+        """
+        Copy a subobject named ``name`` from this folder to the folder
+        represented by ``other``.  If ``newname`` is not none, it is used as
+        the target object name; otherwise the existing subobject name is
+        used.
+        """
         if newname is None:
             newname = name
 
-        with contextlib.closing(StringIO()) as sio:
+        with tempfile.TemporaryFile() as f:
             obj = self.get(name)
-            obj._p_jar.exportFile(obj._p_oid, sio)
-            sio.seek(0)
-            new_obj = obj._p_jar.importFile(sio)
+            obj._p_jar.exportFile(obj._p_oid, f)
+            f.seek(0)
+            new_obj = obj._p_jar.importFile(f)
             del new_obj.__parent__
-            del new_obj.__objectid__
             obj = other.add(newname, new_obj, is_duplicated=True)
             return obj
 
