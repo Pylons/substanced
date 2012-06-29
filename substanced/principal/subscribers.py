@@ -11,15 +11,15 @@ from ..interfaces import (
 )
 
 from ..service import find_service
+from ..util import oid_of
 
 from . import UserToPasswordReset
 
 @subscribe_added(IUser)
-def on_add(event):
+def user_added(event):
     """ Give each user permission to change their own password."""
     user = event.object
-    user.__acl__ = [(Allow, user.__objectid__,
-                     ('sdi.view', 'sdi.change-password'))]
+    user.__acl__ = [(Allow, oid_of(user), ('sdi.view', 'sdi.change-password'))]
 
 @subscribe_will_be_removed(IUser)
 def user_will_be_removed(event):

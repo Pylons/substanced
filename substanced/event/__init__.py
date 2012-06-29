@@ -5,7 +5,7 @@ from zope.interface import (
     Interface,
     )
 
-from .interfaces import (
+from ..interfaces import (
     IObjectAdded,
     IObjectWillBeAdded,
     IObjectRemoved,
@@ -67,6 +67,7 @@ class _FolderEventSubscriber(object):
     def register(self, scanner, name, wrapped):
         def wrapper(event, obj, container):
             return wrapped(event)
+        wrapper.wrapped = wrapped
         scanner.config.add_subscriber(wrapper,
                                       [self.event, self.obj, self.container])
 

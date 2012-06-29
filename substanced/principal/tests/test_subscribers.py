@@ -72,6 +72,22 @@ class Test_user_will_be_removed(unittest.TestCase):
         event.moving = True
         self.assertEqual(self._callFUT(event), None)
 
+class Test_user_added(unittest.TestCase):
+    def _callFUT(self, event):
+        from ..subscribers import user_added
+        return user_added(event)
+
+    def test_it(self):
+        from pyramid.security import Allow
+        user = testing.DummyResource()
+        user.__objectid__ = 1
+        event = testing.DummyResource(object=user)
+        self._callFUT(event) # doesnt blow up
+        self.assertEqual(
+            user.__acl__,
+            [(Allow, 1, ('sdi.view', 'sdi.change-password'))]
+            )
+
 class DummyObjectMap(object):
     def __init__(self, result=()):
         self.result = result
