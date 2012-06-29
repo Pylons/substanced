@@ -343,21 +343,23 @@ class TestFolderContentsViews(unittest.TestCase):
         self.assertTrue('foobar2' in context)
         self.assertEqual(request.session['_f_'], ['Renamed 1 item'])
 
-    def test_rename_finish_success_multiple(self):
+    def test_rename_finish_multiple(self):
         from .. import Folder
         context = Folder()
         context['foobar'] = testing.DummyResource()
         context['foobar1'] = testing.DummyResource()
         context['foobar2'] = testing.DummyResource()
         request = self._makeRequest()
-        request.POST = DummyPost(('foobar',),
+        request.POST = DummyPost(('foobar','foobar1'),
                                  {'foobar': 'foobar0',
                                   'foobar1': 'foobar11',
                                   'form.rename_finish': 'rename_finish'})
         inst = self._makeOne(context, request)
         result = inst.rename_finish()
         self.assertTrue('foobar2' in context)
-        self.assertEqual(request.session['_f_'], ['Renamed 1 item'])
+        self.assertTrue('foobar0' in context)
+        self.assertTrue('foobar11' in context)
+        self.assertEqual(request.session['_f_'], ['Renamed 2 items'])
 
     def test_rename_finish_cancel(self):
         from .. import Folder
