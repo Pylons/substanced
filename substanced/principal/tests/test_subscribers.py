@@ -82,7 +82,7 @@ class Test_user_added(unittest.TestCase):
         user = testing.DummyResource()
         user.__objectid__ = 1
         event = testing.DummyResource(object=user)
-        self._callFUT(event) # doesnt blow up
+        self._callFUT(event)
         self.assertEqual(
             user.__acl__,
             [(Allow, 1, ('sdi.view', 'sdi.change-password'))]
