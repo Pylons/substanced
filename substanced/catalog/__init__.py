@@ -35,12 +35,12 @@ class Catalog(Folder):
         Folder.__init__(self)
         if family is not None:
             self.family = family
-        self.clear_indexes()
+        self.reset()
 
-    def clear_indexes(self):
+    def reset(self):
         """ Clear all indexes in this catalog and clear self.objectids. """
         for index in self.values():
-            index.clear()
+            index.reset()
         self.objectids = self.family.IF.TreeSet()
 
     def index_doc(self, docid, obj):

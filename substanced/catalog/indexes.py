@@ -27,9 +27,9 @@ class PathIndex(BaseIndexMixin, Persistent):
     def __init__(self, family=None):
         if family is not None:
             self.family = family
-        self.clear()
+        self.reset()
 
-    def clear(self):
+    def reset(self):
         self._not_indexed = self.family.IF.Set()
 
     def index_doc(self, docid, obj):

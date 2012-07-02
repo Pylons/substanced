@@ -1,5 +1,7 @@
 from zope.interface.interfaces import IObjectEvent
 
+from hypatia.interfaces import ICatalog as _ICatalog
+
 from zope.interface import (
     Interface,
     Attribute,
@@ -316,27 +318,10 @@ class IFolder(Interface):
         WillBeAdded and Add events will be sent for the new object.
         """
         
-class ICatalog(IFolder):
+class ICatalog(_ICatalog):
     """ A collection of indices """
     objectids = Attribute(
         'a sequence of objectids that are cataloged in this catalog')
-
-    def clear_indexes():
-        """ Clears all indexes in this collection """
-
-    def index_doc(docid, obj):
-        """ Indexes the object ``obj`` in all indexes in this collection using
-        docid ``docid``."""
-
-    def unindex_doc(docid):
-        """ Unindexes the object represented by docid ``docid`` in all
-        indexes in this collection."""
-
-    def reindex_doc(docid, obj):
-        """ Reindex the document referenced by ``docid`` using the object
-        passed in as ``obj`` (typically just does the equivalent of
-        ``unindex_doc``, then ``index_doc``, but specialized indexes
-        can override the method that this API calls to do less work). """
 
     def reindex(dry_run=False, commit_interval=200, indexes=None, 
                 path_re=None, output=None):

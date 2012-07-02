@@ -49,17 +49,17 @@ class TestCatalog(unittest.TestCase):
         inst = self._makeOne()
         verifyObject(ICatalog, inst)
 
-    def test_clear_indexes(self):
+    def test_reset(self):
         catalog = self._makeOne()
         idx = DummyIndex()
         catalog['name'] = idx
-        catalog.clear_indexes()
+        catalog.reset()
         self.assertEqual(idx.cleared, True)
         
-    def test_clear_indexes_objectids(self):
+    def test_reset_objectids(self):
         inst = self._makeOne()
         inst.objectids.insert(1)
-        inst.clear_indexes()
+        inst.reset()
         self.assertEqual(list(inst.objectids), [])
 
     def test_ctor_defaults(self):
@@ -862,7 +862,7 @@ class DummyIndex(object):
     def unindex_doc(self, docid):
         self.unindexed = docid
 
-    def clear(self):
+    def reset(self):
         self.cleared = True
 
     def reindex_doc(self, docid, object):
