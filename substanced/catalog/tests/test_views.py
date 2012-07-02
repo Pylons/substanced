@@ -23,6 +23,47 @@ class TestManageCatalog(unittest.TestCase):
         self.assertEqual(result.location, '/manage')
         self.assertEqual(context.reindexed, True)
 
+class TestManageIndex(unittest.TestCase):
+    def _makeOne(self, context, request):
+        from ..views import ManageIndex
+        return ManageIndex(context, request)
+
+    def test_view(self):
+        context = DummyIndex()
+        request = testing.DummyRequest()
+        request.mgmt_path = lambda *arg: '/manage'
+        inst = self._makeOne(context, request)
+        result = inst.view()
+        self.assertEqual(result['indexed'], 1)
+        self.assertEqual(result['not_indexed'], 1)
+        self.assertEqual(result['index_name'], 'name')
+        self.assertEqual(result['index_type'], 'DummyIndex')
+
+    def test_reindex_parent_not_icatalog(self):
+        context = DummyIndex(False)
+        request = testing.DummyRequest()
+        request.mgmt_path = lambda *arg: '/manage'
+        inst = self._makeOne(context, request)
+        result = inst.reindex()
+        self.assertEqual(result.location, '/manage')
+        self.assertEqual(
+            request.session['_f_error'],
+            ['Cannot reindex an index unless it is contained in a catalog'])
+
+    def test_reindex_parent_is_icatalog(self):
+        from zope.interface import alsoProvides
+        from substanced.interfaces import ICatalog
+        catalog = DummyCatalog()
+        alsoProvides(catalog, ICatalog)
+        context = DummyIndex(catalog)
+        request = testing.DummyRequest()
+        request.mgmt_path = lambda *arg: '/manage'
+        inst = self._makeOne(context, request)
+        result = inst.reindex()
+        self.assertEqual(result.location, '/manage')
+        self.assertEqual(catalog.indexes, ['name'])
+        self.assertEqual(request.session['_f_'], ['Index "name" reindexed'])
+
 class Test_principals_widget(unittest.TestCase):
     def _makeOne(self, node, kw):
         from ..views import principals_widget
@@ -141,6 +182,21 @@ class DummyCatalog(object):
     def __init__(self):
         self.objectids = ()
 
-    def reindex(self):
+    def reindex(self, indexes=None):
+        self.indexes = indexes
         self.reindexed = True
 
+class DummyIndex(object):
+    def __init__(self, parent=None):
+        if parent is None:
+            parent = DummyCatalog()
+        self.__parent__ = parent
+        self.__name__ = 'name'
+
+    def indexed_count(self):
+        return 1
+
+    def not_indexed_count(self):
+        return 1
+    
+        

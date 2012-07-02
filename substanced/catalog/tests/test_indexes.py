@@ -39,9 +39,19 @@ class TestPathIndex(unittest.TestCase):
         result = inst.unindex_doc(1)
         self.assertEqual(result, None)
 
+    def test_reindex_doc(self):
+        inst = self._makeOne()
+        result = inst.reindex_doc(1, None)
+        self.assertEqual(result, None)
+
     def test_docids(self):
         inst = self._makeOne()
         result = inst.docids()
+        self.assertEqual(list(result),  [])
+
+    def test_not_indexed(self):
+        inst = self._makeOne()
+        result = inst.not_indexed()
         self.assertEqual(list(result),  [])
         
     def test_search(self):

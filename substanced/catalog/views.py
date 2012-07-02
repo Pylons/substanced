@@ -2,6 +2,8 @@ import colander
 import deform_bootstrap.widget
 import deform.widget
 
+from hypatia.interfaces import IIndex
+
 from pyramid.httpexceptions import HTTPFound
 
 from pyramid.view import view_defaults
@@ -24,9 +26,11 @@ class ManageCatalog(object):
     def __init__(self, context, request):
         self.context = context
         self.request = request
-        self.redir_location = self.request.mgmt_path(
-            self.context, '@@manage_catalog')
 
+    @property
+    def redir_location(self):
+        return self.request.mgmt_path(self.context, '@@manage_catalog')
+        
     @mgmt_view(request_method='GET', tab_title='Manage')
     def view(self):
         cataloglen = len(self.context.objectids)
@@ -36,6 +40,47 @@ class ManageCatalog(object):
     def reindex(self):
         self.context.reindex()
         self.request.session.flash('Catalog reindexed')
+        return HTTPFound(location=self.redir_location)
+
+@view_defaults(
+    name='manage_index',
+    context=IIndex,
+    renderer='templates/manage_index.pt',
+    permission='sdi.manage-catalog')
+class ManageIndex(object):
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+
+    @property
+    def redir_location(self):
+        return self.request.mgmt_path(self.context, '@@manage_index')
+
+    @mgmt_view(request_method='GET', tab_title='Manage')
+    def view(self):
+        index = self.context
+        indexed = index.indexed_count()
+        not_indexed = index.not_indexed_count()
+        index_name = index.__name__
+        return dict(
+            indexed=indexed,
+            not_indexed=not_indexed,
+            index_name=index_name,
+            index_type = index.__class__.__name__,
+            )
+
+    @mgmt_view(request_method='POST', request_param='reindex', check_csrf=True)
+    def reindex(self):
+        index_name = self.context.__name__
+        catalog  = self.context.__parent__
+        if ICatalog.providedBy(catalog):
+            catalog.reindex(indexes=[index_name])
+            self.request.session.flash('Index "%s" reindexed' % index_name)
+        else:
+            self.request.session.flash(
+                'Cannot reindex an index unless it is contained in a catalog',
+                'error'
+                )
         return HTTPFound(location=self.redir_location)
 
 @colander.deferred

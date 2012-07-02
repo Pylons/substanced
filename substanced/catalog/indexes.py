@@ -32,9 +32,6 @@ class PathIndex(BaseIndexMixin, Persistent):
     def clear(self):
         self._not_indexed = self.family.IF.Set()
 
-    def not_indexed(self):
-        return self._not_indexed
-
     def index_doc(self, docid, obj):
         pass
 
@@ -48,6 +45,9 @@ class PathIndex(BaseIndexMixin, Persistent):
         return self.__parent__.objectids
 
     indexed = docids
+
+    def not_indexed(self):
+        return self._not_indexed
 
     def search(self, path_tuple, depth=None, include_origin=True):
         objectmap = find_service(self.__parent__, 'objectmap')
