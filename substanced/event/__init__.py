@@ -54,7 +54,7 @@ class ObjectModified(object): # pragma: no cover
 #     ....
 
 class _FolderEventSubscriber(object):
-    venusian = venusian
+    venusian = venusian # for testing
 
     def __init__(self, obj=None, container=None):
         if obj is None:

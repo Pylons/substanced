@@ -76,6 +76,9 @@ Guts-Only
 
 - Refactor ACL view.
 
+- Add specific configurator directives for object event registrations
+  (e.g. config.subscribe_modified).
+
 Nice-to-Have Features
 ---------------------
 
