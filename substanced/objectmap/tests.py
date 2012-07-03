@@ -180,7 +180,6 @@ class TestObjectMap(unittest.TestCase):
 
     if IS_32_BIT:
         def test_remove_long(self):
-            import sys
             inst = self._makeOne()
             oid = sys.maxint + 1
             inst.objectid_to_path[oid] = (u'',)
