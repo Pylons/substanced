@@ -145,7 +145,7 @@ class ObjectMap(Persistent):
 
     def object_for(self, objectid_or_path_tuple, context=None):
         """ Returns an object or ``None`` given an object id or a path tuple"""
-        if isinstance(objectid_or_path_tuple, int):
+        if isinstance(objectid_or_path_tuple, (int, long)):
             path_tuple = self.objectid_to_path.get(objectid_or_path_tuple)
         elif isinstance(objectid_or_path_tuple, tuple):
             path_tuple = objectid_or_path_tuple
@@ -200,7 +200,7 @@ class ObjectMap(Persistent):
         (e.g. when moving an object)."""
         if hasattr(obj_objectid_or_path_tuple, '__parent__'):
             path_tuple = resource_path_tuple(obj_objectid_or_path_tuple)
-        elif isinstance(obj_objectid_or_path_tuple, int):
+        elif isinstance(obj_objectid_or_path_tuple, (int, long)):
             path_tuple = self.objectid_to_path[obj_objectid_or_path_tuple]
         elif isinstance(obj_objectid_or_path_tuple, tuple):
             path_tuple = obj_objectid_or_path_tuple

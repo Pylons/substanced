@@ -1,7 +1,10 @@
 import unittest
+import sys
 from pyramid import testing
 from zope.interface import alsoProvides
 from pyramid.traversal import resource_path_tuple
+
+IS_32_BIT = sys.maxsize == 2**32
 
 class TestObjectMap(unittest.TestCase):
     def setUp(self):
@@ -74,12 +77,21 @@ class TestObjectMap(unittest.TestCase):
         inst.objectid_to_path[1] = 'abc'
         self.assertEqual(inst.path_for(1), 'abc')
 
-    def test_object_for_objectid(self):
+    def test_object_for_int(self):
         a = testing.DummyResource()
         inst = self._makeOne()
         inst.objectid_to_path[1] = 'abc'
         inst._find_resource = lambda *arg: a
         self.assertEqual(inst.object_for(1), a)
+
+    if IS_32_BIT:
+        def test_object_for_long(self):
+            a = testing.DummyResource()
+            inst = self._makeOne()
+            oid = sys.maxint + 1
+            inst.objectid_to_path[oid] = 'abc'
+            inst._find_resource = lambda *arg: a
+            self.assertEqual(inst.object_for(oid), a)
 
     def test_object_for_path_tuple(self):
         a = testing.DummyResource()
@@ -158,6 +170,25 @@ class TestObjectMap(unittest.TestCase):
         inst = self._makeOne()
         self.assertRaises(ValueError, inst.remove, 'a')
 
+    def test_remove_int(self):
+        inst = self._makeOne()
+        inst.objectid_to_path[1] = (u'',)
+        inst.path_to_objectid[(u'',)] = 1
+        inst.pathindex[(u'',)] = {0:[1]}
+        inst.remove(1)
+        self.assertEqual(dict(inst.objectid_to_path), {})
+
+    if IS_32_BIT:
+        def test_remove_long(self):
+            import sys
+            inst = self._makeOne()
+            oid = sys.maxint + 1
+            inst.objectid_to_path[oid] = (u'',)
+            inst.path_to_objectid[(u'',)] = oid
+            inst.pathindex[(u'',)] = {0:[oid]}
+            inst.remove(oid)
+            self.assertEqual(dict(inst.objectid_to_path), {})
+        
     def test_remove_traversable_object(self):
         inst = self._makeOne()
         inst.objectid_to_path[1] = (u'',)

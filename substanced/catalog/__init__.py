@@ -234,7 +234,7 @@ class search_catalog(_catalog_request_api):
         return self.Search(self.context, checker).search(**kw)
 
 def _assertint(docid):
-    if not isinstance(docid, int):
+    if not isinstance(docid, (int, long)):
         raise ValueError('%r is not an integer value; document ids must be '
                          'integers' % docid)
 
