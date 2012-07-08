@@ -1,4 +1,5 @@
 import unittest
+import mock
 from pyramid import testing
 
 from zope.interface import Interface
@@ -196,10 +197,11 @@ class TestFolder(unittest.TestCase):
         self.assertEqual(folder.order, ['a', 'b'])
 
     def test___setitem__exists(self):
+        from ...exceptions import FolderKeyError
         dummy = DummyModel()
         folder = self._makeOne({'a': dummy})
         self.assertEqual(folder._num_objects(), 1)
-        self.assertRaises(KeyError, folder.__setitem__, 'a', dummy)
+        self.assertRaises(FolderKeyError, folder.__setitem__, 'a', dummy)
         self.assertEqual(folder._num_objects(), 1)
 
     def test___delitem__(self):

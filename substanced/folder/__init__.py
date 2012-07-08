@@ -7,6 +7,8 @@ from persistent import Persistent
 from BTrees.OOBTree import OOBTree
 from BTrees.Length import Length
 
+from ..exceptions import FolderKeyError
+
 from ..interfaces import (
     IFolder,
     marker,
@@ -224,7 +226,7 @@ class Folder(Persistent):
                              'allowed')
 
         if name in self.data:
-            raise KeyError('An object named %s already exists' % name)
+            raise FolderKeyError('An object named %s already exists' % name)
 
         return name
 
