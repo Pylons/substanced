@@ -1,4 +1,5 @@
 import unittest
+import mock
 from pyramid import testing
 
 from zope.interface import Interface
@@ -23,7 +24,7 @@ class TestFolder(unittest.TestCase):
         klass = self._getTargetClass()
         from ...interfaces import IFolder
         verifyClass(IFolder, klass)
-        
+
     def test_inst_provides_IFolder(self):
         from ...interfaces import IFolder
         inst = self._makeOne()
@@ -38,55 +39,55 @@ class TestFolder(unittest.TestCase):
         self.config.registry.registerHandler(listener, (Interface, iface))
 
     def test_keys(self):
-        folder = self._makeOne({'a':1, 'b':2})
+        folder = self._makeOne({'a': 1, 'b': 2})
         self.assertEqual(list(folder.keys()), ['a', 'b'])
 
     def test_keys_with_order(self):
-        folder = self._makeOne({'a':1, 'b':2})
+        folder = self._makeOne({'a': 1, 'b': 2})
         folder.order = ['b', 'a']
         self.assertEqual(list(folder.keys()), ['b', 'a'])
 
     def test_keys_after_del_order(self):
-        folder = self._makeOne({'a':1, 'b':2})
+        folder = self._makeOne({'a': 1, 'b': 2})
         folder.order = ['b', 'a']
         del folder.order
         self.assertEqual(list(folder.keys()), ['a', 'b'])
 
     def test__iter__(self):
-        folder = self._makeOne({'a':1, 'b':2})
+        folder = self._makeOne({'a': 1, 'b': 2})
         self.assertEqual(list(folder), ['a', 'b'])
 
     def test__iter___with_order(self):
-        folder = self._makeOne({'a':1, 'b':2})
+        folder = self._makeOne({'a': 1, 'b': 2})
         folder.order = ['b', 'a']
         self.assertEqual(list(folder), ['b', 'a'])
 
     def test_values(self):
-        folder = self._makeOne({'a':1, 'b':2})
+        folder = self._makeOne({'a': 1, 'b': 2})
         self.assertEqual(list(folder.values()), [1, 2])
 
     def test_values_with_order(self):
-        folder = self._makeOne({'a':1, 'b':2})
+        folder = self._makeOne({'a': 1, 'b': 2})
         folder.order = ['b', 'a']
         self.assertEqual(list(folder.values()), [2, 1])
 
     def test_items(self):
-        folder = self._makeOne({'a':1, 'b':2})
+        folder = self._makeOne({'a': 1, 'b': 2})
         self.assertEqual(list(folder.items()), [('a', 1), ('b', 2)])
 
     def test_items_with_order(self):
-        folder = self._makeOne({'a':1, 'b':2})
+        folder = self._makeOne({'a': 1, 'b': 2})
         folder.order = ['b', 'a']
         self.assertEqual(list(folder.items()), [('b', 2), ('a', 1)])
 
     def test__len__(self):
-        folder = self._makeOne({'a':1, 'b':2})
+        folder = self._makeOne({'a': 1, 'b': 2})
         self.assertEqual(len(folder), 2)
         del folder['a']
         self.assertEqual(len(folder), 1)
 
     def test__contains__(self):
-        folder = self._makeOne({'a':1, 'b':2})
+        folder = self._makeOne({'a': 1, 'b': 2})
         self.failUnless('a' in folder)
         self.failIf('c' in folder)
 
@@ -97,7 +98,7 @@ class TestFolder(unittest.TestCase):
     def test___setitem__nonstring(self):
         folder = self._makeOne()
         self.assertRaises(ValueError, folder.__setitem__, None, None)
-        
+
     def test___setitem__8bitstring(self):
         folder = self._makeOne()
         self.assertRaises(ValueError, folder.__setitem__, '\xff', None)
@@ -153,7 +154,7 @@ class TestFolder(unittest.TestCase):
     def test_check_name(self):
         folder = self._makeOne()
         self.assertRaises(ValueError, folder.check_name, '@@abc')
-        
+
     def test_add_send_events(self):
         from ...interfaces import IObjectEvent
         from ...interfaces import IObjectWillBeAdded
@@ -182,7 +183,7 @@ class TestFolder(unittest.TestCase):
         from ...interfaces import IObjectEvent
         events = []
         def listener(object, event):
-            events.append(event) #pragma NO COVER
+            events.append(event) # pragma NO COVER
         self._registerEventListener(listener, IObjectEvent)
         dummy = DummyModel()
         folder = self._makeOne()
@@ -201,10 +202,11 @@ class TestFolder(unittest.TestCase):
         self.assertEqual(folder.order, ['a', 'b'])
 
     def test___setitem__exists(self):
+        from ...exceptions import FolderKeyError
         dummy = DummyModel()
-        folder = self._makeOne({'a':dummy})
+        folder = self._makeOne({'a': dummy})
         self.assertEqual(folder._num_objects(), 1)
-        self.assertRaises(KeyError, folder.__setitem__, 'a', dummy)
+        self.assertRaises(FolderKeyError, folder.__setitem__, 'a', dummy)
         self.assertEqual(folder._num_objects(), 1)
 
     def test___delitem__(self):
@@ -218,7 +220,7 @@ class TestFolder(unittest.TestCase):
         dummy = DummyModel()
         dummy.__parent__ = None
         dummy.__name__ = None
-        folder = self._makeOne({'a':dummy})
+        folder = self._makeOne({'a': dummy})
         self.assertEqual(folder._num_objects(), 1)
         del folder['a']
         self.assertEqual(folder._num_objects(), 0)
@@ -242,7 +244,7 @@ class TestFolder(unittest.TestCase):
         dummy = DummyModel()
         dummy.__parent__ = None
         dummy.__name__ = None
-        folder = self._makeOne({'a':dummy})
+        folder = self._makeOne({'a': dummy})
         self.assertTrue(folder.remove("a") is dummy)
 
     def test_remove_send_events(self):
@@ -256,7 +258,7 @@ class TestFolder(unittest.TestCase):
         dummy = DummyModel()
         dummy.__parent__ = None
         dummy.__name__ = None
-        folder = self._makeOne({'a':dummy})
+        folder = self._makeOne({'a': dummy})
         self.assertEqual(folder._num_objects(), 1)
         folder.remove('a', send_events=True)
         self.assertEqual(folder._num_objects(), 0)
@@ -271,7 +273,7 @@ class TestFolder(unittest.TestCase):
         self.assertEqual(events[1].parent, folder)
         self.assertEqual(events[1].name, 'a')
         self.assertFalse(events[1].moving)
-        
+
         self.failIf(hasattr(dummy, '__parent__'))
         self.failIf(hasattr(dummy, '__name__'))
 
@@ -279,12 +281,12 @@ class TestFolder(unittest.TestCase):
         from ...interfaces import IObjectEvent
         events = []
         def listener(object, event):
-            events.append(event) #pragma NO COVER
+            events.append(event) # pragma NO COVER
         self._registerEventListener(listener, IObjectEvent)
         dummy = DummyModel()
         dummy.__parent__ = None
         dummy.__name__ = None
-        folder = self._makeOne({'a':dummy})
+        folder = self._makeOne({'a': dummy})
         self.assertEqual(folder._num_objects(), 1)
         folder.remove('a', send_events=False)
         self.assertEqual(folder._num_objects(), 0)
@@ -298,12 +300,12 @@ class TestFolder(unittest.TestCase):
         from ...interfaces import IObjectWillBeRemoved
         events = []
         def listener(object, event):
-            events.append(event) #pragma NO COVER
+            events.append(event) # pragma NO COVER
         self._registerEventListener(listener, IObjectEvent)
         dummy = DummyModel()
         dummy.__parent__ = None
         dummy.__name__ = None
-        folder = self._makeOne({'a':dummy})
+        folder = self._makeOne({'a': dummy})
         self.assertEqual(folder._num_objects(), 1)
         folder.remove('a', moving=True)
         self.assertEqual(folder._num_objects(), 0)
@@ -331,7 +333,7 @@ class TestFolder(unittest.TestCase):
         self.assertEqual(other['a'].__name__, 'a')
         self.assertEqual(other['a'].__parent__, other)
         self.assertFalse('a' in folder)
-        
+
     def test_move_newname(self):
         folder = self._makeOne()
         other = self._makeOne()
@@ -353,7 +355,7 @@ class TestFolder(unittest.TestCase):
         self.assertEqual(other['a'].__name__, 'a')
         self.assertEqual(other['a'].__parent__, other)
         self.assertTrue('a' in folder)
-        
+
     def test_copy_newname(self):
         folder = self._makeOne()
         other = self._makeOne()
@@ -374,7 +376,7 @@ class TestFolder(unittest.TestCase):
         self.assertEqual(folder['b'].__name__, 'b')
         self.assertEqual(folder['b'].__parent__, folder)
         self.assertFalse('a' in folder)
-        
+
     def test_remove_with_order_removes_name(self):
         folder = self._makeOne()
         folder['a'] = DummyModel()
@@ -400,7 +402,7 @@ class TestFolder(unittest.TestCase):
         self.assertEqual(folder['a'], other)
         self.assertEqual(other.__name__, 'a')
         self.assertEqual(other.__parent__, folder)
-        
+
     def test_pop_success(self):
         from ...interfaces import IObjectEvent
         from ...interfaces import IObjectRemoved
@@ -412,7 +414,7 @@ class TestFolder(unittest.TestCase):
         def listener(object, event):
             events.append(event)
         self._registerEventListener(listener, IObjectEvent)
-        folder = self._makeOne({'a':dummy})
+        folder = self._makeOne({'a': dummy})
         result = folder.pop('a')
         self.assertEqual(result, dummy)
         self.assertEqual(folder._num_objects(), 0)
@@ -456,7 +458,7 @@ class TestFolder(unittest.TestCase):
     def test_unresolveable_unicode_setitem(self):
         name = unicode('La Pe\xc3\xb1a', 'utf-8').encode('latin-1')
         folder = self._makeOne()
-        self.assertRaises(ValueError, 
+        self.assertRaises(ValueError,
                           folder.__setitem__, name, DummyModel())
 
     def test_resolveable_unicode_setitem(self):

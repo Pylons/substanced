@@ -5,6 +5,7 @@ from pyramid.httpexceptions import HTTPFound
 from pyramid.security import has_permission
 from pyramid.view import view_defaults
 
+from ..exceptions import FolderKeyError
 from ..schema import Schema
 from ..form import FormView
 from ..sdi import (
@@ -171,7 +172,9 @@ class FolderContentsViews(object):
         if not torename:
             request.session.flash('No items renamed')
             return HTTPFound(request.mgmt_path(context, '@@contents'))
-        return dict(torename=[context.get(name) for name in torename])
+        return dict(torename=[context.get(name)
+                              for name in torename
+                              if name in context])
 
     @mgmt_view(request_method='POST',
                request_param="form.rename_finish",
@@ -188,12 +191,14 @@ class FolderContentsViews(object):
             return HTTPFound(request.mgmt_path(context, '@@contents'))
 
         torename = request.POST.getall('item-rename')
-        for old_name in torename:
-            new_name = request.POST.get(old_name)
-            if new_name in context.keys():
-                pass
-                # TODO: what if we have name collisions again?
-            context.rename(old_name, new_name)
+        try:
+            for old_name in torename:
+                new_name = request.POST.get(old_name)
+                context.rename(old_name, new_name)
+        except FolderKeyError as e:
+            self.request.session.flash(e.message, 'error')
+            raise HTTPFound(request.mgmt_path(context, '@@contents'))
+
         if len(torename) == 1:
             msg = 'Renamed 1 item'
             request.flash_with_undo(msg)
@@ -213,7 +218,12 @@ class FolderContentsViews(object):
         tocopy = request.POST.getall('item-modify')
 
         if tocopy:
-            request.session['tocopy'] = [oid_of(context.get(name)) for name in tocopy]
+            l = []
+            for name in tocopy:
+                obj = context.get(name)
+                if obj is not None:
+                    l.append(oid_of(obj))
+            request.session['tocopy'] = l
             request.session.flash('Choose where to copy the items:', 'info')
         else:
             request.session.flash('No items to copy')
@@ -222,26 +232,27 @@ class FolderContentsViews(object):
 
     @mgmt_view(request_method='POST',
                request_param="form.copy_finish",
-               permission='sdi.view',
+               permission='sdi.manage-contents',
                tab_condition=False,
                check_csrf=True)
     def copy_finish(self):
         request = self.request
         context = self.context
-        if not has_permission('sdi.manage-contents', context, request):
-            request.session.flash('No permissions to copy here')
-            return HTTPFound(request.mgmt_path(context, '@@contents'))
+        objectmap = context.find_service('objectmap')
+        tocopy = request.session['tocopy']
+        del request.session['tocopy']
 
         if self.request.POST.get('form.copy_finish') == "cancel":
             request.session.flash('No items copied')
-            del request.session['tocopy']
             return HTTPFound(request.mgmt_path(context, '@@contents'))
 
-        objectmap = context.find_service('objectmap')
-        tocopy = request.session['tocopy']
-        for oid in tocopy:
-            obj = objectmap.object_for(oid)
-            obj.__parent__.copy(obj.__name__, context)
+        try:
+            for oid in tocopy:
+                obj = objectmap.object_for(oid)
+                obj.__parent__.copy(obj.__name__, context)
+        except FolderKeyError as e:
+            self.request.session.flash(e.message, 'error')
+            raise HTTPFound(request.mgmt_path(context, '@@contents'))
 
         if len(tocopy) == 1:
             msg = 'Copied 1 item'
@@ -249,7 +260,7 @@ class FolderContentsViews(object):
         else:
             msg = 'Copied %s items' % len(tocopy)
             request.flash_with_undo(msg)
-        del request.session['tocopy']
+
         return HTTPFound(request.mgmt_path(context, '@@contents'))
 
     @mgmt_view(request_method='POST',
@@ -263,7 +274,12 @@ class FolderContentsViews(object):
         tomove = request.POST.getall('item-modify')
 
         if tomove:
-            request.session['tomove'] = [oid_of(context.get(name)) for name in tomove]
+            l = []
+            for name in tomove:
+                obj = context.get(name)
+                if obj is not None:
+                    l.append(oid_of(obj))
+            request.session['tomove'] = l
             request.session.flash('Choose where to move the items:', 'info')
         else:
             request.session.flash('No items to move')
@@ -272,26 +288,27 @@ class FolderContentsViews(object):
 
     @mgmt_view(request_method='POST',
                request_param="form.move_finish",
-               permission='sdi.view',
+               permission='sdi.manage-contents',
                tab_condition=False,
                check_csrf=True)
     def move_finish(self):
         request = self.request
         context = self.context
-        if not has_permission('sdi.manage-contents', context, request):
-            request.session.flash('No permissions to move here')
-            return HTTPFound(request.mgmt_path(context, '@@contents'))
+        objectmap = context.find_service('objectmap')
+        tomove = request.session['tomove']
+        del request.session['tomove']
 
         if self.request.POST.get('form.move_finish') == "cancel":
             request.session.flash('No items moved')
-            del request.session['tomove']
             return HTTPFound(request.mgmt_path(context, '@@contents'))
 
-        objectmap = context.find_service('objectmap')
-        tomove = request.session['tomove']
-        for oid in tomove:
-            obj = objectmap.object_for(oid)
-            obj.__parent__.move(obj.__name__, context)
+        try:
+            for oid in tomove:
+                obj = objectmap.object_for(oid)
+                obj.__parent__.move(obj.__name__, context)
+        except FolderKeyError as e:
+            self.request.session.flash(e.message, 'error')
+            raise HTTPFound(request.mgmt_path(context, '@@contents'))
 
         if len(tomove) == 1:
             msg = 'Moved 1 item'
@@ -299,5 +316,5 @@ class FolderContentsViews(object):
         else:
             msg = 'Moved %s items' % len(tomove)
             request.flash_with_undo(msg)
-        del request.session['tomove']
+
         return HTTPFound(request.mgmt_path(context, '@@contents'))

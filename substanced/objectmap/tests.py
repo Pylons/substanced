@@ -131,7 +131,7 @@ class TestObjectMap(unittest.TestCase):
         inst.path_to_objectid[(u'',)] = 1
         self.assertRaises(ValueError, inst.add, obj, (u'',))
 
-    def test_add_is_duplicated(self):
+    def test_add_duplicating(self):
         inst = self._makeOne()
         obj = testing.DummyResource()
         obj.__objectid__ = 1
@@ -837,10 +837,10 @@ class DummyObjectMap:
         return [objectid]
 
 class DummyEvent(object):
-    def __init__(self, parent, moving=False, is_duplicated=False):
+    def __init__(self, parent, moving=False, duplicating=False):
         self.parent = parent
         self.moving = moving
-        self.is_duplicated = is_duplicated
+        self.duplicating = duplicating
 
 class DummyTreeSet(set):
     def insert(self, val):

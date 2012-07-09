@@ -1,8 +1,4 @@
-try:
-    from cStringIO import cStringIO as StringIO
-except ImportError:
-    from StringIO import StringIO
-import contextlib
+import tempfile
 
 from zope.interface import implementer
 from pyramid.threadlocal import get_current_registry
@@ -11,6 +7,8 @@ from persistent import Persistent
 
 import BTrees
 from BTrees.Length import Length
+
+from ..exceptions import FolderKeyError
 
 from ..interfaces import (
     IFolder,
@@ -242,23 +240,23 @@ class Folder(Persistent):
                              'allowed')
 
         if name in self.data:
-            raise KeyError('An object named %s already exists' % name)
+            raise FolderKeyError('An object named %s already exists' % name)
 
         return name
 
     def add(self, name, other, send_events=True,
-            allow_services=False, is_duplicated=False):
+            allow_services=False, duplicating=False):
         """ Same as ``__setitem__``.
 
         If ``send_events`` is False, suppress the sending of folder events.
         If ``allow_services`` is True, allow the name ``__services__`` to be
-        added. if ``is_duplicated`` is True, oids will be replaced in
+        added. if ``duplicating`` is True, oids will be replaced in
         objectmap.
         """
         name = self.check_name(name, allow_services)
 
         if send_events:
-            event = ObjectWillBeAdded(other, self, name, is_duplicated)
+            event = ObjectWillBeAdded(other, self, name, duplicating)
             self._notify(event)
 
         other.__parent__ = self
@@ -359,18 +357,22 @@ class Folder(Persistent):
         return other
 
     def copy(self, name, other, newname=None):
-        """"""
+        """
+        Copy a subobject named ``name`` from this folder to the folder
+        represented by ``other``.  If ``newname`` is not none, it is used as
+        the target object name; otherwise the existing subobject name is
+        used.
+        """
         if newname is None:
             newname = name
 
-        with contextlib.closing(StringIO()) as sio:
+        with tempfile.TemporaryFile() as f:
             obj = self.get(name)
-            obj._p_jar.exportFile(obj._p_oid, sio)
-            sio.seek(0)
-            new_obj = obj._p_jar.importFile(sio)
+            obj._p_jar.exportFile(obj._p_oid, f)
+            f.seek(0)
+            new_obj = obj._p_jar.importFile(f)
             del new_obj.__parent__
-            del new_obj.__objectid__
-            obj = other.add(newname, new_obj, is_duplicated=True)
+            obj = other.add(newname, new_obj, duplicating=True)
             return obj
 
     def move(self, name, other, newname=None):

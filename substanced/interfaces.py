@@ -111,8 +111,7 @@ class IObjectWillBeAdded(IObjectEvent):
     parent = Attribute('The folder to which the object is being added')
     name = Attribute('The name which the object is being added to the folder '
                      'with')
-    is_duplicated = Attribute('Boolean indicating object is a duplicate and '
-                     'should be remapped')
+    duplicating = Attribute('Boolean indicating object is a duplicate')
 
 class IObjectAdded(IObjectEvent):
     """ An event type sent when an object is added """
