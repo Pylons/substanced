@@ -208,7 +208,7 @@ class TestFolderContentsViews(unittest.TestCase):
         mock_rename_duplicated_resource.side_effect = ['a-1', 'b-1']
 
         inst = self._makeOne(context, request)
-        result = inst.duplicate()
+        inst.duplicate()
 
         mock_rename_duplicated_resource.assert_any_call(context, 'a')
         mock_rename_duplicated_resource.assert_any_call(context, 'b')
@@ -222,7 +222,7 @@ class TestFolderContentsViews(unittest.TestCase):
         request = mock.Mock()
         request.POST.getall.return_value = tuple()
         inst = self._makeOne(context, request)
-        result = inst.duplicate()
+        inst.duplicate()
 
         self.assertEqual(context.mock_calls, [])
         request.session.flash.assert_called_once_with('No items duplicated')
@@ -235,7 +235,7 @@ class TestFolderContentsViews(unittest.TestCase):
         request = mock.Mock()
         request.POST.getall.return_value = ('a',)
         inst = self._makeOne(context, request)
-        result = inst.duplicate()
+        inst.duplicate()
 
         mock_rename_duplicated_resource.assert_any_call(context, 'a')
         context.copy.assert_any_call('a', context, 'a-1')
@@ -292,7 +292,7 @@ class TestFolderContentsViews(unittest.TestCase):
                                                   'form.rename_finish': 'rename_finish'}[x]
 
         inst = self._makeOne(context, request)
-        result = inst.rename_finish()
+        inst.rename_finish()
         request.flash_with_undo.assert_called_once_with('Renamed 1 item')
         context.rename.assert_called_once_with('foobar', 'foobar2')
 
@@ -305,7 +305,7 @@ class TestFolderContentsViews(unittest.TestCase):
                                                   'form.rename_finish': 'rename_finish'}[x]
 
         inst = self._makeOne(context, request)
-        result = inst.rename_finish()
+        inst.rename_finish()
 
         request.flash_with_undo.assert_called_once_with('Renamed 2 items')
         context.rename.assert_any_call('foobar', 'foobar0')
@@ -318,7 +318,7 @@ class TestFolderContentsViews(unittest.TestCase):
         request.POST.get.side_effect = lambda x: {'foobar': 'foobar0',
                                                   'form.rename_finish': 'cancel'}[x]
         inst = self._makeOne(context, request)
-        result = inst.rename_finish()
+        inst.rename_finish()
 
         request.session.flash.assert_called_once_with('No items renamed')
         self.assertFalse(context.rename.called)
@@ -347,7 +347,7 @@ class TestFolderContentsViews(unittest.TestCase):
         request.POST.getall.return_value = ('foobar',)
 
         inst = self._makeOne(context, request)
-        result = inst.copy()
+        inst.copy()
 
         request.session.flash.assert_called_once_with('Choose where to copy the items:', 'info')
         self.assertEqual(mock_oid_of.mock_calls, [mock.call('foobar')])
@@ -363,7 +363,7 @@ class TestFolderContentsViews(unittest.TestCase):
         request.POST.getall.return_value = ('foobar', 'foobar1')
 
         inst = self._makeOne(context, request)
-        result = inst.copy()
+        inst.copy()
 
         request.session.flash.assert_called_once_with('Choose where to copy the items:', 'info')
         self.assertEqual(mock_oid_of.mock_calls, [mock.call('foobar'), mock.call('foobar1')])
@@ -378,7 +378,7 @@ class TestFolderContentsViews(unittest.TestCase):
         request.POST.getall.return_value = ('foobar', 'foobar1')
 
         inst = self._makeOne(context, request)
-        result = inst.copy()
+        inst.copy()
         request.session.flash.assert_called_once_with('Choose where to copy the items:', 'info')
         self.assertEqual(mock_oid_of.mock_calls, [mock.call('foobar')])
         self.assertTrue(request.session.__setitem__.called)
@@ -391,7 +391,7 @@ class TestFolderContentsViews(unittest.TestCase):
         request.POST.getall.return_value = tuple()
 
         inst = self._makeOne(context, request)
-        result = inst.copy()
+        inst.copy()
 
         request.session.flash.assert_called_once_with('No items to copy')
         self.assertFalse(mock_oid_of.called)
@@ -403,7 +403,7 @@ class TestFolderContentsViews(unittest.TestCase):
         request.POST.get.side_effect = lambda x: {'foobar': 'foobar0',
                                                   'form.copy_finish': 'cancel'}[x]
         inst = self._makeOne(context, request)
-        result = inst.copy_finish()
+        inst.copy_finish()
 
         request.session.flash.assert_called_once_with('No items copied')
         self.assertEqual(request.session.__delitem__.call_args, mock.call('tocopy'))
@@ -418,7 +418,7 @@ class TestFolderContentsViews(unittest.TestCase):
         request.POST.get.side_effect = lambda x: {'form.copy_finish': 'copy_finish'}[x]
 
         inst = self._makeOne(context['target'], request)
-        result = inst.copy_finish()
+        inst.copy_finish()
 
         self.assertEqual(mock_folder.__parent__.copy.call_args, mock.call(mock.sentinel.name, context['target']))
         request.flash_with_undo.assert_called_once_with('Copied 1 item')
@@ -434,7 +434,7 @@ class TestFolderContentsViews(unittest.TestCase):
         request.POST.get.side_effect = lambda x: {'form.copy_finish': 'copy_finish'}[x]
 
         inst = self._makeOne(context['target'], request)
-        result = inst.copy_finish()
+        inst.copy_finish()
 
         self.assertTrue(mock.call(123) in context['target'].find_service().object_for.mock_calls)
         self.assertTrue(mock.call(456) in context['target'].find_service().object_for.mock_calls)
@@ -466,7 +466,7 @@ class TestFolderContentsViews(unittest.TestCase):
         request.POST.getall.return_value = ('foobar',)
 
         inst = self._makeOne(context, request)
-        result = inst.move()
+        inst.move()
 
         request.session.flash.assert_called_once_with('Choose where to move the items:', 'info')
         self.assertEqual(mock_oid_of.mock_calls, [mock.call('foobar')])
@@ -481,7 +481,7 @@ class TestFolderContentsViews(unittest.TestCase):
         request.POST.getall.return_value = ('foobar', 'foobar1')
 
         inst = self._makeOne(context, request)
-        result = inst.move()
+        inst.move()
 
         request.session.flash.assert_called_once_with('Choose where to move the items:', 'info')
         self.assertEqual(mock_oid_of.mock_calls, [mock.call('foobar'), mock.call('foobar1')])
@@ -496,7 +496,7 @@ class TestFolderContentsViews(unittest.TestCase):
         request.POST.getall.return_value = ('foobar', 'foobar2')
 
         inst = self._makeOne(context, request)
-        result = inst.move()
+        inst.move()
 
         request.session.flash.assert_called_once_with('Choose where to move the items:', 'info')
         self.assertEqual(mock_oid_of.mock_calls, [mock.call('foobar')])
@@ -511,7 +511,7 @@ class TestFolderContentsViews(unittest.TestCase):
         request.POST.getall.return_value = tuple()
 
         inst = self._makeOne(context, request)
-        result = inst.move()
+        inst.move()
 
         request.session.flash.assert_called_once_with('No items to move')
         self.assertFalse(mock_oid_of.called)
@@ -524,7 +524,7 @@ class TestFolderContentsViews(unittest.TestCase):
         request.POST.get.side_effect = lambda x: {'foobar': 'foobar0',
                                                   'form.move_finish': 'cancel'}[x]
         inst = self._makeOne(context, request)
-        result = inst.move_finish()
+        inst.move_finish()
 
         request.session.flash.assert_called_once_with('No items moved')
         self.assertEqual(request.session.__delitem__.call_args, mock.call('tomove'))
@@ -539,7 +539,7 @@ class TestFolderContentsViews(unittest.TestCase):
         request.POST.get.side_effect = lambda x: {'form.move_finish': 'move_finish'}[x]
 
         inst = self._makeOne(context['target'], request)
-        result = inst.move_finish()
+        inst.move_finish()
 
         self.assertEqual(mock_folder.__parent__.move.call_args, mock.call(mock.sentinel.name, context['target']))
         request.flash_with_undo.assert_called_once_with('Moved 1 item')
@@ -555,7 +555,7 @@ class TestFolderContentsViews(unittest.TestCase):
         request.POST.get.side_effect = lambda x: {'form.move_finish': 'move_finish'}[x]
 
         inst = self._makeOne(context['target'], request)
-        result = inst.move_finish()
+        inst.move_finish()
 
         self.assertTrue(mock.call(123) in context['target'].find_service().object_for.mock_calls)
         self.assertTrue(mock.call(456) in context['target'].find_service().object_for.mock_calls)
