@@ -26,7 +26,7 @@ except IOError:
 install_requires = [
     'pyramid',
     'ZODB3',
-    'hypatia',
+    'hypatia>=0.1a2',
     'venusian',
     'deform',
     'colander',
