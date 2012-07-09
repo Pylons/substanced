@@ -1,8 +1,7 @@
-import unittest
 import sys
+import unittest
+
 from pyramid import testing
-from zope.interface import alsoProvides
-from pyramid.traversal import resource_path_tuple
 
 IS_32_BIT = sys.maxsize == 2**32
 
@@ -782,6 +781,7 @@ class Test_object_will_be_added(unittest.TestCase):
         
     def test_object_has_a_parent(self):
         from ..interfaces import IFolder
+        from pyramid.traversal import resource_path_tuple
         objectmap = DummyObjectMap()
         site = _makeSite(objectmap=objectmap)
         bogusroot = testing.DummyModel(__provides__=IFolder)
@@ -906,6 +906,7 @@ class DummyReferenceMap(dict):
     
 def _makeSite(**kw):
     from ..interfaces import IFolder
+    from zope.interface import alsoProvides
     site = testing.DummyResource(__provides__=kw.pop('__provides__', None))
     alsoProvides(site, IFolder)
     services = testing.DummyResource()
@@ -913,4 +914,3 @@ def _makeSite(**kw):
         services[k] = v
     site['__services__'] = services
     return site
-
