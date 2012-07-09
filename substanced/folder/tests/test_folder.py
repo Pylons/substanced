@@ -1,5 +1,4 @@
 import unittest
-import mock
 from pyramid import testing
 
 from zope.interface import Interface
