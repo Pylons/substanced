@@ -39,8 +39,8 @@ index will end up looking like this:
 >>> map.add('/a/b/c')
 >>> map.pathindex
 
-{(u'',):                  {3: set([1])}, 
- (u'', u'a'):             {2: set([1])}, 
+{(u'',):                  {3: set([1])},
+ (u'', u'a'):             {2: set([1])},
  (u'', u'a', u'b'):       {1: set([1])},
  (u'', u'a', u'b', u'c'): {0: set([1])}}
 
@@ -52,8 +52,8 @@ will look like this:
 >>> map.add('/a')
 >>> map.pathindex
 
-{(u'',):                  {1: set([2]), 3: set([1])}, 
- (u'', u'a'):             {0: set([2]), 2: set([1])}, 
+{(u'',):                  {1: set([2]), 3: set([1])},
+ (u'', u'a'):             {0: set([2]), 2: set([1])},
  (u'', u'a', u'b'):       {1: set([1])},
  (u'', u'a', u'b', u'c'): {0: set([1])}}
 
@@ -62,8 +62,8 @@ If we then add '/z' (and its objectid is 3):
 >>> map.add('/z')
 >>> map.pathindex
 
-{(u'',):                  {1: set([2, 3]), 3: set([1])}, 
- (u'', u'a'):             {0: set([2]), 2: set([1])}, 
+{(u'',):                  {1: set([2, 3]), 3: set([1])},
+ (u'', u'a'):             {0: set([2]), 2: set([1])},
  (u'', u'a', u'b'):       {1: set([1])},
  (u'', u'a', u'b', u'c'): {0: set([1])},
  (u'', u'z'):             {0: set([3])}}
@@ -73,8 +73,8 @@ add an item to object map with a path that already exists in the object
 map.
 
 If '/a' (objectid 2) is then removed, the pathindex is adjusted to remove
-references to the objectid represented by '/a' *and* any children (in this case,
-there's a child at '/a/b/c').
+references to the objectid represented by '/a' *and* any children
+(in this case, there's a child at '/a/b/c').
 
 >>> map.remove(2)
 >>> map.pathindex
@@ -161,7 +161,7 @@ class ObjectMap(Persistent):
             context = self.__parent__
         return find_resource(context, path_tuple)
             
-    def add(self, obj, path_tuple):
+    def add(self, obj, path_tuple, replace_oid=False):
         """ Add a new object to the object map at the location specified by
         ``path_tuple`` (must be the path of the object in the object graph as
         a tuple, as returned by Pyramid's ``resource_path_tuple`` function)."""
@@ -170,7 +170,7 @@ class ObjectMap(Persistent):
 
         objectid = oid_of(obj, _marker)
 
-        if objectid is _marker:
+        if objectid is _marker or replace_oid:
             objectid = self.new_objectid()
             obj.__objectid__ = objectid
         elif objectid in self.objectid_to_path:
@@ -521,7 +521,10 @@ def object_will_be_added(event):
     for node in postorder(obj):
         node_path = node_path_tuple(node)
         path_tuple = basepath + (name,) + node_path[1:]
-        objectmap.add(node, path_tuple) # gives node an object id
+        # the below gives node an objectid; if the will-be-added event is
+        # the result of a duplication, replace the oid of the node with a new
+        # one
+        objectmap.add(node, path_tuple, replace_oid=event.duplicating)
 
 @subscribe_removed()
 def object_removed(event):

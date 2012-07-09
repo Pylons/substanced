@@ -12,7 +12,7 @@ UI-Plus-Guts
 - Create object map management UI (view relationships, view paths, view
   objectids).
 
-- Allow cut, copy, paste, rename, (import/export?) from contents view.
+- import/export from contents view
 
 - Add Undo tab to Site (or per folder?) which will allow admins to undo recent
   transactions.  Implied: add transaction notes to all transactions.

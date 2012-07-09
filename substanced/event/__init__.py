@@ -26,6 +26,11 @@ class ObjectAdded(_ObjectEvent):
 @implementer(IObjectWillBeAdded)
 class ObjectWillBeAdded(_ObjectEvent):
     """ An event sent just before an object has been added to a folder.  """
+    def __init__(self, object, parent, name, duplicating=False):
+        self.object = object
+        self.parent = parent
+        self.name = name
+        self.duplicating = duplicating
 
 class _ObjectRemovalEvent(object):
     def __init__(self, object, parent, name, moving=False):

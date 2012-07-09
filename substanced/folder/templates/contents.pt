@@ -12,7 +12,7 @@
   </div>
 
   <div metal:fill-slot="main">
-     <form action="@@delete_folder_contents" method="POST">
+    <form action="@@contents" method="POST">
 
       <fieldset>
 
@@ -45,13 +45,13 @@
           <div class="span3">
             <tal:loop tal:repeat="choice batch.items">
               <tal:block condition="choice['viewable']">
-                <label class="checkbox" for="delete-${repeat.choice.index}">
+                <label class="checkbox" for="item-${repeat.choice.index}">
                   <i class="${choice['icon']}"> </i>
-                  <input tal:attributes="disabled not choice['deletable']"
+                  <input tal:attributes="disabled not choice['modifiable']"
                          type="checkbox"
-                         name="delete"
+                         name="item-modify"
                          value="${choice['name']}"
-                         id="delete-${repeat.choice.index}"/>
+                         id="item-${repeat.choice.index}"/>
                   <a href="${choice['url']}">${choice['name']}</a>
                 </label>
               </tal:block>
@@ -67,13 +67,13 @@
               <div class="span3">
                 <tal:loop tal:repeat="choice column">
                   <tal:block condition="choice['viewable']">
-                    <label class="checkbox" for="delete-${position}">
+                    <label class="checkbox" for="item-${position}">
                       <i class="${choice['icon']}"> </i>
-                      <input tal:attributes="disabled not choice['deletable']"
+                      <input tal:attributes="disabled not choice['modifiable']"
                              type="checkbox"
-                             name="delete"
+                             name="item-modify"
                              value="${choice['name']}"
-                             id="delete-${position}"/>
+                             id="item-${position}"/>
                       <a href="${choice['url']}">${choice['name']}</a>
                     </label>
                   </tal:block>
@@ -95,15 +95,86 @@
       <input type="hidden" name="csrf_token" 
              value="${request.session.get_csrf_token()}"/>
 
-      <div class="form-actions">
-        <button
-            id="delete"
-            name="form.delete"
-            type="submit"
-            class="btn btn-danger"
-            value="delete">
-          Delete
-        </button>
+      <div class="form-actions btn-toolbar">
+        <tal:block tal:condition="'tocopy' in request.session">
+          <button id="copy_finish"
+                  name="form.copy_finish"
+                  type="submit"
+                  class="btn btn-primary"
+                  value="copy_finish">
+            Copy here
+          </button>
+
+          <button
+              id="cancel"
+              name="form.copy_finish"
+              type="submit"
+              class="btn btn-danger"
+              value="cancel">
+            Cancel
+          </button>
+        </tal:block>
+        <tal:block tal:condition="'tomove' in request.session">
+          <button id="move_finish"
+                  name="form.move_finish"
+                  type="submit"
+                  class="btn btn-primary"
+                  value="move_finish">
+            Move here
+          </button>
+
+          <button
+              id="cancel"
+              name="form.move_finish"
+              type="submit"
+              class="btn btn-danger"
+              value="cancel">
+            Cancel
+          </button>
+        </tal:block>
+
+        <tal:block tal:condition="'tocopy' not in request.session and 'tomove' not in request.session">
+        <div class="btn-group">
+          <button id="rename"
+                  name="form.rename"
+                  type="submit"
+                  class="btn"
+                  value="rename">
+            Rename
+          </button>
+          <button id="copy"
+                  name="form.copy"
+                  type="submit"
+                  class="btn"
+                  value="copy">
+             Copy
+          </button>
+          <button id="move"
+                  name="form.move"
+                  type="submit"
+                  class="btn"
+                  value="move">
+            Move
+          </button>
+          <button id="duplicate"
+                  name="form.duplicate"
+                  type="submit"
+                  class="btn"
+                  value="duplicate">
+            Duplicate
+          </button>
+        </div>
+
+        <div class="btn-group">
+          <button
+              id="delete"
+              name="form.delete"
+              type="submit"
+              class="btn btn-danger"
+              value="delete">
+            Delete
+          </button>
+        </div>
         <div class="btn-group pull-right" tal:condition="addables">
           <a class="btn btn-primary" 
              href="${request.mgmt_path(context, '@@add')}"><i 
@@ -116,9 +187,11 @@
               class="${addable['icon']}"></i> ${addable['type_name']}</a></li>
           </ul>
         </div>
+        </tal:block>
+
       </div>
       </fieldset>
-     </form>
+    </form>
 
   </div>
 
