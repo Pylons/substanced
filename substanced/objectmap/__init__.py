@@ -274,7 +274,7 @@ class ObjectMap(Persistent):
             path_tuple = obj_or_path_tuple
         else:
             raise ValueError(
-                'pathlookup must be provided a traversable object or a '
+                'must provide a traversable object or a '
                 'path tuple, got %s' % (obj_or_path_tuple,))
         return path_tuple
     
