@@ -135,7 +135,7 @@ class mgmt_view(object):
                  decorator=default, mapper=default, http_cache=default,
                  match_param=default, tab_title=default, tab_condition=default,
                  check_csrf=default, csrf_token=default):
-        L = locals()
+        L = dict(locals())
         if (context is not default) or (for_ is not default):
             L['context'] = context or for_
         for k, v in L.items():
