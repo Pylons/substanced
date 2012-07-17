@@ -14,7 +14,7 @@ from repoze.evolution import evolve_to_latest
 def usage(e=None):
     if e is not None:
         print e
-    print "evolve [--latest] [--set-db-version=num] [--package=name] config_uri"
+    print "sd_evolve [--latest] [--set-db-version=num] [--package=name] config_uri"
     print "  Evolves new database with changes from scripts in evolve packages"
     print "     - with no arguments, evolve just displays versions"
     print "     - with the --latest argument, evolve runs scripts as necessary"
