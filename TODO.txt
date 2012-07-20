@@ -26,6 +26,8 @@ UI-Plus-Guts
 - Allow reordering of resources in folder contents view when the folder is
   ordered.
 
+- Computable icons.
+
 Guts-Only
 ---------
 
