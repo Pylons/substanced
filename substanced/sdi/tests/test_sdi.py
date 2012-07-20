@@ -520,6 +520,41 @@ class Test_get_add_views(unittest.TestCase):
         result = self._callFUT(request, context)
         self.assertEqual(result, [])
 
+    def test_content_type_not_addable_to(self):
+        request = testing.DummyRequest()
+        request.matched_route = None
+        request.registry.content = DummyContent()
+        request.mgmt_path = lambda *arg: '/path'
+        context = testing.DummyResource()
+        context.__content_type__ = 'Foo'
+        ct_intr = {}
+        ct_intr['meta'] = {'add_view':lambda *arg: 'abc'}
+        ct_intr['content_type'] = 'Content'
+        ct_intr = DummyIntrospectable(introspectable=ct_intr)
+        ct2_intr = {}
+        checked = []
+        def check(context, request):
+            checked.append(True)
+        ct2_intr['meta'] = {'add_view':check}
+        ct2_intr['content_type'] = 'Content'
+        ct2_intr = DummyIntrospectable(introspectable=ct2_intr)
+        view_intr1 = DummyIntrospectable()
+        view_intr1.category_name = 'views'
+        view_intr1['name'] = 'abc'
+        view_intr1['context'] = None
+        view_intr1['derived_callable'] = None
+        intr = {}
+        intr['tab_title'] = 'abc'
+        intr['tab_condition'] = None
+        intr = DummyIntrospectable(related=(view_intr1,), introspectable=intr)
+        request.registry.introspector = DummyIntrospector(
+            [(ct_intr, ct2_intr), (intr,)])
+        result = self._callFUT(request, context)
+        self.assertEqual(checked, [True])
+        self.assertEqual(
+            result,
+            [{'url': '/path', 'type_name': 'Content', 'icon': ''}])
+
 class Test_get_user(unittest.TestCase):
     def _callFUT(self, request):
         from .. import get_user

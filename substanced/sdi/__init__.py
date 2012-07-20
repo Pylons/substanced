@@ -20,6 +20,7 @@ from pyramid.session import UnencryptedCookieSessionFactoryConfig
 from pyramid.traversal import resource_path_tuple
 
 from ..service import find_service
+from ..content import get_content_type
 
 MANAGE_ROUTE_NAME = 'substanced_manage'
 
@@ -250,6 +251,10 @@ def get_add_views(request, context=None):
         content_type = intr['content_type']
         viewname = meta.get('add_view')
         if viewname:
+            if callable(viewname):
+                viewname = viewname(context, request)
+                if not viewname:
+                    continue
             addable_here = getattr(context, '__addable__', None)
             if addable_here is not None:
                 if not content_type in addable_here:
