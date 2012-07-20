@@ -83,7 +83,7 @@ class TestObjectMap(unittest.TestCase):
         inst._find_resource = lambda *arg: a
         self.assertEqual(inst.object_for(1), a)
 
-    if IS_32_BIT:
+    if IS_32_BIT: # pragma: no cover
         def test_object_for_long(self):
             a = testing.DummyResource()
             inst = self._makeOne()
@@ -184,7 +184,7 @@ class TestObjectMap(unittest.TestCase):
         inst.remove(1)
         self.assertEqual(dict(inst.objectid_to_path), {})
 
-    if IS_32_BIT:
+    if IS_32_BIT: # pragma: no cover
         def test_remove_long(self):
             inst = self._makeOne()
             oid = sys.maxint + 1
