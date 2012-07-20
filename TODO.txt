@@ -92,3 +92,7 @@ Nice-to-Have Features
 
 - Ability to add and edit principals in existing ACEs in ACL edit view.
 
+Docs
+----
+
+- Document that add_view can be a callable.
