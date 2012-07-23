@@ -35,11 +35,6 @@ Guts-Only
 
 - Figure out how to let people override generic add view.
 
-- Create a scaffold.
-
-- Define path index CQE syntax (currently path indexes can only be queried
-  using query instance syntax).
-
 - Substance D ACLs contain object identifiers which refer to principals.
   Currently, when a principal is deleted, ACLs which refer to the principal
   are not adjusted.  This is both a security issue and a sanity issue.  The
@@ -67,8 +62,6 @@ Guts-Only
 
 - Emit an ObjectMoving event rather than removed event with a moving flag,
   then an add event?
-
-- Use family64 for objectmap and catalog BTrees/Sets.
 
 - Get rid of ISite?  Use presence of __services__ to denote site?
 
