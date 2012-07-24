@@ -102,6 +102,8 @@ class FolderContentsViews(object):
             if has_permission('sdi.view', v, request):
                 viewable = True
             icon = request.registry.content.metadata(v, 'icon')
+            if callable(icon):
+                icon = icon(context, request)
             modifiable = can_manage and k != SERVICES_NAME
             data = dict(name=k, modifiable=modifiable, viewable=viewable,
                         url=url, icon=icon)

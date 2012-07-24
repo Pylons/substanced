@@ -139,6 +139,30 @@ class TestFolderContentsViews(unittest.TestCase):
         self.assertEqual(item['icon'], 'icon')
         self.assertEqual(item['name'], 'a')
 
+    def test_show_computable_icon(self):
+        self.config.testing_securitypolicy(permissive=True)
+        context = testing.DummyResource()
+        context['a'] = testing.DummyResource()
+        request = self._makeRequest()
+        def computed_icon(v, default=None):
+            def inner(_context, _request):
+                self.assertEqual(_context, context)
+                self.assertEqual(_request, request)
+                return 'anicon'
+            return inner
+        request.registry.content.metadata = computed_icon
+        inst = self._makeOne(context, request)
+        inst.get_add_views = lambda *arg: ()
+        result = inst.show()
+        batch = result['batch']
+        self.assertEqual(len(batch.items), 1)
+        item = batch.items[0]
+        self.assertEqual(item['url'], '/manage')
+        self.assertTrue(item['viewable'])
+        self.assertTrue(item['modifiable'])
+        self.assertEqual(item['icon'], 'anicon')
+        self.assertEqual(item['name'], 'a')
+
     def test_show_all_permissions_services_name(self):
         self.config.testing_securitypolicy(permissive=True)
         context = testing.DummyResource()
