@@ -1,0 +1,13 @@
+TODO
+- content types
+- fix tests
+
+TO DISCUSS
+- initialize(rename it) + IObjectAdded?
+
+FROM DCWORKFLOW:
+- context based workflow
+- workflow events -> before, after
+- update permission when setting the state
+- collect user, datetime info when changing state
+- workflow history
