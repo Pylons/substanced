@@ -771,7 +771,7 @@ class TestGetWorkflow(unittest.TestCase):
 
     def _callFUT(self, iface, name=''):
         from ...workflow import get_workflow
-        return get_workflow(name, iface)
+        return get_workflow(testing.DummyRequest(), name, iface)
 
     def _registerWorkflowList(self, content_type, workflows, name=''):
         from pyramid.threadlocal import get_current_registry

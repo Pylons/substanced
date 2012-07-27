@@ -288,11 +288,10 @@ class CallbackInfo(object):
         self.transition = transition
         self.request = request
 
-def get_workflow(type, content_type=IDefaultWorkflow):
-    """Return a workflow based on a content_type, the workflow type,
-    and (optionally) a context.
+def get_workflow(request, type, content_type=IDefaultWorkflow):
+    """Return a workflow based on a content_type, the workflow type.
     """
-    reg = get_current_registry()
+    reg = request.registry
 
     # TODO: work with substanced content_types strings
     if not IInterface.providedBy(content_type):
@@ -313,7 +312,7 @@ def get_workflow(type, content_type=IDefaultWorkflow):
     if wf_list:
         return wf_list[0]
 
-def register_workflow(workflow, type_,
+def register_workflow(config, workflow, type_,
                       content_type=IDefaultWorkflow):
     """"""
 
@@ -322,7 +321,7 @@ def register_workflow(workflow, type_,
     if not IInterface.providedBy(content_type):
         content_type = providedBy(content_type)
 
-    reg = get_current_registry()
+    reg = config.registry
 
     # check for existing workflow and if none exist, register it
     wf_list = reg.adapters.lookup((content_type,),
@@ -349,7 +348,7 @@ def add_workflow(config, workflow, content_types=(None,)):
     for content_type in content_types:
         config.action((IWorkflow, content_type, workflow.type),
                       callable=register_workflow,
-                      args=(workflow, workflow.type, content_type))
+                      args=(config, workflow, workflow.type, content_type))
 
 def includeme(config): # pragma: no cover
     config.add_directive('add_workflow', add_workflow)
