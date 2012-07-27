@@ -1,6 +1,3 @@
 repoze.lru
 repoze.evolution
 repoze.catalog
-repoze.workflow
-
-

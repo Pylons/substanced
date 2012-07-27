@@ -365,7 +365,7 @@ class IFile(Interface):
           content type using the ``python-magic`` library based on the
           stream's actual content.
         """
-        
+
     def get_response(self, **kw):
         """ Return a WebOb-compatible response object which uses the blob
         content as the stream data and the mimetype of the file as the
