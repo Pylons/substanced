@@ -30,13 +30,13 @@ class Workflow(object):
     implements(IWorkflow)
 
     def __init__(self, initial_state, type, name='', description=''):
-        self.type = type
         self._transition_data = {}
         self._transition_order = []
         self._state_data = {}
         self._state_order = []
         self.initial_state = initial_state
         self.name = name
+        self.type = type
         self.description = description
 
     def __call__(self, context):
@@ -80,11 +80,6 @@ class Workflow(object):
             raise WorkflowError('Workflow must define its initial state %r'
                                 % self.initial_state)
 
-    def _state_of(self, content):
-        states = getattr(content, STATE_ATTR, None)
-        if states:
-            return states.get(self.type, None)
-
     def _set_state(self, content, state):
         states = getattr(content, STATE_ATTR, None)
         if not states:
@@ -93,16 +88,13 @@ class Workflow(object):
 
     def state_of(self, content):
         """"""
-        if content is None: # for add forms
-            return self.initial_state
-        state = self._state_of(content)
-        if state is None:
-            state, msg = self.initialize(content)
-        return state
+        states = getattr(content, STATE_ATTR, None)
+        if states:
+            return states.get(self.type, None)
 
     def has_state(self, content):
         """"""
-        return self._state_of(content) is not None
+        return self.state_of(content) is not None
 
     def _state_info(self, content, from_state=None):
         content_state = self.state_of(content)
@@ -158,10 +150,9 @@ class Workflow(object):
 
     def reset(self, content, request=None):
         """"""
-        state = self._state_of(content)
+        state = self.state_of(content)
         if state is None:
-            state, msg = self.initialize(content)
-            return self.initial_state, msg
+            return self.initialize(content)
         try:
             stateinfo = self._state_data[state]
         except KeyError:

@@ -126,23 +126,29 @@ class WorkflowTests(unittest.TestCase):
         ob.__workflow_state__ = {'basic': 'abc'}
         self.assertEqual(sm.has_state(ob), True)
 
-    def test__state_of_uninitialized(self):
+    def test_state_of_uninitialized(self):
         sm = self._makeOne()
         ob = DummyContent()
-        self.assertEqual(sm._state_of(ob), None)
+        self.assertEqual(sm.state_of(ob), None)
 
-    def test__state_of_initialized(self):
+    def test_state_of_initialized(self):
         sm = self._makeOne()
         ob = DummyContent()
         ob.__workflow_state__ = {'basic': 'pending'}
-        self.assertEqual(sm._state_of(ob), 'pending')
+        self.assertEqual(sm.state_of(ob), 'pending')
 
-    def test_state_of_does_initialization(self):
+    def test__set_state_empty(self):
+        wf = self._makeOne()
+        ob = DummyContent()
+        self.assertEqual(getattr(wf, '__workflow_state__', None), None)
+        self.assertEqual(wf._set_state(ob, 'pending'), None)
+        self.assertEqual(ob.__workflow_state__['basic'], 'pending')
+
+    def test_state_of_no_workflow_is_None(self):
         sm = self._makeOne()
         sm.add_state('pending')
         ob = DummyContent()
-        self.assertEqual(sm.state_of(ob), 'pending')
-        self.assertEqual(ob.__workflow_state__['basic'], 'pending')
+        self.assertEqual(sm.state_of(ob), None)
 
     def test_state_of_nondefault(self):
         sm = self._makeOne()
@@ -150,9 +156,9 @@ class WorkflowTests(unittest.TestCase):
         ob.__workflow_state__ = {'basic': 'pending'}
         self.assertEqual(sm.state_of(ob), 'pending')
 
-    def test_state_of_None_is_initial_state(self):
+    def test_state_of_None_is_None(self):
         sm = self._makeOne()
-        self.assertEqual(sm.state_of(None), 'pending')
+        self.assertEqual(sm.state_of(None), None)
 
     def test_add_state_state_exists(self):
         from .. import WorkflowError
@@ -394,6 +400,7 @@ class WorkflowTests(unittest.TestCase):
     def test__transition_to_state_skip_same_true(self):
         sm = self._makeOne(initial_state='pending')
         ob = DummyContent()
+        ob.__workflow_state__ = {}
         ob.__workflow_state__['basic'] = 'pending'
         self.assertEqual(sm._transition_to_state(ob, 'pending', (), True),
                          None)
@@ -755,7 +762,7 @@ class CallbackInfoTests(unittest.TestCase):
         self.assertEqual(info.workflow, 'workflow')
         self.assertEqual(info.transition, 'transition')
 
-class TestGetWorkflow(unittest.TestCase):
+class GetWorkflowTests(unittest.TestCase):
 
     def setUp(self):
         testing.setUp()
@@ -856,12 +863,22 @@ class TestGetWorkflow(unittest.TestCase):
             self._callFUT(IContent2),
             specific_workflow)
 
-class DummyContent:
-    __workflow_state__ = {}
+class add_workflowTests(unittest.TestCase):
 
-class DummyCallbackInfo:
-    def __init__(self, workflow=None, transition=None):
-        self.workflow = workflow
+    def _callFUT(self, workflow, content_types=(None,), config=None):
+        from ...workflow import add_workflow
+        add_workflow(config, workflow, content_types)
+
+class register_workflowTests(unittest.TestCase):
+
+    def _callFUT(self, workflow, type_,
+                 content_type=None, config=None):
+        from ...workflow import register_workflow
+        register_workflow(config, workflow, content_types)
+
+
+class DummyContent:
+    pass
 
 # TODO: integration tests for multiple workflows
 # TODO: integration tests for register_workflow, add_workflow
