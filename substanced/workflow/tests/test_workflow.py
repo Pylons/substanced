@@ -863,31 +863,5 @@ class DummyCallbackInfo:
     def __init__(self, workflow=None, transition=None):
         self.workflow = workflow
 
-    def test_transition_not_permissive(self):
-        args = []
-        def checker(*arg):
-            args.append(arg)
-            return False
-        from .. import WorkflowError
-        workflow = self._makeOne(permission_checker=checker)
-        transitioned = []
-        def append(content, name, context=None, request=None):
-            D = {'content': content, 'name': name, 'request': request,
-                 'context': context}
-            transitioned.append(D)
-        workflow._transition = lambda *arg, **kw: append(*arg, **kw)
-        request = object()
-        content = DummyContent()
-        content.__workflow_state__ = {'basic': 'pending'}
-        workflow.transition(content, request, 'publish')
-        self.assertEqual(len(transitioned), 1)
-        transitioned = transitioned[0]
-        self.assertEqual(transitioned['content'], content)
-        self.assertEqual(transitioned['name'], 'publish')
-        self.assertEqual(transitioned['request'], request)
-        self.assertEqual(transitioned['context'], None)
-        self.assertEqual(args, [('view', None, request)])
-        self.transition = transition or {}
-
 # TODO: integration tests for multiple workflows
 # TODO: integration tests for register_workflow, add_workflow
