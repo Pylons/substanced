@@ -198,7 +198,7 @@ class FolderContentsViews(object):
                 new_name = request.POST.get(old_name)
                 context.rename(old_name, new_name)
         except FolderKeyError as e:
-            self.request.session.flash(e.message, 'error')
+            self.request.session.flash(e.args[0], 'error')
             raise HTTPFound(request.mgmt_path(context, '@@contents'))
 
         if len(torename) == 1:
@@ -253,7 +253,7 @@ class FolderContentsViews(object):
                 obj = objectmap.object_for(oid)
                 obj.__parent__.copy(obj.__name__, context)
         except FolderKeyError as e:
-            self.request.session.flash(e.message, 'error')
+            self.request.session.flash(e.args[0], 'error')
             raise HTTPFound(request.mgmt_path(context, '@@contents'))
 
         if len(tocopy) == 1:
@@ -309,7 +309,7 @@ class FolderContentsViews(object):
                 obj = objectmap.object_for(oid)
                 obj.__parent__.move(obj.__name__, context)
         except FolderKeyError as e:
-            self.request.session.flash(e.message, 'error')
+            self.request.session.flash(e.args[0], 'error')
             raise HTTPFound(request.mgmt_path(context, '@@contents'))
 
         if len(tomove) == 1:
