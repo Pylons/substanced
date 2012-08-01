@@ -4,6 +4,8 @@ import transaction
 
 import BTrees
 
+from zope.interface import implementer
+
 from hypatia.catalog import CatalogQuery
 
 from pyramid.traversal import resource_path
@@ -26,6 +28,7 @@ logger = logging.getLogger(__name__) # API
     name='Catalog',
     icon='icon-search'
     )
+@implementer(ICatalog)
 class Catalog(Folder):
     
     family = BTrees.family64

@@ -8,8 +8,6 @@ from zope.interface import (
     implementer,
     )
 
-from pyramid.exceptions import ConfigurationError
-
 class TestContentRegistry(unittest.TestCase):
     def _makeOne(self):
         from . import ContentRegistry
@@ -113,14 +111,6 @@ class Test_add_content_type(unittest.TestCase):
     def _callFUT(self, *arg, **kw):
         from . import add_content_type
         return add_content_type(*arg, **kw)
-
-    def test_fail_content_type_already_set(self):
-        class Dummy(object):
-            __content_type__ = 'dummy'
-        config = DummyConfig()
-        config.registry.content = DummyContentRegistry()
-        self.assertRaises(ConfigurationError, self._callFUT,
-                          config, 'foo', Dummy)
 
     def test_success_function(self):
         dummy = Dummy()

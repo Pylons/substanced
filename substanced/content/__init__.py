@@ -1,13 +1,10 @@
 import inspect
 
-from pyramid.exceptions import ConfigurationError
-
 from zope.interface.interfaces import IInterface
 
 from zope.interface import (
     alsoProvides,
     Interface,
-    implementer,
     implementedBy,
     )
 
@@ -25,11 +22,6 @@ def get_content_type(context):
     return getattr(context, '__content_type__', None)
 
 def set_content_type(context, content_type):
-    has_type = context.__dict__.get('__content_type__')
-    if has_type is not None:
-        raise ConfigurationError(
-            'The context %s already has a content type (%s)' % (
-                context, has_type))
     context.__content_type__ = content_type
 
 class ContentRegistry(object):
@@ -90,8 +82,13 @@ class content(object):
         self.meta = meta
 
     def __call__(self, wrapped):
-        interfaces = _get_meta_interfaces(self.content_type, wrapped, self.meta)
-        implementer(*interfaces)(wrapped)
+        # NB: we don't want to make a content registration with a
+        # content-type that's an interface eagerly imply it's an @implementer
+        # of such a type because folks may need to override content type
+        # construction.  For example, they might use the same factory but an
+        # alternate set of metainformation (including interfaces) and we
+        # don't want the interfaces claimed by the unused content
+        # registration to hang around on the factory.
         def callback(context, name, ob):
             config = context.config.with_package(info.module)
             config.add_content_type(self.content_type, wrapped, **self.meta)
@@ -124,18 +121,18 @@ def add_content_type(config, content_type, factory, **meta):
 
     Other keywords will just be stored, and have no special meaning.
     """
-    # NB: it's intentional that if this function is called by the ``content``
-    # decorator that we reset the implemented interfaces; it's idempotent and
-    # this is for benefit of someone who is not using the decorator.
+
+    # NB: we don't want to make a content registration with a content-type
+    # that's an interface eagerly imply it's an @implementer of such a type
+    # because folks may need to override content construction.  For example,
+    # they might use the same factory but an alternate set of metainformation
+    # (including interfaces) and we don't want the interfaces claimed by the
+    # unused content registration to hang around on the factory.
+    
     interfaces = _get_meta_interfaces(content_type, factory, meta)
-    implementer(*interfaces)(factory)
-
-    set_content_type(factory, content_type)
-
-    if not inspect.isclass(factory):
+    
+    def register_factory(factory=factory):
         factory = provides_factory(factory, content_type, interfaces)
-
-    def register_factory():
         config.registry.content.add(content_type, factory, **meta)
 
     discrim = ('sd-content-type', content_type)
@@ -160,9 +157,10 @@ def provides_factory(factory, content_type, interfaces):
         alsoProvides(inst, *interfaces)
         set_content_type(inst, content_type)
         return inst
-    for attr in ('__doc__', '__name__', '__module__'):
-        if hasattr(factory, attr):
-            setattr(add_provides, attr, getattr(factory, attr))
+    if not inspect.isclass(factory):
+        for attr in ('__doc__', '__name__', '__module__'):
+            if hasattr(factory, attr):
+                setattr(add_provides, attr, getattr(factory, attr))
     add_provides.__orig__ = factory
     return add_provides
 

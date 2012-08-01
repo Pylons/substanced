@@ -2,28 +2,38 @@ import datetime
 import StringIO
 import time
 
-from colander import DateTime
-from colander import deferred
-from colander import Invalid
-from colander import OneOf
-from colander import SchemaNode
-from colander import String
+from colander import (
+    DateTime,
+    deferred,
+    Invalid,
+    OneOf,
+    SchemaNode,
+    String,
+    )
 from deform.schema import FileData
-from deform.widget import FileUploadWidget
-from deform.widget import SelectWidget
-from deform.widget import TextAreaWidget
+from deform.widget import (
+    FileUploadWidget,
+    SelectWidget,
+    TextAreaWidget,
+    )
+
 from persistent import Persistent
 from pytz import timezone
-from pyramid.security import Allow
-from pyramid.security import Everyone
+from pyramid.security import (
+    Allow,
+    Everyone,
+    )
 from substanced.content import content
 from substanced.schema import Schema
 from substanced.folder import Folder
 from substanced.form import FileUploadTempStore
 from substanced.property import PropertySheet
-from substanced.site import Site
-from substanced.site import SitePropertySheet
+from substanced.site import (
+    Site,
+    SitePropertySheet,
+    )
 from ZODB.blob import Blob
+from zope.interface import implementer
 
 from .interfaces import (
     IBlog,
@@ -112,6 +122,7 @@ class BlogEntryPropertySheet(PropertySheet):
     catalog=True,
     tab_order=('properties', 'contents', 'acl_edit'),
     )
+@implementer(IBlogEntry)
 class BlogEntry(Folder):
     def __init__(self, title, entry, format, pubdate):
         Folder.__init__(self)
@@ -206,6 +217,7 @@ class FileUploadPropertySheet(PropertySheet):
         ),
     catalog = True,
     )
+@implementer(IFile)
 class File(Persistent):
     def __init__(self, stream, mimetype='application/octet-stream'):
         self.mimetype = mimetype
@@ -254,6 +266,7 @@ class CommentPropertySheet(PropertySheet):
         ),
     catalog = True,
     )
+@implementer(IComment)
 class Comment(Persistent):
     def __init__(self, commenter_name, text, pubdate):
         self.commenter_name = commenter_name
@@ -268,6 +281,7 @@ class Comment(Persistent):
         ('Basic', SitePropertySheet),
         ),
     )
+@implementer(IBlog)
 class Blog(Site):
     def __init__(self, initial_login, initial_email, initial_password):
         Site.__init__(self, initial_login, initial_email, initial_password)

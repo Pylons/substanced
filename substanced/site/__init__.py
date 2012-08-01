@@ -1,6 +1,8 @@
 import transaction
 import colander
 
+from zope.interface import implementer
+
 from pyramid.exceptions import ConfigurationError
 from pyramid.security import (
     Allow,
@@ -37,6 +39,7 @@ class SitePropertySheet(PropertySheet):
         ('', SitePropertySheet),
         )
     )
+@implementer(ISite)
 class Site(Folder):
     """ An object representing the root of a Substance D site.  Contains
     ``objectmap`` and ``principals`` services.  Initialize with an initial

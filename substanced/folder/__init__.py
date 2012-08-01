@@ -8,6 +8,8 @@ from persistent import Persistent
 import BTrees
 from BTrees.Length import Length
 
+from zope.interface import implementer
+
 from ..exceptions import FolderKeyError
 
 from ..interfaces import (

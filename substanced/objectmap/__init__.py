@@ -4,6 +4,8 @@ from persistent import Persistent
 
 import BTrees
 
+from zope.interface import implementer
+
 from pyramid.location import lineage
 from pyramid.traversal import (
     resource_path_tuple,
@@ -91,6 +93,7 @@ _marker = object()
     name='Object Map',
     icon='icon-asterisk'
     )
+@implementer(IObjectMap)
 class ObjectMap(Persistent):
     
     _v_nextid = None

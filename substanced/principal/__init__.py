@@ -3,7 +3,11 @@ import string
 
 from persistent import Persistent
 from cryptacular.bcrypt import BCRYPTPasswordManager
-from zope.interface import Interface
+
+from zope.interface import (
+    Interface,
+    implementer,
+    )
 
 import colander
 import deform
@@ -45,6 +49,7 @@ class UserToGroup(Interface):
     name='Principals',
     icon='icon-lock'
     )
+@implementer(IPrincipals)
 class Principals(Folder):
     """ Object representing a collection of principals.  Inherits from
     :class:`substanced.folder.Folder`.  Contains ``users``, an instance of
@@ -62,6 +67,7 @@ class Principals(Folder):
     name='Users',
     icon='icon-list-alt'
     )
+@implementer(IUsers)
 class Users(Folder):
     """ Object representing a collection of users.  Inherits from
     :class:`substanced.folder.Folder`.  Contains
@@ -76,6 +82,7 @@ class Users(Folder):
     name='Groups',
     icon='icon-list-alt'
     )
+@implementer(IGroups)
 class Groups(Folder):
     """ Object representing a collection of groups.  Inherits from
     :class:`substanced.folder.Folder`.  Contains
@@ -176,6 +183,7 @@ class GroupPropertySheet(PropertySheet):
         ('', GroupPropertySheet),
         )
     )
+@implementer(IGroup)
 class Group(Folder):
     """ Represents a group.  """
     def __init__(self, description=''):
@@ -310,6 +318,7 @@ class UserPropertySheet(PropertySheet):
         ('', UserPropertySheet),
         )
     )
+@implementer(IUser)
 class User(Folder):
     """ Represents a user.  """
 
@@ -395,6 +404,7 @@ class UserToPasswordReset(object):
     name='Password Resets',
     icon='icon-tags'
     )
+@implementer(IPasswordResets)
 class PasswordResets(Folder):
     """ Object representing the current set of password reset requests """
     def _gen_random_token(self):
@@ -421,6 +431,7 @@ class PasswordResets(Folder):
     name='Password Reset',
     icon='icon-tag'
     )
+@implementer(IPasswordReset)
 class PasswordReset(Persistent):
     """ Object representing the a single password reset request """
     def reset_password(self, password):

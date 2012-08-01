@@ -5,6 +5,7 @@ import StringIO
 import mimetypes
 from persistent import Persistent
 from ZODB.blob import Blob
+from zope.interface import implementer
 
 from pyramid.response import FileResponse
 
@@ -115,6 +116,7 @@ class FileUploadPropertySheet(PropertySheet):
         ),
     catalog = True,
     )
+@implementer(IFile)
 class File(Persistent):
 
     def __init__(self, stream=None, mimetype=None):
