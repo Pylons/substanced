@@ -351,13 +351,16 @@ Other Helpers
 
 .. autofunction:: includeme
 
+:mod:`substanced.workflow` API
+------------------------------
+
+.. automodule:: substanced.workflow
+   :members:
+
 :mod:`substanced.interfaces`
 ----------------------------
 
 These represent interfaces implemented by various Substance D objects.
 
 .. automodule:: substanced.interfaces
-
-.. autointerface:: IPropertySheet
    :members:
-

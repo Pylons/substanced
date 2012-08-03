@@ -11,22 +11,34 @@ from zope.interface.verify import verifyObject
 
 from ..interfaces import (
     IWorkflow,
-    IWorkflowFactory,
     IWorkflowList,
     IDefaultWorkflow,
-    ICallbackInfo,
+    IObjectAdded,
     )
 
 
 STATE_ATTR = '__workflow_state__'
 
 class WorkflowError(Exception):
-    """"""
+    """Exception raised for anything related to :mod:`substanced.workflow`.
+    """
 
 class Workflow(object):
     """Finite state machine.
+
+    Implements `substanced.interfaces.IWorkflow`.
+
+    :param initial_state: Initial state of the workflow assigned to the content
+    :type initial_state: string
+    :param type: Identifier to separate multiple workflows on same content.
+    :type type: string
+    :param name: Display name.
+    :type name: string
+    :param description: Not used internally, provided as help text to describe
+                        what workflow does.
+    :type description: string
+
     """
-    classImplements(IWorkflowFactory)
     implements(IWorkflow)
 
     def __init__(self, initial_state, type, name='', description=''):
@@ -43,8 +55,28 @@ class Workflow(object):
         return self # allow ourselves to act as an adapter
 
     def add_state(self, state_name, callback=None, **kw):
-        """Add a state to the FSM.  ``**kw`` must not contain the key
-        ``callback``.  This name is reserved for internal use.
+        """Add a new workflow state.
+
+        :param state_name: Unique name of the state for this workflow.
+        :param callback: Will be called when content enters this state.
+                         Meaning :meth:`Workflow.reset`,
+                         :meth:`Workflow.initialize`,
+                         :meth:`Workflow.transition` and
+                         :meth:`Workflow.transition_to_state` will trigger
+                         callback if entering this state.
+        :type callback: callable
+        :param \*\*kw: Metadata assigned to this state.
+
+        :raises: :exc:`WorkflowError` if state already exists.
+
+        Callback is called with **content** as first argument and **meta**
+        as second. **meta** is a dictionary containing **workflow**,
+        **transition** and **request**. Be aware that methods as
+        :meth:`Workflow.initialize` pass **transition** as empty dictionary.
+
+        .. note::
+            ``**kw`` must not contain the key
+            ``callback``. This name is reserved for internal use.
         """
         if state_name in self._state_order:
             raise WorkflowError('State %s already defined' % state_name)
@@ -54,9 +86,27 @@ class Workflow(object):
 
     def add_transition(self, transition_name, from_state, to_state,
                        callback=None, permission=None, **kw):
-        """Add a transition to the FSM.  ``**kw`` must not contain
-        any of the keys ``from_state``, ``name``, ``to_state``, or
-        ``callback``; these are reserved for internal use.
+        """Add a new workflow transition.
+
+        :param transition_name: Unique name of transition for this workflow.
+        :param callback: Will be called when transition is executed.
+                         Meaning :meth:`Workflow.transition` and
+                         :meth:`Workflow.transition_to_state` will trigger
+                         callback if this transition is executed.
+        :type callback: callable
+        :param \*\*kw: Metadata assigned to this state.
+
+        :raises: :exc:`WorkflowError` if transition already exists.
+        :raises: :exc:`WorkflowError` if from_state or to_state don't exist.
+
+        Callback is called with **content** as first argument and **meta**
+        as second. **meta** is a dictionary containing **workflow**,
+        **transition** and **request**.
+
+        .. note::
+            ``**kw`` must not contain any of the keys ``from_state``, ``name``,
+            ``to_state``, or ``callback``; these are reserved for internal use.
+
         """
         if transition_name in self._transition_order:
             raise WorkflowError(
@@ -75,7 +125,11 @@ class Workflow(object):
         self._transition_order.append(transition_name)
 
     def check(self):
-        """"""
+        """Check the consistency of the workflow state machine.
+
+        :raises: :exc:`WorkflowError` if workflow is inconsistent.
+
+        """
         if not self.initial_state in self._state_order:
             raise WorkflowError('Workflow must define its initial state %r'
                                 % self.initial_state)
@@ -87,16 +141,20 @@ class Workflow(object):
         getattr(content, STATE_ATTR)[self.type] = state
 
     def state_of(self, content):
-        """"""
+        """Return the current state of the content object or None
+        if the content object does not have this workflow.
+        """
         states = getattr(content, STATE_ATTR, None)
         if states:
             return states.get(self.type, None)
 
     def has_state(self, content):
-        """"""
+        """Return True if the content has state for this workflow,
+        False if not.
+        """
         return self.state_of(content) is not None
 
-    def _state_info(self, content, from_state=None):
+    def _get_states(self, content, from_state=None):
         content_state = self.state_of(content)
         if from_state is None:
             from_state = content_state
@@ -121,17 +179,34 @@ class Workflow(object):
 
         return L
 
-    def state_info(self, content, request, context=None, from_state=None):
-        """"""
-        if context is None:
-            context = content
-        states = self._state_info(content, from_state)
+    def get_states(self, content, request, from_state=None):
+        """Return all states for the workflow.
+
+        :param content: Object to be operated on
+        :param request: `pyramid.request.Request` instance
+        :param from_state: State of the content. If None,
+                           :meth:`Workflow.state_of` will be used on
+                           **content**.
+
+        :rtype: list of dicts
+        :returns: Where dictionary contains information about the transition,
+                  such as **title**, **initial**, **current**,
+                  **transitions** and **data**. **transitions** is return value
+                  of :meth:`Workflow.get_transitions` call for current state.
+                  **data** is a dictionary containing at least **callback**.
+
+        .. note::
+            States that fail `has_permission` check for their transition
+            are left out.
+
+        """
+        states = self._get_states(content, from_state)
         for state in states:
             L = []
             for transition in state['transitions']:
                 permission = transition.get('permission')
                 if permission is not None:
-                    if not has_permission(permission, context,
+                    if not has_permission(permission, content,
                                           request):
                         continue
                 L.append(transition)
@@ -139,17 +214,41 @@ class Workflow(object):
         return states
 
     def initialize(self, content, request=None):
-        """"""
+        """Initialize the content object to the initial state of this workflow.
+
+        :param content: Object to be operated on
+        :param request: `pyramid.request.Request` instance
+        :returns: (initial_state, msg)
+
+        `msg` is a string returned by the state `callback`.
+
+        """
         callback = self._state_data[self.initial_state]['callback']
         msg = None
         if callback is not None:
-            info = CallbackInfo(self, {}, request)
+            info = {
+                'workflow': self,
+                'transition': {},
+                'request': request,
+            }
             msg = callback(content, info)
         self._set_state(content, self.initial_state)
         return self.initial_state, msg
 
     def reset(self, content, request=None):
-        """"""
+        """Reset the content workflow by calling the callback of
+        it's current state and setting its state attr.
+
+        If content has no current state, it will be initialized
+        for this workflow (see initialize).
+
+        `msg` is a string returned by the state callback.
+
+        :param content: Object to be operated on
+        :param request: `pyramid.request.Request` instance
+        :returns: (state, msg)
+
+        """
         state = self.state_of(content)
         if state is None:
             return self.initialize(content)
@@ -161,14 +260,17 @@ class Workflow(object):
         callback = stateinfo['callback']
         msg = None
         if callback is not None:
-            info = CallbackInfo(self, {}, request)
+            info = {
+                'workflow': self,
+                'transition': {},
+                'request': request,
+            }
             msg = callback(content, info)
         self._set_state(content, state)
         return state, msg
 
     def _transition(self, content, transition_name, context=None,
                     request=None):
-        """ Execute a transition via a transition name """
         if context is None:
             context = content
 
@@ -189,9 +291,7 @@ class Workflow(object):
                 'No transition from %r using transition name %r'
                 % (state, transition_name))
 
-        info = CallbackInfo(self, transition, request=request)
-
-        permission = info.transition.get('permission')
+        permission = transition.get('permission')
         if permission is not None:
             if not has_permission(permission, context, request):
                 raise WorkflowError(
@@ -201,6 +301,12 @@ class Workflow(object):
 
         from_state = transition['from_state']
         to_state = transition['to_state']
+
+        info = {
+            'workflow': self,
+            'transition': transition,
+            'request': request,
+        }
 
         transition_callback = transition['callback']
         if transition_callback is not None:
@@ -212,18 +318,26 @@ class Workflow(object):
 
         self._set_state(content, to_state)
 
-    def transition(self, content, request, transition_name, context=None):
-        """"""
-        self._transition(content, transition_name, context=context,
-                         request=request)
+    def transition(self, content, request, transition_name):
+        """Execute a transition using a **transition_name** on **content**.
+
+        :param content: Object to be operated on.
+        :param request: `pyramid.request.Request` instance
+        :param transition_name: Name of transition to execute.
+
+        :raises: :exc:`WorkflowError` if no transition is found
+        :raises: :exc:`WorkflowError` if transition doesn't pass
+                                      `has_permission` check
+        """
+        self._transition(content, transition_name, request=request)
 
     def _transition_to_state(self, content, to_state, context=None,
                              request=None, skip_same=True):
         from_state = self.state_of(content)
         if (from_state == to_state) and skip_same:
             return
-        state_info = self._state_info(content)
-        for info in state_info:
+        states = self._get_states(content)
+        for info in states:
             if info['name'] == to_state:
                 transitions = info['transitions']
                 if transitions:
@@ -238,10 +352,22 @@ class Workflow(object):
         raise WorkflowError(
             'No transition from state %r to state %r' % (from_state, to_state))
 
-    def transition_to_state(self, content, request, to_state, context=None,
+    def transition_to_state(self, content, request, to_state,
                             skip_same=True):
-        """"""
-        self._transition_to_state(content, to_state, context,
+        """Execute a transition to another state using a state name
+        (**to_state**). All possible transitions towards **to_state**
+        will be tried until one if found that passes without exception.
+
+        :param content: Object to be operated on.
+        :param request: `pyramid.request.Request` instance
+        :param to_state: State to transition to.
+        :param skip_same: If True and the **to_state** is the same as
+                          the content state, no transition is issued.
+
+        :raises: :exc:`WorkflowError` if no transition is found
+
+        """
+        self._transition_to_state(content, to_state,
                                   request=request, skip_same=skip_same)
 
     def _get_transitions(self, content, from_state=None):
@@ -256,31 +382,41 @@ class Workflow(object):
 
         return transitions
 
-    def get_transitions(self, content, request, context=None, from_state=None):
-        """"""
-        if context is None:
-            context = content
+    def get_transitions(self, content, request, from_state=None):
+        """Get all transitions from the content state.
+
+        :param content: Object to be operated on.
+        :param request: `pyramid.request.Request` instance
+        :param from_state: Name of the state to retrieve transitions. If None,
+                           :meth:`Workflow.state_of` will be used on
+                           **content**.
+        :rtype: list of dicts
+        :returns: Where dictionary contains information about the transition,
+                  such as **from_state**, **to_state**, **callback**,
+                  **permission** and **name**.
+
+        .. note::
+            Transitions that fail `has_permission` check are left out.
+
+        """
         transitions = self._get_transitions(content, from_state)
         L = []
         for transition in transitions:
             permission = transition.get('permission')
             if permission is not None:
-                if not has_permission(permission, context,
+                if not has_permission(permission, content,
                                       request):
                     continue
             L.append(transition)
         return L
 
-class CallbackInfo(object):
-    implements(ICallbackInfo)
-
-    def __init__(self, workflow, transition, request=None):
-        self.workflow = workflow
-        self.transition = transition
-        self.request = request
-
 def get_workflow(request, type, content_type=IDefaultWorkflow):
-    """Return a workflow based on a content_type, the workflow type.
+    """Return a workflow based on a content_type and the workflow type.
+
+    :param request: `pyramid.request.Request` instance
+    :param type: Workflow type
+    :param content_type: Substanced content type or None for default workflow.
+
     """
     reg = request.registry
 
@@ -303,11 +439,12 @@ def get_workflow(request, type, content_type=IDefaultWorkflow):
     if wf_list:
         return wf_list[0]
 
-def register_workflow(config, workflow, type_,
-                      content_type=IDefaultWorkflow):
-    """"""
 
-    # TODO: initialize workflow on content types
+def register_workflow(config, workflow, type_,
+                      content_type=None):
+    if content_type is None:
+        content_type = IDefaultWorkflow
+
     # TODO: introduce substanced content_types
     if not IInterface.providedBy(content_type):
         content_type = providedBy(content_type)
@@ -327,7 +464,17 @@ def register_workflow(config, workflow, type_,
                             type_)
 
 def add_workflow(config, workflow, content_types=(None,)):
-    """"""
+    """Configurator method for adding a workflow.
+
+    If no **content_types** is given, workflow is registered globally.
+
+    :param config: Pyramid configurator
+    :param workflow: :class:`Workflow` instance
+    :param content_types: Register workflow for given content_types
+    :type content_types: iterable
+
+
+    """
 
     verifyObject(IWorkflow, workflow)
 

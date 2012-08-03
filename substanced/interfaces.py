@@ -38,31 +38,31 @@ class IPropertySheet(Interface):
         """ Perform operations after a successful set. The default
         propertysheet implementation sends an ObjectModified event and
         flashes an undo message"""
-    
+
 class IObjectMap(Interface):
     """ A map of objects to paths and a reference engine """
     def objectid_for(obj_or_path_tuple):
         """ Return the object id for obj_or_path_tuple """
-        
+
     def path_for(objectid):
         """ Return the path tuple for objectid """
 
     def object_for(objectid):
         """ Return the object associated with ``objectid`` or ``None`` if the
         object cannot be found."""
-        
+
     def add(obj):
         """ Add a new object to the object map.  Assigns a new objectid to
         obj.__objectid__ to the object if it doesn't already have one.  The
         object's path or objectid must not already exist in the map.  Returns
         the object id."""
-        
+
     def remove(obj_objectid_or_path_tuple):
         """ Removes an object from the object map using the object itself, an
         object id, or a path tuple.  Returns a set of objectids (children,
         inclusive) removed as the result of removing this object from the
         object map."""
-        
+
     def pathlookup(obj_or_path_tuple, depth=None, include_origin=True):
         """ Returns an iterator of document ids within
         obj_or_path_tuple (a traversable object or a path tuple).  If depth
@@ -70,7 +70,7 @@ class IObjectMap(Interface):
         ``include_origin`` is ``True``, returns the docid of the object
         passed as ``obj_or_path_tuple`` in the returned set, otherwise it
         omits it."""
-        
+
     def connect(src, target, reftype):
         """Connect ``src_object`` to ``target_object`` using the reference
         type ``reftype``.  ``src`` and ``target`` may be objects or object
@@ -85,7 +85,7 @@ class IObjectMap(Interface):
         """ Return a generator consisting of objects which have ``obj`` as a
         relationship source using ``reftype``.  ``obj`` can be an object or
         an object id."""
-        
+
     def targets(obj, reftype):
         """ Return a generator consisting of objects which have ``obj`` as a
         relationship target using ``reftype``. ``obj`` can be an object or an
@@ -98,7 +98,7 @@ class IObjectMap(Interface):
     def sourceids(obj, reftype):
         """ Return a set of objectids which have ``obj`` as a relationship
         source using ``reftype``.  ``obj`` can be an object or an object id."""
-        
+
 class ICatalog(Interface):
     """ A collection of indices """
     objectids = Attribute(
@@ -316,8 +316,8 @@ class IFolder(Interface):
         and WillBeRemoved events will be sent for the old object, and the
         WillBeAdded and Add events will be sent for the new object.e
         """
-        
-        
+
+
 class IPrincipal(IPropertied):
     """ Marker interface representing a user or group """
 
@@ -332,7 +332,7 @@ class IUsers(Interface):
 
 class IGroups(Interface):
     """ Marker interface representing a collection of groups """
-    
+
 class IPrincipals(Interface):
     """ Marker interface representing a container of users and groups """
 
@@ -349,7 +349,7 @@ class IFile(Interface):
     blob = Attribute('The ZODB blob object holding the file content')
 
     mimetype = Attribute('The mimetype of the file content')
-    
+
     def upload(stream, mimetype_hint=False):
         """ Replace the current contents of this file's blob with the
         contents of ``stream``.  ``mimetype_hint`` can be any of the
@@ -377,79 +377,50 @@ class IFile(Interface):
         """ Return the size in bytes of the data in the blob associated with
         the file"""
 
-class IWorkflowFactory(Interface):
-    def __call__(self, context, machine):
-        """ Return an object which implements IWorkflow """
-
 class IWorkflow(Interface):
+    """"""
+
     def add_state(name, callback=None, **kw):
-        """ Add a new state.  ``callback`` is a callback that will be
-        called when a piece of content enters this state."""
+        """"""
 
     def add_transition(name, from_state, to_state, callback=None, **kw):
-        """ Add a new transition.  ``callback`` is the callback that
-        will be called when this transition is made (before it enters
-        the next state)."""
+        """"""
 
     def check():
-        """ Check the consistency of the workflow state machine. Raise
-        an error if it's inconsistent."""
+        """"""
 
     def state_of(content):
-        """ Return the current state of the content object ``content``
-        or None if the content object has not particpated yet in this
-        workflow.  """
+        """"""
 
     def has_state(content):
-        """ Return true if the content has any state, false if not. """
+        """"""
 
-    def state_info(content, request, context=None, from_state=None):
-        """ Return a sequence of state info dictionaries """
+    def get_states(content, request, from_state=None):
+        """"""
 
     def initialize(content, request=None):
-        """ Initialize the content object to the initial state of this
-        workflow. Return a tuple of (state, msg) """
+        """"""
 
     def reset(content, request=None):
-        """ Reset the object by calling the callback of it's current
-        state and setting its state attr.  If ``content`` has no
-        current state, it will be initialized into the initial state
-        for this workflow (see ``initialize``). Return a tuple of
-        (state, msg)"""
+        """"""
 
-    def transition(content, request, transition_name, context=None):
-        """ Execute a transition using a transition name.
-        """
-    def transition_to_state(content, request, to_state, context=None,
+    def transition(content, request, transition_name):
+        """"""
+    def transition_to_state(content, request, to_state,
                             skip_same=True):
-        """ Execute a transition to another state using a state name
-        (``to_state``).  If ``skip_same`` is True, and the
-        ``to_state`` is the same as the content state, do nothing."""
+        """"""
 
-    def get_transitions(content, request, context=None, from_state=None):
-        """ Return a sequence of transition dictionaries """
+    def get_transitions(content, request, from_state=None):
+        """"""
 
 class IWorkflowList(Interface):
-    """ Marker interface used internally by get_workflow and the ZCML
-    machinery.  An item registered as an IWorkflowList utility in
-    the component registry is a dictionary that contains lists of
-    workflow info dictionaries keyed by content type. """
+    """"""
 
 class IDefaultWorkflow(Interface):
     """ Marker interface used internally for workflows that aren't
     associated with a particular content type"""
 
-class ICallbackInfo(Interface):
-    """ Interface used internally to represent 'callback info' objects
-    (the 2nd argument passed to callbacks) """
-
-    transition = Attribute('A dictionary representing the transition underway')
-
-    workflow = Attribute('The workflow object that invoked the callback')
-
-    request = Attribute('The request object. May be None.')
 
 marker = object()
 
 SERVICES_NAME = '__services__'
-
