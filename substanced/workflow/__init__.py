@@ -483,9 +483,20 @@ def add_workflow(config, workflow, content_types=(None,)):
     except WorkflowError, why:
         raise ConfigurationError(str(why))
 
+    intr = config.introspectable(
+        'substance d workflows',
+        (IWorkflow, content_types, workflow.type),
+        content_types,
+        'substance d workflow',
+        )
+    intr['workflow'] = workflow
+    intr['type'] = workflow.type
+    intr['content_types'] = content_types
+
     for content_type in content_types:
         config.action((IWorkflow, content_type, workflow.type),
                       callable=register_workflow,
+                      introspectables=(intr,),
                       args=(config, workflow, workflow.type, content_type))
 
 def includeme(config): # pragma: no cover
