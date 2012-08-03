@@ -37,6 +37,12 @@ class TestContentRegistry(unittest.TestCase):
         dummy = Dummy()
         dummy.__content_type__ = 'dummy'
         self.assertTrue(inst.istype(dummy, 'dummy'))
+
+    def test_exists(self):
+        inst = self._makeOne()
+        inst.factories['category'] = True
+        self.assertTrue(inst.exists('category'))
+        self.assertFalse(inst.exists('foobar'))
         
     def test_istype_false(self):
         inst = self._makeOne()

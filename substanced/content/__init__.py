@@ -43,7 +43,7 @@ class ContentRegistry(object):
 
     def all(self):
         return list(self.factories.keys())
-        
+
     def create(self, content_type, *arg, **kw):
         return self.factories[content_type](*arg, **kw)
 
@@ -59,6 +59,9 @@ class ContentRegistry(object):
 
     def istype(self, context, content_type):
         return content_type == get_content_type(context)
+
+    def exists(self, content_type):
+        return content_type in self.factories.keys()
 
 def _get_meta_interfaces(content_type, factory, meta):
     interfaces = set(implementedBy(factory))
