@@ -1,4 +1,7 @@
+from collections import defaultdict
+
 from pyramid.config import ConfigurationError
+from pyramid.events import subscriber
 from pyramid.security import has_permission
 from pyramid.threadlocal import get_current_registry
 from zope.interface import (
@@ -11,10 +14,10 @@ from zope.interface.verify import verifyObject
 
 from ..interfaces import (
     IWorkflow,
-    IWorkflowList,
     IDefaultWorkflow,
     IObjectAdded,
     )
+from ..content import get_content_type
 
 
 STATE_ATTR = '__workflow_state__'
@@ -50,9 +53,6 @@ class Workflow(object):
         self.name = name
         self.type = type
         self.description = description
-
-    def __call__(self, context):
-        return self # allow ourselves to act as an adapter
 
     def add_state(self, state_name, callback=None, **kw):
         """Add a new workflow state.
@@ -410,7 +410,7 @@ class Workflow(object):
             L.append(transition)
         return L
 
-def get_workflow(request, type, content_type=IDefaultWorkflow):
+def get_workflow(request, type, content_type=None):
     """Return a workflow based on a content_type and the workflow type.
 
     :param request: `pyramid.request.Request` instance
@@ -418,50 +418,24 @@ def get_workflow(request, type, content_type=IDefaultWorkflow):
     :param content_type: Substanced content type or None for default workflow.
 
     """
+    if content_type is None:
+        content_type = IDefaultWorkflow
+
     reg = request.registry
-
-    # TODO: work with substanced content_types strings
-    if not IInterface.providedBy(content_type):
-        content_type = providedBy(content_type)
-
-    if content_type not in (None, IDefaultWorkflow):
-        wf_list = reg.adapters.lookup((content_type,),
-                                      IWorkflowList,
-                                      name=type,
-                                      default=None)
-        if wf_list:
-            return wf_list[0]
-
-    wf_list = reg.adapters.lookup((IDefaultWorkflow,),
-                                  IWorkflowList,
-                                  name=type,
-                                  default=None)
-    if wf_list:
-        return wf_list[0]
-
+    return reg.workflow.get(type, content_type)
 
 def register_workflow(config, workflow, type_,
                       content_type=None):
     if content_type is None:
         content_type = IDefaultWorkflow
 
-    # TODO: introduce substanced content_types
-    if not IInterface.providedBy(content_type):
-        content_type = providedBy(content_type)
-
     reg = config.registry
+    if not reg.content.exists(content_type):
+        raise ConfigurationError('Workflow %s registered for content_type %s '
+                                 'which does not exist.' % (workflow,
+                                                            content_type))
 
-    # check for existing workflow and if none exist, register it
-    wf_list = reg.adapters.lookup((content_type,),
-                                  IWorkflowList,
-                                  name=type_,
-                                  default=None)
-
-    if wf_list is None:
-        reg.registerAdapter(workflow,
-                            (content_type,),
-                            IWorkflowList,
-                            type_)
+    reg.workflow.add(workflow, content_type)
 
 def add_workflow(config, workflow, content_types=(None,)):
     """Configurator method for adding a workflow.
@@ -473,9 +447,11 @@ def add_workflow(config, workflow, content_types=(None,)):
     :param content_types: Register workflow for given content_types
     :type content_types: iterable
 
-
+    :raises: :exc:`ConfigurationError` if :meth:`Workflow.check` fails
+    :raises: :exc:`ConfigurationError` if **content_type** does not exist
+    :raises: :exc:`DoesNotImplement` if **workflow** does not
+             implement IWorkflow
     """
-
     verifyObject(IWorkflow, workflow)
 
     try:
@@ -497,7 +473,45 @@ def add_workflow(config, workflow, content_types=(None,)):
         config.action((IWorkflow, content_type, workflow.type),
                       callable=register_workflow,
                       introspectables=(intr,),
+                      order=9999,
                       args=(config, workflow, workflow.type, content_type))
+
+@subscriber(IObjectAdded)
+def init_workflows_for_object(event):
+    """Initialize workflows when object is added to db.
+    """
+    obj = event.object
+    content_type = get_content_type(obj)
+    registry = get_current_registry()
+
+    if content_type is None:
+        # maybe we should register workflows not relevant
+        # to specific content type?
+        return
+
+    for wf in registry.workflow.get_all_types(content_type):
+        wf.initialize(obj)
+
+class WorkflowRegistry(object):
+
+    def __init__(self):
+        self.types = defaultdict(dict)
+        self.content_types = defaultdict(dict)
+
+    def add(self, wf, content_type):
+        self.types[wf.type][content_type] = wf
+        self.content_types[content_type][wf.type] = wf
+
+    def get(self, type, content_type):
+        type_ = self.types.get(type, None)
+        if type_:
+            return type_.get(content_type, type_.get(IDefaultWorkflow, None))
+
+    def get_all_types(self, content_type):
+        types = dict(self.content_types.get(IDefaultWorkflow, {}))
+        types.update(dict(self.content_types.get(content_type, {})))
+        return types.values()
 
 def includeme(config): # pragma: no cover
     config.add_directive('add_workflow', add_workflow)
+    config.registry.workflow = WorkflowRegistry()

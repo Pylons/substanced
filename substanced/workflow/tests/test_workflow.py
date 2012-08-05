@@ -110,10 +110,6 @@ class WorkflowTests(unittest.TestCase):
         from ...interfaces import IWorkflow
         verifyObject(IWorkflow, self._makeOne())
 
-    def test_call(self):
-        workflow = self._makeOne()
-        self.assertEqual(workflow(None), workflow)
-
     def test_has_state_false(self):
         sm = self._makeOne()
         self.assertEqual(sm.has_state(None), False)
@@ -279,30 +275,30 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(args[0][0], ob)
         info = args[0][1]
         self.assertEqual(info['transition'], {'from_state': 'pending',
-                                           'callback': dummy,
-                                           'to_state': 'published',
-                                           'name': 'publish'})
+                                              'callback': dummy,
+                                              'to_state': 'published',
+                                              'name': 'publish'})
         self.assertEqual(info['workflow'], sm)
         self.assertEqual(args[1][0], ob)
         info = args[1][1]
         self.assertEqual(info['transition'], {'from_state': 'published',
-                                           'callback': dummy,
-                                           'to_state': 'pending',
-                                           'name': 'retract'})
+                                              'callback': dummy,
+                                              'to_state': 'pending',
+                                              'name': 'retract'})
         self.assertEqual(args[1][0], ob)
         self.assertEqual(args[2][0], ob)
         info = args[2][1]
         self.assertEqual(info['transition'], {'from_state': 'pending',
-                                           'callback': dummy,
-                                           'to_state': 'private',
-                                           'name': 'reject'})
+                                              'callback': dummy,
+                                              'to_state': 'private',
+                                              'name': 'reject'})
         self.assertEqual(info['workflow'], sm)
         self.assertEqual(args[3][0], ob)
         info = args[3][1]
         self.assertEqual(info['transition'], {'from_state': 'private',
-                                           'callback': dummy,
-                                           'to_state': 'pending',
-                                           'name': 'submit'})
+                                              'callback': dummy,
+                                              'to_state': 'pending',
+                                              'name': 'submit'})
         self.assertEqual(info['workflow'], sm)
 
     def test__transition_with_state_callback(self):
@@ -353,30 +349,30 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(args[0][0], ob)
         info = args[0][1]
         self.assertEqual(info['transition'], {'from_state': 'pending',
-                                           'callback': dummy,
-                                           'to_state': 'published',
-                                           'name': 'publish'})
+                                              'callback': dummy,
+                                              'to_state': 'published',
+                                              'name': 'publish'})
         self.assertEqual(info['workflow'], sm)
         self.assertEqual(args[1][0], ob)
         info = args[1][1]
         self.assertEqual(info['transition'], {'from_state': 'published',
-                                           'callback': dummy,
-                                           'to_state': 'pending',
-                                           'name': 'retract'})
+                                              'callback': dummy,
+                                              'to_state': 'pending',
+                                              'name': 'retract'})
         self.assertEqual(info['workflow'], sm)
         self.assertEqual(args[2][0], ob)
         info = args[2][1]
         self.assertEqual(info['transition'], {'from_state': 'pending',
-                                           'callback': dummy,
-                                           'to_state': 'private',
-                                           'name': 'reject'})
+                                              'callback': dummy,
+                                              'to_state': 'private',
+                                              'name': 'reject'})
         self.assertEqual(info['workflow'], sm)
         self.assertEqual(args[3][0], ob)
         info = args[3][1]
         self.assertEqual(info['transition'], {'from_state': 'private',
-                                           'callback': dummy,
-                                           'to_state': 'pending',
-                                           'name': 'submit'})
+                                              'callback': dummy,
+                                              'to_state': 'pending',
+                                              'name': 'submit'})
         self.assertEqual(info['workflow'], sm)
 
     def test__transition_to_state_error(self):
@@ -738,29 +734,21 @@ class WorkflowTests(unittest.TestCase):
 class GetWorkflowTests(unittest.TestCase):
 
     def setUp(self):
-        testing.setUp()
+        from ...workflow import includeme
+        self.config = testing.setUp()
+        includeme(self.config)
 
     def tearDown(self):
         testing.tearDown()
 
-    def _getIContent(self):
-        from zope.interface import Interface
-        class IContent(Interface):
-            pass
-        return IContent
-
-    def _callFUT(self, iface, name=''):
+    def _callFUT(self, content_type, type=''):
         from ...workflow import get_workflow
-        return get_workflow(testing.DummyRequest(), name, iface)
+        return get_workflow(testing.DummyRequest(), type, content_type)
 
-    def _registerWorkflowList(self, content_type, workflows, name=''):
-        from pyramid.threadlocal import get_current_registry
-        from ...interfaces import IWorkflowList
-        sm = get_current_registry()
-        sm.registerAdapter(workflows,
-                           (content_type,),
-                           IWorkflowList,
-                           name=name)
+    def _registerWorkflowList(self, content_type, workflows):
+        for wf in workflows:
+            wf.type = ''
+            self.config.registry.workflow.add(wf, content_type)
 
     def test_content_type_is_None_no_registered_workflows(self):
         self.assertEqual(self._callFUT(None, ''), None)
@@ -771,87 +759,275 @@ class GetWorkflowTests(unittest.TestCase):
 
     def test_content_type_is_None_registered_workflow(self):
         from ...interfaces import IDefaultWorkflow
-        workflow = object()
+        workflow = mock.Mock()
         self._registerWorkflowList(IDefaultWorkflow, [workflow])
         result = self._callFUT(None)
         self.assertEqual(result, workflow)
 
     def test_content_type_is_class_registered_workflow(self):
         from ...interfaces import IDefaultWorkflow
-        class Content:
-            pass
-        workflow = object()
+        workflow = mock.Mock()
         self._registerWorkflowList(IDefaultWorkflow, [workflow])
-        result = self._callFUT(Content)
+        result = self._callFUT('Folder')
         self.assertEqual(result, workflow)
 
     def test_content_type_is_IDefaultWorkflow_registered_workflow(self):
         from ...interfaces import IDefaultWorkflow
-        workflow = object()
+        workflow = mock.Mock()
         self._registerWorkflowList(IDefaultWorkflow, [workflow])
         self.assertEqual(self._callFUT(IDefaultWorkflow),
                          workflow)
 
-    def test_content_type_is_IContent_no_registered_workflows(self):
-        IContent = self._getIContent()
-        self.assertEqual(self._callFUT(IContent, ''), None)
+    def test_content_type_is_Folder_no_registered_workflows(self):
+        self.assertEqual(self._callFUT('Folder', ''), None)
 
-    def test_content_type_is_IContent_finds_default(self):
-        IContent = self._getIContent()
+    def test_content_type_is_Folder_finds_default(self):
         from ...interfaces import IDefaultWorkflow
-        workflow = object()
+        workflow = mock.Mock()
         self._registerWorkflowList(IDefaultWorkflow, [workflow])
-        self.assertEqual(self._callFUT(IContent), workflow)
+        self.assertEqual(self._callFUT('Folder'), workflow)
 
-    def test_content_type_is_IContent_finds_specific(self):
-        IContent = self._getIContent()
-        workflow = object()
-        self._registerWorkflowList(IContent, [workflow])
-        self.assertEqual(self._callFUT(IContent), workflow)
+    def test_content_type_is_Folder_finds_specific(self):
+        workflow = mock.Mock()
+        self._registerWorkflowList('Folder', [workflow])
+        self.assertEqual(self._callFUT('Folder'), workflow)
 
-    def test_content_type_is_IContent_finds_more_specific_first(self):
+    def test_content_type_is_Folder_finds_more_specific_first(self):
         from ...interfaces import IDefaultWorkflow
-        IContent = self._getIContent()
-        default_workflow = object()
-        specific_workflow = object()
-        self._registerWorkflowList(IContent, [specific_workflow])
+        default_workflow = mock.Mock()
+        specific_workflow = mock.Mock()
+        self._registerWorkflowList('Folder', [specific_workflow])
         self._registerWorkflowList(IDefaultWorkflow, [default_workflow])
         self.assertEqual(
-            self._callFUT(IContent),
+            self._callFUT('Folder'),
             specific_workflow)
         self.assertEqual(
             self._callFUT(None),
             default_workflow)
 
-    def test_content_type_inherits_from_IContent(self):
-        from ...interfaces import IDefaultWorkflow
-        IContent = self._getIContent()
-        class IContent2(IContent):
-            pass
-        default_workflow = object()
-        specific_workflow = object()
-        self._registerWorkflowList(IContent, [specific_workflow])
-        self._registerWorkflowList(IDefaultWorkflow, [default_workflow])
-        self.assertEqual(
-            self._callFUT(IContent2),
-            specific_workflow)
-
 class add_workflowTests(unittest.TestCase):
 
-    def _callFUT(self, workflow, content_types=(None,), config=None):
+    def setUp(self):
+        self.config = testing.setUp()
+        from ...workflow import includeme
+        includeme(self.config)
+
+    def tearDown(self):
+        testing.tearDown()
+
+    def _callFUT(self, workflow, config, content_types=(None,)):
         from ...workflow import add_workflow
         add_workflow(config, workflow, content_types)
 
+    def test_add_workflow_doesnt_implement_iworkflow(self):
+        from zope.interface.verify import DoesNotImplement
+        config = mock.Mock()
+        self.assertRaises(DoesNotImplement, self._callFUT, object(), config)
+
+    @mock.patch('substanced.workflow.verifyObject')
+    def test_add_workflow_global(self, mock_verifyObject):
+        from ...interfaces import IWorkflow
+        from ...workflow import register_workflow
+        mock_verifyObject.return_value = True
+        config = mock.MagicMock()
+        wf = mock.Mock()
+        self._callFUT(wf, config)
+
+        self.assertEqual(config.action.mock_calls, [
+            mock.call((IWorkflow, None, wf.type),
+                      callable=register_workflow,
+                      introspectables=(mock.ANY,),
+                      order=9999,
+                      args=(config, wf, wf.type, None))
+        ])
+
+    @mock.patch('substanced.workflow.verifyObject')
+    def test_add_workflow_multi_content_types(self, mock_verifyObject):
+        from ...interfaces import IWorkflow
+        from ...workflow import register_workflow
+        mock_verifyObject.return_value = True
+        config = mock.MagicMock()
+        wf = mock.Mock()
+        self._callFUT(wf, config, content_types=('Folder', 'File'))
+
+        self.assertEqual(config.action.mock_calls, [
+            mock.call((IWorkflow, 'Folder', wf.type),
+                      callable=register_workflow,
+                      introspectables=(mock.ANY,),
+                      order=9999,
+                      args=(config, wf, wf.type, 'Folder')),
+            mock.call((IWorkflow, 'File', wf.type),
+                      callable=register_workflow,
+                      introspectables=(mock.ANY,),
+                      order=9999,
+                      args=(config, wf, wf.type, 'File')),
+        ])
+
+    @mock.patch('substanced.workflow.verifyObject')
+    def test_add_workflow_check_error(self, mock_verifyObject):
+        from pyramid.config import ConfigurationError
+        from ...interfaces import IWorkflow
+        from ...workflow import register_workflow, WorkflowError
+        mock_verifyObject.return_value = True
+        config = mock.Mock()
+        wf = mock.Mock()
+        wf.check.side_effect = WorkflowError
+        self.assertRaises(ConfigurationError, self._callFUT, wf, config)
+
 class register_workflowTests(unittest.TestCase):
 
-    def _callFUT(self, workflow, type_,
-                 content_type=None, config=None):
-        from ...workflow import register_workflow
-        register_workflow(config, workflow, content_types)
+    def setUp(self):
+        self.config = testing.setUp()
+        self.config.registry.content = mock.Mock()
+        from ...workflow import includeme
+        includeme(self.config)
 
+    def tearDown(self):
+        testing.tearDown()
+
+    def _callFUT(self, config, workflow, type_,
+                 content_type=None):
+        from ...workflow import register_workflow
+        workflow.type = type_
+        register_workflow(config, workflow, type_, content_type)
+
+    def test_register_workflow_global(self):
+        from ...interfaces import IDefaultWorkflow
+        wf = mock.Mock()
+        self._callFUT(self.config, wf, 'basic')
+
+        self.assertEqual({'basic': {IDefaultWorkflow: wf}},
+                         self.config.registry.workflow.types)
+        self.assertEqual({IDefaultWorkflow: {u'basic': wf}},
+                         self.config.registry.workflow.content_types)
+
+    def test_register_workflow_global_skip_if_exists(self):
+        from ...interfaces import IDefaultWorkflow
+        wf = mock.Mock()
+        self._callFUT(self.config, wf, 'basic')
+        self.assertEqual({'basic': {IDefaultWorkflow: wf}},
+                         self.config.registry.workflow.types)
+        self.assertEqual({IDefaultWorkflow: {u'basic': wf}},
+                         self.config.registry.workflow.content_types)
+
+        self._callFUT(self.config, wf, 'basic')
+        self.assertEqual({'basic': {IDefaultWorkflow: wf}},
+                         self.config.registry.workflow.types)
+        self.assertEqual({IDefaultWorkflow: {u'basic': wf}},
+                         self.config.registry.workflow.content_types)
+
+    def test_register_workflow_two_types(self):
+        wf = mock.Mock()
+        self._callFUT(self.config, wf, 'basic', 'File')
+        self._callFUT(self.config, wf, 'basic', 'Folder')
+
+        self.assertEqual({'basic': {'File': wf, 'Folder': wf}},
+                         self.config.registry.workflow.types)
+        self.assertEqual({'File': {u'basic': wf}, 'Folder': {u'basic': wf}},
+                         self.config.registry.workflow.content_types)
+        self.config.registry.content.exists.assert_any_call('File')
+        self.config.registry.content.exists.assert_any_call('Folder')
+
+    def test_register_workflow_no_such_content_type(self):
+        from pyramid.config import ConfigurationError
+        self.config.registry.content.exists.return_value = False
+        wf = mock.Mock()
+        self.assertRaises(ConfigurationError,
+                          self._callFUT,
+                          self.config,
+                          wf,
+                          'basic',
+                          'Foobar')
+        self.config.registry.content.exists.assert_call('Foobar')
+
+class init_workflows_for_objectTests(unittest.TestCase):
+
+    def _callFUT(self, obj):
+        from ...workflow import init_workflows_for_object
+        event = mock.Mock()
+        event.object = obj
+        init_workflows_for_object(event)
+
+    @mock.patch('substanced.workflow.get_current_registry')
+    @mock.patch('substanced.workflow.get_content_type')
+    def test_no_workflows(self, mock_get_content_type,
+                          mock_get_current_registry):
+        from ...workflow import WorkflowRegistry
+        mock_get_content_type.return_value = "Folder"
+        mock_get_current_registry().workflow = WorkflowRegistry()
+        obj = mock.Mock()
+        self._callFUT(obj)
+        self.assertEqual(obj.mock_calls, [])
+
+    @mock.patch('substanced.workflow.get_current_registry')
+    @mock.patch('substanced.workflow.get_content_type')
+    def test_no_content_type(self, mock_get_content_type,
+                             mock_get_current_registry):
+        from ...interfaces import IDefaultWorkflow
+        from ...workflow import WorkflowRegistry
+        mock_get_content_type.return_value = None
+        mock_get_current_registry().workflow = WorkflowRegistry()
+        wf = mock.Mock()
+        mock_get_current_registry().workflow.add(wf, IDefaultWorkflow)
+        obj = mock.Mock()
+        self._callFUT(obj)
+        self.assertEqual(obj.mock_calls, [])
+
+    @mock.patch('substanced.workflow.get_current_registry')
+    @mock.patch('substanced.workflow.get_content_type')
+    def test_content_type_overrides_default(self, mock_get_content_type,
+                                            mock_get_current_registry):
+        from ...interfaces import IDefaultWorkflow
+        from ...workflow import WorkflowRegistry
+        mock_get_content_type.return_value = "Folder"
+        mock_get_current_registry().workflow = WorkflowRegistry()
+        wf = mock.Mock()
+        wf.type = "basic"
+        wf_specific = mock.Mock()
+        wf_specific.type = "basic"
+        mock_get_current_registry().workflow.add(wf, IDefaultWorkflow)
+        mock_get_current_registry().workflow.add(wf_specific, 'Folder')
+        obj = mock.Mock()
+        self._callFUT(obj)
+        self.assertEqual(obj.mock_calls, [])
+        self.assertEqual(wf.mock_calls, [])
+        self.assertEqual(wf_specific.mock_calls, [mock.call.initialize(obj)])
+
+    @mock.patch('substanced.workflow.get_current_registry')
+    @mock.patch('substanced.workflow.get_content_type')
+    def test_apply_defaults_and_specific(self, mock_get_content_type,
+                                         mock_get_current_registry):
+        from ...interfaces import IDefaultWorkflow
+        from ...workflow import WorkflowRegistry
+        mock_get_content_type.return_value = "Folder"
+        mock_get_current_registry().workflow = WorkflowRegistry()
+        wf = mock.Mock()
+        wf.type = "basic"
+        wf_specific = mock.Mock()
+        wf_specific.type = "basic_2"
+        mock_get_current_registry().workflow.add(wf, IDefaultWorkflow)
+        mock_get_current_registry().workflow.add(wf_specific, 'Folder')
+        obj = mock.Mock()
+        self._callFUT(obj)
+        self.assertEqual(obj.mock_calls, [])
+        self.assertEqual(wf.mock_calls, [mock.call.initialize(obj)])
+        self.assertEqual(wf_specific.mock_calls, [mock.call.initialize(obj)])
+
+    @mock.patch('substanced.workflow.get_current_registry')
+    @mock.patch('substanced.workflow.get_content_type')
+    def test_apply_only_specific(self, mock_get_content_type,
+                                 mock_get_current_registry):
+        from ...interfaces import IDefaultWorkflow
+        from ...workflow import WorkflowRegistry
+        mock_get_content_type.return_value = "Folder"
+        mock_get_current_registry().workflow = WorkflowRegistry()
+        wf = mock.Mock()
+        wf.type = "basic"
+        mock_get_current_registry().workflow.add(wf, 'Folder')
+        obj = mock.Mock()
+        self._callFUT(obj)
+        self.assertEqual(obj.mock_calls, [])
+        self.assertEqual(wf.mock_calls, [mock.call.initialize(obj)])
 
 class DummyContent:
     pass
-
-# TODO: integration tests for multiple workflows
-# TODO: integration tests for register_workflow, add_workflow

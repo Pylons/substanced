@@ -413,9 +413,6 @@ class IWorkflow(Interface):
     def get_transitions(content, request, from_state=None):
         """"""
 
-class IWorkflowList(Interface):
-    """"""
-
 class IDefaultWorkflow(Interface):
     """ Marker interface used internally for workflows that aren't
     associated with a particular content type"""
