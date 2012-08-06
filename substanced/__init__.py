@@ -14,4 +14,4 @@ def includeme(config): # pragma: no cover
     config.include('.property')
     config.include('.widget')
     config.include('.file')
-    
+    config.include('.workflow')

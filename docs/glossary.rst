@@ -65,3 +65,15 @@ Glossary
      structures.  See
      http://docs.pylonsproject.org/projects/colander/en/latest/ for more
      information.
+
+   Workflow
+   Workflows
+     TODO
+
+   Transition
+   Transitions
+     TODO
+
+   State
+   States
+     TODO

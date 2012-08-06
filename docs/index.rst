@@ -57,6 +57,7 @@ Narrative Documentation
    content.rst
    mgmtview.rst
    services.rst
+   workflows.rst
    retail.rst
 
 API Documentation

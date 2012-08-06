@@ -40,31 +40,31 @@ class IPropertySheet(Interface):
         """ Perform operations after a successful set. The default
         propertysheet implementation sends an ObjectModified event and
         flashes an undo message"""
-    
+
 class IObjectMap(Interface):
     """ A map of objects to paths and a reference engine """
     def objectid_for(obj_or_path_tuple):
         """ Return the object id for obj_or_path_tuple """
-        
+
     def path_for(objectid):
         """ Return the path tuple for objectid """
 
     def object_for(objectid):
         """ Return the object associated with ``objectid`` or ``None`` if the
         object cannot be found."""
-        
+
     def add(obj):
         """ Add a new object to the object map.  Assigns a new objectid to
         obj.__objectid__ to the object if it doesn't already have one.  The
         object's path or objectid must not already exist in the map.  Returns
         the object id."""
-        
+
     def remove(obj_objectid_or_path_tuple):
         """ Removes an object from the object map using the object itself, an
         object id, or a path tuple.  Returns a set of objectids (children,
         inclusive) removed as the result of removing this object from the
         object map."""
-        
+
     def pathlookup(obj_or_path_tuple, depth=None, include_origin=True):
         """ Returns an iterator of document ids within
         obj_or_path_tuple (a traversable object or a path tuple).  If depth
@@ -72,7 +72,7 @@ class IObjectMap(Interface):
         ``include_origin`` is ``True``, returns the docid of the object
         passed as ``obj_or_path_tuple`` in the returned set, otherwise it
         omits it."""
-        
+
     def connect(src, target, reftype):
         """Connect ``src_object`` to ``target_object`` using the reference
         type ``reftype``.  ``src`` and ``target`` may be objects or object
@@ -87,7 +87,7 @@ class IObjectMap(Interface):
         """ Return a generator consisting of objects which have ``obj`` as a
         relationship source using ``reftype``.  ``obj`` can be an object or
         an object id."""
-        
+
     def targets(obj, reftype):
         """ Return a generator consisting of objects which have ``obj`` as a
         relationship target using ``reftype``. ``obj`` can be an object or an
@@ -100,7 +100,7 @@ class IObjectMap(Interface):
     def sourceids(obj, reftype):
         """ Return a set of objectids which have ``obj`` as a relationship
         source using ``reftype``.  ``obj`` can be an object or an object id."""
-        
+
 class ISite(IPropertied):
     """ Marker interface for something that is the root of a site """
 
@@ -318,7 +318,7 @@ class IFolder(Interface):
         and WillBeRemoved events will be sent for the old object, and the
         WillBeAdded and Add events will be sent for the new object.
         """
-        
+
 class ICatalog(_ICatalog):
     """ A collection of indices """
     objectids = Attribute(
@@ -367,7 +367,7 @@ class IUsers(Interface):
 
 class IGroups(Interface):
     """ Marker interface representing a collection of groups """
-    
+
 class IPrincipals(Interface):
     """ Marker interface representing a container of users and groups """
 
@@ -384,7 +384,7 @@ class IFile(Interface):
     blob = Attribute('The ZODB blob object holding the file content')
 
     mimetype = Attribute('The mimetype of the file content')
-    
+
     def upload(stream, mimetype_hint=False):
         """ Replace the current contents of this file's blob with the
         contents of ``stream``.  ``mimetype_hint`` can be any of the
@@ -400,7 +400,7 @@ class IFile(Interface):
           content type using the ``python-magic`` library based on the
           stream's actual content.
         """
-        
+
     def get_response(self, **kw):
         """ Return a WebOb-compatible response object which uses the blob
         content as the stream data and the mimetype of the file as the
@@ -412,7 +412,47 @@ class IFile(Interface):
         """ Return the size in bytes of the data in the blob associated with
         the file"""
 
+class IWorkflow(Interface):
+    """"""
+
+    def add_state(name, callback=None, **kw):
+        """"""
+
+    def add_transition(name, from_state, to_state, callback=None, **kw):
+        """"""
+
+    def check():
+        """"""
+
+    def state_of(content):
+        """"""
+
+    def has_state(content):
+        """"""
+
+    def get_states(content, request, from_state=None):
+        """"""
+
+    def initialize(content, request=None):
+        """"""
+
+    def reset(content, request=None):
+        """"""
+
+    def transition(content, request, transition_name):
+        """"""
+    def transition_to_state(content, request, to_state,
+                            skip_same=True):
+        """"""
+
+    def get_transitions(content, request, from_state=None):
+        """"""
+
+class IDefaultWorkflow(Interface):
+    """ Marker interface used internally for workflows that aren't
+    associated with a particular content type"""
+
+
 marker = object()
 
 SERVICES_NAME = '__services__'
-
