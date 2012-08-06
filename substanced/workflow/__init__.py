@@ -4,12 +4,7 @@ from pyramid.config import ConfigurationError
 from pyramid.events import subscriber
 from pyramid.security import has_permission
 from pyramid.threadlocal import get_current_registry
-from zope.interface import (
-    implements,
-    providedBy,
-    classImplements,
-    )
-from zope.interface.interfaces import IInterface
+from zope.interface import implementer
 from zope.interface.verify import verifyObject
 
 from ..interfaces import (
@@ -26,6 +21,7 @@ class WorkflowError(Exception):
     """Exception raised for anything related to :mod:`substanced.workflow`.
     """
 
+@implementer(IWorkflow)
 class Workflow(object):
     """Finite state machine.
 
@@ -42,7 +38,6 @@ class Workflow(object):
     :type description: string
 
     """
-    implements(IWorkflow)
 
     def __init__(self, initial_state, type, name='', description=''):
         self._transition_data = {}
