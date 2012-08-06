@@ -24,7 +24,7 @@ except IOError:
     README = CHANGES = ''
 
 install_requires = [
-    'pyramid',
+    'pyramid>=1.4dev',
     'ZODB3',
     'hypatia>=0.1a2',
     'venusian',
