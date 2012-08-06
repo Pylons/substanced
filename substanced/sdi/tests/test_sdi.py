@@ -101,6 +101,25 @@ class Test_mgmt_path(unittest.TestCase):
         result = inst(context, 'a', b=1)
         self.assertEqual(result, '/path')
 
+class Test_mgmt_url(unittest.TestCase):
+    def _makeOne(self, request):
+        from .. import mgmt_url
+        return mgmt_url(request)
+
+    def test_it(self):
+        from .. import MANAGE_ROUTE_NAME
+        request = testing.DummyRequest()
+        context = testing.DummyResource()
+        def route_url(route_name, *arg, **kw):
+            self.assertEqual(route_name, MANAGE_ROUTE_NAME)
+            self.assertEqual(arg, ('a',))
+            self.assertEqual(kw, {'b':1, 'traverse':('',)})
+            return 'http://example.com/path'
+        request.route_url = route_url
+        inst = self._makeOne(request)
+        result = inst(context, 'a', b=1)
+        self.assertEqual(result, 'http://example.com/path')
+
 
 class Test__default(unittest.TestCase):
     def _makeOne(self):

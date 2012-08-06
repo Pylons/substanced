@@ -106,6 +106,15 @@ class mgmt_path(object):
         kw['traverse'] = traverse
         return self.request.route_path(MANAGE_ROUTE_NAME, *arg, **kw)
 
+class mgmt_url(object):
+    def __init__(self, request):
+        self.request = request
+
+    def __call__(self, obj, *arg, **kw):
+        traverse = resource_path_tuple(obj)
+        kw['traverse'] = traverse
+        return self.request.route_url(MANAGE_ROUTE_NAME, *arg, **kw)
+
 class _default(object):
     def __nonzero__(self):
         return False
@@ -312,6 +321,7 @@ def includeme(config): # pragma: no cover
     manage_pattern = manage_prefix + '*traverse'
     config.add_route(MANAGE_ROUTE_NAME, manage_pattern)
     config.set_request_property(mgmt_path, reify=True)
+    config.set_request_property(mgmt_url, reify=True)
     config.set_request_property(get_user, name='user', reify=True)
     config.include('deform_bootstrap')
     secret = config.registry.settings.get('substanced.secret')
