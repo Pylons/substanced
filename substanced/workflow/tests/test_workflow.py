@@ -819,18 +819,25 @@ class add_workflowTests(unittest.TestCase):
         from ...workflow import add_workflow
         add_workflow(config, workflow, content_types)
 
-    def test_add_workflow_doesnt_implement_iworkflow(self):
-        from zope.interface.verify import DoesNotImplement
-        config = mock.Mock()
-        self.assertRaises(DoesNotImplement, self._callFUT, object(), config)
+    def _makeWorkflow(self):
+        from zope.interface import implementer
+        from ...interfaces import IWorkflow
+        @implementer(IWorkflow)
+        class _Workflow(object):
+            type = 'testing'
+            def check(self):
+                pass
+        return _Workflow()
 
-    @mock.patch('substanced.workflow.verifyObject')
-    def test_add_workflow_global(self, mock_verifyObject):
+    def test_add_workflow_doesnt_implement_iworkflow(self):
+        config = mock.Mock()
+        self.assertRaises(ValueError, self._callFUT, object(), config)
+
+    def test_add_workflow_global(self):
         from ...interfaces import IWorkflow
         from ...workflow import register_workflow
-        mock_verifyObject.return_value = True
         config = mock.MagicMock()
-        wf = mock.Mock()
+        wf = self._makeWorkflow()
         self._callFUT(wf, config)
 
         self.assertEqual(config.action.mock_calls, [
@@ -841,13 +848,11 @@ class add_workflowTests(unittest.TestCase):
                       args=(config, wf, wf.type, None))
         ])
 
-    @mock.patch('substanced.workflow.verifyObject')
-    def test_add_workflow_multi_content_types(self, mock_verifyObject):
+    def test_add_workflow_multi_content_types(self):
         from ...interfaces import IWorkflow
         from ...workflow import register_workflow
-        mock_verifyObject.return_value = True
         config = mock.MagicMock()
-        wf = mock.Mock()
+        wf = self._makeWorkflow()
         self._callFUT(wf, config, content_types=('Folder', 'File'))
 
         self.assertEqual(config.action.mock_calls, [
@@ -863,15 +868,14 @@ class add_workflowTests(unittest.TestCase):
                       args=(config, wf, wf.type, 'File')),
         ])
 
-    @mock.patch('substanced.workflow.verifyObject')
-    def test_add_workflow_check_error(self, mock_verifyObject):
+    def test_add_workflow_check_error(self):
         from pyramid.config import ConfigurationError
-        from ...interfaces import IWorkflow
-        from ...workflow import register_workflow, WorkflowError
-        mock_verifyObject.return_value = True
+        from ...workflow import WorkflowError
         config = mock.Mock()
-        wf = mock.Mock()
-        wf.check.side_effect = WorkflowError
+        wf = self._makeWorkflow()
+        def _check():
+            raise WorkflowError('bogus')
+        wf.check = _check
         self.assertRaises(ConfigurationError, self._callFUT, wf, config)
 
 class register_workflowTests(unittest.TestCase):

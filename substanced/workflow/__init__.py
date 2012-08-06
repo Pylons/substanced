@@ -5,7 +5,6 @@ from pyramid.events import subscriber
 from pyramid.security import has_permission
 from pyramid.threadlocal import get_current_registry
 from zope.interface import implementer
-from zope.interface.verify import verifyObject
 
 from ..interfaces import (
     IWorkflow,
@@ -447,7 +446,8 @@ def add_workflow(config, workflow, content_types=(None,)):
     :raises: :exc:`DoesNotImplement` if **workflow** does not
              implement IWorkflow
     """
-    verifyObject(IWorkflow, workflow)
+    if not IWorkflow.providedBy(workflow):
+        raise ValueError('Not a workflow')
 
     try:
         workflow.check()
