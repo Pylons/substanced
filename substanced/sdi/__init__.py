@@ -13,11 +13,14 @@ from pyramid.authorization import ACLAuthorizationPolicy
 from pyramid.compat import is_nonstr_iter
 from pyramid.exceptions import ConfigurationError
 from pyramid.httpexceptions import HTTPBadRequest
-from pyramid.interfaces import IView
 from pyramid.request import Request
 from pyramid.security import authenticated_userid
 from pyramid.session import UnencryptedCookieSessionFactoryConfig
 from pyramid.traversal import resource_path_tuple
+from pyramid.registry import (
+    predvalseq,
+    Deferred,
+    )
 
 from ..service import find_service
 
@@ -36,25 +39,40 @@ def check_csrf_token(request, token='csrf_token'):
 @viewdefaults
 @action_method
 def add_mgmt_view(
-        config, view=None, name="", permission=None, request_method=None,
-        request_param=None, containment=None, attr=None, renderer=None, 
-        wrapper=None, xhr=False, accept=None, header=None, path_info=None, 
-        custom_predicates=(), context=None, decorator=None, mapper=None, 
-        http_cache=None, match_param=None, request_type=None, tab_title=None,
-        tab_condition=None, check_csrf=False, csrf_token='csrf_token',
-        ):
+    config,
+    view=None,
+    name="",
+    permission=None,
+    request_method=None,
+    request_param=None,
+    containment=None,
+    attr=None,
+    renderer=None, 
+    wrapper=None,
+    xhr=False,
+    accept=None,
+    header=None,
+    path_info=None, 
+    custom_predicates=(),
+    context=None,
+    decorator=None,
+    mapper=None, 
+    http_cache=None,
+    match_param=None,
+    request_type=None,
+    tab_title=None,
+    tab_condition=None,
+    check_csrf=False,
+    csrf_token='csrf_token',
+    **other_predicates
+    ):
+    
     view = config.maybe_dotted(view)
     context = config.maybe_dotted(context)
     containment = config.maybe_dotted(containment)
     mapper = config.maybe_dotted(mapper)
     decorator = config.maybe_dotted(decorator)
 
-    if request_method is not None:
-        request_method = as_sorted_tuple(request_method)
-        if 'GET' in request_method and 'HEAD' not in request_method:
-            # GET implies HEAD too
-            request_method = as_sorted_tuple(request_method + ('HEAD',))
-        
     if check_csrf:
         def _check_csrf_token(context, request):
             check_csrf_token(request, csrf_token)
@@ -62,14 +80,38 @@ def add_mgmt_view(
         custom_predicates = tuple(custom_predicates) + (_check_csrf_token,)
     
     route_name = MANAGE_ROUTE_NAME
-    view_discriminator = [
-        'view', context, name, request_type, IView, containment,
-        request_param, request_method, route_name, attr,
-        xhr, accept, header, path_info, match_param]
-    view_discriminator.extend(sorted([hash(x) for x in custom_predicates]))
-    view_discriminator = tuple(view_discriminator)
 
-    discriminator = ('sdi view',) + view_discriminator[1:]
+    pvals = other_predicates
+    pvals.update(
+        dict(
+            xhr=xhr,
+            request_method=request_method,
+            path_info=path_info,
+            request_param=request_param,
+            header=header,
+            accept=accept,
+            containment=containment,
+            request_type=request_type,
+            match_param=match_param,
+            custom=predvalseq(custom_predicates),
+            )
+        )
+
+    predlist = config.view_predlist
+    
+    def view_discrim_func():
+        # We need to defer the discriminator until we know what the phash
+        # is.  It can't be computed any sooner because thirdparty
+        # predicates may not yet exist when add_view is called.
+        order, preds, phash = predlist.make(config, **pvals)
+        return ('view', context, name, route_name, phash)
+
+    def sdi_view_discrim_func():
+        order, preds, phash = predlist.make(config, **pvals)
+        return ('sdi view', context, name, route_name, phash)
+
+    view_discriminator = Deferred(view_discrim_func)
+    discriminator = Deferred(sdi_view_discrim_func)
 
     if inspect.isclass(view) and attr:
         view_desc = 'method %r of %s' % (attr, config.object_description(view))

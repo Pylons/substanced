@@ -238,6 +238,32 @@ class Test_provides_factory(unittest.TestCase):
         self.assertTrue(IDummy.providedBy(ob))
         self.assertTrue(IDummy in directlyProvidedBy(ob))
 
+class TestContentTypePredicate(unittest.TestCase):
+    def _makeOne(self, val):
+        from . import ContentTypePredicate
+        return ContentTypePredicate(val, None)
+    
+    def test___call___true(self):
+        inst = self._makeOne('abc')
+        context = Dummy()
+        context.__content_type__ = 'abc'
+        result = inst(context, None)
+        self.assertTrue(result)
+        
+    def test___call___false(self):
+        inst = self._makeOne(True)
+        context = Dummy()
+        result = inst(context, None)
+        self.assertFalse(result)
+
+    def test_text(self):
+        inst = self._makeOne('abc')
+        self.assertEqual(inst.text(), 'content_type = abc')
+
+    def test_phash(self):
+        inst = self._makeOne('abc')
+        self.assertEqual(inst.phash(), 'content_type = abc')
+
 class DummyContentRegistry(object):
     def __init__(self):
         self.added = []

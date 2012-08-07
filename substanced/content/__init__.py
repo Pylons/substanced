@@ -167,7 +167,19 @@ def provides_factory(factory, content_type, interfaces):
     add_provides.__orig__ = factory
     return add_provides
 
+class ContentTypePredicate(object):
+    def __init__(self, val, config):
+        self.val = val
+
+    def text(self):
+        return 'content_type = %s' % (self.val,)
+
+    phash = text
+
+    def __call__(self, context, request):
+        return get_content_type(context) == self.val
+
 def includeme(config): # pragma: no cover
     config.registry.content = ContentRegistry()
     config.add_directive('add_content_type', add_content_type)
-
+    config.add_view_predicate('content_type', ContentTypePredicate)
