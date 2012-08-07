@@ -25,16 +25,10 @@ class Test_add_mgmt_view(unittest.TestCase):
         config = DummyConfigurator()
         return config
 
-    def test_with_request_method_sorted(self):
+    def test_with_request_method(self):
         config = self._makeConfig()
         self._callFUT(config, request_method=('HEAD', 'GET'))
-        self.assertEqual(config._added['request_method'], ('GET', 'HEAD'))
-        self.assertTrue(config._actions)
-
-    def test_with_request_method_get_implies_head(self):
-        config = self._makeConfig()
-        self._callFUT(config, request_method='GET')
-        self.assertEqual(config._added['request_method'], ('GET', 'HEAD'))
+        self.assertEqual(config._added['request_method'], ('HEAD', 'GET'))
         self.assertTrue(config._actions)
 
     def test_with_check_csrf(self):
@@ -648,12 +642,16 @@ class DummyVenusian(object):
         self.category = category
         return self.info
 
+class DummyPredicateList(object):
+    pass
+
 class DummyConfigurator(object):
     _ainfo = None
     def __init__(self):
         self._intr = DummyIntrospectable()
         self._actions = []
         self._added = None
+        self.view_predlist = DummyPredicateList()
 
     def object_description(self, ob):
         return ob

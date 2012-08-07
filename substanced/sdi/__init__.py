@@ -17,13 +17,12 @@ from pyramid.request import Request
 from pyramid.security import authenticated_userid
 from pyramid.session import UnencryptedCookieSessionFactoryConfig
 from pyramid.traversal import resource_path_tuple
-from pyramid.util import (
+from pyramid.registry import (
     predvalseq,
     Deferred,
     )
 
 from ..service import find_service
-from ..content import get_content_type
 
 MANAGE_ROUTE_NAME = 'substanced_manage'
 
