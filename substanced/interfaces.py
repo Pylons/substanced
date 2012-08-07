@@ -357,26 +357,81 @@ class IPrincipal(IPropertied):
     """ Marker interface representing a user or group """
 
 class IUser(IPrincipal):
-    """ Marker interface representing a user """
+    """ A user """
+
+    def check_password(password):
+        """ Checks if the plaintext password passed as ``password`` matches
+        this user's stored, encrypted passowrd.  Returns ``True`` or
+        ``False``."""
+
+    def set_pasword(password):
+        """ Set new user password. """
+
+    def email_password_reset(request):
+        """ Sends a password reset email. """
+
+    def get_groupids(objectmap=None):
+        """ Returns a sequence of group ids which this user is a member of.
+        """
+
+    def get_groups():
+        """ Returns a generator of group objects which this user is a member
+        of. """
+
+    def connect(*groups):
+        """ Connect this user to one or more group objects or group
+        objectids. """
+
+    def disconnect(*groups):
+        """ Disconnect this user from one or more group objects or group
+        objectids. """
 
 class IGroup(IPrincipal):
-    """ Marker interface representing a group """
+    """ A group """
+
+    def get_memberids():
+        """ Returns a sequence of member ids which belong to this group. """
+
+    def get_members():
+        """ Returns a generator of member objects which belong to this group.
+        """
+
+    def connect(*members):
+        """ Connect this group to one or more user objects or user
+        objectids. """
+
+    def disconnect(*members):
+        """ Disconnect this group from one or more user objects or user
+        objectids. """
 
 class IUsers(Interface):
-    """ Marker interface representing a collection of users """
+    """ A collection of users """
+
+    def add_user(login, password, **properties):
+        """ Add a user to the user collection and set passed in properties.
+        """
 
 class IGroups(Interface):
-    """ Marker interface representing a collection of groups """
+    """ A collection of groups """
+
+    def add_group(name):
+        """ Add a group to the group collection. """
 
 class IPrincipals(Interface):
     """ Marker interface representing a container of users and groups """
 
 class IPasswordResets(Interface):
-    """ Marker interface representing a collection of password reset requests
-    """
+    """ A collection of password reset requests. """
+
+    def add_reset(user):
+        """ Object representing the current set of password reset requests.
+        """
 
 class IPasswordReset(Interface):
-    """ Marker interface represent a password reset request """
+    """ A password reset request """
+
+    def reset_password(password):
+        """ Reset the password """
 
 class IFile(Interface):
     """ An object representing file content """
