@@ -12,6 +12,8 @@ UI-Plus-Guts
 - Create object map management UI (view relationships, view paths, view
   objectids).
 
+- Create workflow management UI.
+
 - import/export from contents view
 
 - Add Undo tab to Site (or per folder?) which will allow admins to undo recent
@@ -52,6 +54,8 @@ Guts-Only
   Note that a variant of this bug/feature has existed in Zope for 13 years,
   and it hasn't seemed to have raised much ire, but it always bugged me.
 
+- Add a change_acl API that sends an event when an ACL is changed.
+
 - Decide whether to split "manage contents" permissions out for folders into
   add, delete, rename.
 
@@ -61,9 +65,9 @@ Guts-Only
 - Emit an ObjectMoving event rather than removed event with a moving flag,
   then an add event?
 
-- Get rid of ISite?  Use presence of __services__ to denote site?
-
-- Add a change_acl API that sends an event when an ACL is changed.
+- Get rid of ISite?  Use presence of __services__ to denote site?  Probably
+  not.  But make sure that you can host more than one site in the same
+  instance (virtual-hosting-wise).
 
 - Undo of catalog reindex doesnt?
 
