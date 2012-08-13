@@ -131,8 +131,9 @@ class Workflow(object):
     def _set_state(self, content, state):
         states = getattr(content, STATE_ATTR, None)
         if not states:
-            setattr(content, STATE_ATTR, {})
-        getattr(content, STATE_ATTR)[self.type] = state
+            states = {}
+            setattr(content, STATE_ATTR, states)
+        states[self.type] = state
 
     def state_of(self, content):
         """Return the current state of the content object or None
