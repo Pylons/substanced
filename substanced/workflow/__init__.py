@@ -40,9 +40,7 @@ class Workflow(object):
 
     def __init__(self, initial_state, type, name='', description=''):
         self._transition_data = {}
-        self._transition_order = []
         self._state_data = {}
-        self._state_order = []
         self.initial_state = initial_state
         self.name = name
         self.type = type
@@ -72,11 +70,10 @@ class Workflow(object):
             ``**kw`` must not contain the key
             ``callback``. This name is reserved for internal use.
         """
-        if state_name in self._state_order:
+        if state_name in self._state_data:
             raise WorkflowError('State %s already defined' % state_name)
         kw['callback'] = callback
         self._state_data[state_name] = kw
-        self._state_order.append(state_name)
 
     def add_transition(self, transition_name, from_state, to_state,
                        callback=None, permission=None, **kw):
@@ -102,12 +99,12 @@ class Workflow(object):
             ``to_state``, or ``callback``; these are reserved for internal use.
 
         """
-        if transition_name in self._transition_order:
+        if transition_name in self._transition_data:
             raise WorkflowError(
                 'Duplicate transition name %s' % transition_name)
-        if not from_state in self._state_order:
+        if from_state not in self._state_data:
             raise WorkflowError('No such state %r' % from_state)
-        if not to_state in self._state_order:
+        if to_state not in self._state_data:
             raise WorkflowError('No such state %r' % to_state)
         transition = kw
         transition['name'] = transition_name
@@ -116,7 +113,6 @@ class Workflow(object):
         transition['callback'] = callback
         transition['permission'] = permission
         self._transition_data[transition_name] = transition
-        self._transition_order.append(transition_name)
 
     def check(self):
         """Check the consistency of the workflow state machine.
@@ -124,7 +120,7 @@ class Workflow(object):
         :raises: :exc:`WorkflowError` if workflow is inconsistent.
 
         """
-        if not self.initial_state in self._state_order:
+        if self.initial_state not in self._state_data:
             raise WorkflowError('Workflow must define its initial state %r'
                                 % self.initial_state)
 
@@ -156,16 +152,13 @@ class Workflow(object):
 
         L = []
 
-        for state_name in self._state_order:
+        for state_name, state in self._state_data.items():
             D = {'name': state_name, 'transitions': []}
-            state_data = self._state_data[state_name]
-            D['data'] = state_data
+            D['data'] = state
             D['initial'] = state_name == self.initial_state
             D['current'] = state_name == content_state
-            title = state_data.get('title', state_name)
-            D['title'] = title
-            for tname in self._transition_order:
-                transition = self._transition_data[tname]
+            D['title'] = state.get('title', state_name)
+            for tname, transition in self._transition_data.items():
                 if (transition['from_state'] == from_state and
                         transition['to_state'] == state_name):
                     transitions = D['transitions']
@@ -274,11 +267,10 @@ class Workflow(object):
         si = (state, transition_name)
 
         transition = None
-        for tname in self._transition_order:
-            t = self._transition_data[tname]
-            match = (t['from_state'], t['name'])
+        for tname, candidate in self._transition_data.items():
+            match = (candidate['from_state'], candidate['name'])
             if si == match:
-                transition = t
+                transition = candidate
                 break
 
         if transition is None:
@@ -370,8 +362,7 @@ class Workflow(object):
             from_state = self.state_of(content)
 
         transitions = []
-        for tname in self._transition_order:
-            transition = self._transition_data[tname]
+        for tname, transition in self._transition_data.items():
             if from_state == transition['from_state']:
                 transitions.append(transition)
 

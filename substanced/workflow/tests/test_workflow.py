@@ -15,10 +15,9 @@ class WorkflowTests(unittest.TestCase):
 
     def _makePopulated(self, state_callback=None, transition_callback=None):
         sm = self._makeOne()
-        sm._state_order = ['pending', 'published', 'private']
-        sm._state_data.setdefault('pending', {'callback': state_callback})
-        sm._state_data.setdefault('published', {'callback': state_callback})
-        sm._state_data.setdefault('private', {'callback': state_callback})
+        sm._state_data['pending'] = {'callback': state_callback}
+        sm._state_data['published'] = {'callback': state_callback}
+        sm._state_data['private'] = {'callback': state_callback}
         tdata = sm._transition_data
         tdata['publish'] = dict(name='publish',
                                 from_state='pending',
@@ -36,7 +35,6 @@ class WorkflowTests(unittest.TestCase):
                                from_state='private',
                                to_state='pending',
                                callback=transition_callback)
-        sm._transition_order = ['publish', 'reject', 'retract', 'submit']
         return sm
 
     def _makePopulatedOverlappingTransitions(
@@ -49,7 +47,6 @@ class WorkflowTests(unittest.TestCase):
             to_state='pending',
             callback=transition_callback,
             )
-        sm._transition_order.append('submit2')
         return sm
 
     @mock.patch('substanced.workflow.has_permission')
@@ -66,7 +63,7 @@ class WorkflowTests(unittest.TestCase):
         sm._transition_data['submit']['permission'] = 'forbidden'
         sm._transition_data['submit2']['permission'] = 'allowed'
 
-        mock_has_permission.side_effect = (False, True)
+        mock_has_permission.side_effect = lambda p, c, r: p != 'forbidden'
         ob = DummyContent()
         ob.__workflow_state__ = {'basic': 'private'}
         sm.transition_to_state(ob, object(), 'pending')
@@ -95,10 +92,9 @@ class WorkflowTests(unittest.TestCase):
         self.assertRaises(WorkflowError, sm.transition_to_state,
                           ob, request, 'pending')
         self.assertEqual(len(callback_args), 0)
-        self.assertEqual(mock_has_permission.mock_calls[0],
-                         mock.call('forbidden1', ob, request))
-        self.assertEqual(mock_has_permission.mock_calls[1],
-                         mock.call('forbidden2', ob, request))
+        pcalls = sorted(mock_has_permission.mock_calls)
+        self.assertEqual(pcalls[0], mock.call('forbidden1', ob, request))
+        self.assertEqual(pcalls[1], mock.call('forbidden2', ob, request))
 
     def test_class_conforms_to_IWorkflow(self):
         from zope.interface.verify import verifyClass
@@ -157,7 +153,6 @@ class WorkflowTests(unittest.TestCase):
     def test_add_state_state_exists(self):
         from .. import WorkflowError
         sm = self._makeOne()
-        sm._state_order = ['foo']
         sm._state_data = {'foo': {'c': 5}}
         self.assertRaises(WorkflowError, sm.add_state, 'foo')
 
@@ -165,15 +160,13 @@ class WorkflowTests(unittest.TestCase):
         sm = self._makeOne()
         callback = object()
         sm.add_state('foo', callback, a=1, b=2)
-        self.assertEqual(sm._state_order, ['foo'])
-        self.assertEqual(sm._state_data, {'foo': {'callback': callback,
-                                                  'a': 1, 'b': 2}})
+        self.assertEqual(sm._state_data,
+                         {'foo': {'callback': callback, 'a': 1, 'b': 2}})
 
     def test_add_state_defaults(self):
         sm = self._makeOne()
         callback = object()
         sm.add_state('foo')
-        self.assertEqual(sm._state_order, ['foo'])
         self.assertEqual(sm._state_data, {'foo': {'callback': None}})
 
     def test_add_transition(self):
@@ -183,7 +176,6 @@ class WorkflowTests(unittest.TestCase):
         sm.add_transition('make_public', 'private', 'public', None, a=1)
         sm.add_transition('make_private', 'public', 'private', None, b=2)
         self.assertEqual(len(sm._transition_data), 2)
-        self.assertEqual(sm._transition_order, ['make_public', 'make_private'])
         make_public = sm._transition_data['make_public']
         self.assertEqual(make_public['name'], 'make_public')
         self.assertEqual(make_public['from_state'], 'private')
@@ -196,7 +188,7 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(make_private['to_state'], 'private')
         self.assertEqual(make_private['callback'], None)
         self.assertEqual(make_private['b'], 2)
-        self.assertEqual(len(sm._state_order), 2)
+        self.assertEqual(len(sm._state_data), 2)
 
     def test_add_transition_transition_name_already_exists(self):
         from .. import WorkflowError
@@ -415,99 +407,102 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(len(state['transitions']), 0)
 
     def test__get_states_pending(self):
+        from operator import itemgetter
         sm = self._makePopulated()
         ob = DummyContent()
         ob.__workflow_state__ = {'basic': 'pending'}
-        result = sm._get_states(ob)
+        result = sorted(sm._get_states(ob), key=itemgetter('name'))
         self.assertEqual(len(result), 3)
 
         state = result[0]
+        self.assertEqual(state['name'], 'pending')
         self.assertEqual(state['initial'], True)
         self.assertEqual(state['current'], True)
-        self.assertEqual(state['name'], 'pending')
         self.assertEqual(state['title'], 'pending')
         self.assertEqual(state['data'], {'callback': None})
         self.assertEqual(len(state['transitions']), 0)
 
         state = result[1]
-        self.assertEqual(state['initial'], False)
-        self.assertEqual(state['current'], False)
-        self.assertEqual(state['name'], 'published')
-        self.assertEqual(state['title'], 'published')
-        self.assertEqual(state['data'], {'callback': None})
-        self.assertEqual(len(state['transitions']), 1)
-        self.assertEquals(state['transitions'][0]['name'], 'publish')
-
-        state = result[2]
-        self.assertEqual(state['initial'], False)
-        self.assertEqual(state['current'], False)
         self.assertEqual(state['name'], 'private')
+        self.assertEqual(state['initial'], False)
+        self.assertEqual(state['current'], False)
         self.assertEqual(state['title'], 'private')
         self.assertEqual(state['data'], {'callback': None})
         self.assertEqual(len(state['transitions']), 1)
         self.assertEqual(state['transitions'][0]['name'], 'reject')
 
+        state = result[2]
+        self.assertEqual(state['name'], 'published')
+        self.assertEqual(state['initial'], False)
+        self.assertEqual(state['current'], False)
+        self.assertEqual(state['title'], 'published')
+        self.assertEqual(state['data'], {'callback': None})
+        self.assertEqual(len(state['transitions']), 1)
+        self.assertEquals(state['transitions'][0]['name'], 'publish')
+
     def test__get_states_published(self):
+        from operator import itemgetter
         sm = self._makePopulated()
         ob = DummyContent()
         ob.__workflow_state__ = {'basic': 'published'}
-        result = sm._get_states(ob)
+        result = sorted(sm._get_states(ob), key=itemgetter('name'))
         self.assertEqual(len(result), 3)
 
         state = result[0]
+        self.assertEqual(state['name'], 'pending')
         self.assertEqual(state['initial'], True)
         self.assertEqual(state['current'], False)
-        self.assertEqual(state['name'], 'pending')
         self.assertEqual(state['title'], 'pending')
         self.assertEqual(state['data'], {'callback': None})
         self.assertEqual(len(state['transitions']), 1)
         self.assertEquals(state['transitions'][0]['name'], 'retract')
 
         state = result[1]
-        self.assertEqual(state['initial'], False)
-        self.assertEqual(state['current'], True)
-        self.assertEqual(state['name'], 'published')
-        self.assertEqual(state['title'], 'published')
-        self.assertEqual(state['data'], {'callback': None})
-        self.assertEqual(len(state['transitions']), 0)
-
-        state = result[2]
+        self.assertEqual(state['name'], 'private')
         self.assertEqual(state['initial'], False)
         self.assertEqual(state['current'], False)
-        self.assertEqual(state['name'], 'private')
         self.assertEqual(state['title'], 'private')
         self.assertEqual(state['data'], {'callback': None})
         self.assertEqual(len(state['transitions']), 0)
 
+        state = result[2]
+        self.assertEqual(state['name'], 'published')
+        self.assertEqual(state['initial'], False)
+        self.assertEqual(state['current'], True)
+        self.assertEqual(state['title'], 'published')
+        self.assertEqual(state['data'], {'callback': None})
+        self.assertEqual(len(state['transitions']), 0)
+
     def test__get_states_private(self):
+        from operator import itemgetter
         sm = self._makePopulated()
         ob = DummyContent()
         ob.__workflow_state__ = {'basic': 'private'}
-        result = sm._get_states(ob)
+        result = sorted(sm._get_states(ob), key=itemgetter('name'))
         self.assertEqual(len(result), 3)
 
         state = result[0]
+        self.assertEqual(state['name'], 'pending')
         self.assertEqual(state['initial'], True)
         self.assertEqual(state['current'], False)
-        self.assertEqual(state['name'], 'pending')
         self.assertEqual(state['title'], 'pending')
         self.assertEqual(state['data'], {'callback': None})
         self.assertEqual(len(state['transitions']), 1)
         self.assertEquals(state['transitions'][0]['name'], 'submit')
 
         state = result[1]
+        self.assertEqual(state['name'], 'private')
         self.assertEqual(state['initial'], False)
-        self.assertEqual(state['current'], False)
-        self.assertEqual(state['name'], 'published')
-        self.assertEqual(state['title'], 'published')
+        self.assertEqual(state['current'], True)
+        self.assertEqual(state['title'], 'private')
         self.assertEqual(state['data'], {'callback': None})
         self.assertEqual(len(state['transitions']), 0)
 
         state = result[2]
+        self.assertEqual(state['name'], 'published')
         self.assertEqual(state['initial'], False)
-        self.assertEqual(state['current'], True)
-        self.assertEqual(state['name'], 'private')
-        self.assertEqual(state['title'], 'private')
+        self.assertEqual(state['current'], False)
+        self.assertEqual(state['title'], 'published')
         self.assertEqual(state['data'], {'callback': None})
         self.assertEqual(len(state['transitions']), 0)
 
