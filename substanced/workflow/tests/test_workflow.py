@@ -53,7 +53,7 @@ class WorkflowTests(unittest.TestCase):
     def test_transition_to_state_two_transitions_second_works(
             self, mock_has_permission):
         args = []
-        def dummy(content, info):
+        def dummy(content, **info):
             args.append((content, info))
 
         sm = self._makePopulatedOverlappingTransitions(
@@ -273,8 +273,8 @@ class WorkflowTests(unittest.TestCase):
 
     def test__transition(self):
         args = []
-        def dummy(content, info):
-            args.append((content, info))
+        def dummy(content, **kw):
+            args.append((content, kw))
         sm = self._makePopulated(transition_callback=dummy)
         ob = DummyContent()
         ob.__workflow_state__ = {'basic': 'pending'}
@@ -318,8 +318,8 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(info['workflow'], sm)
 
     def test__transition_with_state_callback(self):
-        def dummy(content, info):
-            content.info = info
+        def dummy(content, **kw):
+            content.info = kw
         sm = self._makePopulated(state_callback=dummy)
         ob = DummyContent()
         ob.__workflow_state__ = {'basic': 'pending'}
@@ -331,6 +331,31 @@ class WorkflowTests(unittest.TestCase):
                           'published',
                           'name': 'publish'})
         self.assertEqual(ob.info['workflow'], sm)
+
+    def test__transition_with_custom_state_callback(self):
+        class _State(dict):
+            _called = None
+            def __call__(self, content, **kw):
+                self._called = (content, kw)
+        sm = self._makeOne()
+        sm._state_factory = _State
+        sm.add_state('pending')
+        sm.add_state('published')
+        sm.add_transition('publish', 'pending', 'published')
+        ob = DummyContent()
+        ob.__workflow_state__ = {'basic': 'pending'}
+        sm._transition(ob, 'publish')
+        called = sm._states['published']._called
+        self.assertEqual(called[0], ob)
+        self.assertEqual(called[1], {'request': None,
+                                     'transition': {'from_state': 'pending',
+                                                    'callback': None,
+                                                    'to_state': 'published',
+                                                    'permission': None,
+                                                    'name': 'publish',
+                                                   },
+                                     'workflow': sm,
+                                    })
 
     def test__transition_error(self):
         sm = self._makeOne(initial_state='pending')
@@ -348,7 +373,7 @@ class WorkflowTests(unittest.TestCase):
 
     def test__transition_to_state(self):
         args = []
-        def dummy(content, info):
+        def dummy(content, **info):
             args.append((content, info))
         sm = self._makePopulated(transition_callback=dummy)
         ob = DummyContent()
@@ -540,7 +565,7 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(state, 'pending')
 
     def test_initialize_with_initializer(self):
-        def initializer(content, info):
+        def initializer(content, **kw):
             content.initialized = True
             return 'abc'
         sm = self._makeOne(initial_state='pending')
@@ -553,7 +578,7 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(state, 'pending')
 
     def test_reset_content_has_no_state(self):
-        def callback(content, info):
+        def callback(content, **kw):
             content.called_back = True
             return '123'
         sm = self._makeOne(initial_state='pending')
@@ -575,7 +600,7 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(msg, None)
 
     def test_reset_content_has_state(self):
-        def callback(content, info):
+        def callback(content, **kw):
             content.called_back = True
             return '123'
         sm = self._makeOne(initial_state='pending')
@@ -734,10 +759,10 @@ class WorkflowTests(unittest.TestCase):
                           mock.call('view', request, 'whatever')])
 
     def test_callbackinfo_has_request(self):
-        def transition_cb(content, info):
+        def transition_cb(content, **info):
             self.assertEqual(info['request'], request)
-        def state_cb(content, info):
-            self.assertEqual(info['request'], request)
+        def state_cb(content, **kw):
+            self.assertEqual(kw['request'], request)
         wf = self._makeOne('initial')
         wf.add_state('initial', callback=state_cb)
         wf.add_state('new')

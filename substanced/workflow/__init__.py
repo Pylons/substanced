@@ -136,15 +136,17 @@ class Workflow(object):
         if not states:
             states = {}
             setattr(content, STATE_ATTR, states)
-        callback = self._states[state].get('callback')
         msg = None
+        new_state = self._states[state]
+        callback = getattr(new_state, '__call__', None)
+        if callback is None:
+            callback = self._states[state].get('callback')
         if callback is not None:
-            info = {
-                'workflow': self,
-                'transition': transition,
-                'request': request,
-            }
-            msg = callback(content, info)
+            msg = callback(content,
+                           request=request,
+                           transition=transition,
+                           workflow=self,
+                          )
         states[self.type] = state
         return state, msg
 
@@ -294,9 +296,15 @@ class Workflow(object):
             'request': request,
         }
 
-        transition_callback = transition['callback']
-        if transition_callback is not None:
-            transition_callback(content, info)
+        callback = getattr(transition, '__call__', None)
+        if callback is None:
+            callback = transition.get('callback')
+        if callback is not None:
+            callback(content,
+                     request=request,
+                     transition=transition,
+                     workflow=self,
+                    )
 
         self._set_state(content, to_state, request, transition)
 
