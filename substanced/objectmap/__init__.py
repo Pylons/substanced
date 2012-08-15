@@ -23,9 +23,7 @@ from ..util import (
     oid_of,
     )
 
-from ..interfaces import (
-    IObjectMap,
-    )
+from ..interfaces import IObjectMap
 
 """
 Pathindex data structure of object map:
@@ -89,8 +87,7 @@ references to the objectid represented by '/a' *and* any children
 _marker = object()
 
 @content(
-    IObjectMap,
-    name='Object Map',
+    'Object Map',
     icon='icon-asterisk'
     )
 @implementer(IObjectMap)

@@ -95,7 +95,9 @@ class Test_FolderEventSubscriber(unittest.TestCase):
         subscriber = config.subscribed[0]
         wrapper = subscriber['wrapped']
         self.assertEqual(wrapper.wrapped, foo)
-        self.assertEqual(wrapper(None, None, None), 'abc')
+        event = Dummy()
+        self.assertEqual(wrapper(event, None, None), 'abc')
+        self.assertEqual(event.registry, scanner.config.registry)
 
     def test___call__(self):
         dec = self._makeOne()
@@ -106,9 +108,14 @@ class Test_FolderEventSubscriber(unittest.TestCase):
         self.assertEqual(dummy_venusian.attached,
                          [(foo, dec.register, 'substanced')])
 
+class Dummy:
+    pass
+        
+registry = Dummy()
 class DummyConfigurator(object):
     def __init__(self):
         self.subscribed = []
+        self.registry = registry
 
     def add_subscriber(self, wrapped, ifaces):
         self.subscribed.append({'wrapped':wrapped, 'ifaces':ifaces})
@@ -123,6 +130,3 @@ class DummyVenusian(object):
     def attach(self, wrapped, fn, category=None):
         self.attached.append((wrapped, fn, category))
 
-class Dummy:
-    pass
-        

@@ -10,7 +10,6 @@ import venusian
 
 from pyramid.authentication import SessionAuthenticationPolicy
 from pyramid.authorization import ACLAuthorizationPolicy
-from pyramid.compat import is_nonstr_iter
 from pyramid.exceptions import ConfigurationError
 from pyramid.httpexceptions import HTTPBadRequest
 from pyramid.request import Request
@@ -26,12 +25,6 @@ from ..service import find_service
 
 MANAGE_ROUTE_NAME = 'substanced_manage'
 
-def as_sorted_tuple(val):
-    if not is_nonstr_iter(val):
-        val = (val,)
-    val = tuple(sorted(val))
-    return val
-
 def check_csrf_token(request, token='csrf_token'):
     if request.params.get(token) != request.session.get_csrf_token():
         raise HTTPBadRequest('incorrect CSRF token')
@@ -43,13 +36,14 @@ def add_mgmt_view(
     view=None,
     name="",
     permission=None,
+    request_type=None,
     request_method=None,
     request_param=None,
     containment=None,
     attr=None,
     renderer=None, 
     wrapper=None,
-    xhr=False,
+    xhr=None,
     accept=None,
     header=None,
     path_info=None, 
@@ -59,12 +53,11 @@ def add_mgmt_view(
     mapper=None, 
     http_cache=None,
     match_param=None,
-    request_type=None,
     tab_title=None,
     tab_condition=None,
     check_csrf=False,
     csrf_token='csrf_token',
-    **other_predicates
+    **predicates
     ):
     
     view = config.maybe_dotted(view)
@@ -81,7 +74,7 @@ def add_mgmt_view(
     
     route_name = MANAGE_ROUTE_NAME
 
-    pvals = other_predicates
+    pvals = predicates.copy()
     pvals.update(
         dict(
             xhr=xhr,
@@ -126,7 +119,7 @@ def add_mgmt_view(
         path_info=path_info, custom_predicates=custom_predicates, 
         context=context, decorator=decorator, mapper=mapper, 
         http_cache=http_cache, match_param=match_param, 
-        request_type=request_type
+        request_type=request_type, **predicates
         )
     
     intr = config.introspectable(
@@ -176,22 +169,8 @@ class mgmt_view(object):
     See :ref:`view_defaults` for more information.
     """
     venusian = venusian
-    def __init__(self, name=default, request_type=default, for_=default,
-                 permission=default, route_name=default,
-                 request_method=default, request_param=default,
-                 containment=default, attr=default, renderer=default,
-                 wrapper=default, xhr=default, accept=default,
-                 header=default, path_info=default,
-                 custom_predicates=default, context=default,
-                 decorator=default, mapper=default, http_cache=default,
-                 match_param=default, tab_title=default, tab_condition=default,
-                 check_csrf=default, csrf_token=default):
-        L = dict(locals())
-        if (context is not default) or (for_ is not default):
-            L['context'] = context or for_
-        for k, v in L.items():
-            if k not in ('self', 'L') and v is not default:
-                setattr(self, k, v)
+    def __init__(self, **settings):
+        self.__dict__.update(settings)
     
     def __call__(self, wrapped):
         settings = self.__dict__.copy()

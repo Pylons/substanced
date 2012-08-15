@@ -54,7 +54,7 @@ def name_or_file(node, kw):
         if not struct['name']:
             filename = struct['file'].get('filename')
             if filename:
-                curried_name_validator = _make_name_validator(IFile)
+                curried_name_validator = _make_name_validator('File')
                 real_name_validator = curried_name_validator(node, kw)
                 real_name_validator(node['file'], filename)
             else:
@@ -80,7 +80,7 @@ class AddFileView(FormView):
     buttons = ('add',)
 
     def _makeob(self, stream):
-        return self.request.registry.content.create(IFile, stream)
+        return self.request.registry.content.create('File', stream)
 
     def add_success(self, appstruct):
         name = appstruct['name']

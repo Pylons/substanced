@@ -5,18 +5,19 @@ from pyramid.security import (
     Authenticated,
     )
 
-from ..interfaces import ICatalogable
-from ..service import find_service
-from ..util import (
-    postorder,
-    oid_of,
-    )
-from . import NO_INHERIT
+from ..catalog import is_catalogable
 
 from ..sdi import (
     mgmt_view,
     check_csrf_token,
     )
+from ..service import find_service
+from ..util import (
+    postorder,
+    oid_of,
+    )
+
+from . import NO_INHERIT
 
 def get_workflow(*arg, **kw):
     return # XXX
@@ -134,7 +135,7 @@ def acl_edit_view(context, request):
             allowed = catalog.get('allowed')
             if allowed is not None:
                 for node in postorder(context):
-                    if ICatalogable.providedBy(node):
+                    if is_catalogable(node, request.registry):
                         catalog.reindex_doc(oid_of(node), node)
 
     workflow = get_context_workflow(context)

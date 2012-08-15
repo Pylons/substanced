@@ -14,6 +14,7 @@ from ..interfaces import (
     )
     
 class _ObjectEvent(object):
+    registry = None # added by _FolderEventSubscriber
     def __init__(self, object, parent, name):
         self.object = object
         self.parent = parent
@@ -33,6 +34,7 @@ class ObjectWillBeAdded(_ObjectEvent):
         self.duplicating = duplicating
 
 class _ObjectRemovalEvent(object):
+    registry = None # added by _FolderEventSubscriber
     def __init__(self, object, parent, name, moving=False):
         self.object = object
         self.parent = parent
@@ -50,6 +52,7 @@ class ObjectWillBeRemoved(_ObjectRemovalEvent):
 @implementer(IObjectModified)
 class ObjectModified(object): # pragma: no cover
     """ An event sent when an object has been modified."""
+    registry = None # added by _FolderEventSubscriber
     def __init__(self, object):
         self.object = object
 
@@ -70,7 +73,9 @@ class _FolderEventSubscriber(object):
         self.container = container
 
     def register(self, scanner, name, wrapped):
+        registry = scanner.config.registry
         def wrapper(event, obj, container):
+            event.registry = registry
             return wrapped(event)
         wrapper.wrapped = wrapped
         scanner.config.add_subscriber(wrapper,

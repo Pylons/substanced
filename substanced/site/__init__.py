@@ -32,8 +32,7 @@ class SitePropertySheet(PropertySheet):
     schema = SiteSchema()
 
 @content(
-    ISite,
-    name='Site',
+    'Site',
     icon='icon-home',
     propertysheets = (
         ('', SitePropertySheet),

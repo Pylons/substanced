@@ -45,8 +45,7 @@ class UserToGroup(Interface):
     object map"""
 
 @content(
-    IPrincipals,
-    name='Principals',
+    'Principals',
     icon='icon-lock'
     )
 @implementer(IPrincipals)
@@ -63,8 +62,7 @@ class Principals(Folder):
         self['resets'] = PasswordResets()
 
 @content(
-    IUsers,
-    name='Users',
+    'Users',
     icon='icon-list-alt'
     )
 @implementer(IUsers)
@@ -78,8 +76,7 @@ class Users(Folder):
         return user
 
 @content(
-    IGroups,
-    name='Groups',
+    'Groups',
     icon='icon-list-alt'
     )
 @implementer(IGroups)
@@ -174,8 +171,7 @@ class GroupPropertySheet(PropertySheet):
         context.connect(*struct['members'])
 
 @content(
-    IGroup,
-    name='Group',
+    'Group',
     icon='icon-th-list',
     add_view='add_group',
     tab_order=('properties',),
@@ -309,8 +305,7 @@ class UserPropertySheet(PropertySheet):
         context.connect(*struct['groups'])
 
 @content(
-    IUser,
-    name='User',
+    'User',
     icon='icon-user',
     add_view='add_user',
     tab_order=('properties',),
@@ -400,8 +395,7 @@ class UserToPasswordReset(object):
     pass
 
 @content(
-    IPasswordResets,
-    name='Password Resets',
+    'Password Resets',
     icon='icon-tags'
     )
 @implementer(IPasswordResets)
@@ -427,8 +421,7 @@ class PasswordResets(Folder):
         return reset
 
 @content(
-    IPasswordReset,
-    name='Password Reset',
+    'Password Reset',
     icon='icon-tag'
     )
 @implementer(IPasswordReset)

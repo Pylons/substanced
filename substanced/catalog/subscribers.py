@@ -1,6 +1,3 @@
-from ..interfaces import (
-    ICatalogable,
-    )
 
 from ..event import (
     subscribe_added,
@@ -18,6 +15,8 @@ from ..util import (
     oid_of,
     )
 
+from . import is_catalogable
+
 @subscribe_added()
 def object_added(event):
     """ An IObjectAdded event subscriber which indexes an object and and its
@@ -31,7 +30,7 @@ def object_added(event):
     if not catalogs:
         return
     for node in postorder(obj):
-        if ICatalogable.providedBy(node):
+        if is_catalogable(node, event.registry):
             objectid = oid_of(node)
             for catalog in catalogs:
                 catalog.index_doc(objectid, node)
