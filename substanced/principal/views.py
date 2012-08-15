@@ -7,11 +7,11 @@ from ..form import FormView
 from ..sdi import mgmt_view
 from ..schema import Schema
 from ..service import find_service
+
 from ..interfaces import (
     IUsers,
     IUser,
     IGroups,
-    IGroup,
     IPasswordReset,
     )
 
@@ -42,7 +42,7 @@ class AddUserView(FormView):
         registry = self.request.registry
         name = appstruct.pop('login')
         groups = appstruct.pop('groups')
-        user = registry.content.create(IUser, **appstruct)
+        user = registry.content.create('User', **appstruct)
         self.context[name] = user
         user.connect(*groups)
         return HTTPFound(self.request.mgmt_path(user, '@@properties'))
@@ -63,7 +63,7 @@ class AddGroupView(FormView):
         registry = self.request.registry
         name = appstruct.pop('name')
         members = appstruct.pop('members')
-        group = registry.content.create(IGroup, **appstruct)
+        group = registry.content.create('Group', **appstruct)
         self.context[name] = group
         group.connect(*members)
         return HTTPFound(self.request.mgmt_path(group, '@@properties'))

@@ -7,16 +7,6 @@ from zope.interface import (
     Attribute,
     )
 
-class IContent(Interface):
-    """ Marker interface representing an object that has a content type """
-
-class ICatalogable(Interface):
-    """ Marker interface describing catalogable content.  An object must
-    implement this interface to have its attributes indexed """
-
-class IPropertied(Interface):
-    """ Marker interface denoting that a piece of content has property sheets.
-    """
 class IPropertySheet(Interface):
     """ Interface for objects with a set of properties defined by a Colander
     schema.  The class :class:`substanced.property.PropertySheet` (which is
@@ -101,7 +91,7 @@ class IObjectMap(Interface):
         """ Return a set of objectids which have ``obj`` as a relationship
         source using ``reftype``.  ``obj`` can be an object or an object id."""
 
-class ISite(IPropertied):
+class ISite(Interface):
     """ Marker interface for something that is the root of a site """
 
 class ISearch(Interface):
@@ -353,7 +343,7 @@ class ICatalog(_ICatalog):
         ``substanced.catalog`` Python logger output at ``info`` level.
         """
         
-class IPrincipal(IPropertied):
+class IPrincipal(Interface):
     """ Marker interface representing a user or group """
 
 class IUser(IPrincipal):

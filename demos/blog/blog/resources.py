@@ -1,5 +1,4 @@
 import datetime
-import StringIO
 import time
 
 from colander import (
@@ -10,9 +9,7 @@ from colander import (
     SchemaNode,
     String,
     )
-from deform.schema import FileData
 from deform.widget import (
-    FileUploadWidget,
     SelectWidget,
     TextAreaWidget,
     )
@@ -26,20 +23,10 @@ from pyramid.security import (
 from substanced.content import content
 from substanced.schema import Schema
 from substanced.folder import Folder
-from substanced.form import FileUploadTempStore
 from substanced.property import PropertySheet
 from substanced.site import (
     Site,
     SitePropertySheet,
-    )
-from ZODB.blob import Blob
-from zope.interface import implementer
-
-from .interfaces import (
-    IBlog,
-    IBlogEntry,
-    IComment,
-    IFile,
     )
 
 def make_name_validator(content_type):
@@ -72,7 +59,7 @@ eastern = timezone('America/New_York')
 class BlogEntrySchema(Schema):
     name = SchemaNode(
         String(),
-        validator = make_name_validator(IBlogEntry),
+        validator = make_name_validator('Blog Entry'),
         )
     title = SchemaNode(
         String(),
@@ -112,8 +99,7 @@ class BlogEntryPropertySheet(PropertySheet):
         context.pubdate = struct['pubdate']
 
 @content(
-    IBlogEntry,
-    name='Blog Entry',
+    'Blog Entry',
     icon='icon-book',
     add_view='add_blog_entry',
     propertysheets=(
@@ -122,7 +108,6 @@ class BlogEntryPropertySheet(PropertySheet):
     catalog=True,
     tab_order=('properties', 'contents', 'acl_edit'),
     )
-@implementer(IBlogEntry)
 class BlogEntry(Folder):
     def __init__(self, title, entry, format, pubdate):
         Folder.__init__(self)
@@ -141,106 +126,6 @@ class BlogEntry(Folder):
                 self['comments'][name] = comment
                 break
 
-_marker = object()
-
-@deferred
-def upload_widget(node, kw):
-    request = kw['request']
-    tmpstore = FileUploadTempStore(request)
-    return FileUploadWidget(tmpstore)
-
-class FilePropertiesSchema(Schema):
-    name = SchemaNode(
-        String(),
-        validator = make_name_validator(IFile),
-        )
-    mimetype = SchemaNode(
-        String(),
-        missing = 'application/octet-stream',
-        )
-
-class FilePropertySheet(PropertySheet):
-    schema = FilePropertiesSchema()
-
-    def get(self):
-        context = self.context
-        return dict(
-            name=context.__name__,
-            mimetype=context.mimetype
-            )
-
-    def set(self, struct):
-        context = self.context
-        newname = struct['name']
-        mimetype = struct['mimetype']
-        context.mimetype = mimetype
-        oldname = context.__name__
-        if newname and newname != oldname:
-            context.__parent__.rename(oldname, newname)
-
-class FileUploadSchema(Schema):
-    file = SchemaNode(
-        FileData(),
-        widget = upload_widget,
-        )
-
-class FileUploadPropertySheet(PropertySheet):
-    schema = FileUploadSchema()
-    
-    def get(self):
-        context = self.context
-        filedata = dict(
-            fp=None,
-            uid=str(context.__objectid__),
-            filename='',
-            )
-        return dict(file=filedata)
-    
-    def set(self, struct):
-        context = self.context
-        file = struct['file']
-        if file.get('fp'):
-            fp = file['fp']
-            fp.seek(0)
-            context.upload(fp)
-        
-@content(
-    IFile,
-    icon='icon-file',
-    add_view='add_file',
-    # prevent view tab from sorting first (it would display the file when
-    # manage_main clicked)
-    tab_order = ('properties', 'acl_edit', 'view'),
-    propertysheets = (
-        ('Basic', FilePropertySheet),
-        ('Upload', FileUploadPropertySheet),
-        ),
-    catalog = True,
-    )
-@implementer(IFile)
-class File(Persistent):
-    def __init__(self, stream, mimetype='application/octet-stream'):
-        self.mimetype = mimetype
-        self.blob = Blob()
-        self.upload(stream)
-           
-    def upload(self, stream):
-        if not stream:
-            stream = StringIO.StringIO()
-        fp = self.blob.open('w')
-        size = 0
-        for chunk in chunks(stream):
-            size += len(chunk)        
-            fp.write(chunk)
-        fp.close()
-        self.size = size
-        
-def chunks(stream, chunk_size=10000):
-    while True:
-        chunk = stream.read(chunk_size)
-        if not chunk: break
-        yield chunk
-
 class CommentSchema(Schema):
     commenter = SchemaNode(
        String(),
@@ -257,8 +142,7 @@ class CommentPropertySheet(PropertySheet):
     schema = CommentSchema()
 
 @content(
-    IComment,
-    name='Comment',
+    'Comment',
     icon='icon-comment',
     add_view='add_comment',
     propertysheets = (
@@ -266,7 +150,6 @@ class CommentPropertySheet(PropertySheet):
         ),
     catalog = True,
     )
-@implementer(IComment)
 class Comment(Persistent):
     def __init__(self, commenter_name, text, pubdate):
         self.commenter_name = commenter_name
@@ -274,14 +157,12 @@ class Comment(Persistent):
         self.pubdate = pubdate
 
 @content(
-    IBlog,
-    name='Blog',
+    'Blog',
     icon='icon-home',
     propertysheets = (
         ('Basic', SitePropertySheet),
         ),
     )
-@implementer(IBlog)
 class Blog(Site):
     def __init__(self, initial_login, initial_email, initial_password):
         Site.__init__(self, initial_login, initial_email, initial_password)

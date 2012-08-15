@@ -774,6 +774,65 @@ class Test_search_catalog(unittest.TestCase):
         inst(a=1, permitted=(['bob'], 'view'))
         self.assertTrue(inst.Search.checker(request.context))
 
+class Test_is_catalogable(unittest.TestCase):
+    def setUp(self):
+        self.config = testing.setUp()
+
+    def tearDown(self):
+        testing.tearDown()
+
+    def _callFUT(self, resource, registry=None):
+        from .. import is_catalogable
+        return is_catalogable(resource, registry)
+
+    def test_no_registry_passed(self):
+        resource = Dummy()
+        resource.result = True
+        self.config.registry.content = DummyContent()
+        self.assertTrue(self._callFUT(resource))
+
+    def test_true(self):
+        resource = Dummy()
+        resource.result = True
+        registry = Dummy()
+        registry.content = DummyContent()
+        self.assertTrue(self._callFUT(resource, registry))
+
+    def test_false(self):
+        resource = Dummy()
+        resource.result = False
+        registry = Dummy()
+        registry.content = DummyContent()
+        self.assertFalse(self._callFUT(resource, registry))
+
+class TestCatalogablePredicate(unittest.TestCase):
+    def _makeOne(self, val, config):
+        from .. import CatalogablePredicate
+        return CatalogablePredicate(val, config)
+
+    def test_text(self):
+        config = Dummy()
+        config.registry = Dummy()
+        inst = self._makeOne(True, config)
+        self.assertEqual(inst.text(), 'catalogable = True')
+
+    def test_phash(self):
+        config = Dummy()
+        config.registry = Dummy()
+        inst = self._makeOne(True, config)
+        self.assertEqual(inst.phash(), 'catalogable = True')
+
+    def test__call__(self):
+        config = Dummy()
+        config.registry = Dummy()
+        inst = self._makeOne(True, config)
+        def is_catalogable(context, registry):
+            self.assertEqual(context, None)
+            self.assertEqual(registry, config.registry)
+            return True
+        inst.is_catalogable = is_catalogable
+        self.assertEqual(inst(None, None), True)
+
 class DummySearch(object):
     def __init__(self, result):
         self.result = result
@@ -888,4 +947,10 @@ class DummyIndex(object):
             return ['sorted3', 'sorted2', 'sorted1']
         return ['sorted1', 'sorted2', 'sorted3']
 
+class DummyContent(object):
+    def metadata(self, resource, name, default=None):
+        return getattr(resource, 'result', default)
+        
 
+class Dummy(object):
+    pass

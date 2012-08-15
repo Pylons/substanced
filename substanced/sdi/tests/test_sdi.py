@@ -54,7 +54,10 @@ class Test_add_mgmt_view(unittest.TestCase):
     def test_discriminator(self):
         config = self._makeConfig()
         self._callFUT(config)
-        self.assertTrue(config._actions[0][0], 'sdi view')
+        discrim = config._actions[0][0]
+        self.assertEqual(discrim.resolve(),
+                         ('sdi view', None, '', 'substanced_manage', 'hash')
+                         )
 
     def test_intr_action(self):
         config = self._makeConfig()
@@ -75,6 +78,8 @@ class Test_add_mgmt_view(unittest.TestCase):
         self.assertEqual(config._intr['tab_condition'], 'tab_condition')
         self.assertEqual(config._intr['check_csrf'], True)
         self.assertEqual(config._intr['csrf_token'], 'csrf_token')
+        self.assertEqual(config._intr.related['views'].resolve(),
+                         ('view', None, '', 'substanced_manage', 'hash'))
 
 class Test_mgmt_path(unittest.TestCase):
     def _makeOne(self, request):
@@ -145,23 +150,17 @@ class Test_mgmt_view(unittest.TestCase):
         decorator = self._makeOne()
         self.assertEqual(decorator.__dict__, {})
 
-    def test_create_context_trumps_for(self):
-        decorator = self._makeOne(context='123', for_='456')
-        self.assertEqual(decorator.context, '123')
-
-    def test_create_for_trumps_context_None(self):
-        decorator = self._makeOne(context=None, for_='456')
-        self.assertEqual(decorator.context, '456')
-
     def test_create_nondefaults(self):
         decorator = self._makeOne(
-            name=None, request_type=None, for_=None,
-            permission='foo', mapper='mapper',
-            decorator='decorator', match_param='match_param'
+            name=None,
+            request_type=None,
+            permission='foo',
+            mapper='mapper',
+            decorator='decorator',
+            match_param='match_param',
             )
         self.assertEqual(decorator.name, None)
         self.assertEqual(decorator.request_type, None)
-        self.assertEqual(decorator.context, None)
         self.assertEqual(decorator.permission, 'foo')
         self.assertEqual(decorator.mapper, 'mapper')
         self.assertEqual(decorator.decorator, 'decorator')
@@ -643,7 +642,8 @@ class DummyVenusian(object):
         return self.info
 
 class DummyPredicateList(object):
-    pass
+    def make(self, config, **pvals):
+        return 1, (), 'hash'
 
 class DummyConfigurator(object):
     _ainfo = None

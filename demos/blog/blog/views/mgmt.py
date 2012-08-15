@@ -1,15 +1,11 @@
 from webob.exc import HTTPFound
 from substanced.sdi import mgmt_view
 from substanced.form import FormView
-from substanced.interfaces import ISite
 
-from ..resources import (
-    IBlogEntry,
-    BlogEntrySchema,
-    )
+from ..resources import BlogEntrySchema
 
 @mgmt_view(
-    context=ISite,
+    content_type='Blog',
     name='add_blog_entry',
     permission='sdi.add-content', 
     renderer='substanced.sdi:templates/form.pt',
@@ -23,7 +19,7 @@ class AddBlogEntryView(FormView):
     def add_success(self, appstruct):
         name = appstruct.pop('name')
         request = self.request
-        blogentry = request.registry.content.create(IBlogEntry, **appstruct)
+        blogentry = request.registry.content.create('Blog Entry', **appstruct)
         self.context[name] = blogentry
         loc = request.mgmt_path(self.context, name, '@@properties')
         return HTTPFound(location=loc)

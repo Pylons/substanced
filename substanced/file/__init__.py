@@ -38,7 +38,7 @@ def file_upload_widget(node, kw):
 class FilePropertiesSchema(Schema):
     name = colander.SchemaNode(
         colander.String(),
-        validator = _make_name_validator(IFile),
+        validator = _make_name_validator('File'),
         )
     mimetype = colander.SchemaNode(
         colander.String(),
@@ -103,8 +103,7 @@ class FileUploadPropertySheet(PropertySheet):
         tmpstore.clear()
 
 @content(
-    IFile,
-    name = 'File',
+    'File',
     icon='icon-file',
     add_view='add_file',
     # prevent view tab from sorting first (it would display the image when
