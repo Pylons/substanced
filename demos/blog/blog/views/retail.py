@@ -8,13 +8,6 @@ from pyramid.url import resource_url
 from pyramid.view import view_config
 from pyramid.security import authenticated_userid
 
-from ..resources import (
-    IBlogEntry,
-    IBlog,
-    IFile,
-    Comment,
-    )
-
 def _getentrybody(format, entry):
     if format == 'rst':
        body = publish_parts(entry, writer_name='html')['fragment']
@@ -23,13 +16,13 @@ def _getentrybody(format, entry):
     return body
 
 @view_config(
-    context=IBlog,
     renderer='templates/frontpage.pt',
+    content_type='Blog',
     )
 def blogview(context, request):
     blogentries = []
     for name, blogentry in context.items():
-        if IBlogEntry.providedBy(blogentry):
+        if request.registry.content.istype(blogentry, 'Blog Entry'):
             blogentries.append(
                 {'url': resource_url(blogentry, request),
                  'title': blogentry.title,
@@ -55,7 +48,7 @@ def blogview(context, request):
         )
 
 @view_config(
-    context=IBlogEntry,
+    content_type='Blog Entry',
     renderer='templates/blogentry.pt',
     )
 def blogentry_view(context, request):
@@ -79,7 +72,8 @@ def blogentry_view(context, request):
            message = 'Please enter your name'
         else: 
            pubdate = datetime.datetime.now()
-           comment = Comment(commenter_name, comment_text, pubdate)
+           comment = request.registry.content.create(
+               'Comment', commenter_name, comment_text, pubdate)
            context.add_comment(comment)
 
     body = _getentrybody(context.format, context.entry)
@@ -103,7 +97,7 @@ def blogentry_view(context, request):
         )
 
 @view_config(
-    context=IFile,
+    content_type='File',
     name='download.html',
     )
 def download_attachment(context, request):
@@ -144,7 +138,7 @@ class FeedViews(object):
 
         blogentries = []
         for name, blogentry in context.items():
-            if IBlogEntry.providedBy(blogentry):
+            if request.registry.content.istype(blogentry, 'Blog Entry'):
                 updated = blogentry.pubdate
                 info = {'url': resource_url(blogentry, request),
                         'title': blogentry.title,

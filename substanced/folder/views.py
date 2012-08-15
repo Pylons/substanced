@@ -60,11 +60,13 @@ class AddFolderSchema(Schema):
         validator=name_validator,
         )
 
-@mgmt_view(context=IFolder,
-           name='add_folder',
-           tab_condition=False,
-           permission='sdi.add-content',
-           renderer='substanced.sdi:templates/form.pt')
+@mgmt_view(
+    context=IFolder,
+    name='add_folder',
+    tab_condition=False,
+    permission='sdi.add-content',
+    renderer='substanced.sdi:templates/form.pt'
+    )
 class AddFolderView(FormView):
     title = 'Add Folder'
     schema = AddFolderSchema()
@@ -73,7 +75,7 @@ class AddFolderView(FormView):
     def add_success(self, appstruct):
         registry = self.request.registry
         name = appstruct['name']
-        folder = registry.content.create(IFolder)
+        folder = registry.content.create('Folder')
         self.context[name] = folder
         return HTTPFound(location=self.request.mgmt_path(folder, '@@contents'))
 
@@ -81,7 +83,8 @@ class AddFolderView(FormView):
 @view_defaults(
     context=IFolder,
     name='contents',
-    renderer='templates/contents.pt')
+    renderer='templates/contents.pt'
+    )
 class FolderContentsViews(object):
 
     get_add_views = staticmethod(get_add_views) # for testing
@@ -90,7 +93,10 @@ class FolderContentsViews(object):
         self.context = context
         self.request = request
 
-    @mgmt_view(request_method="GET", permission='sdi.view')
+    @mgmt_view(
+        request_method='GET',
+        permission='sdi.view'
+        )
     def show(self):
         context = self.context
         request = self.request
@@ -112,11 +118,13 @@ class FolderContentsViews(object):
         batch = Batch(L, request)
         return dict(batch=batch, addables=addables)
 
-    @mgmt_view(request_method='POST',
-               request_param="form.delete",
-               permission='sdi.manage-contents',
-               tab_condition=False,
-               check_csrf=True)
+    @mgmt_view(
+        request_method='POST',
+        request_param="form.delete",
+        permission='sdi.manage-contents',
+        tab_condition=False,
+        check_csrf=True
+        )
     def delete(self):
         request = self.request
         context = self.context
@@ -138,11 +146,13 @@ class FolderContentsViews(object):
             request.flash_with_undo(msg)
         return HTTPFound(request.mgmt_path(context, '@@contents'))
 
-    @mgmt_view(request_method='POST',
-               request_param="form.duplicate",
-               permission='sdi.manage-contents',
-               tab_condition=False,
-               check_csrf=True)
+    @mgmt_view(
+        request_method='POST',
+        request_param="form.duplicate",
+        permission='sdi.manage-contents',
+        tab_condition=False,
+        check_csrf=True
+        )
     def duplicate(self):
         request = self.request
         context = self.context
@@ -161,12 +171,14 @@ class FolderContentsViews(object):
             request.flash_with_undo(msg)
         return HTTPFound(request.mgmt_path(context, '@@contents'))
 
-    @mgmt_view(request_method='POST',
-               request_param="form.rename",
-               permission='sdi.manage-contents',
-               renderer='templates/rename.pt',
-               tab_condition=False,
-               check_csrf=True)
+    @mgmt_view(
+        request_method='POST',
+        request_param="form.rename",
+        permission='sdi.manage-contents',
+        renderer='templates/rename.pt',
+        tab_condition=False,
+        check_csrf=True
+        )
     def rename(self):
         request = self.request
         context = self.context
@@ -178,12 +190,14 @@ class FolderContentsViews(object):
                               for name in torename
                               if name in context])
 
-    @mgmt_view(request_method='POST',
-               request_param="form.rename_finish",
-               name="rename",
-               permission='sdi.manage-contents',
-               tab_condition=False,
-               check_csrf=True)
+    @mgmt_view(
+        request_method='POST',
+        request_param="form.rename_finish",
+        name="rename",
+        permission='sdi.manage-contents',
+        tab_condition=False,
+        check_csrf=True
+        )
     def rename_finish(self):
         request = self.request
         context = self.context
@@ -209,11 +223,13 @@ class FolderContentsViews(object):
             request.flash_with_undo(msg)
         return HTTPFound(request.mgmt_path(context, '@@contents'))
 
-    @mgmt_view(request_method='POST',
-               request_param="form.copy",
-               permission='sdi.view',
-               tab_condition=False,
-               check_csrf=True)
+    @mgmt_view(
+        request_method='POST',
+        request_param="form.copy",
+        permission='sdi.view',
+        tab_condition=False,
+        check_csrf=True
+        )
     def copy(self):
         request = self.request
         context = self.context
@@ -232,11 +248,13 @@ class FolderContentsViews(object):
 
         return HTTPFound(request.mgmt_path(context, '@@contents'))
 
-    @mgmt_view(request_method='POST',
-               request_param="form.copy_finish",
-               permission='sdi.manage-contents',
-               tab_condition=False,
-               check_csrf=True)
+    @mgmt_view(
+        request_method='POST',
+        request_param="form.copy_finish",
+        permission='sdi.manage-contents',
+        tab_condition=False,
+        check_csrf=True
+        )
     def copy_finish(self):
         request = self.request
         context = self.context
@@ -265,11 +283,13 @@ class FolderContentsViews(object):
 
         return HTTPFound(request.mgmt_path(context, '@@contents'))
 
-    @mgmt_view(request_method='POST',
-               request_param="form.move",
-               permission='sdi.view',
-               tab_condition=False,
-               check_csrf=True)
+    @mgmt_view(
+        request_method='POST',
+        request_param="form.move",
+        permission='sdi.view',
+        tab_condition=False,
+        check_csrf=True
+        )
     def move(self):
         request = self.request
         context = self.context
@@ -288,11 +308,13 @@ class FolderContentsViews(object):
 
         return HTTPFound(request.mgmt_path(context, '@@contents'))
 
-    @mgmt_view(request_method='POST',
-               request_param="form.move_finish",
-               permission='sdi.manage-contents',
-               tab_condition=False,
-               check_csrf=True)
+    @mgmt_view(
+        request_method='POST',
+        request_param="form.move_finish",
+        permission='sdi.manage-contents',
+        tab_condition=False,
+        check_csrf=True
+        )
     def move_finish(self):
         request = self.request
         context = self.context

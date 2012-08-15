@@ -8,8 +8,6 @@ from persistent import Persistent
 import BTrees
 from BTrees.Length import Length
 
-from zope.interface import implementer
-
 from ..exceptions import FolderKeyError
 
 from ..interfaces import (
@@ -32,9 +30,11 @@ from ..service import (
     find_services,
     )
 
-
-@content(IFolder, icon='icon-folder-close', add_view='add_folder',
-         name='Folder')
+@content(
+    'Folder',
+    icon='icon-folder-close',
+    add_view='add_folder',
+    )
 @implementer(IFolder)
 class Folder(Persistent):
     """ A folder implementation which acts much like a Python dictionary.

@@ -26,36 +26,50 @@ class Test_object_added(unittest.TestCase):
         self._callFUT(event) # doesnt blow up
 
     def test_catalogable_objects(self):
-        from ...interfaces import ICatalogable, IFolder
+        from ...interfaces import IFolder
         catalog = DummyCatalog()
         objectmap = DummyObjectMap()
         site = _makeSite(objectmap=objectmap, catalog=catalog)
-        model1 = testing.DummyResource(__provides__=(IFolder, ICatalogable))
+        model1 = testing.DummyResource(__provides__=(IFolder,))
         model1.__objectid__ = 1
-        model2 = testing.DummyResource(__provides__=ICatalogable)
+        model1.__factory_type__ = 'factory1'
+        model2 = testing.DummyResource()
         model2.__objectid__ = 2
+        model2.__factory_type__ = 'factory2'
         model1['model2'] = model2
         site['model1'] = model1
         event = DummyEvent(model1, None)
+        content = DummyContent(
+            metadata={'factory1':{'catalog':True},
+                      'factory2':{'catalog':True},
+                      })
+        registry = DummyRegistry(content=content)
+        event.registry = registry
         self._callFUT(event)
         self.assertEqual(catalog.indexed, [(2, model2), (1, model1)])
         
     def test_catalogable_objects_disjoint(self):
-        from ...interfaces import ICatalogable, IFolder
+        from ...interfaces import IFolder
         catalog = DummyCatalog()
         objectmap = DummyObjectMap()
         site = _makeSite(objectmap=objectmap, catalog=catalog)
         model1 = testing.DummyResource(__provides__=IFolder)
-        model2 = testing.DummyResource(__provides__=ICatalogable)
+        model1.__factory_type__ = 'factory1'
+        model2 = testing.DummyResource()
         model2.__objectid__ = 1
+        model2.__factory_type__ = 'factory2'
         model1['model2'] = model2
         site['model1'] = model1
         event = DummyEvent(model1, None)
+        content = DummyContent(
+            metadata={'factory2':{'catalog':True}})
+        registry = DummyRegistry(content=content)
+        event.registry = registry
         self._callFUT(event)
         self.assertEqual(catalog.indexed, [(1, model2)])
 
     def test_multiple_catalogs(self):
-        from ...interfaces import ICatalogable, IFolder
+        from ...interfaces import IFolder
         catalog1 = DummyCatalog()
         catalog2 = DummyCatalog()
         objectmap = DummyObjectMap()
@@ -63,13 +77,20 @@ class Test_object_added(unittest.TestCase):
         inner_site.__objectid__ = -1
         outer_site = _makeSite(objectmap=objectmap, catalog=catalog1)
         outer_site['inner'] = inner_site
-        model1 = testing.DummyResource(__provides__=(IFolder, ICatalogable))
+        model1 = testing.DummyResource(__provides__=(IFolder,))
         model1.__objectid__ = 1
-        model2 = testing.DummyResource(__provides__=ICatalogable)
+        model1.__factory_type__ = 'factory1'
+        model2 = testing.DummyResource()
         model2.__objectid__ = 2
+        model2.__factory_type__ = 'factory2'
         model1['model2'] = model2
         inner_site['model1'] = model1
         event = DummyEvent(model1, None)
+        content = DummyContent(
+            metadata={'factory1':{'catalog':True},
+                      'factory2':{'catalog':True}})
+        registry = DummyRegistry(content=content)
+        event.registry = registry
         self._callFUT(event)
         self.assertEqual(catalog1.indexed, [(2, model2), (1, model1)])
         self.assertEqual(catalog2.indexed, [(2, model2), (1, model1)])
@@ -141,29 +162,36 @@ class Test_object_modified(unittest.TestCase):
         return object_modified(event)
 
     def test_no_catalog(self):
-        from ...interfaces import ICatalogable
         objectmap = DummyObjectMap()
         site = _makeSite(objectmap=objectmap)
-        model = testing.DummyResource(__provides__=ICatalogable)
+        model = testing.DummyResource()
         model.__objectid__ = 1
+        model.__factory_type__ = 'factory1'
         site['model'] = model
         event = DummyEvent(model, site)
+        content = DummyContent(
+            metadata={'factory1':{'catalog':True}})
+        registry = DummyRegistry(content=content)
+        event.registry = registry
         self._callFUT(event) # doesnt blow up
         
     def test_catalogable_object(self):
-        from ...interfaces import ICatalogable
         objectmap = DummyObjectMap()
         catalog = DummyCatalog()
         site = _makeSite(objectmap=objectmap, catalog=catalog)
-        model = testing.DummyResource(__provides__=ICatalogable)
+        model = testing.DummyResource()
         model.__objectid__ = 1
+        model.__factory_type__ = 'factory1'
         site['model'] = model
         event = DummyEvent(model, site)
+        content = DummyContent(
+            metadata={'factory1':{'catalog':True}})
+        registry = DummyRegistry(content=content)
+        event.registry = registry
         self._callFUT(event)
         self.assertEqual(catalog.reindexed, [(1, model)])
 
     def test_multiple_catalogs(self):
-        from ...interfaces import ICatalogable
         objectmap = DummyObjectMap()
         catalog1 = DummyCatalog()
         catalog2 = DummyCatalog()
@@ -171,11 +199,16 @@ class Test_object_modified(unittest.TestCase):
         inner = _makeSite(catalog=catalog2)
         inner.__objectid__ = -1
         outer['inner'] = inner
-        model = testing.DummyResource(__provides__=ICatalogable)
+        model = testing.DummyResource()
         model.__objectid__ = 1
+        model.__factory_type__ = 'factory1'
         inner['model'] = model
         outer['inner'] = inner
         event = DummyEvent(model, None)
+        content = DummyContent(
+            metadata={'factory1':{'catalog':True}})
+        registry = DummyRegistry(content=content)
+        event.registry = registry
         self._callFUT(event)
         self.assertEqual(catalog1.reindexed, [(1, model)])
         self.assertEqual(catalog2.reindexed, [(1, model)])
@@ -210,4 +243,16 @@ class DummyEvent(object):
     def __init__(self, object, parent):
         self.object = object
         self.parent = parent
+        
+class DummyContent(object):
+    def __init__(self, metadata):
+        self._metadata = metadata
+
+    def metadata(self, resource, name, default=None):
+        return self._metadata.get(resource.__factory_type__, default)
+
+class DummyRegistry(object):
+    def __init__(self, content):
+        self.content = content
+        
         

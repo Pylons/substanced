@@ -9,6 +9,7 @@ from zope.interface import implementer
 from hypatia.catalog import CatalogQuery
 
 from pyramid.traversal import resource_path
+from pyramid.threadlocal import get_current_registry
 from pyramid.security import effective_principals
 from pyramid.interfaces import IAuthorizationPolicy
 
@@ -24,8 +25,7 @@ from ..folder import Folder
 logger = logging.getLogger(__name__) # API
 
 @content(
-    ICatalog,
-    name='Catalog',
+    'Catalog',
     icon='icon-search'
     )
 @implementer(ICatalog)
@@ -241,10 +241,31 @@ def _assertint(docid):
         raise ValueError('%r is not an integer value; document ids must be '
                          'integers' % docid)
 
+def is_catalogable(resource, registry=None):
+    if registry is None:
+        registry = get_current_registry()
+    return bool(registry.content.metadata(resource, 'catalog', False))
+
+class CatalogablePredicate(object):
+    is_catalogable = staticmethod(is_catalogable) # for testing
+    
+    def __init__(self, val, config):
+        self.val = bool(val)
+        self.registry = config.registry
+
+    def text(self):
+        return 'catalogable = %s' % self.val
+
+    phash = text
+
+    def __call__(self, context, request):
+        return self.is_catalogable(context, self.registry) == self.val
+
 def includeme(config): # pragma: no cover
     from zope.interface import Interface
     config.registry.registerAdapter(Search, (Interface,), ISearch)
     config.set_request_property(query_catalog, reify=True)
     config.set_request_property(search_catalog, reify=True)
+    config.add_view_predicate('catalogable', CatalogablePredicate)
     config.scan('.')
     

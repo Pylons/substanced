@@ -6,11 +6,9 @@ from pyramid.httpexceptions import (
     HTTPNotFound,
     )
 from pyramid.security import has_permission
+from pyramid.threadlocal import get_current_registry
 
-from ..interfaces import (
-    IPropertied,
-    IPropertySheet,
-    )
+from ..interfaces import IPropertySheet
 from ..form import FormView
 from ..sdi import mgmt_view
 from ..event import ObjectModified
@@ -32,7 +30,7 @@ def has_permission_to_view_any_propertysheet(context, request):
     return False
 
 @mgmt_view(
-    context=IPropertied,
+    propertied=True,
     name='properties',
     renderer='templates/propertysheets.pt',
     tab_title='Properties',
@@ -125,6 +123,28 @@ class PropertySheet(object):
         self.request.registry.subscribers((self.context, event), None)
         self.request.flash_with_undo('Updated properties', 'success')
 
+def is_propertied(resource, registry=None):
+    if registry is None:
+        registry = get_current_registry()
+    sheets = registry.content.metadata(resource, 'propertysheets', None)
+    return sheets is not None
+
+class PropertiedPredicate(object):
+    is_propertied = staticmethod(is_propertied) # for testing
+    
+    def __init__(self, val, config):
+        self.val = bool(val)
+        self.registry = config.registry
+
+    def text(self):
+        return 'propertied = %s' % self.val
+
+    phash = text
+
+    def __call__(self, context, request):
+        return self.is_propertied(context, self.registry) == self.val
+
 def includeme(config): # pragma: no cover
+    config.add_view_predicate('propertied', PropertiedPredicate)
     config.scan('.')
     
