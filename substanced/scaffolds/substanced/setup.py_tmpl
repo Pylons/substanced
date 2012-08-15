@@ -14,9 +14,9 @@ requires = [
     'pyramid_tm',
     ]
 
-setup(name='simple',
+setup(name='{{project}}',
       version='0.0',
-      description='simple',
+      description='{{project}}',
       long_description=README + '\n\n' +  CHANGES,
       classifiers=[
         "Programming Language :: Python",
@@ -33,10 +33,10 @@ setup(name='simple',
       zip_safe=False,
       install_requires=requires,
       tests_require=requires,
-      test_suite="simple",
+      test_suite="{{project}}",
       entry_points = """\
       [paste.app_factory]
-      main = simple:main
+      main = {{project}}:main
       """,
       )
 

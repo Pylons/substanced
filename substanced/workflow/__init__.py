@@ -4,13 +4,7 @@ from pyramid.config import ConfigurationError
 from pyramid.events import subscriber
 from pyramid.security import has_permission
 from pyramid.threadlocal import get_current_registry
-from zope.interface import (
-    implements,
-    providedBy,
-    classImplements,
-    )
-from zope.interface.interfaces import IInterface
-from zope.interface.verify import verifyObject
+from zope.interface import implementer
 
 from ..interfaces import (
     IWorkflow,
@@ -26,6 +20,7 @@ class WorkflowError(Exception):
     """Exception raised for anything related to :mod:`substanced.workflow`.
     """
 
+@implementer(IWorkflow)
 class Workflow(object):
     """Finite state machine.
 
@@ -42,7 +37,6 @@ class Workflow(object):
     :type description: string
 
     """
-    implements(IWorkflow)
 
     def __init__(self, initial_state, type, name='', description=''):
         self._transition_data = {}
@@ -137,8 +131,9 @@ class Workflow(object):
     def _set_state(self, content, state):
         states = getattr(content, STATE_ATTR, None)
         if not states:
-            setattr(content, STATE_ATTR, {})
-        getattr(content, STATE_ATTR)[self.type] = state
+            states = {}
+            setattr(content, STATE_ATTR, states)
+        states[self.type] = state
 
     def state_of(self, content):
         """Return the current state of the content object or None
@@ -452,7 +447,8 @@ def add_workflow(config, workflow, content_types=(None,)):
     :raises: :exc:`DoesNotImplement` if **workflow** does not
              implement IWorkflow
     """
-    verifyObject(IWorkflow, workflow)
+    if not IWorkflow.providedBy(workflow):
+        raise ValueError('Not a workflow')
 
     try:
         workflow.check()
