@@ -32,9 +32,11 @@ class TestFilePropertySheet(unittest.TestCase):
         context = testing.DummyResource()
         context.__name__ = 'name'
         context.mimetype = 'mimetype'
+        context.title = 'title'
         request = testing.DummyRequest()
         inst = self._makeOne(context, request)
-        self.assertEqual(inst.get(), {'name':'name', 'mimetype':'mimetype'})
+        self.assertEqual(inst.get(), {'name':'name', 'mimetype':'mimetype',
+                                      'title':'title'})
         
     def test_set_no_name_change(self):
         context = testing.DummyResource()
@@ -42,7 +44,9 @@ class TestFilePropertySheet(unittest.TestCase):
         context.mimetype = 'mimetype'
         request = testing.DummyRequest()
         inst = self._makeOne(context, request)
-        inst.set({'mimetype':'newmimetype', 'name':'name'})
+        inst.set({'mimetype':'newmimetype', 'name':'name',
+                  'title':'newtitle'})
+        self.assertEqual(inst.context.title, 'newtitle')
         self.assertEqual(inst.context.mimetype, 'newmimetype')
 
     def test_set_with_name_change(self):
@@ -58,7 +62,9 @@ class TestFilePropertySheet(unittest.TestCase):
         context.mimetype = 'mimetype'
         request = testing.DummyRequest()
         inst = self._makeOne(context, request)
-        inst.set({'mimetype':'newmimetype', 'name':'newname'})
+        inst.set({'mimetype':'newmimetype', 'name':'newname',
+                  'title':'newtitle'})
+        self.assertEqual(inst.context.title, 'newtitle')
         self.assertEqual(inst.context.mimetype, 'newmimetype')
         self.assertTrue(context.renamed)
 
@@ -158,14 +164,26 @@ class TestFile(unittest.TestCase):
     def tearDown(self):
         testing.tearDown()
         
-    def _makeOne(self, stream, mimetype):
+    def _makeOne(self, stream, mimetype, title=None):
         from .. import File
-        return File(stream, mimetype)
+        return File(stream, mimetype, title)
 
     def test_ctor_no_stream(self):
         inst = self._makeOne(None, None)
         self.assertEqual(inst.mimetype, 'application/octet-stream')
-    
+
+    def test_ctor_no_title(self):
+        inst = self._makeOne(None, None)
+        self.assertEqual(inst.title, u'')
+
+    def test_ctor_with_None_title(self):
+        inst = self._makeOne(None, None, None)
+        self.assertEqual(inst.title, u'')
+
+    def test_ctor_with_with_title(self):
+        inst = self._makeOne(None, None, 'abc')
+        self.assertEqual(inst.title, 'abc')
+
     def test_ctor_with_stream_mimetype_None(self):
         stream = StringIO.StringIO('abc')
         inst = self._makeOne(stream, None)

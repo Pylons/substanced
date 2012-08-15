@@ -40,6 +40,9 @@ class FilePropertiesSchema(Schema):
         colander.String(),
         validator = _make_name_validator('File'),
         )
+    title = colander.SchemaNode(
+        colander.String(),
+        )
     mimetype = colander.SchemaNode(
         colander.String(),
         )
@@ -52,13 +55,16 @@ class FilePropertySheet(PropertySheet):
         return dict(
             name=context.__name__,
             mimetype=context.mimetype,
+            title=context.title,
             )
 
     def set(self, struct):
         context = self.context
         newname = struct['name']
         mimetype = struct['mimetype']
+        title = struct['title']
         context.mimetype = mimetype
+        context.title = title
         oldname = context.__name__
         if newname and newname != oldname:
             context.__parent__.rename(oldname, newname)
@@ -118,12 +124,16 @@ class FileUploadPropertySheet(PropertySheet):
 @implementer(IFile)
 class File(Persistent):
 
-    def __init__(self, stream=None, mimetype=None):
+    title = u''
+
+    def __init__(self, stream=None, mimetype=None, title=u''):
         """ The constructor of a File object.
 
         ``stream`` should be a filelike object (an object with a ``read``
         method that takes a size argument) or ``None``.  If stream is
         ``None``, the blob attached to this file object is created empty.
+
+        ``title`` must be a string or Unicode object.
 
         ``mimetype`` may be any of the following:
 
@@ -144,6 +154,7 @@ class File(Persistent):
         """
         self.blob = Blob()
         self.mimetype = mimetype or 'application/octet-stream'
+        self.title = title or u''
         if stream is not None:
             if mimetype is USE_MAGIC:
                 hint = USE_MAGIC
