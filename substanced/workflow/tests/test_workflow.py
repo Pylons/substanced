@@ -15,10 +15,10 @@ class WorkflowTests(unittest.TestCase):
 
     def _makePopulated(self, state_callback=None, transition_callback=None):
         sm = self._makeOne()
-        sm._state_data['pending'] = {'callback': state_callback}
-        sm._state_data['published'] = {'callback': state_callback}
-        sm._state_data['private'] = {'callback': state_callback}
-        tdata = sm._transition_data
+        sm._states['pending'] = {'callback': state_callback}
+        sm._states['published'] = {'callback': state_callback}
+        sm._states['private'] = {'callback': state_callback}
+        tdata = sm._transitions
         tdata['publish'] = dict(name='publish',
                                 from_state='pending',
                                 to_state='published',
@@ -41,7 +41,7 @@ class WorkflowTests(unittest.TestCase):
             self, state_callback=None, transition_callback=None):
         sm = self._makePopulated(state_callback, transition_callback)
 
-        sm._transition_data['submit2'] = dict(
+        sm._transitions['submit2'] = dict(
             name='submit2',
             from_state='private',
             to_state='pending',
@@ -60,8 +60,8 @@ class WorkflowTests(unittest.TestCase):
             transition_callback=dummy,
             )
 
-        sm._transition_data['submit']['permission'] = 'forbidden'
-        sm._transition_data['submit2']['permission'] = 'allowed'
+        sm._transitions['submit']['permission'] = 'forbidden'
+        sm._transitions['submit2']['permission'] = 'allowed'
 
         mock_has_permission.side_effect = lambda p, c, r: p != 'forbidden'
         ob = DummyContent()
@@ -81,8 +81,8 @@ class WorkflowTests(unittest.TestCase):
             transition_callback=dummy,
             )
 
-        sm._transition_data['submit']['permission'] = 'forbidden1'
-        sm._transition_data['submit2']['permission'] = 'forbidden2'
+        sm._transitions['submit']['permission'] = 'forbidden1'
+        sm._transitions['submit2']['permission'] = 'forbidden2'
 
         ob = DummyContent()
         ob.__workflow_state__ = {'basic': 'private'}
@@ -153,21 +153,21 @@ class WorkflowTests(unittest.TestCase):
     def test_add_state_state_exists(self):
         from .. import WorkflowError
         sm = self._makeOne()
-        sm._state_data = {'foo': {'c': 5}}
+        sm._states = {'foo': {'c': 5}}
         self.assertRaises(WorkflowError, sm.add_state, 'foo')
 
     def test_add_state_info_state_doesntexist(self):
         sm = self._makeOne()
         callback = object()
         sm.add_state('foo', callback, a=1, b=2)
-        self.assertEqual(sm._state_data,
+        self.assertEqual(sm._states,
                          {'foo': {'callback': callback, 'a': 1, 'b': 2}})
 
     def test_add_state_defaults(self):
         sm = self._makeOne()
         callback = object()
         sm.add_state('foo')
-        self.assertEqual(sm._state_data, {'foo': {'callback': None}})
+        self.assertEqual(sm._states, {'foo': {'callback': None}})
 
     def test_add_transition(self):
         sm = self._makeOne()
@@ -175,20 +175,20 @@ class WorkflowTests(unittest.TestCase):
         sm.add_state('private')
         sm.add_transition('make_public', 'private', 'public', None, a=1)
         sm.add_transition('make_private', 'public', 'private', None, b=2)
-        self.assertEqual(len(sm._transition_data), 2)
-        make_public = sm._transition_data['make_public']
+        self.assertEqual(len(sm._transitions), 2)
+        make_public = sm._transitions['make_public']
         self.assertEqual(make_public['name'], 'make_public')
         self.assertEqual(make_public['from_state'], 'private')
         self.assertEqual(make_public['to_state'], 'public')
         self.assertEqual(make_public['callback'], None)
         self.assertEqual(make_public['a'], 1)
-        make_private = sm._transition_data['make_private']
+        make_private = sm._transitions['make_private']
         self.assertEqual(make_private['name'], 'make_private')
         self.assertEqual(make_private['from_state'], 'public')
         self.assertEqual(make_private['to_state'], 'private')
         self.assertEqual(make_private['callback'], None)
         self.assertEqual(make_private['b'], 2)
-        self.assertEqual(len(sm._state_data), 2)
+        self.assertEqual(len(sm._states), 2)
 
     def test_add_transition_transition_name_already_exists(self):
         from .. import WorkflowError

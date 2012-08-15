@@ -28,22 +28,23 @@ class Workflow(object):
 
     :param initial_state: Initial state of the workflow assigned to the content
     :type initial_state: string
+
     :param type: Identifier to separate multiple workflows on same content.
     :type type: string
+
     :param name: Display name.
     :type name: string
+
     :param description: Not used internally, provided as help text to describe
                         what workflow does.
     :type description: string
-
     """
-
     def __init__(self, initial_state, type, name='', description=''):
-        self._transition_data = {}
-        self._state_data = {}
-        self.initial_state = initial_state
-        self.name = name
+        self._transitions = {}
+        self._states = {}
+        self._initial_state = initial_state
         self.type = type
+        self.name = name
         self.description = description
 
     def add_state(self, state_name, callback=None, **kw):
@@ -70,10 +71,10 @@ class Workflow(object):
             ``**kw`` must not contain the key
             ``callback``. This name is reserved for internal use.
         """
-        if state_name in self._state_data:
+        if state_name in self._states:
             raise WorkflowError('State %s already defined' % state_name)
         kw['callback'] = callback
-        self._state_data[state_name] = kw
+        self._states[state_name] = kw
 
     def add_transition(self, transition_name, from_state, to_state,
                        callback=None, permission=None, **kw):
@@ -99,12 +100,12 @@ class Workflow(object):
             ``to_state``, or ``callback``; these are reserved for internal use.
 
         """
-        if transition_name in self._transition_data:
+        if transition_name in self._transitions:
             raise WorkflowError(
                 'Duplicate transition name %s' % transition_name)
-        if from_state not in self._state_data:
+        if from_state not in self._states:
             raise WorkflowError('No such state %r' % from_state)
-        if to_state not in self._state_data:
+        if to_state not in self._states:
             raise WorkflowError('No such state %r' % to_state)
         transition = kw
         transition['name'] = transition_name
@@ -112,7 +113,7 @@ class Workflow(object):
         transition['to_state'] = to_state
         transition['callback'] = callback
         transition['permission'] = permission
-        self._transition_data[transition_name] = transition
+        self._transitions[transition_name] = transition
 
     def check(self):
         """Check the consistency of the workflow state machine.
@@ -120,9 +121,9 @@ class Workflow(object):
         :raises: :exc:`WorkflowError` if workflow is inconsistent.
 
         """
-        if self.initial_state not in self._state_data:
+        if self._initial_state not in self._states:
             raise WorkflowError('Workflow must define its initial state %r'
-                                % self.initial_state)
+                                % self._initial_state)
 
     def _set_state(self, content, state):
         states = getattr(content, STATE_ATTR, None)
@@ -152,13 +153,13 @@ class Workflow(object):
 
         L = []
 
-        for state_name, state in self._state_data.items():
+        for state_name, state in self._states.items():
             D = {'name': state_name, 'transitions': []}
             D['data'] = state
-            D['initial'] = state_name == self.initial_state
+            D['initial'] = state_name == self._initial_state
             D['current'] = state_name == content_state
             D['title'] = state.get('title', state_name)
-            for tname, transition in self._transition_data.items():
+            for tname, transition in self._transitions.items():
                 if (transition['from_state'] == from_state and
                         transition['to_state'] == state_name):
                     transitions = D['transitions']
@@ -211,7 +212,7 @@ class Workflow(object):
         `msg` is a string returned by the state `callback`.
 
         """
-        callback = self._state_data[self.initial_state]['callback']
+        callback = self._states[self._initial_state]['callback']
         msg = None
         if callback is not None:
             info = {
@@ -220,8 +221,8 @@ class Workflow(object):
                 'request': request,
             }
             msg = callback(content, info)
-        self._set_state(content, self.initial_state)
-        return self.initial_state, msg
+        self._set_state(content, self._initial_state)
+        return self._initial_state, msg
 
     def reset(self, content, request=None):
         """Reset the content workflow by calling the callback of
@@ -241,7 +242,7 @@ class Workflow(object):
         if state is None:
             return self.initialize(content)
         try:
-            stateinfo = self._state_data[state]
+            stateinfo = self._states[state]
         except KeyError:
             raise WorkflowError('No such state %s for workflow %s' %
                                 (state, self.name))
@@ -267,7 +268,7 @@ class Workflow(object):
         si = (state, transition_name)
 
         transition = None
-        for tname, candidate in self._transition_data.items():
+        for tname, candidate in self._transitions.items():
             match = (candidate['from_state'], candidate['name'])
             if si == match:
                 transition = candidate
@@ -299,7 +300,7 @@ class Workflow(object):
         if transition_callback is not None:
             transition_callback(content, info)
 
-        state_callback = self._state_data[to_state]['callback']
+        state_callback = self._states[to_state]['callback']
         if state_callback is not None:
             state_callback(content, info)
 
@@ -362,7 +363,7 @@ class Workflow(object):
             from_state = self.state_of(content)
 
         transitions = []
-        for tname, transition in self._transition_data.items():
+        for tname, transition in self._transitions.items():
             if from_state == transition['from_state']:
                 transitions.append(transition)
 
