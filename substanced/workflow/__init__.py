@@ -129,12 +129,24 @@ class Workflow(object):
             raise WorkflowError('Workflow must define its initial state %r'
                                 % self._initial_state)
 
-    def _set_state(self, content, state):
+    def _set_state(self, content, state, request, transition=None):
+        if transition is None:
+            transition = {}
         states = getattr(content, STATE_ATTR, None)
         if not states:
             states = {}
             setattr(content, STATE_ATTR, states)
+        callback = self._states[state].get('callback')
+        msg = None
+        if callback is not None:
+            info = {
+                'workflow': self,
+                'transition': transition,
+                'request': request,
+            }
+            msg = callback(content, info)
         states[self.type] = state
+        return state, msg
 
     def state_of(self, content):
         """Return the current state of the content object or None
@@ -216,16 +228,7 @@ class Workflow(object):
         `msg` is a string returned by the state `callback`.
 
         """
-        callback = self._states[self._initial_state]['callback']
-        msg = None
-        if callback is not None:
-            info = {
-                'workflow': self,
-                'transition': {},
-                'request': request,
-            }
-            msg = callback(content, info)
-        self._set_state(content, self._initial_state)
+        state, msg = self._set_state(content, self._initial_state, request)
         return self._initial_state, msg
 
     def reset(self, content, request=None):
@@ -250,16 +253,7 @@ class Workflow(object):
         except KeyError:
             raise WorkflowError('No such state %s for workflow %s' %
                                 (state, self.name))
-        callback = stateinfo['callback']
-        msg = None
-        if callback is not None:
-            info = {
-                'workflow': self,
-                'transition': {},
-                'request': request,
-            }
-            msg = callback(content, info)
-        self._set_state(content, state)
+        state, msg = self._set_state(content, state, request)
         return state, msg
 
     def _transition(self, content, transition_name, context=None,
@@ -304,11 +298,7 @@ class Workflow(object):
         if transition_callback is not None:
             transition_callback(content, info)
 
-        state_callback = self._states[to_state]['callback']
-        if state_callback is not None:
-            state_callback(content, info)
-
-        self._set_state(content, to_state)
+        self._set_state(content, to_state, request, transition)
 
     def transition(self, content, request, transition_name):
         """Execute a transition using a **transition_name** on **content**.

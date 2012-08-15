@@ -127,13 +127,6 @@ class WorkflowTests(unittest.TestCase):
         ob.__workflow_state__ = {'basic': 'pending'}
         self.assertEqual(sm.state_of(ob), 'pending')
 
-    def test__set_state_empty(self):
-        wf = self._makeOne()
-        ob = DummyContent()
-        self.assertEqual(getattr(wf, '__workflow_state__', None), None)
-        self.assertEqual(wf._set_state(ob, 'pending'), None)
-        self.assertEqual(ob.__workflow_state__['basic'], 'pending')
-
     def test_state_of_no_workflow_is_None(self):
         sm = self._makeOne()
         sm.add_state('pending')
