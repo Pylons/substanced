@@ -39,7 +39,7 @@ install_requires = [
     ]
 
 docs_extras = ['Sphinx', 'repoze.sphinx.autointerface']
-testing_extras = ['nose', 'coverage', 'mock']
+testing_extras = ['nose', 'coverage', 'mock', 'virtualenv']
 
 setup(name='substanced',
       version='0.0',
