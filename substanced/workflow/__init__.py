@@ -39,6 +39,9 @@ class Workflow(object):
                         what workflow does.
     :type description: string
     """
+    _state_factory = dict       # overridable by instances / subclasses
+    _transition_factory = dict  # overridable by instances / subclasses
+
     def __init__(self, initial_state, type, name='', description=''):
         self._transitions = {}
         self._states = {}
@@ -74,7 +77,7 @@ class Workflow(object):
         if state_name in self._states:
             raise WorkflowError('State %s already defined' % state_name)
         kw['callback'] = callback
-        self._states[state_name] = kw
+        self._states[state_name] = self._state_factory(**kw)
 
     def add_transition(self, transition_name, from_state, to_state,
                        callback=None, permission=None, **kw):
@@ -107,12 +110,13 @@ class Workflow(object):
             raise WorkflowError('No such state %r' % from_state)
         if to_state not in self._states:
             raise WorkflowError('No such state %r' % to_state)
-        transition = kw
-        transition['name'] = transition_name
-        transition['from_state'] = from_state
-        transition['to_state'] = to_state
-        transition['callback'] = callback
-        transition['permission'] = permission
+        transition = self._transition_factory(
+                                name=transition_name,
+                                from_state=from_state,
+                                to_state=to_state,
+                                callback=callback,
+                                permission=permission,
+                                **kw)
         self._transitions[transition_name] = transition
 
     def check(self):

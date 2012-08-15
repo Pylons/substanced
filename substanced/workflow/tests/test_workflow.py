@@ -165,30 +165,20 @@ class WorkflowTests(unittest.TestCase):
 
     def test_add_state_defaults(self):
         sm = self._makeOne()
-        callback = object()
         sm.add_state('foo')
         self.assertEqual(sm._states, {'foo': {'callback': None}})
 
-    def test_add_transition(self):
+    def test_add_state_w_custom_factory(self):
         sm = self._makeOne()
-        sm.add_state('public')
-        sm.add_state('private')
-        sm.add_transition('make_public', 'private', 'public', None, a=1)
-        sm.add_transition('make_private', 'public', 'private', None, b=2)
-        self.assertEqual(len(sm._transitions), 2)
-        make_public = sm._transitions['make_public']
-        self.assertEqual(make_public['name'], 'make_public')
-        self.assertEqual(make_public['from_state'], 'private')
-        self.assertEqual(make_public['to_state'], 'public')
-        self.assertEqual(make_public['callback'], None)
-        self.assertEqual(make_public['a'], 1)
-        make_private = sm._transitions['make_private']
-        self.assertEqual(make_private['name'], 'make_private')
-        self.assertEqual(make_private['from_state'], 'public')
-        self.assertEqual(make_private['to_state'], 'private')
-        self.assertEqual(make_private['callback'], None)
-        self.assertEqual(make_private['b'], 2)
-        self.assertEqual(len(sm._states), 2)
+        _THE_STATE = object()
+        _called_with = []
+        def _factory(*args, **kw):
+            _called_with.append((args, kw))
+            return _THE_STATE
+        sm._state_factory = _factory
+        sm.add_state('foo')
+        self.assertEqual(sm._states, {'foo': _THE_STATE})
+        self.assertEqual(_called_with, [((), {'callback': None})])
 
     def test_add_transition_transition_name_already_exists(self):
         from .. import WorkflowError
@@ -212,6 +202,47 @@ class WorkflowTests(unittest.TestCase):
         sm.add_state('private')
         self.assertRaises(WorkflowError, sm.add_transition, 'make_public',
                           'private', 'public')
+
+    def test_add_transition(self):
+        sm = self._makeOne()
+        sm.add_state('public')
+        sm.add_state('private')
+        sm.add_transition('make_public', 'private', 'public', None, a=1)
+        sm.add_transition('make_private', 'public', 'private', None, b=2)
+        self.assertEqual(len(sm._transitions), 2)
+        make_public = sm._transitions['make_public']
+        self.assertEqual(make_public['name'], 'make_public')
+        self.assertEqual(make_public['from_state'], 'private')
+        self.assertEqual(make_public['to_state'], 'public')
+        self.assertEqual(make_public['callback'], None)
+        self.assertEqual(make_public['a'], 1)
+        make_private = sm._transitions['make_private']
+        self.assertEqual(make_private['name'], 'make_private')
+        self.assertEqual(make_private['from_state'], 'public')
+        self.assertEqual(make_private['to_state'], 'private')
+        self.assertEqual(make_private['callback'], None)
+        self.assertEqual(make_private['b'], 2)
+        self.assertEqual(len(sm._states), 2)
+
+    def test_add_transition_w_custom_factory(self):
+        sm = self._makeOne()
+        _THE_TRANSITION = object()
+        _called_with = []
+        def _factory(*args, **kw):
+            _called_with.append((args, kw))
+            return _THE_TRANSITION
+        sm._transition_factory = _factory
+        sm.add_state('public')
+        sm.add_state('private')
+        sm.add_transition('make_public', 'private', 'public', None, a=1)
+        self.assertEqual(sm._transitions, {'make_public': _THE_TRANSITION})
+        self.assertEqual(_called_with,
+                         [((), {'name': 'make_public',
+                                'from_state': 'private',
+                                'to_state': 'public',
+                                'permission': None,
+                                'callback': None,
+                                'a': 1})])
 
     def test_check_fails(self):
         from .. import WorkflowError
