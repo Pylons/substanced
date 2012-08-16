@@ -25,10 +25,6 @@ from ..service import find_service
 
 MANAGE_ROUTE_NAME = 'substanced_manage'
 
-def check_csrf_token(request, token='csrf_token'):
-    if request.params.get(token) != request.session.get_csrf_token():
-        raise HTTPBadRequest('incorrect CSRF token')
-
 @viewdefaults
 @action_method
 def add_mgmt_view(
@@ -55,8 +51,7 @@ def add_mgmt_view(
     match_param=None,
     tab_title=None,
     tab_condition=None,
-    check_csrf=False,
-    csrf_token='csrf_token',
+    check_csrf=None,
     **predicates
     ):
     
@@ -66,12 +61,6 @@ def add_mgmt_view(
     mapper = config.maybe_dotted(mapper)
     decorator = config.maybe_dotted(decorator)
 
-    if check_csrf:
-        def _check_csrf_token(context, request):
-            check_csrf_token(request, csrf_token)
-            return True
-        custom_predicates = tuple(custom_predicates) + (_check_csrf_token,)
-    
     route_name = MANAGE_ROUTE_NAME
 
     pvals = predicates.copy()
@@ -112,14 +101,29 @@ def add_mgmt_view(
         view_desc = config.object_description(view)
 
     config.add_view(
-        view=view, name=name, permission=permission, route_name=route_name,
-        request_method=request_method, request_param=request_param,
-        containment=containment, attr=attr, renderer=renderer, 
-        wrapper=wrapper, xhr=xhr, accept=accept, header=header, 
-        path_info=path_info, custom_predicates=custom_predicates, 
-        context=context, decorator=decorator, mapper=mapper, 
-        http_cache=http_cache, match_param=match_param, 
-        request_type=request_type, **predicates
+        view=view,
+        name=name,
+        permission=permission,
+        route_name=route_name,
+        request_method=request_method,
+        request_param=request_param,
+        containment=containment,
+        attr=attr,
+        renderer=renderer, 
+        wrapper=wrapper,
+        xhr=xhr,
+        accept=accept,
+        header=header, 
+        path_info=path_info,
+        custom_predicates=custom_predicates, 
+        context=context,
+        decorator=decorator,
+        mapper=mapper, 
+        http_cache=http_cache,
+        match_param=match_param, 
+        request_type=request_type,
+        check_csrf=check_csrf,
+        **predicates
         )
     
     intr = config.introspectable(
@@ -127,7 +131,6 @@ def add_mgmt_view(
     intr['tab_title'] = tab_title
     intr['tab_condition'] = tab_condition
     intr['check_csrf'] = check_csrf
-    intr['csrf_token'] = csrf_token
     intr.relate('views', view_discriminator)
     config.action(discriminator, introspectables=(intr,))
 
@@ -148,17 +151,6 @@ class mgmt_url(object):
         traverse = resource_path_tuple(obj)
         kw['traverse'] = traverse
         return self.request.route_url(MANAGE_ROUTE_NAME, *arg, **kw)
-
-class _default(object):
-    def __nonzero__(self):
-        return False
-
-    __bool__ = __nonzero__
-
-    def __repr__(self): # pragma: no cover
-        return '(default)'
-
-default = _default()
 
 class mgmt_view(object):
     """ A class :term:`decorator` which, when applied to a class, will
@@ -316,22 +308,28 @@ def get_user(request):
     objectmap = find_service(request.context, 'objectmap')
     return objectmap.object_for(userid)
 
-def add_permission(config, permission_name):
-    """ A configurator directive which registers a free-standing permission
-    (without associating it with a view), so it shows up in the Security tab
-    dropdown for permissions. Usage example::
+def check_csrf_token(request, token='csrf_token'):
+    """ Check the CSRF token in the request's session against the value in
+    ``request.params.get(token)``"""
+    if request.params.get(token) != request.session.get_csrf_token():
+        raise HTTPBadRequest('incorrect CSRF token')
 
-      config = Configurator()
-      config.add_permission('view')
-    """
-    intr = config.introspectable('permissions', permission_name,
-                                 permission_name, 'permission')
-    intr['value'] = permission_name
-    config.action(None, introspectables=(intr,))
+class _CheckCSRFTokenPredicate(object):
+    def __init__(self, val, config):
+        self.val = bool(val)
+
+    def text(self):
+        return 'check_csrf = %s' % (self.val,)
+
+    phash = text
+
+    def __call__(self, context, request):
+        check_csrf_token(request)
+        return True
 
 def includeme(config): # pragma: no cover
+    config.add_view_predicate('check_csrf', _CheckCSRFTokenPredicate)
     config.add_directive('add_mgmt_view', add_mgmt_view, action_wrap=False)
-    config.add_directive('add_permission', add_permission)
     YEAR = 86400 * 365
     config.add_static_view('deformstatic', 'deform:static', cache_max_age=YEAR)
     config.add_static_view('sdistatic', 'substanced.sdi:static',

@@ -31,19 +31,6 @@ class Test_add_mgmt_view(unittest.TestCase):
         self.assertEqual(config._added['request_method'], ('HEAD', 'GET'))
         self.assertTrue(config._actions)
 
-    def test_with_check_csrf(self):
-        from pyramid.httpexceptions import HTTPBadRequest
-        config = self._makeConfig()
-        self._callFUT(config, check_csrf=True)
-        preds = config._added['custom_predicates']
-        self.assertEqual(len(preds), 1)
-        self.assertTrue(config._actions)
-        request = testing.DummyRequest()
-        self.assertRaises(HTTPBadRequest, preds[0], None, request)
-        request = testing.DummyRequest()
-        request.params['csrf_token'] = request.session.get_csrf_token()
-        self.assertTrue(preds[0](None, request))
-
     def test_view_isclass_with_attr(self):
         class AView(object):
             pass
@@ -72,12 +59,14 @@ class Test_add_mgmt_view(unittest.TestCase):
     def test_intr_values(self):
         config = self._makeConfig()
         self._callFUT(
-            config, tab_title='tab_title', tab_condition='tab_condition',
-            check_csrf=True, csrf_token='csrf_token')
+            config,
+            tab_title='tab_title',
+            tab_condition='tab_condition',
+            check_csrf=True
+            )
         self.assertEqual(config._intr['tab_title'], 'tab_title')
         self.assertEqual(config._intr['tab_condition'], 'tab_condition')
         self.assertEqual(config._intr['check_csrf'], True)
-        self.assertEqual(config._intr['csrf_token'], 'csrf_token')
         self.assertEqual(config._intr.related['views'].resolve(),
                          ('view', None, '', 'substanced_manage', 'hash'))
 
@@ -120,18 +109,6 @@ class Test_mgmt_url(unittest.TestCase):
         self.assertEqual(result, 'http://example.com/path')
 
 
-class Test__default(unittest.TestCase):
-    def _makeOne(self):
-        from .. import _default
-        return _default()
-
-    def test__nonzero__(self):
-        self.assertFalse(self._makeOne())
-
-    def test___repr__(self):
-        inst = self._makeOne()
-        self.assertEqual(repr(inst), '(default)')
-        
 class Test_mgmt_view(unittest.TestCase):
     def setUp(self):
         testing.setUp()
@@ -596,15 +573,27 @@ class Test_get_user(unittest.TestCase):
         request.context = context
         self.assertEqual(self._callFUT(request), 'foo')
 
-class Test_add_permission(unittest.TestCase):
-    def _callFUT(self, config, permission_name):
-        from .. import add_permission
-        return add_permission(config, permission_name)
-    
-    def test_it(self):
-        config = DummyConfigurator()
-        self._callFUT(config, 'perm')
-        self.assertEqual(config._actions,  [(None, ({'value': 'perm'},))])
+class Test_CheckCSRFTokenPredicate(unittest.TestCase):
+    def _makeOne(self, val, config):
+        from .. import _CheckCSRFTokenPredicate
+        return _CheckCSRFTokenPredicate(val, config)
+
+    def test_text(self):
+        inst = self._makeOne(True, None)
+        self.assertEqual(inst.text(), 'check_csrf = True')
+
+    def test_phash(self):
+        inst = self._makeOne(True, None)
+        self.assertEqual(inst.phash(), 'check_csrf = True')
+        
+    def test_it_call(self):
+        from pyramid.httpexceptions import HTTPBadRequest
+        inst = self._makeOne(True, None)
+        request = testing.DummyRequest()
+        self.assertRaises(HTTPBadRequest, inst, None, request)
+        request = testing.DummyRequest()
+        request.params['csrf_token'] = request.session.get_csrf_token()
+        self.assertTrue(inst(None, request))
 
 class DummyContent(object):
     def __init__(self, result=None):

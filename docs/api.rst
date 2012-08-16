@@ -333,6 +333,8 @@ Other Helpers
 
 .. autofunction:: add_permission
 
+.. autocfunction:: check_csrf_token
+
 .. autoclass:: mgmt_view
 
 :mod:`substanced.service` API
