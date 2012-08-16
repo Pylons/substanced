@@ -585,13 +585,18 @@ class Test_CheckCSRFTokenPredicate(unittest.TestCase):
         inst = self._makeOne(True, None)
         self.assertEqual(inst.phash(), 'check_csrf = True')
         
-    def test_it_call(self):
+    def test_it_call_val_True(self):
         from pyramid.httpexceptions import HTTPBadRequest
         inst = self._makeOne(True, None)
         request = testing.DummyRequest()
         self.assertRaises(HTTPBadRequest, inst, None, request)
         request = testing.DummyRequest()
         request.params['csrf_token'] = request.session.get_csrf_token()
+        self.assertTrue(inst(None, request))
+
+    def test_it_call_val_False(self):
+        inst = self._makeOne(False, None)
+        request = testing.DummyRequest()
         self.assertTrue(inst(None, request))
 
 class DummyContent(object):

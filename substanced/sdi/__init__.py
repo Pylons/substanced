@@ -321,7 +321,8 @@ class _CheckCSRFTokenPredicate(object):
     phash = text
 
     def __call__(self, context, request):
-        check_csrf_token(request)
+        if self.val:
+            check_csrf_token(request)
         return True
 
 def includeme(config): # pragma: no cover
