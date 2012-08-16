@@ -34,8 +34,11 @@ visited:
 
    from pyramid.view import view_config
 
-   @view_config(renderer='string', route_name='substanced_manage', 
-                name='foobar')
+   @view_config(
+       renderer='string',
+       route_name='substanced_manage', 
+       name='foobar'
+       )
    def foobar(request):
        return 'Foobar!'
 

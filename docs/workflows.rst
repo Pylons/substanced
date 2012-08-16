@@ -1,15 +1,25 @@
 Workflows
 =========
 
-A workflow is a collection of :term:`transitions` that :term:`transition` between :term:`states`. Specifically, :mod:`substanced.workflow` implements `event-driven finite-state machine <https://en.wikipedia.org/wiki/Finite-state_machine>`_ workflows.
+A workflow is a collection of :term:`transitions` that :term:`transition`
+between :term:`states`. Specifically, :mod:`substanced.workflow` implements
+`event-driven finite-state machine
+<https://en.wikipedia.org/wiki/Finite-state_machine>`_ workflows.
 
-Workflows are used to ease following tasks when content goes through the lifecycle:
+Workflows are used to ease following tasks when content goes through the
+lifecycle:
 
 - updating security (adding/removing permissions)
 - sending emails
 - ...
 
-States and transitions together with metadata are stored on the :class:`~substanced.workflow.Workflow`. Workflows are stored in ``config.registry.workflows``. The only thing that content has from the workflow machinery is ``content.__workflow_state__`` attribute that stores a dict of all workflow types and corresponding states assigned. When content is added to the database (:class:`~substanced.event.ObjectAdded` event is emitted), all relevant registered workflows are initialized for it.
+States and transitions together with metadata are stored on the
+:class:`~substanced.workflow.Workflow`. Workflows are stored in
+``config.registry.workflows``. The only thing that content has from the
+workflow machinery is ``content.__workflow_state__`` attribute that stores a
+dict of all workflow types and corresponding states assigned. When content is
+added to the database (:class:`~substanced.event.ObjectAdded` event is
+emitted), all relevant registered workflows are initialized for it.
 
 
 Features
@@ -32,7 +42,8 @@ Suppose we want to add a simple workflow::
    |draft|                        |published|
    \-----/   --- to_publish -->   \---------/
 
-Using :func:`~substanced.workflow.add_workflow` Pyramid configuration directive::
+Using :func:`~substanced.workflow.add_workflow` Pyramid configuration
+directive::
 
     >>> workflow = Workflow(initial_state="draft", type="article")
     >>> workflow.add_state("draft")
@@ -80,7 +91,8 @@ Execute a :meth:`~substanced.workflow.Workflow.transition`::
 
     >>> workflow.transition(context, request, 'to_publish')
 
-List all states of the workflow with :meth:`~substanced.workflow.Workflow.get_states`::
+List all states of the workflow with
+:meth:`~substanced.workflow.Workflow.get_states`::
 
     >>> workflow.get_states(context, request)
     [{'name': 'draft',
@@ -129,4 +141,5 @@ When you execute the transition, callback is called::
     >>> workflow.transition(context, request, 'to_publish_with_callback')
     meta: {'workflow': <Workflow ...>, 'transition': {'to_state': 'published', 'from_state': 'draft', ...}, request=<Request ...>}
 
-To know more about callback parameters, read :meth:`~substanced.workflow.Workflow.add_transition` signature.
+To know more about callback parameters, read
+:meth:`~substanced.workflow.Workflow.add_transition` signature.

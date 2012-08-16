@@ -78,7 +78,7 @@ instead:
    When a resource factory is not a class, Substance D will wrap the resource
    factory in something that changes the resource object returned from the
    factory.  In the above case, the BlogEntry instance returned from
-   ``make_blog_entry`` will be changed; its ``__content_type__`` attribute
+   ``make_blog_entry`` will be changed; its ``__factory_type__`` attribute
    will be mutated.
 
 In order to activate a ``@content`` decorator, it must be *scanned* using the
@@ -139,10 +139,10 @@ the content type, and must be followed with whatever arguments are required
 by the resource factory.
 
 Creating an instance of content this way isn't particularly more useful than
-creating an instance of the resource object directly by calling its class
-``__init__`` unless you're building a highly abstract system.  But even if
-you're not building a very abstract system, types can be very useful.  For
-instance, types can be enumerated:
+creating an instance of the resource object by calling its class ``__init__``
+directly unless you're building a highly abstract system.  But even if you're
+not building a very abstract system, types can be very useful.  For instance,
+types can be enumerated:
 
 .. code-block:: python
 

@@ -49,6 +49,8 @@ following features:
 
 - Built-in users and groups management.
 
+- Built-in content workflow.
+
 - Indexing and searching of content (field, keyword, facet, and full-text).
 
 - A facility for relating content objects to each other.
