@@ -51,7 +51,6 @@ def add_mgmt_view(
     match_param=None,
     tab_title=None,
     tab_condition=None,
-    check_csrf=None,
     **predicates
     ):
     
@@ -122,7 +121,6 @@ def add_mgmt_view(
         http_cache=http_cache,
         match_param=match_param, 
         request_type=request_type,
-        check_csrf=check_csrf,
         **predicates
         )
     
@@ -130,7 +128,6 @@ def add_mgmt_view(
         'sdi views', discriminator, view_desc, 'sdi view')
     intr['tab_title'] = tab_title
     intr['tab_condition'] = tab_condition
-    intr['check_csrf'] = check_csrf
     intr.relate('views', view_discriminator)
     config.action(discriminator, introspectables=(intr,))
 

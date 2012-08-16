@@ -66,7 +66,6 @@ class Test_add_mgmt_view(unittest.TestCase):
             )
         self.assertEqual(config._intr['tab_title'], 'tab_title')
         self.assertEqual(config._intr['tab_condition'], 'tab_condition')
-        self.assertEqual(config._intr['check_csrf'], True)
         self.assertEqual(config._intr.related['views'].resolve(),
                          ('view', None, '', 'substanced_manage', 'hash'))
 
