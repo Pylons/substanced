@@ -1,5 +1,7 @@
 import inspect
 
+from pyramid.location import lineage
+
 from pyramid.threadlocal import get_current_registry
 
 import venusian
@@ -24,6 +26,11 @@ def dotted_name_of(g):
     module = g.__module__
     return '.'.join((module, name))
 
+def find_content_type(resource, content_type, registry=None):
+    if registry is None:
+        registry = get_current_registry()
+    return registry.content.find(resource, content_type)
+        
 class ContentRegistry(object):
     def __init__(self):
         self.factory_types = {}
@@ -59,6 +66,11 @@ class ContentRegistry(object):
 
     def exists(self, content_type):
         return content_type in self.content_types.keys()
+
+    def find(self, context, content_type):
+        for location in lineage(context):
+            if self.typeof(location) == content_type:
+                return location
 
 # venusian decorator that marks a class as a content class
 class content(object):

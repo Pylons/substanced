@@ -82,6 +82,16 @@ class TestContentRegistry(unittest.TestCase):
         inst.content_types['dummy'] = True
         inst.content_types['category'] = True
         self.assertEqual(sorted(inst.all()), ['category', 'dummy'])
+
+    def test_find(self):
+        root = Dummy()
+        root.__factory_type__ = 'dummy'
+        resource = Dummy()
+        resource.__factory_type__ = 'notdummy'
+        resource.__parent__ = root
+        inst = self._makeOne()
+        inst.factory_types['dummy'] = 'ContentType'
+        self.assertEqual(inst.find(resource, 'ContentType'), root)
         
 class Test_content(unittest.TestCase):
     def _makeOne(self, content_type):
@@ -300,6 +310,28 @@ class Test_get_factory_type(unittest.TestCase):
         self.assertEqual(self._callFUT(resource),
                          'substanced.content.tests.Dummy')
 
+class Test_find_content_type(unittest.TestCase):
+    def setUp(self):
+        self.config = testing.setUp()
+
+    def tearDown(self):
+        testing.tearDown()
+
+    def _callFUT(self, resource, content_type, registry=None):
+        from . import find_content_type
+        return find_content_type(resource, content_type, registry)
+
+    def test_without_registry(self):
+        self.config.registry.content = DummyContentRegistry()
+        resource = Dummy()
+        self.assertEqual(self._callFUT(resource, 1), resource)
+        
+    def test_with_registry(self):
+        registry = Dummy()
+        registry.content = DummyContentRegistry()
+        resource = Dummy()
+        self.assertEqual(self._callFUT(resource, 1, registry), resource)
+
 class DummyContentRegistry(object):
     def __init__(self):
         self.added = []
@@ -309,6 +341,9 @@ class DummyContentRegistry(object):
 
     def typeof(self, resource):
         return resource.type
+
+    def find(self, resource, content_type):
+        return resource
 
 class Dummy(object):
     pass
