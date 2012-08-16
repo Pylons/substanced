@@ -129,7 +129,7 @@ def is_propertied(resource, registry=None):
     sheets = registry.content.metadata(resource, 'propertysheets', None)
     return sheets is not None
 
-class PropertiedPredicate(object):
+class _PropertiedPredicate(object):
     is_propertied = staticmethod(is_propertied) # for testing
     
     def __init__(self, val, config):
@@ -145,6 +145,6 @@ class PropertiedPredicate(object):
         return self.is_propertied(context, self.registry) == self.val
 
 def includeme(config): # pragma: no cover
-    config.add_view_predicate('propertied', PropertiedPredicate)
+    config.add_view_predicate('propertied', _PropertiedPredicate)
     config.scan('.')
     

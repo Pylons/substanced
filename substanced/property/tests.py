@@ -271,10 +271,10 @@ class Test_is_propertied(unittest.TestCase):
         registry.content = DummyContent(None)
         self.assertFalse(self._callFUT(resource, registry))
 
-class TestPropertiedPredicate(unittest.TestCase):
+class Test_PropertiedPredicate(unittest.TestCase):
     def _makeOne(self, val, config):
-        from . import PropertiedPredicate
-        return PropertiedPredicate(val, config)
+        from . import _PropertiedPredicate
+        return _PropertiedPredicate(val, config)
 
     def test_text(self):
         config = Dummy()
