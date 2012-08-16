@@ -131,24 +131,16 @@ def add_mgmt_view(
     intr.relate('views', view_discriminator)
     config.action(discriminator, introspectables=(intr,))
 
-class mgmt_path(object):
-    def __init__(self, request):
-        self.request = request
+def mgmt_path(request, obj, *arg, **kw):
+    traverse = resource_path_tuple(obj)
+    kw['traverse'] = traverse
+    return request.route_path(MANAGE_ROUTE_NAME, *arg, **kw)
 
-    def __call__(self, obj, *arg, **kw):
-        traverse = resource_path_tuple(obj)
-        kw['traverse'] = traverse
-        return self.request.route_path(MANAGE_ROUTE_NAME, *arg, **kw)
-
-class mgmt_url(object):
-    def __init__(self, request):
-        self.request = request
-
-    def __call__(self, obj, *arg, **kw):
-        traverse = resource_path_tuple(obj)
-        kw['traverse'] = traverse
-        return self.request.route_url(MANAGE_ROUTE_NAME, *arg, **kw)
-
+def mgmt_url(request, obj, *arg, **kw):
+    traverse = resource_path_tuple(obj)
+    kw['traverse'] = traverse
+    return request.route_url(MANAGE_ROUTE_NAME, *arg, **kw)
+    
 class mgmt_view(object):
     """ A class :term:`decorator` which, when applied to a class, will
     provide defaults for all view configurations that use the class.  This
@@ -352,9 +344,9 @@ def includeme(config): # pragma: no cover
     manage_prefix = settings.get('substanced.manage_prefix', '/manage')
     manage_pattern = manage_prefix + '*traverse'
     config.add_route(MANAGE_ROUTE_NAME, manage_pattern)
-    config.set_request_property(mgmt_path, reify=True)
-    config.set_request_property(mgmt_url, reify=True)
-    config.set_request_property(get_user, name='user', reify=True)
+    config.set_request_method(mgmt_path)
+    config.set_request_method(mgmt_url)
+    config.set_request_method(get_user, name='user', reify=True)
     config.include('deform_bootstrap')
     secret = config.registry.settings.get('substanced.secret')
     if secret is None:

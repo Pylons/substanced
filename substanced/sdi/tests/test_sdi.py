@@ -70,9 +70,9 @@ class Test_add_mgmt_view(unittest.TestCase):
                          ('view', None, '', 'substanced_manage', 'hash'))
 
 class Test_mgmt_path(unittest.TestCase):
-    def _makeOne(self, request):
+    def _callFUT(self, *arg, **kw):
         from .. import mgmt_path
-        return mgmt_path(request)
+        return mgmt_path(*arg, **kw)
 
     def test_it(self):
         from .. import MANAGE_ROUTE_NAME
@@ -84,14 +84,13 @@ class Test_mgmt_path(unittest.TestCase):
             self.assertEqual(kw, {'b':1, 'traverse':('',)})
             return '/path'
         request.route_path = route_path
-        inst = self._makeOne(request)
-        result = inst(context, 'a', b=1)
+        result = self._callFUT(request, context, 'a', b=1)
         self.assertEqual(result, '/path')
 
 class Test_mgmt_url(unittest.TestCase):
-    def _makeOne(self, request):
+    def _callFUT(self, *arg, **kw):
         from .. import mgmt_url
-        return mgmt_url(request)
+        return mgmt_url(*arg, **kw)
 
     def test_it(self):
         from .. import MANAGE_ROUTE_NAME
@@ -103,8 +102,7 @@ class Test_mgmt_url(unittest.TestCase):
             self.assertEqual(kw, {'b':1, 'traverse':('',)})
             return 'http://example.com/path'
         request.route_url = route_url
-        inst = self._makeOne(request)
-        result = inst(context, 'a', b=1)
+        result = self._callFUT(request, context, 'a', b=1)
         self.assertEqual(result, 'http://example.com/path')
 
 
