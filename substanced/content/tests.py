@@ -186,10 +186,10 @@ class Test_add_content_type(unittest.TestCase):
         meta = config.actions[1][1]['introspectables'][0]['meta']
         self.assertEqual(meta['catalog'], True)
 
-class Test_wrap_factory(unittest.TestCase):
+class Test__wrap_factory(unittest.TestCase):
     def _callFUT(self, factory, factory_type):
-        from . import wrap_factory
-        return wrap_factory(factory, factory_type)
+        from . import _wrap_factory
+        return _wrap_factory(factory, factory_type)
 
     def test_content_factory_isclass_factory_type_is_not_supplied(self):
         class Foo(object):
@@ -235,10 +235,10 @@ class Test_wrap_factory(unittest.TestCase):
         self.assertTrue(ob is foo)
         self.assertEqual(ob.__factory_type__, 'dummy')
 
-class TestContentTypePredicate(unittest.TestCase):
+class Test_ContentTypePredicate(unittest.TestCase):
     def _makeOne(self, val, config):
-        from . import ContentTypePredicate
-        return ContentTypePredicate(val, config)
+        from . import _ContentTypePredicate
+        return _ContentTypePredicate(val, config)
 
     def _makeConfig(self, result):
         config = Dummy()
@@ -295,10 +295,10 @@ class Test_get_content_type(unittest.TestCase):
         resource.type = 'bar'
         self.assertEqual(self._callFUT(resource, registry), 'bar')
 
-class Test_get_factory_type(unittest.TestCase):
+class Test__get_factory_type(unittest.TestCase):
     def _callFUT(self, resource):
-        from . import get_factory_type
-        return get_factory_type(resource)
+        from . import _get_factory_type
+        return _get_factory_type(resource)
 
     def test_has_ft_attr(self):
         resource = Dummy()

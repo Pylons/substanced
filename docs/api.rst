@@ -139,7 +139,14 @@ Other Helpers
 
 .. automodule:: substanced.content
 
+.. autofunction:: get_content_type
+
+.. autofunction:: find_content_type
+
 .. autoclass:: content
+   :members:
+
+.. autoclass:: ContentRegistry
    :members:
 
 .. autofunction:: add_content_type

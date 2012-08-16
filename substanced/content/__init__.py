@@ -9,73 +9,108 @@ import venusian
 _marker = object()
 
 def get_content_type(resource, registry=None):
+    """ Return the content type of a resource or ``None`` if the object has
+    no content type.  If ``registry`` is not supplied, the current Pyramid
+    registry will be looked up as a thread local in order to find the
+    Substance D content registry."""
     if registry is None:
         registry = get_current_registry()
     return registry.content.typeof(resource)
 
-def get_factory_type(resource):
+def find_content_type(resource, content_type, registry=None):
+    """ Return the first object in the :term:`lineage` of the resource that
+    supplies the ``content_type``.  If ``registry`` is not supplied, the
+    current Pyramid registry will be looked up as a thread local in order to
+    find the Substance D content registry."""
+    if registry is None:
+        registry = get_current_registry()
+    return registry.content.find(resource, content_type)
+
+def _get_factory_type(resource):
     """ If the resource has a __factory_type__ attribute, return it.
     Otherwise return the full Python dotted name of the resource's class."""
     factory_type = getattr(resource, '__factory_type__', None)
     if factory_type is None:
-        factory_type = dotted_name_of(resource.__class__)
+        factory_type = _dotted_name_of(resource.__class__)
     return factory_type
 
-def dotted_name_of(g):
+def _dotted_name_of(g):
     name = g.__name__
     module = g.__module__
     return '.'.join((module, name))
 
-def find_content_type(resource, content_type, registry=None):
-    if registry is None:
-        registry = get_current_registry()
-    return registry.content.find(resource, content_type)
-        
 class ContentRegistry(object):
+    """ An object accessible as ``registry.content`` (aka
+    ``request.registry.content``, aka ``config.registry.content``) that
+    contains information about Substance D content types."""
     def __init__(self):
         self.factory_types = {}
         self.content_types = {}
         self.meta = {}
 
     def add(self, content_type, factory_type, factory, **meta):
+        """ Add a content type to this registry """
         self.factory_types[factory_type] = content_type
         self.content_types[content_type] = factory
         self.meta[content_type] = meta
 
     def all(self):
+        """ Return all content types known my this registry as a sequence."""
         return list(self.content_types.keys())
 
     def create(self, content_type, *arg, **kw):
+        """ Create an instance of ``content_type`` by calling its factory
+        with ``*arg`` and ``**kw`` and return it."""
         factory = self.content_types[content_type]
         return factory(*arg, **kw)
 
-    def metadata(self, context, name, default=None):
-        content_type = self.typeof(context)
+    def metadata(self, resource, name, default=None):
+        """
+        Return a metadata value for the content type of ``resource`` based on
+        the ``**meta`` value passed to
+        :meth:`~substanced.content.ContentRegistry.add`.  If a value in that
+        content type's metadata was passed using ``name`` as its name, the
+        value will be returned, otherwise ``default`` will be returned.
+        """
+        content_type = self.typeof(resource)
         maybe = self.meta.get(content_type, {}).get(name)
         if maybe is not None:
             return maybe
         return default
 
-    def typeof(self, context):
-        factory_type = get_factory_type(context)
+    def typeof(self, resource):
+        """ Return the content type of ``resource`` """
+        factory_type = _get_factory_type(resource)
         content_type = self.factory_types.get(factory_type)
         return content_type
 
-    def istype(self, context, content_type):
-        return content_type == self.typeof(context)
+    def istype(self, resource, content_type):
+        """ Return ``True`` if ``resource`` is of content type
+        ``content_type``, ``False`` otherwise."""
+        return content_type == self.typeof(resource)
 
     def exists(self, content_type):
+        """ Return ``True`` if ``content_type`` has been registered within
+        this content registry, ``False`` otherwise."""
         return content_type in self.content_types.keys()
 
-    def find(self, context, content_type):
-        for location in lineage(context):
+    def find(self, resource, content_type):
+        """ Return the first object in the :term:`lineage` of the
+        ``resource`` that supplies the ``content_type`` or ``None`` if no
+        such object can be found."""
+        for location in lineage(resource):
             if self.typeof(location) == content_type:
                 return location
 
 # venusian decorator that marks a class as a content class
 class content(object):
     """ Use as a decorator for a content factory (usually a class).  Accepts
-    a content type, a factory type (optionally), and a set of meta keywords."""
+    a content type, a factory type (optionally), and a set of meta keywords.
+    These values mean the same thing as they mean for
+    :func:`substanced.content.add_content_type`.  This decorator attaches
+    information to the object it decorates which is used to call
+    :func:`~substanced.content.add_content_type` during a :term:`scan`.
+    """
     venusian = venusian
     def __init__(self, content_type, factory_type=None, **meta):
         self.content_type = content_type
@@ -86,7 +121,9 @@ class content(object):
         def callback(context, name, ob):
             config = context.config.with_package(info.module)
             config.add_content_type(
-                self.content_type, wrapped, factory_type=self.factory_type,
+                self.content_type,
+                wrapped,
+                factory_type=self.factory_type,
                 **self.meta
                 )
         info = self.venusian.attach(wrapped, callback, category='substanced')
@@ -163,7 +200,7 @@ def add_content_type(config, content_type, factory, factory_type=None, **meta):
     # convenient to be able to use the factory directly (via an import) in
     # user code.
     
-    factory_type, derived_factory = wrap_factory(factory, factory_type)
+    factory_type, derived_factory = _wrap_factory(factory, factory_type)
 
     def register_factory():
         config.registry.content.add(
@@ -189,7 +226,7 @@ def add_content_type(config, content_type, factory, factory_type=None, **meta):
     
     config.action(discrim, callable=register_factory, introspectables=(intr,))
 
-def wrap_factory(factory, factory_type):
+def _wrap_factory(factory, factory_type):
     """ Wrap a factory in something that applies a factory type marker
     attribute to an instance created by the factory if necessary.  It's
     necessary if any of the following are true:
@@ -203,10 +240,10 @@ def wrap_factory(factory, factory_type):
     """
  
     if inspect.isclass(factory) and factory_type is None:
-        return dotted_name_of(factory), factory
+        return _dotted_name_of(factory), factory
 
     if factory_type is None:
-        factory_type = dotted_name_of(factory)
+        factory_type = _dotted_name_of(factory)
 
     def factory_wrapper(*arg, **kw):
         inst = factory(*arg, **kw)
@@ -216,7 +253,7 @@ def wrap_factory(factory, factory_type):
     factory_wrapper.__factory__ = factory
     return factory_type, factory_wrapper
 
-class ContentTypePredicate(object):
+class _ContentTypePredicate(object):
     def __init__(self, val, config):
         self.val = val
         self.registry = config.registry
@@ -232,4 +269,4 @@ class ContentTypePredicate(object):
 def includeme(config): # pragma: no cover
     config.registry.content = ContentRegistry()
     config.add_directive('add_content_type', add_content_type)
-    config.add_view_predicate('content_type', ContentTypePredicate)
+    config.add_view_predicate('content_type', _ContentTypePredicate)
