@@ -599,6 +599,59 @@ class Test_CheckCSRFTokenPredicate(unittest.TestCase):
         request = testing.DummyRequest()
         self.assertTrue(inst(None, request))
 
+class Test_PhysicalPathPredicate(unittest.TestCase):
+    def _makeOne(self, val, config):
+        from .. import _PhysicalPathPredicate
+        return _PhysicalPathPredicate(val, config)
+
+    def test_text(self):
+        inst = self._makeOne('/', None)
+        self.assertEqual(inst.text(), "physical_path = ('',)")
+
+    def test_phash(self):
+        inst = self._makeOne('/', None)
+        self.assertEqual(inst.phash(), "physical_path = ('',)")
+        
+    def test_it_call_val_tuple_True(self):
+        inst = self._makeOne(('', 'abc'), None)
+        root = Dummy()
+        root.__name__ = ''
+        root.__parent__ = None
+        context = Dummy()
+        context.__name__ = 'abc'
+        context.__parent__ = root
+        self.assertTrue(inst(context, None))
+
+    def test_it_call_val_list_True(self):
+        inst = self._makeOne(['', 'abc'], None)
+        root = Dummy()
+        root.__name__ = ''
+        root.__parent__ = None
+        context = Dummy()
+        context.__name__ = 'abc'
+        context.__parent__ = root
+        self.assertTrue(inst(context, None))
+
+    def test_it_call_val_str_True(self):
+        inst = self._makeOne('/abc', None)
+        root = Dummy()
+        root.__name__ = ''
+        root.__parent__ = None
+        context = Dummy()
+        context.__name__ = 'abc'
+        context.__parent__ = root
+        self.assertTrue(inst(context, None))
+
+    def test_it_call_False(self):
+        inst = self._makeOne('/', None)
+        root = Dummy()
+        root.__name__ = ''
+        root.__parent__ = None
+        context = Dummy()
+        context.__name__ = 'abc'
+        context.__parent__ = root
+        self.assertFalse(inst(context, None))
+
 class DummyContent(object):
     def __init__(self, result=None):
         self.result = result
@@ -676,4 +729,6 @@ class DummyIntrospectable(dict):
         
     def relate(self, category, discrim):
         self.related[category] = discrim
-        
+
+class Dummy(object):
+    pass

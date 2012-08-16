@@ -325,8 +325,24 @@ class _CheckCSRFTokenPredicate(object):
             check_csrf_token(request)
         return True
 
+class _PhysicalPathPredicate(object):
+    def __init__(self, val, config):
+        if isinstance(val, basestring):
+            val = tuple(filter(None, val.split('/')))
+            val = ('',) + val
+        self.val = tuple(val)
+
+    def text(self):
+        return 'physical_path = %s' % (self.val,)
+
+    phash = text
+
+    def __call__(self, context, request):
+        return resource_path_tuple(context) == self.val
+
 def includeme(config): # pragma: no cover
     config.add_view_predicate('check_csrf', _CheckCSRFTokenPredicate)
+    config.add_view_predicate('physical_path', _PhysicalPathPredicate)
     config.add_directive('add_mgmt_view', add_mgmt_view, action_wrap=False)
     YEAR = 86400 * 365
     config.add_static_view('deformstatic', 'deform:static', cache_max_age=YEAR)
