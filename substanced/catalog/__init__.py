@@ -24,9 +24,14 @@ from ..folder import Folder
 
 logger = logging.getLogger(__name__) # API
 
+def add_catalog_if_in_services(context, request):
+    if context.__name__ == '__services__' and not 'catalog' in context:
+        return 'add_catalog'
+
 @content(
     'Catalog',
-    icon='icon-search'
+    icon='icon-search',
+    add_view=add_catalog_if_in_services,
     )
 @implementer(ICatalog)
 class Catalog(Folder):
