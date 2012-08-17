@@ -26,7 +26,6 @@ def includeme(config): # pragma: no cover
     config.include('.objectmap')
     config.include('.catalog')
     config.include('.root')
-    config.include('.site')
     config.include('.evolution')
     config.include('.folder')
     config.include('.principal')
