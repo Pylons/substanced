@@ -91,9 +91,8 @@ class Folder(Persistent):
         services = self.get(SERVICES_NAME)
         if services is None:
             services = Folder()
-            self.add(SERVICES_NAME, services, send_events=False,
-                     allow_services=True)
-        services.add(name, obj, send_events=False)
+            self.add(SERVICES_NAME, services, allow_services=True)
+        services.add(name, obj)
 
     def keys(self):
         """ Return an iterable sequence of object names present in the folder.
@@ -246,8 +245,8 @@ class Folder(Persistent):
 
         return name
 
-    def add(self, name, other, send_events=True,
-            allow_services=False, duplicating=False):
+    def add(self, name, other, send_events=True, allow_services=False,
+            duplicating=False):
         """ Same as ``__setitem__``.
 
         If ``send_events`` is False, suppress the sending of folder events.
