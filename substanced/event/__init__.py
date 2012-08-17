@@ -11,6 +11,7 @@ from ..interfaces import (
     IObjectRemoved,
     IObjectWillBeRemoved,
     IObjectModified,
+    IRootCreated,
     )
     
 class _ObjectEvent(object):
@@ -55,6 +56,12 @@ class ObjectModified(object): # pragma: no cover
     registry = None # added by _FolderEventSubscriber
     def __init__(self, object):
         self.object = object
+
+@implementer(IRootCreated)
+class RootCreated(object):
+    def __init__(self, object, registry):
+        self.object = object
+        self.registry = registry
 
 # subscriber decorators, e.g.
 # @subscribe_added(MyContent)
@@ -109,4 +116,3 @@ class subscribe_modified(_FolderEventSubscriber):
     """ Decorator for registering an object will-be-removed event subscriber
     (a subscriber for ObjectModified)."""
     event = IObjectModified
-

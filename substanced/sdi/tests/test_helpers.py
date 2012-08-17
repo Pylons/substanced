@@ -51,19 +51,25 @@ class Test_breadcrumbs(unittest.TestCase):
                'icon': None}]
             )
 
-class Test_get_site_title(unittest.TestCase):
+class Test_get_sdi_title(unittest.TestCase):
     def _callFUT(self, request):
-        from ..helpers import get_site_title
-        return get_site_title(request)
+        from ..helpers import get_sdi_title
+        return get_sdi_title(request)
         
-    def test_it(self):
-        from ...interfaces import ISite
-        resource = testing.DummyResource(__provides__=ISite)
-        resource.title = 'My Title'
+    def test_it_exists(self):
+        resource = testing.DummyResource()
+        resource.sdi_title = 'My Title'
         request = testing.DummyRequest()
         request.context = resource
         result = self._callFUT(request)
         self.assertEqual(result, 'My Title')
+
+    def test_it_missing(self):
+        resource = testing.DummyResource()
+        request = testing.DummyRequest()
+        request.context = resource
+        result = self._callFUT(request)
+        self.assertEqual(result, 'Substance D')
 
 class Test_add_renderer_globals(unittest.TestCase):
     def _callFUT(self, event):

@@ -2,7 +2,6 @@ import sys
 
 from pyramid.renderers import get_renderer
 from pyramid.location import lineage
-from pyramid.traversal import find_interface
 from pyramid.security import has_permission
 
 from pyramid.events import (
@@ -12,8 +11,6 @@ from pyramid.events import (
 
 from . import get_mgmt_views # API used by templates
 get_mgmt_views = get_mgmt_views # pyflakes
-
-from ..interfaces import ISite
 
 def macros():
     template = get_renderer('templates/master.pt').implementation()
@@ -32,9 +29,12 @@ def breadcrumbs(request):
                             'icon':icon})
     return breadcrumbs
 
-def get_site_title(request):
-    site = find_interface(request.context, ISite)
-    return site.title or 'Substance D'
+def get_sdi_title(request):
+    for location in lineage(request.context):
+        sdi_title = getattr(location, 'sdi_title', None)
+        if sdi_title is not None:
+            return sdi_title
+    return 'Substance D'
 
 @subscriber(BeforeRender)
 def add_renderer_globals(event):

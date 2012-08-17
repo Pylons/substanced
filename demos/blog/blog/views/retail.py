@@ -17,7 +17,7 @@ def _getentrybody(format, entry):
 
 @view_config(
     renderer='templates/frontpage.pt',
-    content_type='Blog',
+    content_type='Root',
     )
 def blogview(context, request):
     blogentries = []
