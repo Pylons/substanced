@@ -33,8 +33,6 @@ Guts-Only
 
 - Basic scaffold (``pcreate`` template).
 
-- Figure out how to let people override generic add view.
-
 - Substance D ACLs contain object identifiers which refer to principals.
   Currently, when a principal is deleted, ACLs which refer to the principal
   are not adjusted.  This is both a security issue and a sanity issue.  The
@@ -65,10 +63,6 @@ Guts-Only
 - Emit an ObjectMoving event rather than removed event with a moving flag,
   then an add event?
 
-- Get rid of ISite?  Use presence of __services__ to denote site?  Probably
-  not.  But make sure that you can host more than one site in the same
-  instance (virtual-hosting-wise).
-
 - Undo of catalog reindex doesnt?
 
 - Refactor ACL view.
@@ -92,5 +86,8 @@ Docs
   context/request).
 
 - Document that icon to @content can be a callable (accepting context/request).
+
+- Document how to override a content registration.  Include an override
+  example for the sole purpose of overriding the add view.
 
 
