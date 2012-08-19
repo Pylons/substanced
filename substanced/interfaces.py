@@ -91,9 +91,6 @@ class IObjectMap(Interface):
         """ Return a set of objectids which have ``obj`` as a relationship
         source using ``reftype``.  ``obj`` can be an object or an object id."""
 
-class ISite(Interface):
-    """ Marker interface for something that is the root of a site """
-
 class ISearch(Interface):
     """ Adapter for searching the catalog """
 
@@ -130,6 +127,14 @@ class IObjectRemoved(IObjectEvent):
 class IObjectModified(IObjectEvent):
     """ May be sent when an object is modified """
     object = Attribute('The object being modified')
+
+class IRootCreated(Interface):
+    """ An event type sent when a Substance D root object is first created by
+    its root factory"""
+    object = Attribute('The freshly created root object.  It will already '
+                       'have been seated into the ZODB database')
+    registry = Attribute('The Pyramid registry used when the object was '
+                         'created')
 
 class IFolder(Interface):
     """ A Folder which stores objects using Unicode keys.
@@ -442,6 +447,8 @@ class IDefaultWorkflow(Interface):
     """ Marker interface used internally for workflows that aren't
     associated with a particular content type"""
 
+class IRoot(IFolder):
+    pass
 
 marker = object()
 

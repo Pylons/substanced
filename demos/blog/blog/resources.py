@@ -1,6 +1,14 @@
 import datetime
 import time
 
+from persistent import Persistent
+from pytz import timezone
+
+from pyramid.security import (
+    Allow,
+    Everyone,
+    )
+
 from colander import (
     DateTime,
     deferred,
@@ -9,24 +17,19 @@ from colander import (
     SchemaNode,
     String,
     )
+
 from deform.widget import (
     SelectWidget,
     TextAreaWidget,
     )
 
-from persistent import Persistent
-from pytz import timezone
-from pyramid.security import (
-    Allow,
-    Everyone,
-    )
 from substanced.content import content
 from substanced.schema import Schema
 from substanced.folder import Folder
 from substanced.property import PropertySheet
-from substanced.site import (
-    Site,
-    SitePropertySheet,
+from substanced.root import (
+    Root,
+    RootPropertySheet,
     )
 
 def make_name_validator(content_type):
@@ -157,16 +160,16 @@ class Comment(Persistent):
         self.pubdate = pubdate
 
 @content(
-    'Blog',
+    'Root',
     icon='icon-home',
     propertysheets = (
-        ('Basic', SitePropertySheet),
+        ('Basic', RootPropertySheet),
         ),
     )
-class Blog(Site):
-    def __init__(self, initial_login, initial_email, initial_password):
-        Site.__init__(self, initial_login, initial_email, initial_password)
-        acl = list(getattr(self, '__acl__', []))
-        acl.append((Allow, Everyone, 'view'))
-        self.__acl__ = acl
-        
+def Blog(*arg, **kw):
+    root = Root(*arg, **kw)
+    acl = getattr(root, '__acl__', [])
+    acl.append((Allow, Everyone, 'view'))
+    root.__acl__ = acl
+    return root
+

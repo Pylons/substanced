@@ -18,7 +18,7 @@ Objectives
 
 - Include Substanced D into your ``Configurator``
 
-- Use a ``substanced.site.Site.root_factory`` as your ``root_factory``
+- Use a ``substanced.root_factory`` as your ``root_factory``
 
 Steps
 =====
@@ -62,8 +62,9 @@ files: ``Data.fs``, ``Data.fs.index``, etc. What's that all about?
   configures the ``ZODB`` setup, as well as an inclusion of
   ``pyramid_tm`` for transaction management
 
-- The ``__init__.py`` uses ``root_factory=Site.root_factory`` to create
-  a persistent ``Site`` instance at the root of the resource tree
+- The ``__init__.py`` uses ``root_factory=root_factory`` to create a
+  persistent Substance D root object instance at the root of the resource
+  tree
 
 - We tell the ``Configurator`` to include some settings from Substance
   D, such as paths to static directories

@@ -7,6 +7,8 @@
 
 .. autofunction:: includeme
 
+.. autofunction:: root_factory
+
 :mod:`substanced.catalog` API
 -----------------------------
 
@@ -346,12 +348,12 @@ Other Helpers
 
 .. autofunction:: find_services
 
-:mod:`substanced.site` API
+:mod:`substanced.root` API
 --------------------------
 
-.. automodule:: substanced.site
+.. automodule:: substanced.root
 
-.. autoclass:: Site
+.. autoclass:: Root
    :members:
 
 .. autofunction:: includeme
