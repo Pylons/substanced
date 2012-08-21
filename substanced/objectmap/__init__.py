@@ -12,8 +12,11 @@ from pyramid.traversal import (
     find_resource,
     )
 
-from ..content import content
-from ..service import find_service
+from ..content import (
+    service,
+    find_service,
+    )
+
 from ..event import (
     subscribe_will_be_added,
     subscribe_removed,
@@ -86,8 +89,9 @@ references to the objectid represented by '/a' *and* any children
 
 _marker = object()
 
-@content(
+@service(
     'Object Map',
+    service_name='objectmap',
     icon='icon-asterisk'
     )
 @implementer(IObjectMap)
@@ -498,7 +502,7 @@ def node_path_tuple(resource):
     # have a __name__
     return tuple(reversed([getattr(loc, '__name__', '') for 
                            loc in lineage(resource)]))
-    
+
 @subscribe_will_be_added()
 def object_will_be_added(event):
     """ Objects added to folders must always have an __objectid__.  This must

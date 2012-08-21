@@ -13,7 +13,10 @@ from pyramid.authorization import ACLAuthorizationPolicy
 from pyramid.exceptions import ConfigurationError
 from pyramid.httpexceptions import HTTPBadRequest
 from pyramid.request import Request
-from pyramid.security import authenticated_userid
+from pyramid.security import (
+    authenticated_userid,
+    has_permission,
+    )
 from pyramid.session import UnencryptedCookieSessionFactoryConfig
 from pyramid.traversal import resource_path_tuple
 from pyramid.registry import (
@@ -21,7 +24,8 @@ from pyramid.registry import (
     Deferred,
     )
 
-from ..service import find_service
+from ..interfaces import SERVICES_NAME
+from ..content import find_service
 
 MANAGE_ROUTE_NAME = 'substanced_manage'
 
@@ -172,7 +176,7 @@ class mgmt_view(object):
         settings['_info'] = info.codeinfo # fbo "action_method"
         return wrapped
 
-def get_mgmt_views(request, context=None, names=None):
+def sdi_mgmt_views(request, context=None, names=None):
     registry = request.registry
     if context is None:
         context = request.context
@@ -247,7 +251,108 @@ def get_mgmt_views(request, context=None, names=None):
                     
     return ordered + sorted(L, key=operator.itemgetter('title'))
 
-def get_add_views(request, context=None):
+def sdi_folder_contents(folder, request):
+    """
+    Returns a sequence of dictionaries that can be used by a 'folder
+    contents' view.  The sequence is implemented as a generator.  The
+    ``folder`` object passed must implement the methods of the
+    :class:`substanced.interfaces.IFolder` interface, and the ``request``
+    object passed must be a Pyramid request.
+
+    Each dictionary in the sequence reflects information about a single
+    subobject in the folder.  Each dictionary in the sequence returned will
+    have the following keys:
+
+    ``name``
+
+      The name of the subobject.
+
+    ``deletable``
+
+      A boolean indicating whether or not this subobject is deletable.
+
+    ``viewable``
+
+      A boolean indicating whether or not this subobject is viewable.
+
+    ``url``
+
+      The URL to the subobject.  This will be ``/path/to/subob/@@manage_main``.
+
+    This function considers a subobject:
+
+    - 'deletable' if the user has the ``sdi.manage-contents`` permission on
+      ``folder`` or if the subobject has a ``__sd_deletable__`` attribute
+      which resolves to a boolean ``True`` value.
+
+    - 'viewable' if the user has the ``sdi.view`` permission against the
+      subobject.
+
+    This function honors two subobject hooks.
+
+    The first subobject hook is named ``__sd_hidden__``.  If a subobject has
+    an attribute named ``__sd_hidden__``, it is expected to be either a
+    boolean or a callable.  If ``__sd_hidden__`` is a boolean, the value is
+    used verbatim.  If ``__sd_hidden__`` is a callable, the callable is
+    called with two positional arguments: the subobject and the request; the
+    result is expected to be a boolean.  The ``__sd_hidden__`` value (or
+    callable return value) is used to determine whether or not the a
+    dictionary is present which reflects the subobject in the sequence
+    returned by this function.  If it is ``True``, a dictionary is not
+    created for the subobject and will not present in the returned sequence.
+    If it is ``False``, a dictionary *is* created for the subobject and will
+    be present in the returned sequence.  If a subobject does not have the
+    ``__sd_hidden__`` attribute, it is assumed to be visible (not hidden) as
+    if ``__sd_hidden__`` was present and ``False``; in such a case a
+    dictionary for the subobject will be present in the returned sequence.
+
+    The second subobject hook is named ``__sd_deletable__``.  It works just
+    like ``__sd_hidden__`` (it can be a bare value or a callable, and the
+    callable is called just like ``__sd_hidden__``).  If a subobject has an
+    ``__sd_deletable__`` attribute, and its resolved value is not ``None``,
+    the value will used as the ``deletable`` value returned in the dictionary
+    for the subobject.  If ``__sd_deletable__`` does not exist on a subobject
+    or resolves to ``None``, the ``deletable`` value will be the default: a
+    boolean indicating whether the current user has the
+    ``sdi.manage-contents`` permission on the ``folder``.
+
+    This function honors one content type hook.  The content type hook is
+    named ``icon``.  If the ``icon`` supplied to the content type
+    configuration of a subobject is a callable, the callable will be passed
+    the subobject and the ``request``; it is expected to return an icon name
+    or ``None``.  ``icon`` may alternately be either ``None`` or a string
+    representing a icon name instead of a callable.
+    """
+    can_manage = has_permission('sdi.manage-contents', folder, request)
+    for k, v in folder.items():
+        hidden = getattr(v, '__sd_hidden__', None)
+        if hidden is not None:
+            if callable(hidden):
+                hidden = hidden(v, request)
+        if not has_permission('sdi.view', v, request):
+            hidden = True
+        if hidden:
+            continue
+        icon = request.registry.content.metadata(v, 'icon')
+        if callable(icon):
+            icon = icon(v, request)
+        deletable = getattr(v, '__sd_deletable__', None)
+        if deletable is not None:
+            if callable(deletable):
+                deletable = deletable(v, request)
+        if deletable is None:
+            deletable = can_manage
+        url = request.mgmt_path(v, '@@manage_main')
+        data = dict(
+            name=k,
+            deletable=deletable,
+            viewable=True, # XXX remove
+            url=url,
+            icon=icon
+            )
+        yield data
+
+def sdi_add_views(request, context=None):
     registry = request.registry
     if context is None:
         context = request.context
@@ -261,21 +366,30 @@ def get_add_views(request, context=None):
         content_type = intr['content_type']
         viewname = meta.get('add_view')
         if viewname:
+            if meta.get('is_service'):
+                # services are not addable anywhere except within a
+                # __services__ folder
+                if not context.__name__ == SERVICES_NAME:
+                    continue
             if callable(viewname):
                 viewname = viewname(context, request)
                 if not viewname:
                     continue
-            addable_here = getattr(context, '__addable__', None)
+            addable_here = getattr(context, '__sd_addable__', None)
             if addable_here is not None:
-                if not content_type in addable_here:
-                    continue
+                if callable(addable_here):
+                    if not addable_here(intr):
+                        continue
+                else:
+                    if not content_type in addable_here:
+                        continue
             type_name = meta.get('name', content_type)
             icon = meta.get('icon', '')
             data = dict(type_name=type_name, icon=icon)
             candidates[viewname] = data
 
     candidate_names = candidates.keys()
-    views = get_mgmt_views(request, context, names=candidate_names)
+    views = sdi_mgmt_views(request, context, names=candidate_names)
 
     L = []
 
@@ -361,3 +475,4 @@ def includeme(config): # pragma: no cover
     config.set_authorization_policy(authz_policy)
     config.add_permission('sdi.edit-properties') # used by property machinery
     config.scan('.')
+

@@ -87,6 +87,31 @@ class TestAddFolderView(unittest.TestCase):
         self.assertEqual(context['name'], resource)
         self.assertEqual(resp.location, 'http://example.com')
 
+class Test_add_services_folder(unittest.TestCase):
+    def _callFUT(self, context, request):
+        from ..views import add_services_folder
+        return add_services_folder(context, request)
+    
+    def _makeRequest(self, resource):
+        request = testing.DummyRequest()
+        request.mgmt_path = lambda *arg: '/manage'
+        request.registry.content = DummyContent(resource)
+        return request
+    
+    def test_it(self):
+        resource = testing.DummyResource()
+        context = testing.DummyResource()
+        def add(name, ob, reserved_names=None):
+            self.assertEqual(name, '__services__')
+            self.assertEqual(ob, resource)
+            self.assertEqual(reserved_names, ())
+            context[name] = ob
+        context.add = add
+        request = self._makeRequest(resource)
+        result = self._callFUT(context, request)
+        self.assertTrue('__services__' in context)
+        self.assertEqual(result.location, '/manage')
+        
 class TestFolderContentsViews(unittest.TestCase):
     def setUp(self):
         self.config = testing.setUp()
@@ -105,80 +130,18 @@ class TestFolderContentsViews(unittest.TestCase):
         request.flash_with_undo = request.session.flash
         return request
 
-    def test_show_no_permissions(self):
-        self.config.testing_securitypolicy(permissive=False)
+    def test_show(self):
         context = testing.DummyResource()
-        context['a'] = testing.DummyResource()
         request = self._makeRequest()
         inst = self._makeOne(context, request)
-        inst.get_add_views = lambda *arg: ()
+        inst.sdi_folder_contents = lambda *arg: ('a',)
+        inst.sdi_add_views = lambda *arg: ('b',)
         result = inst.show()
         batch = result['batch']
         self.assertEqual(len(batch.items), 1)
-        item = batch.items[0]
-        self.assertEqual(item['url'], '/manage')
-        self.assertFalse(item['viewable'])
-        self.assertFalse(item['modifiable'])
-        self.assertEqual(item['icon'], 'icon')
-        self.assertEqual(item['name'], 'a')
-
-    def test_show_all_permissions(self):
-        self.config.testing_securitypolicy(permissive=True)
-        context = testing.DummyResource()
-        context['a'] = testing.DummyResource()
-        request = self._makeRequest()
-        inst = self._makeOne(context, request)
-        inst.get_add_views = lambda *arg: ()
-        result = inst.show()
-        batch = result['batch']
-        self.assertEqual(len(batch.items), 1)
-        item = batch.items[0]
-        self.assertEqual(item['url'], '/manage')
-        self.assertTrue(item['viewable'])
-        self.assertTrue(item['modifiable'])
-        self.assertEqual(item['icon'], 'icon')
-        self.assertEqual(item['name'], 'a')
-
-    def test_show_computable_icon(self):
-        self.config.testing_securitypolicy(permissive=True)
-        context = testing.DummyResource()
-        context['a'] = testing.DummyResource()
-        request = self._makeRequest()
-        def computed_icon(v, default=None):
-            def inner(_context, _request):
-                self.assertEqual(_context, context)
-                self.assertEqual(_request, request)
-                return 'anicon'
-            return inner
-        request.registry.content.metadata = computed_icon
-        inst = self._makeOne(context, request)
-        inst.get_add_views = lambda *arg: ()
-        result = inst.show()
-        batch = result['batch']
-        self.assertEqual(len(batch.items), 1)
-        item = batch.items[0]
-        self.assertEqual(item['url'], '/manage')
-        self.assertTrue(item['viewable'])
-        self.assertTrue(item['modifiable'])
-        self.assertEqual(item['icon'], 'anicon')
-        self.assertEqual(item['name'], 'a')
-
-    def test_show_all_permissions_services_name(self):
-        self.config.testing_securitypolicy(permissive=True)
-        context = testing.DummyResource()
-        context['__services__'] = testing.DummyResource()
-        request = self._makeRequest()
-        inst = self._makeOne(context, request)
-        inst.get_add_views = lambda *arg: ()
-        result = inst.show()
-        batch = result['batch']
-        self.assertEqual(len(batch.items), 1)
-        item = batch.items[0]
-        self.assertEqual(item['url'], '/manage')
-        self.assertTrue(item['viewable'])
-        self.assertFalse(item['modifiable'])
-        self.assertEqual(item['icon'], 'icon')
-        self.assertEqual(item['name'], '__services__')
+        self.assertEqual(batch.items[0], 'a')
+        addables = result['addables']
+        self.assertEqual(addables, ('b',))
 
     def test_delete_none_deleted(self):
         context = testing.DummyResource()
@@ -668,5 +631,3 @@ class DummyContent(object):
     def create(self, iface, *arg, **kw):
         return self.resource
 
-    def metadata(self, v, default=None):
-        return default

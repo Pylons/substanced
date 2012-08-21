@@ -7,6 +7,8 @@ from zope.interface import (
     Attribute,
     )
 
+RESERVED_NAMES = (u'__services__',)
+
 class IPropertySheet(Interface):
     """ Interface for objects with a set of properties defined by a Colander
     schema.  The class :class:`substanced.property.PropertySheet` (which is
@@ -130,10 +132,10 @@ class IObjectModified(IObjectEvent):
 
 class IRootCreated(Interface):
     """ An event type sent when a Substance D root object is first created by
-    its root factory"""
+    the Substance D root factory"""
     object = Attribute('The freshly created root object.  It will already '
                        'have been seated into the ZODB database')
-    registry = Attribute('The Pyramid registry used when the object was '
+    request = Attribute('The Pyramid request active when the object was '
                          'created')
 
 class IFolder(Interface):
@@ -223,19 +225,20 @@ class IFolder(Interface):
         and ``__parent__`` value.
         """
 
-    def add(name, other, send_events=True, allow_services=False):
+    def add(name, other, send_events=True, reserved_names=RESERVED_NAMES):
         """ Same as ``__setitem__``.
 
         If ``send_events`` is false, suppress the sending of folder events.
-        If ``allow_services`` is True, allow the name ``__services__`` to be
-        added.
+        Disallow the addition of the name provided is in the
+        ``RESERVED_NAMES`` list.
         """
 
-    def check_name(name, allow_services=False):
+    def check_name(name, reserved_names=RESERVED_NAMES):
         """
-        Checks the name passed for validity.  If the name is valid, and the
-        name does not already exist in the folder, returns a validated name.
-        If the name is not valid, a ValueError will be raised.  """
+        Checks the name passed for validity.  If the name is valid, is not
+        present in ``reserved_names``, and the name does not already exist in
+        the folder, returns a validated name.  Otherwise a :exc:`ValueError`
+        will be raised."""
 
     def pop(name, default=None):
         """ Remove the item stored in the under ``name`` and return it.

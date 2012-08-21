@@ -18,20 +18,19 @@ from ..interfaces import (
     ICatalog,
     )
 
-from ..content import content
-from ..service import find_service
+from ..content import (
+    service,
+    find_service,
+    )
 from ..folder import Folder
 
 logger = logging.getLogger(__name__) # API
 
-def add_catalog_if_in_services(context, request):
-    if context.__name__ == '__services__' and not 'catalog' in context:
-        return 'add_catalog'
-
-@content(
+@service(
     'Catalog',
     icon='icon-search',
-    add_view=add_catalog_if_in_services,
+    service_name='catalog',
+    add_view='add_catalog',
     )
 @implementer(ICatalog)
 class Catalog(Folder):

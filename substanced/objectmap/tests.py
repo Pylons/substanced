@@ -848,7 +848,7 @@ def resource(path):
 def split(s):
     return (u'',) + tuple(filter(None, s.split(u'/')))
 
-class DummyObjectMap:
+class DummyObjectMap(object):
     def __init__(self):
         self.added = []
         self.removed = []
@@ -911,14 +911,13 @@ class DummyReferenceMap(dict):
 
     def targetids(self, oid, reftype):
         return self._targetids
-    
-def _makeSite(**kw):
+
+def _makeSite(objectmap):
     from ..interfaces import IFolder
     from zope.interface import alsoProvides
-    site = testing.DummyResource(__provides__=kw.pop('__provides__', None))
+    site = testing.DummyResource()
     alsoProvides(site, IFolder)
     services = testing.DummyResource()
-    for k, v in kw.items():
-        services[k] = v
     site['__services__'] = services
+    services['objectmap'] = objectmap
     return site

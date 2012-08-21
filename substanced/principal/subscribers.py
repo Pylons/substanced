@@ -10,7 +10,7 @@ from ..interfaces import (
     IPrincipal,
 )
 
-from ..service import find_service
+from ..content import find_service
 from ..util import oid_of
 
 from . import UserToPasswordReset

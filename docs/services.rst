@@ -22,7 +22,7 @@ path, and to resolve an object identifier to an object.  The ``principals``
 service allows a developer to add and enumerate users and groups.
 
 A service can be looked up in one of two ways: using the
-:func:`pryamid.service.find_service` API or the
+:func:`pryamid.content.find_service` API or the
 :meth:`pyramid.folder.Folder.find_service` API.  They are functionally
 equivalent.  The latter exists only as a convenience so you don't need to
 import a function if you know you're dealing with a :term:`folder`.
@@ -32,11 +32,11 @@ until it finds a parent folder that has a ``__services__`` subfolder.  It
 will then look inside that ``__services__`` folder for an object by some
 name.
 
-Here's how to use :func:`pyramid.service.find_service`:
+Here's how to use :func:`pyramid.content.find_service`:
 
 .. code-block:: python
 
-   from substanced.service import find_service
+   from substanced.content import find_service
    objectmap = find_service(somecontext, 'objectmap')
 
 ``somecontext`` above is any :term:`resource` in the :term:`resource tree`.

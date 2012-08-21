@@ -123,6 +123,15 @@ class Test_content(unittest.TestCase):
         ct = config.content_types
         self.assertEqual(len(ct), 1)
 
+class Test_service(Test_content):
+    def _makeOne(self, content_type):
+        from ..content import service
+        return service(content_type)
+    
+    def test_is_service_in_meta(self):
+        inst = self._makeOne('Special')
+        self.assertTrue('is_service' in inst.meta)
+
 class Test_add_content_type(unittest.TestCase):
     def _callFUT(self, *arg, **kw):
         from . import add_content_type
@@ -185,6 +194,22 @@ class Test_add_content_type(unittest.TestCase):
         self.assertEqual(len(config.actions), 2)
         meta = config.actions[1][1]['introspectables'][0]['meta']
         self.assertEqual(meta['catalog'], True)
+
+class Test_add_service_type(Test_add_content_type):
+    def _callFUT(self, *arg, **kw):
+        from . import add_service_type
+        return add_service_type(*arg, **kw)
+
+    def test_is_service_in_meta(self):
+        config = DummyConfig()
+        config.registry.content = DummyContentRegistry()
+        class Foo(object):
+            pass
+        self._callFUT(config, 'foo', Foo)
+        self.assertEqual(len(config.actions), 2)
+        meta = config.actions[1][1]['introspectables'][0]['meta']
+        self.assertEqual(meta['is_service'], True)
+    
 
 class Test__wrap_factory(unittest.TestCase):
     def _callFUT(self, factory, factory_type):
@@ -310,7 +335,7 @@ class Test__get_factory_type(unittest.TestCase):
         self.assertEqual(self._callFUT(resource),
                          'substanced.content.tests.Dummy')
 
-class Test_find_content_type(unittest.TestCase):
+class Test_find_content(unittest.TestCase):
     def setUp(self):
         self.config = testing.setUp()
 
@@ -318,8 +343,8 @@ class Test_find_content_type(unittest.TestCase):
         testing.tearDown()
 
     def _callFUT(self, resource, content_type, registry=None):
-        from . import find_content_type
-        return find_content_type(resource, content_type, registry)
+        from . import find_content
+        return find_content(resource, content_type, registry)
 
     def test_without_registry(self):
         self.config.registry.content = DummyContentRegistry()
@@ -331,6 +356,63 @@ class Test_find_content_type(unittest.TestCase):
         registry.content = DummyContentRegistry()
         resource = Dummy()
         self.assertEqual(self._callFUT(resource, 1, registry), resource)
+
+class Test_find_service(unittest.TestCase):
+    def _callFUT(self, context, name):
+        from . import find_service
+        return find_service(context, name)
+    
+    def test_unfound(self):
+        from ..interfaces import IFolder
+        site = testing.DummyResource(__provides__=IFolder)
+        services = testing.DummyResource()
+        site['__services__'] = services
+        self.assertEqual(self._callFUT(site, 'catalog'), None)
+        
+    def test_found(self):
+        from ..interfaces import IFolder
+        site = testing.DummyResource(__provides__=IFolder)
+        services = testing.DummyResource()
+        catalog = testing.DummyResource
+        services['catalog'] = catalog
+        site['__services__'] = services
+        self.assertEqual(self._callFUT(site, 'catalog'), catalog)
+
+class Test_find_services(unittest.TestCase):
+    def _callFUT(self, context, name):
+        from . import find_services
+        return find_services(context, name)
+    
+    def test_one_found(self):
+        from ..interfaces import IFolder
+        site = testing.DummyResource(__provides__=IFolder)
+        services = testing.DummyResource()
+        catalog = testing.DummyResource()
+        services['catalog'] = catalog
+        site['__services__'] = services
+        self.assertEqual(self._callFUT(site, 'catalog'), [catalog])
+        
+    def test_two_found(self):
+        from ..interfaces import IFolder
+        folder = testing.DummyResource(__provides__=IFolder)
+        services1 = testing.DummyResource()
+        catalog1 = testing.DummyResource()
+        services1['catalog'] = catalog1
+        folder['__services__'] = services1
+        site = testing.DummyResource(__provides__=IFolder)
+        services2 = testing.DummyResource()
+        catalog2 = testing.DummyResource()
+        services2['catalog'] = catalog2
+        site['__services__'] = services2
+        site['folder'] = folder
+        self.assertEqual(self._callFUT(folder, 'catalog'), [catalog1, catalog2])
+    
+    def test_unfound(self):
+        from ..interfaces import IFolder
+        site = testing.DummyResource(__provides__=IFolder)
+        services = testing.DummyResource()
+        site['__services__'] = services
+        self.assertEqual(self._callFUT(site, 'catalog'), [])
 
 class DummyContentRegistry(object):
     def __init__(self):

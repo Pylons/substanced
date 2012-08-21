@@ -69,9 +69,9 @@ class Test_oid_of(unittest.TestCase):
         self.assertEqual(self._callFUT(obj, 1), 1)
 
 class TestBatch(unittest.TestCase):
-    def _makeOne(self, seq, request, url=None, default_size=15):
+    def _makeOne(self, seq, request, url=None, default_size=15, seqlen=None):
         from . import Batch
-        return Batch(seq, request, url, default_size)
+        return Batch(seq, request, url, default_size, seqlen=seqlen)
 
     def test_it_first_batch_of_3(self):
         seq = [1,2,3,4,5,6,7]
@@ -80,6 +80,29 @@ class TestBatch(unittest.TestCase):
         request.params['batch_size'] = 3
         request.url = 'http://example.com'
         inst = self._makeOne(seq, request)
+        self.assertEqual(inst.items, [1,2,3])
+        self.assertEqual(inst.num, 0)
+        self.assertEqual(inst.size, 3)
+        self.assertEqual(inst.length, 3)
+        self.assertEqual(inst.last, 2)
+        self.assertEqual(inst.required, True)
+        self.assertEqual(inst.first_url, None)
+        self.assertEqual(inst.prev_url, None)
+        self.assertEqual(inst.next_url,
+                         'http://example.com?batch_num=1&batch_size=3')
+        self.assertEqual(inst.last_url,
+                         'http://example.com?batch_num=2&batch_size=3')
+
+    def test_it_first_batch_of_3_generator(self):
+        def gen():
+            for x in [1,2,3,4,5,6,7]:
+                yield x
+        seq = gen()
+        request = testing.DummyRequest()
+        request.params['batch_num'] = 0
+        request.params['batch_size'] = 3
+        request.url = 'http://example.com'
+        inst = self._makeOne(seq, request, seqlen=7)
         self.assertEqual(inst.items, [1,2,3])
         self.assertEqual(inst.num, 0)
         self.assertEqual(inst.size, 3)
@@ -115,6 +138,31 @@ class TestBatch(unittest.TestCase):
         self.assertEqual(inst.last_url,
                          'http://example.com?batch_num=2&batch_size=3')
 
+    def test_it_second_batch_of_3_generator(self):
+        def gen():
+            for x in [1,2,3,4,5,6,7]:
+                yield x
+        seq = gen()
+        request = testing.DummyRequest()
+        request.params['batch_num'] = 1
+        request.params['batch_size'] = 3
+        request.url = 'http://example.com'
+        inst = self._makeOne(seq, request, seqlen=7)
+        self.assertEqual(inst.items, [4,5,6])
+        self.assertEqual(inst.num, 1)
+        self.assertEqual(inst.size, 3)
+        self.assertEqual(inst.length, 3)
+        self.assertEqual(inst.last, 2)
+        self.assertEqual(inst.required, True)
+        self.assertEqual(inst.first_url,
+                         'http://example.com?batch_num=0&batch_size=3')
+        self.assertEqual(inst.prev_url,
+                         'http://example.com?batch_num=0&batch_size=3')
+        self.assertEqual(inst.next_url,
+                         'http://example.com?batch_num=2&batch_size=3')
+        self.assertEqual(inst.last_url,
+                         'http://example.com?batch_num=2&batch_size=3')
+
     def test_it_third_batch_of_3(self):
         seq = [1,2,3,4,5,6,7]
         request = testing.DummyRequest()
@@ -122,6 +170,29 @@ class TestBatch(unittest.TestCase):
         request.params['batch_size'] = 3
         request.url = 'http://example.com'
         inst = self._makeOne(seq, request)
+        self.assertEqual(inst.items, [7])
+        self.assertEqual(inst.num, 2)
+        self.assertEqual(inst.size, 3)
+        self.assertEqual(inst.length, 1)
+        self.assertEqual(inst.last, 2)
+        self.assertEqual(inst.required, True)
+        self.assertEqual(inst.first_url,
+                         'http://example.com?batch_num=0&batch_size=3')
+        self.assertEqual(inst.prev_url,
+                         'http://example.com?batch_num=1&batch_size=3')
+        self.assertEqual(inst.next_url, None)
+        self.assertEqual(inst.last_url, None)
+
+    def test_it_third_batch_of_3_generator(self):
+        def gen():
+            for x in [1,2,3,4,5,6,7]:
+                yield x
+        seq = gen()
+        request = testing.DummyRequest()
+        request.params['batch_num'] = 2
+        request.params['batch_size'] = 3
+        request.url = 'http://example.com'
+        inst = self._makeOne(seq, request, seqlen=7)
         self.assertEqual(inst.items, [7])
         self.assertEqual(inst.num, 2)
         self.assertEqual(inst.size, 3)

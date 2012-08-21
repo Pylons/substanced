@@ -12,7 +12,7 @@ from pyramid.traversal import resource_path_tuple
 from pyramid.compat import url_unquote_text
 from pyramid.settings import asbool
 
-from ..service import find_service
+from ..content import find_service
 
 PATH_WITH_OPTIONS = re.compile(r'\[(.+?)\](.+?)$')
 

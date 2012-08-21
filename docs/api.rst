@@ -143,15 +143,24 @@ Other Helpers
 
 .. autofunction:: get_content_type
 
-.. autofunction:: find_content_type
+.. autofunction:: find_content
+
+.. autofunction:: find_service
+
+.. autofunction:: find_services
 
 .. autoclass:: content
    :members:
 
-.. autoclass:: ContentRegistry
+.. autoclass:: service
    :members:
 
 .. autofunction:: add_content_type
+
+.. autofunction:: add_service_type
+
+.. autoclass:: ContentRegistry
+   :members:
 
 .. autofunction:: includeme
 
@@ -338,15 +347,6 @@ Other Helpers
 .. autocfunction:: check_csrf_token
 
 .. autoclass:: mgmt_view
-
-:mod:`substanced.service` API
------------------------------
-
-.. automodule:: substanced.service
-
-.. autofunction:: find_service
-
-.. autofunction:: find_services
 
 :mod:`substanced.root` API
 --------------------------

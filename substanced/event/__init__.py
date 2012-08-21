@@ -59,9 +59,9 @@ class ObjectModified(object): # pragma: no cover
 
 @implementer(IRootCreated)
 class RootCreated(object):
-    def __init__(self, object, registry):
+    def __init__(self, object, request):
         self.object = object
-        self.registry = registry
+        self.request = request
 
 # subscriber decorators, e.g.
 # @subscribe_added(MyContent)

@@ -9,8 +9,8 @@ from pyramid.events import (
     BeforeRender,
     )
 
-from . import get_mgmt_views # API used by templates
-get_mgmt_views = get_mgmt_views # pyflakes
+from . import sdi_mgmt_views # API used by templates
+sdi_mgmt_views = sdi_mgmt_views # pyflakes
 
 def macros():
     template = get_renderer('templates/master.pt').implementation()

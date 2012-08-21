@@ -2,7 +2,6 @@ import colander
 import re
 
 from pyramid.httpexceptions import HTTPFound
-from pyramid.security import has_permission
 from pyramid.view import view_defaults
 
 from ..exceptions import FolderKeyError
@@ -10,15 +9,12 @@ from ..schema import Schema
 from ..form import FormView
 from ..sdi import (
     mgmt_view,
-    get_add_views,
+    sdi_add_views,
+    sdi_folder_contents,
     )
 from ..util import Batch, oid_of
 
-from ..interfaces import (
-    IFolder,
-    SERVICES_NAME
-    )
-
+from ..interfaces import IFolder
 
 def rename_duplicated_resource(context, name):
     """Finds next available name inside container by appending
@@ -77,8 +73,18 @@ class AddFolderView(FormView):
         name = appstruct['name']
         folder = registry.content.create('Folder')
         self.context[name] = folder
-        return HTTPFound(location=self.request.mgmt_path(folder, '@@contents'))
+        return HTTPFound(location=self.request.mgmt_path(folder))
 
+@mgmt_view(
+    context=IFolder,
+    name='add_services_folder',
+    permission='sdi.add-services',
+    tab_condition=False,
+    )
+def add_services_folder(context, request):
+    services = request.registry.content.create('Services')
+    context.add('__services__', services, reserved_names=())
+    return HTTPFound(location=request.mgmt_path(services))
 
 @view_defaults(
     context=IFolder,
@@ -87,7 +93,8 @@ class AddFolderView(FormView):
     )
 class FolderContentsViews(object):
 
-    get_add_views = staticmethod(get_add_views) # for testing
+    sdi_add_views = staticmethod(sdi_add_views) # for testing
+    sdi_folder_contents = staticmethod(sdi_folder_contents) # for testing
 
     def __init__(self, context, request):
         self.context = context
@@ -98,24 +105,11 @@ class FolderContentsViews(object):
         permission='sdi.view'
         )
     def show(self):
-        context = self.context
         request = self.request
-        can_manage = has_permission('sdi.manage-contents', context, request)
-        L = []
-        for k, v in context.items():
-            viewable = False
-            url = request.mgmt_path(v, '@@manage_main')
-            if has_permission('sdi.view', v, request):
-                viewable = True
-            icon = request.registry.content.metadata(v, 'icon')
-            if callable(icon):
-                icon = icon(context, request)
-            modifiable = can_manage and k != SERVICES_NAME
-            data = dict(name=k, modifiable=modifiable, viewable=viewable,
-                        url=url, icon=icon)
-            L.append(data)
-        addables = self.get_add_views(request, context)
-        batch = Batch(L, request)
+        context = self.context
+        seq = self.sdi_folder_contents(context, request) # generator
+        addables = self.sdi_add_views(request, context)
+        batch = Batch(seq, request, seqlen=len(context))
         return dict(batch=batch, addables=addables)
 
     @mgmt_view(
@@ -342,3 +336,4 @@ class FolderContentsViews(object):
             request.flash_with_undo(msg)
 
         return HTTPFound(request.mgmt_path(context, '@@contents'))
+

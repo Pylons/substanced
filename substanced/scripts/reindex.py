@@ -13,7 +13,7 @@ from pyramid.traversal import (
     resource_path,
     )
 
-from substanced.service import find_service
+from substanced.content import find_service
 
 def main():
     parser = OptionParser(description=__doc__)

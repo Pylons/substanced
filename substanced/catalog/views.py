@@ -13,26 +13,24 @@ from ..interfaces import (
     IFolder,
     )
 
+from ..content import find_service
 from ..sdi import mgmt_view
 from ..form import FormView
 from ..schema import Schema
-from ..service import find_service
 from ..util import oid_of
 
 from . import logger
 
 @mgmt_view(
-    context=IFolder,
+    content_type='Services',
     name='add_catalog',
     tab_condition=False,
-    permission='sdi.add-service',
+    permission='sdi.add-services',
     )
 def add_catalog(context, request):
-    # context assumed to be a __services__ folder
-    registry = request.registry
-    catalog = registry.content.create('Catalog')
-    context.__parent__.add_service('catalog', catalog)
-    return HTTPFound(location=request.mgmt_path(catalog))
+    catalog = request.registry.content.create('Catalog')
+    context['catalog'] = catalog
+    return HTTPFound(location=request.mgmt_path(context))
 
 @view_defaults(
     name='manage_catalog',

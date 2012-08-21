@@ -178,7 +178,7 @@ class Test_mgmt_view(unittest.TestCase):
         venusian.callback(context, None, None)
         self.assertEqual(context.config.settings['attr'], 'bar')
 
-class Test_get_mgmt_views(unittest.TestCase):
+class Test_sdi_mgmt_views(unittest.TestCase):
     def setUp(self):
         testing.setUp()
 
@@ -186,8 +186,8 @@ class Test_get_mgmt_views(unittest.TestCase):
         testing.tearDown()
         
     def _callFUT(self, request, context=None, names=None):
-        from .. import get_mgmt_views
-        return get_mgmt_views(request, context, names)
+        from .. import sdi_mgmt_views
+        return sdi_mgmt_views(request, context, names)
 
     def test_no_views_found(self):
         request = testing.DummyRequest()
@@ -439,10 +439,129 @@ class Test_get_mgmt_views(unittest.TestCase):
         self.assertEqual(result[1]['class'], None)
         self.assertEqual(result[1]['url'], '/path/@@a')
 
-class Test_get_add_views(unittest.TestCase):
+class Test_sdi_folder_contents(unittest.TestCase):
+    def setUp(self):
+        self.config = testing.setUp()
+
+    def tearDown(self):
+        testing.tearDown()
+
+    def _callFUT(self, context, request):
+        from .. import sdi_folder_contents
+        return sdi_folder_contents(context, request)
+
+    def _makeRequest(self):
+        request = testing.DummyRequest()
+        request.registry.content = DummyContent('icon')
+        request.mgmt_path = lambda *arg: '/manage'
+        return request
+        
+    def test_no_permissions(self):
+        self.config.testing_securitypolicy(permissive=False)
+        context = testing.DummyResource()
+        context['a'] = testing.DummyResource()
+        request = self._makeRequest()
+        result = list(self._callFUT(context, request))
+        self.assertEqual(len(result), 0)
+
+    def test_all_permissions(self):
+        self.config.testing_securitypolicy(permissive=True)
+        context = testing.DummyResource()
+        context['a'] = testing.DummyResource()
+        request = self._makeRequest()
+        result = list(self._callFUT(context, request))
+        self.assertEqual(len(result), 1)
+        item = result[0]
+        self.assertEqual(item['url'], '/manage')
+        self.assertTrue(item['viewable'])
+        self.assertTrue(item['deletable'])
+        self.assertEqual(item['icon'], 'icon')
+        self.assertEqual(item['name'], 'a')
+
+    def test_computable_icon(self):
+        self.config.testing_securitypolicy(permissive=True)
+        context = testing.DummyResource()
+        context['a'] = testing.DummyResource()
+        request = self._makeRequest()
+        def computed_icon(v, default=None):
+            def inner(subobject, _request):
+                self.assertEqual(subobject, context['a'])
+                self.assertEqual(_request, request)
+                return 'anicon'
+            return inner
+        request.registry.content.metadata = computed_icon
+        result = list(self._callFUT(context, request))
+        self.assertEqual(len(result), 1)
+        item = result[0]
+        self.assertEqual(item['url'], '/manage')
+        self.assertTrue(item['viewable'])
+        self.assertTrue(item['deletable'])
+        self.assertEqual(item['icon'], 'anicon')
+        self.assertEqual(item['name'], 'a')
+
+    def test_literal_icon(self):
+        self.config.testing_securitypolicy(permissive=True)
+        context = testing.DummyResource()
+        context['a'] = testing.DummyResource()
+        request = self._makeRequest()
+        def computed_icon(v, default=None):
+            return 'anicon'
+        request.registry.content.metadata = computed_icon
+        result = list(self._callFUT(context, request))
+        self.assertEqual(len(result), 1)
+        item = result[0]
+        self.assertEqual(item['url'], '/manage')
+        self.assertTrue(item['viewable'])
+        self.assertTrue(item['deletable'])
+        self.assertEqual(item['icon'], 'anicon')
+        self.assertEqual(item['name'], 'a')
+
+    def test_all_permissions_hidden_subobject(self):
+        self.config.testing_securitypolicy(permissive=True)
+        context = testing.DummyResource()
+        resource = testing.DummyResource()
+        resource.__sd_hidden__ = lambda *arg: True
+        context['object'] = resource
+        request = self._makeRequest()
+        result = list(self._callFUT(context, request))
+        self.assertEqual(len(result), 0)
+
+    def test_all_permissions_hidden_subobject_boolean(self):
+        self.config.testing_securitypolicy(permissive=True)
+        context = testing.DummyResource()
+        resource = testing.DummyResource()
+        resource.__sd_hidden__ = True
+        context['object'] = resource
+        request = self._makeRequest()
+        result = list(self._callFUT(context, request))
+        self.assertEqual(len(result), 0)
+
+    def test_deletable_callable(self):
+        self.config.testing_securitypolicy(permissive=True)
+        context = testing.DummyResource()
+        resource = testing.DummyResource()
+        resource.__sd_deletable__ = lambda *arg: False
+        context['object'] = resource
+        request = self._makeRequest()
+        result = list(self._callFUT(context, request))
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]['deletable'], False)
+
+    def test_deletable_boolean(self):
+        self.config.testing_securitypolicy(permissive=True)
+        context = testing.DummyResource()
+        resource = testing.DummyResource()
+        resource.__sd_deletable__ = False
+        context['object'] = resource
+        request = self._makeRequest()
+        result = list(self._callFUT(context, request))
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]['deletable'], False)
+
+class Test_sdi_add_views(unittest.TestCase):
     def _callFUT(self, request, context=None):
-        from .. import get_add_views
-        return get_add_views(request, context)
+        from .. import sdi_add_views
+        return sdi_add_views(request, context)
 
     def setUp(self):
         testing.setUp()
@@ -488,7 +607,7 @@ class Test_get_add_views(unittest.TestCase):
         request.registry.content = DummyContent()
         request.mgmt_path = lambda *arg: '/path'
         context = testing.DummyResource()
-        context.__addable__ = ('Not Content',)
+        context.__sd_addable__ = ('Not Content',)
         ct_intr = {}
         ct_intr['meta'] = {'add_view':'abc'}
         ct_intr['content_type'] = 'Content'
@@ -506,6 +625,30 @@ class Test_get_add_views(unittest.TestCase):
         result = self._callFUT(request, context)
         self.assertEqual(result, [])
 
+    def test_one_content_type_not_addable_callable(self):
+        request = testing.DummyRequest()
+        request.matched_route = None
+        request.registry.content = DummyContent()
+        request.mgmt_path = lambda *arg: '/path'
+        context = testing.DummyResource()
+        context.__sd_addable__ = lambda *arg: False
+        ct_intr = {}
+        ct_intr['meta'] = {'add_view':'abc'}
+        ct_intr['content_type'] = 'Content'
+        ct_intr = DummyIntrospectable(introspectable=ct_intr)
+        view_intr1 = DummyIntrospectable()
+        view_intr1.category_name = 'views'
+        view_intr1['name'] = 'abc'
+        view_intr1['context'] = None
+        view_intr1['derived_callable'] = None
+        intr = {}
+        intr['tab_title'] = 'abc'
+        intr['tab_condition'] = None
+        intr = DummyIntrospectable(related=(view_intr1,), introspectable=intr)
+        request.registry.introspector = DummyIntrospector([(ct_intr,), (intr,)])
+        result = self._callFUT(request, context)
+        self.assertEqual(result, [])
+        
     def test_content_type_not_addable_to(self):
         request = testing.DummyRequest()
         request.matched_route = None
@@ -540,6 +683,53 @@ class Test_get_add_views(unittest.TestCase):
         self.assertEqual(
             result,
             [{'url': '/path', 'type_name': 'Content', 'icon': ''}])
+
+    def test_trying_to_add_service_to_nonservice_folder(self):
+        request = testing.DummyRequest()
+        request.matched_route = None
+        request.registry.content = DummyContent()
+        request.mgmt_path = lambda *arg: '/path'
+        context = testing.DummyResource()
+        ct_intr = {}
+        ct_intr['meta'] = {'add_view':'abc', 'is_service':True}
+        ct_intr['content_type'] = 'Content'
+        ct_intr = DummyIntrospectable(introspectable=ct_intr)
+        view_intr1 = DummyIntrospectable()
+        view_intr1.category_name = 'views'
+        view_intr1['name'] = 'abc'
+        view_intr1['context'] = None
+        view_intr1['derived_callable'] = None
+        intr = {}
+        intr['tab_title'] = 'abc'
+        intr['tab_condition'] = None
+        intr = DummyIntrospectable(related=(view_intr1,), introspectable=intr)
+        request.registry.introspector = DummyIntrospector([(ct_intr,), (intr,)])
+        result = self._callFUT(request, context)
+        self.assertEqual(result, [])
+
+    def test_trying_to_add_service_to_service_folder(self):
+        request = testing.DummyRequest()
+        request.matched_route = None
+        request.registry.content = DummyContent()
+        request.mgmt_path = lambda *arg: '/path'
+        context = testing.DummyResource()
+        context.__name__ = '__services__'
+        ct_intr = {}
+        ct_intr['meta'] = {'add_view':'abc', 'is_service':True}
+        ct_intr['content_type'] = 'Content'
+        ct_intr = DummyIntrospectable(introspectable=ct_intr)
+        view_intr1 = DummyIntrospectable()
+        view_intr1.category_name = 'views'
+        view_intr1['name'] = 'abc'
+        view_intr1['context'] = None
+        view_intr1['derived_callable'] = None
+        intr = {}
+        intr['tab_title'] = 'abc'
+        intr['tab_condition'] = None
+        intr = DummyIntrospectable(related=(view_intr1,), introspectable=intr)
+        request.registry.introspector = DummyIntrospector([(ct_intr,), (intr,)])
+        result = self._callFUT(request, context)
+        self.assertEqual(len(result), 1)
 
 class Test_get_user(unittest.TestCase):
     def _callFUT(self, request):

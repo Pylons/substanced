@@ -114,7 +114,7 @@ class TestManagementViews(unittest.TestCase):
             return '/path'
         request.mgmt_path = mgmt_path
         inst = self._makeOne(context, request)
-        inst.get_mgmt_views = lambda *arg: []
+        inst.sdi_mgmt_views = lambda *arg: []
         result = inst.manage_main()
         self.assertEqual(request.session['came_from'], 'http://example.com')
         self.assertEqual(result.location, '/path')
@@ -127,7 +127,7 @@ class TestManagementViews(unittest.TestCase):
             return '/path'
         request.mgmt_path = mgmt_path
         inst = self._makeOne(context, request)
-        inst.get_mgmt_views = lambda *arg: [{'view_name':'fred'}]
+        inst.sdi_mgmt_views = lambda *arg: [{'view_name':'fred'}]
         result = inst.manage_main()
         self.assertEqual(result.location, '/path')
 
@@ -135,7 +135,7 @@ class TestManagementViews(unittest.TestCase):
         context = testing.DummyResource()
         request = testing.DummyRequest()
         inst = self._makeOne(context, request)
-        inst.get_add_views = lambda *arg: []
+        inst.sdi_add_views = lambda *arg: []
         result = inst.add_content()
         self.assertEqual(result, {'views':[]})
         
@@ -143,7 +143,7 @@ class TestManagementViews(unittest.TestCase):
         context = testing.DummyResource()
         request = testing.DummyRequest()
         inst = self._makeOne(context, request)
-        inst.get_add_views = lambda *arg: [{'url':'http://foo'}]
+        inst.sdi_add_views = lambda *arg: [{'url':'http://foo'}]
         result = inst.add_content()
         self.assertEqual(result.location, 'http://foo')
 

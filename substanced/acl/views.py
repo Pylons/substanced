@@ -5,13 +5,14 @@ from pyramid.security import (
     Authenticated,
     )
 
+from ..content import (
+    find_service,
+    )
 from ..catalog import is_catalogable
-
 from ..sdi import (
     mgmt_view,
     check_csrf_token,
     )
-from ..service import find_service
 from ..util import (
     postorder,
     oid_of,
@@ -154,8 +155,6 @@ def acl_edit_view(context, request):
         security_state = None
         security_states = None
 
-    objectmap = find_service(context, 'objectmap')
-        
     parent = context.__parent__
     parent_acl = []
 

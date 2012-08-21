@@ -2,6 +2,7 @@ import tempfile
 
 from zope.interface import implementer
 from pyramid.threadlocal import get_current_registry
+from pyramid.security import has_permission
 
 from persistent import Persistent
 
@@ -14,6 +15,7 @@ from ..interfaces import (
     IFolder,
     marker,
     SERVICES_NAME,
+    RESERVED_NAMES,
     )
 
 from ..event import (
@@ -23,9 +25,8 @@ from ..event import (
     ObjectWillBeRemoved,
     )
 
-from ..content import content
-
-from ..service import (
+from ..content import (
+    content,
     find_service,
     find_services,
     )
@@ -85,13 +86,15 @@ class Folder(Persistent):
         exists.  A shortcut for :func:`substanced.service.find_services`"""
         return find_services(self, service_name)
 
-    def add_service(self, name, obj):
+    def add_service(self, name, obj, registry=None):
         """ Add a service to this folder's ``__services__`` folder named
         ``name``."""
+        if registry is None:
+            registry = get_current_registry()
         services = self.get(SERVICES_NAME)
         if services is None:
-            services = Folder()
-            self.add(SERVICES_NAME, services, allow_services=True)
+            services = registry.content.create('Services')
+            self.add(SERVICES_NAME, services, reserved_names=())
         services.add(name, obj)
 
     def keys(self):
@@ -198,7 +201,7 @@ class Folder(Persistent):
         """
         return self.add(name, other)
 
-    def check_name(self, name, allow_services=False):
+    def check_name(self, name, reserved_names=RESERVED_NAMES):
         """
 
         Check the ``name`` passed to ensure that it's addable to the folder.
@@ -216,8 +219,8 @@ class Folder(Persistent):
         - the name is empty.
 
         If any of these conditions are untrue, raise a :exc:`ValueError`.  If
-        the name passed is ``__services__``, and ``allow_services`` is not
-        ``True``, also raise a :exc:`ValueError`.
+        the name passed is in the list of ``reserved_names``, raise a
+        :exc:`ValueError`.
         """
         if not isinstance(name, basestring):
             raise ValueError("Name must be a string rather than a %s" %
@@ -230,8 +233,8 @@ class Folder(Persistent):
         except UnicodeDecodeError:
             raise ValueError('Name "%s" not decodeable to unicode' % name)
 
-        if name == SERVICES_NAME and not allow_services:
-            raise ValueError('%s is a reserved name' % SERVICES_NAME)
+        if name in reserved_names:
+            raise ValueError('%s is a reserved name' % name)
 
         if name.startswith('@@'):
             raise ValueError('Names which start with "@@" are not allowed')
@@ -245,20 +248,22 @@ class Folder(Persistent):
 
         return name
 
-    def add(self, name, other, send_events=True, allow_services=False,
-            duplicating=False):
+    def add(self, name, other, send_events=True, reserved_names=RESERVED_NAMES,
+            duplicating=False, registry=None):
         """ Same as ``__setitem__``.
 
         If ``send_events`` is False, suppress the sending of folder events.
-        If ``allow_services`` is True, allow the name ``__services__`` to be
-        added. if ``duplicating`` is True, oids will be replaced in
+        Don't allow names in the ``reserved_names`` sequence to be
+        added. If ``duplicating`` is True, oids will be replaced in
         objectmap.
         """
-        name = self.check_name(name, allow_services)
+        if registry is None:
+            registry = get_current_registry()
+        name = self.check_name(name, reserved_names)
 
         if send_events:
             event = ObjectWillBeAdded(other, self, name, duplicating)
-            self._notify(event)
+            self._notify(event, registry)
 
         other.__parent__ = self
         other.__name__ = name
@@ -271,7 +276,7 @@ class Folder(Persistent):
 
         if send_events:
             event = ObjectAdded(other, self, name)
-            self._notify(event)
+            self._notify(event, registry)
 
     def pop(self, name, default=marker):
         """ Remove the item stored in the under ``name`` and return it.
@@ -299,9 +304,10 @@ class Folder(Persistent):
             return default
         return result
 
-    def _notify(self, event):
-        reg = get_current_registry()
-        reg.subscribers((event, event.object, self), None)
+    def _notify(self, event, registry=None):
+        if registry is None:
+            registry = get_current_registry()
+        registry.subscribers((event, event.object, self), None)
 
     def __delitem__(self, name):
         """ Remove the object from this folder stored under ``name``.
@@ -417,6 +423,40 @@ class Folder(Persistent):
             del self[name]
         self[name] = newobject
 
+def add_services_folder(context, request):
+    if IFolder.providedBy(context):
+        if not '__services__' in context:
+            return 'add_services_folder'
+
+@content(
+    'Services',
+    icon='icon-off',
+    add_view=add_services_folder,
+    )
+class Services(Folder):
+    def __sd_addable__(self, introspectable):
+        # The only kinds of objects addable to a Services folder are
+        # services, so we return True iff:
+        #
+        # - The introspectable represents a content type registered with the
+        # @service decorator or config.add_service (it adds ``is_service`` to
+        # the type's metadata).
+        #
+        # - The service name mentioned in the introspectable metadata doesn't
+        #   already exist in this services folder.  If the introspectable
+        #   metadata doesn't mention a service name, however, this condition
+        #   is elided.
+        meta = introspectable['meta']
+        is_service = meta.get('is_service', False)
+        if is_service:
+            service_name = meta.get('service_name', None)
+            return not (service_name and service_name in self)
+        return False
+
+    def __sd_hidden__(self, context, request):
+        # Don't show this item in folder contents view unless the viewer
+        # has permission to add services in the SDI
+        return not has_permission('sdi.add-services', context, request)
 
 def includeme(config): # pragma: no cover
     config.scan('.')

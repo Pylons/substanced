@@ -1,13 +1,12 @@
+from ..content import (
+    find_services,
+    find_service,
+    )
 
 from ..event import (
     subscribe_added,
     subscribe_will_be_removed,
     subscribe_modified,
-    )
-    
-from ..service import (
-    find_services,
-    find_service,
     )
 
 from ..util import (

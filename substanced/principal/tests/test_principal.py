@@ -205,6 +205,17 @@ class TestGroup(unittest.TestCase):
         self.assertEqual(parent.objectmap.connections,
                          [(1, inst, UserToGroup), (2, inst, UserToGroup)])
 
+    def test_connect_with_memberobject(self):
+        from .. import UserToGroup
+        parent = self._makeParent()
+        inst = self._makeOne()
+        parent['name'] = inst
+        member = testing.DummyResource()
+        member.__objectid__ = 5
+        inst.connect(member)
+        self.assertEqual(parent.objectmap.connections,
+                         [(member, inst, UserToGroup)])
+
     def test_disconnect_with_members(self):
         from .. import UserToGroup
         parent = self._makeParent()
@@ -520,7 +531,7 @@ class TestPasswordResets(unittest.TestCase):
         inst = self._makeOne()
         objectmap = DummyObjectMap()
         services = testing.DummyResource()
-        inst.add('__services__', services, allow_services=True)
+        inst.add('__services__', services, reserved_names=())
         services['objectmap'] = objectmap
         user = testing.DummyResource()
         reset = inst.add_reset(user)

@@ -33,9 +33,12 @@ from ..interfaces import (
     IPasswordReset,
     )
 
-from ..content import content
+from ..content import (
+    content,
+    service,
+    find_service,
+    )
 from ..schema import Schema
-from ..service import find_service
 from ..folder import Folder
 from ..util import oid_of
 from ..property import PropertySheet
@@ -44,22 +47,29 @@ class UserToGroup(Interface):
     """ The reference type used to store users-to-groups references in the
     object map"""
 
-@content(
+@service(
     'Principals',
+    service_name='principals',
     icon='icon-lock'
     )
 @implementer(IPrincipals)
 class Principals(Folder):
-    """ Object representing a collection of principals.  Inherits from
-    :class:`substanced.folder.Folder`.  Contains ``users``, an instance of
-    :class:`substanced.principal.Users`, ``groups``, an instance of
+    """ Service object representing a collection of principals.  Inherits
+    from :class:`substanced.folder.Folder`.  Contains ``users``, an instance
+    of :class:`substanced.principal.Users`, ``groups``, an instance of
     :class:`substanced.principal.Groups`, and ``resets`` an instance of
     :class:`substanced.principal.PasswordResets`"""
     def __init__(self):
         Folder.__init__(self)
-        self['users'] = Users()
-        self['groups'] = Groups()
-        self['resets'] = PasswordResets()
+        users = Users()
+        groups = Groups()
+        resets = PasswordResets() 
+        users.__sd_deletable__ = False
+        groups.__sd_deletable__ = False
+        resets.__sd_deletable__ = False
+        self['users'] = users
+        self['groups'] = groups
+        self['resets'] = resets
 
 @content(
     'Users',
@@ -187,7 +197,7 @@ class Group(Folder):
         self.description = description
 
     def _resolve_member(self, member_or_memberid):
-        objectmap = self.find_service('objectmap')
+        objectmap = find_service(self, 'objectmap')
         if oid_of(member_or_memberid, None) is None:
             # it's a group id
             member = objectmap.object_for(member_or_memberid)
@@ -197,19 +207,19 @@ class Group(Folder):
 
     def get_memberids(self):
         """ Returns a sequence of member ids which belong to this group. """
-        objectmap = self.find_service('objectmap')
+        objectmap = find_service(self, 'objectmap')
         return objectmap.sourceids(self, UserToGroup)
 
     def get_members(self):
         """ Returns a generator of member objects which belong to this group. 
         """
-        objectmap = self.find_service('objectmap')
+        objectmap = find_service(self, 'objectmap')
         return objectmap.sources(self, UserToGroup)
 
     def connect(self, *members):
         """ Connect this group to one or more user objects or user 
         objectids."""
-        objectmap = self.find_service('objectmap')
+        objectmap = find_service(self, 'objectmap')
         for memberid in members:
             member = self._resolve_member(memberid)
             if member is not None:
@@ -220,7 +230,7 @@ class Group(Folder):
         objectids."""
         if not members:
             members = self.get_memberids()
-        objectmap = self.find_service('objectmap')
+        objectmap = find_service(self, 'objectmap')
         for memberid in members:
             member = self._resolve_member(memberid)
             if member is not None:
@@ -325,7 +335,7 @@ class User(Folder):
         self.email = email
 
     def _resolve_group(self, group_or_groupid):
-        objectmap = self.find_service('objectmap')
+        objectmap = find_service(self, 'objectmap')
         if oid_of(group_or_groupid, None) is None:
             # it's a group id
             group = objectmap.object_for(group_or_groupid)
@@ -362,19 +372,19 @@ class User(Folder):
     def get_groupids(self, objectmap=None):
         """ Returns a sequence of group ids which this user is a member of. """
         if objectmap is None:
-            objectmap = self.find_service('objectmap')
+            objectmap = find_service(self, 'objectmap')
         return objectmap.targetids(self, UserToGroup)
 
     def get_groups(self):
         """ Returns a generator of group objects which this user is a member
         of."""
-        objectmap = self.find_service('objectmap')
+        objectmap = find_service(self, 'objectmap')
         return objectmap.targets(self, UserToGroup)
 
     def connect(self, *groups):
         """ Connect this user to one or more group objects or group 
         objectids."""
-        objectmap = self.find_service('objectmap')
+        objectmap = find_service(self, 'objectmap')
         for groupid in groups:
             group = self._resolve_group(groupid)
             if group is not None:
@@ -385,7 +395,7 @@ class User(Folder):
         objectids."""
         if not groups:
             groups = self.get_groupids()
-        objectmap = self.find_service('objectmap')
+        objectmap = find_service(self, 'objectmap')
         for groupid in groups:
             group = self._resolve_group(groupid)
             if group is not None:
@@ -416,7 +426,7 @@ class PasswordResets(Folder):
         reset = PasswordReset()
         self[token] = reset
         reset.__acl__ = [(Allow, Everyone, ('sdi.view',))]
-        objectmap = self.find_service('objectmap')
+        objectmap = find_service(self, 'objectmap')
         objectmap.connect(user, reset, UserToPasswordReset)
         return reset
 

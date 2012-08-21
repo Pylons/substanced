@@ -6,6 +6,11 @@ from pyramid.threadlocal import get_current_registry
 
 import venusian
 
+from ..interfaces import (
+    IFolder,
+    SERVICES_NAME
+    )
+
 _marker = object()
 
 def get_content_type(resource, registry=None):
@@ -17,7 +22,7 @@ def get_content_type(resource, registry=None):
         registry = get_current_registry()
     return registry.content.typeof(resource)
 
-def find_content_type(resource, content_type, registry=None):
+def find_content(resource, content_type, registry=None):
     """ Return the first object in the :term:`lineage` of the resource that
     supplies the ``content_type``.  If ``registry`` is not supplied, the
     current Pyramid registry will be looked up as a thread local in order to
@@ -25,6 +30,34 @@ def find_content_type(resource, content_type, registry=None):
     if registry is None:
         registry = get_current_registry()
     return registry.content.find(resource, content_type)
+
+def _find_services(context, name, one=False):
+    L = []
+    for obj in lineage(context):
+        if IFolder.providedBy(obj):
+            services = obj.get(SERVICES_NAME)
+            if services is not None:
+                if name in services:
+                    service = services[name]
+                    if one:
+                        return service
+                    L.append(service)
+    if one:
+        return None
+    return L
+
+def find_service(context, name):
+    """ Find the first service named ``name`` in the lineage of ``context``
+    or return ``None`` if no such-named service could be found. """
+    return _find_services(context, name, one=True)
+                
+def find_services(context, name):
+    """Finds all services named ``name`` in the lineage of ``context`` and
+    returns a sequence containing those service objects. The sequence will
+    begin with the most deepest nested service and will end with the least
+    deeply nested service.  Returns an empty sequence if no such-named
+    service could be found."""
+    return _find_services(context, name)
 
 def _get_factory_type(resource):
     """ If the resource has a __factory_type__ attribute, return it.
@@ -102,7 +135,7 @@ class ContentRegistry(object):
             if self.typeof(location) == content_type:
                 return location
 
-# venusian decorator that marks a class as a content class
+# venusian decorator that marks a content factory
 class content(object):
     """ Use as a decorator for a content factory (usually a class).  Accepts
     a content type, a factory type (optionally), and a set of meta keywords.
@@ -130,10 +163,49 @@ class content(object):
         self.meta['_info'] = info.codeinfo # fbo "action_method"
         return wrapped
 
+# venusian decorator that marks a service factory
+class service(content):
+    """
+    This class is meant to be used as a decorator for a content factory that
+    creates a service object (aka a service factory).  A service object is an
+    instance of a content type only addable within a ``__services__`` folder.
+    Services often have well-known names within the services folder.  For
+    example, the ``principals`` object within a services folder is 'the
+    principals service', the ``catalog`` object within a services folder is
+    'the catalog service' and so on.
+
+    This decorator accepts a content type, a factory type (optionally), and a
+    set of meta keywords.  These values mean the same thing as they mean for
+    the :class:`substanced.content.content` decorator and
+    :func:`substanced.content.add_content_type`.  The decorator attaches
+    information to the object it decorates which is used to call
+    :func:`~substanced.content.add_content_type` during a :term:`scan`.
+
+    There are two differences between using the
+    :class:`substanced.content.content` decorator and the
+    :class:`substanced.service.service` decorator.
+
+    - Using the ``service`` decorator prevents the content factory it
+      decorates from being used by the SDI UI except to add the service to a
+      ``__services__`` folder.  It won't be addable in any other place.
+
+    - The ``service`` decorator honors a ``service_name`` keyword argument.
+      If this argument is passed, and a service already exists in the
+      ``__services__`` folder by this name, the service will not be shown as
+      addable in the add-content dropdown in the SDI UI.
+    """
+
+    venusian = venusian
+    
+    def __init__(self, content_type, factory_type=None, **meta):
+        meta['is_service'] = True
+        content.__init__(self, content_type, factory_type=factory_type, **meta)
+
 def add_content_type(config, content_type, factory, factory_type=None, **meta):
     """
-    Configurator method which adds a content type.  Call via
-    ``config.add_content_type`` during Pyramid configuration phase.
+    Configurator directive method which register a content type factory with
+    the Substance D type system.  Call via ``config.add_content_type`` during
+    Pyramid configuration phase.
     
     ``content_type`` is a hashable object (usually a string) representing the
     content type.
@@ -226,6 +298,43 @@ def add_content_type(config, content_type, factory, factory_type=None, **meta):
     
     config.action(discrim, callable=register_factory, introspectables=(intr,))
 
+def add_service_type(config, content_type, factory, factory_type=None, **meta):
+    """
+    Configurator directive method which registers a service factory.  Call
+    via ``config.add_service_type`` during Pyramid configuration phase.  All
+    arguments mean the same thing as they mean for the
+    :class:`substanced.content.add_content_type`.
+    
+    A service factory is a special kind of content factory.  A service
+    factory creates a service object.  A service object is an instance of a
+    content type only addable within a ``__services__`` folder.  Services
+    often have well-known names within the services folder.  For example, the
+    ``principals`` object within a services folder is 'the principals
+    service', the ``catalog`` object within a services folder is 'the catalog
+    service' and so on.
+
+    There are two differences between using the
+    :class:`substanced.content.add_content_type` function and the
+    :class:`substanced.service.add_service_tyoe` decorator.
+
+    - Using ``add_service_type`` prevents the content factory it names
+      from being used by the SDI UI except to add the service to a
+      ``__services__`` folder.  It won't be addable in any other place.
+
+    - The ``add_service_type`` function honors a ``service_name`` keyword
+      argument in its ``**meta``.  If this argument is passed, and a service
+      already exists in the ``__services__`` folder by this name, the service
+      will not be shown as addable in the add-content dropdown in the SDI UI.
+    """
+    meta['is_service'] = True
+    return add_content_type(
+        config,
+        content_type,
+        factory,
+        factory_type=factory_type,
+        **meta
+        )
+
 def _wrap_factory(factory, factory_type):
     """ Wrap a factory in something that applies a factory type marker
     attribute to an instance created by the factory if necessary.  It's
@@ -269,4 +378,6 @@ class _ContentTypePredicate(object):
 def includeme(config): # pragma: no cover
     config.registry.content = ContentRegistry()
     config.add_directive('add_content_type', add_content_type)
+    config.add_directive('add_service_type', add_service_type)
     config.add_view_predicate('content_type', _ContentTypePredicate)
+

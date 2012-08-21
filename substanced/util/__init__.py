@@ -1,5 +1,6 @@
 import colander
 import calendar
+import itertools
 import math
 import urlparse
 
@@ -163,7 +164,8 @@ class Batch(object):
     A method to split ``items`` into a nested list representing columns.
     
     """
-    def __init__(self, seq, request, url=None, default_size=10, toggle_size=40):
+    def __init__(self, seq, request, url=None, default_size=10, toggle_size=40,
+                 seqlen=None):
         if url is None:
             url = request.url
 
@@ -194,9 +196,12 @@ class Batch(object):
 
         start = num * size
         end = start + size
-        items = seq[start:end]
+        items = list(itertools.islice(seq, start, end))
         length = len(items)
-        last = int(math.ceil(len(seq) / float(size)) - 1)
+        if seqlen is None:
+            # won't work if seq is a generator
+            seqlen = len(seq)
+        last = int(math.ceil(seqlen / float(size)) - 1)
 
         first_url = None
         prev_url = None
@@ -208,7 +213,7 @@ class Batch(object):
             first_url = merge_url_qs(url, batch_size=size, batch_num=0)
         if start >= size:
             prev_url = merge_url_qs(url, batch_size=size, batch_num=num-1)
-        if len(seq) > end:
+        if seqlen > end:
             next_url = merge_url_qs(url, batch_size=size, batch_num=num+1)
         if size and (num < last):
             last_url = merge_url_qs(url, batch_size=size, batch_num=last)

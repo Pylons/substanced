@@ -70,6 +70,17 @@ Guts-Only
 - Add specific configurator directives for object event registrations
   (e.g. config.subscribe_modified).
 
+- __viewable__, __renameable__, __deletable__, __copyable__, __duplicatable__
+  attributes of contained objects in folder contents view that controls
+  how contained object can be acted upon?  E.g.::
+
+    def __viewable__(self, context, request):
+        return has_permission('sdi.view', context, request)
+
+- Fix ``Batch`` such that seqlen is a maximum.  Rationale: the sequence that
+  the batch receives may be smaller than seqlen due to hidden objects in
+  folder contents view.
+
 Nice-to-Have Features
 ---------------------
 

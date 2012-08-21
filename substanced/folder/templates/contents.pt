@@ -47,7 +47,7 @@
               <tal:block condition="choice['viewable']">
                 <label class="checkbox" for="item-${repeat.choice.index}">
                   <i class="${choice['icon']}"> </i>
-                  <input tal:attributes="disabled not choice['modifiable']"
+                  <input tal:attributes="disabled not choice['deletable']"
                          type="checkbox"
                          name="item-modify"
                          value="${choice['name']}"
@@ -69,7 +69,7 @@
                   <tal:block condition="choice['viewable']">
                     <label class="checkbox" for="item-${position}">
                       <i class="${choice['icon']}"> </i>
-                      <input tal:attributes="disabled not choice['modifiable']"
+                      <input tal:attributes="disabled not choice['deletable']"
                              type="checkbox"
                              name="item-modify"
                              value="${choice['name']}"

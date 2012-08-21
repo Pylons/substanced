@@ -6,7 +6,7 @@ from pyramid.httpexceptions import HTTPFound
 from ..form import FormView
 from ..sdi import mgmt_view
 from ..schema import Schema
-from ..service import find_service
+from ..content import find_service
 
 from ..interfaces import (
     IUsers,

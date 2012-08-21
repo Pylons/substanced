@@ -10,8 +10,8 @@ from pyramid.security import (
 
 from . import (
     mgmt_view,
-    get_mgmt_views,
-    get_add_views,
+    sdi_mgmt_views,
+    sdi_add_views,
     check_csrf_token,
     )
 
@@ -20,7 +20,7 @@ import json
 from pyramid.view import view_defaults
 from pyramid_zodbconn import get_connection
 
-from ..service import find_service
+from ..content import find_service
 from ..util import oid_of
 from ..interfaces import IFolder
 
@@ -68,8 +68,8 @@ def logout(request):
 
 class ManagementViews(object):
     # these defined as staticmethods only for test overriding
-    get_mgmt_views = staticmethod(get_mgmt_views)
-    get_add_views = staticmethod(get_add_views)
+    sdi_mgmt_views = staticmethod(sdi_mgmt_views)
+    sdi_add_views = staticmethod(sdi_add_views)
     
     def __init__(self, context, request):
         self.context = context
@@ -79,7 +79,7 @@ class ManagementViews(object):
     @mgmt_view(name='manage_main', tab_condition=False)
     def manage_main(self):
         request = self.request
-        view_data = self.get_mgmt_views(request)
+        view_data = self.sdi_mgmt_views(request)
         if not view_data:
             request.session['came_from'] = request.url
             return HTTPFound(
@@ -94,7 +94,7 @@ class ManagementViews(object):
                permission='sdi.manage-contents', renderer='templates/add.pt',
                tab_condition=False)
     def add_content(self):
-        views = self.get_add_views(self.request, self.context)
+        views = self.sdi_add_views(self.request, self.context)
         if len(views) == 1:
             return HTTPFound(location=views[0]['url'])
         return {'views':views}

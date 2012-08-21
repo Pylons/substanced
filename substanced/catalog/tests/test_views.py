@@ -1,6 +1,21 @@
 import unittest
 from pyramid import testing
 
+class Test_add_catalog(unittest.TestCase):
+    def _callFUT(self, context, request):
+        from ..views import add_catalog
+        return add_catalog(context, request)
+
+    def test_it(self):
+        context = testing.DummyResource()
+        request = testing.DummyRequest()
+        request.mgmt_path = lambda *arg: '/'
+        catalog = testing.DummyResource()
+        request.registry.content = DummyContentRegistry(catalog)
+        result = self._callFUT(context, request)
+        self.assertEqual(context['catalog'], catalog)
+        self.assertEqual(result.location, '/')
+
 class TestManageCatalog(unittest.TestCase):
     def _makeOne(self, context, request):
         from ..views import ManageCatalog
@@ -199,4 +214,9 @@ class DummyIndex(object):
     def not_indexed_count(self):
         return 1
     
+class DummyContentRegistry(object):
+    def __init__(self, result):
+        self.result = result
         
+    def create(self, *arg, **kw):
+        return self.result
