@@ -3,6 +3,61 @@ import mock
 
 from pyramid import testing
 
+class WorkflowStateTests(unittest.TestCase):
+
+    def _getTargetClass(self):
+        from .. import WorkflowState
+        return WorkflowState
+
+    def _makeOne(self, **kw):
+        klass = self._getTargetClass()
+        return klass(**kw)
+
+    def test_class_conforms_to_IWorkflowState(self):
+        from zope.interface.verify import verifyClass
+        from substanced.interfaces import IWorkflowState
+        verifyClass(IWorkflowState, self._getTargetClass())
+
+    def test_instance_conforms_to_IWorkflowState(self):
+        from zope.interface.verify import verifyObject
+        from substanced.interfaces import IWorkflowState
+        verifyObject(IWorkflowState, self._makeOne())
+
+    def test_ctor_defaults(self):
+        state = self._makeOne()
+        self.assertEqual(state._callback, None)
+        self.assertEqual(state.name, '')
+        self.assertEqual(state.title, '')
+
+class WorkflowTransitionTests(unittest.TestCase):
+
+    def _getTargetClass(self):
+        from .. import WorkflowTransition
+        return WorkflowTransition
+
+    def _makeOne(self, **kw):
+        klass = self._getTargetClass()
+        return klass(**kw)
+
+    def test_class_conforms_to_IWorkflowTransition(self):
+        from zope.interface.verify import verifyClass
+        from substanced.interfaces import IWorkflowTransition
+        verifyClass(IWorkflowTransition, self._getTargetClass())
+
+    def test_instance_conforms_to_IWorkflowTransition(self):
+        from zope.interface.verify import verifyObject
+        from substanced.interfaces import IWorkflowTransition
+        verifyObject(IWorkflowTransition, self._makeOne())
+
+    def test_ctor_defaults(self):
+        transition = self._makeOne()
+        self.assertEqual(transition._callback, None)
+        self.assertEqual(transition.name, '')
+        self.assertEqual(transition.title, '')
+        self.assertEqual(transition.from_state, None)
+        self.assertEqual(transition.to_state, None)
+        self.assertEqual(transition.permission, None)
+
 class WorkflowTests(unittest.TestCase):
 
     def _getTargetClass(self):
