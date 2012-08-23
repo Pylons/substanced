@@ -4,9 +4,9 @@ import unittest
 from pyramid import testing
 
 class TestContentRegistry(unittest.TestCase):
-    def _makeOne(self):
+    def _makeOne(self, registry=None):
         from . import ContentRegistry
-        return ContentRegistry()
+        return ContentRegistry(registry)
 
     def test_add(self):
         inst = self._makeOne()
@@ -24,6 +24,7 @@ class TestContentRegistry(unittest.TestCase):
     def test_create(self):
         inst = self._makeOne()
         inst.content_types['dummy'] = lambda a: a
+        inst.meta['dummy'] = {}
         self.assertEqual(inst.create('dummy', 'a'), 'a')
 
     def test_typeof(self):

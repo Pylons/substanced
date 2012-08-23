@@ -76,7 +76,8 @@ class ContentRegistry(object):
     """ An object accessible as ``registry.content`` (aka
     ``request.registry.content``, aka ``config.registry.content``) that
     contains information about Substance D content types."""
-    def __init__(self):
+    def __init__(self, registry):
+        self.registry = registry
         self.factory_types = {}
         self.content_types = {}
         self.meta = {}
@@ -93,9 +94,18 @@ class ContentRegistry(object):
 
     def create(self, content_type, *arg, **kw):
         """ Create an instance of ``content_type`` by calling its factory
-        with ``*arg`` and ``**kw`` and return it."""
+        with ``*arg`` and ``**kw``.  If the resulting object has an
+        ``__sd_aftercreate__`` attribute (method), call it with the Pyramid
+        registry object.  Return the created object."""
         factory = self.content_types[content_type]
-        return factory(*arg, **kw)
+        meta = self.meta[content_type]
+        inst = factory(*arg, **kw)
+        aftercreate = meta.get('after_create')
+        if aftercreate is not None:
+            if isinstance(aftercreate, basestring):
+                aftercreate = getattr(inst, aftercreate)
+            aftercreate(inst, self.registry)
+        return inst
 
     def metadata(self, resource, name, default=None):
         """
@@ -376,7 +386,7 @@ class _ContentTypePredicate(object):
         return get_content_type(context, self.registry) == self.val
 
 def includeme(config): # pragma: no cover
-    config.registry.content = ContentRegistry()
+    config.registry.content = ContentRegistry(config.registry)
     config.add_directive('add_content_type', add_content_type)
     config.add_directive('add_service_type', add_service_type)
     config.add_view_predicate('content_type', _ContentTypePredicate)

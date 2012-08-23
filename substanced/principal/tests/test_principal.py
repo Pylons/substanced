@@ -1,20 +1,23 @@
 import unittest
 from pyramid import testing
 import colander
-from zope.interface import (
-    alsoProvides,
-    implementer,
-    )
+from zope.interface import implementer
 
 class TestPrincipals(unittest.TestCase):
     def _makeOne(self):
         from .. import Principals
         return Principals()
 
-    def test_ctor(self):
+    def test_after_create(self):
         inst = self._makeOne()
-        self.assertTrue('users' in inst)
-        self.assertTrue('groups' in inst)
+        ob = testing.DummyResource()
+        content = DummyContentRegistry(ob)
+        registry = testing.DummyResource()
+        registry.content = content
+        inst.after_create(None, registry)
+        self.assertEqual(inst['users'], ob)
+        self.assertEqual(inst['groups'], ob)
+        self.assertEqual(inst['resets'], ob)
         
 class TestUsers(unittest.TestCase):
     def _makeOne(self):
@@ -60,27 +63,29 @@ class Test_groupname_validator(unittest.TestCase):
 
     def test_it_not_adding_with_exception(self):
         kw = self._makeKw()
+        request = kw['request']
+        request.registry.content = DummyContentRegistry(True)
         kw['request'].context['abc'] = testing.DummyResource()
+        def check_name(*arg, **kw):
+            raise Exception('fred')
+        kw['request'].services['principals']['groups'].check_name = check_name
         node = object()
         v = self._makeOne(node, kw)
         self.assertRaises(colander.Invalid, v, node, 'abc')
 
     def test_it_adding_with_exception(self):
-        from ...interfaces import IGroup
         kw = self._makeKw()
-        context = kw['request'].context
-        alsoProvides(context, IGroup)
-        services = kw['request'].services
-        services['principals']['groups']['abc'] = testing.DummyResource()
+        request = kw['request']
+        request.registry.content = DummyContentRegistry(False)
+        request.context['abc'] = testing.DummyResource()
         node = object()
         v = self._makeOne(node, kw)
         self.assertRaises(colander.Invalid, v, node, 'abc')
 
     def test_it_adding_with_exception_exists_in_users(self):
-        from ...interfaces import IGroup
         kw = self._makeKw()
-        context = kw['request'].context
-        alsoProvides(context, IGroup)
+        request = kw['request']
+        request.registry.content = DummyContentRegistry(False)
         services = kw['request'].services
         services['principals']['users']['abc'] = testing.DummyResource()
         node = object()
@@ -250,15 +255,15 @@ class Test_login_validator(unittest.TestCase):
         site['__services__']['principals']['users']['user'] = user
         request = testing.DummyRequest()
         request.context = user
+        request.registry.content = DummyContentRegistry(False)
         kw = dict(request=request)
         inst = self._makeOne(None, kw)
         self.assertRaises(colander.Invalid, inst, None, 'name')
 
     def test_not_adding_check_name_fails(self):
         from ...testing import make_site
-        from ...interfaces import IUser
         site = make_site()
-        user = testing.DummyResource(__provides__=IUser)
+        user = testing.DummyResource()
         user.__objectid__ = 1
         def check_name(*arg):
             raise ValueError('a')
@@ -267,30 +272,30 @@ class Test_login_validator(unittest.TestCase):
         users.check_name = check_name
         request = testing.DummyRequest()
         request.context = user
+        request.registry.content = DummyContentRegistry(True)
         kw = dict(request=request)
         inst = self._makeOne(None, kw)
         self.assertRaises(colander.Invalid, inst, None, 'newname')
 
     def test_not_adding_newname_same_as_old(self):
         from ...testing import make_site
-        from ...interfaces import IUser
         site = make_site()
-        user = testing.DummyResource(__provides__=IUser)
+        user = testing.DummyResource()
         user.__objectid__ = 1
         def check_name(v): raise ValueError(v)
         user.check_name = check_name
         site['__services__']['principals']['users']['user'] = user
         request = testing.DummyRequest()
         request.context = user
+        request.registry.content = DummyContentRegistry(True)
         kw = dict(request=request)
         inst = self._makeOne(None, kw)
         self.assertEqual(inst(None, 'user'), None)
 
     def test_groupname_exists(self):
         from ...testing import make_site
-        from ...interfaces import IUser
         site = make_site()
-        user = testing.DummyResource(__provides__=IUser)
+        user = testing.DummyResource()
         user.__objectid__ = 1
         def check_name(v): raise ValueError(v)
         user.check_name = check_name
@@ -298,6 +303,7 @@ class Test_login_validator(unittest.TestCase):
         site['__services__']['principals']['groups']['group'] = user
         request = testing.DummyRequest()
         request.context = user
+        request.registry.content = DummyContentRegistry(True)
         kw = dict(request=request)
         inst = self._makeOne(None, kw)
         self.assertRaises(colander.Invalid, inst, None, 'group')
@@ -603,4 +609,15 @@ class DummyObjectMap(object):
 
     def disconnect(self, source, target, reftype):
         self.disconnections.append((source, target, reftype))
+    
+class DummyContentRegistry(object):
+    def __init__(self, result):
+        self.result = result
+
+    def istype(self, context, type):
+        return self.result
+
+    def create(self, name, *arg, **kw):
+        return self.result
+    
     

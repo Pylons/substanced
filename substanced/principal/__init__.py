@@ -51,19 +51,36 @@ class UserToGroup(Interface):
 @service(
     'Principals',
     service_name='principals',
-    icon='icon-lock'
+    icon='icon-lock',
+    after_create='after_create',
     )
 @implementer(IPrincipals)
 class Principals(Folder):
     """ Service object representing a collection of principals.  Inherits
-    from :class:`substanced.folder.Folder`.  Contains ``users``, an instance
-    of :class:`substanced.principal.Users`, ``groups``, an instance of
-    :class:`substanced.principal.Groups`, and ``resets`` an instance of
-    :class:`substanced.principal.PasswordResets`"""
-    def __init__(self, registry=None):
-        if registry is None:
-            registry = get_current_registry()
-        Folder.__init__(self)
+    from :class:`substanced.folder.Folder`.
+
+    If this object is created via
+    :meth:`substanced.content.ContentRegistry.create`, the instance will
+    contain three subobjects:
+
+      ``users``
+
+         an instance of the content type `Users``
+
+      ``groups``
+
+         an instance of the content type ``Groups``
+         
+      ``resets``
+
+         an instance of the content type ``Password Resets``
+
+    If however, an instance of this class is created directly (as opposed to
+    being created via the ``registry.content.create`` API), you'll need to
+    call its ``after_create`` method manually after you've created it to
+    cause the content subobjects described above to be added to it.
+    """
+    def after_create(self, inst, registry):
         users = registry.content.create('Users')
         groups = registry.content.create('Groups')
         resets = registry.content.create('Password Resets')
@@ -81,12 +98,13 @@ class Principals(Folder):
 @implementer(IUsers)
 class Users(Folder):
     """ Object representing a collection of users.  Inherits from
-    :class:`substanced.folder.Folder`.  Contains
-    :class:`substanced.principal.User` objects."""
-    def add_user(self, login, password, email='', registry=None):
+    :class:`substanced.folder.Folder`.  Contains objects of content type
+    'User'."""
+    def add_user(self, login, *arg, **kw):
+        registry = kw.pop('registry', None)
         if registry is None:
             registry = get_current_registry()
-        user = registry.content.create('User', password, email)
+        user = registry.content.create('User', *arg, **kw)
         self[login] = user
         return user
 
@@ -97,12 +115,13 @@ class Users(Folder):
 @implementer(IGroups)
 class Groups(Folder):
     """ Object representing a collection of groups.  Inherits from
-    :class:`substanced.folder.Folder`.  Contains
-    :class:`substanced.principal.Group` objects."""
-    def add_group(self, name, registry=None):
+    :class:`substanced.folder.Folder`.  Contains objects of content type 'Group'
+    """
+    def add_group(self, name, *arg, **kw):
+        registry = kw.pop('registry', None)
         if registry is None:
             registry = get_current_registry()
-        group = registry.content.create('Group')
+        group = registry.content.create('Group', *arg, **kw)
         self[name] = group
         return group
 
@@ -110,7 +129,7 @@ class Groups(Folder):
 def groupname_validator(node, kw):
     request = kw['request']
     context = request.context
-    adding = not request.content.istype(context, 'Group')
+    adding = not request.registry.content.istype(context, 'Group')
     def exists(node, value):
         principals = find_service(context, 'principals')
         if adding:
@@ -248,7 +267,7 @@ class Group(Folder):
 def login_validator(node, kw):
     request = kw['request']
     context = request.context
-    adding = not request.content.istype(context, 'User')
+    adding = not request.registry.content.istype(context, 'User')
     def exists(node, value):
         principals = find_service(context, 'principals')
         if adding:
@@ -427,14 +446,15 @@ class PasswordResets(Folder):
         chars = string.letters + string.digits
         return ''.join(random.choice(chars) for _ in range(length))
 
-    def add_reset(self, user, registry=None):
+    def add_reset(self, user, *arg, **kw):
+        registry = kw.pop('registry', None)
         if registry is None:
             registry = get_current_registry()
         while 1:
             token = self._gen_random_token()
             if not token in self:
                 break
-        reset = registry.content.create('Password Reset')
+        reset = registry.content.create('Password Reset', *arg, **kw)
         self[token] = reset
         reset.__acl__ = [(Allow, Everyone, ('sdi.view',))]
         objectmap = find_service(self, 'objectmap')

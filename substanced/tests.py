@@ -46,9 +46,9 @@ class Test_root_factory(unittest.TestCase):
         group.connect = connect
         group.__objectid__ = 1
         principals['users'] = testing.DummyResource()
-        principals['users'].add_user = lambda *arg: user
+        principals['users'].add_user = lambda *arg, **kw: user
         principals['groups'] = testing.DummyResource()
-        principals['groups'].add_group = lambda *arg: group
+        principals['groups'].add_group = lambda *arg, **kw: group
         objects = [
             ('Root', root),
             ('Object Map', objectmap),

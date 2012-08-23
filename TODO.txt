@@ -101,4 +101,6 @@ Docs
 - Document how to override a content registration.  Include an override
   example for the sole purpose of overriding the add view.
 
+- Explain ``after_create`` meta-argument to content.
 
+- Explain __sd_deletable__, __sd_addable__.
