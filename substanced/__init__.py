@@ -35,8 +35,9 @@ def root_factory(request, t=transaction, g=get_connection):
         # prevent SDI deletion/renaming of root principals service
         principals.__sd_deletable__ = False
         app_root.add_service('principals', principals)
-        user = principals['users'].add_user(login, password, email)
-        admins = principals['groups'].add_group('admins')
+        user = principals['users'].add_user(login, password, email,
+                                            registry=registry)
+        admins = principals['groups'].add_group('admins', registry=registry)
         admins.connect(user)
         app_root.__acl__ = [
             (Allow, oid_of(admins), ALL_PERMISSIONS)

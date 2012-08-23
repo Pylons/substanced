@@ -19,6 +19,7 @@ from pyramid.security import (
     Allow,
     Everyone,
     )
+from pyramid.threadlocal import get_current_registry
 
 from pyramid_mailer import get_mailer
 from pyramid_mailer.message import Message
@@ -59,11 +60,13 @@ class Principals(Folder):
     of :class:`substanced.principal.Users`, ``groups``, an instance of
     :class:`substanced.principal.Groups`, and ``resets`` an instance of
     :class:`substanced.principal.PasswordResets`"""
-    def __init__(self):
+    def __init__(self, registry=None):
+        if registry is None:
+            registry = get_current_registry()
         Folder.__init__(self)
-        users = Users()
-        groups = Groups()
-        resets = PasswordResets() 
+        users = registry.content.create('Users')
+        groups = registry.content.create('Groups')
+        resets = registry.content.create('Password Resets')
         users.__sd_deletable__ = False
         groups.__sd_deletable__ = False
         resets.__sd_deletable__ = False
@@ -80,8 +83,10 @@ class Users(Folder):
     """ Object representing a collection of users.  Inherits from
     :class:`substanced.folder.Folder`.  Contains
     :class:`substanced.principal.User` objects."""
-    def add_user(self, login, password, email=''):
-        user = User(password, email)
+    def add_user(self, login, password, email='', registry=None):
+        if registry is None:
+            registry = get_current_registry()
+        user = registry.content.create('User', password, email)
         self[login] = user
         return user
 
@@ -94,15 +99,18 @@ class Groups(Folder):
     """ Object representing a collection of groups.  Inherits from
     :class:`substanced.folder.Folder`.  Contains
     :class:`substanced.principal.Group` objects."""
-    def add_group(self, name):
-        group = Group()
+    def add_group(self, name, registry=None):
+        if registry is None:
+            registry = get_current_registry()
+        group = registry.content.create('Group')
         self[name] = group
         return group
 
 @colander.deferred
 def groupname_validator(node, kw):
-    context = kw['request'].context
-    adding = not IGroup.providedBy(context)
+    request = kw['request']
+    context = request.context
+    adding = not request.content.istype(context, 'Group')
     def exists(node, value):
         principals = find_service(context, 'principals')
         if adding:
@@ -238,8 +246,9 @@ class Group(Folder):
 
 @colander.deferred
 def login_validator(node, kw):
-    context = kw['request'].context
-    adding = not IUser.providedBy(context)
+    request = kw['request']
+    context = request.context
+    adding = not request.content.istype(context, 'User')
     def exists(node, value):
         principals = find_service(context, 'principals')
         if adding:
@@ -418,12 +427,14 @@ class PasswordResets(Folder):
         chars = string.letters + string.digits
         return ''.join(random.choice(chars) for _ in range(length))
 
-    def add_reset(self, user):
+    def add_reset(self, user, registry=None):
+        if registry is None:
+            registry = get_current_registry()
         while 1:
             token = self._gen_random_token()
             if not token in self:
                 break
-        reset = PasswordReset()
+        reset = registry.content.create('Password Reset')
         self[token] = reset
         reset.__acl__ = [(Allow, Everyone, ('sdi.view',))]
         objectmap = find_service(self, 'objectmap')
