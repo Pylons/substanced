@@ -27,6 +27,30 @@ class TestContentRegistry(unittest.TestCase):
         inst.meta['dummy'] = {}
         self.assertEqual(inst.create('dummy', 'a'), 'a')
 
+    def test_create_with_after_create_str(self):
+        inst = self._makeOne()
+        class Dummy(object):
+            def after_create(self, inst, registry):
+                self.after_created = True
+        inst.content_types['dummy'] = Dummy
+        inst.meta['dummy'] = {'after_create':'after_create'}
+        ob = inst.create('dummy')
+        self.assertEqual(ob.__class__, Dummy)
+        self.assertTrue(ob.after_created)
+
+    def test_create_with_after_create_nonstr(self):
+        inst = self._makeOne()
+        class Dummy(object):
+            pass
+        def after_create(ob, registry):
+            self.assertEqual(ob.__class__, Dummy)
+            ob.after_created = True
+        inst.content_types['dummy'] = Dummy
+        inst.meta['dummy'] = {'after_create':after_create}
+        ob = inst.create('dummy')
+        self.assertEqual(ob.__class__, Dummy)
+        self.assertTrue(ob.after_created)
+
     def test_typeof(self):
         inst = self._makeOne()
         dummy = Dummy()
