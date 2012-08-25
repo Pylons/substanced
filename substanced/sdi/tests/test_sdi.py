@@ -885,7 +885,7 @@ class DummyConfigurator(object):
         self._intr = DummyIntrospectable()
         self._actions = []
         self._added = None
-        self.view_predlist = DummyPredicateList()
+        self.get_predlist = lambda *arg: DummyPredicateList()
 
     def object_description(self, ob):
         return ob

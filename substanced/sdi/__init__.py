@@ -82,7 +82,7 @@ def add_mgmt_view(
             )
         )
 
-    predlist = config.view_predlist
+    predlist = config.get_predlist('view')
     
     def view_discrim_func():
         # We need to defer the discriminator until we know what the phash
