@@ -165,6 +165,7 @@ class Comment(Persistent):
     propertysheets = (
         ('Basic', RootPropertySheet),
         ),
+    after_create='after_create',
     )
 def Blog(*arg, **kw):
     root = Root(*arg, **kw)
