@@ -28,6 +28,7 @@ from substanced.event import subscribe_created
 from substanced.schema import Schema
 from substanced.folder import Folder
 from substanced.property import PropertySheet
+from substanced.root import Root
 
 def make_name_validator(content_type):
     @deferred
@@ -156,10 +157,9 @@ class Comment(Persistent):
         self.text = text
         self.pubdate = pubdate
 
-@subscribe_created(content_type='Root')
+@subscribe_created(Root)
 def after_root_created(event):
     root = event.object
     acl = getattr(root, '__acl__', [])
     acl.append((Allow, Everyone, 'view'))
     root.__acl__ = acl
-    
