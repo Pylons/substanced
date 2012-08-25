@@ -504,6 +504,6 @@ class DummyVenusian(object):
         return self.info
 
 class DummyRegistry(object):
-    def notify(self, event):
-        self.notified = event
+    def subscribers(self, dumb, dumber):
+        self.notified = dumb
         

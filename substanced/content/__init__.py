@@ -109,7 +109,10 @@ class ContentRegistry(object):
             if isinstance(aftercreate, basestring):
                 aftercreate = getattr(inst, aftercreate)
             aftercreate(inst, self.registry)
-        self.registry.notify(ContentCreated(inst, content_type, meta))
+        self.registry.subscribers(
+            (ContentCreated(inst, content_type, meta), inst),
+            None
+            )
         return inst
 
     def metadata(self, resource, name, default=None):
