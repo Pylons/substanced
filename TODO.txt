@@ -103,4 +103,6 @@ Docs
 
 - Explain ``after_create`` meta-argument to content.
 
-- Explain __sd_deletable__, __sd_addable__.
+- Explain __sd_deletable__, __sd_addable__, __sd_hidden__.
+
+- Explain event listener decorators and add_content_subscriber.

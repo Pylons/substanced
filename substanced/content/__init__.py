@@ -96,9 +96,11 @@ class ContentRegistry(object):
 
     def create(self, content_type, *arg, **kw):
         """ Create an instance of ``content_type`` by calling its factory
-        with ``*arg`` and ``**kw``.  If the resulting object has an
-        ``__sd_aftercreate__`` attribute (method), call it with the Pyramid
-        registry object.  Return the created object."""
+        with ``*arg`` and ``**kw``.  If the meta of the content type has an
+        ``after_create`` value, call it (if it's a string, it's assumed to be
+        a method of the created object); then send a
+        :class:`substanced.event.ContentCreatedEvent`.  Return the created
+        object."""
         factory = self.content_types[content_type]
         inst = factory(*arg, **kw)
         meta = self.meta[content_type].copy()
