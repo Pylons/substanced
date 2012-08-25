@@ -22,13 +22,16 @@ class TestContentRegistry(unittest.TestCase):
         self.assertEqual(inst.meta['ct'], {'icon':'fred'})
         
     def test_create(self):
-        inst = self._makeOne()
+        registry = DummyRegistry()
+        inst = self._makeOne(registry)
         inst.content_types['dummy'] = lambda a: a
         inst.meta['dummy'] = {}
         self.assertEqual(inst.create('dummy', 'a'), 'a')
+        self.assertTrue(registry.notified)
 
     def test_create_with_after_create_str(self):
-        inst = self._makeOne()
+        registry = DummyRegistry()
+        inst = self._makeOne(registry)
         class Dummy(object):
             def after_create(self, inst, registry):
                 self.after_created = True
@@ -39,7 +42,8 @@ class TestContentRegistry(unittest.TestCase):
         self.assertTrue(ob.after_created)
 
     def test_create_with_after_create_nonstr(self):
-        inst = self._makeOne()
+        registry = DummyRegistry()
+        inst = self._makeOne(registry)
         class Dummy(object):
             pass
         def after_create(ob, registry):
@@ -294,18 +298,18 @@ class Test_ContentTypePredicate(unittest.TestCase):
         config = Dummy()
         config.registry = Dummy()
         config.registry.content = Dummy()
-        config.registry.content.typeof = lambda *x: result
+        config.registry.content.istype = lambda *x: result
         return config
     
     def test___call___true(self):
-        config = self._makeConfig('abc')
+        config = self._makeConfig(True)
         inst = self._makeOne('abc', config)
         context = Dummy()
         result = inst(context, None)
         self.assertTrue(result)
 
     def test___call___false(self):
-        config = self._makeConfig('notabc')
+        config = self._makeConfig(False)
         inst = self._makeOne('abc', config)
         context = Dummy()
         result = inst(context, None)
@@ -499,3 +503,7 @@ class DummyVenusian(object):
         self.attachments.append((wrapped, callback, category))
         return self.info
 
+class DummyRegistry(object):
+    def notify(self, event):
+        self.notified = event
+        

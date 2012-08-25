@@ -130,13 +130,14 @@ class IObjectModified(IObjectEvent):
     """ May be sent when an object is modified """
     object = Attribute('The object being modified')
 
-class IRootCreated(Interface):
-    """ An event type sent when a Substance D root object is first created by
-    the Substance D root factory"""
+class IContentCreated(Interface):
+    """ An event type sent when a Substance D content object is created 
+    via ``registry.content.create``"""
     object = Attribute('The freshly created root object.  It will already '
                        'have been seated into the ZODB database')
-    request = Attribute('The Pyramid request active when the object was '
-                         'created')
+    content_type = Attribute('The content type of the object that was created')
+    meta = Attribute('The metainformation about the content type in the '
+                     'content registry')
 
 class IFolder(Interface):
     """ A Folder which stores objects using Unicode keys.

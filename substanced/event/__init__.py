@@ -1,3 +1,5 @@
+from functools import update_wrapper
+
 import venusian
 
 from zope.interface import (
@@ -11,11 +13,10 @@ from ..interfaces import (
     IObjectRemoved,
     IObjectWillBeRemoved,
     IObjectModified,
-    IRootCreated,
+    IContentCreated,
     )
     
 class _ObjectEvent(object):
-    registry = None # added by _FolderEventSubscriber
     def __init__(self, object, parent, name):
         self.object = object
         self.parent = parent
@@ -35,7 +36,6 @@ class ObjectWillBeAdded(_ObjectEvent):
         self.duplicating = duplicating
 
 class _ObjectRemovalEvent(object):
-    registry = None # added by _FolderEventSubscriber
     def __init__(self, object, parent, name, moving=False):
         self.object = object
         self.parent = parent
@@ -53,44 +53,59 @@ class ObjectWillBeRemoved(_ObjectRemovalEvent):
 @implementer(IObjectModified)
 class ObjectModified(object): # pragma: no cover
     """ An event sent when an object has been modified."""
-    registry = None # added by _FolderEventSubscriber
     def __init__(self, object):
         self.object = object
 
-@implementer(IRootCreated)
-class RootCreated(object):
-    def __init__(self, object, request):
+@implementer(IContentCreated)
+class ContentCreated(object):
+    def __init__(self, object, content_type, meta):
         self.object = object
-        self.request = request
+        self.content_type = content_type
+        self.meta = meta
 
 # subscriber decorators, e.g.
 # @subscribe_added(MyContent)
 # def foo(event):
 #     ....
 
-class _FolderEventSubscriber(object):
+class _Subscriber(object):
     venusian = venusian # for testing
+    def __call__(self, wrapped):
+        self.venusian.attach(wrapped, self.register, category='substanced')
+        return wrapped
 
-    def __init__(self, obj=None, container=None):
+class _FolderEventSubscriber(_Subscriber):
+    def __init__(self, obj=None, container=None, **predicates):
         if obj is None:
             obj = Interface
         if container is None:
             container = Interface
         self.obj = obj
         self.container = container
+        self.predicates = predicates
 
     def register(self, scanner, name, wrapped):
-        registry = scanner.config.registry
-        def wrapper(event, obj, container):
-            event.registry = registry
-            return wrapped(event)
-        wrapper.wrapped = wrapped
-        scanner.config.add_subscriber(wrapper,
-                                      [self.event, self.obj, self.container])
+        scanner.config.add_content_subscriber(
+            wrapped,
+            [self.event, self.obj, self.container],
+            **self.predicates
+            )
 
-    def __call__(self, wrapped):
-        self.venusian.attach(wrapped, self.register, category='substanced')
-        return wrapped
+# content events have no container associated
+
+class _ContentEventSubscriber(_Subscriber):
+    def __init__(self, obj=None, **predicates):
+        if obj is None:
+            obj = Interface
+        self.obj = obj
+        self.predicates = predicates
+
+    def register(self, scanner, name, wrapped):
+        scanner.config.add_content_subscriber(
+            wrapped,
+            [self.event, self.obj],
+            **self.predicates
+            )
 
 class subscribe_added(_FolderEventSubscriber):
     """ Decorator for registering an object added event subscriber
@@ -112,7 +127,46 @@ class subscribe_will_be_removed(_FolderEventSubscriber):
     (a subscriber for ObjectWillBeRemoved)."""
     event = IObjectWillBeRemoved
 
-class subscribe_modified(_FolderEventSubscriber):
-    """ Decorator for registering an object will-be-removed event subscriber
+class subscribe_modified(_ContentEventSubscriber):
+    """ Decorator for registering an object modified event subscriber
     (a subscriber for ObjectModified)."""
     event = IObjectModified
+
+class subscribe_created(_ContentEventSubscriber):
+    """ Decorator for registering an object will-be-removed event subscriber
+    (a subscriber for ContentCreated)."""
+    event = IContentCreated
+    
+def add_content_subscriber(config, subscriber, iface=None, **predicates):
+    """ Configurator directive that works like Pyramid's ``add_subscriber``,
+    except it wraps the subscriber in something that first adds the
+    ``registry`` attribute to the event being sent before the wrapped
+    subscriber is called."""
+    registry = config.registry
+    def wrapper(event, *arg): # *arg ignored
+        event.registry = registry
+        return subscriber(event)
+    if hasattr(subscriber, '__name__'):
+        update_wrapper(wrapper, subscriber)
+    wrapper.wrapped = subscriber
+    config.add_subscriber(wrapper, iface, **predicates)
+
+class _ContentTypePredicate(object):
+    def __init__(self, val, config):
+        self.val = val
+        self.registry = config.registry
+
+    def phash(self):
+        return 'content_type = %s' % (self.val,)
+
+    text = phash
+
+    def __call__(self, event, *arg):
+        # NB: accept *arg so we can be used as either a folder event
+        # predicate or as a content event predicate.  (yes, it's lame).
+        return self.registry.content.istype(event.object, self.val)
+    
+def includeme(config): # pragma: no cover
+    config.add_directive('add_content_subscriber', add_content_subscriber)
+    config.add_subscriber_predicate('content_type', _ContentTypePredicate)
+    

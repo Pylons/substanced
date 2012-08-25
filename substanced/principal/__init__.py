@@ -48,6 +48,11 @@ class UserToGroup(Interface):
     """ The reference type used to store users-to-groups references in the
     object map"""
 
+def _gen_random_token():
+    length = random.choice(range(10, 16))
+    chars = string.letters + string.digits
+    return ''.join(random.choice(chars) for _ in range(length))
+
 @service(
     'Principals',
     service_name='principals',
@@ -77,8 +82,8 @@ class Principals(Folder):
 
     If however, an instance of this class is created directly (as opposed to
     being created via the ``registry.content.create`` API), you'll need to
-    call its ``after_create`` method manually after you've created it to
-    cause the content subobjects described above to be added to it.
+    call its ``after_create`` method manually after you've created it
+    to cause the content subobjects described above to be added to it.
     """
     def after_create(self, inst, registry):
         users = registry.content.create('Users')
@@ -91,6 +96,47 @@ class Principals(Folder):
         self['groups'] = groups
         self['resets'] = resets
 
+    def add_user(self, login, *arg, **kw):
+        """ Add a user to this principal service using the login ``login``.
+        ``*arg`` and ``**kw`` are passed along to
+        ``registry.content.create('User')``"""
+        registry = kw.pop('registry', None)
+        if registry is None:
+            registry = get_current_registry()
+        user = registry.content.create('User', *arg, **kw)
+        self['users'][login] = user
+        return user
+
+    def add_group(self, name, *arg, **kw):
+        """ Add a group to this principal service using the name ``name``.
+        ``*arg`` and ``**kw`` are passed along to
+        ``registry.content.create('Group')``"""
+        registry = kw.pop('registry', None)
+        if registry is None:
+            registry = get_current_registry()
+        group = registry.content.create('Group', *arg, **kw)
+        self['groups'][name] = group
+        return group
+
+    def add_reset(self, user, *arg, **kw):
+        """ Add a password reset to this principal service for the user
+        ``user`` (either a user object or a user id).  ``name``.  ``*arg``
+        and ``**kw`` are passed along to ``registry.content.create('Password
+        Reset')``"""
+        registry = kw.pop('registry', None)
+        if registry is None:
+            registry = get_current_registry()
+        while 1:
+            token = _gen_random_token()
+            if not token in self:
+                break
+        reset = registry.content.create('Password Reset', *arg, **kw)
+        self['resets'][token] = reset
+        reset.__acl__ = [(Allow, Everyone, ('sdi.view',))]
+        objectmap = find_service(self, 'objectmap')
+        objectmap.connect(user, reset, UserToPasswordReset)
+        return reset
+
 @content(
     'Users',
     icon='icon-list-alt'
@@ -100,13 +146,6 @@ class Users(Folder):
     """ Object representing a collection of users.  Inherits from
     :class:`substanced.folder.Folder`.  Contains objects of content type
     'User'."""
-    def add_user(self, login, *arg, **kw):
-        registry = kw.pop('registry', None)
-        if registry is None:
-            registry = get_current_registry()
-        user = registry.content.create('User', *arg, **kw)
-        self[login] = user
-        return user
 
 @content(
     'Groups',
@@ -117,13 +156,6 @@ class Groups(Folder):
     """ Object representing a collection of groups.  Inherits from
     :class:`substanced.folder.Folder`.  Contains objects of content type 'Group'
     """
-    def add_group(self, name, *arg, **kw):
-        registry = kw.pop('registry', None)
-        if registry is None:
-            registry = get_current_registry()
-        group = registry.content.create('Group', *arg, **kw)
-        self[name] = group
-        return group
 
 @colander.deferred
 def groupname_validator(node, kw):
@@ -439,27 +471,6 @@ class UserToPasswordReset(object):
 @implementer(IPasswordResets)
 class PasswordResets(Folder):
     """ Object representing the current set of password reset requests """
-    def _gen_random_token(self):
-        """ Generates a random token to be used by ``self.add_reset``.
-        """
-        length = random.choice(range(10, 16))
-        chars = string.letters + string.digits
-        return ''.join(random.choice(chars) for _ in range(length))
-
-    def add_reset(self, user, *arg, **kw):
-        registry = kw.pop('registry', None)
-        if registry is None:
-            registry = get_current_registry()
-        while 1:
-            token = self._gen_random_token()
-            if not token in self:
-                break
-        reset = registry.content.create('Password Reset', *arg, **kw)
-        self[token] = reset
-        reset.__acl__ = [(Allow, Everyone, ('sdi.view',))]
-        objectmap = find_service(self, 'objectmap')
-        objectmap.connect(user, reset, UserToPasswordReset)
-        return reset
 
 @content(
     'Password Reset',

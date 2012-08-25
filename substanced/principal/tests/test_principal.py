@@ -18,28 +18,38 @@ class TestPrincipals(unittest.TestCase):
         self.assertEqual(inst['users'], ob)
         self.assertEqual(inst['groups'], ob)
         self.assertEqual(inst['resets'], ob)
-        
-class TestUsers(unittest.TestCase):
-    def _makeOne(self):
-        from .. import Users
-        return Users()
 
     def test_add_user(self):
         inst = self._makeOne()
+        users = inst['users'] = testing.DummyResource()
         user = inst.add_user('login', 'password')
-        self.assertTrue('login' in inst)
+        self.assertTrue('login' in users)
         self.assertEqual(user.__name__, 'login')
-
-class TestGroups(unittest.TestCase):
-    def _makeOne(self):
-        from .. import Groups
-        return Groups()
 
     def test_add_group(self):
         inst = self._makeOne()
+        groups = inst['groups'] = testing.DummyResource()
         group = inst.add_group('groupname')
-        self.assertTrue('groupname' in inst)
+        self.assertTrue('groupname' in groups)
         self.assertEqual(group.__name__, 'groupname')
+
+    def test_add_reset(self):
+        from .. import UserToPasswordReset
+        resets = testing.DummyResource()
+        inst = self._makeOne()
+        objectmap = DummyObjectMap()
+        services = testing.DummyResource()
+        inst.add('__services__', services, reserved_names=())
+        services['objectmap'] = objectmap
+        inst.add('resets', resets)
+        user = testing.DummyResource()
+        reset = inst.add_reset(user)
+        self.assertEqual(
+            objectmap.connections,
+            [(user, reset, UserToPasswordReset)])
+        self.assertTrue(reset.__acl__)
+        self.assertEqual(len(inst), 2)
+
 
 class Test_groupname_validator(unittest.TestCase):
     def _makeOne(self, node, kw):
@@ -526,26 +536,6 @@ class Test_groupfinder(unittest.TestCase):
         request.context = context
         result = self._callFUT(1, request)
         self.assertEqual(result, (1,2))
-
-class TestPasswordResets(unittest.TestCase):
-    def _makeOne(self):
-        from .. import PasswordResets
-        return PasswordResets()
-
-    def test_add_reset(self):
-        from .. import UserToPasswordReset
-        inst = self._makeOne()
-        objectmap = DummyObjectMap()
-        services = testing.DummyResource()
-        inst.add('__services__', services, reserved_names=())
-        services['objectmap'] = objectmap
-        user = testing.DummyResource()
-        reset = inst.add_reset(user)
-        self.assertEqual(
-            objectmap.connections,
-            [(user, reset, UserToPasswordReset)])
-        self.assertTrue(reset.__acl__)
-        self.assertEqual(len(inst), 2)
 
 class TestPasswordReset(unittest.TestCase):
     def _makeOne(self):

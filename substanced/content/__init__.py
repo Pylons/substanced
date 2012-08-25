@@ -11,6 +11,8 @@ from ..interfaces import (
     SERVICES_NAME
     )
 
+from ..event import ContentCreated
+
 _marker = object()
 
 def get_content_type(resource, registry=None):
@@ -98,13 +100,14 @@ class ContentRegistry(object):
         ``__sd_aftercreate__`` attribute (method), call it with the Pyramid
         registry object.  Return the created object."""
         factory = self.content_types[content_type]
-        meta = self.meta[content_type]
         inst = factory(*arg, **kw)
+        meta = self.meta[content_type].copy()
         aftercreate = meta.get('after_create')
         if aftercreate is not None:
             if isinstance(aftercreate, basestring):
                 aftercreate = getattr(inst, aftercreate)
             aftercreate(inst, self.registry)
+        self.registry.notify(ContentCreated(inst, content_type, meta))
         return inst
 
     def metadata(self, resource, name, default=None):
@@ -383,7 +386,7 @@ class _ContentTypePredicate(object):
     phash = text
 
     def __call__(self, context, request):
-        return get_content_type(context, self.registry) == self.val
+        return self.registry.content.istype(context, self.val)
 
 def includeme(config): # pragma: no cover
     config.registry.content = ContentRegistry(config.registry)
