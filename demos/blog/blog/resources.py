@@ -24,13 +24,10 @@ from deform.widget import (
     )
 
 from substanced.content import content
+from substanced.event import subscribe_created
 from substanced.schema import Schema
 from substanced.folder import Folder
 from substanced.property import PropertySheet
-from substanced.root import (
-    Root,
-    RootPropertySheet,
-    )
 
 def make_name_validator(content_type):
     @deferred
@@ -159,18 +156,10 @@ class Comment(Persistent):
         self.text = text
         self.pubdate = pubdate
 
-@content(
-    'Root',
-    icon='icon-home',
-    propertysheets = (
-        ('Basic', RootPropertySheet),
-        ),
-    after_create='after_create',
-    )
-def Blog(*arg, **kw):
-    root = Root(*arg, **kw)
+@subscribe_created(content_type='Root')
+def after_root_created(event):
+    root = event.object
     acl = getattr(root, '__acl__', [])
     acl.append((Allow, Everyone, 'view'))
     root.__acl__ = acl
-    return root
-
+    
