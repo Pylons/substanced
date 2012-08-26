@@ -632,6 +632,37 @@ def reference_property(reftype):
     getter returns the *instance* related to the target instead of the target
     object id.  Likewise, its setter will accept another persistent object
     instance that has an object id.
+
+    For example:
+
+    .. code-block:: python
+       :linenos:
+
+       # definition
+
+       from substanced.content import content
+       from substanced.objectmap import reference_property
+
+       @content('Profile')
+       class Profile(Persistent):
+           user = reference_property('profile-to-user')
+
+       # subsequent usage of the property in a view...
+
+       profile = registry.content.create('Profile')
+       somefolder['profile'] = profile
+       profile.user = request.user
+       print profile.user # will print the user object
+
+       # if the user is later deleted by unrelated code...
+
+       print profile.user # will print None
+
+       # or if you delete the value explicitly...
+
+       del profile.user
+       print profile.user # will print None
+    
     """
     return _reference_property(reftype, resolve=True)
 
