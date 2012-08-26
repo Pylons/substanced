@@ -611,11 +611,11 @@ def referenceid_source_property(reftype):
        # definition
 
        from substanced.content import content
-       from substanced.objectmap import referenceid_property
+       from substanced.objectmap import referenceid_source_property
 
        @content('Profile')
        class Profile(Persistent):
-           user_id = referenceid_property('profile-to-userid')
+           user_id = referenceid_source_property('profile-to-userid')
 
        # subsequent usage of the property in a view...
 
@@ -644,10 +644,10 @@ def referenceid_target_property(reftype):
 
 def reference_source_property(reftype):
     """
-    Exactly like :func:`substanced.objectmap.referenceid_property`, except its
-    getter returns the *instance* related to the target instead of the target
-    object id.  Likewise, its setter will accept another persistent object
-    instance that has an object id.
+    Exactly like :func:`substanced.objectmap.referenceid_source_property`,
+    except its getter returns the *instance* related to the target instead of
+    the target object id.  Likewise, its setter will accept another
+    persistent object instance that has an object id.
 
     For example:
 
