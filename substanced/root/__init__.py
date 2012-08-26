@@ -73,7 +73,7 @@ class Root(Folder):
         self.add_service('principals', principals, registry=registry)
         user = principals.add_user(login, password, email, registry=registry)
         admins = principals.add_group('admins', registry=registry)
-        admins.connect(user)
+        admins.memberids.connect([user])
         self.__acl__ = [
             (Allow, oid_of(admins), ALL_PERMISSIONS)
             ]

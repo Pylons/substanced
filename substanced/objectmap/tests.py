@@ -881,21 +881,21 @@ class Test_referenceid_source_property(unittest.TestCase):
         svcs = inst['__services__'] = self.DummyFolder()
         svcs['objectmap'] = DummyObjectMap(targetids=(1,))
         del inst.prop
-        self.assertEqual(svcs['objectmap'].disconnected, (inst, 1, Dummy))
+        self.assertEqual(svcs['objectmap'].disconnected, [(inst, 1, Dummy)])
 
     def test_set_None(self):
         inst = self._makeInst()
         svcs = inst['__services__'] = self.DummyFolder()
         svcs['objectmap'] = DummyObjectMap(targetids=())
         inst.prop = None
-        self.assertEqual(svcs['objectmap'].connected, None)
+        self.assertEqual(svcs['objectmap'].connected, [])
 
     def test_set_not_None(self):
         inst = self._makeInst()
         svcs = inst['__services__'] = self.DummyFolder()
         svcs['objectmap'] = DummyObjectMap(targetids=())
         inst.prop = 2
-        self.assertEqual(svcs['objectmap'].connected, (inst, 2, Dummy))
+        self.assertEqual(svcs['objectmap'].connected, [(inst, 2, Dummy)])
 
 class Test_referenceid_target_property(unittest.TestCase):
     def setUp(self):
@@ -944,21 +944,21 @@ class Test_referenceid_target_property(unittest.TestCase):
         svcs = inst['__services__'] = self.DummyFolder()
         svcs['objectmap'] = DummyObjectMap(sourceids=(1,))
         del inst.prop
-        self.assertEqual(svcs['objectmap'].disconnected, (1, inst, Dummy))
+        self.assertEqual(svcs['objectmap'].disconnected, [(1, inst, Dummy)])
 
     def test_set_None(self):
         inst = self._makeInst()
         svcs = inst['__services__'] = self.DummyFolder()
         svcs['objectmap'] = DummyObjectMap(sourceids=())
         inst.prop = None
-        self.assertEqual(svcs['objectmap'].connected, None)
+        self.assertEqual(svcs['objectmap'].connected, [])
 
     def test_set_not_None(self):
         inst = self._makeInst()
         svcs = inst['__services__'] = self.DummyFolder()
         svcs['objectmap'] = DummyObjectMap(sourceids=())
         inst.prop = 2
-        self.assertEqual(svcs['objectmap'].connected, (2, inst, Dummy))
+        self.assertEqual(svcs['objectmap'].connected, [(2, inst, Dummy)])
 
 class Test_reference_source_property(unittest.TestCase):
     def setUp(self):
@@ -1009,21 +1009,21 @@ class Test_reference_source_property(unittest.TestCase):
         svcs = inst['__services__'] = self.DummyFolder()
         svcs['objectmap'] = DummyObjectMap(targetids=(1,))
         del inst.prop
-        self.assertEqual(svcs['objectmap'].disconnected, (inst, 1, Dummy))
+        self.assertEqual(svcs['objectmap'].disconnected, [(inst, 1, Dummy)])
 
     def test_set_None(self):
         inst = self._makeInst()
         svcs = inst['__services__'] = self.DummyFolder()
         svcs['objectmap'] = DummyObjectMap(targetids=())
         inst.prop = None
-        self.assertEqual(svcs['objectmap'].connected, None)
+        self.assertEqual(svcs['objectmap'].connected, [])
 
     def test_set_not_None(self):
         inst = self._makeInst()
         svcs = inst['__services__'] = self.DummyFolder()
         svcs['objectmap'] = DummyObjectMap(targetids=())
         inst.prop = 2
-        self.assertEqual(svcs['objectmap'].connected, (inst, 2, Dummy))
+        self.assertEqual(svcs['objectmap'].connected, [(inst, 2, Dummy)])
 
 class Test_reference_target_property(unittest.TestCase):
     def setUp(self):
@@ -1074,21 +1074,812 @@ class Test_reference_target_property(unittest.TestCase):
         svcs = inst['__services__'] = self.DummyFolder()
         svcs['objectmap'] = DummyObjectMap(sourceids=(1,))
         del inst.prop
-        self.assertEqual(svcs['objectmap'].disconnected, (1, inst, Dummy))
+        self.assertEqual(svcs['objectmap'].disconnected, [(1, inst, Dummy)])
 
     def test_set_None(self):
         inst = self._makeInst()
         svcs = inst['__services__'] = self.DummyFolder()
         svcs['objectmap'] = DummyObjectMap(sourceids=())
         inst.prop = None
-        self.assertEqual(svcs['objectmap'].connected, None)
+        self.assertEqual(svcs['objectmap'].connected, [])
 
     def test_set_not_None(self):
         inst = self._makeInst()
         svcs = inst['__services__'] = self.DummyFolder()
         svcs['objectmap'] = DummyObjectMap(sourceids=())
         inst.prop = 2
-        self.assertEqual(svcs['objectmap'].connected, (2, inst, Dummy))
+        self.assertEqual(svcs['objectmap'].connected, [(2, inst, Dummy)])
+
+class Test_multireferenceid_source_property(unittest.TestCase):
+    def setUp(self):
+        from substanced.interfaces import IFolder
+        @implementer(IFolder)
+        class DummyFolder(dict):
+            pass
+        self.DummyFolder = DummyFolder
+
+    def _makeInst(self, reftype=None, ignore_missing=False):
+        if reftype is None:
+            reftype = Dummy
+        from . import multireference_sourceid_property
+        class Inner(self.DummyFolder):
+            prop = multireference_sourceid_property(
+                reftype,
+                ignore_missing=ignore_missing,
+                )
+        inst = Inner()
+        inst.__objectid__ = -1
+        return inst
+
+    def test_get_zero(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(targetids=())
+        self.assertEqual(list(inst.prop), [])
+
+    def test_get_one(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(targetids=(1,))
+        self.assertEqual(list(inst.prop), [1])
+
+    def test_get_two(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(targetids=(1,2))
+        self.assertEqual(list(inst.prop), [1,2])
+
+    def test_del_zero(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(targetids=())
+        del inst.prop
+        self.assertEqual(list(inst.prop), [])
+
+    def test_del_one(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(targetids=(1,))
+        del inst.prop
+        self.assertEqual(svcs['objectmap'].disconnected, [(-1, 1, Dummy)])
+
+    def test_del_two(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(targetids=(1,2))
+        del inst.prop
+        self.assertEqual(svcs['objectmap'].disconnected,
+                         [(-1, 1, Dummy), (-1, 2, Dummy)])
+
+    def test_set_None(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(targetids=())
+        self.assertRaises(ValueError, inst.__setattr__, 'prop', None)
+
+    def test_set_zero(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(targetids=(1,))
+        inst.prop = []
+        self.assertEqual(svcs['objectmap'].disconnected, [(-1, 1, Dummy)])
+        self.assertEqual(svcs['objectmap'].connected, [])
+
+    def test_set_one(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(targetids=(1,))
+        inst.prop = [2]
+        self.assertEqual(svcs['objectmap'].disconnected, [(-1, 1, Dummy)])
+        self.assertEqual(svcs['objectmap'].connected, [(-1, 2, Dummy)])
+
+    def test_set_two(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(targetids=(1,))
+        inst.prop = [2, 3]
+        self.assertEqual(svcs['objectmap'].disconnected, [(-1, 1, Dummy)])
+        self.assertEqual(svcs['objectmap'].connected,
+                         [(-1, 2, Dummy), (-1, 3, Dummy)])
+
+    def test_clear(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(targetids=(1,))
+        inst.prop.clear()
+        self.assertEqual(svcs['objectmap'].disconnected, [(-1, 1, Dummy)])
+
+    def test_connect(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(targetids=())
+        inst.prop.connect([2,3])
+        self.assertEqual(svcs['objectmap'].connected,
+                         [(-1, 2, Dummy), (-1, 3, Dummy)])
+        
+    def test_connect_missing(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(targetids=(),
+                                           toraise=ValueError('a'))
+        self.assertRaises(ValueError, inst.prop.connect, [2,3])
+
+    def test_connect_with_ignore_missing(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(targetids=(),
+                                           toraise=ValueError('a'))
+        inst.prop.connect([2,3], ignore_missing=True)
+        self.assertEqual(svcs['objectmap'].connected, [])
+
+    def test_disconnect(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(targetids=())
+        inst.prop.disconnect([2,3])
+        self.assertEqual(svcs['objectmap'].disconnected,
+                         [(-1, 2, Dummy), (-1, 3, Dummy)])
+        
+    def test_disconnect_missing(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(targetids=(),
+                                           toraise=ValueError('a'))
+        self.assertRaises(ValueError, inst.prop.disconnect, [2,3])
+
+    def test_disconnect_with_ignore_missing(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(targetids=(),
+                                           toraise=ValueError('a'))
+        inst.prop.disconnect([2,3], ignore_missing=True)
+        self.assertEqual(svcs['objectmap'].disconnected, [])
+
+    def test_ignore_missing_implicit(self):
+        inst = self._makeInst(ignore_missing=True)
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(targetids=(),
+                                           toraise=ValueError('a'))
+        inst.prop.disconnect([2,3])
+        self.assertEqual(svcs['objectmap'].disconnected, [])
+
+class Test_multireference_source_property(unittest.TestCase):
+    def setUp(self):
+        from substanced.interfaces import IFolder
+        @implementer(IFolder)
+        class DummyFolder(dict):
+            pass
+        self.DummyFolder = DummyFolder
+
+    def _makeInst(self, reftype=None, ignore_missing=False):
+        if reftype is None:
+            reftype = Dummy
+        from . import multireference_source_property
+        class Inner(self.DummyFolder):
+            prop = multireference_source_property(
+                reftype,
+                ignore_missing=ignore_missing
+                )
+        inst = Inner()
+        inst.__objectid__ = -1
+        return inst
+
+    def test_get_zero(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(targetids=())
+        self.assertEqual(list(inst.prop), [])
+
+    def test_get_one(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(targetids=(1,), result=object)
+        self.assertEqual(list(inst.prop), [object])
+
+    def test_get_two(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(targetids=(1,2), result=object)
+        self.assertEqual(list(inst.prop), [object, object])
+
+    def test_del_zero(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(targetids=())
+        del inst.prop
+        self.assertEqual(list(inst.prop), [])
+
+    def test_del_one(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(targetids=(1,))
+        del inst.prop
+        self.assertEqual(svcs['objectmap'].disconnected, [(-1, 1, Dummy)])
+
+    def test_del_two(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(targetids=(1,2))
+        del inst.prop
+        self.assertEqual(svcs['objectmap'].disconnected,
+                         [(-1, 1, Dummy), (-1, 2, Dummy)])
+
+    def test_set_None(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(targetids=())
+        self.assertRaises(ValueError, inst.__setattr__, 'prop', None)
+
+    def test_set_zero(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(targetids=(1,))
+        inst.prop = []
+        self.assertEqual(svcs['objectmap'].disconnected, [(-1, 1, Dummy)])
+        self.assertEqual(svcs['objectmap'].connected, [])
+
+    def test_set_one(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(targetids=(1,))
+        inst.prop = [2]
+        self.assertEqual(svcs['objectmap'].disconnected, [(-1, 1, Dummy)])
+        self.assertEqual(svcs['objectmap'].connected, [(-1, 2, Dummy)])
+
+    def test_set_two(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(targetids=(1,))
+        inst.prop = [2, 3]
+        self.assertEqual(svcs['objectmap'].disconnected, [(-1, 1, Dummy)])
+        self.assertEqual(svcs['objectmap'].connected,
+                         [(-1, 2, Dummy), (-1, 3, Dummy)])
+
+    def test_clear(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(targetids=(1,))
+        inst.prop.clear()
+        self.assertEqual(svcs['objectmap'].disconnected, [(-1, 1, Dummy)])
+
+    def test_connect(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(targetids=())
+        inst.prop.connect([2,3])
+        self.assertEqual(svcs['objectmap'].connected,
+                         [(-1, 2, Dummy), (-1, 3, Dummy)])
+        
+    def test_connect_missing(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(targetids=(),
+                                           toraise=ValueError('a'))
+        self.assertRaises(ValueError, inst.prop.connect, [2,3])
+
+    def test_connect_with_ignore_missing(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(targetids=(),
+                                           toraise=ValueError('a'))
+        inst.prop.connect([2,3], ignore_missing=True)
+        self.assertEqual(svcs['objectmap'].connected, [])
+
+    def test_disconnect(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(targetids=())
+        inst.prop.disconnect([2,3])
+        self.assertEqual(svcs['objectmap'].disconnected,
+                         [(-1, 2, Dummy), (-1, 3, Dummy)])
+        
+    def test_disconnect_missing(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(targetids=(),
+                                           toraise=ValueError('a'))
+        self.assertRaises(ValueError, inst.prop.disconnect, [2,3])
+
+    def test_disconnect_with_ignore_missing(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(targetids=(),
+                                           toraise=ValueError('a'))
+        inst.prop.disconnect([2,3], ignore_missing=True)
+        self.assertEqual(svcs['objectmap'].disconnected, [])
+
+    def test_ignore_missing_implicit(self):
+        inst = self._makeInst(ignore_missing=True)
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(targetids=(),
+                                           toraise=ValueError('a'))
+        inst.prop.disconnect([2,3])
+        self.assertEqual(svcs['objectmap'].disconnected, [])
+
+class Test_multireference_targetid_property(unittest.TestCase):
+    def setUp(self):
+        from substanced.interfaces import IFolder
+        @implementer(IFolder)
+        class DummyFolder(dict):
+            pass
+        self.DummyFolder = DummyFolder
+
+    def _makeInst(self, reftype=None, ignore_missing=False):
+        if reftype is None:
+            reftype = Dummy
+        from . import multireference_targetid_property
+        class Inner(self.DummyFolder):
+            prop = multireference_targetid_property(
+                reftype,
+                ignore_missing=ignore_missing
+                )
+        inst = Inner()
+        inst.__objectid__ = -1
+        return inst
+
+    def test_get_zero(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(sourceids=())
+        self.assertEqual(list(inst.prop), [])
+
+    def test_get_one(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(sourceids=(1,))
+        self.assertEqual(list(inst.prop), [1])
+
+    def test_get_two(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(sourceids=(1,2))
+        self.assertEqual(list(inst.prop), [1,2])
+
+    def test_del_zero(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(sourceids=())
+        del inst.prop
+        self.assertEqual(list(inst.prop), [])
+
+    def test_del_one(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(sourceids=(1,))
+        del inst.prop
+        self.assertEqual(svcs['objectmap'].disconnected, [(1, -1, Dummy)])
+
+    def test_del_two(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(sourceids=(1,2))
+        del inst.prop
+        self.assertEqual(svcs['objectmap'].disconnected,
+                         [(1, -1, Dummy), (2, -1, Dummy)])
+
+    def test_set_None(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(sourceids=())
+        self.assertRaises(ValueError, inst.__setattr__, 'prop', None)
+
+    def test_set_zero(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(sourceids=(1,))
+        inst.prop = []
+        self.assertEqual(svcs['objectmap'].disconnected, [(1, -1, Dummy)])
+        self.assertEqual(svcs['objectmap'].connected, [])
+
+    def test_set_one(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(sourceids=(1,))
+        inst.prop = [2]
+        self.assertEqual(svcs['objectmap'].disconnected, [(1, -1, Dummy)])
+        self.assertEqual(svcs['objectmap'].connected, [(2, -1, Dummy)])
+
+    def test_set_two(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(sourceids=(1,))
+        inst.prop = [2, 3]
+        self.assertEqual(svcs['objectmap'].disconnected, [(1, -1, Dummy)])
+        self.assertEqual(svcs['objectmap'].connected,
+                         [(2, -1, Dummy), (3, -1, Dummy)])
+
+    def test_clear(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(sourceids=(1,))
+        inst.prop.clear()
+        self.assertEqual(svcs['objectmap'].disconnected, [(1, -1, Dummy)])
+
+    def test_connect(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(sourceids=())
+        inst.prop.connect([2,3])
+        self.assertEqual(svcs['objectmap'].connected,
+                         [(2, -1, Dummy), (3, -1, Dummy)])
+        
+    def test_connect_missing(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(sourceids=(),
+                                           toraise=ValueError('a'))
+        self.assertRaises(ValueError, inst.prop.connect, [2,3])
+
+    def test_connect_with_ignore_missing(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(sourceids=(),
+                                           toraise=ValueError('a'))
+        inst.prop.connect([2,3], ignore_missing=True)
+        self.assertEqual(svcs['objectmap'].connected, [])
+
+    def test_disconnect(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(sourceids=())
+        inst.prop.disconnect([2,3])
+        self.assertEqual(svcs['objectmap'].disconnected,
+                         [(2, -1, Dummy), (3, -1, Dummy)])
+        
+    def test_disconnect_missing(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(sourceids=(),
+                                           toraise=ValueError('a'))
+        self.assertRaises(ValueError, inst.prop.disconnect, [2,3])
+
+    def test_disconnect_with_ignore_missing(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(sourceids=(),
+                                           toraise=ValueError('a'))
+        inst.prop.disconnect([2,3], ignore_missing=True)
+        self.assertEqual(svcs['objectmap'].disconnected, [])
+
+    def test_ignore_missing_implicit(self):
+        inst = self._makeInst(ignore_missing=True)
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(sourceids=(),
+                                           toraise=ValueError('a'))
+        inst.prop.disconnect([2,3])
+        self.assertEqual(svcs['objectmap'].disconnected, [])
+
+class Test_multireference_target_property(unittest.TestCase):
+    def setUp(self):
+        from substanced.interfaces import IFolder
+        @implementer(IFolder)
+        class DummyFolder(dict):
+            pass
+        self.DummyFolder = DummyFolder
+
+    def _makeInst(self, reftype=None, ignore_missing=False):
+        if reftype is None:
+            reftype = Dummy
+        from . import multireference_target_property
+        class Inner(self.DummyFolder):
+            prop = multireference_target_property(
+                reftype,
+                ignore_missing=ignore_missing
+                )
+        inst = Inner()
+        inst.__objectid__ = -1
+        return inst
+
+    def test_get_zero(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(sourceids=())
+        self.assertEqual(list(inst.prop), [])
+
+    def test_get_one(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(sourceids=(1,), result=object)
+        self.assertEqual(list(inst.prop), [object])
+
+    def test_get_two(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(sourceids=(1,2), result=object)
+        self.assertEqual(list(inst.prop), [object, object])
+
+    def test_del_zero(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(sourceids=())
+        del inst.prop
+        self.assertEqual(list(inst.prop), [])
+
+    def test_del_one(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(sourceids=(1,))
+        del inst.prop
+        self.assertEqual(svcs['objectmap'].disconnected, [(1, -1, Dummy)])
+
+    def test_del_two(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(sourceids=(1,2))
+        del inst.prop
+        self.assertEqual(svcs['objectmap'].disconnected,
+                         [(1, -1, Dummy), (2, -1, Dummy)])
+
+    def test_set_None(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(sourceids=())
+        self.assertRaises(ValueError, inst.__setattr__, 'prop', None)
+
+    def test_set_zero(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(sourceids=(1,))
+        inst.prop = []
+        self.assertEqual(svcs['objectmap'].disconnected, [(1, -1, Dummy)])
+        self.assertEqual(svcs['objectmap'].connected, [])
+
+    def test_set_one(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(sourceids=(1,))
+        inst.prop = [2]
+        self.assertEqual(svcs['objectmap'].disconnected, [(1, -1, Dummy)])
+        self.assertEqual(svcs['objectmap'].connected, [(2, -1, Dummy)])
+
+    def test_set_two(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(sourceids=(1,))
+        inst.prop = [2, 3]
+        self.assertEqual(svcs['objectmap'].disconnected, [(1, -1, Dummy)])
+        self.assertEqual(svcs['objectmap'].connected,
+                         [(2, -1, Dummy), (3, -1, Dummy)])
+
+    def test_clear(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(sourceids=(1,))
+        inst.prop.clear()
+        self.assertEqual(svcs['objectmap'].disconnected, [(1, -1, Dummy)])
+
+    def test_connect(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(sourceids=())
+        inst.prop.connect([2,3])
+        self.assertEqual(svcs['objectmap'].connected,
+                         [(2, -1, Dummy), (3, -1, Dummy)])
+        
+    def test_connect_missing(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(sourceids=(),
+                                           toraise=ValueError('a'))
+        self.assertRaises(ValueError, inst.prop.connect, [2,3])
+
+    def test_connect_with_ignore_missing(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(sourceids=(),
+                                           toraise=ValueError('a'))
+        inst.prop.connect([2,3], ignore_missing=True)
+        self.assertEqual(svcs['objectmap'].connected, [])
+
+    def test_disconnect(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(sourceids=())
+        inst.prop.disconnect([2,3])
+        self.assertEqual(svcs['objectmap'].disconnected,
+                         [(2, -1, Dummy), (3, -1, Dummy)])
+        
+    def test_disconnect_missing(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(sourceids=(),
+                                           toraise=ValueError('a'))
+        self.assertRaises(ValueError, inst.prop.disconnect, [2,3])
+
+    def test_disconnect_with_ignore_missing(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(sourceids=(),
+                                           toraise=ValueError('a'))
+        inst.prop.disconnect([2,3], ignore_missing=True)
+        self.assertEqual(svcs['objectmap'].disconnected, [])
+
+    def test_ignore_missing_implicit(self):
+        inst = self._makeInst(ignore_missing=True)
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(sourceids=(),
+                                           toraise=ValueError('a'))
+        inst.prop.disconnect([2,3])
+        self.assertEqual(svcs['objectmap'].disconnected, [])
+
+class TestMultireference(unittest.TestCase):
+    def _makeOne(
+        self,
+        context,
+        oids,
+        objectmap,
+        ignore_missing=False,
+        resolve=False,
+        orientation='source'
+        ):
+        from . import Multireference
+        return Multireference(
+            context,
+            oids,
+            objectmap,
+            'reftype',
+            ignore_missing=ignore_missing,
+            resolve=resolve,
+            orientation=orientation
+            )
+
+    def _makeContext(self):
+        resource = testing.DummyResource()
+        resource.__objectid__ = -1
+        return resource
+
+    def test___nonzero__True(self):
+        inst = self._makeOne(None, [1], None)
+        self.assertTrue(inst.__nonzero__())
+        
+    def test___nonzero__False(self):
+        inst = self._makeOne(None, [], None)
+        self.assertFalse(inst.__nonzero__())
+
+    def test___getitem__(self):
+        inst = self._makeOne(None, [1], None)
+        self.assertEqual(inst[0], 1)
+
+    def test___getitem___with_resolve(self):
+        objectmap = DummyObjectMap(result=object)
+        inst = self._makeOne(None, [1], objectmap, resolve=True)
+        self.assertEqual(inst[0], object)
+        
+    def test___contains__True(self):
+        inst = self._makeOne(None, [1], None)
+        self.assertTrue(inst.__contains__(1))
+        
+    def test___contains__False(self):
+        inst = self._makeOne(None, [], None)
+        self.assertFalse(inst.__contains__(1))
+            
+    def test___contains___withresolve_True(self):
+        objectmap = DummyObjectMap(result=object)
+        inst = self._makeOne(None, [1], objectmap, resolve=True)
+        self.assertTrue(inst.__contains__(object))
+        
+    def test___contains___withresolve_False(self):
+        inst = self._makeOne(None, [], None, resolve=True)
+        self.assertFalse(inst.__contains__(object))
+
+    def test___iter__(self):
+        inst = self._makeOne(None, [1], None)
+        self.assertEqual(list(inst.__iter__()), [1])
+
+    def test___iter__withresolve(self):
+        objectmap = DummyObjectMap(result=object)
+        inst = self._makeOne(None, [1], objectmap, resolve=True)
+        self.assertEqual(list(inst.__iter__()), [object])
+
+    def test___len__(self):
+        inst = self._makeOne(None, [1], None)
+        self.assertEqual(len(inst), 1)
+
+    def test_connect_zero(self):
+        objectmap = DummyObjectMap()
+        context = self._makeContext()
+        inst = self._makeOne(context, [1], objectmap)
+        inst.connect([])
+        self.assertEqual(objectmap.connected, [])
+        
+    def test_connect_one(self):
+        objectmap = DummyObjectMap()
+        context = self._makeContext()
+        inst = self._makeOne(context, [1], objectmap)
+        inst.connect([1])
+        self.assertEqual(objectmap.connected, [(-1, 1, 'reftype')])
+
+    def test_connect_two(self):
+        objectmap = DummyObjectMap()
+        context = self._makeContext()
+        inst = self._makeOne(context, [1, 2], objectmap)
+        inst.connect([1, 2])
+        self.assertEqual(
+            objectmap.connected,
+            [(-1, 1, 'reftype'), (-1, 2, 'reftype')]
+            )
+
+    def test_connect_ignore_missing_explicit(self):
+        objectmap = DummyObjectMap(toraise=ValueError('a'))
+        context = self._makeContext()
+        inst = self._makeOne(context, [1, 2], objectmap)
+        inst.connect([1, 2], ignore_missing=True)
+        self.assertEqual(objectmap.connected, [])
+
+    def test_connect_ignore_missing_implicit(self):
+        objectmap = DummyObjectMap(toraise=ValueError('a'))
+        context = self._makeContext()
+        inst = self._makeOne(context, [1, 2], objectmap, ignore_missing=True)
+        inst.connect([1, 2])
+        self.assertEqual(objectmap.connected, [])
+
+    def test_connect_nonsource(self):
+        objectmap = DummyObjectMap()
+        context = self._makeContext()
+        inst = self._makeOne(context, [1, 2], objectmap, orientation='target')
+        inst.connect([1, 2])
+        self.assertEqual(
+            objectmap.connected,
+            [(1, -1, 'reftype'), (2, -1, 'reftype')]
+            )
+
+    def test_disconnect_zero(self):
+        objectmap = DummyObjectMap()
+        context = self._makeContext()
+        inst = self._makeOne(context, [1], objectmap)
+        inst.disconnect([])
+        self.assertEqual(objectmap.disconnected, [])
+        
+    def test_disconnect_one(self):
+        objectmap = DummyObjectMap()
+        context = self._makeContext()
+        inst = self._makeOne(context, [1], objectmap)
+        inst.disconnect([1])
+        self.assertEqual(objectmap.disconnected, [(-1, 1, 'reftype')])
+
+    def test_disconnect_two(self):
+        objectmap = DummyObjectMap()
+        context = self._makeContext()
+        inst = self._makeOne(context, [1, 2], objectmap)
+        inst.disconnect([1, 2])
+        self.assertEqual(
+            objectmap.disconnected,
+            [(-1, 1, 'reftype'), (-1, 2, 'reftype')]
+            )
+
+    def test_disconnect_ignore_missing_explicit(self):
+        objectmap = DummyObjectMap(toraise=ValueError('a'))
+        context = self._makeContext()
+        inst = self._makeOne(context, [1, 2], objectmap)
+        inst.disconnect([1, 2], ignore_missing=True)
+        self.assertEqual(objectmap.disconnected, [])
+
+    def test_disconnect_ignore_missing_implicit(self):
+        objectmap = DummyObjectMap(toraise=ValueError('a'))
+        context = self._makeContext()
+        inst = self._makeOne(context, [1, 2], objectmap, ignore_missing=True)
+        inst.disconnect([1, 2])
+        self.assertEqual(objectmap.disconnected, [])
+
+    def test_disconnect_nonsource(self):
+        objectmap = DummyObjectMap()
+        context = self._makeContext()
+        inst = self._makeOne(context, [1, 2], objectmap, orientation='target')
+        inst.disconnect([1, 2])
+        self.assertEqual(
+            objectmap.disconnected,
+            [(1, -1, 'reftype'), (2, -1, 'reftype')]
+            )
+
+    def test_clear(self):
+        objectmap = DummyObjectMap()
+        context = self._makeContext()
+        inst = self._makeOne(context, [1, 2], objectmap)
+        inst.clear()
+        self.assertEqual(
+            objectmap.disconnected,
+            [(-1, 1, 'reftype'), (-1, 2, 'reftype')]
+            )
 
 class Dummy(object):
     pass
@@ -1109,14 +1900,15 @@ def split(s):
     return (u'',) + tuple(filter(None, s.split(u'/')))
 
 class DummyObjectMap(object):
-    def __init__(self, targetids=(), sourceids=(), result=None):
+    def __init__(self, targetids=(), sourceids=(), result=None, toraise=None):
         self.added = []
         self.removed = []
-        self.connected = None
-        self.disconnected = None
+        self.connected = []
+        self.disconnected = []
         self._targetids = targetids
         self._sourceids = sourceids
         self.result = result
+        self.toraise = toraise
 
     def add(self, obj, path, replace_oid=False):
         self.added.append((obj, path))
@@ -1141,10 +1933,14 @@ class DummyObjectMap(object):
         return self._sourceids
 
     def disconnect(self, source, target, reftype):
-        self.disconnected = (source, target, reftype)
+        if self.toraise:
+            raise self.toraise
+        self.disconnected.append((source, target, reftype))
 
     def connect(self, source, target, reftype):
-        self.connected = (source, target, reftype)
+        if self.toraise:
+            raise self.toraise
+        self.connected.append((source, target, reftype))
 
 
 class DummyEvent(object):

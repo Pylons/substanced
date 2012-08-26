@@ -135,7 +135,7 @@ class TestGroupPropertysheet(unittest.TestCase):
     def test_get(self):
         context = testing.DummyResource()
         context.__name__ = 'name'
-        context.get_memberids = lambda: [1]
+        context.memberids = [1]
         context.description = 'desc'
         request = testing.DummyRequest()
         inst = self._makeOne(context, request)
@@ -154,18 +154,19 @@ class TestGroupPropertysheet(unittest.TestCase):
             self.assertEqual(new, 'name')
             context.renamed = True
         parent.rename = rename
-        def disconnect():
-            context.disconnected = True
-        def connect(*members):
+        def clear():
+            context.cleared = True
+        def connect(members):
             self.assertEqual(members, (1,))
             context.connected = True
-        context.disconnect = disconnect
-        context.connect = connect
+        context.memberids = testing.DummyResource()
+        context.memberids.clear = clear
+        context.memberids.connect = connect
         inst = self._makeOne(context, request)
         inst.set({'description':'desc', 'name':'name', 'members':(1,)})
         self.assertEqual(context.description, 'desc')
         self.assertTrue(context.renamed)
-        self.assertTrue(context.disconnected)
+        self.assertTrue(context.cleared)
         self.assertTrue(context.connected)
 
     def test_set_newname_same_as_oldname(self):
@@ -173,17 +174,18 @@ class TestGroupPropertysheet(unittest.TestCase):
         request = testing.DummyRequest()
         parent = self._makeParent()
         parent['oldname'] = context
-        def disconnect():
-            context.disconnected = True
-        def connect(*members):
+        def clear():
+            context.cleared = True
+        def connect(members):
             self.assertEqual(members, (1,))
             context.connected = True
-        context.disconnect = disconnect
-        context.connect = connect
+        context.memberids = testing.DummyResource()
+        context.memberids.clear = clear
+        context.memberids.connect = connect
         inst = self._makeOne(context, request)
         inst.set({'description':'desc', 'name':'name', 'members':(1,)})
         self.assertEqual(context.description, 'desc')
-        self.assertTrue(context.disconnected)
+        self.assertTrue(context.cleared)
         self.assertTrue(context.connected)
 
 class TestGroup(unittest.TestCase):
@@ -191,64 +193,9 @@ class TestGroup(unittest.TestCase):
         from .. import Group
         return Group(description)
 
-    def _makeParent(self):
-        parent = DummyFolder()
-        parent['__services__'] = DummyFolder()
-        objectmap = DummyObjectMap()
-        parent['__services__']['objectmap'] = objectmap
-        parent.objectmap = objectmap
-        return parent
-
-    def test_get_memberids(self):
-        parent = self._makeParent()
-        inst = self._makeOne()
-        parent['name'] = inst
-        self.assertEqual(inst.get_memberids(), ())
-
-    def test_get_members(self):
-        parent = self._makeParent()
-        inst = self._makeOne()
-        parent['name'] = inst
-        self.assertEqual(inst.get_members(), ())
-
-    def test_connect(self):
-        from .. import UserToGroup
-        parent = self._makeParent()
-        inst = self._makeOne()
-        parent['name'] = inst
-        inst.connect(1, 2)
-        self.assertEqual(parent.objectmap.connections,
-                         [(1, inst, UserToGroup), (2, inst, UserToGroup)])
-
-    def test_connect_with_memberobject(self):
-        from .. import UserToGroup
-        parent = self._makeParent()
-        inst = self._makeOne()
-        parent['name'] = inst
-        member = testing.DummyResource()
-        member.__objectid__ = 5
-        inst.connect(member)
-        self.assertEqual(parent.objectmap.connections,
-                         [(member, inst, UserToGroup)])
-
-    def test_disconnect_with_members(self):
-        from .. import UserToGroup
-        parent = self._makeParent()
-        inst = self._makeOne()
-        parent['name'] = inst
-        inst.disconnect(1, 2)
-        self.assertEqual(parent.objectmap.disconnections,
-                         [(1, inst, UserToGroup), (2, inst, UserToGroup)])
-
-    def test_disconnect_no_members(self):
-        from .. import UserToGroup
-        parent = self._makeParent()
-        inst = self._makeOne()
-        inst.get_memberids = lambda: (1,2)
-        parent['name'] = inst
-        inst.disconnect()
-        self.assertEqual(parent.objectmap.disconnections,
-                         [(1, inst, UserToGroup), (2, inst, UserToGroup)])
+    def test_ctor(self):
+        inst = self._makeOne('abc')
+        self.assertEqual(inst.description, 'abc')
 
 class Test_login_validator(unittest.TestCase):
     def _makeOne(self, node, kw):
@@ -344,7 +291,7 @@ class TestUserPropertySheet(unittest.TestCase):
         context = testing.DummyResource()
         context.__name__ = 'fred'
         context.email = 'email'
-        context.get_groupids = lambda: [1,2]
+        context.groupids = [1,2]
         request = testing.DummyRequest()
         inst = self._makeOne(context, request)
         self.assertEqual(inst.get(),
@@ -360,18 +307,19 @@ class TestUserPropertySheet(unittest.TestCase):
             self.assertEqual(new, 'name')
             context.renamed = True
         parent.rename = rename
-        def disconnect():
-            context.disconnected = True
-        def connect(*members):
+        def clear():
+            context.cleared = True
+        def connect(members):
             self.assertEqual(members, (1,))
             context.connected = True
-        context.disconnect = disconnect
-        context.connect = connect
+        context.groupids = testing.DummyResource()
+        context.groupids.clear = clear
+        context.groupids.connect = connect
         inst = self._makeOne(context, request)
         inst.set({'email':'email', 'login':'name', 'groups':(1,)})
         self.assertEqual(context.email, 'email')
         self.assertTrue(context.renamed)
-        self.assertTrue(context.disconnected)
+        self.assertTrue(context.cleared)
         self.assertTrue(context.connected)
 
     def test_set_newname_same_as_oldname(self):
@@ -379,17 +327,18 @@ class TestUserPropertySheet(unittest.TestCase):
         request = testing.DummyRequest()
         parent = testing.DummyResource()
         parent['name'] = context
-        def disconnect():
-            context.disconnected = True
-        def connect(*members):
+        def clear():
+            context.cleared = True
+        def connect(members):
             self.assertEqual(members, (1,))
             context.connected = True
-        context.disconnect = disconnect
-        context.connect = connect
+        context.groupids = testing.DummyResource()
+        context.groupids.clear = clear
+        context.groupids.connect = connect
         inst = self._makeOne(context, request)
         inst.set({'email':'email', 'login':'name', 'groups':(1,)})
         self.assertEqual(context.email, 'email')
-        self.assertTrue(context.disconnected)
+        self.assertTrue(context.cleared)
         self.assertTrue(context.connected)
 
 class TestUser(unittest.TestCase):
@@ -431,69 +380,6 @@ class TestUser(unittest.TestCase):
         inst.email_password_reset(request)
         self.assertTrue(get_mailer(request).outbox)
 
-    def test_get_groupids(self):
-        from ...testing import make_site
-        parent = make_site()
-        parent['__services__'].replace('objectmap', DummyObjectMap(True))
-        inst = self._makeOne('abc')
-        parent['foo'] = inst
-        self.assertEqual(inst.get_groupids(), True)
-
-    def test_get_groups(self):
-        from ...testing import make_site
-        parent = make_site()
-        parent['__services__'].replace('objectmap', DummyObjectMap(True))
-        inst = self._makeOne('abc')
-        parent['foo'] = inst
-        self.assertEqual(inst.get_groups(), True)
-
-    def test_connect(self):
-        from .. import UserToGroup
-        from ...testing import make_site
-        parent = make_site()
-        omap = DummyObjectMap(True)
-        parent['__services__'].replace('objectmap', omap)
-        inst = self._makeOne('abc')
-        parent['foo'] = inst
-        inst.connect(1, 2)
-        self.assertEqual(omap.connections,
-                         [(inst, 1, UserToGroup), (inst, 2, UserToGroup)])
-
-    def test_disconnect_no_groups(self):
-        from .. import UserToGroup
-        from ...testing import make_site
-        parent = make_site()
-        omap = DummyObjectMap(True)
-        parent['__services__'].replace('objectmap', omap)
-        inst = self._makeOne('abc')
-        inst.get_groupids = lambda: (1, 2)
-        parent['foo'] = inst
-        inst.disconnect()
-        self.assertEqual(omap.disconnections,
-                         [(inst, 1, UserToGroup), (inst, 2, UserToGroup)])
-        
-    def test_disconnect_with_groups(self):
-        from .. import UserToGroup
-        from ...testing import make_site
-        parent = make_site()
-        omap = DummyObjectMap(True)
-        parent['__services__'].replace('objectmap', omap)
-        inst = self._makeOne('abc')
-        parent['foo'] = inst
-        inst.disconnect(1,2)
-        self.assertEqual(omap.disconnections,
-                         [(inst, 1, UserToGroup), (inst, 2, UserToGroup)])
-
-    def test__resolve_group_with_oid(self):
-        from ...testing import make_site
-        parent = make_site()
-        omap = DummyObjectMap(True)
-        parent['__services__'].replace('objectmap', omap)
-        inst = self._makeOne('abc')
-        g1 = testing.DummyResource()
-        g1.__objectid__ = 1
-        self.assertEqual(inst._resolve_group(g1), g1)
-
 class Test_groupfinder(unittest.TestCase):
     def _callFUT(self, userid, request):
         from .. import groupfinder
@@ -528,7 +414,7 @@ class Test_groupfinder(unittest.TestCase):
         context = testing.DummyResource(__provides__=IFolder)
         omap = testing.DummyResource()
         user = testing.DummyResource()
-        user.get_groupids = lambda *arg: (1,2)
+        user.groupids = (1,2)
         omap.object_for = lambda *arg: user
         services = testing.DummyResource()
         services['objectmap'] = omap
@@ -577,29 +463,13 @@ class DummyObjectMap(object):
     def __init__(self, result=()):
         self.result = result
         self.connections = []
-        self.disconnections = []
-
-    def object_for(self, oid):
-        return oid
-
-    def sourceids(self, object, reftype):
-        return self.result
-
-    def targetids(self, object, reftype):
-        return self.result
 
     def sources(self, object, reftype):
-        return self.result
-
-    def targets(self, object, reftype):
         return self.result
 
     def connect(self, source, target, reftype):
         self.connections.append((source, target, reftype))
 
-    def disconnect(self, source, target, reftype):
-        self.disconnections.append((source, target, reftype))
-    
 class DummyContentRegistry(object):
     def __init__(self, result):
         self.result = result

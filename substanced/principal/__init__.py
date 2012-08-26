@@ -43,6 +43,12 @@ from ..schema import Schema
 from ..folder import Folder
 from ..util import oid_of
 from ..property import PropertySheet
+from ..objectmap import (
+    multireference_targetid_property,
+    multireference_target_property,
+    multireference_sourceid_property,
+    multireference_source_property,
+    )
 
 class UserToGroup(Interface):
     """ The reference type used to store users-to-groups references in the
@@ -223,7 +229,7 @@ class GroupPropertySheet(PropertySheet):
         props = {}
         props['description'] = context.description
         props['name'] = context.__name__
-        member_strs = map(str, context.get_memberids())
+        member_strs = map(str, context.memberids)
         props['members'] = member_strs
         return props
 
@@ -236,8 +242,8 @@ class GroupPropertySheet(PropertySheet):
         if newname != oldname:
             parent = context.__parent__
             parent.rename(oldname, newname)
-        context.disconnect()
-        context.connect(*struct['members'])
+        context.memberids.clear()
+        context.memberids.connect(struct['members'])
 
 @content(
     'Group',
@@ -255,45 +261,8 @@ class Group(Folder):
         Folder.__init__(self)
         self.description = description
 
-    def _resolve_member(self, member_or_memberid):
-        objectmap = find_service(self, 'objectmap')
-        if oid_of(member_or_memberid, None) is None:
-            # it's a group id
-            member = objectmap.object_for(member_or_memberid)
-        else:
-            member = member_or_memberid
-        return member
-
-    def get_memberids(self):
-        """ Returns a sequence of member ids which belong to this group. """
-        objectmap = find_service(self, 'objectmap')
-        return objectmap.sourceids(self, UserToGroup)
-
-    def get_members(self):
-        """ Returns a generator of member objects which belong to this group. 
-        """
-        objectmap = find_service(self, 'objectmap')
-        return objectmap.sources(self, UserToGroup)
-
-    def connect(self, *members):
-        """ Connect this group to one or more user objects or user 
-        objectids."""
-        objectmap = find_service(self, 'objectmap')
-        for memberid in members:
-            member = self._resolve_member(memberid)
-            if member is not None:
-                objectmap.connect(member, self, UserToGroup)
-
-    def disconnect(self, *members):
-        """ Disconnect this group from one or more user objects or user 
-        objectids."""
-        if not members:
-            members = self.get_memberids()
-        objectmap = find_service(self, 'objectmap')
-        for memberid in members:
-            member = self._resolve_member(memberid)
-            if member is not None:
-                objectmap.disconnect(member, self, UserToGroup)
+    memberids = multireference_targetid_property(UserToGroup)
+    members = multireference_target_property(UserToGroup)
 
 @colander.deferred
 def login_validator(node, kw):
@@ -360,7 +329,7 @@ class UserPropertySheet(PropertySheet):
         props = {}
         props['email'] = context.email
         props['login'] = context.__name__
-        props['groups'] = map(str, context.get_groupids())
+        props['groups'] = map(str, context.groupids)
         return props
 
     def set(self, struct):
@@ -371,8 +340,8 @@ class UserPropertySheet(PropertySheet):
         if newname != oldname:
             parent = context.__parent__
             parent.rename(oldname, newname)
-        context.disconnect()
-        context.connect(*struct['groups'])
+        context.groupids.clear()
+        context.groupids.connect(struct['groups'])
 
 @content(
     'User',
@@ -389,19 +358,13 @@ class User(Folder):
 
     pwd_manager = BCRYPTPasswordManager()
 
+    groupids = multireference_sourceid_property(UserToGroup)
+    groups = multireference_source_property(UserToGroup)
+
     def __init__(self, password, email):
         Folder.__init__(self)
         self.password = self.pwd_manager.encode(password)
         self.email = email
-
-    def _resolve_group(self, group_or_groupid):
-        objectmap = find_service(self, 'objectmap')
-        if oid_of(group_or_groupid, None) is None:
-            # it's a group id
-            group = objectmap.object_for(group_or_groupid)
-        else:
-            group = group_or_groupid
-        return group
 
     def check_password(self, password):
         """ Checks if the plaintext password passed as ``password`` matches
@@ -428,38 +391,6 @@ class User(Folder):
             )
         mailer = get_mailer(request)
         mailer.send(message)
-
-    def get_groupids(self, objectmap=None):
-        """ Returns a sequence of group ids which this user is a member of. """
-        if objectmap is None:
-            objectmap = find_service(self, 'objectmap')
-        return objectmap.targetids(self, UserToGroup)
-
-    def get_groups(self):
-        """ Returns a generator of group objects which this user is a member
-        of."""
-        objectmap = find_service(self, 'objectmap')
-        return objectmap.targets(self, UserToGroup)
-
-    def connect(self, *groups):
-        """ Connect this user to one or more group objects or group 
-        objectids."""
-        objectmap = find_service(self, 'objectmap')
-        for groupid in groups:
-            group = self._resolve_group(groupid)
-            if group is not None:
-                objectmap.connect(self, group, UserToGroup)
-
-    def disconnect(self, *groups):
-        """ Disconnect this user from one or more group objects or group 
-        objectids."""
-        if not groups:
-            groups = self.get_groupids()
-        objectmap = find_service(self, 'objectmap')
-        for groupid in groups:
-            group = self._resolve_group(groupid)
-            if group is not None:
-                objectmap.disconnect(self, group, UserToGroup)
 
 class UserToPasswordReset(object):
     pass
@@ -499,7 +430,7 @@ def groupfinder(userid, request):
     user = objectmap.object_for(userid)
     if user is None:
         return None
-    return user.get_groupids(objectmap)
+    return user.groupids
 
 def includeme(config): # pragma: no cover
     config.scan('.')

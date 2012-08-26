@@ -6,6 +6,7 @@ import BTrees
 
 from zope.interface import implementer
 
+from pyramid.compat import is_nonstr_iter
 from pyramid.location import lineage
 from pyramid.traversal import (
     resource_path_tuple,
@@ -544,7 +545,7 @@ def object_removed(event):
     objectmap.remove(objectid, references=not moving)
 
 def _reference_property(reftype, resolve, orientation='source'):
-    def _get_oid(self, resolve=resolve):
+    def _get(self, resolve=resolve):
         objectmap = find_service(self, 'objectmap')
         if orientation == 'source':
             oids = list(objectmap.targetids(self, reftype))
@@ -559,8 +560,8 @@ def _reference_property(reftype, resolve, orientation='source'):
             return objectmap.object_for(oid)
         return oid
 
-    def _set_oid(self, oid):
-        _del_oid(self)
+    def _set(self, oid):
+        _del(self)
         if oid is None:
             return
         objectmap = find_service(self, 'objectmap')
@@ -569,8 +570,8 @@ def _reference_property(reftype, resolve, orientation='source'):
         else:
             objectmap.connect(oid, self, reftype)
 
-    def _del_oid(self):
-        oid = _get_oid(self, resolve=False)
+    def _del(self):
+        oid = _get(self, resolve=False)
         if oid is None:
             return
         objectmap = find_service(self, 'objectmap')
@@ -579,7 +580,7 @@ def _reference_property(reftype, resolve, orientation='source'):
         else:
             objectmap.disconnect(oid, self, reftype)
 
-    return property(_get_oid, _set_oid, _del_oid)
+    return property(_get, _set, _del)
 
 def referenceid_source_property(reftype):
     """
@@ -688,6 +689,151 @@ def reference_target_property(reftype):
     the reference and any object assigned to the property is the target."""
     return _reference_property(reftype, resolve=True, orientation='target')
 
+def _multireference_property(
+    reftype,
+    ignore_missing,
+    resolve,
+    orientation,
+    ):
+
+    def _get(self, resolve=resolve):
+        objectmap = find_service(self, 'objectmap')
+        if orientation == 'source':
+            oids = objectmap.targetids(self, reftype)
+        else:
+            oids = objectmap.sourceids(self, reftype)
+        return Multireference(
+            self,
+            oids,
+            objectmap,
+            reftype,
+            ignore_missing,
+            resolve,
+            orientation,
+            )
+
+    def _set(self, oids):
+        if not is_nonstr_iter(oids):
+            raise ValueError('Must be a sequence')
+        iterable = _del(self)
+        iterable.connect(oids)
+
+    def _del(self):
+        iterable = _get(self, resolve=False)
+        iterable.clear()
+        return iterable
+
+    return property(_get, _set, _del)
+
+def multireference_sourceid_property(reftype, ignore_missing=False):
+    return _multireference_property(
+        reftype,
+        ignore_missing=ignore_missing,
+        resolve=False,
+        orientation='source'
+        )
+
+def multireference_source_property(reftype, ignore_missing=False):
+    return _multireference_property(
+        reftype,
+        ignore_missing=ignore_missing,
+        resolve=True,
+        orientation='source'
+        )
+
+def multireference_targetid_property(reftype, ignore_missing=False):
+    return _multireference_property(
+        reftype,
+        ignore_missing=ignore_missing,
+        resolve=False,
+        orientation='target'
+        )
+
+def multireference_target_property(reftype, ignore_missing=False):
+    return _multireference_property(
+        reftype,
+        ignore_missing=ignore_missing,
+        resolve=True,
+        orientation='target'
+        )
+
+class Multireference(object):
+    """ An iterable of objects (of ``resolve`` is true) or oids
+    (if ``resolve`` is false).  Also supports ``connect``, ``disconnect``,
+    and ``clear`` methods. """
+    def __init__(
+        self,
+        context,
+        oids,
+        objectmap,
+        reftype,
+        ignore_missing,
+        resolve,
+        orientation,
+        ):
+        self.context = context
+        self.oids = oids
+        self.objectmap = objectmap
+        self.reftype = reftype
+        self.ignore_missing = ignore_missing
+        self.resolve = resolve
+        self.orientation = orientation
+
+    def __nonzero__(self):
+        return bool(self.oids)
+
+    def __getitem__(self, i):
+        oid = self.oids[i]
+        if self.resolve:
+            return self.objectmap.object_for(oid)
+        return oid
+
+    def __contains__(self, other):
+        if self.resolve:
+            return other in [
+                self.objectmap.object_for(oid) for oid in self.oids
+                ]
+        return other in self.oids
+
+    def __iter__(self):
+        if self.resolve:
+            return iter((self.objectmap.object_for(oid) for oid in self.oids))
+        return iter(self.oids)
+
+    def __len__(self):
+        return len(self.oids)
+
+    def connect(self, objects, ignore_missing=None):
+        if ignore_missing is None:
+            ignore_missing = self.ignore_missing
+        ctx_oid = oid_of(self.context)
+        for obj in objects:
+            try:
+                if self.orientation == 'source':
+                    self.objectmap.connect(ctx_oid, obj, self.reftype)
+                else:
+                    self.objectmap.connect(obj, ctx_oid, self.reftype)
+            except ValueError:
+                if not ignore_missing:
+                    raise
+
+    def disconnect(self, objects, ignore_missing=None):
+        if ignore_missing is None:
+            ignore_missing = self.ignore_missing
+        ctx_oid = oid_of(self.context)
+        for obj in objects:
+            try:
+                if self.orientation == 'source':
+                    self.objectmap.disconnect(ctx_oid, obj, self.reftype)
+                else:
+                    self.objectmap.disconnect(obj, ctx_oid, self.reftype)
+            except ValueError:
+                if not ignore_missing:
+                    raise
+
+    def clear(self):
+        self.disconnect(self.oids)
+            
 def includeme(config): # pragma: no cover
     config.scan('.')
     

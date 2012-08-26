@@ -17,7 +17,9 @@ class TestRoot(unittest.TestCase):
         services.add = services.__setitem__
         def connect(other):
             group.connected = other
-        group.connect = connect
+        memberids = testing.DummyResource()
+        memberids.connect = connect
+        group.memberids = memberids
         group.__objectid__ = 1
         user = testing.DummyResource()
         def add_user(*arg, **kw):

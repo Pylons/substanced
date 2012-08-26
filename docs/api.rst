@@ -292,6 +292,14 @@ Other Helpers
 
 .. autofunction:: reference_target_property
 
+.. autofunction:: multireferenceid_source_property
+
+.. autofunction:: multireference_source_property
+
+.. autofunction:: multireferenceid_target_property
+
+.. autofunction:: multireference_target_property
+
 .. autofunction:: includeme
 
 

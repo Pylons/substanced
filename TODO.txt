@@ -106,3 +106,8 @@ Docs
 - Explain __sd_deletable__, __sd_addable__, __sd_hidden__.
 
 - Explain event listener decorators and add_content_subscriber.
+
+- Narrative docs for reference properties.
+
+- Docstrings for multireference property implementations.
+
