@@ -543,6 +543,98 @@ def object_removed(event):
     objectid = oid_of(obj)
     objectmap.remove(objectid, references=not moving)
 
+def _reference_property(reftype, resolve):
+    def _get_oid(self, resolve=resolve):
+        objectmap = find_service(self, 'objectmap')
+        target_ids = list(objectmap.targetids(self, reftype))
+        if not target_ids:
+            target_id = None
+        else:
+            assert(len(target_ids)==1)
+            target_id = target_ids[0]
+        if resolve:
+            return objectmap.object_for(target_id)
+        return target_id
+
+    def _set_oid(self, target_id):
+        _del_oid(self)
+        if target_id is None:
+            return
+        objectmap = find_service(self, 'objectmap')
+        objectmap.connect(self, target_id, reftype)
+
+    def _del_oid(self):
+        target_id = _get_oid(self, resolve=False)
+        if target_id is None:
+            return
+        objectmap = find_service(self, 'objectmap')
+        objectmap.disconnect(self, target_id, reftype)
+
+    return property(_get_oid, _set_oid, _del_oid)
+
+def referenceid_property(reftype):
+    """
+    Returns a property which, when set, establishes an :term:`object map
+    reference` between the property's instance and another object in the
+    objectmap based on the reference type ``reftype``.  It is comparable to a
+    Python 'weakref' between the persistent object instance which the
+    property is attached to and the persistent target object id; when the
+    target object or the object upon which the property is defined is removed
+    from the system, the reference is destroyed.
+
+    The ``reftype`` argument is a :term:`reference type`, a hashable object
+    that describes the type of the relation.  See
+    :meth:`substanced.objectmap.ObjectMap.connect` for more information about
+    reference types.
+
+    You can set, get, and delete the value.  When you set the value, a
+    relation is formed between the object which houses the property and the
+    target object id.  When you get the value, the related value (or ``None``
+    if no relation exists) is returned, when you delete the value, the
+    relation is destroyed and the value will revert to ``None``.
+
+    For example:
+
+    .. code-block:: python
+       :linenos:
+
+       # definition
+
+       from substanced.content import content
+       from substanced.objectmap import referenceid_property
+
+       @content('Profile')
+       class Profile(Persistent):
+           user_id = referenceid_property('profile-to-userid')
+
+       # subsequent usage of the property in a view...
+
+       profile = registry.content.create('Profile')
+       somefolder['profile'] = profile
+       profile.user_id = oid_of(request.user)
+       print profile.user_id # will print the oid of the user
+
+       # if the user is later deleted by unrelated code...
+
+       print profile.user_id # will print None
+
+       # or if you delete the value explicitly...
+
+       del profile.user_id
+       print profile.user_id # will print None
+
+    """
+    return _reference_property(reftype, resolve=False)
+
+def reference_property(reftype):
+    """
+    Exactly like :func:`substanced.objectmap.referenceid_property`, except its
+    getter returns the *instance* related to the target instead of the target
+    object id.  Likewise, its setter will accept another persistent object
+    instance that has an object id.
+    """
+    return _reference_property(reftype, resolve=True)
+
 def includeme(config): # pragma: no cover
     config.scan('.')
     

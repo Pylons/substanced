@@ -284,6 +284,10 @@ Other Helpers
 .. autoclass:: ObjectMap
    :members:
 
+.. autofunction:: referenceid_property
+
+.. autofunction:: reference_property
+
 .. autofunction:: includeme
 
 
@@ -342,9 +346,7 @@ Other Helpers
 
 .. autofunction:: add_mgmt_view
 
-.. autofunction:: add_permission
-
-.. autocfunction:: check_csrf_token
+.. autofunction:: check_csrf_token
 
 .. autoclass:: mgmt_view
 

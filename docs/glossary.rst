@@ -77,3 +77,28 @@ Glossary
    State
    States
      TODO
+
+   Object Map Reference
+     A relationship kept in the :term:`object map` between two persistent
+     objects.  It is composed of a source, some number of targets, and a
+     :term:`reference type`.
+
+   Reference Type
+     A hashable object describing the type of relationship between two
+     objects in the :term:`object map`.  It's usually a string.
+
+   Object Map
+     A Substance D :term:`service` which maps the object ids of persistent
+     objects to paths and object ids to other object ids in the system.
+
+   Service
+     A substanced content object which lives in a specially named
+     ``__services__`` folder.
+
+   Global Object
+     A Python object that can be obtained via an ``import`` statement.
+
+   Factory Wrapper
+     A function that wraps a content factory when the content factory is not
+     a class or when a ``factory_name`` is used within the content type
+     declaration.

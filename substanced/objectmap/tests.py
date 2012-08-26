@@ -1,5 +1,6 @@
 import sys
 import unittest
+from zope.interface import implementer
 
 from pyramid import testing
 
@@ -832,7 +833,138 @@ class Test_object_removed(unittest.TestCase):
         self._callFUT(event)
         self.assertEqual(objectmap.removed, [1])
         self.assertFalse(objectmap.references_removed)
-        
+
+class Test_referenceid_property(unittest.TestCase):
+    def setUp(self):
+        from substanced.interfaces import IFolder
+        @implementer(IFolder)
+        class DummyFolder(dict):
+            pass
+        self.DummyFolder = DummyFolder
+
+    def _makeInst(self, reftype=None):
+        if reftype is None:
+            reftype = Dummy
+        from . import referenceid_property
+        class Inner(self.DummyFolder):
+            prop = referenceid_property(reftype)
+        inst = Inner()
+        return inst
+
+    def test_get_no_targetids(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(targetids=())
+        self.assertEqual(inst.prop, None)
+
+    def test_get_one_targetid(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(targetids=(1,))
+        self.assertEqual(inst.prop, 1)
+
+    def test_get_gt_one_targetid(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(targetids=(1,2))
+        self.assertRaises(AssertionError, getattr, inst, 'prop')
+
+    def test_del_no_target_id(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(targetids=())
+        del inst.prop
+        self.assertEqual(inst.prop, None)
+
+    def test_del_one_targetid(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(targetids=(1,))
+        del inst.prop
+        self.assertEqual(svcs['objectmap'].disconnected, (1, Dummy))
+
+    def test_set_None(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(targetids=())
+        inst.prop = None
+        self.assertEqual(svcs['objectmap'].connected, None)
+
+    def test_set_not_None(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(targetids=())
+        inst.prop = 2
+        self.assertEqual(svcs['objectmap'].connected, (2, Dummy))
+
+class Test_reference_property(unittest.TestCase):
+    def setUp(self):
+        from substanced.interfaces import IFolder
+        @implementer(IFolder)
+        class DummyFolder(dict):
+            pass
+        self.DummyFolder = DummyFolder
+
+    def _makeInst(self, reftype=None):
+        if reftype is None:
+            reftype = Dummy
+        from . import reference_property
+        class Inner(self.DummyFolder):
+            prop = reference_property(reftype)
+        inst = Inner()
+        inst.__objectid__ = 1
+        return inst
+
+    def test_get_no_targetids(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(targetids=())
+        self.assertEqual(inst.prop, None)
+
+    def test_get_one_targetid(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        ob = object()
+        svcs['objectmap'] = DummyObjectMap(targetids=(1,), result=ob)
+        self.assertEqual(inst.prop, ob)
+
+    def test_get_gt_one_targetid(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(targetids=(1,2))
+        self.assertRaises(AssertionError, getattr, inst, 'prop')
+
+    def test_del_no_target_id(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(targetids=())
+        del inst.prop
+        self.assertEqual(inst.prop, None)
+
+    def test_del_one_targetid(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(targetids=(1,))
+        del inst.prop
+        self.assertEqual(svcs['objectmap'].disconnected, (1, Dummy))
+
+    def test_set_None(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(targetids=())
+        inst.prop = None
+        self.assertEqual(svcs['objectmap'].connected, None)
+
+    def test_set_not_None(self):
+        inst = self._makeInst()
+        svcs = inst['__services__'] = self.DummyFolder()
+        svcs['objectmap'] = DummyObjectMap(targetids=())
+        inst.prop = 2
+        self.assertEqual(svcs['objectmap'].connected, (2, Dummy))
+
+class Dummy(object):
+    pass
+
 def resource(path):
     path_tuple = split(path)
     parent = None
@@ -849,9 +981,13 @@ def split(s):
     return (u'',) + tuple(filter(None, s.split(u'/')))
 
 class DummyObjectMap(object):
-    def __init__(self):
+    def __init__(self, targetids=(), result=None):
         self.added = []
         self.removed = []
+        self.connected = None
+        self.disconnected = None
+        self._targetids = targetids
+        self.result = result
 
     def add(self, obj, path, replace_oid=False):
         self.added.append((obj, path))
@@ -865,6 +1001,19 @@ class DummyObjectMap(object):
         self.references_removed = references
         self.removed.append(objectid)
         return [objectid]
+
+    def object_for(self, objectid):
+        return self.result
+
+    def targetids(self, context, reftype):
+        return self._targetids
+
+    def disconnect(self, source, target_id, reftype):
+        self.disconnected = (target_id, reftype)
+
+    def connect(self, source, target_id, reftype):
+        self.connected = (target_id, reftype)
+
 
 class DummyEvent(object):
     def __init__(self, object, parent, moving=False, duplicating=False):
