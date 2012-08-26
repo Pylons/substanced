@@ -284,9 +284,13 @@ Other Helpers
 .. autoclass:: ObjectMap
    :members:
 
-.. autofunction:: referenceid_property
+.. autofunction:: referenceid_source_property
 
-.. autofunction:: reference_property
+.. autofunction:: reference_source_property
+
+.. autofunction:: referenceid_target_property
+
+.. autofunction:: reference_target_property
 
 .. autofunction:: includeme
 

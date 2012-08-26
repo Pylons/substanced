@@ -543,44 +543,54 @@ def object_removed(event):
     objectid = oid_of(obj)
     objectmap.remove(objectid, references=not moving)
 
-def _reference_property(reftype, resolve):
+def _reference_property(reftype, resolve, orientation='source'):
     def _get_oid(self, resolve=resolve):
         objectmap = find_service(self, 'objectmap')
-        target_ids = list(objectmap.targetids(self, reftype))
-        if not target_ids:
-            target_id = None
+        if orientation == 'source':
+            oids = list(objectmap.targetids(self, reftype))
         else:
-            assert(len(target_ids)==1)
-            target_id = target_ids[0]
+            oids = list(objectmap.sourceids(self, reftype))
+        if not oids:
+            oid = None
+        else:
+            assert(len(oids)==1)
+            oid = oids[0]
         if resolve:
-            return objectmap.object_for(target_id)
-        return target_id
+            return objectmap.object_for(oid)
+        return oid
 
-    def _set_oid(self, target_id):
+    def _set_oid(self, oid):
         _del_oid(self)
-        if target_id is None:
+        if oid is None:
             return
         objectmap = find_service(self, 'objectmap')
-        objectmap.connect(self, target_id, reftype)
+        if orientation == 'source':
+            objectmap.connect(self, oid, reftype)
+        else:
+            objectmap.connect(oid, self, reftype)
 
     def _del_oid(self):
-        target_id = _get_oid(self, resolve=False)
-        if target_id is None:
+        oid = _get_oid(self, resolve=False)
+        if oid is None:
             return
         objectmap = find_service(self, 'objectmap')
-        objectmap.disconnect(self, target_id, reftype)
+        if orientation == 'source':
+            objectmap.disconnect(self, oid, reftype)
+        else:
+            objectmap.disconnect(oid, self, reftype)
 
     return property(_get_oid, _set_oid, _del_oid)
 
-def referenceid_property(reftype):
+def referenceid_source_property(reftype):
     """
     Returns a property which, when set, establishes an :term:`object map
-    reference` between the property's instance and another object in the
-    objectmap based on the reference type ``reftype``.  It is comparable to a
-    Python 'weakref' between the persistent object instance which the
-    property is attached to and the persistent target object id; when the
-    target object or the object upon which the property is defined is removed
-    from the system, the reference is destroyed.
+    reference` between the property's instance (the source) and another
+    object in the objectmap (the target) based on the reference type
+    ``reftype``.  It is comparable to a Python 'weakref' between the
+    persistent object instance which the property is attached to and the
+    persistent target object id; when the target object or the object upon
+    which the property is defined is removed from the system, the reference
+    is destroyed.
 
     The ``reftype`` argument is a :term:`reference type`, a hashable object
     that describes the type of the relation.  See
@@ -626,7 +636,13 @@ def referenceid_property(reftype):
     """
     return _reference_property(reftype, resolve=False)
 
-def reference_property(reftype):
+def referenceid_target_property(reftype):
+    """ Same as :func:`substanced.objectmap.referenceid_source_property`,
+    except the object upon which the property is defined is the *source* of
+    the reference and any object assigned to the property is the target."""
+    return _reference_property(reftype, resolve=False, orientation='target')
+
+def reference_source_property(reftype):
     """
     Exactly like :func:`substanced.objectmap.referenceid_property`, except its
     getter returns the *instance* related to the target instead of the target
@@ -665,6 +681,12 @@ def reference_property(reftype):
     
     """
     return _reference_property(reftype, resolve=True)
+
+def reference_target_property(reftype):
+    """ Same as :func:`substanced.objectmap.reference_source_property`,
+    except the object upon which the property is defined is the *source* of
+    the reference and any object assigned to the property is the target."""
+    return _reference_property(reftype, resolve=True, orientation='target')
 
 def includeme(config): # pragma: no cover
     config.scan('.')
