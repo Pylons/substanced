@@ -1,6 +1,5 @@
-from pyramid.events import subscriber
-
-from substanced.event import RootCreated
+from substanced.root import Root
+from substanced.event import subscribe_created
 from substanced.catalog import Catalog
 
 from substanced.catalog.indexes import (
@@ -16,7 +15,7 @@ from substanced.catalog.discriminators import (
     get_interfaces,
     )
 
-@subscriber(RootCreated)
+@subscribe_created(Root)
 def root_created(event):
     catalog = Catalog()
     catalog['name'] = FieldIndex('__name__')
