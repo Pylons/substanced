@@ -78,6 +78,8 @@ Guts-Only
   the batch receives may be smaller than seqlen due to hidden objects in
   folder contents view.
 
+- Generalize name validator.
+
 Nice-to-Have Features
 ---------------------
 
