@@ -1758,9 +1758,15 @@ class TestMultireference(unittest.TestCase):
         inst = self._makeOne(None, [1], objectmap, resolve=True)
         self.assertTrue(inst.__contains__(object))
         
-    def test___contains___withresolve_False(self):
-        inst = self._makeOne(None, [], None, resolve=True)
+    def test___contains___withresolve_False_empty(self):
+        objectmap = DummyObjectMap(result=object)
+        inst = self._makeOne(None, [], objectmap, resolve=True)
         self.assertFalse(inst.__contains__(object))
+
+    def test___contains___withresolve_False_nonempty(self):
+        objectmap = DummyObjectMap(result=object)
+        inst = self._makeOne(None, [1], objectmap, resolve=True)
+        self.assertFalse(inst.__contains__(None))
 
     def test___iter__(self):
         inst = self._makeOne(None, [1], None)

@@ -790,9 +790,11 @@ class Multireference(object):
 
     def __contains__(self, other):
         if self.resolve:
-            return other in [
-                self.objectmap.object_for(oid) for oid in self.oids
-                ]
+            object_for = self.objectmap.object_for
+            for oid in self.oids:
+                if object_for(oid) == other:
+                    return True
+            return False
         return other in self.oids
 
     def __iter__(self):
