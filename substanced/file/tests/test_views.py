@@ -82,7 +82,7 @@ class TestAddFileView(unittest.TestCase):
         request = testing.DummyRequest()
         request.mgmt_path = lambda *arg: '/mgmt'
         request.registry.content = DummyContent(created)
-        appstruct = {'name':'abc', 'file':None}
+        appstruct = {'name':'abc', 'file':None, 'title':None}
         inst = self._makeOne(context, request)
         result = inst.add_success(appstruct)
         self.assertEqual(result.location, '/mgmt')
@@ -95,7 +95,8 @@ class TestAddFileView(unittest.TestCase):
         request.mgmt_path = lambda *arg: '/mgmt'
         request.registry.content = DummyContent(created)
         fp = StringIO.StringIO('abc')
-        appstruct = {'name':None, 'file':{'fp':fp, 'filename':'filename'}}
+        appstruct = {'name':None, 'title':None,
+                     'file':{'fp':fp, 'filename':'filename'}}
         inst = self._makeOne(context, request)
         result = inst.add_success(appstruct)
         self.assertEqual(result.location, '/mgmt')
@@ -108,7 +109,9 @@ class TestAddFileView(unittest.TestCase):
         request.mgmt_path = lambda *arg: '/mgmt'
         request.registry.content = DummyContent(created)
         fp = StringIO.StringIO('abc')
-        appstruct = {'name':'abc', 'file':{'fp':fp, 'filename':'filename'}}
+        appstruct = {'name':'abc',
+                     'file':{'fp':fp, 'filename':'filename'},
+                     'title':None}
         inst = self._makeOne(context, request)
         result = inst.add_success(appstruct)
         self.assertEqual(result.location, '/mgmt')
@@ -120,7 +123,9 @@ class TestAddFileView(unittest.TestCase):
         request = testing.DummyRequest()
         request.mgmt_path = lambda *arg: '/mgmt'
         request.registry.content = DummyContent(created)
-        appstruct = {'name':'abc', 'file':{'fp':None, 'filename':'filename'}}
+        appstruct = {'name':'abc',
+                     'file':{'fp':None, 'filename':'filename'},
+                     'title':None}
         inst = self._makeOne(context, request)
         result = inst.add_success(appstruct)
         self.assertEqual(result.location, '/mgmt')

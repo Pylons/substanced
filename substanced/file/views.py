@@ -79,11 +79,16 @@ class AddFileView(FormView):
     schema['mimetype'].missing = colander.null
     buttons = ('add',)
 
-    def _makeob(self, stream):
-        return self.request.registry.content.create('File', stream)
+    def _makeob(self, stream, title):
+        return self.request.registry.content.create(
+            'File',
+            stream,
+            title=title,
+            )
 
     def add_success(self, appstruct):
         name = appstruct['name']
+        title = appstruct['title'] or None
         filedata = appstruct['file']
         stream = None
         filename = None
@@ -95,7 +100,7 @@ class AddFileView(FormView):
             else:
                 stream = None
         name = name or filename
-        fileob = self._makeob(stream)
+        fileob = self._makeob(stream, title)
         self.context[name] = fileob
         return HTTPFound(self.request.mgmt_path(self.context))
 
