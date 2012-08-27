@@ -42,7 +42,7 @@ class FilePropertiesSchema(Schema):
         )
     title = colander.SchemaNode(
         colander.String(),
-        missing=colander.null,
+        missing='',
         )
     mimetype = colander.SchemaNode(
         colander.String(),
