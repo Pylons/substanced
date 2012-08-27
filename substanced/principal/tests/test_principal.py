@@ -8,6 +8,16 @@ class TestPrincipals(unittest.TestCase):
         from .. import Principals
         return Principals()
 
+    def test___sd_addable__True(self):
+        intr = {'content_type':'Users'}
+        inst = self._makeOne()
+        self.assertTrue(inst.__sd_addable__(intr))
+
+    def test___sd_addable__False(self):
+        intr = {'content_type':'Wrong'}
+        inst = self._makeOne()
+        self.assertFalse(inst.__sd_addable__(intr))
+
     def test_after_create(self):
         inst = self._makeOne()
         ob = testing.DummyResource()
@@ -50,6 +60,50 @@ class TestPrincipals(unittest.TestCase):
         self.assertTrue(reset.__acl__)
         self.assertEqual(len(inst), 2)
 
+class TestUsers(unittest.TestCase):
+    def _makeOne(self):
+        from .. import Users
+        return Users()
+
+    def test___sd_addable__True(self):
+        intr = {'content_type':'User'}
+        inst = self._makeOne()
+        self.assertTrue(inst.__sd_addable__(intr))
+
+    def test___sd_addable__False(self):
+        intr = {'content_type':'Wrong'}
+        inst = self._makeOne()
+        self.assertFalse(inst.__sd_addable__(intr))
+
+class TestPasswordResets(unittest.TestCase):
+    def _makeOne(self):
+        from .. import PasswordResets
+        return PasswordResets()
+
+    def test___sd_addable__True(self):
+        intr = {'content_type':'Password Reset'}
+        inst = self._makeOne()
+        self.assertTrue(inst.__sd_addable__(intr))
+
+    def test___sd_addable__False(self):
+        intr = {'content_type':'Wrong'}
+        inst = self._makeOne()
+        self.assertFalse(inst.__sd_addable__(intr))
+
+class TestGroups(unittest.TestCase):
+    def _makeOne(self):
+        from .. import Groups
+        return Groups()
+
+    def test___sd_addable__True(self):
+        intr = {'content_type':'Group'}
+        inst = self._makeOne()
+        self.assertTrue(inst.__sd_addable__(intr))
+
+    def test___sd_addable__False(self):
+        intr = {'content_type':'Wrong'}
+        inst = self._makeOne()
+        self.assertFalse(inst.__sd_addable__(intr))
 
 class Test_groupname_validator(unittest.TestCase):
     def _makeOne(self, node, kw):

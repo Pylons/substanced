@@ -56,7 +56,7 @@ class AddUserView(FormView):
         user = registry.content.create('User', **appstruct)
         self.context[name] = user
         user.connect(*groups)
-        return HTTPFound(self.request.mgmt_path(user, '@@properties'))
+        return HTTPFound(self.request.mgmt_path(self.context))
 
 @mgmt_view(
     context=IGroups,
@@ -77,7 +77,7 @@ class AddGroupView(FormView):
         group = registry.content.create('Group', **appstruct)
         self.context[name] = group
         group.connect(*members)
-        return HTTPFound(self.request.mgmt_path(group, '@@properties'))
+        return HTTPFound(self.request.mgmt_path(self.context))
 
 @colander.deferred
 def password_validator(node, kw):

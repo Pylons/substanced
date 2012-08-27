@@ -97,7 +97,7 @@ class AddFileView(FormView):
         name = name or filename
         fileob = self._makeob(stream)
         self.context[name] = fileob
-        return HTTPFound(self.request.mgmt_path(fileob, '@@properties'))
+        return HTTPFound(self.request.mgmt_path(self.context))
 
 onepixel = pkg_resources.resource_filename(
     'substanced.file', 'static/onepixel.gif')

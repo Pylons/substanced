@@ -92,6 +92,12 @@ class Principals(Folder):
     call its ``after_create`` method manually after you've created it
     to cause the content subobjects described above to be added to it.
     """
+    def __sd_addable__(self, introspectable):
+        ct = introspectable.get('content_type')
+        if ct in ('Users', 'Groups', 'Password Resets'):
+            return True
+        return False
+        
     def after_create(self, inst, registry):
         users = registry.content.create('Users')
         groups = registry.content.create('Groups')
@@ -153,6 +159,8 @@ class Users(Folder):
     """ Object representing a collection of users.  Inherits from
     :class:`substanced.folder.Folder`.  Contains objects of content type
     'User'."""
+    def __sd_addable__(self, introspectable):
+        return introspectable.get('content_type') == 'User'
 
 @content(
     'Groups',
@@ -163,6 +171,8 @@ class Groups(Folder):
     """ Object representing a collection of groups.  Inherits from
     :class:`substanced.folder.Folder`.  Contains objects of content type 'Group'
     """
+    def __sd_addable__(self, introspectable):
+        return introspectable.get('content_type') == 'Group'
 
 @colander.deferred
 def groupname_validator(node, kw):
@@ -403,6 +413,8 @@ class UserToPasswordReset(object):
 @implementer(IPasswordResets)
 class PasswordResets(Folder):
     """ Object representing the current set of password reset requests """
+    def __sd_addable__(self, introspectable):
+        return introspectable.get('content_type') == 'Password Reset'
 
 @content(
     'Password Reset',
