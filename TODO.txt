@@ -6,15 +6,12 @@ UI-Only
 UI-Plus-Guts
 ------------
 
-- Create "addable here" API that manages the __addable__ attribute of a
-  folderish object.
-
 - Create object map management UI (view relationships, view paths, view
   objectids).
 
 - Create workflow management UI.
 
-- import/export from contents view
+- Import/export from folder contents view.
 
 - Add Undo tab to Site (or per folder?) which will allow admins to undo recent
   transactions.  Implied: add transaction notes to all transactions.
@@ -25,13 +22,13 @@ UI-Plus-Guts
 
 - Allow services to be added to services folder via add view UIs.
 
+- Allow indexes to be added-to/removed-from catalog service.
+
 - Allow reordering of resources in folder contents view when the folder is
   ordered.
 
 Guts-Only
 ---------
-
-- Basic scaffold (``pcreate`` template).
 
 - Substance D ACLs contain object identifiers which refer to principals.
   Currently, when a principal is deleted, ACLs which refer to the principal
@@ -110,4 +107,10 @@ Docs
 - Narrative docs for reference properties.
 
 - Docstrings for multireference property implementations.
+
+Probably Bad Ideas
+------------------
+
+- Create "addable here" API that manages the __sd_addable__ attribute of a
+  folderish object.
 
