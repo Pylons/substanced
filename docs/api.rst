@@ -284,19 +284,22 @@ Other Helpers
 .. autoclass:: ObjectMap
    :members:
 
-.. autofunction:: referenceid_source_property
+.. autoclass:: Multireference
+   :members:
+
+.. autofunction:: reference_sourceid_property
 
 .. autofunction:: reference_source_property
 
-.. autofunction:: referenceid_target_property
+.. autofunction:: reference_targetid_property
 
 .. autofunction:: reference_target_property
 
-.. autofunction:: multireferenceid_source_property
+.. autofunction:: multireference_sourceid_property
 
 .. autofunction:: multireference_source_property
 
-.. autofunction:: multireferenceid_target_property
+.. autofunction:: multireference_targetid_property
 
 .. autofunction:: multireference_target_property
 

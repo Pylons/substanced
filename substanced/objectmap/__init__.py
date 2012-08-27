@@ -582,7 +582,7 @@ def _reference_property(reftype, resolve, orientation='source'):
 
     return property(_get, _set, _del)
 
-def referenceid_source_property(reftype):
+def reference_sourceid_property(reftype):
     """
     Returns a property which, when set, establishes an :term:`object map
     reference` between the property's instance (the source) and another
@@ -612,11 +612,11 @@ def referenceid_source_property(reftype):
        # definition
 
        from substanced.content import content
-       from substanced.objectmap import referenceid_source_property
+       from substanced.objectmap import reference_sourceid_property
 
        @content('Profile')
        class Profile(Persistent):
-           user_id = referenceid_source_property('profile-to-userid')
+           user_id = reference_sourceid_property('profile-to-userid')
 
        # subsequent usage of the property in a view...
 
@@ -637,15 +637,15 @@ def referenceid_source_property(reftype):
     """
     return _reference_property(reftype, resolve=False)
 
-def referenceid_target_property(reftype):
-    """ Same as :func:`substanced.objectmap.referenceid_source_property`,
+def reference_targetid_property(reftype):
+    """ Same as :func:`substanced.objectmap.reference_sourceid_property`,
     except the object upon which the property is defined is the *source* of
     the reference and any object assigned to the property is the target."""
     return _reference_property(reftype, resolve=False, orientation='target')
 
 def reference_source_property(reftype):
     """
-    Exactly like :func:`substanced.objectmap.referenceid_source_property`,
+    Exactly like :func:`substanced.objectmap.reference_sourceid_property`,
     except its getter returns the *instance* related to the target instead of
     the target object id.  Likewise, its setter will accept another
     persistent object instance that has an object id.
@@ -726,6 +726,9 @@ def _multireference_property(
     return property(_get, _set, _del)
 
 def multireference_sourceid_property(reftype, ignore_missing=False):
+    """ Like :func:`substanced.objectmap.reference_sourceid_property`, but
+    maintains a :class:`substanced.objectmap.Multireference` rather than an
+    object id."""
     return _multireference_property(
         reftype,
         ignore_missing=ignore_missing,
@@ -734,6 +737,9 @@ def multireference_sourceid_property(reftype, ignore_missing=False):
         )
 
 def multireference_source_property(reftype, ignore_missing=False):
+    """ Like :func:`substanced.objectmap.reference_source_property`, but
+    maintains a :class:`substanced.objectmap.Multireference` rather than a
+    single object reference."""
     return _multireference_property(
         reftype,
         ignore_missing=ignore_missing,
@@ -742,6 +748,9 @@ def multireference_source_property(reftype, ignore_missing=False):
         )
 
 def multireference_targetid_property(reftype, ignore_missing=False):
+    """ Like :func:`substanced.objectmap.reference_targetid_property`, but
+    maintains a :class:`substanced.objectmap.Multireference` rather than an
+    object id."""
     return _multireference_property(
         reftype,
         ignore_missing=ignore_missing,
@@ -750,6 +759,9 @@ def multireference_targetid_property(reftype, ignore_missing=False):
         )
 
 def multireference_target_property(reftype, ignore_missing=False):
+    """ Like :func:`substanced.objectmap.reference_target_property`, but
+    maintains a :class:`substanced.objectmap.Multireference` rather than a
+    single object reference."""
     return _multireference_property(
         reftype,
         ignore_missing=ignore_missing,
@@ -758,9 +770,11 @@ def multireference_target_property(reftype, ignore_missing=False):
         )
 
 class Multireference(object):
-    """ An iterable of objects (of ``resolve`` is true) or oids
-    (if ``resolve`` is false).  Also supports ``connect``, ``disconnect``,
-    and ``clear`` methods. """
+    """ An iterable of objects (if ``resolve`` is true) or oids (if
+    ``resolve`` is false).  Also supports the Python sequence protocol.
+
+    Additionally supports ``connect``, ``disconnect``, and ``clear`` methods
+    for mutating the relationships implied by the reference."""
     def __init__(
         self,
         context,
@@ -780,15 +794,21 @@ class Multireference(object):
         self.orientation = orientation
 
     def __nonzero__(self):
+        """ Returns ``True`` if there are oids associated with this
+        multireference, ``False`` if the oid list is empty. """
         return bool(self.oids)
 
     def __getitem__(self, i):
+        """ Return the i'th element from the sequence of objects or object
+        ids"""
         oid = self.oids[i]
         if self.resolve:
             return self.objectmap.object_for(oid)
         return oid
 
     def __contains__(self, other):
+        """ Return ``True`` if ``other`` is a member of the sequence managed
+        by this multireference. """
         if self.resolve:
             object_for = self.objectmap.object_for
             for oid in self.oids:
@@ -798,14 +818,19 @@ class Multireference(object):
         return other in self.oids
 
     def __iter__(self):
+        """ Return an iterable of object ids or objects. """
         if self.resolve:
             return iter((self.objectmap.object_for(oid) for oid in self.oids))
         return iter(self.oids)
 
     def __len__(self):
+        """ Return the length of the sequence of objects implied by this
+        multireference"""
         return len(self.oids)
 
     def connect(self, objects, ignore_missing=None):
+        """ Connect ``objects`` to this reference's relationship. ``objects``
+        should be a sequence of content objects or object identifiers."""
         if ignore_missing is None:
             ignore_missing = self.ignore_missing
         ctx_oid = oid_of(self.context)
@@ -820,6 +845,8 @@ class Multireference(object):
                     raise
 
     def disconnect(self, objects, ignore_missing=None):
+        """ Disonnect ``objects`` to this reference's relationship. ``objects``
+        should be a sequence of content objects or object identifiers."""
         if ignore_missing is None:
             ignore_missing = self.ignore_missing
         ctx_oid = oid_of(self.context)
@@ -834,6 +861,7 @@ class Multireference(object):
                     raise
 
     def clear(self):
+        """ Clear all references in this relationship. """
         self.disconnect(self.oids)
             
 def includeme(config): # pragma: no cover

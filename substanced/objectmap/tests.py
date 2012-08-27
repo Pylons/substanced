@@ -834,7 +834,7 @@ class Test_object_removed(unittest.TestCase):
         self.assertEqual(objectmap.removed, [1])
         self.assertFalse(objectmap.references_removed)
 
-class Test_referenceid_source_property(unittest.TestCase):
+class Test_reference_sourceid_property(unittest.TestCase):
     def setUp(self):
         from substanced.interfaces import IFolder
         @implementer(IFolder)
@@ -845,9 +845,9 @@ class Test_referenceid_source_property(unittest.TestCase):
     def _makeInst(self, reftype=None):
         if reftype is None:
             reftype = Dummy
-        from . import referenceid_source_property
+        from . import reference_sourceid_property
         class Inner(self.DummyFolder):
-            prop = referenceid_source_property(reftype)
+            prop = reference_sourceid_property(reftype)
         inst = Inner()
         return inst
 
@@ -897,7 +897,7 @@ class Test_referenceid_source_property(unittest.TestCase):
         inst.prop = 2
         self.assertEqual(svcs['objectmap'].connected, [(inst, 2, Dummy)])
 
-class Test_referenceid_target_property(unittest.TestCase):
+class Test_reference_targetid_property(unittest.TestCase):
     def setUp(self):
         from substanced.interfaces import IFolder
         @implementer(IFolder)
@@ -908,9 +908,9 @@ class Test_referenceid_target_property(unittest.TestCase):
     def _makeInst(self, reftype=None):
         if reftype is None:
             reftype = Dummy
-        from . import referenceid_target_property
+        from . import reference_targetid_property
         class Inner(self.DummyFolder):
-            prop = referenceid_target_property(reftype)
+            prop = reference_targetid_property(reftype)
         inst = Inner()
         return inst
 
@@ -1090,7 +1090,7 @@ class Test_reference_target_property(unittest.TestCase):
         inst.prop = 2
         self.assertEqual(svcs['objectmap'].connected, [(2, inst, Dummy)])
 
-class Test_multireferenceid_source_property(unittest.TestCase):
+class Test_multireference_sourceid_property(unittest.TestCase):
     def setUp(self):
         from substanced.interfaces import IFolder
         @implementer(IFolder)
