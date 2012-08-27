@@ -1,19 +1,19 @@
 import unittest
 from pyramid import testing
 
-class Test_add_catalog(unittest.TestCase):
+class Test_add_catalog_service(unittest.TestCase):
     def _callFUT(self, context, request):
-        from ..views import add_catalog
-        return add_catalog(context, request)
+        from ..views import add_catalog_service
+        return add_catalog_service(context, request)
 
     def test_it(self):
         context = testing.DummyResource()
         request = testing.DummyRequest()
         request.mgmt_path = lambda *arg: '/'
-        catalog = testing.DummyResource()
-        request.registry.content = DummyContentRegistry(catalog)
+        service = testing.DummyResource()
+        request.registry.content = DummyContentRegistry(service)
         result = self._callFUT(context, request)
-        self.assertEqual(context['catalog'], catalog)
+        self.assertEqual(context['catalog'], service)
         self.assertEqual(result.location, '/')
 
 class TestManageCatalog(unittest.TestCase):

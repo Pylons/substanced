@@ -27,6 +27,17 @@ class AddUserSchema(UserSchema):
         )
 
 @mgmt_view(
+    content_type='Services',
+    name='add_principals_service',
+    tab_condition=False,
+    permission='sdi.add-services',
+    )
+def add_principals_service(context, request):
+    service = request.registry.content.create('Principals')
+    context['principals'] = service
+    return HTTPFound(location=request.mgmt_path(context))
+
+@mgmt_view(
     context=IUsers,
     name='add_user',
     permission='sdi.add-user', 

@@ -2,6 +2,21 @@ import unittest
 import colander
 from pyramid import testing
 
+class Test_add_principals_service(unittest.TestCase):
+    def _callFUT(self, context, request):
+        from ..views import add_principals_service
+        return add_principals_service(context, request)
+
+    def test_it(self):
+        context = testing.DummyResource()
+        request = testing.DummyRequest()
+        request.mgmt_path = lambda *arg: '/'
+        service = testing.DummyResource()
+        request.registry.content = DummyContentRegistry(service)
+        result = self._callFUT(context, request)
+        self.assertEqual(context['principals'], service)
+        self.assertEqual(result.location, '/')
+
 class TestAddUserView(unittest.TestCase):
     def _makeOne(self, context, request):
         from ..views import AddUserView
@@ -10,7 +25,7 @@ class TestAddUserView(unittest.TestCase):
     def _makeRequest(self, resource):
         request = testing.DummyRequest()
         request.registry = testing.DummyResource()
-        request.registry.content = DummyContent(resource)
+        request.registry.content = DummyContentRegistry(resource)
         request.mgmt_path = lambda *arg: 'http://example.com'
         return request
 
@@ -32,7 +47,7 @@ class TestAddGroupView(unittest.TestCase):
     def _makeRequest(self, resource):
         request = testing.DummyRequest()
         request.registry = testing.DummyResource()
-        request.registry.content = DummyContent(resource)
+        request.registry.content = DummyContentRegistry(resource)
         request.mgmt_path = lambda *arg: 'http://example.com'
         return request
 
@@ -171,7 +186,7 @@ class DummyPrincipal(object):
     def email_password_reset(self, request):
         self.emailed_password_reset = True
 
-class DummyContent(object):
+class DummyContentRegistry(object):
     def __init__(self, resource):
         self.resource = resource
 

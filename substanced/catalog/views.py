@@ -8,10 +8,7 @@ from pyramid.httpexceptions import HTTPFound
 
 from pyramid.view import view_defaults
 
-from ..interfaces import (
-    ICatalog,
-    IFolder,
-    )
+from ..interfaces import ICatalog
 
 from ..content import find_service
 from ..sdi import mgmt_view
@@ -23,11 +20,11 @@ from . import logger
 
 @mgmt_view(
     content_type='Services',
-    name='add_catalog',
+    name='add_catalog_service',
     tab_condition=False,
     permission='sdi.add-services',
     )
-def add_catalog(context, request):
+def add_catalog_service(context, request):
     catalog = request.registry.content.create('Catalog')
     context['catalog'] = catalog
     return HTTPFound(location=request.mgmt_path(context))

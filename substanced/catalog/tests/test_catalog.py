@@ -37,6 +37,16 @@ class TestCatalog(unittest.TestCase):
         cls = self._getTargetClass()
         return cls(*arg, **kw)
 
+    def test___sd_addable__True(self):
+        inst = self._makeOne()
+        intr = {'meta':{'is_index':True}}
+        self.assertTrue(inst.__sd_addable__(intr))
+
+    def test___sd_addable__False(self):
+        inst = self._makeOne()
+        intr = {'meta':{}}
+        self.assertFalse(inst.__sd_addable__(intr))
+
     def test_klass_provides_ICatalog(self):
         klass = self._getTargetClass()
         from zope.interface.verify import verifyClass

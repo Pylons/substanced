@@ -84,7 +84,7 @@ class AddFolderView(FormView):
 def add_services_folder(context, request):
     services = request.registry.content.create('Services')
     context.add('__services__', services, reserved_names=())
-    return HTTPFound(location=request.mgmt_path(services))
+    return HTTPFound(location=request.mgmt_path(context))
 
 @view_defaults(
     context=IFolder,

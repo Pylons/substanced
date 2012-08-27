@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__) # API
     'Catalog',
     icon='icon-search',
     service_name='catalog',
-    add_view='add_catalog',
+    add_view='add_catalog_service',
     )
 @implementer(ICatalog)
 class Catalog(Folder):
@@ -43,6 +43,13 @@ class Catalog(Folder):
         if family is not None:
             self.family = family
         self.reset()
+
+    def __sd_addable__(self, introspectable):
+        # The only kinds of objects addable to a Catalog are indexes, so we
+        # return True only if the introspectable represents a content type
+        # registered with the is_index metadata flag.
+        meta = introspectable['meta']
+        return meta.get('is_index', False)
 
     def reset(self):
         """ Clear all indexes in this catalog and clear self.objectids. """

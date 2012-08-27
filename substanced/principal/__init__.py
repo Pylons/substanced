@@ -64,6 +64,7 @@ def _gen_random_token():
     service_name='principals',
     icon='icon-lock',
     after_create='after_create',
+    add_view='add_principals_service',
     )
 @implementer(IPrincipals)
 class Principals(Folder):
