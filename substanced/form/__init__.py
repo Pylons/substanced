@@ -96,11 +96,13 @@ class FormView(object):
         action = getattr(self, 'action', '')
         method = getattr(self, 'method', 'POST')
         formid = getattr(self, 'formid', 'deform')
+        autocomplete = getattr(self, 'autocomplete', None)
         self.schema = self.schema.bind(
             request=self.request, context=self.context)
         form = self.form_class(self.schema, action=action, method=method,
                                buttons=self.buttons, formid=formid,
-                               use_ajax=use_ajax, ajax_options=ajax_options)
+                               use_ajax=use_ajax, ajax_options=ajax_options,
+                               autocomplete=autocomplete)
         self.before(form)
         reqts = form.get_widget_resources()
         result = None

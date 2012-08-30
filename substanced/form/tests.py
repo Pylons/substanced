@@ -212,7 +212,8 @@ class TestFileUploadTempStore(unittest.TestCase):
 
 class DummyForm(object):
     def __init__(self, schema, action=None, method=None, buttons=None,
-                 formid=None, use_ajax=False, ajax_options=''):
+                 formid=None, use_ajax=False, ajax_options='',
+                 autocomplete=None):
         self.schema = schema
         self.action = action
         self.method = method
@@ -220,6 +221,7 @@ class DummyForm(object):
         self.formid = formid
         self.use_ajax = use_ajax
         self.ajax_options = ajax_options
+        self.autocomplete = autocomplete
 
     def get_widget_resources(self):
         return {'js':(), 'css':()}
