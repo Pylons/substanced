@@ -103,6 +103,8 @@ class FormView(object):
                                buttons=self.buttons, formid=formid,
                                use_ajax=use_ajax, ajax_options=ajax_options,
                                autocomplete=autocomplete)
+        # XXX override autocomplete; should be part of deform_bootstrap
+        form.widget.template = 'substanced:widget/templates/form.pt' 
         self.before(form)
         reqts = form.get_widget_resources()
         result = None

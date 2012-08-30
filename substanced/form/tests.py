@@ -210,6 +210,9 @@ class TestFileUploadTempStore(unittest.TestCase):
         inst['a'] = {'randid':'abc'}
         inst.clear() # doesn't choke
 
+class DummyWidget(object):
+    pass
+
 class DummyForm(object):
     def __init__(self, schema, action=None, method=None, buttons=None,
                  formid=None, use_ajax=False, ajax_options='',
@@ -222,6 +225,7 @@ class DummyForm(object):
         self.use_ajax = use_ajax
         self.ajax_options = ajax_options
         self.autocomplete = autocomplete
+        self.widget = DummyWidget()
 
     def get_widget_resources(self):
         return {'js':(), 'css':()}
