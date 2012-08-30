@@ -93,9 +93,13 @@ class FormView(object):
     def __call__(self):
         use_ajax = getattr(self, 'use_ajax', False)
         ajax_options = getattr(self, 'ajax_options', '{}')
+        action = getattr(self, 'action', '')
+        method = getattr(self, 'method', 'POST')
+        formid = getattr(self, 'formid', 'deform')
         self.schema = self.schema.bind(
             request=self.request, context=self.context)
-        form = self.form_class(self.schema, buttons=self.buttons,
+        form = self.form_class(self.schema, action=action, method=method,
+                               buttons=self.buttons, formid=formid,
                                use_ajax=use_ajax, ajax_options=ajax_options)
         self.before(form)
         reqts = form.get_widget_resources()

@@ -211,9 +211,13 @@ class TestFileUploadTempStore(unittest.TestCase):
         inst.clear() # doesn't choke
 
 class DummyForm(object):
-    def __init__(self, schema, buttons=None, use_ajax=False, ajax_options=''):
+    def __init__(self, schema, action=None, method=None, buttons=None,
+                 formid=None, use_ajax=False, ajax_options=''):
         self.schema = schema
+        self.action = action
+        self.method = method
         self.buttons = buttons
+        self.formid = formid
         self.use_ajax = use_ajax
         self.ajax_options = ajax_options
 
