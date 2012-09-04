@@ -1,7 +1,6 @@
 from collections import defaultdict
 
 from pyramid.config import ConfigurationError
-from pyramid.events import subscriber
 from pyramid.security import has_permission
 from pyramid.threadlocal import get_current_registry
 from zope.interface import implementer
@@ -9,9 +8,9 @@ from zope.interface import implementer
 from ..interfaces import (
     IWorkflow,
     IDefaultWorkflow,
-    IObjectAdded,
     )
 from ..content import get_content_type
+from ..event import subscribe_added
 
 
 STATE_ATTR = '__workflow_state__'
@@ -276,7 +275,7 @@ class Workflow(object):
 
         if transition is None:
             raise WorkflowError(
-                'No transition from %r using transition name %r'
+                'No transition from state %r using transition name %r'
                 % (state, transition_name))
 
         permission = transition.get('permission')
@@ -466,7 +465,7 @@ def add_workflow(config, workflow, content_types=(None,)):
                       order=9999,
                       args=(config, workflow, workflow.type, content_type))
 
-@subscriber(IObjectAdded)
+@subscribe_added()
 def init_workflows_for_object(event):
     """Initialize workflows when object is added to db.
     """
