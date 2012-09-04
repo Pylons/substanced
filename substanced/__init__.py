@@ -1,5 +1,9 @@
 import transaction
 from pyramid_zodbconn import get_connection
+from .event import (
+    ObjectAdded,
+    ObjectWillBeAdded,
+    )
 
 def root_factory(request, t=transaction, g=get_connection):
     """ A function which can be used as a Pyramid ``root_factory``.  It
@@ -10,7 +14,11 @@ def root_factory(request, t=transaction, g=get_connection):
     if not 'app_root' in zodb_root:
         registry = request.registry
         app_root = registry.content.create('Root')
+        event = ObjectWillBeAdded(app_root, None, '')
+        registry.notify(event)
         zodb_root['app_root'] = app_root
+        event = ObjectAdded(app_root, None, '')
+        registry.notify(event)
         t.commit()
     return zodb_root['app_root']
 

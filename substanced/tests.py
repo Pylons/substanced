@@ -14,7 +14,7 @@ class Test_root_factory(unittest.TestCase):
 
     def _makeRequest(self, app_root=None):
         request = Dummy()
-        request.registry = Dummy()
+        request.registry = DummyRegistry()
         request.registry.content = Dummy()
         request.registry.content.create = lambda *arg: app_root
         return request
@@ -28,6 +28,7 @@ class Test_root_factory(unittest.TestCase):
         result = self._callFUT(request, txn, gc)
         self.assertEqual(result, app_root)
         self.assertTrue(txn.committed)
+        self.assertEqual(len(request.registry.notified), 2)
         
     def test_with_app_root(self):
         txn = DummyTransaction()
@@ -56,4 +57,10 @@ class Dummy_get_connection(object):
 
 class Dummy(object):
     pass
+
+class DummyRegistry(object):
+    def __init__(self):
+        self.notified = []
+    def notify(self, event):
+        self.notified.append(event)
 
