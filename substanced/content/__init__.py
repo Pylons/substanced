@@ -1,5 +1,6 @@
 import inspect
 
+from pyramid.compat import is_nonstr_iter
 from pyramid.location import lineage
 
 from pyramid.threadlocal import get_current_registry
@@ -102,9 +103,12 @@ class ContentRegistry(object):
         inst = factory(*arg, **kw)
         aftercreate = meta.get('after_create')
         if aftercreate is not None:
-            if isinstance(aftercreate, basestring):
-                aftercreate = getattr(inst, aftercreate)
-            aftercreate(inst, self.registry)
+            if not is_nonstr_iter(aftercreate):
+                aftercreate = [aftercreate]
+            for callback in aftercreate:
+                if isinstance(callback, basestring):
+                    callback = getattr(inst, callback)
+                callback(inst, self.registry)
         return inst
 
     def metadata(self, resource, name, default=None):
