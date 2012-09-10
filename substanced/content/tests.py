@@ -55,6 +55,27 @@ class TestContentRegistry(unittest.TestCase):
         self.assertEqual(ob.__class__, Dummy)
         self.assertTrue(ob.after_created)
 
+    def test_create_with_after_create_sequence(self):
+        registry = DummyRegistry()
+        inst = self._makeOne(registry)
+        class Dummy(object):
+            pass
+        def after_create1(ob, registry):
+            self.assertEqual(ob.__class__, Dummy)
+            L = getattr(ob, 'after', [])
+            L.append(1)
+            ob.after = L
+        def after_create2(ob, registry):
+            self.assertEqual(ob.__class__, Dummy)
+            L = getattr(ob, 'after', [])
+            L.append(2)
+            ob.after = L
+        inst.content_types['dummy'] = Dummy
+        inst.meta['dummy'] = {'after_create':(after_create1, after_create2)}
+        ob = inst.create('dummy')
+        self.assertEqual(ob.__class__, Dummy)
+        self.assertEqual(ob.after, [1,2])
+
     def test_typeof(self):
         inst = self._makeOne()
         dummy = Dummy()

@@ -1,5 +1,6 @@
 import inspect
 
+from pyramid.compat import is_nonstr_iter
 from pyramid.location import lineage
 
 from pyramid.threadlocal import get_current_registry
@@ -98,17 +99,21 @@ class ContentRegistry(object):
         """ Create an instance of ``content_type`` by calling its factory
         with ``*arg`` and ``**kw``.  If the meta of the content type has an
         ``after_create`` value, call it (if it's a string, it's assumed to be
-        a method of the created object); then send a
-        :class:`substanced.event.ContentCreatedEvent`.  Return the created
-        object."""
+        a method of the created object, and if it's a sequence, each value
+        should be a string or a callable, which will be called in turn); then
+        send a :class:`substanced.event.ContentCreatedEvent`.  Return the
+        created object."""
         factory = self.content_types[content_type]
         inst = factory(*arg, **kw)
         meta = self.meta[content_type].copy()
         aftercreate = meta.get('after_create')
         if aftercreate is not None:
-            if isinstance(aftercreate, basestring):
-                aftercreate = getattr(inst, aftercreate)
-            aftercreate(inst, self.registry)
+            if not is_nonstr_iter(aftercreate):
+                aftercreate = [aftercreate]
+            for callback in aftercreate:
+                if isinstance(callback, basestring):
+                    callback = getattr(inst, callback)
+                callback(inst, self.registry)
         self.registry.subscribers(
             (ContentCreated(inst, content_type, meta), inst),
             None
