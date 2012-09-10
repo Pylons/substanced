@@ -13,11 +13,6 @@ from pyramid.traversal import (
     find_resource,
     )
 
-from ..content import (
-    service,
-    find_service,
-    )
-
 from ..event import (
     subscribe_will_be_added,
     subscribe_removed,
@@ -25,6 +20,7 @@ from ..event import (
 from ..util import (
     postorder,
     oid_of,
+    acquire,
     )
 
 from ..interfaces import IObjectMap
@@ -90,11 +86,6 @@ references to the objectid represented by '/a' *and* any children
 
 _marker = object()
 
-@service(
-    'Object Map',
-    service_name='objectmap',
-    icon='icon-asterisk'
-    )
 @implementer(IObjectMap)
 class ObjectMap(Persistent):
     
@@ -103,13 +94,17 @@ class ObjectMap(Persistent):
 
     family = BTrees.family64
 
-    def __init__(self, family=None):
+    def __init__(self, root, family=None):
         if family is not None:
             self.family = family
         self.objectid_to_path = self.family.IO.BTree()
         self.path_to_objectid = self.family.OI.BTree()
         self.pathindex = self.family.OO.BTree()
         self.referencemap = ReferenceMap()
+
+        # yes, this circref is on purpose
+        self.root = root
+        root.__objectmap__ = self
 
     def new_objectid(self):
         """ Obtain an unused integer object identifier """
@@ -163,7 +158,7 @@ class ObjectMap(Persistent):
 
     def _find_resource(self, context, path_tuple): # replaced in tests
         if context is None:
-            context = self.__parent__
+            context = self.root
         return find_resource(context, path_tuple)
             
     def add(self, obj, path_tuple, replace_oid=False):
@@ -512,7 +507,7 @@ def object_will_be_added(event):
      convenient) :class:`substanced.event.ObjectAdded` fired later."""
     obj = event.object
     parent = event.parent
-    objectmap = find_service(parent, 'objectmap')
+    objectmap = find_objectmap(parent)
     if objectmap is None:
         return
     if getattr(obj, '__parent__', None):
@@ -538,7 +533,7 @@ def object_removed(event):
     obj = event.object
     parent = event.parent
     moving = event.moving
-    objectmap = find_service(parent, 'objectmap')
+    objectmap = find_objectmap(parent)
     if objectmap is None:
         return
     objectid = oid_of(obj)
@@ -546,7 +541,7 @@ def object_removed(event):
 
 def _reference_property(reftype, resolve, orientation='source'):
     def _get(self, resolve=resolve):
-        objectmap = find_service(self, 'objectmap')
+        objectmap = find_objectmap(self)
         if orientation == 'source':
             oids = list(objectmap.targetids(self, reftype))
         else:
@@ -564,7 +559,7 @@ def _reference_property(reftype, resolve, orientation='source'):
         _del(self)
         if oid is None:
             return
-        objectmap = find_service(self, 'objectmap')
+        objectmap = find_objectmap(self)
         if orientation == 'source':
             objectmap.connect(self, oid, reftype)
         else:
@@ -574,7 +569,7 @@ def _reference_property(reftype, resolve, orientation='source'):
         oid = _get(self, resolve=False)
         if oid is None:
             return
-        objectmap = find_service(self, 'objectmap')
+        objectmap = find_objectmap(self)
         if orientation == 'source':
             objectmap.disconnect(self, oid, reftype)
         else:
@@ -697,7 +692,7 @@ def _multireference_property(
     ):
 
     def _get(self, resolve=resolve):
-        objectmap = find_service(self, 'objectmap')
+        objectmap = find_objectmap(self)
         if orientation == 'source':
             oids = objectmap.targetids(self, reftype)
         else:
@@ -863,6 +858,9 @@ class Multireference(object):
     def clear(self):
         """ Clear all references in this relationship. """
         self.disconnect(self.oids)
+
+def find_objectmap(context):
+    return acquire(context, '__objectmap__')
             
 def includeme(config): # pragma: no cover
     config.scan('.')

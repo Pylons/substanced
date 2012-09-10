@@ -58,10 +58,8 @@ class Test_user_will_be_removed(unittest.TestCase):
             reset.committed = True
         reset.commit_suicide = commit_suicide
         objectmap = DummyObjectMap((reset,))
-        services = testing.DummyResource()
-        parent['__services__'] = services
+        parent.__objectmap__ = objectmap
         parent['user'] = user
-        services['objectmap'] = objectmap
         event = testing.DummyResource(object=user)
         event.moving = False
         self._callFUT(event)

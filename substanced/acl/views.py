@@ -9,6 +9,7 @@ from ..content import (
     find_service,
     )
 from ..catalog import is_catalogable
+from ..objectmap import find_objectmap
 from ..sdi import (
     mgmt_view,
     check_csrf_token,
@@ -37,7 +38,7 @@ def get_context_workflow(context):
            renderer='templates/acl.pt', tab_title='Security')
 def acl_edit_view(context, request):
     principal_service = find_service(context, 'principals')
-    objectmap = find_service(context, 'objectmap')
+    objectmap = find_objectmap(context)
 
     acl = original_acl = getattr(context, '__acl__', [])
     if acl and acl[-1] == NO_INHERIT:

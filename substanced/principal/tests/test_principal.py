@@ -48,9 +48,7 @@ class TestPrincipals(unittest.TestCase):
         resets = testing.DummyResource()
         inst = self._makeOne()
         objectmap = DummyObjectMap()
-        services = testing.DummyResource()
-        inst.add('__services__', services, reserved_names=())
-        services['objectmap'] = objectmap
+        inst.__objectmap__ = objectmap
         inst.add('resets', resets)
         user = testing.DummyResource()
         reset = inst.add_reset(user)
@@ -58,7 +56,7 @@ class TestPrincipals(unittest.TestCase):
             objectmap.connections,
             [(user, reset, UserToPasswordReset)])
         self.assertTrue(reset.__acl__)
-        self.assertEqual(len(inst), 2)
+        self.assertEqual(len(inst), 1)
 
 class TestUsers(unittest.TestCase):
     def _makeOne(self):
@@ -182,8 +180,7 @@ class TestGroupPropertysheet(unittest.TestCase):
         parent = DummyFolder()
         parent['__services__'] = DummyFolder()
         objectmap = DummyObjectMap()
-        parent['__services__']['objectmap'] = objectmap
-        parent.objectmap = objectmap
+        parent.__objectmap__ = objectmap
         return parent
 
     def test_get(self):
@@ -455,9 +452,7 @@ class Test_groupfinder(unittest.TestCase):
         context = testing.DummyResource(__provides__=IFolder)
         omap = testing.DummyResource()
         omap.object_for = lambda *arg: None
-        services = testing.DummyResource()
-        services['objectmap'] = omap
-        context['__services__'] = services
+        context.__objectmap__ = omap
         request.context = context
         result = self._callFUT(1, request)
         self.assertEqual(result, None)
@@ -470,9 +465,7 @@ class Test_groupfinder(unittest.TestCase):
         user = testing.DummyResource()
         user.groupids = (1,2)
         omap.object_for = lambda *arg: user
-        services = testing.DummyResource()
-        services['objectmap'] = omap
-        context['__services__'] = services
+        context.__objectmap__ = omap
         request.context = context
         result = self._callFUT(1, request)
         self.assertEqual(result, (1,2))
@@ -491,10 +484,8 @@ class TestPasswordReset(unittest.TestCase):
         user.set_password = set_password
         objectmap = DummyObjectMap((user,))
         inst = self._makeOne()
+        parent.__objectmap__ = objectmap
         parent['reset'] = inst
-        services = testing.DummyResource()
-        parent['__services__'] = services
-        services['objectmap'] = objectmap
         inst.reset_password('password')
         self.assertEqual(user.password, 'password')
         self.assertFalse('reset' in parent)

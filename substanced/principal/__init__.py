@@ -44,6 +44,7 @@ from ..folder import Folder
 from ..util import oid_of
 from ..property import PropertySheet
 from ..objectmap import (
+    find_objectmap,
     multireference_targetid_property,
     multireference_target_property,
     multireference_sourceid_property,
@@ -146,7 +147,7 @@ class Principals(Folder):
         reset = registry.content.create('Password Reset', *arg, **kw)
         self['resets'][token] = reset
         reset.__acl__ = [(Allow, Everyone, ('sdi.view',))]
-        objectmap = find_service(self, 'objectmap')
+        objectmap = find_objectmap(self)
         objectmap.connect(user, reset, UserToPasswordReset)
         return reset
 
@@ -424,7 +425,7 @@ class PasswordResets(Folder):
 class PasswordReset(Persistent):
     """ Object representing the a single password reset request """
     def reset_password(self, password):
-        objectmap = find_service(self, 'objectmap')
+        objectmap = find_objectmap(self)
         sources = list(objectmap.sources(self, UserToPasswordReset))
         user = sources[0]
         user.set_password(password)
@@ -437,7 +438,7 @@ def groupfinder(userid, request):
     """ A Pyramid authentication policy groupfinder callback that uses the
     Substance D principal system to find groups."""
     context = request.context
-    objectmap = find_service(context, 'objectmap')
+    objectmap = find_objectmap(context)
     if objectmap is None:
         return None
     user = objectmap.object_for(userid)

@@ -7,12 +7,14 @@ from pyramid.view import view_defaults
 from ..exceptions import FolderKeyError
 from ..schema import Schema
 from ..form import FormView
+from ..objectmap import find_objectmap
 from ..sdi import (
     mgmt_view,
     sdi_add_views,
     sdi_folder_contents,
     )
 from ..util import Batch, oid_of
+
 
 from ..interfaces import IFolder
 
@@ -252,7 +254,7 @@ class FolderContentsViews(object):
     def copy_finish(self):
         request = self.request
         context = self.context
-        objectmap = context.find_service('objectmap')
+        objectmap = find_objectmap(context)
         tocopy = request.session['tocopy']
         del request.session['tocopy']
 
@@ -312,7 +314,7 @@ class FolderContentsViews(object):
     def move_finish(self):
         request = self.request
         context = self.context
-        objectmap = context.find_service('objectmap')
+        objectmap = find_objectmap(context)
         tomove = request.session['tomove']
         del request.session['tomove']
 

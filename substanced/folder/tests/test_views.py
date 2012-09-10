@@ -546,11 +546,13 @@ class TestFolderContentsViews(unittest.TestCase):
         self.assertEqual(request.session.__delitem__.call_args,
                          mock.call('tomove'))
 
-    def test_move_finish_one(self):
+    @mock.patch('substanced.folder.views.find_objectmap')
+    def test_move_finish_one(self, mock_find_objectmap):
         context = mock.MagicMock()
-        mock_folder = context['target'].find_service().object_for()
+        mock_folder = mock.Mock() #context['target'].find_objectmap().object_for()
         mock_folder.__parent__ = mock.MagicMock()
         mock_folder.__name__ = mock.sentinel.name
+        mock_find_objectmap.return_value = mock_folder
         request = mock.MagicMock()
         request.session.__getitem__.return_value = [123]
         request.POST.get.side_effect = lambda x: {

@@ -4,6 +4,8 @@ import itertools
 import math
 import urlparse
 
+from pyramid.location import lineage
+
 from ..interfaces import IFolder
 
 _marker = object()
@@ -286,3 +288,9 @@ def _make_name_validator(content_type):
         return exists
     return name_validator
 
+def acquire(context, name, default=None):
+    for node in lineage(context):
+        result = getattr(node, name, _marker)
+        if result is not _marker:
+            return result
+    return default

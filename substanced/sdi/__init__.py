@@ -25,7 +25,7 @@ from pyramid.registry import (
     )
 
 from ..interfaces import SERVICES_NAME
-from ..content import find_service
+from ..objectmap import find_objectmap
 
 MANAGE_ROUTE_NAME = 'substanced_manage'
 
@@ -408,7 +408,7 @@ def get_user(request):
     userid = authenticated_userid(request)
     if userid is None:
         return None
-    objectmap = find_service(request.context, 'objectmap')
+    objectmap = find_objectmap(request.context)
     return objectmap.object_for(userid)
 
 def check_csrf_token(request, token='csrf_token'):

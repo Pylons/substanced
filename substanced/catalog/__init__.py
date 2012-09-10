@@ -23,6 +23,7 @@ from ..content import (
     find_service,
     )
 from ..folder import Folder
+from ..objectmap import find_objectmap
 
 logger = logging.getLogger(__name__) # API
 
@@ -132,7 +133,7 @@ class Catalog(Folder):
             output and output('reindexing only indexes %s' % str(indexes))
 
         i = 1
-        objectmap = find_service(self, 'objectmap')
+        objectmap = find_objectmap(self)
         for objectid in self.objectids:
             resource = objectmap.object_for(objectid)
             if resource is None:
@@ -172,7 +173,7 @@ class Search(object):
         self.context = context
         self.permission_checker = permission_checker
         self.catalog = find_service(self.context, 'catalog')
-        self.objectmap = find_service(self.context, 'objectmap')
+        self.objectmap = find_objectmap(self.context)
         if family is not None:
             self.family = family
 

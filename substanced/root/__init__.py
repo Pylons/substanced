@@ -14,6 +14,7 @@ from ..content import content
 from ..property import PropertySheet
 from ..interfaces import IRoot
 from ..util import oid_of
+from ..objectmap import ObjectMap
 
 class RootSchema(Schema):
     """ The schema representing site properties. """
@@ -63,10 +64,9 @@ class Root(Folder):
                 )
         login = settings.get('substanced.initial_login', 'admin')
         email = settings.get('substanced.initial_email', 'admin@example.com')
-        objectmap = registry.content.create('Object Map')
-        # prevent SDI deletion/renaming of objectmap
-        objectmap.__sd_deletable__ = False
-        self.add_service('objectmap', objectmap, registry=registry)
+        # side effect of ObjectMap constructor: it sets the ``__objectmap__``
+        # attribute of the argument you pass it.
+        objectmap = ObjectMap(self)
         principals = registry.content.create('Principals')
         # prevent SDI deletion/renaming of root principals service
         principals.__sd_deletable__ = False

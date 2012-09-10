@@ -752,11 +752,9 @@ class Test_get_user(unittest.TestCase):
         self.config.testing_securitypolicy(permissive=True, userid='fred')
         request = testing.DummyRequest()
         context = testing.DummyResource(__provides__=IFolder)
-        services = testing.DummyResource()
         objectmap = testing.DummyResource()
         objectmap.object_for = lambda *arg: 'foo'
-        services['objectmap'] = objectmap
-        context['__services__'] = services
+        context.__objectmap__ = objectmap
         request.context = context
         self.assertEqual(self._callFUT(request), 'foo')
 

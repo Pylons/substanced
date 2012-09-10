@@ -12,7 +12,7 @@ from pyramid.traversal import resource_path_tuple
 from pyramid.compat import url_unquote_text
 from pyramid.settings import asbool
 
-from ..content import find_service
+from ..objectmap import find_objectmap
 
 PATH_WITH_OPTIONS = re.compile(r'\[(.+?)\](.+?)$')
 
@@ -50,7 +50,7 @@ class PathIndex(BaseIndexMixin, Persistent):
         return self._not_indexed
 
     def search(self, path_tuple, depth=None, include_origin=True):
-        objectmap = find_service(self.__parent__, 'objectmap')
+        objectmap = find_objectmap(self.__parent__)
         return objectmap.pathlookup(path_tuple, depth, include_origin)
 
     def _parse_optionstr(self, optionstr):

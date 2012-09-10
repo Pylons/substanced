@@ -11,6 +11,7 @@ from ..interfaces import (
 )
 
 from ..content import find_service
+from ..objectmap import find_objectmap
 from ..util import oid_of
 
 from . import UserToPasswordReset
@@ -28,7 +29,7 @@ def user_will_be_removed(event):
     user = event.object
     if event.moving: # it's not really being removed
         return
-    objectmap = find_service(user, 'objectmap')
+    objectmap = find_objectmap(user)
     if objectmap is not None:
         resets = objectmap.targets(user, UserToPasswordReset)
         for reset in resets:

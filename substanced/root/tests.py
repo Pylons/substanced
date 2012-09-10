@@ -28,9 +28,6 @@ class TestRoot(unittest.TestCase):
             return group
         created.add_user = add_user
         created.add_group = add_group
-        def add(*arg, **kw):
-            created.added = True
-        created.add = add
         registry = testing.DummyResource()
         registry.settings = settings
         registry.content = testing.DummyResource()
@@ -53,10 +50,9 @@ class TestRoot(unittest.TestCase):
         registry = self._makeRegistry(settings)
         inst = self._makeOne()
         inst.after_create(inst, registry)
+        self.assertTrue('__objectmap__' in inst.__dict__)
         services = inst['__services__']
-        self.assertTrue('objectmap' in services)
         self.assertTrue('principals' in services)
-        self.assertTrue(registry.created.added)
         self.assertTrue(registry.group.connected)
         self.assertTrue(inst.__acl__)
         self.assertFalse(registry.created.__sd_deletable__)

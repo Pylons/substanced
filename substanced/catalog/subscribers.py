@@ -1,13 +1,12 @@
-from ..content import (
-    find_services,
-    find_service,
-    )
+from ..content import find_services
 
 from ..event import (
     subscribe_added,
     subscribe_will_be_removed,
     subscribe_modified,
     )
+
+from ..objectmap import find_objectmap
 
 from ..util import (
     postorder,
@@ -25,7 +24,7 @@ def object_added(event):
     fired before this gets fired.
     """
     obj = event.object
-    catalogs = find_services(obj, 'catalog')
+    catalogs = find_objectmap(obj)
     if not catalogs:
         return
     for node in postorder(obj):
@@ -40,7 +39,7 @@ def object_will_be_removed(event):
     lineage; an :class:`substanced.event.ObjectWillBeRemoved` event
     subscriber"""
     obj = event.object
-    objectmap = find_service(obj, 'objectmap')
+    objectmap = find_objectmap(obj)
     catalogs = find_services(obj, 'catalog')
     if objectmap is None or not catalogs:
         return

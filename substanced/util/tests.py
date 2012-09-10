@@ -359,6 +359,25 @@ class Test__make_name_validator(unittest.TestCase):
         validator(node, 'abc')
         self.assertTrue(context.checked)
 
+class Test_acquire(unittest.TestCase):
+    def _callFUT(self, node, name, default=None):
+        from . import acquire
+        return acquire(node, name, default=default)
+
+    def test_missing_with_default(self):
+        inst = DummyContent(None)
+        marker = object()
+        self.assertEqual(self._callFUT(inst, 'abc', marker), marker)
+
+    def test_missing_no_default(self):
+        inst = DummyContent(None)
+        self.assertEqual(self._callFUT(inst, 'abc'), None)
+
+    def test_hit(self):
+        inst = DummyContent(None)
+        inst.abc = '123'
+        self.assertEqual(self._callFUT(inst, 'abc'), '123')
+
 class DummyContent(object):
     def __init__(self, result):
         self.result = result
