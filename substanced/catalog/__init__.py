@@ -275,8 +275,8 @@ class CatalogablePredicate(object):
 def includeme(config): # pragma: no cover
     from zope.interface import Interface
     config.registry.registerAdapter(Search, (Interface,), ISearch)
-    config.set_request_method(query_catalog, reify=True)
-    config.set_request_method(search_catalog, reify=True)
+    config.add_request_method(query_catalog, reify=True)
+    config.add_request_method(search_catalog, reify=True)
     config.add_view_predicate('catalogable', CatalogablePredicate)
     config.scan('.')
     

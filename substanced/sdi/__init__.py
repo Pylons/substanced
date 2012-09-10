@@ -458,9 +458,9 @@ def includeme(config): # pragma: no cover
     manage_prefix = settings.get('substanced.manage_prefix', '/manage')
     manage_pattern = manage_prefix + '*traverse'
     config.add_route(MANAGE_ROUTE_NAME, manage_pattern)
-    config.set_request_method(mgmt_path)
-    config.set_request_method(mgmt_url)
-    config.set_request_method(get_user, name='user', reify=True)
+    config.add_request_method(mgmt_path)
+    config.add_request_method(mgmt_url)
+    config.add_request_method(get_user, name='user', reify=True)
     config.include('deform_bootstrap')
     secret = config.registry.settings.get('substanced.secret')
     if secret is None:

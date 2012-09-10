@@ -61,6 +61,6 @@ def undo_one(request):
     return HTTPFound(request.referrer or request.mgmt_path(request.context))
             
 def includeme(config): # pragma: no cover
-    config.set_request_method(FlashUndo, name='flash_with_undo', reify=True)
+    config.add_request_method(FlashUndo, name='flash_with_undo', reify=True)
     config.scan('.')
     
