@@ -59,8 +59,5 @@ class Dummy(object):
     pass
 
 class DummyRegistry(object):
-    def __init__(self):
-        self.notified = []
-    def notify(self, event):
-        self.notified.append(event)
+    pass
 
