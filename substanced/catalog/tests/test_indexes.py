@@ -22,7 +22,8 @@ class TestPathIndex(unittest.TestCase):
         index = PathIndex(family=family)
         index.__parent__ = catalog
         site = _makeSite(catalog=catalog)
-        ObjectMap(site)
+        objectmap = ObjectMap(site)
+        site.__objectmap__ = objectmap
         return index
 
     def _acquire(self, inst, name):

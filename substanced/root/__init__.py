@@ -54,6 +54,11 @@ class Root(Folder):
     """
     sdi_title = ''
 
+    def __init__(self):
+        Folder.__init__(self)
+        self.__objectmap__ = ObjectMap(self)
+        self.__objectmap__.add(self, ('',))
+
     def after_create(self, inst, registry):
         settings = registry.settings
         password = settings.get('substanced.initial_password')
@@ -66,7 +71,6 @@ class Root(Folder):
         email = settings.get('substanced.initial_email', 'admin@example.com')
         # side effect of ObjectMap constructor: it sets the ``__objectmap__``
         # attribute of the argument you pass it.
-        objectmap = ObjectMap(self)
         principals = registry.content.create('Principals')
         # prevent SDI deletion/renaming of root principals service
         principals.__sd_deletable__ = False
@@ -79,7 +83,6 @@ class Root(Folder):
             ]
         # prevent SDI deletion/renaming of root services folder
         self['__services__'].__sd_deletable__ = False
-        objectmap.add(self, ('',))
 
 def includeme(config): # pragma: no cover
     config.scan('.')

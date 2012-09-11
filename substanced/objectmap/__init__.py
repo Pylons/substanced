@@ -101,10 +101,7 @@ class ObjectMap(Persistent):
         self.path_to_objectid = self.family.OI.BTree()
         self.pathindex = self.family.OO.BTree()
         self.referencemap = ReferenceMap()
-
-        # yes, this circref is on purpose
         self.root = root
-        root.__objectmap__ = self
 
     def new_objectid(self):
         """ Obtain an unused integer object identifier """
