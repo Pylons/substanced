@@ -407,9 +407,10 @@ class TestFolderContentsViews(unittest.TestCase):
         self.assertEqual(request.session.__delitem__.call_args,
                          mock.call('tocopy'))
 
-    def test_copy_finish_one(self):
+    @mock.patch('substanced.folder.views.find_objectmap')
+    def test_copy_finish_one(self, mock_find_objectmap):
         context = mock.MagicMock()
-        mock_folder = context['target'].find_service().object_for()
+        mock_folder = mock_find_objectmap().object_for()
         mock_folder.__parent__ = mock.MagicMock()
         mock_folder.__name__ = mock.sentinel.name
         request = mock.MagicMock()
@@ -417,17 +418,19 @@ class TestFolderContentsViews(unittest.TestCase):
         request.POST.get.side_effect = lambda x: {
             'form.copy_finish': 'copy_finish'}[x]
 
-        inst = self._makeOne(context['target'], request)
+        inst = self._makeOne(context, request)
         inst.copy_finish()
 
         self.assertEqual(mock_folder.__parent__.copy.call_args,
-                         mock.call(mock.sentinel.name, context['target']))
+                         mock.call(mock.sentinel.name, context))
         request.flash_with_undo.assert_called_once_with('Copied 1 item')
-        self.assertEqual(request.session.__delitem__.call_args, mock.call('tocopy'))
+        self.assertEqual(request.session.__delitem__.call_args,
+                         mock.call('tocopy'))
 
-    def test_copy_finish_multi(self):
+    @mock.patch('substanced.folder.views.find_objectmap')
+    def test_copy_finish_multi(self, mock_find_objectmap):
         context = mock.MagicMock()
-        mock_folder = context['target'].find_service().object_for()
+        mock_folder = mock_find_objectmap().object_for()
         mock_folder.__parent__ = mock.MagicMock()
         mock_folder.__name__ = mock.sentinel.name
         request = mock.MagicMock()
@@ -435,23 +438,24 @@ class TestFolderContentsViews(unittest.TestCase):
         request.POST.get.side_effect = lambda x: {
             'form.copy_finish': 'copy_finish'}[x]
 
-        inst = self._makeOne(context['target'], request)
+        inst = self._makeOne(context, request)
         inst.copy_finish()
 
         self.assertTrue(mock.call(123) in
-                        context['target'].find_service().object_for.mock_calls)
+                        mock_find_objectmap().object_for.mock_calls)
         self.assertTrue(mock.call(456) in
-                        context['target'].find_service().object_for.mock_calls)
+                        mock_find_objectmap().object_for.mock_calls)
         self.assertEqual(mock_folder.__parent__.copy.call_args,
-                         mock.call(mock.sentinel.name, context['target']))
+                         mock.call(mock.sentinel.name, context))
         request.flash_with_undo.assert_called_once_with('Copied 2 items')
         self.assertEqual(request.session.__delitem__.call_args,
                          mock.call('tocopy'))
 
-    def test_copy_finish_already_exists(self):
+    @mock.patch('substanced.folder.views.find_objectmap')
+    def test_copy_finish_already_exists(self, mock_find_objectmap):
         from ...exceptions import FolderKeyError
         context = mock.MagicMock()
-        mock_folder = context['target'].find_service().object_for()
+        mock_folder = mock_find_objectmap().object_for()
         mock_folder.__parent__ = mock.MagicMock()
         mock_folder.__parent__.copy.side_effect = FolderKeyError(u'foobar')
         mock_folder.__name__ = mock.sentinel.name
@@ -460,7 +464,7 @@ class TestFolderContentsViews(unittest.TestCase):
         request.POST.get.side_effect = lambda x: {
             'form.copy_finish': 'copy_finish'}[x]
 
-        inst = self._makeOne(context['target'], request)
+        inst = self._makeOne(context, request)
         self.assertRaises(HTTPFound, inst.copy_finish)
         request.session.flash.assert_called_once_with(u'foobar', 'error')
 
@@ -549,27 +553,27 @@ class TestFolderContentsViews(unittest.TestCase):
     @mock.patch('substanced.folder.views.find_objectmap')
     def test_move_finish_one(self, mock_find_objectmap):
         context = mock.MagicMock()
-        mock_folder = mock.Mock() #context['target'].find_objectmap().object_for()
+        mock_folder = mock_find_objectmap().object_for()
         mock_folder.__parent__ = mock.MagicMock()
         mock_folder.__name__ = mock.sentinel.name
-        mock_find_objectmap.return_value = mock_folder
         request = mock.MagicMock()
         request.session.__getitem__.return_value = [123]
         request.POST.get.side_effect = lambda x: {
             'form.move_finish': 'move_finish'}[x]
 
-        inst = self._makeOne(context['target'], request)
+        inst = self._makeOne(context, request)
         inst.move_finish()
 
         self.assertEqual(mock_folder.__parent__.move.call_args,
-                         mock.call(mock.sentinel.name, context['target']))
+                         mock.call(mock.sentinel.name, context))
         request.flash_with_undo.assert_called_once_with('Moved 1 item')
         self.assertEqual(request.session.__delitem__.call_args,
                          mock.call('tomove'))
 
-    def test_move_finish_multi(self):
+    @mock.patch('substanced.folder.views.find_objectmap')
+    def test_move_finish_multi(self, mock_find_objectmap):
         context = mock.MagicMock()
-        mock_folder = context['target'].find_service().object_for()
+        mock_folder = mock_find_objectmap().object_for()
         mock_folder.__parent__ = mock.MagicMock()
         mock_folder.__name__ = mock.sentinel.name
         request = mock.MagicMock()
@@ -577,23 +581,24 @@ class TestFolderContentsViews(unittest.TestCase):
         request.POST.get.side_effect = lambda x: {
             'form.move_finish': 'move_finish'}[x]
 
-        inst = self._makeOne(context['target'], request)
+        inst = self._makeOne(context, request)
         inst.move_finish()
 
         self.assertTrue(mock.call(123) in
-                        context['target'].find_service().object_for.mock_calls)
+                        mock_find_objectmap().object_for.mock_calls)
         self.assertTrue(mock.call(456) in
-                        context['target'].find_service().object_for.mock_calls)
+                        mock_find_objectmap().object_for.mock_calls)
         self.assertEqual(mock_folder.__parent__.move.call_args,
-                         mock.call(mock.sentinel.name, context['target']))
+                         mock.call(mock.sentinel.name, context))
         self.assertEqual(request.session.__delitem__.call_args,
                          mock.call('tomove'))
         request.flash_with_undo.assert_called_once_with('Moved 2 items')
 
-    def test_move_finish_already_exists(self):
+    @mock.patch('substanced.folder.views.find_objectmap')
+    def test_move_finish_already_exists(self, mock_find_objectmap):
         from ...exceptions import FolderKeyError
         context = mock.MagicMock()
-        mock_folder = context['target'].find_service().object_for()
+        mock_folder = mock_find_objectmap().object_for()
         mock_folder.__parent__ = mock.MagicMock()
         mock_folder.__parent__.move.side_effect = FolderKeyError(u'foobar')
         mock_folder.__name__ = mock.sentinel.name
@@ -602,7 +607,7 @@ class TestFolderContentsViews(unittest.TestCase):
         request.POST.get.side_effect = lambda x: {
             'form.move_finish': 'move_finish'}[x]
 
-        inst = self._makeOne(context['target'], request)
+        inst = self._makeOne(context, request)
         self.assertRaises(HTTPFound, inst.move_finish)
         request.session.flash.assert_called_once_with(u'foobar', 'error')
 

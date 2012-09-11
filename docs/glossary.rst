@@ -53,7 +53,7 @@ Glossary
 
    Service
      A persistent object in the :term:`resource tree` that exposes an API to
-     application developers.  For example, the ``objectmap`` service.
+     application developers.  For example, the ``principals`` service.
 
    Deform
      A form library that draws and validates forms based on :term:`Colander`

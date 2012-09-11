@@ -18,12 +18,16 @@ class TestPathIndex(unittest.TestCase):
     def _makeOne(self, family=None):
         from ..indexes import PathIndex
         from ...objectmap import ObjectMap
-        objectmap = ObjectMap()
         catalog = DummyCatalog()
         index = PathIndex(family=family)
         index.__parent__ = catalog
-        _makeSite(catalog=catalog, objectmap=objectmap)
+        site = _makeSite(catalog=catalog)
+        ObjectMap(site)
         return index
+
+    def _acquire(self, inst, name):
+        from substanced.util import acquire
+        return acquire(inst, name)
 
     def test_ctor_alternate_family(self):
         inst = self._makeOne(family=BTrees.family32)
@@ -57,7 +61,7 @@ class TestPathIndex(unittest.TestCase):
     def test_search(self):
         inst = self._makeOne()
         obj = testing.DummyResource()
-        objectmap = inst.__parent__.__parent__['objectmap']
+        objectmap = self._acquire(inst, '__objectmap__')
         objectmap._v_nextid = 1
         objectmap.add(obj, (u'',))
         result = inst.search((u'',))
@@ -66,7 +70,7 @@ class TestPathIndex(unittest.TestCase):
     def test_apply_obj(self):
         inst = self._makeOne()
         obj = testing.DummyResource()
-        objectmap = inst.__parent__.__parent__['objectmap']
+        objectmap = self._acquire(inst, '__objectmap__')
         objectmap._v_nextid = 1
         objectmap.add(obj, (u'',))
         result = inst.apply(obj)
@@ -81,7 +85,7 @@ class TestPathIndex(unittest.TestCase):
     def test_apply_path(self):
         inst = self._makeOne()
         obj = testing.DummyResource()
-        objectmap = inst.__parent__.__parent__['objectmap']
+        objectmap = self._acquire(inst, '__objectmap__')
         objectmap._v_nextid = 1
         objectmap.add(obj, (u'',))
         result = inst.apply((u'',))
@@ -90,7 +94,7 @@ class TestPathIndex(unittest.TestCase):
     def test_apply_dict(self):
         inst = self._makeOne()
         obj = testing.DummyResource()
-        objectmap = inst.__parent__.__parent__['objectmap']
+        objectmap = self._acquire(inst, '__objectmap__')
         objectmap._v_nextid = 1
         objectmap.add(obj, (u'',))
         obj2 = testing.DummyResource(__name__='a')
@@ -102,7 +106,7 @@ class TestPathIndex(unittest.TestCase):
     def test_apply_dict_withdepth(self):
         inst = self._makeOne()
         obj = testing.DummyResource()
-        objectmap = inst.__parent__.__parent__['objectmap']
+        objectmap = self._acquire(inst, '__objectmap__')
         objectmap._v_nextid = 1
         objectmap.add(obj, (u'',))
         obj2 = testing.DummyResource(__name__='a')
@@ -114,7 +118,7 @@ class TestPathIndex(unittest.TestCase):
     def test_apply_dict_with_include_origin_false(self):
         inst = self._makeOne()
         obj = testing.DummyResource()
-        objectmap = inst.__parent__.__parent__['objectmap']
+        objectmap = self._acquire(inst, '__objectmap__')
         objectmap._v_nextid = 1
         objectmap.add(obj, (u'',))
         obj2 = testing.DummyResource(__name__='a')
@@ -171,7 +175,7 @@ class TestPathIndex(unittest.TestCase):
         # ftest to make sure we have the right kind of Sets
         inst = self._makeOne()
         obj = testing.DummyResource()
-        objectmap = inst.__parent__.__parent__['objectmap']
+        objectmap = self._acquire(inst, '__objectmap__')
         objectmap._v_nextid = 1
         objectmap.add(obj, (u'',))
         result = inst.apply_intersect(obj, objectmap.family.IF.Set([1]))

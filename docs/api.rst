@@ -281,6 +281,8 @@ Other Helpers
 
 .. automodule:: substanced.objectmap
 
+.. autofunction:: find_objectmap
+
 .. autoclass:: ObjectMap
    :members:
 

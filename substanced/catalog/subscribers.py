@@ -24,7 +24,7 @@ def object_added(event):
     fired before this gets fired.
     """
     obj = event.object
-    catalogs = find_objectmap(obj)
+    catalogs = find_services(obj, 'catalog')
     if not catalogs:
         return
     for node in postorder(obj):

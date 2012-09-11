@@ -860,6 +860,8 @@ class Multireference(object):
         self.disconnect(self.oids)
 
 def find_objectmap(context):
+    """ Returns the object map for the root object in the lineage of the
+    ``context``"""
     return acquire(context, '__objectmap__')
             
 def includeme(config): # pragma: no cover

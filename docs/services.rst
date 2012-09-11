@@ -8,18 +8,18 @@ A :term:`service` is a name for an object that lives inside a folder named
      |
      \ __services__
                    \
-                    |-- objectmap
+                    |-- catalog
                     |
                     |-- principals
 
 In the above example, two services exist within the ``/__services__`` folder.
-One is named ``objectmap``, the other is named ``principals``.
+One is named ``catalog``, the other is named ``principals``.
 
 Services expose APIs that exist for the benefit of application developers.
-For instance, the ``objectmap`` service provides an API that allows a
-developer to relate one object to another, to look up all the objects below a
-path, and to resolve an object identifier to an object.  The ``principals``
-service allows a developer to add and enumerate users and groups.
+For instance, the ``catalog`` service provides an API that allows a developer
+to index and query for content objects using a structured query API.  The
+``principals`` service allows a developer to add and enumerate users and
+groups.
 
 A service can be looked up in one of two ways: using the
 :func:`pryamid.content.find_service` API or the
@@ -37,7 +37,7 @@ Here's how to use :func:`pyramid.content.find_service`:
 .. code-block:: python
 
    from substanced.content import find_service
-   objectmap = find_service(somecontext, 'objectmap')
+   principals = find_service(somecontext, 'principals')
 
 ``somecontext`` above is any :term:`resource` in the :term:`resource tree`.
 For example, ``somecontext`` could be a "document" object you've added to a
@@ -47,7 +47,7 @@ Here's how to use :meth:`pyramid.folder.Folder.find_service`:
 
 .. code-block:: python
 
-   objectmap = somefolder.find_service('objectmap')
+   principals = somefolder.find_service('principals')
 
 ``somefolder`` above is any :class:`substanced.folder.Folder` object (or any
 object which inherits from that class) present in the :term:`resource tree`.

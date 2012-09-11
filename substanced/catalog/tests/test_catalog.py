@@ -15,6 +15,9 @@ def _makeSite(**kw):
     site = testing.DummyResource(__provides__=kw.pop('__provides__', None))
     alsoProvides(site, IFolder)
     services = testing.DummyResource()
+    objectmap = kw.pop('objectmap', None)
+    if objectmap is not None:
+        site.__objectmap__ = objectmap
     for k, v in kw.items():
         services[k] = v
     site['__services__'] = services
