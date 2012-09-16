@@ -37,7 +37,7 @@ class TestAddUserView(unittest.TestCase):
         resp = inst.add_success({'login':'name', 'groups':(1,)})
         self.assertEqual(context['name'], resource)
         self.assertEqual(resp.location, 'http://example.com')
-        self.assertEqual(resource.connected, (1,))
+        self.assertEqual(resource.groups, (1,))
 
 class TestAddGroupView(unittest.TestCase):
     def _makeOne(self, context, request):
@@ -59,6 +59,7 @@ class TestAddGroupView(unittest.TestCase):
         resp = inst.add_success({'name':'name', 'members':(1,)})
         self.assertEqual(context['name'], resource)
         self.assertEqual(resp.location, 'http://example.com')
+        self.assertEqual(resource.members, (1,))
 
 class Test_password_validator(unittest.TestCase):
     def _makeOne(self, node, kw):
@@ -177,9 +178,6 @@ class Test_login_validator(unittest.TestCase):
         self.assertEqual(inst(None, 'fred'), None)
 
 class DummyPrincipal(object):
-    def connect(self, *args):
-        self.connected = args
-
     def set_password(self, password):
         self.password = password
 

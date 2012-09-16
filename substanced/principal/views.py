@@ -55,7 +55,7 @@ class AddUserView(FormView):
         groups = appstruct.pop('groups')
         user = registry.content.create('User', **appstruct)
         self.context[name] = user
-        user.connect(*groups)
+        user.groups = groups
         return HTTPFound(self.request.mgmt_path(self.context))
 
 @mgmt_view(
@@ -76,7 +76,7 @@ class AddGroupView(FormView):
         members = appstruct.pop('members')
         group = registry.content.create('Group', **appstruct)
         self.context[name] = group
-        group.connect(*members)
+        group.members = members
         return HTTPFound(self.request.mgmt_path(self.context))
 
 @colander.deferred
