@@ -5,6 +5,8 @@ from pyramid.security import has_permission
 from pyramid.threadlocal import get_current_registry
 from zope.interface import implementer
 
+from persistent.mapping import PersistentMapping
+
 from ..interfaces import (
     IWorkflow,
     IDefaultWorkflow,
@@ -133,7 +135,7 @@ class Workflow(object):
             transition = {}
         states = getattr(content, STATE_ATTR, None)
         if not states:
-            states = {}
+            states = PersistentMapping()
             setattr(content, STATE_ATTR, states)
         msg = None
         new_state = self._states[state]
