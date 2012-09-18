@@ -44,8 +44,8 @@ Demonstration Application
 
 See the application running at http://substanced.repoze.org for a
 demonstration of the Substance D management interface.  The package that
-contains the code for that demo is available at
-https://github.com/Pylons/substanced/tree/master/demo .
+contains the code for that demo is available by running ``pcreate -s
+substanced myproj`` with Substance D installed.
 
 Narrative Documentation
 -----------------------
