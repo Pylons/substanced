@@ -421,7 +421,7 @@ class TestUser(unittest.TestCase):
         resets = principals['resets'] = testing.DummyResource()
         def add_reset(user):
             self.assertEqual(user, inst)
-        resets.add_reset = add_reset
+        principals.add_reset = add_reset
         request = testing.DummyRequest()
         request.mgmt_path = lambda *arg: '/mgmt'
         request.root = site

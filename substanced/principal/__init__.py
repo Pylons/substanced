@@ -392,8 +392,7 @@ class User(Folder):
         root = request.root
         sitename = getattr(root, 'title', None) or 'Substance D'
         principals = find_service(self, 'principals')
-        resets = principals['resets']
-        reset = resets.add_reset(self)
+        reset = principals.add_reset(self)
         reseturl = request.application_url + request.mgmt_path(reset)
         message = Message(
             subject = 'Account information for %s' % sitename,
