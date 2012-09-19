@@ -411,6 +411,9 @@ def get_user(request):
     objectmap = find_objectmap(request.context)
     return objectmap.object_for(userid)
 
+# XXX check_csrf_token and _CheckCSRFTokenPredicate can be removed once we
+# publish Pyramid 1.4a2 (it has analogues of both)
+
 def check_csrf_token(request, token='csrf_token'):
     """ Check the CSRF token in the request's session against the value in
     ``request.params.get(token)``"""
