@@ -291,6 +291,24 @@ class Test_sdi_mgmt_views(unittest.TestCase):
         result = self._callFUT(request)
         self.assertEqual(result, [])
 
+    def test_one_related_view_anycontext_tabcondition_True(self):
+        request = testing.DummyRequest()
+        request.matched_route = None
+        request.mgmt_path = lambda context, view_name: '/path/%s' % view_name
+        request.registry.content = DummyContent()
+        view_intr = DummyIntrospectable()
+        view_intr.category_name = 'views'
+        view_intr['name'] = 'name'
+        view_intr['context'] = None
+        view_intr['derived_callable'] = None
+        intr = {}
+        intr['tab_title'] = None
+        intr['tab_condition'] = True
+        intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
+        request.registry.introspector = DummyIntrospector([(intr,)])
+        result = self._callFUT(request)
+        self.assertEqual(len(result), 1)
+
     def test_one_related_view_anycontext_tabcondition_callable(self):
         request = testing.DummyRequest()
         request.matched_route = None

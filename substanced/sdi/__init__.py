@@ -215,8 +215,10 @@ def sdi_mgmt_views(request, context=None, names=None):
             elif intr_context and not isinstance(context, intr_context):
                 continue
             if tab_condition is not None and names is None:
-                if tab_condition is False or not tab_condition(
-                    context, request):
+                if callable(tab_condition):
+                    if not tab_condition(context, request):
+                        continue
+                elif not tab_condition:
                     continue
             derived = view_intr['derived_callable']
             if hasattr(derived, '__predicated__'):
