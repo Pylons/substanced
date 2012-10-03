@@ -380,7 +380,7 @@ class User(Folder):
 
     def check_password(self, password):
         """ Checks if the plaintext password passed as ``password`` matches
-        this user's stored, encrypted passowrd.  Returns ``True`` or
+        this user's stored, encrypted password.  Returns ``True`` or
         ``False``."""
         return self.pwd_manager.check(self.password, password)
 

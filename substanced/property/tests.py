@@ -170,6 +170,19 @@ class TestPropertySheet(unittest.TestCase):
         self.assertEqual(vals['title'], 'title')
         self.assertEqual(vals['description'], 'description')
 
+    def test_get_with_activateable(self):
+        context = testing.DummyResource()
+        L = []
+        context._p_activate = lambda *arg: L.append(True)
+        request = testing.DummyRequest()
+        inst = self._makeOne(context, request)
+        context.title = 'title'
+        context.description = 'description'
+        vals = inst.get()
+        self.assertEqual(vals['title'], 'title')
+        self.assertEqual(vals['description'], 'description')
+        self.assertEqual(L, [True])
+
     def test_set(self):
         context = testing.DummyResource()
         request = testing.DummyRequest()

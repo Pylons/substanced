@@ -112,6 +112,8 @@ class PropertySheet(object):
 
     def get(self):
         context = self.context
+        if hasattr(context, '_p_activate'):
+            context._p_activate()
         return dict(context.__dict__)
 
     def set(self, struct):
