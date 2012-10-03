@@ -544,7 +544,7 @@ def _reference_property(reftype, resolve, orientation='source'):
         else:
             oids = list(objectmap.sourceids(self, reftype))
         if not oids:
-            oid = None
+            return None
         else:
             assert(len(oids)==1)
             oid = oids[0]

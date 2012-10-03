@@ -978,7 +978,7 @@ class Test_reference_source_property(unittest.TestCase):
 
     def test_get_no_targetids(self):
         inst = self._makeInst()
-        objectmap = DummyObjectMap(targetids=())
+        objectmap = DummyObjectMap(targetids=(), result=1)
         inst.__objectmap__ = objectmap
         self.assertEqual(inst.prop, None)
 
