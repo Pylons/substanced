@@ -508,6 +508,10 @@ class SequentialAutoNamingFolder(Folder, _AutoNamingFolder):
 
     This class is typically used as a base class for a custom content type.
     """
+
+    _autoname_length = 7
+    _autoname_start = -1
+
     def __init__(
         self,
         data=None,
@@ -519,13 +523,10 @@ class SequentialAutoNamingFolder(Folder, _AutoNamingFolder):
         name to object. Autoname length may be supplied.  If it is not, it
         will default to 7.  Autoname start may be supplied.  If it is not, it
         will default to -1."""
-        if autoname_length is None:
-            autoname_length = 7
-        if autoname_start is None:
-            autoname_start = -1
-
-        self._autoname_length = autoname_length
-        self._autoname_start = autoname_start
+        if autoname_length is not None:
+            self._autoname_length = autoname_length
+        if autoname_start is not None:
+            self._autoname_start = autoname_start
 
         super(SequentialAutoNamingFolder, self).__init__(
             data=data,
@@ -600,15 +601,14 @@ class RandomAutoNamingFolder(Folder, _AutoNamingFolder):
     """
 
     _randomchoice = staticmethod(random.choice) # for testing
+    _autoname_length = 7
 
     def __init__(self, data=None, family=None, autoname_length=None):
         """ Constructor.  Data may be an initial dictionary mapping object
         name to object. Autoname length may be supplied.  If it is not, it
         will default to 7."""
-        if autoname_length is None:
-            autoname_length = 7
-
-        self._autoname_length = autoname_length
+        if autoname_length is not None:
+            self._autoname_length = autoname_length
 
         super(RandomAutoNamingFolder, self).__init__(
             data=data,
