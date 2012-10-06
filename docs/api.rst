@@ -259,6 +259,24 @@ Other Helpers
      be returned from ``__iter__()``, ``keys()``, ``values()``, and
      ``items()``.  If not set, use an effectively random order.
 
+.. autoclass:: SequentialAutoNamingFolder
+
+   .. automethod:: __init__
+
+   .. automethod:: add_autoname
+
+   .. automethod:: next_name
+
+   .. automethod:: add
+
+.. autoclass:: RandomAutoNamingFolder
+
+   .. automethod:: __init__
+
+   .. automethod:: add_autoname
+
+   .. automethod:: next_name
+
 .. autofunction:: includeme
 
 :mod:`substanced.form` API

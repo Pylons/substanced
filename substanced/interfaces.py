@@ -49,7 +49,8 @@ class IObjectMap(Interface):
         """ Add a new object to the object map.  Assigns a new objectid to
         obj.__objectid__ to the object if it doesn't already have one.  The
         object's path or objectid must not already exist in the map.  Returns
-        the object id."""
+        the object id.
+        """
 
     def remove(obj_objectid_or_path_tuple):
         """ Removes an object from the object map using the object itself, an
@@ -226,12 +227,23 @@ class IFolder(Interface):
         and ``__parent__`` value.
         """
 
-    def add(name, other, send_events=True, reserved_names=RESERVED_NAMES):
+    def add(name, other, send_events=True, reserved_names=RESERVED_NAMES,
+            duplicating=False, registry=None):
         """ Same as ``__setitem__``.
 
         If ``send_events`` is false, suppress the sending of folder events.
         Disallow the addition of the name provided is in the
-        ``RESERVED_NAMES`` list.
+        ``RESERVED_NAMES`` list.  If ``duplicating`` is True, the
+        ObjectWillBeAdded event sent will be marked as 'duplicating', which
+        typically has the effect that the subobject's object id will be
+        overwritten instead of reused.  If ``registry`` is passed, it should
+        be a Pyramid registry object; otherwise the
+        ``pyramid.threadlocal.get_current_registry`` function is used to look
+        up the current registry.
+
+        This method returns the name used to place the subobject in the
+        folder (a derivation of ``name``, usually the result of
+        ``self.check_name(name)``).
         """
 
     def check_name(name, reserved_names=RESERVED_NAMES):
@@ -316,6 +328,31 @@ class IFolder(Interface):
         This operation is done in terms of a remove and an add.  The Removed
         and WillBeRemoved events will be sent for the old object, and the
         WillBeAdded and Add events will be sent for the new object.
+        """
+
+class IAutoNamingFolder(IFolder):
+    def next_name(subobject):
+        """Return a name (a string) based on the autonaming policy for this
+        folder.  ``subobject`` is the object being added to the folder.
+        Implementations are free to ignore the ``subobject`` that is passed.
+        Implementations which don't require the subobject to generate a name
+        should support ``None`` as the ``subobject`` argument, in case
+        calling code just needs to generate a name without actually adding a
+        subobject."""
+
+    def add_autoname(
+        subobject,
+        send_events=True,
+        duplicating=False,
+        registry=None,
+        ):
+        """Add a subobject, naming it automatically, giving it the name
+        returned by this folder's ``next_name`` method.  It has the same
+        effect as calling :meth:`substanced.folder.Folder.add`, but you
+        needn't provide a name argument.
+
+        This method returns the name of the subobject.
+
         """
 
 class ICatalog(_ICatalog):

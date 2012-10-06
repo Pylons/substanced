@@ -594,6 +594,84 @@ class TestServices(unittest.TestCase):
         inst = self._makeOne()
         self.assertEqual(inst.__sd_hidden__(context, request), True)
 
+class TestSequentialAutoNamingFolder(unittest.TestCase):
+    def _makeOne(self, d=None, autoname_length=None, autoname_start=None):
+        from .. import SequentialAutoNamingFolder
+        return SequentialAutoNamingFolder(
+            d,
+            autoname_length=autoname_length,
+            autoname_start=autoname_start
+            )
+
+    def test_next_name_empty(self):
+        inst = self._makeOne()
+        self.assertEqual(inst.next_name(None), '0'.zfill(7))
+
+    def test_next_name_nonempty(self):
+        ob = DummyModel()
+        inst = self._makeOne({'000000000':ob})
+        self.assertEqual(inst.next_name(None), '1'.zfill(7))
+
+    def test_next_name_alternate_autoname_length(self):
+        inst = self._makeOne(autoname_length=5)
+        self.assertEqual(inst.next_name(None), '0'.zfill(5))
+
+    def test_next_name_alternate_autoname_start(self):
+        inst = self._makeOne(autoname_start=0)
+        self.assertEqual(inst.next_name(None), '1'.zfill(7))
+
+    def test_add_not_intifiable(self):
+        ob = DummyModel()
+        inst = self._makeOne()
+        self.assertRaises(ValueError, inst.add, 'abcdef', ob)
+
+    def test_add_intifiable(self):
+        ob = DummyModel()
+        inst = self._makeOne()
+        inst.add('1', ob)
+        self.assertTrue('1'.zfill(7) in inst)
+
+    def test_add_autoname(self):
+        ob = DummyModel()
+        inst = self._makeOne()
+        result = inst.add_autoname(ob)
+        name = '0'.zfill(7)
+        self.assertEqual(ob.__name__, name)
+        self.assertTrue(name in inst)
+        self.assertEqual(name, result)
+
+class TestRandomAutoNamingFolder(unittest.TestCase):
+    def _makeOne(self, d=None, autoname_length=None):
+        from .. import RandomAutoNamingFolder
+        return RandomAutoNamingFolder(d, autoname_length=autoname_length)
+
+    def test_next_name_doesntexist(self):
+        inst = self._makeOne()
+        inst._randomchoice = lambda *arg: 'x'
+        self.assertEqual(inst.next_name(None), 'x' * 7)
+
+    def test_next_name_exists(self):
+        inst = self._makeOne()
+        L = ['x'] * 7
+        L.extend(['y'] * 7)
+        def choice(vals):
+            v = L.pop()
+            return v
+        inst._randomchoice = choice
+        self.assertEqual(inst.next_name(None), 'y' * 7)
+
+    def test_next_name_alternate_length(self):
+        inst = self._makeOne(autoname_length=5)
+        self.assertEqual(len(inst.next_name(None)), 5)
+        
+    def test_add_autoname(self):
+        ob = DummyModel()
+        inst = self._makeOne()
+        result = inst.add_autoname(ob)
+        self.assertEqual(ob.__name__, result)
+        self.assertTrue(result in inst)
+        self.assertEqual(len(result), 7)
+
 class DummyModel(object):
     pass
 

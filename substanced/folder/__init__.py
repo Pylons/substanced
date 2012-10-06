@@ -1,3 +1,5 @@
+import random
+import string
 import tempfile
 
 from zope.interface import implementer
@@ -13,6 +15,7 @@ from ..exceptions import FolderKeyError
 
 from ..interfaces import (
     IFolder,
+    IAutoNamingFolder,
     marker,
     SERVICES_NAME,
     RESERVED_NAMES,
@@ -256,6 +259,10 @@ class Folder(Persistent):
         Don't allow names in the ``reserved_names`` sequence to be
         added. If ``duplicating`` is True, oids will be replaced in
         objectmap.
+
+        This method returns the name used to place the subobject in the
+        folder (a derivation of ``name``, usually the result of
+        ``self.check_name(name)``).
         """
         if registry is None:
             registry = get_current_registry()
@@ -277,6 +284,8 @@ class Folder(Persistent):
         if send_events:
             event = ObjectAdded(other, self, name)
             self._notify(event, registry)
+
+        return name
 
     def pop(self, name, default=marker):
         """ Remove the item stored in the under ``name`` and return it.
@@ -457,6 +466,169 @@ class Services(Folder):
         # Don't show this item in folder contents view unless the viewer
         # has permission to add services in the SDI
         return not has_permission('sdi.add-services', context, request)
+
+class _AutoNamingFolder(object):
+    def add_autoname(
+        self,
+        subobject,
+        send_events=True,
+        duplicating=False,
+        registry=None
+        ):
+        """ Add a subobject, naming it automatically, giving it the name
+        returned by this folder's ``next_name`` method.  It has the same
+        effect as calling :meth:`substanced.folder.Folder.add`, but you
+        needn't provide a name argument.
+
+        This method returns the name of the subobject.
+        """
+
+        name = self.next_name(subobject)
+
+        self.add(
+            name,
+            subobject,
+            send_events=send_events,
+            duplicating=duplicating,
+            registry=registry
+            )
+
+        return name
+
+@implementer(IAutoNamingFolder)
+class SequentialAutoNamingFolder(Folder, _AutoNamingFolder):
+    """ An auto-naming folder which autonames a subobject by sequentially
+    incrementing the maximum key of the folder.
+
+    Example names: ``0000001``, then ``0000002``, and so on.
+
+    This class implements the
+    :class:`substanced.interfaces.IAutoNamingFolder` interface and inherits
+    from :class:`substanced.folder.Folder`.
+
+    This class is typically used as a base class for a custom content type.
+    """
+    def __init__(
+        self,
+        data=None,
+        family=None,
+        autoname_length=None,
+        autoname_start=None
+        ):
+        """ Constructor.  Data may be an initial dictionary mapping object
+        name to object. Autoname length may be supplied.  If it is not, it
+        will default to 7.  Autoname start may be supplied.  If it is not, it
+        will default to -1."""
+        if autoname_length is None:
+            autoname_length = 7
+        if autoname_start is None:
+            autoname_start = -1
+
+        self._autoname_length = autoname_length
+        self._autoname_start = autoname_start
+
+        super(SequentialAutoNamingFolder, self).__init__(
+            data=data,
+            family=family,
+            )
+
+    def next_name(self, subobject):
+        """Return a name string based on:
+
+        - intifying the maximum key of this folder and adding one.
+
+        - zero-filling the left hand side of the result with as many zeroes
+          as are in the value of this folder's ``autoname_length``
+          constructor value.
+
+        If the folder has no items in it, the initial value used as a name
+        will be the value of this folder's ``autoname_start`` constructor
+        value.
+        """
+        try:
+            maxkey = self.data.maxKey()
+        except ValueError: # empty tree
+            maxkey = self._autoname_start
+        name = self._zfill(int(maxkey) + 1)
+        return name
+
+    def _zfill(self, name):
+        return str(int(name)).zfill(self._autoname_length)
+
+    def add(self, name, other, send_events=True, reserved_names=RESERVED_NAMES,
+            duplicating=False, registry=None):
+        """ The ``add`` method of a SequentialAutoNamingFolder will raise a
+        :exc:`ValueError` if the ``name`` it is passed is not intifiable, as
+        its ``next_name`` method relies on controlling the types of names
+        that are added to it (they must be intifiable).  It will also
+        zero-fill the name passed based on this folder's ``autoname_length``
+        constructor value.  It otherwise just calls its superclass' ``add``
+        method and returns the result."""
+        try:
+            int(name)
+        except:
+            raise ValueError(
+                'You cannot call the add method of a %s with a name that '
+                'is not intifiable; you passed %r' % (
+                    self.__class__.__name__,
+                    name
+                    )
+            )
+        name = self._zfill(name)
+        return super(SequentialAutoNamingFolder, self).add(
+            name,
+            other,
+            send_events=send_events,
+            reserved_names=reserved_names,
+            duplicating=duplicating,
+            registry=registry,
+            )
+
+@implementer(IAutoNamingFolder)
+class RandomAutoNamingFolder(Folder, _AutoNamingFolder):
+    """An auto-naming folder which autonames a subobject using a random
+    string.
+
+    Example names: ``MXF937A``, ``FLTP2F9``.
+
+    This class implements the
+    :class:`substanced.interfaces.IAutoNamingFolder` interface and inherits
+    from :class:`substanced.folder.Folder`.
+
+    This class is typically used as a base class for a custom
+    content type.    
+    """
+
+    _randomchoice = staticmethod(random.choice) # for testing
+
+    def __init__(self, data=None, family=None, autoname_length=None):
+        """ Constructor.  Data may be an initial dictionary mapping object
+        name to object. Autoname length may be supplied.  If it is not, it
+        will default to 7."""
+        if autoname_length is None:
+            autoname_length = 7
+
+        self._autoname_length = autoname_length
+
+        super(RandomAutoNamingFolder, self).__init__(
+            data=data,
+            family=family,
+            )
+
+    def next_name(self, subobject):
+        """Return a name string based on generating a random string composed
+        of digits and uppercase letters of a length determined by this
+        folder's ``autoname_length`` constructor value.  It tries generatoing
+        values continuously until one that is unused is found.
+        """
+        def randchar():
+            return self._randomchoice(
+                string.ascii_uppercase + string.digits
+                )
+        while True:
+            name = ''.join([randchar() for x in range(self._autoname_length)])
+            if not name in self:
+                return name
 
 def includeme(config): # pragma: no cover
     config.scan('.')
