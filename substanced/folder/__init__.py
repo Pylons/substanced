@@ -468,14 +468,14 @@ class Services(Folder):
         return not has_permission('sdi.add-services', context, request)
 
 class _AutoNamingFolder(object):
-    def add_autoname(
+    def add_next(
         self,
         subobject,
         send_events=True,
         duplicating=False,
         registry=None
         ):
-        """ Add a subobject, naming it automatically, giving it the name
+        """Add a subobject, naming it automatically, giving it the name
         returned by this folder's ``next_name`` method.  It has the same
         effect as calling :meth:`substanced.folder.Folder.add`, but you
         needn't provide a name argument.
@@ -485,15 +485,13 @@ class _AutoNamingFolder(object):
 
         name = self.next_name(subobject)
 
-        self.add(
+        return self.add(
             name,
             subobject,
             send_events=send_events,
             duplicating=duplicating,
             registry=registry
             )
-
-        return name
 
 @implementer(IAutoNamingFolder)
 class SequentialAutoNamingFolder(Folder, _AutoNamingFolder):

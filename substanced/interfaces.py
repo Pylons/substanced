@@ -340,7 +340,7 @@ class IAutoNamingFolder(IFolder):
         calling code just needs to generate a name without actually adding a
         subobject."""
 
-    def add_autoname(
+    def add_next(
         subobject,
         send_events=True,
         duplicating=False,
@@ -352,7 +352,6 @@ class IAutoNamingFolder(IFolder):
         needn't provide a name argument.
 
         This method returns the name of the subobject.
-
         """
 
 class ICatalog(_ICatalog):

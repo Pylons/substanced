@@ -631,10 +631,10 @@ class TestSequentialAutoNamingFolder(unittest.TestCase):
         inst.add('1', ob)
         self.assertTrue('1'.zfill(7) in inst)
 
-    def test_add_autoname(self):
+    def test_add_next(self):
         ob = DummyModel()
         inst = self._makeOne()
-        result = inst.add_autoname(ob)
+        result = inst.add_next(ob)
         name = '0'.zfill(7)
         self.assertEqual(ob.__name__, name)
         self.assertTrue(name in inst)
@@ -664,10 +664,10 @@ class TestRandomAutoNamingFolder(unittest.TestCase):
         inst = self._makeOne(autoname_length=5)
         self.assertEqual(len(inst.next_name(None)), 5)
         
-    def test_add_autoname(self):
+    def test_add_next(self):
         ob = DummyModel()
         inst = self._makeOne()
-        result = inst.add_autoname(ob)
+        result = inst.add_next(ob)
         self.assertEqual(ob.__name__, result)
         self.assertTrue(result in inst)
         self.assertEqual(len(result), 7)
