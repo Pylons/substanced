@@ -263,7 +263,7 @@ Other Helpers
 
    .. automethod:: __init__
 
-   .. automethod:: add_autoname
+   .. automethod:: add_next
 
    .. automethod:: next_name
 
@@ -273,7 +273,7 @@ Other Helpers
 
    .. automethod:: __init__
 
-   .. automethod:: add_autoname
+   .. automethod:: add_next
 
    .. automethod:: next_name
 
