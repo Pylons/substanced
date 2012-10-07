@@ -104,3 +104,5 @@ Contributors
 - Domen Kožar, 2012/06/10
 
 - Paul Everitt, 2012/09/19
+
+- Carlos de la Guardia, 2012/10/07
