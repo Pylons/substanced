@@ -1,7 +1,7 @@
 Building a Retail Application
 -----------------------------
 
-It's not the intent that normal unprivleged users of an application you build
+It's not the intent that normal unprivileged users of an application you build
 using Substance D ever see the :term:`SDI` management interface.  That
 interface is reserved for privileged users, like you and your staff.
 
