@@ -215,7 +215,7 @@ http://twitter.github.com/bootstrap/base-css.html#icons .
 Add Views
 ~~~~~~~~~
 
-You can associate a content type with view that will allow the type to be
+You can associate a content type with a view that will allow the type to be
 added by passing the name of the add view as a keyword argument to
 ``@content`` or ``add_content_type``.
 
