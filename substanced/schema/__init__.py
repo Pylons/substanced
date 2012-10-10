@@ -5,20 +5,33 @@ from pyramid.i18n import TranslationStringFactory
 
 _ = TranslationStringFactory('substanced')
 
-@colander.deferred
-def csrf_value(node, kw):
-    return kw['request'].session.get_csrf_token()
+class CSRFToken(colander.SchemaNode):
 
-@colander.deferred
-def csrf_validator(node, kw):
-    def csrf_validate(node, value):
-        if value != kw['request'].session.get_csrf_token():
+    schema_type = colander.String
+    widget = deform.widget.HiddenWidget()
+    
+    def validator(self, node, value):
+        request = self.bindings['request']
+        token = request.session.get_csrf_token()
+        if value != token:
             raise colander.Invalid(
                 node,
                 _('Invalid cross-site scripting token'),
-                value)
-    return csrf_validate
+                value
+                )
 
+    def after_bind(self, node, kw):
+        token = kw['request'].session.get_csrf_token()
+        self.default = token
+        
+class RemoveCSRFMapping(colander.Mapping):
+    def deserialize(self, node, cstruct):
+        result = colander.Mapping.deserialize(self, node, cstruct)
+        if result is colander.null:
+            return result
+        result.pop('_csrf_token_', None)
+        return result
+                   
 class Schema(colander.Schema):
     """
     A ``colander.Schema`` subclass which generates and validates a CSRF token
@@ -45,21 +58,5 @@ class Schema(colander.Schema):
       Substance D itself, but may not be done for you in extremely custom
       configurations.
     """
-    _csrf_token_ = colander.SchemaNode(
-        colander.String(),
-        widget=deform.widget.HiddenWidget(),
-        default=csrf_value,
-        validator=csrf_validator,
-        )
-
-class RemoveCSRFMapping(colander.Mapping):
-    def deserialize(self, node, cstruct):
-        result = colander.Mapping.deserialize(self, node, cstruct)
-        if result is colander.null:
-            return result
-        result.pop('_csrf_token_', None)
-        return result
-                   
-Schema.schema_type = RemoveCSRFMapping
-
-    
+    schema_type = RemoveCSRFMapping
+    _csrf_token_ = CSRFToken()

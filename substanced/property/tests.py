@@ -317,11 +317,6 @@ class DummyForm(object):
     def render(self, appstruct=None, readonly=False):
         self.rendered.append((appstruct, readonly))
 
-class DummySchema(object):
-    def bind(self, **kw):
-        self.bound = kw
-        return self
-        
 class DummyPropertySheet(object):
     schema = 'schema'
     def __init__(self, context, request):
