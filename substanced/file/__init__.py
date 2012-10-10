@@ -27,14 +27,6 @@ from ..property import PropertySheet
 from ..interfaces import IFile
 from ..util import _make_name_validator
 
-@colander.deferred
-def file_upload_widget(node, kw):
-    request = kw['request']
-    tmpstore = FileUploadTempStore(request)
-    widget = deform.widget.FileUploadWidget(tmpstore)
-    widget.template = 'substanced.file:templates/file_upload.pt'
-    return widget
-
 class FilePropertiesSchema(Schema):
     name = colander.SchemaNode(
         colander.String(),
@@ -70,13 +62,20 @@ class FilePropertySheet(PropertySheet):
         if newname and newname != oldname:
             context.__parent__.rename(oldname, newname)
 
-filenode = colander.SchemaNode(
-    deform.schema.FileData(),
-    widget = file_upload_widget,
-    )
+@colander.deferred
+def file_upload_widget(node, kw):
+    request = kw['request']
+    tmpstore = FileUploadTempStore(request)
+    widget = deform.widget.FileUploadWidget(tmpstore)
+    widget.template = 'substanced.file:templates/file_upload.pt'
+    return widget
+
+class FileNode(colander.SchemaNode):
+    schema_type = deform.schema.FileData
+    widget = file_upload_widget
 
 class FileUploadSchema(Schema):
-    file = filenode.clone()
+    file = FileNode()
 
 class FileUploadPropertySheet(PropertySheet):
     schema = FileUploadSchema()
