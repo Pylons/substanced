@@ -58,7 +58,7 @@ class PropertySheetsView(FormView):
         self.active_factory = active_factory
         self.active_sheet = active_factory(self.context, self.request)
         self.sheet_names = [x[0] for x in viewable_sheet_factories]
-        self.schema = self.active_sheet.get_schema()
+        self.schema = self.active_sheet.schema
 
     def has_permission_to(self, perm, sheet_factory):
         permissions = getattr(sheet_factory, 'permissions', None)
@@ -103,12 +103,11 @@ class PropertySheet(object):
         ('change', 'sdi.edit-properties'),
         )
 
+    schema = None
+
     def __init__(self, context, request):
         self.context = context
         self.request = request
-
-    def get_schema(self):
-        return self.schema.bind(request=self.request, context=self.context)
 
     def get(self):
         context = self.context

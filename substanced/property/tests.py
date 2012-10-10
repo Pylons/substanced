@@ -65,8 +65,8 @@ class TestPropertySheetsView(unittest.TestCase):
         request.mgmt_path = lambda *arg: '/mgmt'
         sheet_factory = testing.DummyResource()
         sheet_factory.__call__ = lambda *arg: sheet_factory
-        sheet_factory.get_schema = lambda *arg: None
         sheet_factory.permissions = [('change', 'sdi.change')]
+        sheet_factory.schema = None
         request.registry.content = DummyContent(
             [('name', sheet_factory)])
         resource = testing.DummyResource()
@@ -104,8 +104,8 @@ class TestPropertySheetsView(unittest.TestCase):
         request.registry = testing.DummyResource()
         sheet_factory = testing.DummyResource()
         sheet_factory.__call__ = lambda *arg: sheet_factory
-        sheet_factory.get_schema = lambda *arg: None
         sheet_factory.permissions = [('edit', 'sdi.edit')]
+        sheet_factory.schema = None
         request.registry.content = DummyContent(
             [('name', sheet_factory)])
         resource = testing.DummyResource()
@@ -118,8 +118,8 @@ class TestPropertySheetsView(unittest.TestCase):
         request = testing.DummyRequest()
         request.registry = self.config.registry
         sheet_factory = testing.DummyResource()
+        sheet_factory.schema = None
         sheet_factory.__call__ = lambda *arg: sheet_factory
-        sheet_factory.get_schema = lambda *arg: None
         sheet_factory.permissions = [('view', 'sdi.view')]
         request.registry.content = DummyContent(
             [('name', sheet_factory)])
@@ -133,8 +133,8 @@ class TestPropertySheetsView(unittest.TestCase):
     def test_viewable_sheet_factories_no_permission(self):
         sheet_factory = testing.DummyResource()
         sheet_factory.__call__ = lambda *arg: sheet_factory
-        sheet_factory.get_schema = lambda *arg: None
         sheet_factory.permissions = [('view', 'sdi.view')]
+        sheet_factory.schema = None
         request = testing.DummyRequest()
         request.registry.content = DummyContent(
             [('name', sheet_factory)])
@@ -151,15 +151,6 @@ class TestPropertySheet(unittest.TestCase):
         from . import PropertySheet
         return PropertySheet(context, request)
 
-    def test_get_schema(self):
-        context = testing.DummyResource()
-        request = testing.DummyRequest()
-        inst = self._makeOne(context, request)
-        schema = DummySchema()
-        inst.schema = schema
-        self.assertEqual(inst.get_schema(), schema)
-        self.assertEqual(schema.bound, {'request':request, 'context':context})
-        
     def test_get(self):
         context = testing.DummyResource()
         request = testing.DummyRequest()
@@ -332,6 +323,7 @@ class DummySchema(object):
         return self
         
 class DummyPropertySheet(object):
+    schema = 'schema'
     def __init__(self, context, request):
         self.context = context
         self.request = request
@@ -344,9 +336,6 @@ class DummyPropertySheet(object):
 
     def after_set(self):
         self.after = True
-
-    def get_schema(self):
-        return 'schema'
 
 class DummyContent(object):
     def __init__(self, result):

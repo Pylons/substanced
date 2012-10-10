@@ -15,9 +15,8 @@ class IPropertySheet(Interface):
     meant to be subclassed for specialization) implements this interface."""
     context = Attribute('The context of the property sheet (a resource)')
     request = Attribute('The current request')
-
-    def get_schema():
-        """ Return a (bound) colander schema """
+    schema = Attribute('The unbound colander schema instance which defines '
+                       'the fields related to this property sheet')
 
     def get():
         """ Return a dictionary representing the current property state
