@@ -24,12 +24,12 @@ except IOError:
     README = CHANGES = ''
 
 install_requires = [
-    'pyramid>=1.4dev',
+    'pyramid>=1.4dev', # thirdparty predicates
     'ZODB3',
-    'hypatia>=0.1a2',
+    'hypatia>=0.1a2', # IIndexEnumeration
     'venusian',
     'deform',
-    'colander',
+    'colander>=0.9.9.1dev', # subclassable schemanodes
     'deform_bootstrap',
     'repoze.evolution',
     'pyramid_zodbconn',
@@ -43,7 +43,7 @@ testing_extras = ['nose', 'coverage', 'mock', 'virtualenv']
 
 setup(name='substanced',
       version='0.0',
-      description='A Zope2-like framework built using Pyramid',
+      description='An application server built using Pyramid',
       long_description=README + '\n\n' + CHANGES,
       classifiers=[
         "Intended Audience :: Developers",
