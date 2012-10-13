@@ -413,40 +413,48 @@ def add_catalog_index_factory(config, name, factory):
         )
 
 def add_catalog_index(config, name, factory_name, **factory_args):
+    """ Add a candidate catalog index to the Subtance D ConfigurationError
+    state.  ``name`` is an index name.  ``factory_name`` is the name of
+    an index factory.  The ``factory_name`` must be in the set of factory
+    names added via :func:`substanced.catalog.add_index_factory`.
+    ``factory_args`` is a set of args to pass to the index factory when
+    the index factory is used to construct an index.
+
+    This directive has the potential to be called multiple times with the same 
+    or similar arguments during startup.  It copes with index name/type 
+    conflicts in the following ways:
+
+    - If two or more callers call this directive with the exact same arguments,
+      no conflict will occur.  In this circumstance, calling the function is
+      idempotent.
+
+    - If two or more callers call this directive, one with factory args and
+      the rest without factory args, the one with factory args will "win", and
+      no conflict will occur.  Every call to this function after the first
+      call with ``factory_args`` in this circumstance is idempotent.
+
+    - If two or more callers call this directive with a differing 
+      ``factory_name``, but the same ``name``, a conflict error will be raised
+      at startup.
+
+    - If two or more callers call this directive with the same name and factory
+      name, but each with differing ``factory_args``, a conflict error will be
+      raised at startup.
+
+    """
+
+    # Sorry, future self, for the hairy code; it's likely I should have
+    # stopped and tried to generalize the Pyramid configuration system to
+    # handle this form of conflict detection / resolution instead of
+    # doing what's below.
+
     action_info = config.action_info
+
     def add_index():
+
         indexes = get_candidate_indexes(config.registry)
-        if name in indexes:
-            # we reuse the existing candidate index info if this factory name 
-            # and factory arg information doesn't conflict with the existing
-            # one
-            vals = indexes[name]
-            if vals['factory_name'] != factory_name:
-                fake_discriminator = (
-                'conflicting factory name information for index named %r: '
-                '%r vs %r' % (
-                    name, factory_name, vals['factory_name']
-                    )
-                )
-                raise ConfigurationConflictError(
-                    {fake_discriminator: [vals['action_info']]}
-                    )
-            if vals['factory_args'] and factory_args:
-                if vals['factory_args'] != factory_args:
-                    # if both specify factory args, and they differ, it'll be a 
-                    # conflict; but if one doesn't specify any args, or both
-                    # specify the same args, that's ok
-                    fake_discriminator = (
-                        'conflicting factory argument information for index '
-                        'named %r: %r vs. %r' % (
-                            name, factory_args, vals['factory_args'],
-                            )
-                        )
-                    raise ConfigurationConflictError(
-                        {fake_discriminator: [vals['action_info']]}
-                        )
-        else:
-            # we create a new candidate index struct in the registry
+
+        def add_candidate():
             factories = get_index_factories(config.registry)
             if not factory_name in factories:
                 raise ConfigurationError(
@@ -472,7 +480,51 @@ def add_catalog_index(config, name, factory_name, **factory_args):
             if config.introspector:
                 intr.register(config.introspector, action_info)
 
-    discriminator = None # we handle our own conflict detection
+        if name in indexes:
+            # we can use the existing candidate index info if this factory name
+            # and factory arg information doesn't conflict with the existing
+            # index
+
+            vals = indexes[name]
+
+            if vals['factory_name'] != factory_name:
+                # both indexes must name the same factory, or it's a conflict
+                fake_discriminator = (
+                'conflicting factory name information for index named %r: '
+                '%r vs %r' % (
+                    name, factory_name, vals['factory_name']
+                    )
+                )
+                raise ConfigurationConflictError(
+                    {fake_discriminator: [vals['action_info']]}
+                    )
+
+            if vals['factory_args'] and factory_args:
+                # if both the existing candidate index and this index specify 
+                # factory args, and those args differ, it'll be a conflict; 
+                # but if one doesn't specify any args, or both specify the same
+                # args, it's not a conflict
+                if vals['factory_args'] != factory_args:
+                    fake_discriminator = (
+                        'conflicting factory argument information for index '
+                        'named %r: %r vs. %r' % (
+                            name, factory_args, vals['factory_args'],
+                            )
+                        )
+                    raise ConfigurationConflictError(
+                        {fake_discriminator: [vals['action_info']]}
+                        )
+
+            if factory_args and not vals['factory_args']:
+                # prefer this index, overriding the previously registered one,
+                # as it has factory args while the previously registered one 
+                # does not.
+                add_candidate()
+
+        else:
+            add_candidate()
+
+    discriminator = None # we handle our own conflict detection/resolution
     config.action(discriminator, callable=add_index)
 
 def _add_discrim(name, kw):
