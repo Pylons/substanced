@@ -61,7 +61,7 @@ def get_textrepr(obj, default):
     parts = [texts[0]] * 10
     parts.extend(texts[1:])
     return ' '.join(parts)
-    
+
 def _get_date_or_datetime(obj, attr, default):
     d = getattr(obj, attr, None)
     if isinstance(d, datetime.datetime) or isinstance(d, datetime.date):
@@ -98,3 +98,28 @@ def get_allowed_to_view(obj, default):
         # to be no matches.
         principals = [NoWay()]
     return principals
+
+def get_name(obj, default):
+    return getattr(obj, '__name__', default)
+
+class ContentViewDiscriminator(object):
+    """ Used as a discriminator for indexes derived from content catalog view 
+    registrations. """
+    def __init__(self, name, fallback=None):
+        self.name = name
+        self.fallback = fallback
+
+    def __call__(self, view_wrapper, default):
+        """ Expects a CatalogViewWrapper instance as view_wrapper """
+        content = view_wrapper.content
+        view_factory = view_wrapper.view_factory
+        name = self.name
+        if name is not None:
+            view = view_factory(content)
+            val = getattr(view, name, None)
+            if val is None:
+                return default
+            return val()
+        if self.fallback is not None:
+            return self.fallback(content, default)
+        return default

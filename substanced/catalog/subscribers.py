@@ -13,7 +13,10 @@ from ..util import (
     oid_of,
     )
 
-from . import is_catalogable
+from . import (
+    catalog_view_factory_for, 
+    CatalogViewWrapper,
+    )
 
 @subscribe_added()
 def object_added(event):
@@ -28,10 +31,14 @@ def object_added(event):
     if not catalogs:
         return
     for node in postorder(obj):
-        if is_catalogable(node, event.registry):
+        catalog_view_factory = catalog_view_factory_for(node, event.registry)
+        if catalog_view_factory:
             objectid = oid_of(node)
             for catalog in catalogs:
-                catalog.index_doc(objectid, node)
+                catalog.index_doc(
+                    objectid,
+                    CatalogViewWrapper(node, catalog_view_factory)
+                    )
 
 @subscribe_will_be_removed()
 def object_will_be_removed(event):
@@ -54,8 +61,11 @@ def object_modified(event):
     the object's lineage; an :class:`substanced.event.ObjectModifed` event
     subscriber"""
     obj = event.object
-    catalogs = find_services(obj, 'catalog')
-    for catalog in catalogs:
-        objectid = oid_of(obj)
-        catalog.reindex_doc(objectid, obj)
+    catalog_view_factory = catalog_view_factory_for(obj, event.registry)
+    if catalog_view_factory:
+        catalog_view = catalog_view_factory(obj)
+        catalogs = find_services(obj, 'catalog')
+        for catalog in catalogs:
+            objectid = oid_of(obj)
+            catalog.reindex_doc(objectid, catalog_view)
 

@@ -11,11 +11,27 @@ from hypatia.catalog import CatalogQuery
 from pyramid.traversal import resource_path
 from pyramid.threadlocal import get_current_registry
 from pyramid.security import effective_principals
-from pyramid.interfaces import IAuthorizationPolicy
+from pyramid.interfaces import (
+    IAuthorizationPolicy,
+    PHASE1_CONFIG,
+    )
+from pyramid.exceptions import (
+    ConfigurationConflictError,
+    ConfigurationError,
+    )
 
 from ..interfaces import (
     ISearch,
     ICatalog,
+    )
+
+from . import indexes as indexes_module
+from .discriminators import (
+    ContentViewDiscriminator,
+    get_name,
+    get_interfaces,
+    get_containment,
+    get_allowed_to_view,
     )
 
 from ..content import (
@@ -89,7 +105,7 @@ class Catalog(Folder):
             self.objectids.insert(docid)
 
     def reindex(self, dry_run=False, commit_interval=200, indexes=None, 
-                path_re=None, output=None):
+                path_re=None, output=None, registry=None):
 
         """\
         Reindex all objects in the catalog using the existing set of
@@ -121,6 +137,9 @@ class Catalog(Folder):
         if output is None: # pragma: no cover
             output = logger.info
 
+        if registry is None:
+            registry = get_current_registry()
+
         def commit_or_abort():
             if dry_run:
                 output and output('*** aborting ***')
@@ -151,16 +170,35 @@ class Catalog(Folder):
                 continue
             output and output('reindexing %s' % path)
 
+            view_factory = catalog_view_factory_for(resource, registry)
+            wrapper = CatalogViewWrapper(resource, view_factory)
+
             if indexes is None:
-                self.reindex_doc(objectid, resource)
+                self.reindex_doc(objectid, wrapper)
             else:
                 for index in indexes:
-                    self[index].reindex_doc(objectid, resource)
+                    self[index].reindex_doc(objectid, wrapper)
             if i % commit_interval == 0: # pragma: no cover
                 commit_or_abort()
             i+=1
         if i:
             commit_or_abort()
+
+    def update_indexes(self, registry):
+        indexes = get_candidate_indexes(registry)
+        # add indexes
+        for name, vals in indexes.items():
+            if name not in self:
+                factory_name = vals['factory_name']
+                factory_args = vals['factory_args']
+                factories = get_index_factories(registry)
+                factory = factories[factory_name]
+                self[name] = factory(name, **factory_args)
+
+        # remove indexes
+        for name in self.keys():
+            if name not in indexes:
+                del self[name]
 
 class Search(object):
     """ Catalog query helper """
@@ -254,9 +292,17 @@ def _assertint(docid):
                          'integers' % docid)
 
 def is_catalogable(resource, registry=None):
+    return bool(catalog_view_factory_for(resource, registry))
+
+def catalog_view_factory_for(resource, registry=None):
     if registry is None:
         registry = get_current_registry()
-    return bool(registry.content.metadata(resource, 'catalog', False))
+    return registry.content.metadata(resource, 'catalog', False)
+
+class CatalogViewWrapper(object):
+    def __init__(self, content, view_factory):
+        self.content = content
+        self.view_factory = view_factory
 
 class CatalogablePredicate(object):
     is_catalogable = staticmethod(is_catalogable) # for testing
@@ -273,11 +319,141 @@ class CatalogablePredicate(object):
     def __call__(self, context, request):
         return self.is_catalogable(context, self.registry) == self.val
 
+def get_index_factories(registry):
+    factories = getattr(registry, 'index_factories', None)
+    if factories is None:
+        factories = {}
+        registry.factories = factories
+    return factories
+
+def get_candidate_indexes(registry):
+    indexes = getattr(registry, 'candidate_indexes', None)
+    if indexes is None:
+        indexes = {}
+        registry.candidate_indexes = indexes
+    return indexes
+
+def add_catalog_index_factory(config, name, factory):
+    def add_index_factory():
+        index_factories = get_index_factories(config.registry)
+        index_factories[name] = factory
+
+    discriminator = ('sd-catalog-index-factory', name)
+    intr = config.introspectable(
+        'sd catalog index factories',
+        discriminator,
+        name,
+        'sd catalog index factory'
+        )
+    intr['name'] = name
+    intr['type'] = type
+    intr['factory'] = factory
+    config.action(
+        discriminator, 
+        order=PHASE1_CONFIG, # must come before add_catalog_index
+        callable=add_index_factory,
+        introspectables=(intr,)
+        )
+
+def add_catalog_index(config, name, factory_name, **factory_args):
+    def add_index():
+        indexes = get_candidate_indexes(config.registry)
+        if name in indexes:
+            vals = indexes[name]
+            if vals['factory_name'] != factory_name:
+                raise ConfigurationConflictError(
+                    'Conflicting factory_name information for index named %s:' 
+                    '%s vs. %s'% name, vals['factory_name'], factory_name
+                    )
+            if vals['factory_args'] and factory_args:
+                if vals['factory_args'] != factory_args:
+                    # if both specify factory args, it'll be a conflict;
+                    # but if one doesn't care, that's ok
+                    raise ConfigurationConflictError(
+                        'Conflicting factory argument information for index '
+                        'named %s' % name
+                        )
+        else:
+            factories = get_index_factories(config.registry)
+            if not factory_name in factories:
+                raise ConfigurationError(
+                    'No such index factory %s' % factory_name
+                    )
+            indexes[name] = {
+                'factory_name':factory_name, 
+                'factory_args':factory_args
+                }
+
+    discriminator = ('sd-catalog-index', name)
+    intr = config.introspectable(
+        'sd catalog indexes', discriminator, name, 'sd catalog index'
+        )
+    intr['name'] = name
+    intr['factory_name'] = factory_name
+    intr['factory_args'] = factory_args
+    config.action(discriminator, callable=add_index, introspectables=(intr,))
+
+def _add_discrim(self, name, kw):
+    discriminator = ContentViewDiscriminator(name)
+    kw.setdefault('discriminator', discriminator)
+
+def text_index_factory(name, **kw):
+    _add_discrim(name, kw)
+    return indexes_module.TextIndex(**kw)
+
+def field_index_factory(name, **kw):
+    _add_discrim(name, kw)
+    return indexes_module.FieldIndex(**kw)
+
+def keyword_index_factory(name, **kw):
+    _add_discrim(name, kw)
+    return indexes_module.KeywordIndex(**kw)
+
+def path_index_factory(name, **kw):
+    return indexes_module.PathIndex(**kw)
+
+def facet_index_factory(name, **kw):
+    _add_discrim(name, kw)
+    return indexes_module.FacetIndex(**kw)
+
 def includeme(config): # pragma: no cover
     from zope.interface import Interface
     config.registry.registerAdapter(Search, (Interface,), ISearch)
     config.add_request_method(query_catalog, reify=True)
     config.add_request_method(search_catalog, reify=True)
     config.add_view_predicate('catalogable', CatalogablePredicate)
+    config.add_directive('add_catalog_index_factory', add_catalog_index_factory)
+    config.add_directive('add_catalog_index', add_catalog_index)
+    config.add_catalog_index_factory('text', text_index_factory)
+    config.add_catalog_index_factory('field', field_index_factory)
+    config.add_catalog_index_factory('facet', facet_index_factory)
+    config.add_catalog_index_factory('keyword', keyword_index_factory)
+    config.add_catalog_index_factory('path', path_index_factory)
+    add_default_indexes(config)
     config.scan('.')
-    
+
+def add_default_indexes(config):
+    config.add_catalog_index(
+        'name',
+        'field',
+        discriminator=ContentViewDiscriminator(None, get_name)
+        )
+    config.add_catalog_index(
+        'interfaces',
+        'field',
+        discriminator=ContentViewDiscriminator(None, get_interfaces)
+        )
+    config.add_catalog_index(
+        'containment',
+        'field',
+        discriminator=ContentViewDiscriminator(None, get_containment)
+        )
+    config.add_catalog_index(
+        'allowed',
+        'field',
+        discriminator=ContentViewDiscriminator(None, get_allowed_to_view)
+        )
+    config.add_catalog_index(
+        'path',
+        'path',
+        )
