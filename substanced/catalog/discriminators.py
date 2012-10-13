@@ -100,12 +100,28 @@ def get_allowed_to_view(obj, default):
     return principals
 
 def get_name(obj, default):
+    """ Useful as a FieldIndex discriminator.  Returns the ``__name__`` of the 
+    object or ``default`` if the object has no ``__name__``."""
     return getattr(obj, '__name__', default)
 
 class ContentViewDiscriminator(object):
     """ Used as a discriminator for indexes derived from content catalog view 
     registrations. """
     def __init__(self, name, fallback=None):
+        """ ``name`` is the attribute name of the method of the catalog view
+        which will return the value for this index.  ``fallback`` is a
+        fallback discriminator that will be used against the content object
+        if a) ``name`` is None or b) the named attribute is not found on
+        the catalog view.  ``name`` may be ``None``.  If the ``name`` is None, 
+        ``fallback`` must be provided: in this situation, the discriminator 
+        will not attempt to use any method of the catalog view; instead it will
+        always use the fallback discriminator against the content.  This is 
+        useful for  'system' indexes."""
+        if name is None and fallback is None:
+            raise ValueError(
+                'If name is not provided, a fallback discriminator must be '
+                'provided'
+                )
         self.name = name
         self.fallback = fallback
 
@@ -121,7 +137,4 @@ class ContentViewDiscriminator(object):
             if val is not None:
                 return val()
 
-        if self.fallback is not None:
-            return self.fallback(content, default)
-
-        return default
+        return self.fallback(content, default)

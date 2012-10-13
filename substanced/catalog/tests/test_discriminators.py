@@ -186,3 +186,84 @@ class TestGetAllowedToView(unittest.TestCase):
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0].__class__, NoWay)
 
+class Test_get_name(unittest.TestCase):
+    def setUp(self):
+        self.config = testing.setUp()
+
+    def tearDown(self):
+        testing.tearDown()
+
+    def _callFUT(self, object, default):
+        from ..discriminators import get_name
+        return get_name(object, default)
+
+    def test_it_has_no_name(self):
+        context = object()
+        result = self._callFUT(context, None)
+        self.assertEqual(result, None)
+
+    def test_it_has_name(self):
+        context = testing.DummyModel()
+        context.__name__ = 'foo'
+        result = self._callFUT(context, None)
+        self.assertEqual(result, 'foo')
+
+class TestContentViewDiscriminator(unittest.TestCase):
+    def _makeOne(self, name, fallback=None):
+        from ..discriminators import ContentViewDiscriminator
+        return ContentViewDiscriminator(name, fallback=fallback)
+
+    def _makeWrapper(self, content, view_factory=None):
+        return DummyContentViewWrapper(content, view_factory)
+
+    def _fallback(self, obj, default):
+        return obj
+
+    def test_ctor_both_None(self):
+        self.assertRaises(ValueError, self._makeOne, None, None)
+
+    def test_ctor_name_None(self):
+        inst = self._makeOne(None, 'abc')
+        self.assertEqual(inst.name, None)
+        self.assertEqual(inst.fallback, 'abc')
+
+    def test_ctor_fallback_not_provided(self):
+        inst = self._makeOne('abc')
+        self.assertEqual(inst.name, 'abc')
+        self.assertEqual(inst.fallback, None)
+
+    def test_call_name_is_None(self):
+        inst = self._makeOne(None, self._fallback)
+        content = object()
+        wrapper = self._makeWrapper(content)
+        result = inst(wrapper, None)
+        self.assertEqual(result, content)
+
+    def test_call_name_is_not_None_wrapper_has_attr(self):
+        inst = self._makeOne('attr', self._fallback)
+        content = object()
+        factory = DummyViewFactory
+        wrapper = self._makeWrapper(content, factory)
+        result = inst(wrapper, None)
+        self.assertEqual(result, 'attr')
+
+    def test_call_name_is_not_None_wrapper_doesnt_have_attr(self):
+        inst = self._makeOne('noattr', self._fallback)
+        content = object()
+        factory = DummyViewFactory
+        wrapper = self._makeWrapper(content, factory)
+        result = inst(wrapper, None)
+        self.assertEqual(result, content)
+
+class DummyViewFactory(object):
+    def __init__(self, content):
+        self.content = content
+
+    def attr(self):
+        return 'attr'
+
+class DummyContentViewWrapper(object):
+    def __init__(self, content, view_factory):
+        self.content = content
+        self.view_factory = view_factory
+
