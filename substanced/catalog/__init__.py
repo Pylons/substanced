@@ -32,6 +32,8 @@ from .discriminators import (
     get_interfaces,
     get_containment,
     get_allowed_to_view,
+    get_textrepr,
+    get_title,
     )
 
 from ..content import (
@@ -469,6 +471,10 @@ def includeme(config): # pragma: no cover
 
 def add_default_indexes(config):
     config.add_catalog_index(
+        'path',
+        'path',
+        )
+    config.add_catalog_index(
         'name',
         'field',
         discriminator=ContentViewDiscriminator(None, get_name)
@@ -489,6 +495,12 @@ def add_default_indexes(config):
         discriminator=ContentViewDiscriminator(None, get_allowed_to_view)
         )
     config.add_catalog_index(
-        'path',
-        'path',
+        'texts',
+        'text',
+        discriminator=ContentViewDiscriminator('texts', get_textrepr)
+        )
+    config.add_catalog_index(
+        'title',
+        'field',
+        discriminator=ContentViewDiscriminator('title', get_title)
         )
