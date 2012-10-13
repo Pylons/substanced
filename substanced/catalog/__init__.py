@@ -28,6 +28,7 @@ from ..interfaces import (
     )
 
 from . import indexes as indexes_module
+
 from .discriminators import (
     ContentViewDiscriminator,
     get_name,
@@ -44,6 +45,7 @@ from ..content import (
     )
 from ..folder import Folder
 from ..objectmap import find_objectmap
+from ..util import oid_of
 
 logger = logging.getLogger(__name__) # API
 
@@ -193,7 +195,18 @@ class Catalog(Folder):
         if i:
             commit_or_abort()
 
-    def update_indexes(self, registry):
+    def update_indexes(self, registry=None):
+        """ Use the candidate indexes registered via ``config.add_index`` to
+        populate this catalog.  Any indexes which are present in the
+        candidate indexes, but not present in the catalog will be created.
+        Any indexes which are present in the catalog but not present in
+        the candidate indexes will be deleted.
+
+        Note that this does not reindex the catalog after adding or removing
+        indexes.
+        """
+        if registry is None:
+            registry = get_current_registry()
         indexes = get_candidate_indexes(registry)
         # add indexes
         for name, vals in indexes.items():
@@ -349,12 +362,15 @@ class indexed(object):
         if index_name is None:
             index_name = wrapped.__name__
 
+        factory_args = self.factory_args.copy()
+
         def callback(context, name, ob):
             config = context.config.with_package(info.module)
+            factory_args['_info'] = info.codeinfo
             config.add_catalog_index(
                 index_name,
                 self.factory_name,
-                **self.factory_args
+                **factory_args
                 )
 
         info = self.venusian.attach(wrapped, callback, category='substanced')
@@ -365,7 +381,7 @@ def get_index_factories(registry):
     factories = getattr(registry, 'index_factories', None)
     if factories is None:
         factories = {}
-        registry.factories = factories
+        registry.index_factories = factories
     return factories
 
 def get_candidate_indexes(registry):
@@ -388,54 +404,74 @@ def add_catalog_index_factory(config, name, factory):
         'sd catalog index factory'
         )
     intr['name'] = name
-    intr['type'] = type
     intr['factory'] = factory
     config.action(
         discriminator, 
-        order=PHASE1_CONFIG, # must come before add_catalog_index
         callable=add_index_factory,
+        order=PHASE1_CONFIG, # must come before add_catalog_index
         introspectables=(intr,)
         )
 
 def add_catalog_index(config, name, factory_name, **factory_args):
+    action_info = config.action_info
     def add_index():
         indexes = get_candidate_indexes(config.registry)
         if name in indexes:
+            # we reuse the existing candidate index info if this factory name 
+            # and factory arg information doesn't conflict with the existing
+            # one
             vals = indexes[name]
             if vals['factory_name'] != factory_name:
+                fake_discriminator = (
+                'conflicting factory name information for index named %r: '
+                '%r vs %r' % (
+                    name, factory_name, vals['factory_name']
+                    )
+                )
                 raise ConfigurationConflictError(
-                    'Conflicting factory_name information for index named %s:' 
-                    '%s vs. %s'% name, vals['factory_name'], factory_name
+                    {fake_discriminator: [vals['action_info']]}
                     )
             if vals['factory_args'] and factory_args:
                 if vals['factory_args'] != factory_args:
-                    # if both specify factory args, it'll be a conflict;
-                    # but if one doesn't care, that's ok
+                    # if both specify factory args, and they differ, it'll be a 
+                    # conflict; but if one doesn't specify any args, or both
+                    # specify the same args, that's ok
+                    fake_discriminator = (
+                        'conflicting factory argument information for index '
+                        'named %r: %r vs. %r' % (
+                            name, factory_args, vals['factory_args'],
+                            )
+                        )
                     raise ConfigurationConflictError(
-                        'Conflicting factory argument information for index '
-                        'named %s' % name
+                        {fake_discriminator: [vals['action_info']]}
                         )
         else:
+            # we create a new candidate index struct in the registry
             factories = get_index_factories(config.registry)
             if not factory_name in factories:
                 raise ConfigurationError(
-                    'No such index factory %s' % factory_name
+                    'No index factory named %r' % factory_name
                     )
             indexes[name] = {
                 'factory_name':factory_name, 
-                'factory_args':factory_args
+                'factory_args':factory_args,
+                'action_info':action_info,
                 }
 
-    discriminator = ('sd-catalog-index', name)
+    discriminator = None # we handle our own conflict detection
     intr = config.introspectable(
-        'sd catalog indexes', discriminator, name, 'sd catalog index'
+        'sd catalog indexes', name, name, 'sd catalog index'
         )
     intr['name'] = name
     intr['factory_name'] = factory_name
     intr['factory_args'] = factory_args
+    intr.relate(
+        'sd catalog index factories', 
+        ('sd-catalog-index-factory', factory_name)
+        )
     config.action(discriminator, callable=add_index, introspectables=(intr,))
 
-def _add_discrim(self, name, kw):
+def _add_discrim(name, kw):
     discriminator = ContentViewDiscriminator(name)
     kw.setdefault('discriminator', discriminator)
 
@@ -475,37 +511,71 @@ def includeme(config): # pragma: no cover
     config.scan('.')
 
 def add_default_indexes(config):
+    """ Add the default set of Substance D indexes:
+
+    - path (a PathIndex)
+
+      Represents the path of the content object.
+
+    - name (a FieldIndex), uses ``content.__name__`` exclusively
+
+      Represents the local name of the content object.
+
+    - oid (a FieldIndex), uses ``oid_of(content)`` exclusively.
+
+      Represents the object identifier (globally unique) of the content object.
+
+    - interfaces (a KeywordIndex), uses a custom discriminator exclusively.
+
+      Represents the set of interfaces possessed by the content object.
+
+    - containment (a KeywordIndex), uses a custom discriminator exclusively.
+
+      Represents the set of interfaces and classes which are possessed by
+      parents of the content object (inclusive of itself)
+
+    - allowed (a KeywordIndex), uses a custom discriminator exclusively.
+
+      Represents the set of principals allowed to view the content (those with
+      the ``view`` permission relative to the content).
+
+    - texts (a TextIndex), uses either ``texts`` of the content's catalog
+      view or the ``texts`` attribute/method of the content object if 
+      a ``texts`` attribute doesn't exist on the catalog view.
+
+      Represents the set of data that should be searchable via fulltext.
+
+    - title (a FieldIndex), uses either ``title`` of the content's catalog
+      view or the ``title`` attribute/method of the content object if 
+      a ``title`` attribute doesn't exist on the catalog view.
+
+      Represents the title of a content object.
+
+    """
+
+    CVD = ContentViewDiscriminator
+
     config.add_catalog_index(
-        'path',
-        'path',
+        'path', 'path',
         )
     config.add_catalog_index(
-        'name',
-        'field',
-        discriminator=ContentViewDiscriminator(None, get_name)
+        'name', 'field', discriminator=CVD(None, get_name)
         )
     config.add_catalog_index(
-        'interfaces',
-        'field',
-        discriminator=ContentViewDiscriminator(None, get_interfaces)
+        'oid', 'field', discriminator=CVD(None, oid_of)
         )
     config.add_catalog_index(
-        'containment',
-        'field',
-        discriminator=ContentViewDiscriminator(None, get_containment)
+        'interfaces', 'keyword', discriminator=CVD(None, get_interfaces)
         )
     config.add_catalog_index(
-        'allowed',
-        'field',
-        discriminator=ContentViewDiscriminator(None, get_allowed_to_view)
+        'containment', 'keyword', discriminator=CVD(None, get_containment)
         )
     config.add_catalog_index(
-        'texts',
-        'text',
-        discriminator=ContentViewDiscriminator('texts', get_textrepr)
+        'allowed', 'keyword', discriminator=CVD(None, get_allowed_to_view)
         )
     config.add_catalog_index(
-        'title',
-        'field',
-        discriminator=ContentViewDiscriminator('title', get_title)
+        'texts', 'text', discriminator=CVD('texts', get_textrepr)
+        )
+    config.add_catalog_index(
+        'title', 'field', discriminator=CVD('title', get_title)
         )
