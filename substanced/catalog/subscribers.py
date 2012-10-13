@@ -32,7 +32,7 @@ def object_added(event):
         return
     for node in postorder(obj):
         catalog_view_factory = catalog_view_factory_for(node, event.registry)
-        if catalog_view_factory:
+        if catalog_view_factory is not None:
             objectid = oid_of(node)
             for catalog in catalogs:
                 catalog.index_doc(
@@ -62,10 +62,10 @@ def object_modified(event):
     subscriber"""
     obj = event.object
     catalog_view_factory = catalog_view_factory_for(obj, event.registry)
-    if catalog_view_factory:
-        catalog_view = catalog_view_factory(obj)
+    if catalog_view_factory is not None:
+        wrapper = CatalogViewWrapper(obj, catalog_view_factory)
         catalogs = find_services(obj, 'catalog')
         for catalog in catalogs:
             objectid = oid_of(obj)
-            catalog.reindex_doc(objectid, catalog_view)
+            catalog.reindex_doc(objectid, wrapper)
 

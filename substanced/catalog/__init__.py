@@ -294,10 +294,17 @@ def _assertint(docid):
 def is_catalogable(resource, registry=None):
     return bool(catalog_view_factory_for(resource, registry))
 
+class GenericViewFactory(object):
+    def __init__(self, content):
+        self.content = content
+
 def catalog_view_factory_for(resource, registry=None):
     if registry is None:
         registry = get_current_registry()
-    return registry.content.metadata(resource, 'catalog', False)
+    value = registry.content.metadata(resource, 'catalog', False)
+    if value is True: # bw compat
+        value = GenericViewFactory
+    return value
 
 class CatalogViewWrapper(object):
     def __init__(self, content, view_factory):
