@@ -109,10 +109,16 @@ class FolderContentsViews(object):
     def show(self):
         request = self.request
         context = self.context
+        headers = getattr(context, '__sd_headers__', [])
+        if not headers:
+            headers = getattr(context, '__sd_columns__', [])
+            headers = [header.replace('_', ' ').capitalize()
+                       for header in headers]
+            headers = [header.replace(':oid', '') for header in headers]
         seq = self.sdi_folder_contents(context, request) # generator
         addables = self.sdi_add_views(request, context)
         batch = Batch(seq, request, seqlen=len(context))
-        return dict(batch=batch, addables=addables)
+        return dict(batch=batch, addables=addables, headers=headers)
 
     @mgmt_view(
         request_method='POST',

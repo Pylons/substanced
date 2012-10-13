@@ -1,5 +1,6 @@
 import inspect
 import operator
+import datetime
 
 from zope.interface.interfaces import IInterface
 
@@ -281,6 +282,11 @@ def sdi_folder_contents(folder, request):
 
       The URL to the subobject.  This will be ``/path/to/subob/@@manage_main``.
 
+    ``columns``
+
+      Any extra column values obtained from this subobject's attributes, as
+      defined by the ``__sd_columns__`` hook.
+
     This function considers a subobject:
 
     - 'deletable' if the user has the ``sdi.manage-contents`` permission on
@@ -318,14 +324,30 @@ def sdi_folder_contents(folder, request):
     boolean indicating whether the current user has the
     ``sdi.manage-contents`` permission on the ``folder``.
 
-    This function honors one content type hook.  The content type hook is
-    named ``icon``.  If the ``icon`` supplied to the content type
-    configuration of a subobject is a callable, the callable will be passed
-    the subobject and the ``request``; it is expected to return an icon name
-    or ``None``.  ``icon`` may alternately be either ``None`` or a string
-    representing a icon name instead of a callable.
+    This function honors  a few content type hooks.
+    
+    The first content type hook is named ``icon``.  If the ``icon`` supplied
+    to the content type configuration of a subobject is a callable, the
+    callable will be passed the subobject and the ``request``; it is expected
+    to return an icon name or ``None``.  ``icon`` may alternately be either
+    ``None`` or a string representing a icon name instead of a callable.
+
+    The second content type hook is named ``__sd_columns__``. It's a list of
+    strings with the names of any attributes from the folder subobjects that
+    should be displayed as columns in the folder's content display. If an
+    attribute is known to represent an object id, appending ``:oid`` to its
+    name will cause the corresponding object's ``__name__`` to be displayed
+    instead of the oid. The column names will be used as headers for the table
+    of contents, replacing any underscores with spaces.
+
+    The third content type hook is named ``__sd_headers__``. This is a list of
+    header titles that has to correspond one to one with the ``__sd_columns__``
+    attribute name list. If it exists, these values will be used as headers
+    instead of the column names.
     """
     can_manage = has_permission('sdi.manage-contents', folder, request)
+    sd_columns = getattr(folder, '__sd_columns__', [])
+    objectmap = find_objectmap(request.context)
     for k, v in folder.items():
         hidden = getattr(v, '__sd_hidden__', None)
         if hidden is not None:
@@ -345,12 +367,25 @@ def sdi_folder_contents(folder, request):
         if deletable is None:
             deletable = can_manage
         url = request.mgmt_path(v, '@@manage_main')
+        columns = []
+        for column in sd_columns:
+            oid = False
+            if column.endswith(':oid'):
+                column = column.split(':')[0]
+                oid = True
+            value = getattr(v, column, None)
+            if oid:
+                value = objectmap.object_for(value).__name__
+            if type(value) == datetime.datetime:
+                value = value.strftime('%m/%d/%Y')
+            columns.append(value)
         data = dict(
             name=k,
             deletable=deletable,
             viewable=True, # XXX remove
             url=url,
-            icon=icon
+            icon=icon,
+            columns=columns,
             )
         yield data
 

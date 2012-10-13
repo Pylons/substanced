@@ -12,6 +12,7 @@
   </div>
 
   <div metal:fill-slot="main">
+    <div class="container-fluid">
     <form action="@@contents" method="POST">
 
       <fieldset>
@@ -35,28 +36,40 @@
 
       <div tal:condition="batch.items">
 
-        <label class="checkbox" for="selectall">
-          <input type="checkbox" onclick="toggleChecked(this.checked)"/>
-          -- all --
-        </label>
-
         <div id="choices" class="row" tal:condition="not batch.multicolumn">
 
-          <div class="span3">
-            <tal:loop tal:repeat="choice batch.items">
-              <tal:block condition="choice['viewable']">
-                <label class="checkbox" for="item-${repeat.choice.index}">
-                  <i class="${choice['icon']}"> </i>
-                  <input tal:attributes="disabled not choice['deletable']"
-                         type="checkbox"
-                         name="item-modify"
-                         value="${choice['name']}"
-                         id="item-${repeat.choice.index}"/>
-                  <a href="${choice['url']}">${choice['name']}</a>
-                </label>
-              </tal:block>
-            </tal:loop>
-          </div>
+	  <table class="table table-striped">
+            <thead>
+              <th>Name</th>
+              <th tal:repeat="header headers">${header}</th>
+            </thead>
+            <tbody>
+	      <tr>
+	        <td colspan="${len(headers)+1}">
+                  <label class="checkbox" for="selectall">
+                  <input type="checkbox" onclick="toggleChecked(this.checked)"/>
+                  -- all --
+                  </label>
+                </td>
+              </tr>
+              <tal:loop tal:repeat="choice batch.items">
+                <tr tal:condition="choice['viewable']">
+                  <td>
+                    <label class="checkbox" for="item-${repeat.choice.index}">
+                      <i class="${choice['icon']}"> </i>
+                      <input tal:attributes="disabled not choice['deletable']"
+                             type="checkbox"
+                             name="item-modify"
+                             value="${choice['name']}"
+                             id="item-${repeat.choice.index}"/>
+                      <a href="${choice['url']}">${choice['name']}</a>
+                    </label>
+                  </td>
+                  <td tal:repeat="column choice['columns']">${column}</td>
+                </tr>
+              </tal:loop>
+            </tbody>
+          </table> 
 
         </div>
 
@@ -193,6 +206,7 @@
       </fieldset>
     </form>
 
+  </div>
   </div>
 
 </div>
