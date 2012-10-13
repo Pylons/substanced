@@ -114,12 +114,14 @@ class ContentViewDiscriminator(object):
         content = view_wrapper.content
         view_factory = view_wrapper.view_factory
         name = self.name
+
         if name is not None:
             view = view_factory(content)
             val = getattr(view, name, None)
-            if val is None:
-                return default
-            return val()
+            if val is not None:
+                return val()
+
         if self.fallback is not None:
             return self.fallback(content, default)
+
         return default
