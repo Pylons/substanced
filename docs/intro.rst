@@ -63,7 +63,7 @@ Substance D is built upon on the following technologies:
 
 - `Pyramid <http://pylonsproject.org>`_
 
-- `repoze.catalog <http://docs.repoze.org/catalog>`_
+- `hypatia <https://github.com/Pylons/hypatia>`_
 
 - `repoze.evolution <http://docs.repoze.org/evolution>`_
 
@@ -74,9 +74,9 @@ Substance D is built upon on the following technologies:
 The Management Interface
 ------------------------
 
-The Substance D management interface (aka :term:`SDI`) is a set of
-:term:`view` registrations that are imposed upon the resource tree.  The SDI
-allows you to add, delete, change and otherwise manage resources.
+The Substance D management interface (aka :term:`SDI`) is a set of :term:`view`
+registrations that are imposed upon the :term:`resource tree`.  The SDI allows
+you to add, delete, change and otherwise manage resources.
 
 The SDI is extensible and allows you to plug your own views into it, so you
 can present nontechnical users with a way to manage arbitrary kinds of

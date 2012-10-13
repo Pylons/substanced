@@ -7,7 +7,7 @@ is usually ``/manage``, unless you've changed it from its default by setting
 a custom ``substanced.manage_prefix`` in your application's ``.ini`` file.
 
 This means that views declared as management views will never show up in your
-application's "retail" interface (the interface that "normal" unprivileged
+application's "retail" interface (the interface that normal unprivileged
 users see).  They'll only show up when a user is using the :term:`SDI` to
 manage content.
 
@@ -16,8 +16,8 @@ There are two ways to define management views:
 - Using the :class:`substanced.sdi.mgmt_view` decorator on a function,
   method, or class.
 
-- Using the :func:`substanced.sdi.add_mgmt_view` Configurator
-  (aka. ``config.add_mgmt_view``) API.
+- Using the :func:`substanced.sdi.add_mgmt_view` Configurator (aka.
+  ``config.add_mgmt_view``) API.
 
 The former is most convenient, but they are functionally equivalent.
 ``mgmt_view`` just calls into ``add_mgmt_view`` when found via a
@@ -66,5 +66,5 @@ than a plain Pyramid view registration:
   request forgery attributes with the view.
 
 So if you want things to work right when developing management views, you'll
-prefer ``@mgmt_view`` over ``@view_config``, and ``config.add_mgmt_view``
-over ``config.add_view``.
+use ``@mgmt_view`` instead of ``@view_config``, and ``config.add_mgmt_view``
+instead of ``config.add_view``.
