@@ -49,7 +49,12 @@ class Test_object_added(unittest.TestCase):
         registry = DummyRegistry(content=content)
         event.registry = registry
         self._callFUT(event)
-        self.assertEqual(catalog.indexed, [(2, model2), (1, model1)])
+        indexed = catalog.indexed
+        self.assertEqual(len(indexed), 2)
+        self.assertEqual(indexed[0][0], 2)
+        self.assertEqual(indexed[0][1].content, model2)
+        self.assertEqual(indexed[1][0], 1)
+        self.assertEqual(indexed[1][1].content, model1)
         
     def test_catalogable_objects_disjoint(self):
         from ...interfaces import IFolder
@@ -69,7 +74,10 @@ class Test_object_added(unittest.TestCase):
         registry = DummyRegistry(content=content)
         event.registry = registry
         self._callFUT(event)
-        self.assertEqual(catalog.indexed, [(1, model2)])
+        indexed = catalog.indexed
+        self.assertEqual(len(indexed), 1)
+        self.assertEqual(indexed[0][0], 1)
+        self.assertEqual(indexed[0][1].content, model2)
 
     def test_multiple_catalogs(self):
         from ...interfaces import IFolder
@@ -95,8 +103,13 @@ class Test_object_added(unittest.TestCase):
         registry = DummyRegistry(content=content)
         event.registry = registry
         self._callFUT(event)
-        self.assertEqual(catalog1.indexed, [(2, model2), (1, model1)])
-        self.assertEqual(catalog2.indexed, [(2, model2), (1, model1)])
+        for catalog in (catalog1, catalog2):
+            indexed = catalog.indexed
+            self.assertEqual(len(indexed), 2)
+            self.assertEqual(indexed[0][0], 2)
+            self.assertEqual(indexed[0][1].content, model2)
+            self.assertEqual(indexed[1][0], 1)
+            self.assertEqual(indexed[1][1].content, model1)
 
 class Test_object_will_be_removed(unittest.TestCase):
     def _callFUT(self, event):
@@ -192,7 +205,10 @@ class Test_object_modified(unittest.TestCase):
         registry = DummyRegistry(content=content)
         event.registry = registry
         self._callFUT(event)
-        self.assertEqual(catalog.reindexed, [(1, model)])
+        reindexed = catalog.reindexed
+        self.assertEqual(len(reindexed), 1)
+        self.assertEqual(reindexed[0][0], 1)
+        self.assertEqual(reindexed[0][1].content, model)
 
     def test_multiple_catalogs(self):
         objectmap = DummyObjectMap()
@@ -213,8 +229,11 @@ class Test_object_modified(unittest.TestCase):
         registry = DummyRegistry(content=content)
         event.registry = registry
         self._callFUT(event)
-        self.assertEqual(catalog1.reindexed, [(1, model)])
-        self.assertEqual(catalog2.reindexed, [(1, model)])
+        for catalog in (catalog1, catalog2):
+            reindexed = catalog.reindexed
+            self.assertEqual(len(reindexed), 1)
+            self.assertEqual(reindexed[0][0], 1)
+            self.assertEqual(reindexed[0][1].content, model)
 
 class DummyCatalog(dict):
     

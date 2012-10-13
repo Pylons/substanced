@@ -28,6 +28,7 @@ class TestCatalog(unittest.TestCase):
     
     def setUp(self):
         self.config = testing.setUp()
+        self.config.registry.content = DummyContentRegistry()
 
     def tearDown(self):
         testing.tearDown()
@@ -152,7 +153,9 @@ class TestCatalog(unittest.TestCase):
         inst.reindex_doc = lambda objectid, model: L.append((objectid, model))
         out = []
         inst.reindex(output=out.append)
-        self.assertEqual(L, [(1, a)])
+        self.assertEqual(len(L), 1)
+        self.assertEqual(L[0][0], 1)
+        self.assertEqual(L[0][1].content, a)
         self.assertEqual(out,
                           ["reindexing /a",
                           '*** committing ***'])
@@ -173,7 +176,8 @@ class TestCatalog(unittest.TestCase):
         inst.reindex_doc = lambda objectid, model: L.append((objectid, model))
         out = []
         inst.reindex(output=out.append)
-        self.assertEqual(L, [(1, a)])
+        self.assertEqual(L[0][0], 1)
+        self.assertEqual(L[0][1].content, a)
         self.assertEqual(out,
                           ["reindexing /a",
                           "error: object at path /b not found",
@@ -217,7 +221,8 @@ class TestCatalog(unittest.TestCase):
             path_re=re.compile('/a'), 
             output=out.append
             )
-        self.assertEqual(L, [(1, a)])
+        self.assertEqual(L[0][0], 1)
+        self.assertEqual(L[0][1].content, a)
         self.assertEqual(out,
                           ['reindexing /a',
                           '*** committing ***'])
@@ -238,7 +243,12 @@ class TestCatalog(unittest.TestCase):
         inst.reindex_doc = lambda objectid, model: L.append((objectid, model))
         out = []
         inst.reindex(dry_run=True, output=out.append)
-        self.assertEqual(sorted(L), [(1, a), (2, b)])
+        self.assertEqual(len(L), 2)
+        L.sort()
+        self.assertEqual(L[0][0], 1)
+        self.assertEqual(L[0][1].content, a)
+        self.assertEqual(L[1][0], 2)
+        self.assertEqual(L[1][1].content, b)
         self.assertEqual(out,
                          ['reindexing /a',
                           'reindexing /b',
@@ -267,7 +277,9 @@ class TestCatalog(unittest.TestCase):
                           'reindexing /a',
                           '*** committing ***'])
         self.assertEqual(transaction.committed, 1)
-        self.assertEqual(L, [(1,a)])
+        self.assertEqual(len(L), 1)
+        self.assertEqual(L[0][0], 1)
+        self.assertEqual(L[0][1].content, a)
     
 class TestSearch(unittest.TestCase):
     family = BTrees.family64
@@ -967,3 +979,8 @@ class DummyContent(object):
 
 class Dummy(object):
     pass
+
+class DummyContentRegistry(object):
+    def metadata(self, resource, name, default=None):
+        return True
+
