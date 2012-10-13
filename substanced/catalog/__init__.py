@@ -2,6 +2,8 @@ import logging
 
 import transaction
 
+import venusian
+
 import BTrees
 
 from zope.interface import implementer
@@ -334,6 +336,9 @@ class CatalogablePredicate(object):
         return self.is_catalogable(context, self.registry) == self.val
 
 class indexed(object):
+
+    venusian = venusian # for testing
+
     def __init__(self, factory_name, index_name=None, **factory_args):
         self.factory_name = factory_name
         self.index_name = index_name
