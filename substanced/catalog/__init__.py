@@ -457,19 +457,23 @@ def add_catalog_index(config, name, factory_name, **factory_args):
                 'factory_args':factory_args,
                 'action_info':action_info,
                 }
+            # we need to defer the registration of this introspectable to get 
+            # the correct action info showing up
+            intr = config.introspectable(
+                    'sd catalog indexes', name, name, 'sd catalog index'
+                    )
+            intr['name'] = name
+            intr['factory_name'] = factory_name
+            intr['factory_args'] = factory_args
+            intr.relate(
+                'sd catalog index factories', 
+                ('sd-catalog-index-factory', factory_name)
+                )
+            if config.introspector:
+                intr.register(config.introspector, action_info)
 
     discriminator = None # we handle our own conflict detection
-    intr = config.introspectable(
-        'sd catalog indexes', name, name, 'sd catalog index'
-        )
-    intr['name'] = name
-    intr['factory_name'] = factory_name
-    intr['factory_args'] = factory_args
-    intr.relate(
-        'sd catalog index factories', 
-        ('sd-catalog-index-factory', factory_name)
-        )
-    config.action(discriminator, callable=add_index, introspectables=(intr,))
+    config.action(discriminator, callable=add_index)
 
 def _add_discrim(name, kw):
     discriminator = ContentViewDiscriminator(name)
