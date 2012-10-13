@@ -197,8 +197,8 @@ class Catalog(Folder):
 
     def update_indexes(
         self,
-        dry_run=False,
         registry=None,
+        dry_run=False,
         output=None,
         reindex=False,
         **kw
