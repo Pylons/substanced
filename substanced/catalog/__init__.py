@@ -133,6 +133,11 @@ class Catalog(Folder):
         the reindex.  If ``False`` is passed, no output is done.  If ``None``
         is passed (the default), the output will wind up in the
         ``substanced.catalog`` Python logger output at ``info`` level.
+
+        ``registry``, if passed, should be a Pyramid registry.  If one is not
+        passed, the ``get_current_registry()`` function will be used to
+        look up the current registry.  This function needs the registry in
+        order to access content catalog views.
         """
         if output is None: # pragma: no cover
             output = logger.info
@@ -325,6 +330,29 @@ class CatalogablePredicate(object):
 
     def __call__(self, context, request):
         return self.is_catalogable(context, self.registry) == self.val
+
+class indexed(object):
+    def __init__(self, factory_name, index_name=None, **factory_args):
+        self.factory_name = factory_name
+        self.index_name = index_name
+        self.factory_args = factory_args
+
+    def __call__(self, wrapped):
+        index_name = self.index_name
+        if index_name is None:
+            index_name = wrapped.__name__
+
+        def callback(context, name, ob):
+            config = context.config.with_package(info.module)
+            config.add_catalog_index(
+                index_name,
+                self.factory_name,
+                **self.factory_args
+                )
+
+        info = self.venusian.attach(wrapped, callback, category='substanced')
+
+        return wrapped        
 
 def get_index_factories(registry):
     factories = getattr(registry, 'index_factories', None)
