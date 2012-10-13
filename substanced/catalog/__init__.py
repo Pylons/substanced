@@ -195,32 +195,100 @@ class Catalog(Folder):
         if i:
             commit_or_abort()
 
-    def update_indexes(self, registry=None):
-        """ Use the candidate indexes registered via ``config.add_index`` to
+    def update_indexes(
+        self,
+        dry_run=False,
+        registry=None,
+        output=None,
+        reindex=False,
+        **kw
+        ):
+        """
+        Use the candidate indexes registered via ``config.add_index`` to
         populate this catalog.  Any indexes which are present in the
         candidate indexes, but not present in the catalog will be created.
         Any indexes which are present in the catalog but not present in
         the candidate indexes will be deleted.
 
-        Note that this does not reindex the catalog after adding or removing
-        indexes.
+        If ``dry_run`` is ``True``, don't commit the changes made when this
+        function is called, just send what would have been done to the logger.
+
+        ``registry``, if passed, should be a Pyramid registry.  If one is not
+        passed, the ``get_current_registry()`` function will be used to
+        look up the current registry.  This function needs the registry in
+        order to access content catalog views.
+
+        ``output``, if passed should be one of ``None``, ``False`` or a
+        function.  If it is a function, the function should accept a single
+        message argument that will be used to record the actions taken during
+        the reindex.  If ``False`` is passed, no output is done.  If ``None``
+        is passed (the default), the output will wind up in the
+        ``substanced.catalog`` Python logger output at ``info`` level.
+
+        This function does not reindex new indexes added to the catalog
+        unless ``reindex=True`` is passed. Arguments to this method
+        captured as ``kw`` are passed to 
+        :meth:`substanced.catalog.Catalog.reindex` if ``reindex`` is True,
+        otherwise ``kw`` is ignored.
         """
+        if output is None: # pragma: no cover
+            output = logger.info
+
         if registry is None:
             registry = get_current_registry()
+
         indexes = get_candidate_indexes(registry)
+        added = []
+        removed = []
+
         # add indexes
         for name, vals in indexes.items():
             if name not in self:
                 factory_name = vals['factory_name']
                 factory_args = vals['factory_args']
+                output and output(
+                    'update_indexes: adding %s index named %r' % (
+                        name, factory_name)
+                    )
                 factories = get_index_factories(registry)
                 factory = factories[factory_name]
                 self[name] = factory(name, **factory_args)
+                added.append(name)
 
         # remove indexes
         for name in self.keys():
             if name not in indexes:
+                output and output(
+                    'update_indexes: removing %s index named %r' % (
+                        name)
+                    )
                 del self[name]
+                removed.append(name)
+
+        def commit_or_abort():
+            if dry_run:
+                output and output('*** aborting ***')
+                self.transaction.abort()
+            else:
+                output and output('*** committing ***')
+                self.transaction.commit()
+
+        if added or removed:
+            commit_or_abort()
+        else:
+            output and output('update_indexes: No indexes added or removed')
+
+        if added and reindex:
+            output and output('update_indexes: Reindexing added indexes')
+            self.reindex(
+                indexes=added,
+                registry=registry,
+                output=output, 
+                dry_run=dry_run,
+                **kw
+                )
+        elif added:
+            output and output('update_indexes: Not reindexing added indexes')
 
 class Search(object):
     """ Catalog query helper """
@@ -349,24 +417,25 @@ class CatalogablePredicate(object):
         return self.is_catalogable(context, self.registry) == self.val
 
 class indexed(object):
+    """ A method decorator which calls 
+    :func:`substanced.catalog.add_catalog_index` when scanned, using the
+    ``factory_name`` and ``factory_args`` passed, where the index's
+    name is the name of the method being wrapped. """
 
     venusian = venusian # for testing
 
-    def __init__(self, factory_name, index_name=None, **factory_args):
+    def __init__(self, factory_name, **factory_args):
         self.factory_name = factory_name
-        self.index_name = index_name
         self.factory_args = factory_args
 
     def __call__(self, wrapped):
-        index_name = self.index_name
-        if index_name is None:
-            index_name = wrapped.__name__
+        index_name = wrapped.__name__
 
         factory_args = self.factory_args.copy()
 
         def callback(context, name, ob):
             config = context.config.with_package(info.module)
-            factory_args['_info'] = info.codeinfo
+            factory_args['_info'] = info.codeinfo # FBO action_method
             config.add_catalog_index(
                 index_name,
                 self.factory_name,
