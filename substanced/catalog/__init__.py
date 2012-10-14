@@ -256,7 +256,7 @@ class Catalog(Folder):
         indexes = categories.get(category, {})
 
         def get_index_category(name):
-            return getattr(self[name], 'category', None)
+            return getattr(self[name], 'sd_category', None)
 
         factories = get_index_factories(registry)
 
@@ -593,30 +593,30 @@ def _add_discrim(name, kw):
 def text_index_factory(name, category, **kw):
     _add_discrim(name, kw)
     index =  indexes_module.TextIndex(**kw)
-    index.category = category
+    index.sd_category = category
     return index
 
 def field_index_factory(name, category, **kw):
     _add_discrim(name, kw)
     index = indexes_module.FieldIndex(**kw)
-    index.category = category
+    index.sd_category = category
     return index
 
 def keyword_index_factory(name, category, **kw):
     _add_discrim(name, kw)
     index =  indexes_module.KeywordIndex(**kw)
-    index.category = category
+    index.sd_category = category
     return index
 
 def path_index_factory(name, category, **kw):
     index =  indexes_module.PathIndex(**kw)
-    index.category = category
+    index.sd_category = category
     return index
 
 def facet_index_factory(name, category, **kw):
     _add_discrim(name, kw)
     index =  indexes_module.FacetIndex(**kw)
-    index.category = category
+    index.sd_category = category
     return index
 
 def includeme(config): # pragma: no cover
