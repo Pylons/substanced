@@ -289,9 +289,9 @@ class TestCatalog(unittest.TestCase):
         inst.transaction = transaction
         inst.update_indexes('system', registry=registry,  output=out.append)
         self.assertEqual(out,  
-            ['update_indexes: starting category system', 
+            ["update_indexes: starting category 'system'", 
              'update_indexes: no indexes added or removed', 
-             'update_indexes: finished with category system'])
+             "update_indexes: finished with category 'system'"])
         self.assertEqual(transaction.committed, 0)
         self.assertEqual(transaction.aborted, 0)
 
@@ -314,11 +314,11 @@ class TestCatalog(unittest.TestCase):
         inst.transaction = transaction
         inst.update_indexes('system', registry=registry,  output=out.append)
         self.assertEqual(out,  
-            ['update_indexes: starting category system', 
+            ["update_indexes: starting category 'system'", 
             "update_indexes: adding field index named 'name'",
             '*** committing ***',
             'update_indexes: not reindexing added indexes',
-             'update_indexes: finished with category system'])
+             "update_indexes: finished with category 'system'"])
         self.assertEqual(transaction.committed, 1)
         self.assertEqual(transaction.aborted, 0)
         self.assertTrue('name' in inst)
@@ -333,13 +333,13 @@ class TestCatalog(unittest.TestCase):
         inst.update_indexes('system', registry=registry,  output=out.append,
             dry_run=True, reindex=True)
         self.assertEqual(out,  
-            ['update_indexes: starting category system', 
+            ["update_indexes: starting category 'system'", 
             "update_indexes: adding field index named 'name'",
             '*** aborting ***',
             'update_indexes: reindexing added indexes',
             "reindexing only indexes ['name']",
             '*** aborting ***',
-             'update_indexes: finished with category system'])
+             "update_indexes: finished with category 'system'"])
         self.assertEqual(transaction.committed, 0)
         self.assertEqual(transaction.aborted, 2)
         self.assertTrue('name' in inst)
@@ -351,15 +351,17 @@ class TestCatalog(unittest.TestCase):
         out = []
         inst = self._makeOne()
         existing = testing.DummyResource()
+        existing.sd_category = 'notsystem'
         inst['name'] = existing
         transaction = DummyTransaction()
         inst.transaction = transaction
         inst.update_indexes('system', registry=registry,  output=out.append)
         self.assertEqual(out,  
-            ['update_indexes: starting category system', 
-            "update_indexes: not replacing existing index in category 'system'",
+            ["update_indexes: starting category 'system'", 
+            "update_indexes: not replacing existing index in category "
+            "'notsystem' named 'name'",
              'update_indexes: no indexes added or removed', 
-             'update_indexes: finished with category system'])
+             "update_indexes: finished with category 'system'"])
         self.assertEqual(transaction.committed, 0)
         self.assertEqual(transaction.aborted, 0)
         self.assertEqual(inst['name'], existing)
@@ -370,18 +372,20 @@ class TestCatalog(unittest.TestCase):
         out = []
         inst = self._makeOne()
         existing = testing.DummyResource()
+        existing.sd_category = 'notsystem'
         inst['name'] = existing
         transaction = DummyTransaction()
         inst.transaction = transaction
         inst.update_indexes('system', registry=registry,  output=out.append,
             replace=True)
         self.assertEqual(out,  
-            ['update_indexes: starting category system', 
-            "update_indexes: replacing existing index in category 'system'",
+            ["update_indexes: starting category 'system'", 
+            "update_indexes: replacing existing index in category "
+            "'notsystem' named 'name'",
             "update_indexes: adding field index named 'name'",
             '*** committing ***',
             'update_indexes: not reindexing added indexes',
-            'update_indexes: finished with category system']
+            "update_indexes: finished with category 'system'"]
             )
         self.assertEqual(transaction.committed, 1)
         self.assertEqual(transaction.aborted, 0)
@@ -399,12 +403,12 @@ class TestCatalog(unittest.TestCase):
         inst['other'] = existing
         inst.update_indexes('system', registry=registry,  output=out.append)
         self.assertEqual(out,  
-            ['update_indexes: starting category system', 
+            ["update_indexes: starting category 'system'", 
             "update_indexes: adding field index named 'name'",
             "update_indexes: removing index named u'other'",
             '*** committing ***',
             'update_indexes: not reindexing added indexes',
-             'update_indexes: finished with category system'])
+            "update_indexes: finished with category 'system'"])
         self.assertEqual(transaction.committed, 1)
         self.assertEqual(transaction.aborted, 0)
         self.assertTrue('name' in inst)
@@ -421,11 +425,11 @@ class TestCatalog(unittest.TestCase):
         inst['other'] = existing
         inst.update_indexes('system', registry=registry,  output=out.append)
         self.assertEqual(out,  
-            ['update_indexes: starting category system', 
+            ["update_indexes: starting category 'system'", 
             "update_indexes: adding field index named 'name'",
             '*** committing ***',
             'update_indexes: not reindexing added indexes',
-             'update_indexes: finished with category system'])
+             "update_indexes: finished with category 'system'"])
         self.assertEqual(transaction.committed, 1)
         self.assertEqual(transaction.aborted, 0)
         self.assertTrue('name' in inst)

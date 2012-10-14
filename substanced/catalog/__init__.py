@@ -10,16 +10,13 @@ from zope.interface import implementer
 
 from hypatia.catalog import CatalogQuery
 
+from pyramid.exceptions import ConfigurationError
 from pyramid.traversal import resource_path
 from pyramid.threadlocal import get_current_registry
 from pyramid.security import effective_principals
 from pyramid.interfaces import (
     IAuthorizationPolicy,
     PHASE1_CONFIG,
-    )
-from pyramid.exceptions import (
-    ConfigurationConflictError,
-    ConfigurationError,
     )
 
 from ..interfaces import (
@@ -256,7 +253,7 @@ class Catalog(Folder):
         added = []
         removed = []
 
-        output and output('update_indexes: starting category %s' % category)
+        output and output('update_indexes: starting category %r' % category)
 
         indexes = categories.get(category, {})
 
@@ -271,9 +268,11 @@ class Catalog(Folder):
                     factory_name, name)
                 )
             factory = factories[factory_name]
+
             if name in self:
                 del self[name]
             self[name] = factory(name, **factory_args)
+
             added.append(name)
 
         # add indexes
@@ -283,14 +282,14 @@ class Catalog(Folder):
                 if idx_category != category:
                     if replace:
                         output and output(
-                            'update_indexes: replacing existing index in '
-                            'category %r' % category
+                            'update_indexes: replacing existing index '
+                            'in category %r named %r' % (idx_category, name)
                             )
                         add_or_replace(name, vals)
                     else:
                         output and output(
                             'update_indexes: not replacing existing index '
-                            'in category %r' % category
+                            'in category %r named %r' % (idx_category, name)
                             )
             else:
                 add_or_replace(name, vals)
@@ -333,7 +332,7 @@ class Catalog(Folder):
             output and output('update_indexes: not reindexing added indexes')
 
         output and output(
-            'update_indexes: finished with category %s' %  category
+            'update_indexes: finished with category %r' %  category
             )
 
 class Search(object):
@@ -563,6 +562,7 @@ def add_catalog_index(config, name, factory_name, category, **factory_args):
             raise ConfigurationError(
                 'No index factory named %r' % factory_name
                 )
+
         catvals = {
             'factory_name':factory_name, 
             'factory_args':factory_args,
@@ -588,24 +588,34 @@ def _add_discrim(name, kw):
     discriminator = ContentViewDiscriminator(name)
     kw.setdefault('discriminator', discriminator)
 
-def text_index_factory(name, **kw):
+def text_index_factory(name, category, **kw):
     _add_discrim(name, kw)
-    return indexes_module.TextIndex(**kw)
+    index =  indexes_module.TextIndex(**kw)
+    index.sd_category = category
+    return index
 
-def field_index_factory(name, **kw):
+def field_index_factory(name, category, **kw):
     _add_discrim(name, kw)
-    return indexes_module.FieldIndex(**kw)
+    index = indexes_module.FieldIndex(**kw)
+    index.sd_category = category
+    return index
 
-def keyword_index_factory(name, **kw):
+def keyword_index_factory(name, category, **kw):
     _add_discrim(name, kw)
-    return indexes_module.KeywordIndex(**kw)
+    index =  indexes_module.KeywordIndex(**kw)
+    index.sd_category = category
+    return index
 
-def path_index_factory(name, **kw):
-    return indexes_module.PathIndex(**kw)
+def path_index_factory(name, category, **kw):
+    index =  indexes_module.PathIndex(**kw)
+    index.sd_category = category
+    return index
 
-def facet_index_factory(name, **kw):
+def facet_index_factory(name, category, **kw):
     _add_discrim(name, kw)
-    return indexes_module.FacetIndex(**kw)
+    index =  indexes_module.FacetIndex(**kw)
+    index.sd_category = category
+    return index
 
 def includeme(config): # pragma: no cover
     from zope.interface import Interface
