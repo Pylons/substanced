@@ -268,7 +268,7 @@ class Catalog(Folder):
             factory_args = vals['factory_args']
             output and output(
                 'update_indexes: adding %s index named %r' % (
-                    name, factory_name)
+                    factory_name, name)
                 )
             factory = factories[factory_name]
             self[name] = factory(name, **factory_args)
@@ -287,7 +287,7 @@ class Catalog(Folder):
                         add_or_replace(name, vals)
                     else:
                         output and output(
-                            'update_indexes: **not** replacing existing index '
+                            'update_indexes: not replacing existing index '
                             'in category %r' % category
                             )
             else:
@@ -316,10 +316,10 @@ class Catalog(Folder):
         if added or removed:
             commit_or_abort()
         else:
-            output and output('update_indexes: No indexes added or removed')
+            output and output('update_indexes: no indexes added or removed')
 
         if added and reindex:
-            output and output('update_indexes: Reindexing added indexes')
+            output and output('update_indexes: reindexing added indexes')
             self.reindex(
                 indexes=added,
                 registry=registry,
@@ -329,7 +329,7 @@ class Catalog(Folder):
                 )
 
         elif added:
-            output and output('update_indexes: Not reindexing added indexes')
+            output and output('update_indexes: not reindexing added indexes')
 
         output and output(
             'update_indexes: finished with category %s' %  category
