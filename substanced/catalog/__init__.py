@@ -239,7 +239,10 @@ class Catalog(Folder):
         :meth:`substanced.catalog.Catalog.reindex` if ``reindex`` is True,
         otherwise ``kw`` is ignored.
 
-
+        If ``replace`` is ``True``, an existing catalog index that is
+        not in the ``category`` supplied but which has the same name as a
+        candidate index will be replaced.  If ``replace`` is ``False``,
+        existing indexes will never be replaced.
         """
         if output is None: # pragma: no cover
             output = logger.info
