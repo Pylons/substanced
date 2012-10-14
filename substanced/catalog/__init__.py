@@ -426,9 +426,6 @@ def _assertint(docid):
         raise ValueError('%r is not an integer value; document ids must be '
                          'integers' % docid)
 
-def is_catalogable(resource, registry=None):
-    return bool(catalog_view_factory_for(resource, registry))
-
 class GenericViewFactory(object):
     def __init__(self, content):
         self.content = content
@@ -440,6 +437,9 @@ def catalog_view_factory_for(resource, registry=None):
     if value is True: # bw compat
         value = GenericViewFactory
     return value
+
+def is_catalogable(resource, registry=None):
+    return bool(catalog_view_factory_for(resource, registry))
 
 class CatalogViewWrapper(object):
     def __init__(self, content, view_factory):

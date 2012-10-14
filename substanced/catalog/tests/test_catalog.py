@@ -610,6 +610,15 @@ class TestSearch(unittest.TestCase):
         self.assertEqual(num, 0)
         self.assertEqual(list(objectids), [])
 
+class TestGenericViewFactory(unittest.TestCase):
+    def _makeOne(self, content):
+        from .. import GenericViewFactory
+        return GenericViewFactory(content)
+
+    def test_it(self):
+        inst = self._makeOne(None)
+        self.assertEqual(inst.content, None)
+
 class TestSearchFunctional(unittest.TestCase):
     family = BTrees.family64
     
@@ -982,6 +991,39 @@ class Test_is_catalogable(unittest.TestCase):
         registry = Dummy()
         registry.content = DummyContent()
         self.assertFalse(self._callFUT(resource, registry))
+
+class Test_catalog_view_factory_for(unittest.TestCase):
+    def setUp(self):
+        self.config = testing.setUp()
+
+    def tearDown(self):
+        testing.tearDown()
+
+    def _callFUT(self, resource, registry=None):
+        from .. import catalog_view_factory_for
+        return catalog_view_factory_for(resource, registry)
+
+    def test_no_registry_passed(self):
+        resource = Dummy()
+        resource.result = True
+        self.config.registry.content = DummyContent()
+        self.assertTrue(self._callFUT(resource))
+
+    def test_true(self):
+        from .. import GenericViewFactory
+        resource = Dummy()
+        resource.result = True
+        registry = Dummy()
+        registry.content = DummyContent()
+        self.assertEqual(self._callFUT(resource, registry), GenericViewFactory)
+
+    def test_supplied(self):
+        resource = Dummy()
+        dummyviewfactory = object()
+        resource.result = dummyviewfactory
+        registry = Dummy()
+        registry.content = DummyContent()
+        self.assertEqual(self._callFUT(resource, registry), dummyviewfactory)
 
 class TestCatalogablePredicate(unittest.TestCase):
     def _makeOne(self, val, config):
