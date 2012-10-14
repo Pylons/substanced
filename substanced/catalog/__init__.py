@@ -578,10 +578,10 @@ def add_catalog_index(config, name, factory_name, category, **factory_args):
     discriminator = ('sd-index', name, category)
     config.action(discriminator, callable=add_index, introspectables=(intr,))
 
-def _index_factory(ctor, name, category, kw):
+def _index_factory(ctor, name, category, *kw):
     if not 'discriminator' in kw:
         kw['discriminator'] = CatalogViewDiscriminator(name)
-    index = indexes_module.TextIndex(**kw)
+    index = ctor(**kw)
     index.sd_category = category
     return index
 
