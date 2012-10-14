@@ -197,9 +197,11 @@ class Catalog(Folder):
 
     def update_indexes(
         self,
+        category,
         registry=None,
         dry_run=False,
         output=None,
+        replace=False,
         reindex=False,
         **kw
         ):
@@ -210,13 +212,18 @@ class Catalog(Folder):
         Any indexes which are present in the catalog but not present in
         the candidate indexes will be deleted.
 
-        If ``dry_run`` is ``True``, don't commit the changes made when this
-        function is called, just send what would have been done to the logger.
+        ``category`` is the name of a category of indexes.
+        It should match a category name passed to ``add_index``. Pass ``None``
+        as ``category`` to populate the catalog with the default "system" 
+        indexes.
 
         ``registry``, if passed, should be a Pyramid registry.  If one is not
         passed, the ``get_current_registry()`` function will be used to
         look up the current registry.  This function needs the registry in
         order to access content catalog views.
+
+        If ``dry_run`` is ``True``, don't commit the changes made when this
+        function is called, just send what would have been done to the logger.
 
         ``output``, if passed should be one of ``None``, ``False`` or a
         function.  If it is a function, the function should accept a single
@@ -226,10 +233,13 @@ class Catalog(Folder):
         ``substanced.catalog`` Python logger output at ``info`` level.
 
         This function does not reindex new indexes added to the catalog
-        unless ``reindex=True`` is passed. Arguments to this method
-        captured as ``kw`` are passed to 
+        unless ``reindex=True`` is passed.
+
+        Arguments to this method captured as ``kw`` are passed to
         :meth:`substanced.catalog.Catalog.reindex` if ``reindex`` is True,
         otherwise ``kw`` is ignored.
+
+
         """
         if output is None: # pragma: no cover
             output = logger.info
@@ -237,33 +247,60 @@ class Catalog(Folder):
         if registry is None:
             registry = get_current_registry()
 
-        indexes = get_candidate_indexes(registry)
+        categories = get_candidate_indexes(registry)
         added = []
         removed = []
 
+        output and output('update_indexes: starting category %s' % category)
+
+        indexes = categories.get(category, {})
+
+        def get_index_category(name):
+            return getattr(self[name], 'category', None)
+
+        factories = get_index_factories(registry)
+
+        def add_or_replace(name, vals):
+            factory_name = vals['factory_name']
+            factory_args = vals['factory_args']
+            output and output(
+                'update_indexes: adding %s index named %r' % (
+                    name, factory_name)
+                )
+            factory = factories[factory_name]
+            self[name] = factory(name, **factory_args)
+            added.append(name)
+
         # add indexes
         for name, vals in indexes.items():
-            if name not in self:
-                factory_name = vals['factory_name']
-                factory_args = vals['factory_args']
-                output and output(
-                    'update_indexes: adding %s index named %r' % (
-                        name, factory_name)
-                    )
-                factories = get_index_factories(registry)
-                factory = factories[factory_name]
-                self[name] = factory(name, **factory_args)
-                added.append(name)
+            if name in self:
+                idx_category = get_index_category(name)
+                if idx_category != category:
+                    if replace:
+                        output and output(
+                            'update_indexes: replacing existing index in'
+                            'category %r' % category
+                            )
+                        add_or_replace(name, vals)
+                    else:
+                        output and output(
+                            'update_indexes: **not** replacing existing index '
+                            'in category %r' % category
+                            )
+            else:
+                add_or_replace(name, vals)
 
         # remove indexes
-        for name in self.keys():
-            if name not in indexes:
-                output and output(
-                    'update_indexes: removing %s index named %r' % (
-                        name)
-                    )
-                del self[name]
-                removed.append(name)
+        for name, vals in self.items():
+            if not name in indexes:
+                idx_category = get_index_category(name)
+                if idx_category == category:
+                    output and output(
+                        'update_indexes: removing %s index named %r' % (
+                            name)
+                        )
+                    del self[name]
+                    removed.append(name)
 
         def commit_or_abort():
             if dry_run:
@@ -287,8 +324,13 @@ class Catalog(Folder):
                 dry_run=dry_run,
                 **kw
                 )
+
         elif added:
             output and output('update_indexes: Not reindexing added indexes')
+
+        output and output(
+            'update_indexes: finished with category %s' %  category
+            )
 
 class Search(object):
     """ Catalog query helper """
@@ -424,7 +466,8 @@ class indexed(object):
 
     venusian = venusian # for testing
 
-    def __init__(self, factory_name, **factory_args):
+    def __init__(self, factory_name, category, **factory_args):
+        self.category = category
         self.factory_name = factory_name
         self.factory_args = factory_args
 
@@ -439,6 +482,7 @@ class indexed(object):
             config.add_catalog_index(
                 index_name,
                 self.factory_name,
+                self.category,
                 **factory_args
                 )
 
@@ -481,120 +525,64 @@ def add_catalog_index_factory(config, name, factory):
         introspectables=(intr,)
         )
 
-def add_catalog_index(config, name, factory_name, **factory_args):
-    """ Add a candidate catalog index to the Subtance D ConfigurationError
-    state.  ``name`` is an index name.  ``factory_name`` is the name of
-    an index factory.  The ``factory_name`` must be in the set of factory
-    names added via :func:`substanced.catalog.add_index_factory`.
-    ``factory_args`` is a set of args to pass to the index factory when
-    the index factory is used to construct an index.
-
-    This directive has the potential to be called multiple times with the same 
-    or similar arguments during startup.  It copes with index name/type 
-    conflicts in the following ways:
-
-    - If two or more callers call this directive with the exact same arguments,
-      no conflict will occur.  In this circumstance, calling the function is
-      idempotent.
-
-    - If two or more callers call this directive, one with factory args and
-      the rest without factory args, the one with factory args will "win", and
-      no conflict will occur.  Every call to this function after the first
-      call with ``factory_args`` in this circumstance is idempotent.
-
-    - If two or more callers call this directive with a differing 
-      ``factory_name``, but the same ``name``, a conflict error will be raised
-      at startup.
-
-    - If two or more callers call this directive with the same name and factory
-      name, but each with differing ``factory_args``, a conflict error will be
-      raised at startup.
-
+def add_catalog_index(config, name, factory_name, category, **factory_args):
     """
 
-    # Sorry, future self, for the hairy code; it's likely I should have
-    # stopped and tried to generalize the Pyramid configuration system to
-    # handle this form of conflict detection / resolution instead of
-    # doing what's below.
+    A Configurator directive which adds a candidate catalog index to the 
+    Subtance D configuration state.
 
+    ``name`` is an index name.  ``factory_name`` is the name of an index
+    factory: it must be one of the default index factory names ``path``,
+    ``field``, ``text``, ``facet`` or ``keyword`` or another factory name
+    in the set of names of factories added via 
+    :func:`substanced.catalog.add_index_factory`.  ``factory_args`` is a set of
+    args to pass to the index factory when it's used to construct an index.
+
+    ``category`` represents an index category for use
+    by :meth:`substanced.catalog.Catalog.update_indexes`.  It's usually just a
+    string.  An application will typically choose to categorize all its
+    indexes in the same category so those indexes can be added as a set 
+    by ``update_indexes``.  Substance D adds a default set of indexes
+    in the ``system`` category.
+
+    This directive obeys normal Pyramid configurator conflict detection /
+    resolution rules: it uses the ``name`` and the ``category`` in the
+    discriminator, so application indexes can be overridden at startup
+    if you need to override an index that has been registered with a given name 
+    and category using a different factory or set of factory arguments.
+    """
     action_info = config.action_info
 
     def add_index():
-
+        factories = get_index_factories(config.registry)
         indexes = get_candidate_indexes(config.registry)
 
-        def add_candidate():
-            factories = get_index_factories(config.registry)
-            if not factory_name in factories:
-                raise ConfigurationError(
-                    'No index factory named %r' % factory_name
-                    )
-            indexes[name] = {
-                'factory_name':factory_name, 
-                'factory_args':factory_args,
-                'action_info':action_info,
-                }
-            # we need to defer the registration of this introspectable to get 
-            # the correct action info showing up
-            intr = config.introspectable(
-                    'sd catalog indexes', name, name, 'sd catalog index'
-                    )
-            intr['name'] = name
-            intr['factory_name'] = factory_name
-            intr['factory_args'] = factory_args
-            intr.relate(
-                'sd catalog index factories', 
-                ('sd-catalog-index-factory', factory_name)
+        if not factory_name in factories:
+            raise ConfigurationError(
+                'No index factory named %r' % factory_name
                 )
-            if config.introspector:
-                intr.register(config.introspector, action_info)
+        catvals = {
+            'factory_name':factory_name, 
+            'factory_args':factory_args,
+            'action_info':action_info,
+            'category':category,
+            }
+        indexes.setdefault(category, {})[name] = catvals
 
-        if name in indexes:
-            # we can use the existing candidate index info if this factory name
-            # and factory arg information doesn't conflict with the existing
-            # index
+    intr = config.introspectable(
+        'sd catalog indexes', name, name, 'sd catalog index'
+        )
+    intr['name'] = name
+    intr['factory_name'] = factory_name
+    intr['factory_args'] = factory_args
+    intr['category'] = category
+    intr.relate(
+        'sd catalog index factories', 
+        ('sd-catalog-index-factory', factory_name)
+        )
 
-            vals = indexes[name]
-
-            if vals['factory_name'] != factory_name:
-                # both indexes must name the same factory, or it's a conflict
-                fake_discriminator = (
-                'conflicting factory name information for index named %r: '
-                '%r vs %r' % (
-                    name, factory_name, vals['factory_name']
-                    )
-                )
-                raise ConfigurationConflictError(
-                    {fake_discriminator: [vals['action_info']]}
-                    )
-
-            if vals['factory_args'] and factory_args:
-                # if both the existing candidate index and this index specify 
-                # factory args, and those args differ, it'll be a conflict; 
-                # but if one doesn't specify any args, or both specify the same
-                # args, it's not a conflict
-                if vals['factory_args'] != factory_args:
-                    fake_discriminator = (
-                        'conflicting factory argument information for index '
-                        'named %r: %r vs. %r' % (
-                            name, factory_args, vals['factory_args'],
-                            )
-                        )
-                    raise ConfigurationConflictError(
-                        {fake_discriminator: [vals['action_info']]}
-                        )
-
-            if factory_args and not vals['factory_args']:
-                # prefer this index, overriding the previously registered one,
-                # as it has factory args while the previously registered one 
-                # does not.
-                add_candidate()
-
-        else:
-            add_candidate()
-
-    discriminator = None # we handle our own conflict detection/resolution
-    config.action(discriminator, callable=add_index)
+    discriminator = ('sd-index', name, category)
+    config.action(discriminator, callable=add_index, introspectables=(intr,))
 
 def _add_discrim(name, kw):
     discriminator = ContentViewDiscriminator(name)
@@ -632,11 +620,11 @@ def includeme(config): # pragma: no cover
     config.add_catalog_index_factory('facet', facet_index_factory)
     config.add_catalog_index_factory('keyword', keyword_index_factory)
     config.add_catalog_index_factory('path', path_index_factory)
-    add_default_indexes(config)
+    add_system_indexes(config)
     config.scan('.')
 
-def add_default_indexes(config):
-    """ Add the default set of Substance D indexes:
+def add_system_indexes(config):
+    """ Add the default set of Substance D indexes in the ``system`` category:
 
     - path (a PathIndex)
 
@@ -678,29 +666,34 @@ def add_default_indexes(config):
 
     """
 
-    CVD = ContentViewDiscriminator
-
     config.add_catalog_index(
-        'path', 'path',
+        'path', 'path', 'system'
         )
     config.add_catalog_index(
-        'name', 'field', discriminator=CVD(None, get_name)
+        'name', 'field', 'system',
+        discriminator=ContentViewDiscriminator(None, get_name)
         )
     config.add_catalog_index(
-        'oid', 'field', discriminator=CVD(None, oid_of)
+        'oid', 'field', 'system',
+        discriminator=ContentViewDiscriminator(None, oid_of)
         )
     config.add_catalog_index(
-        'interfaces', 'keyword', discriminator=CVD(None, get_interfaces)
+        'interfaces', 'keyword', 'system',
+        discriminator=ContentViewDiscriminator(None, get_interfaces)
         )
     config.add_catalog_index(
-        'containment', 'keyword', discriminator=CVD(None, get_containment)
+        'containment', 'keyword', 'system',
+        discriminator=ContentViewDiscriminator(None, get_containment)
         )
     config.add_catalog_index(
-        'allowed', 'keyword', discriminator=CVD(None, get_allowed_to_view)
+        'allowed', 'keyword', 'system',
+        discriminator=ContentViewDiscriminator(None, get_allowed_to_view)
         )
     config.add_catalog_index(
-        'texts', 'text', discriminator=CVD('texts', get_textrepr)
+        'texts', 'text', 'system',
+        discriminator=ContentViewDiscriminator('texts', get_textrepr)
         )
     config.add_catalog_index(
-        'title', 'field', discriminator=CVD('title', get_title)
+        'title', 'field', 'system',
+        discriminator=ContentViewDiscriminator('title', get_title)
         )
