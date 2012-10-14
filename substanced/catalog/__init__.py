@@ -247,10 +247,12 @@ class Catalog(Folder):
         if output is None: # pragma: no cover
             output = logger.info
 
-        if registry is None:
+        if registry is None: # pragma: no cover
             registry = get_current_registry()
 
         categories = get_candidate_indexes(registry)
+        factories = get_index_factories(registry)
+
         added = []
         removed = []
 
@@ -259,9 +261,7 @@ class Catalog(Folder):
         indexes = categories.get(category, {})
 
         def get_index_category(name):
-            return getattr(self[name], 'category', None)
-
-        factories = get_index_factories(registry)
+            return getattr(self[name], 'sd_category', None)
 
         def add_or_replace(name, vals):
             factory_name = vals['factory_name']
@@ -271,6 +271,8 @@ class Catalog(Folder):
                     factory_name, name)
                 )
             factory = factories[factory_name]
+            if name in self:
+                del self[name]
             self[name] = factory(name, **factory_args)
             added.append(name)
 
@@ -281,7 +283,7 @@ class Catalog(Folder):
                 if idx_category != category:
                     if replace:
                         output and output(
-                            'update_indexes: replacing existing index in'
+                            'update_indexes: replacing existing index in '
                             'category %r' % category
                             )
                         add_or_replace(name, vals)
@@ -299,8 +301,7 @@ class Catalog(Folder):
                 idx_category = get_index_category(name)
                 if idx_category == category:
                     output and output(
-                        'update_indexes: removing %s index named %r' % (
-                            name)
+                        'update_indexes: removing index named %r' % name
                         )
                     del self[name]
                     removed.append(name)
@@ -494,17 +495,17 @@ class indexed(object):
         return wrapped        
 
 def get_index_factories(registry):
-    factories = getattr(registry, 'index_factories', None)
+    factories = getattr(registry, 'sd_index_factories', None)
     if factories is None:
         factories = {}
-        registry.index_factories = factories
+        registry.sd_index_factories = factories
     return factories
 
 def get_candidate_indexes(registry):
-    indexes = getattr(registry, 'candidate_indexes', None)
+    indexes = getattr(registry, 'sd_candidate_indexes', None)
     if indexes is None:
         indexes = {}
-        registry.candidate_indexes = indexes
+        registry.sd_candidate_indexes = indexes
     return indexes
 
 def add_catalog_index_factory(config, name, factory):
@@ -554,8 +555,6 @@ def add_catalog_index(config, name, factory_name, category, **factory_args):
     if you need to override an index that has been registered with a given name 
     and category using a different factory or set of factory arguments.
     """
-    action_info = config.action_info
-
     def add_index():
         factories = get_index_factories(config.registry)
         indexes = get_candidate_indexes(config.registry)
@@ -567,8 +566,6 @@ def add_catalog_index(config, name, factory_name, category, **factory_args):
         catvals = {
             'factory_name':factory_name, 
             'factory_args':factory_args,
-            'action_info':action_info,
-            'category':category,
             }
         indexes.setdefault(category, {})[name] = catvals
 

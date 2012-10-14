@@ -280,6 +280,155 @@ class TestCatalog(unittest.TestCase):
         self.assertEqual(len(L), 1)
         self.assertEqual(L[0][0], 1)
         self.assertEqual(L[0][1].content, a)
+
+    def test_update_indexes_nothing_to_do(self):
+        registry = self.config.registry
+        out = []
+        inst = self._makeOne()
+        transaction = DummyTransaction()
+        inst.transaction = transaction
+        inst.update_indexes('system', registry=registry,  output=out.append)
+        self.assertEqual(out,  
+            ['update_indexes: starting category system', 
+             'update_indexes: no indexes added or removed', 
+             'update_indexes: finished with category system'])
+        self.assertEqual(transaction.committed, 0)
+        self.assertEqual(transaction.aborted, 0)
+
+    def _setup_index(self):
+        registry = self.config.registry
+        from .. import get_candidate_indexes, get_index_factories
+        categories = get_candidate_indexes(registry)
+        idx = {'factory_name':'field', 'factory_args':{}}
+        categories['system'] = {'name':idx}
+        factories = get_index_factories(registry)
+        dummyidx = testing.DummyModel()
+        factories['field'] = lambda *arg, **kw: dummyidx
+
+    def test_update_indexes_add_single(self):
+        self._setup_index()
+        registry = self.config.registry
+        out = []
+        inst = self._makeOne()
+        transaction = DummyTransaction()
+        inst.transaction = transaction
+        inst.update_indexes('system', registry=registry,  output=out.append)
+        self.assertEqual(out,  
+            ['update_indexes: starting category system', 
+            "update_indexes: adding field index named 'name'",
+            '*** committing ***',
+            'update_indexes: not reindexing added indexes',
+             'update_indexes: finished with category system'])
+        self.assertEqual(transaction.committed, 1)
+        self.assertEqual(transaction.aborted, 0)
+        self.assertTrue('name' in inst)
+
+    def test_update_indexes_add_single_dryrun_with_reindex(self):
+        registry = self.config.registry
+        self._setup_index()
+        out = []
+        inst = self._makeOne()
+        transaction = DummyTransaction()
+        inst.transaction = transaction
+        inst.update_indexes('system', registry=registry,  output=out.append,
+            dry_run=True, reindex=True)
+        self.assertEqual(out,  
+            ['update_indexes: starting category system', 
+            "update_indexes: adding field index named 'name'",
+            '*** aborting ***',
+            'update_indexes: reindexing added indexes',
+            "reindexing only indexes ['name']",
+            '*** aborting ***',
+             'update_indexes: finished with category system'])
+        self.assertEqual(transaction.committed, 0)
+        self.assertEqual(transaction.aborted, 2)
+        self.assertTrue('name' in inst)
+
+
+    def test_update_indexes_add_single_already_exists(self):
+        self._setup_index()
+        registry = self.config.registry
+        out = []
+        inst = self._makeOne()
+        existing = testing.DummyResource()
+        inst['name'] = existing
+        transaction = DummyTransaction()
+        inst.transaction = transaction
+        inst.update_indexes('system', registry=registry,  output=out.append)
+        self.assertEqual(out,  
+            ['update_indexes: starting category system', 
+            "update_indexes: not replacing existing index in category 'system'",
+             'update_indexes: no indexes added or removed', 
+             'update_indexes: finished with category system'])
+        self.assertEqual(transaction.committed, 0)
+        self.assertEqual(transaction.aborted, 0)
+        self.assertEqual(inst['name'], existing)
+
+    def test_update_indexes_add_single_already_exists_replace(self):
+        self._setup_index()
+        registry = self.config.registry
+        out = []
+        inst = self._makeOne()
+        existing = testing.DummyResource()
+        inst['name'] = existing
+        transaction = DummyTransaction()
+        inst.transaction = transaction
+        inst.update_indexes('system', registry=registry,  output=out.append,
+            replace=True)
+        self.assertEqual(out,  
+            ['update_indexes: starting category system', 
+            "update_indexes: replacing existing index in category 'system'",
+            "update_indexes: adding field index named 'name'",
+            '*** committing ***',
+            'update_indexes: not reindexing added indexes',
+            'update_indexes: finished with category system']
+            )
+        self.assertEqual(transaction.committed, 1)
+        self.assertEqual(transaction.aborted, 0)
+        self.assertNotEqual(inst['name'], existing)
+
+    def test_update_indexes_remove_single(self):
+        self._setup_index()
+        registry = self.config.registry
+        out = []
+        inst = self._makeOne()
+        transaction = DummyTransaction()
+        inst.transaction = transaction
+        existing = testing.DummyModel()
+        existing.sd_category = 'system'
+        inst['other'] = existing
+        inst.update_indexes('system', registry=registry,  output=out.append)
+        self.assertEqual(out,  
+            ['update_indexes: starting category system', 
+            "update_indexes: adding field index named 'name'",
+            "update_indexes: removing index named u'other'",
+            '*** committing ***',
+            'update_indexes: not reindexing added indexes',
+             'update_indexes: finished with category system'])
+        self.assertEqual(transaction.committed, 1)
+        self.assertEqual(transaction.aborted, 0)
+        self.assertTrue('name' in inst)
+
+    def test_update_indexes_remove_diffcat(self):
+        self._setup_index()
+        registry = self.config.registry
+        out = []
+        inst = self._makeOne()
+        transaction = DummyTransaction()
+        inst.transaction = transaction
+        existing = testing.DummyModel()
+        existing.sd_category = 'notsystem'
+        inst['other'] = existing
+        inst.update_indexes('system', registry=registry,  output=out.append)
+        self.assertEqual(out,  
+            ['update_indexes: starting category system', 
+            "update_indexes: adding field index named 'name'",
+            '*** committing ***',
+            'update_indexes: not reindexing added indexes',
+             'update_indexes: finished with category system'])
+        self.assertEqual(transaction.committed, 1)
+        self.assertEqual(transaction.aborted, 0)
+        self.assertTrue('name' in inst)
     
 class TestSearch(unittest.TestCase):
     family = BTrees.family64
