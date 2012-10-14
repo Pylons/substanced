@@ -268,8 +268,7 @@ class Catalog(Folder):
 
             if name in self:
                 del self[name]
-            self[name] = factory(name, **factory_args)
-
+            self[name] = factory(name, category, **factory_args)
             added.append(name)
 
         # add indexes
