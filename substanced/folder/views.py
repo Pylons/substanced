@@ -109,12 +109,12 @@ class FolderContentsViews(object):
     def show(self):
         request = self.request
         context = self.context
-        headers = getattr(context, '__sd_headers__', [])
-        if not headers:
-            headers = getattr(context, '__sd_columns__', [])
-            headers = [header.replace('_', ' ').capitalize()
-                       for header in headers]
-            headers = [header.replace(':oid', '') for header in headers]
+        headers = []
+        sd_columns = getattr(context, '__sd_columns__', None)
+        if sd_columns is not None:
+            if callable(sd_columns):
+                sd_columns = sd_columns(self, None, request)
+            headers = [column['name'] for column in sd_columns]
         seq = self.sdi_folder_contents(context, request) # generator
         addables = self.sdi_add_views(request, context)
         batch = Batch(seq, request, seqlen=len(context))

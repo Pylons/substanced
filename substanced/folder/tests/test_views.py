@@ -130,7 +130,7 @@ class TestFolderContentsViews(unittest.TestCase):
         request.flash_with_undo = request.session.flash
         return request
 
-    def test_show(self):
+    def test_show_no_columns(self):
         context = testing.DummyResource()
         request = self._makeRequest()
         inst = self._makeOne(context, request)
@@ -142,6 +142,27 @@ class TestFolderContentsViews(unittest.TestCase):
         self.assertEqual(batch.items[0], 'a')
         addables = result['addables']
         self.assertEqual(addables, ('b',))
+        headers = result['headers']
+        self.assertEqual(headers, [])
+
+    def test_show_with_columns(self):
+        context = testing.DummyResource()
+        context.__sd_columns__ = [{'name': 'Col 1',
+                                   'value': 'col1'},
+                                  {'name': 'Col 2',
+                                   'value': 'col2'}]
+        request = self._makeRequest()
+        inst = self._makeOne(context, request)
+        inst.sdi_folder_contents = lambda *arg: ('a',)
+        inst.sdi_add_views = lambda *arg: ('b',)
+        result = inst.show()
+        batch = result['batch']
+        self.assertEqual(len(batch.items), 1)
+        self.assertEqual(batch.items[0], 'a')
+        addables = result['addables']
+        self.assertEqual(addables, ('b',))
+        headers = result['headers']
+        self.assertEqual(headers, ['Col 1', 'Col 2'])
 
     def test_delete_none_deleted(self):
         context = testing.DummyResource()

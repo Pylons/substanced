@@ -324,30 +324,37 @@ def sdi_folder_contents(folder, request):
     boolean indicating whether the current user has the
     ``sdi.manage-contents`` permission on the ``folder``.
 
-    This function honors  a few content type hooks.
+    This function honors one content type hook.  The content type hook is
+    named ``icon``.  If the ``icon`` supplied to the content type
+    configuration of a subobject is a callable, the callable will be passed
+    the subobject and the ``request``; it is expected to return an icon name
+    or ``None``.  ``icon`` may alternately be either ``None`` or a string
+    representing a icon name instead of a callable.
+
+    To display the contents using a table with any given subobject attributes,
+    a callable named ``__sd_columns__`` can be defined on the folder.  The
+    callable will be passed the folder, the subobject and the ``request``.  It
+    must return a list of dictionaries with at least a ``name`` key for the
+    column header and a ``value`` key with the correct column value given the
+    subobject. The callable should be prepared to receive subobjects that will
+    *not* have the desired attributes.
     
-    The first content type hook is named ``icon``.  If the ``icon`` supplied
-    to the content type configuration of a subobject is a callable, the
-    callable will be passed the subobject and the ``request``; it is expected
-    to return an icon name or ``None``.  ``icon`` may alternately be either
-    ``None`` or a string representing a icon name instead of a callable.
-
-    The second content type hook is named ``__sd_columns__``. It's a list of
-    strings with the names of any attributes from the folder subobjects that
-    should be displayed as columns in the folder's content display. If an
-    attribute is known to represent an object id, appending ``:oid`` to its
-    name will cause the corresponding object's ``__name__`` to be displayed
-    instead of the oid. The column names will be used as headers for the table
-    of contents, replacing any underscores with spaces.
-
-    The third content type hook is named ``__sd_headers__``. This is a list of
-    header titles that has to correspond one to one with the ``__sd_columns__``
-    attribute name list. If it exists, these values will be used as headers
-    instead of the column names.
+    Alternatively, each dictionary can contain string values, in
+    which case the columns will be given the value of the attribute of the
+    subobject with that name, if present, or an empty string if it doesn't
+    exist.
     """
+    def attribute_columns(sd_columns, subobject):
+        columns = []
+        for column in sd_columns:
+            value = getattr(subobject, column['value'], '')
+            if type(value) == datetime.datetime:
+                value = value.strftime('%m/%d/%Y')
+            columns.append({'name': column['name'], 'value': value})
+        return columns
+
     can_manage = has_permission('sdi.manage-contents', folder, request)
-    sd_columns = getattr(folder, '__sd_columns__', [])
-    objectmap = find_objectmap(request.context)
+    sd_columns = getattr(folder, '__sd_columns__', None)
     for k, v in folder.items():
         hidden = getattr(v, '__sd_hidden__', None)
         if hidden is not None:
@@ -368,17 +375,12 @@ def sdi_folder_contents(folder, request):
             deletable = can_manage
         url = request.mgmt_path(v, '@@manage_main')
         columns = []
-        for column in sd_columns:
-            oid = False
-            if column.endswith(':oid'):
-                column = column.split(':')[0]
-                oid = True
-            value = getattr(v, column, None)
-            if oid:
-                value = objectmap.object_for(value).__name__
-            if type(value) == datetime.datetime:
-                value = value.strftime('%m/%d/%Y')
-            columns.append(value)
+        if sd_columns is not None:
+            if callable(sd_columns):
+                columns = sd_columns(folder, v, request)
+            else:
+                columns = attribute_columns(sd_columns, v)
+        columns = [column['value'] for column in columns]
         data = dict(
             name=k,
             deletable=deletable,

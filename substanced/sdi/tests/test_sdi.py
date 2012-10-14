@@ -576,6 +576,36 @@ class Test_sdi_folder_contents(unittest.TestCase):
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0]['deletable'], False)
 
+    def test_columns_dict(self):
+        self.config.testing_securitypolicy(permissive=True)
+        context = testing.DummyResource()
+        context.__sd_columns__ = [{'name': 'Col 1',
+                                   'value': 'col1'},
+                                  {'name': 'Col 2',
+                                   'value': 'col2'}]
+        context['a'] = testing.DummyResource()
+        context['a'].col1 = 'val1'
+        context['a'].col2 = 'val2'
+        request = self._makeRequest()
+        result = list(self._callFUT(context, request))
+        self.assertEqual(result[0]['columns'], ['val1', 'val2'])
+
+    def test_columns_callable(self):
+        def get_columns(folder, subobject, request):
+            return [{'name': 'Col 1',
+                     'value': getattr(subobject, 'col1')},
+                    {'name': 'Col 2',
+                     'value': getattr(subobject, 'col2')}]
+        self.config.testing_securitypolicy(permissive=True)
+        context = testing.DummyResource()
+        context.__sd_columns__ = get_columns
+        context['a'] = testing.DummyResource()
+        context['a'].col1 = 'val1'
+        context['a'].col2 = 'val2'
+        request = self._makeRequest()
+        result = list(self._callFUT(context, request))
+        self.assertEqual(result[0]['columns'], ['val1', 'val2'])
+
 class Test_sdi_add_views(unittest.TestCase):
     def _callFUT(self, request, context=None):
         from .. import sdi_add_views
