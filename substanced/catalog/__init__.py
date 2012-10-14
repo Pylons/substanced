@@ -2,7 +2,7 @@ import logging
 
 import transaction
 
-import venusian
+#import venusian
 
 import BTrees
 
@@ -27,13 +27,10 @@ from ..interfaces import (
 from . import indexes as indexes_module
 
 from .discriminators import (
-    ContentViewDiscriminator,
+    CatalogViewDiscriminator,
     get_name,
     get_interfaces,
     get_containment,
-    get_allowed_to_view,
-    get_textrepr,
-    get_title,
     )
 
 from ..content import (
@@ -426,25 +423,21 @@ def _assertint(docid):
         raise ValueError('%r is not an integer value; document ids must be '
                          'integers' % docid)
 
-class GenericViewFactory(object):
-    def __init__(self, content):
-        self.content = content
-
-def catalog_view_factory_for(resource, registry=None):
-    if registry is None:
-        registry = get_current_registry()
-    value = registry.content.metadata(resource, 'catalog', False)
-    if value is True: # bw compat
-        value = GenericViewFactory
-    return value
-
-def is_catalogable(resource, registry=None):
-    return bool(catalog_view_factory_for(resource, registry))
+_marker = object()
 
 class CatalogViewWrapper(object):
     def __init__(self, content, view_factory):
         self.content = content
         self.view_factory = view_factory
+
+def catalog_view_factory_for(resource, registry=None):
+    if registry is None:
+        registry = get_current_registry()
+    value = registry.content.metadata(resource, 'catalog', False)
+    return value
+
+def is_catalogable(resource, registry=None):
+    return bool(catalog_view_factory_for(resource, registry))
 
 class CatalogablePredicate(object):
     is_catalogable = staticmethod(is_catalogable) # for testing
@@ -461,37 +454,39 @@ class CatalogablePredicate(object):
     def __call__(self, context, request):
         return self.is_catalogable(context, self.registry) == self.val
 
-class indexed(object):
-    """ A method decorator which calls 
-    :func:`substanced.catalog.add_catalog_index` when scanned, using the
-    ``factory_name`` and ``factory_args`` passed, where the index's
-    name is the name of the method being wrapped. """
+# reenable once we need this
+# 
+# class indexed(object):
+#     """ A method decorator which calls 
+#     :func:`substanced.catalog.add_catalog_index` when scanned, using the
+#     ``factory_name`` and ``factory_args`` passed, where the index's
+#     name is the name of the method being wrapped. """
 
-    venusian = venusian # for testing
+#     venusian = venusian # for testing
 
-    def __init__(self, factory_name, category, **factory_args):
-        self.category = category
-        self.factory_name = factory_name
-        self.factory_args = factory_args
+#     def __init__(self, factory_name, category, **factory_args):
+#         self.category = category
+#         self.factory_name = factory_name
+#         self.factory_args = factory_args
 
-    def __call__(self, wrapped):
-        index_name = wrapped.__name__
+#     def __call__(self, wrapped):
+#         index_name = wrapped.__name__
 
-        factory_args = self.factory_args.copy()
+#         factory_args = self.factory_args.copy()
 
-        def callback(context, name, ob):
-            config = context.config.with_package(info.module)
-            factory_args['_info'] = info.codeinfo # FBO action_method
-            config.add_catalog_index(
-                index_name,
-                self.factory_name,
-                self.category,
-                **factory_args
-                )
+#         def callback(context, name, ob):
+#             config = context.config.with_package(info.module)
+#             factory_args['_info'] = info.codeinfo # FBO action_method
+#             config.add_catalog_index(
+#                 index_name,
+#                 self.factory_name,
+#                 self.category,
+#                 **factory_args
+#                 )
 
-        info = self.venusian.attach(wrapped, callback, category='substanced')
+#         info = self.venusian.attach(wrapped, callback, category='substanced')
 
-        return wrapped        
+#         return wrapped        
 
 def get_index_factories(registry):
     factories = getattr(registry, 'sd_index_factories', None)
@@ -584,36 +579,27 @@ def add_catalog_index(config, name, factory_name, category, **factory_args):
     discriminator = ('sd-index', name, category)
     config.action(discriminator, callable=add_index, introspectables=(intr,))
 
-def _add_discrim(name, kw):
-    discriminator = ContentViewDiscriminator(name)
-    kw.setdefault('discriminator', discriminator)
+def _index_factory(ctor, name, category, kw):
+    if not 'discriminator' in kw:
+        kw['discriminator'] = CatalogViewDiscriminator(name)
+    index = indexes_module.TextIndex(**kw)
+    index.sd_category = category
+    return index
 
 def text_index_factory(name, category, **kw):
-    _add_discrim(name, kw)
-    index =  indexes_module.TextIndex(**kw)
-    index.sd_category = category
-    return index
+    return _index_factory(indexes_module.TextIndex, name, category, **kw)
 
 def field_index_factory(name, category, **kw):
-    _add_discrim(name, kw)
-    index = indexes_module.FieldIndex(**kw)
-    index.sd_category = category
-    return index
+    return _index_factory(indexes_module.FieldIndex, name, category, **kw)
 
 def keyword_index_factory(name, category, **kw):
-    _add_discrim(name, kw)
-    index =  indexes_module.KeywordIndex(**kw)
-    index.sd_category = category
-    return index
+    return _index_factory(indexes_module.KeywordIndex, name, category, **kw)
+
+def facet_index_factory(name, category, **kw):
+    return _index_factory(indexes_module.FacetIndex, name, category, **kw)
 
 def path_index_factory(name, category, **kw):
     index =  indexes_module.PathIndex(**kw)
-    index.sd_category = category
-    return index
-
-def facet_index_factory(name, category, **kw):
-    _add_discrim(name, kw)
-    index =  indexes_module.FacetIndex(**kw)
     index.sd_category = category
     return index
 
@@ -657,23 +643,6 @@ def add_system_indexes(config):
       Represents the set of interfaces and classes which are possessed by
       parents of the content object (inclusive of itself)
 
-    - allowed (a KeywordIndex), uses a custom discriminator exclusively.
-
-      Represents the set of principals allowed to view the content (those with
-      the ``view`` permission relative to the content).
-
-    - texts (a TextIndex), uses either ``texts`` of the content's catalog
-      view or the ``texts`` attribute/method of the content object if 
-      a ``texts`` attribute doesn't exist on the catalog view.
-
-      Represents the set of data that should be searchable via fulltext.
-
-    - title (a FieldIndex), uses either ``title`` of the content's catalog
-      view or the ``title`` attribute/method of the content object if 
-      a ``title`` attribute doesn't exist on the catalog view.
-
-      Represents the title of a content object.
-
     """
 
     config.add_catalog_index(
@@ -681,29 +650,17 @@ def add_system_indexes(config):
         )
     config.add_catalog_index(
         'name', 'field', 'system',
-        discriminator=ContentViewDiscriminator(None, get_name)
+        discriminator=get_name,
         )
     config.add_catalog_index(
         'oid', 'field', 'system',
-        discriminator=ContentViewDiscriminator(None, oid_of)
+        discriminator=oid_of,
         )
     config.add_catalog_index(
         'interfaces', 'keyword', 'system',
-        discriminator=ContentViewDiscriminator(None, get_interfaces)
+        discriminator=get_interfaces,
         )
     config.add_catalog_index(
         'containment', 'keyword', 'system',
-        discriminator=ContentViewDiscriminator(None, get_containment)
-        )
-    config.add_catalog_index(
-        'allowed', 'keyword', 'system',
-        discriminator=ContentViewDiscriminator(None, get_allowed_to_view)
-        )
-    config.add_catalog_index(
-        'texts', 'text', 'system',
-        discriminator=ContentViewDiscriminator('texts', get_textrepr)
-        )
-    config.add_catalog_index(
-        'title', 'field', 'system',
-        discriminator=ContentViewDiscriminator('title', get_title)
+        discriminator=get_containment,
         )

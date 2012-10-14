@@ -610,15 +610,6 @@ class TestSearch(unittest.TestCase):
         self.assertEqual(num, 0)
         self.assertEqual(list(objectids), [])
 
-class TestGenericViewFactory(unittest.TestCase):
-    def _makeOne(self, content):
-        from .. import GenericViewFactory
-        return GenericViewFactory(content)
-
-    def test_it(self):
-        inst = self._makeOne(None)
-        self.assertEqual(inst.content, None)
-
 class TestSearchFunctional(unittest.TestCase):
     family = BTrees.family64
     
@@ -1010,12 +1001,11 @@ class Test_catalog_view_factory_for(unittest.TestCase):
         self.assertTrue(self._callFUT(resource))
 
     def test_true(self):
-        from .. import GenericViewFactory
         resource = Dummy()
         resource.result = True
         registry = Dummy()
         registry.content = DummyContent()
-        self.assertEqual(self._callFUT(resource, registry), GenericViewFactory)
+        self.assertEqual(self._callFUT(resource, registry), True)
 
     def test_supplied(self):
         resource = Dummy()
@@ -1024,6 +1014,18 @@ class Test_catalog_view_factory_for(unittest.TestCase):
         registry = Dummy()
         registry.content = DummyContent()
         self.assertEqual(self._callFUT(resource, registry), dummyviewfactory)
+
+class TestCatalogViewWrapper(unittest.TestCase):
+    def _makeOne(self, content, view_factory):
+        from .. import CatalogViewWrapper
+        return CatalogViewWrapper(content, view_factory)
+
+    def test_it(self):
+        content = testing.DummyResource()
+        view_factory = None
+        inst = self._makeOne(content, view_factory)
+        self.assertEqual(inst.content, content)
+        self.assertEqual(inst.view_factory, view_factory)
 
 class TestCatalogablePredicate(unittest.TestCase):
     def _makeOne(self, val, config):
@@ -1052,6 +1054,7 @@ class TestCatalogablePredicate(unittest.TestCase):
             return True
         inst.is_catalogable = is_catalogable
         self.assertEqual(inst(None, None), True)
+
 
 class DummySearch(object):
     def __init__(self, result):
