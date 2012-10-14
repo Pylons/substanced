@@ -32,14 +32,14 @@ Introduction
       -- Phillip K. Dick, A Scanner Darkly
 
 
-Substance D is an application development environment that provides the
-following features:
+Substance D is an application server.  It provides the following features:
 
-- Facilities that allow developers to define "content" (e.g. "a blog
-  entry", "a product", or "a news item", etc).
+- Facilities that allow developers to define "content" (e.g. "a blog   entry",
+  "a product", or "a news item", etc).
 
 - A management (aka "admin") web UI which allows nonexpert but privileged
-  users to create, edit, update, and delete developer-defined content.
+  users to create, edit, update, and delete developer-defined content as well
+  as managing other aspects of the system such as users.
 
 - "Undo" capability for actions taken via the management UI.
 
@@ -75,8 +75,9 @@ The Management Interface
 ------------------------
 
 The Substance D management interface (aka :term:`SDI`) is a set of :term:`view`
-registrations that are imposed upon the :term:`resource tree`.  The SDI allows
-you to add, delete, change and otherwise manage resources.
+registrations that are imposed upon the :term:`resource tree` of your
+application.  The SDI allows you to add, delete, change and otherwise manage
+resources.
 
 The SDI is extensible and allows you to plug your own views into it, so you
 can present nontechnical users with a way to manage arbitrary kinds of

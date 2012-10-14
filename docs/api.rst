@@ -30,6 +30,10 @@
 
 .. autofunction:: includeme
 
+.. autofunction:: add_catalog_index
+
+.. autofunction:: add_catalog_index_factory
+
 XXX: request.search_catalog, request.query_catalog
 
 :mod:`substanced.catalog.discriminators` API
