@@ -74,5 +74,5 @@ class CatalogViewDiscriminator(object):
         catalog_view = view_factory(content)
         meth = getattr(catalog_view, method_name, _marker)
         if meth is not _marker:
-            return meth()
+            return meth(default)
         return default

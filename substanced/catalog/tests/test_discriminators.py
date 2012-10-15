@@ -140,7 +140,7 @@ class DummyViewFactory(object):
     def __init__(self, content):
         self.content = content
 
-    def attr(self):
+    def attr(self, default):
         return 'attr'
 
 class DummyContentViewWrapper(object):
