@@ -65,7 +65,7 @@ class CatalogViewDiscriminator(object):
         self.method_name = method_name
 
     def __call__(self, wrapper, default):
-        if wrapper is True:
+        if wrapper.view_factory is True:
             # system indexes only
             return default
         content = wrapper.content

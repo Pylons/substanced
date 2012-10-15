@@ -116,7 +116,8 @@ class TestCatalogViewDiscriminator(unittest.TestCase):
 
     def test_call_wrapper_is_True(self):
         inst = self._makeOne('attr')
-        result = inst(True, None)
+        wrapper = DummyContentViewWrapper(None, True)
+        result = inst(wrapper, None)
         self.assertEqual(result, None)
 
     def test_call_wrapper_has_attr(self):
