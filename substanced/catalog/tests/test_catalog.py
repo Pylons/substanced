@@ -1134,6 +1134,98 @@ class Test_add_catalog_index(unittest.TestCase):
         callable = action['callable']
         self.assertRaises(ConfigurationError, callable)
 
+class Test_text_index_factory(unittest.TestCase):
+    def _callFUT(self, name, category, **kw):
+        from .. import text_index_factory
+        return text_index_factory(name, category, **kw)
+
+    def test_it(self):
+        result = self._callFUT('name', 'category')
+        self.assertEqual(result.__class__.__name__, 'TextIndex')
+        self.assertEqual(result.sd_category, 'category')
+        self.assertEqual(result.discriminator.method_name, 'name')
+
+    def test_it_with_discrim(self):
+        result = self._callFUT('name', 'category', discriminator='abc')
+        self.assertEqual(result.__class__.__name__, 'TextIndex')
+        self.assertEqual(result.sd_category, 'category')
+        self.assertEqual(result.discriminator, 'abc')
+
+class Test_field_index_factory(unittest.TestCase):
+    def _callFUT(self, name, category, **kw):
+        from .. import field_index_factory
+        return field_index_factory(name, category, **kw)
+
+    def test_it(self):
+        result = self._callFUT('name', 'category')
+        self.assertEqual(result.__class__.__name__, 'FieldIndex')
+        self.assertEqual(result.sd_category, 'category')
+        self.assertEqual(result.discriminator.method_name, 'name')
+
+    def test_it_with_discrim(self):
+        result = self._callFUT('name', 'category', discriminator='abc')
+        self.assertEqual(result.__class__.__name__, 'FieldIndex')
+        self.assertEqual(result.sd_category, 'category')
+        self.assertEqual(result.discriminator, 'abc')
+
+class Test_keyword_index_factory(unittest.TestCase):
+    def _callFUT(self, name, category, **kw):
+        from .. import keyword_index_factory
+        return keyword_index_factory(name, category, **kw)
+
+    def test_it(self):
+        result = self._callFUT('name', 'category')
+        self.assertEqual(result.__class__.__name__, 'KeywordIndex')
+        self.assertEqual(result.sd_category, 'category')
+        self.assertEqual(result.discriminator.method_name, 'name')
+
+    def test_it_with_discrim(self):
+        result = self._callFUT('name', 'category', discriminator='abc')
+        self.assertEqual(result.__class__.__name__, 'KeywordIndex')
+        self.assertEqual(result.sd_category, 'category')
+        self.assertEqual(result.discriminator, 'abc')
+
+class Test_facet_index_factory(unittest.TestCase):
+    def _callFUT(self, name, category, **kw):
+        from .. import facet_index_factory
+        return facet_index_factory(name, category, **kw)
+
+    def test_it(self):
+        result = self._callFUT('name', 'category', facets=['abc'])
+        self.assertEqual(result.__class__.__name__, 'FacetIndex')
+        self.assertEqual(result.sd_category, 'category')
+        self.assertEqual(result.discriminator.method_name, 'name')
+
+    def test_it_with_discrim(self):
+        result = self._callFUT('name', 'category', discriminator='abc',
+            facets=['abc'])
+        self.assertEqual(result.__class__.__name__, 'FacetIndex')
+        self.assertEqual(result.sd_category, 'category')
+        self.assertEqual(result.discriminator, 'abc')
+
+class Test_path_index_factory(unittest.TestCase):
+    def _callFUT(self, name, category, **kw):
+        from .. import path_index_factory
+        return path_index_factory(name, category, **kw)
+
+    def test_it(self):
+        result = self._callFUT('name', 'category')
+        self.assertEqual(result.__class__.__name__, 'PathIndex')
+        self.assertEqual(result.sd_category, 'category')
+
+class Test_add_system_indexes(unittest.TestCase):
+    def _callFUT(self, config):
+        from .. import add_system_indexes
+        return add_system_indexes(config)
+
+    def test_it(self):
+        config = DummyConfigurator()
+        self._callFUT(config)
+        self.assertEqual(
+            config.indexes,
+            ['path', 'name', 'oid', 'interfaces', 'containment']
+            )
+
 class DummyIntrospectable(dict):
     def __init__(self, *arg, **kw):
         dict.__init__(self, *arg, **kw)
@@ -1146,6 +1238,7 @@ class DummyConfigurator(object):
         self.actions = []
         self.intr = DummyIntrospectable()
         self.registry = testing.DummyResource()
+        self.indexes = []
 
     def action(self, discriminator, callable, order=None, introspectables=()):
         self.actions.append(
@@ -1158,6 +1251,9 @@ class DummyConfigurator(object):
 
     def introspectable(self, category, discriminator, name, single):
         return self.intr
+
+    def add_catalog_index(self, name, factory_name, category, **kw):
+        self.indexes.append(name)
 
 class DummySearch(object):
     def __init__(self, result):

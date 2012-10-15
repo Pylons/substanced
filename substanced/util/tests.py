@@ -378,6 +378,21 @@ class Test_acquire(unittest.TestCase):
         inst.abc = '123'
         self.assertEqual(self._callFUT(inst, 'abc'), '123')
 
+class Test_coarse_datetime_repr(unittest.TestCase):
+    def _callFUT(self, d):
+        from . import coarse_datetime_repr
+        return coarse_datetime_repr(d)
+
+    def test_it(self):
+        import calendar
+        import datetime
+        d = datetime.datetime.now()
+        result = self._callFUT(d)
+        timetime = calendar.timegm(d.timetuple())
+        val = int(timetime) // 100        
+        self.assertEqual(result, val)
+
+
 class DummyContent(object):
     def __init__(self, result):
         self.result = result
