@@ -47,7 +47,7 @@ XXX: request.search_catalog, request.query_catalog
 
 .. autofunction:: get_containment
 
-.. autofunction:: AllowedDiscriminator
+.. autoclass:: AllowedDiscriminator
 
 :mod:`hypatia.query` API
 -------------------------------
