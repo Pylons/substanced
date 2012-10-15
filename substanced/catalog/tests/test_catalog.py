@@ -1055,6 +1055,53 @@ class TestCatalogablePredicate(unittest.TestCase):
         inst.is_catalogable = is_catalogable
         self.assertEqual(inst(None, None), True)
 
+class Test_add_catalog_index_factory(unittest.TestCase):
+    def _callFUT(self, config, name, factory):
+        from .. import add_catalog_index_factory
+        return add_catalog_index_factory(config, name, factory)
+
+    def test_it(self):
+        from pyramid.interfaces import PHASE1_CONFIG
+        from .. import get_index_factories
+        config = DummyConfigurator()
+        self._callFUT(config, 'name', 'factory')
+        self.assertEqual(len(config.actions), 1)
+        action = config.actions[0]
+        self.assertEqual(
+            action['discriminator'],
+            ('sd-catalog-index-factory', 'name')
+            )
+        self.assertEqual(
+            action['order'], PHASE1_CONFIG
+            )
+        self.assertEqual(
+            action['introspectables'], (config.intr,)
+            )
+        self.assertEqual(config.intr['name'], 'name')
+        self.assertEqual(config.intr['factory'], 'factory')
+        callable = action['callable']
+        callable()
+        self.assertEqual(
+            get_index_factories(config.registry), {'name':'factory'}
+            )
+
+class DummyConfigurator(object):
+    def __init__(self):
+        self.actions = []
+        self.intr = {}
+        self.registry = testing.DummyResource()
+
+    def action(self, discriminator, callable, order, introspectables):
+        self.actions.append(
+            {
+            'discriminator':discriminator,
+            'callable':callable,
+            'order':order,
+            'introspectables':introspectables,
+            })
+
+    def introspectable(self, category, discriminator, name, single):
+        return self.intr
 
 class DummySearch(object):
     def __init__(self, result):
