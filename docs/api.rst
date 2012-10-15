@@ -41,19 +41,13 @@ XXX: request.search_catalog, request.query_catalog
 
 .. automodule:: substanced.catalog.discriminators
 
-.. autofunction:: get_title
+.. autofunction:: get_name
 
 .. autofunction:: get_interfaces
 
 .. autofunction:: get_containment
 
-.. autofunction:: get_textrepr
-
-.. autofunction:: get_creation_date
-
-.. autofunction:: get_modified_date
-
-.. autofunction:: get_allowed_to_view
+.. autofunction:: AllowedDiscriminator
 
 :mod:`hypatia.query` API
 -------------------------------
