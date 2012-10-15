@@ -4,9 +4,10 @@
     <link href="${request.static_url('substanced.sdi:static/dt_bootstrap.css')}" rel="stylesheet" />
     <script type="text/javascript">
       function toggleChecked(status) {
-          $("#sdi-contents-table input").each( function() {
-             if (!$(this).attr("disabled")) {
-               $(this).attr("checked",status);
+          dt = $("#sdi-contents-table").dataTable().fnGetNodes()
+          $(dt).each( function() {
+             if (!$(this).find('input').eq(0).attr("disabled")) {
+               $(this).find('input').eq(0).attr("checked",status);
              }
          })};
     </script>
