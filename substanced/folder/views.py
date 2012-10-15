@@ -13,7 +13,7 @@ from ..sdi import (
     sdi_add_views,
     sdi_folder_contents,
     )
-from ..util import Batch, oid_of
+from ..util import oid_of
 
 
 from ..interfaces import IFolder
@@ -117,7 +117,10 @@ class FolderContentsViews(object):
             headers = [column['name'] for column in sd_columns]
         seq = self.sdi_folder_contents(context, request) # generator
         addables = self.sdi_add_views(request, context)
-        return dict(items=seq, addables=addables, headers=headers)
+        return dict(items=seq,
+                    num_items=len(context),
+                    addables=addables,
+                    headers=headers)
 
     @mgmt_view(
         request_method='POST',
