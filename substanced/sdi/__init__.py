@@ -348,8 +348,6 @@ def sdi_folder_contents(folder, request):
         columns = []
         for column in sd_columns:
             value = getattr(subobject, column['value'], '')
-            if type(value) == datetime.datetime:
-                value = value.strftime('%m/%d/%Y')
             columns.append({'name': column['name'], 'value': value})
         return columns
 
