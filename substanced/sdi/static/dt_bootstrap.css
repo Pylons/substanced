@@ -20,6 +20,10 @@ div.dataTables_paginate {
 	margin: 0;
 }
 
+div.row, div.row input {
+        margin-bottom: 5px;
+}
+
 table.table {
 	clear: both;
 	margin-bottom: 6px !important;

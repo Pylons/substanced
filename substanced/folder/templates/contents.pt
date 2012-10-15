@@ -29,16 +29,6 @@
               <th tal:repeat="header headers">${header}</th>
             </thead>
             <tbody>
-	      <tr>
-	        <td>
-                  <label class="checkbox" for="selectall">
-                  <input type="checkbox" onclick="toggleChecked(this.checked)"/>
-                  -- all --
-                  </label>
-                </td>
-	        <td tal:repeat="column range(len(headers))">
-		</td>
-              </tr>
               <tal:loop tal:repeat="choice items">
                 <tr tal:condition="choice['viewable']">
                   <td>

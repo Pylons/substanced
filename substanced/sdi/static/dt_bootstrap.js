@@ -148,7 +148,7 @@ if ( $.fn.DataTable.TableTools ) {
 /* Table initialisation */
 $(document).ready(function() {
 	$('#sdi-contents-table').dataTable( {
-		"sDom": "<'row'<'span6'l><'span6'f>r>t<'row'<'span6'i><'span6'p>>",
+		"sDom": "<'row'<'span6'l><'span6'f>r><'row'<'selectall span6'>r>t<'row'<'span6'i><'span6'p>>",
 		"sPaginationType": "bootstrap",
 	        "iDisplayLength": 20,
 	        "aLengthMenu": [[20, 50, 100, -1], [20, 50, 100, "All"]],
@@ -157,4 +157,9 @@ $(document).ready(function() {
 			"sLengthMenu": "_MENU_ records per page"
 		}
 	} );
+	if (!pagination_enabled) {
+	    // if no pagination, make sure search moves right
+	    $('div.span6').eq(0).html('&nbsp');
+	}
+	$('div.selectall').html('Select all: <input type="checkbox" onclick="toggleChecked(this.checked)"/>');
 } );
