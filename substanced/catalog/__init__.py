@@ -575,7 +575,7 @@ def add_catalog_index(config, name, factory_name, category, **factory_args):
         ('sd-catalog-index-factory', factory_name)
         )
 
-    discriminator = ('sd-index', name, category)
+    discriminator = ('sd-catalog-index', name, category)
     config.action(discriminator, callable=add_index, introspectables=(intr,))
 
 def _index_factory(ctor, name, category, *kw):

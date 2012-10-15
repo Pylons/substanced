@@ -1085,13 +1085,69 @@ class Test_add_catalog_index_factory(unittest.TestCase):
             get_index_factories(config.registry), {'name':'factory'}
             )
 
+class Test_add_catalog_index(unittest.TestCase):
+    def _callFUT(self, config, name, factory_name, category, **factory_args):
+        from .. import add_catalog_index
+        return add_catalog_index(
+            config, name, factory_name, category, **factory_args
+            )
+
+    def test_it(self):
+        from .. import get_index_factories, get_candidate_indexes
+        config = DummyConfigurator()
+        self._callFUT(config, 'name', 'factory_name', 'category', a=1)
+        self.assertEqual(len(config.actions), 1)
+        action = config.actions[0]
+        self.assertEqual(
+            action['discriminator'],
+            ('sd-catalog-index', 'name', 'category')
+            )
+        self.assertEqual(
+            action['introspectables'], (config.intr,)
+            )
+        self.assertEqual(config.intr['name'], 'name')
+        self.assertEqual(config.intr['factory_name'], 'factory_name')
+        self.assertEqual(config.intr['factory_args'], {'a':1})
+        self.assertEqual(config.intr['category'], 'category')
+        self.assertEqual(
+            config.intr.relations,
+            [{'name': 'sd catalog index factories', 
+              'discrim': ('sd-catalog-index-factory', 'factory_name')}]
+              )
+        factories = get_index_factories(config.registry)
+        factories['factory_name'] = 'yo'
+        callable = action['callable']
+        callable()
+        self.assertEqual(
+            get_candidate_indexes(config.registry), 
+            {'category':{
+                'name':{'factory_name':'factory_name', 'factory_args':{'a':1}}
+                }
+            }
+            )
+
+    def test_no_factory(self):
+        from pyramid.exceptions import ConfigurationError
+        config = DummyConfigurator()
+        self._callFUT(config, 'name', 'factory_name', 'category', a=1)
+        action = config.actions[0]
+        callable = action['callable']
+        self.assertRaises(ConfigurationError, callable)
+
+class DummyIntrospectable(dict):
+    def __init__(self, *arg, **kw):
+        dict.__init__(self, *arg, **kw)
+        self.relations = []
+    def relate(self, name, discrim):
+        self.relations.append({'name':name, 'discrim':discrim})
+
 class DummyConfigurator(object):
     def __init__(self):
         self.actions = []
-        self.intr = {}
+        self.intr = DummyIntrospectable()
         self.registry = testing.DummyResource()
 
-    def action(self, discriminator, callable, order, introspectables):
+    def action(self, discriminator, callable, order=None, introspectables=()):
         self.actions.append(
             {
             'discriminator':discriminator,
