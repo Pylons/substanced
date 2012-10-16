@@ -155,7 +155,12 @@ $(document).ready(function() {
 	        "bPaginate": pagination_enabled,
 		"oLanguage": {
 			"sLengthMenu": "_MENU_ records per page"
-		}
+		},
+                "aoColumnDefs": [
+		        { "sWidth": "25px", "aTargets": [0] },
+		        { "bSortable": false, "aTargets": non_sortable_cols },
+		        { "bSearchable": false, "aTargets": non_filterable_cols }
+	        ]	
 	} );
 	if (!pagination_enabled) {
 	    // if no pagination, make sure search moves right

@@ -338,19 +338,13 @@ def sdi_folder_contents(folder, request):
     column header and a ``value`` key with the correct column value given the
     subobject. The callable should be prepared to receive subobjects that will
     *not* have the desired attributes.
-    
-    Alternatively, each dictionary can contain string values, in
-    which case the columns will be given the value of the attribute of the
-    subobject with that name, if present, or an empty string if it doesn't
-    exist.
-    """
-    def attribute_columns(sd_columns, subobject):
-        columns = []
-        for column in sd_columns:
-            value = getattr(subobject, column['value'], '')
-            columns.append({'name': column['name'], 'value': value})
-        return columns
 
+    In addition to ``name`` and ``value``, the column dictionary can contain
+    the keys ``sortable`` and ``filterable``, which specify respectively whether
+    the column will have buttons for sorting the rows and whether a row can be
+    filtered using a simple text search. The default value for both of those
+    parameters is True.
+    """
     can_manage = has_permission('sdi.manage-contents', folder, request)
     sd_columns = getattr(folder, '__sd_columns__', None)
     for k, v in folder.items():
@@ -374,10 +368,7 @@ def sdi_folder_contents(folder, request):
         url = request.mgmt_path(v, '@@manage_main')
         columns = []
         if sd_columns is not None:
-            if callable(sd_columns):
-                columns = sd_columns(folder, v, request)
-            else:
-                columns = attribute_columns(sd_columns, v)
+            columns = sd_columns(folder, v, request)
         columns = [column['value'] for column in columns]
         data = dict(
             name=k,

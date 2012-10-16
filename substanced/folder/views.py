@@ -110,17 +110,27 @@ class FolderContentsViews(object):
         request = self.request
         context = self.context
         headers = []
+        non_sortable = [0]
+        non_filterable = [0]
         sd_columns = getattr(context, '__sd_columns__', None)
         if sd_columns is not None:
-            if callable(sd_columns):
-                sd_columns = sd_columns(self, None, request)
-            headers = [column['name'] for column in sd_columns]
+            sd_columns = sd_columns(self, None, request)
+            for order, column in enumerate(sd_columns):
+                headers.append(column['name'])
+                sortable = column.get('sortable', True)
+                if not sortable:
+                    non_sortable.append(order + 1)
+                filterable = column.get('filterable', True)
+                if not filterable:
+                    non_filterable.append(order + 1)
         seq = self.sdi_folder_contents(context, request) # generator
         addables = self.sdi_add_views(request, context)
         return dict(items=seq,
                     num_items=len(context),
                     addables=addables,
-                    headers=headers)
+                    headers=headers,
+                    non_filterable=str(non_filterable),
+                    non_sortable=str(non_sortable))
 
     @mgmt_view(
         request_method='POST',
