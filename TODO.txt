@@ -20,8 +20,6 @@ UI-Plus-Guts
 
 - Stamp created objects with created date info?
 
-- Allow services to be added to services folder via add view UIs.
-
 - Allow indexes to be added-to/removed-from catalog service.
 
 - Allow reordering of resources in folder contents view when the folder is
@@ -81,6 +79,17 @@ Guts-Only
   folder contents view.
 
 - Generalize name validator.
+
+- Provide a less sucky API for searching.  Something like maybe:
+
+  catalog = find_service(self, 'catalog')
+  catalog.query(catalog['interfaces']==IClothingSKU).AND(catalog['path']==here, 
+                depth=2)
+
+  Might expand to:
+
+  'interfaces==IClothingSKU and path=='[depth=2]%s'" % here
+
 
 Nice-to-Have Features
 ---------------------
