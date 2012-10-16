@@ -13,7 +13,7 @@ from ..sdi import (
     sdi_add_views,
     sdi_folder_contents,
     )
-from ..util import Batch, oid_of
+from ..util import oid_of
 
 
 from ..interfaces import IFolder
@@ -109,10 +109,28 @@ class FolderContentsViews(object):
     def show(self):
         request = self.request
         context = self.context
+        headers = []
+        non_sortable = [0]
+        non_filterable = [0]
+        sd_columns = getattr(context, '__sd_columns__', None)
+        if sd_columns is not None:
+            sd_columns = sd_columns(self, None, request)
+            for order, column in enumerate(sd_columns):
+                headers.append(column['name'])
+                sortable = column.get('sortable', True)
+                if not sortable:
+                    non_sortable.append(order + 1)
+                filterable = column.get('filterable', True)
+                if not filterable:
+                    non_filterable.append(order + 1)
         seq = self.sdi_folder_contents(context, request) # generator
         addables = self.sdi_add_views(request, context)
-        batch = Batch(seq, request, seqlen=len(context))
-        return dict(batch=batch, addables=addables)
+        return dict(items=seq,
+                    num_items=len(context),
+                    addables=addables,
+                    headers=headers,
+                    non_filterable=str(non_filterable),
+                    non_sortable=str(non_sortable))
 
     @mgmt_view(
         request_method='POST',

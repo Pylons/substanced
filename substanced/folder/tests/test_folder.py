@@ -522,6 +522,43 @@ class TestFolder(unittest.TestCase):
         self.assertEqual(inst['__services__'], services)
         self.assertEqual(inst['__services__']['foo'], foo)
 
+    def _makesdcolumns_request(self, icon):
+        request = testing.DummyResource()
+        registry = testing.DummyResource()
+        content = testing.DummyResource()
+        content.metadata = lambda *arg: icon
+        request.registry = registry
+        request.registry.content = content
+        request.mgmt_path = lambda *arg: '/'
+        return request
+
+    def test___sd_columns__(self):
+        inst = self._makeOne()
+        fred = testing.DummyResource()
+        fred.__name__ = 'fred'
+        request = self._makesdcolumns_request('icon')
+        result = inst.__sd_columns__(inst, fred, request)
+        self.assertEqual(
+           result,
+           [{'sortable': True, 
+             'name': 'Name', 
+             'value': '<i class="icon"> </i> <a href="/">fred</a>'}] 
+           )
+
+    def test___sd_columns__with_callable_icon(self):
+        inst = self._makeOne()
+        fred = testing.DummyResource()
+        fred.__name__ = 'fred'
+        request = self._makesdcolumns_request(lambda *arg: 'icon')
+        result = inst.__sd_columns__(inst, fred, request)
+        self.assertEqual(
+           result, 
+           [{'sortable': True, 
+             'name': 'Name', 
+             'value': '<i class="icon"> </i> <a href="/">fred</a>'}] 
+           )
+
+
 class Test_add_services_folder(unittest.TestCase):
     def _callFUT(self, context, request):
         from .. import add_services_folder
