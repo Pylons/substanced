@@ -53,6 +53,18 @@ class Folder(Persistent):
     # Default uses ordering of underlying BTree.
     _order = None
 
+    def __sd_columns__(self, folder, subobject, request):
+        name = getattr(subobject, '__name__', '')
+        url = request.mgmt_path(subobject, '@@manage_main')
+        link_tag = '<a href="%s">%s</a>' % (url, name)
+        icon = request.registry.content.metadata(subobject, 'icon')
+        if callable(icon):
+            icon = icon(subobject, request)
+        icon_tag = '<i class="%s"> </i>' % icon
+        return [{'name': 'Name',
+                'value': '%s %s' % (icon_tag, link_tag),
+                'sortable': True}]
+
     def _get_order(self):
         if self._order is not None:
             return list(self._order)

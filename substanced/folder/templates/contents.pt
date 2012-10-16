@@ -1,95 +1,52 @@
 <div metal:use-macro="sdi_h.macros()['master']">
 
   <div tal:omit-tag="" metal:fill-slot="head-more">
+    <link href="${request.static_url('substanced.sdi:static/dt_bootstrap.css')}" rel="stylesheet" />
     <script type="text/javascript">
       function toggleChecked(status) {
-          $("#choices input").each( function() {
-             if (!$(this).attr("disabled")) {
-               $(this).attr("checked",status);
+          dt = $("#sdi-contents-table").dataTable().fnGetNodes()
+          $(dt).each( function() {
+             if (!$(this).find('input').eq(0).attr("disabled")) {
+               $(this).find('input').eq(0).attr("checked",status);
              }
          })};
     </script>
   </div>
 
   <div metal:fill-slot="main">
+    <div class="container-fluid">
     <form action="@@contents" method="POST">
 
       <fieldset>
 
-      <div class="pagination" tal:condition="batch.required">
-        <ul>
-          <li tal:attributes="class not batch.first_url and 'disabled'" ><a 
-                 href="${batch.first_url}">&laquo;</a></li>
-          <li tal:attributes="class not batch.prev_url and 'disabled'"><a 
-                 href="${batch.prev_url}">&larr;</a></li>
-          <li class="disabled"><a 
-               href="#">page ${batch.num+1} of ${batch.last+1}</a></li>
-          <li tal:attributes="class not batch.next_url and 'disabled'"><a  
-                 href="${batch.next_url}">&rarr;</a></li>
-          <li tal:attributes="class not batch.last_url and 'disabled'" ><a 
-                href="${batch.last_url}">&raquo;</a></li>
-        </ul>
-      </div>
+      <h2 tal:condition="not items">No items</h2>
 
-      <h2 tal:condition="not batch.items">No items</h2>
+      <div tal:condition="items">
 
-      <div tal:condition="batch.items">
-
-        <label class="checkbox" for="selectall">
-          <input type="checkbox" onclick="toggleChecked(this.checked)"/>
-          -- all --
-        </label>
-
-        <div id="choices" class="row" tal:condition="not batch.multicolumn">
-
-          <div class="span3">
-            <tal:loop tal:repeat="choice batch.items">
-              <tal:block condition="choice['viewable']">
-                <label class="checkbox" for="item-${repeat.choice.index}">
-                  <i class="${choice['icon']}"> </i>
-                  <input tal:attributes="disabled not choice['deletable']"
-                         type="checkbox"
-                         name="item-modify"
-                         value="${choice['name']}"
-                         id="item-${repeat.choice.index}"/>
-                  <a href="${choice['url']}">${choice['name']}</a>
-                </label>
-              </tal:block>
-            </tal:loop>
-          </div>
-
-        </div>
-
-        <div id="choices" tal:condition="batch.multicolumn">
-
-          <div class="row-fluid" tal:define="position 0">
-            <tal:loop tal:repeat="column batch.make_columns()">
-              <div class="span3">
-                <tal:loop tal:repeat="choice column">
-                  <tal:block condition="choice['viewable']">
-                    <label class="checkbox" for="item-${position}">
-                      <i class="${choice['icon']}"> </i>
+	  <table id="sdi-contents-table" class="table table-striped">
+            <thead>
+              <th>Select</th>
+              <th tal:repeat="header headers">${header}</th>
+            </thead>
+            <tbody>
+              <tal:loop tal:repeat="choice items">
+                <tr tal:condition="choice['viewable']">
+                  <td>
                       <input tal:attributes="disabled not choice['deletable']"
                              type="checkbox"
                              name="item-modify"
                              value="${choice['name']}"
-                             id="item-${position}"/>
-                      <a href="${choice['url']}">${choice['name']}</a>
-                    </label>
-                  </tal:block>
-                  <?python position += 1 ?>
-                </tal:loop>
-              </div>
-            </tal:loop>
-          </div>
-        </div>
+                             id="item-${repeat.choice.index}"/>
+                  </td>
+                  <td tal:repeat="column choice['columns']">${structure:column}</td>
+                </tr>
+              </tal:loop>
+            </tbody>
+          </table> 
 
       </div>
 
-      <div class="row-fluid" tal:condition="batch.required">
-        <div class="span2">
-          <a class="btn" href="${batch.toggle_url}">${batch.toggle_text}</a>
-        </div>
+      <div class="clearfix">
       </div>
 
       <input type="hidden" name="csrf_token" 
@@ -193,6 +150,13 @@
       </fieldset>
     </form>
 
+  </div>
+  </div>
+
+
+  <div tal:omit-tag="" metal:fill-slot="tail-more">
+  <script type="text/javascript" tal:define="enabled num_items>20 and 'true' or 'false'" tal:content="string:var pagination_enabled = ${enabled};non_sortable_cols = ${non_sortable};non_filterable_cols = ${non_filterable}"></script>
+    <script src="${request.static_url('substanced.sdi:static/dt_bootstrap.js')}" type="text/javascript"></script>
   </div>
 
 </div>

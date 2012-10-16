@@ -1,5 +1,6 @@
 import inspect
 import operator
+import datetime
 
 from zope.interface.interfaces import IInterface
 
@@ -281,6 +282,11 @@ def sdi_folder_contents(folder, request):
 
       The URL to the subobject.  This will be ``/path/to/subob/@@manage_main``.
 
+    ``columns``
+
+      Any extra column values obtained from this subobject's attributes, as
+      defined by the ``__sd_columns__`` hook.
+
     This function considers a subobject:
 
     - 'deletable' if the user has the ``sdi.manage-contents`` permission on
@@ -324,8 +330,23 @@ def sdi_folder_contents(folder, request):
     the subobject and the ``request``; it is expected to return an icon name
     or ``None``.  ``icon`` may alternately be either ``None`` or a string
     representing a icon name instead of a callable.
+
+    To display the contents using a table with any given subobject attributes,
+    a callable named ``__sd_columns__`` can be defined on the folder.  The
+    callable will be passed the folder, the subobject and the ``request``.  It
+    must return a list of dictionaries with at least a ``name`` key for the
+    column header and a ``value`` key with the correct column value given the
+    subobject. The callable should be prepared to receive subobjects that will
+    *not* have the desired attributes.
+
+    In addition to ``name`` and ``value``, the column dictionary can contain
+    the keys ``sortable`` and ``filterable``, which specify respectively whether
+    the column will have buttons for sorting the rows and whether a row can be
+    filtered using a simple text search. The default value for both of those
+    parameters is True.
     """
     can_manage = has_permission('sdi.manage-contents', folder, request)
+    sd_columns = getattr(folder, '__sd_columns__', None)
     for k, v in folder.items():
         hidden = getattr(v, '__sd_hidden__', None)
         if hidden is not None:
@@ -345,12 +366,17 @@ def sdi_folder_contents(folder, request):
         if deletable is None:
             deletable = can_manage
         url = request.mgmt_path(v, '@@manage_main')
+        columns = []
+        if sd_columns is not None:
+            columns = sd_columns(folder, v, request)
+        columns = [column['value'] for column in columns]
         data = dict(
             name=k,
             deletable=deletable,
             viewable=True, # XXX remove
             url=url,
-            icon=icon
+            icon=icon,
+            columns=columns,
             )
         yield data
 
