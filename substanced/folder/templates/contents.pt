@@ -55,7 +55,7 @@
       <div class="form-actions btn-toolbar">
 
 	<div tal:repeat="group buttons"
-             tal:attributes="class group['type']=='group' and 'btn-group' or ''">
+	     class="${group['type']=='group' and 'btn-group' or 'btn-single'}">
           <button tal:repeat="button group['buttons']"
                   id="${button['id']}"
                   name="form.${button['name']}"
