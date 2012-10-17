@@ -12,6 +12,7 @@ from ..sdi import (
     mgmt_view,
     sdi_add_views,
     sdi_folder_contents,
+    sdi_content_buttons,
     )
 from ..util import oid_of
 
@@ -97,6 +98,7 @@ class FolderContentsViews(object):
 
     sdi_add_views = staticmethod(sdi_add_views) # for testing
     sdi_folder_contents = staticmethod(sdi_folder_contents) # for testing
+    sdi_content_buttons = staticmethod(sdi_content_buttons) # for testing
 
     def __init__(self, context, request):
         self.context = context
@@ -124,11 +126,13 @@ class FolderContentsViews(object):
                 if not filterable:
                     non_filterable.append(order + 1)
         seq = self.sdi_folder_contents(context, request) # generator
+        buttons = self.sdi_content_buttons(context, request)
         addables = self.sdi_add_views(request, context)
         return dict(items=seq,
                     num_items=len(context),
                     addables=addables,
                     headers=headers,
+                    buttons=buttons,
                     non_filterable=str(non_filterable),
                     non_sortable=str(non_sortable))
 
