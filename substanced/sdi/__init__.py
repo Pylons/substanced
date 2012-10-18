@@ -330,13 +330,15 @@ def sdi_folder_contents(folder, request):
     or ``None``.  ``icon`` may alternately be either ``None`` or a string
     representing a icon name instead of a callable.
 
-    To display the contents using a table with any given subobject attributes,
-    a callable named ``__sd_columns__`` can be defined on the folder.  The
-    callable will be passed the folder, the subobject and the ``request``.  It
-    must return a list of dictionaries with at least a ``name`` key for the
-    column header and a ``value`` key with the correct column value given the
-    subobject. The callable should be prepared to receive subobjects that will
-    *not* have the desired attributes.
+    To display the contents using a table with any given subobject
+    attributes, a callable named ``__sd_columns__`` can be defined on the
+    folder.  The callable will be passed the folder, a subobject and the
+    ``request``.  It will be called once for every object in the folder to
+    obtain column representations for each of its subobjects.  It must return
+    a list of dictionaries with at least a ``name`` key for the column header
+    and a ``value`` key with the correct column value given the
+    subobject. The callable must be prepared to receive subobjects that
+    will *not* have the desired attributes.
 
     In addition to ``name`` and ``value``, the column dictionary can contain
     the keys ``sortable`` and ``filterable``, which specify respectively whether
@@ -351,11 +353,12 @@ def sdi_folder_contents(folder, request):
     can be overriden by a folder subclass to provide a customized toolbar.
 
     The ``__sd_buttons__`` callable will be passed the ``context`` and the
-    ``request``. It must return a list of dictionaries with at least a ``type``
-    key for the button set type and a ``buttons`` key with a list of dictionaries
-    representing the buttons. The ``type`` should be one of the string values
-    ``group`` or ``single``. A group will display its buttons side by side, with
-    no margin, while the single type will display each button separately.
+    ``request``. It must return a list of dictionaries with at least a
+    ``type`` key for the button set type and a ``buttons`` key with a list of
+    dictionaries representing the buttons. The ``type`` should be one of the
+    string values ``group`` or ``single``. A group will display its buttons
+    side by side, with no margin, while the single type will display each
+    button separately.
 
     Each button in a ``buttons`` dictionary is rendered using the button tag and
     requires five keys: ``id`` for the button's id attribute, ``name`` for the
@@ -367,7 +370,7 @@ def sdi_folder_contents(folder, request):
     returned by the ``substanced.sdi.default_sdi_buttons`` function.
 
     def __sd_buttons__(context, request):
-        from sdi.substanced import default_sdi_buttons
+        from substanced.sdi import default_sdi_buttons
         folder_buttons = default_sdi_buttons(context, request)
         buttons = {'type': 'single',
                    'buttons': [{'id': 'button1',
@@ -440,6 +443,7 @@ def sdi_folder_contents(folder, request):
         yield data
 
 def default_sdi_columns(folder, subobject, request):
+    """ The default __sd_columns__ hook """
     name = getattr(subobject, '__name__', '')
     url = request.mgmt_path(subobject, '@@manage_main')
     link_tag = '<a href="%s">%s</a>' % (url, name)
@@ -456,8 +460,9 @@ def sdi_buttons(context, request):
     if clbl is None:
         return []
     return clbl(context, request)
-                   
+
 def default_sdi_buttons(context, request):
+    """ The default __sd_buttons__ hook """
     buttons = []
     finish_buttons = []
 
