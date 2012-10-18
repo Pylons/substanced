@@ -592,10 +592,10 @@ class Test_sdi_folder_contents(unittest.TestCase):
         result = list(self._callFUT(context, request))
         self.assertEqual(result[0]['columns'], ['val1', 'val2'])
 
-class Test_sdi_content_buttons(unittest.TestCase):
+class Test_sdi_buttons(unittest.TestCase):
     def _callFUT(self, context, request):
-        from .. import sdi_content_buttons
-        return sdi_content_buttons(context, request)
+        from .. import sdi_buttons
+        return sdi_buttons(context, request)
 
     def setUp(self):
         testing.setUp()
@@ -605,6 +605,7 @@ class Test_sdi_content_buttons(unittest.TestCase):
 
     def test_no_buttons(self):
         context = testing.DummyResource()
+        context.__sd_buttons__ = None
         request = testing.DummyRequest()
         result = self._callFUT(context, request)
         self.assertEqual(result, [])
@@ -615,6 +616,137 @@ class Test_sdi_content_buttons(unittest.TestCase):
         request = testing.DummyRequest()
         result = self._callFUT(context, request)
         self.assertEqual(result, 'abc')
+
+class Test_default_sdi_columns(unittest.TestCase):
+    def _callFUT(self, folder, context, request):
+        from .. import default_sdi_columns
+        return default_sdi_columns(folder, context, request)
+    
+    def _makeRequest(self, icon):
+        request = testing.DummyResource()
+        registry = testing.DummyResource()
+        content = testing.DummyResource()
+        content.metadata = lambda *arg: icon
+        request.registry = registry
+        request.registry.content = content
+        request.mgmt_path = lambda *arg: '/'
+        return request
+
+    def test_it(self):
+        fred = testing.DummyResource()
+        fred.__name__ = 'fred'
+        request = self._makeRequest('icon')
+        result = self._callFUT(None, fred, request)
+        self.assertEqual(
+           result,
+           [{'sortable': True, 
+             'name': 'Name', 
+             'value': '<i class="icon"> </i> <a href="/">fred</a>'}] 
+           )
+
+    def test_it_with_callable_icon(self):
+        fred = testing.DummyResource()
+        fred.__name__ = 'fred'
+        request = self._makeRequest(lambda *arg: 'icon')
+        result = self._callFUT(None, fred, request)
+        self.assertEqual(
+           result, 
+           [{'sortable': True, 
+             'name': 'Name', 
+             'value': '<i class="icon"> </i> <a href="/">fred</a>'}] 
+           )
+
+class Test_default_sdi_buttons(unittest.TestCase):
+    def _callFUT(self, context, request):
+        from .. import default_sdi_buttons
+        return default_sdi_buttons(context, request)
+    
+    def test_it_novals(self):
+        request = testing.DummyRequest()
+        context = testing.DummyResource()
+        result = self._callFUT(context, request)
+        self.assertEqual(
+            result,
+            [{
+              'type': 'group', 
+              'buttons': 
+                  [{'text': 'Rename', 
+                    'class': '', 
+                    'id': 'rename', 
+                    'value': 'rename', 
+                    'name': 'form.rename'}, 
+                   {'text': 'Copy', 'class': '', 
+                    'id': 'copy', 
+                    'value': 'copy', 
+                    'name': 'form.copy'}, 
+                   {'text': 'Move', 
+                    'class': '', 
+                    'id': 'move', 
+                    'value': 'move', 
+                    'name': 'form.move'}, 
+                   {'text': 'Duplicate', 
+                    'class': '', 
+                    'id': 'duplicate', 
+                    'value': 'duplicate', 
+                    'name': 'form.duplicate'}]
+                }, 
+             {
+              'type':'group',
+              'buttons': 
+                  [{'text': 'Delete', 
+                    'class': 'btn-danger', 
+                    'id': 'delete', 
+                    'value': 'delete', 
+                    'name': 'form.delete'}]
+               },
+            ])
+
+
+    def test_it_tocopy(self):
+        request = testing.DummyRequest()
+        context = testing.DummyResource()
+        request.session['tocopy'] = True
+        result = self._callFUT(context, request)
+        self.assertEqual(
+            result,
+            [
+              {'buttons': 
+                [{'text': 'Copy here', 
+                  'class': 'btn-primary', 
+                  'id': 'copy_finish', 
+                  'value': 'copy_finish', 
+                  'name': 'form.copy_finish'}, 
+                 {'text': 'Cancel', 
+                  'class': 'btn-danger', 
+                  'id': 'cancel', 
+                  'value': 'cancel', 
+                  'name': 'form.copy_finish'}],
+               'type': 'single'}
+               ]
+               )
+
+    def test_it_tomove(self):
+        request = testing.DummyRequest()
+        context = testing.DummyResource()
+        request.session['tomove'] = True
+        result = self._callFUT(context, request)
+        self.assertEqual(
+            result, [
+            {'buttons': [
+                {'text': 'Move here',
+                 'class': 'btn-primary',
+                 'id': 'move_finish',
+                 'value': 'move_finish',
+                 'name': 'form.move_finish'},
+                {'text': 'Cancel',
+                 'class': 'btn-danger',
+                 'id': 'cancel',
+                 'value': 'cancel',
+                 'name':'form.move_finish'}],
+             'type': 'single'}
+            ]            
+            )
+
 
 class Test_sdi_add_views(unittest.TestCase):
     def _callFUT(self, request, context=None):

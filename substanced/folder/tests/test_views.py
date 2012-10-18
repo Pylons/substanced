@@ -132,6 +132,7 @@ class TestFolderContentsViews(unittest.TestCase):
 
     def test_show_no_columns(self):
         context = testing.DummyResource()
+        context.__sd_columns__ = None
         request = self._makeRequest()
         inst = self._makeOne(context, request)
         inst.sdi_folder_contents = lambda *arg: ('a',)

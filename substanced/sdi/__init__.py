@@ -363,11 +363,12 @@ def sdi_folder_contents(folder, request):
     applied to it, ``value`` for the value that will be passed as a request
     parameter when the form is submitted and ``text`` for the button's text.
     
-    Most of the time, the best strategy will be to modify the original buttons
-    returned by the Folder's ``__sd_buttons__`` method, like this:
+    Most of the time, the best strategy will be to modify the default buttons
+    returned by the ``substanced.sdi.default_sdi_buttons`` function.
 
     def __sd_buttons__(context, request):
-        folder_buttons = super(MyFolderSubclass, self).__sd_buttons__()
+        from sdi.substanced import default_sdi_buttons
+        folder_buttons = default_sdi_buttons(context, request)
         buttons = {'type': 'single',
                    'buttons': [{'id': 'button1',
                    'name': 'button1',
@@ -394,7 +395,7 @@ def sdi_folder_contents(folder, request):
     renderer='substanced.sdi:templates/contents.pt',
     permission='sdi.manage-contents',
     request_method='POST',
-    request_param='form.button1',
+    request_param='button1',
     tab_condition=False,
     )
     def button1(context, request):
@@ -404,7 +405,7 @@ def sdi_folder_contents(folder, request):
 
     """
     can_manage = has_permission('sdi.manage-contents', folder, request)
-    sd_columns = getattr(folder, '__sd_columns__', None)
+    sd_columns = getattr(folder, '__sd_columns__', default_sdi_columns)
     for k, v in folder.items():
         hidden = getattr(v, '__sd_hidden__', None)
         if hidden is not None:
@@ -438,11 +439,99 @@ def sdi_folder_contents(folder, request):
             )
         yield data
 
-def sdi_content_buttons(context, request):
-    groups = getattr(context, '__sd_buttons__', None)
-    if groups is None:
+def default_sdi_columns(folder, subobject, request):
+    name = getattr(subobject, '__name__', '')
+    url = request.mgmt_path(subobject, '@@manage_main')
+    link_tag = '<a href="%s">%s</a>' % (url, name)
+    icon = request.registry.content.metadata(subobject, 'icon')
+    if callable(icon):
+        icon = icon(subobject, request)
+    icon_tag = '<i class="%s"> </i>' % icon
+    return [{'name': 'Name',
+            'value': '%s %s' % (icon_tag, link_tag),
+            'sortable': True}]
+
+def sdi_buttons(context, request):
+    clbl = getattr(context, '__sd_buttons__', default_sdi_buttons)
+    if clbl is None:
         return []
-    return groups(context, request)
+    return clbl(context, request)
+                   
+def default_sdi_buttons(context, request):
+    buttons = []
+    finish_buttons = []
+
+    if 'tocopy' in request.session:
+        finish_buttons.extend(
+            [
+            {'id': 'copy_finish',
+              'name': 'form.copy_finish',
+              'class': 'btn-primary',
+              'value': 'copy_finish',
+              'text': 'Copy here'},
+            {'id': 'cancel',
+             'name': 'form.copy_finish',
+             'class': 'btn-danger',
+             'value': 'cancel',
+             'text': 'Cancel'},
+            ])
+
+    if 'tomove' in request.session:
+        finish_buttons.extend(
+            [{'id': 'move_finish',
+              'name': 'form.move_finish',
+              'class': 'btn-primary',
+              'value': 'move_finish',
+              'text': 'Move here'},
+             {'id': 'cancel',
+              'name': 'form.move_finish',
+              'class': 'btn-danger',
+              'value': 'cancel',
+              'text': 'Cancel'}])
+
+    if finish_buttons:
+        buttons.append(
+          {'type':'single', 'buttons':finish_buttons}
+          )
+
+    if not 'tomove' in request.session and not 'tocopy' in request.session:
+
+        main_buttons = [
+             {'id': 'rename',
+              'name': 'form.rename',
+              'class': '',
+              'value': 'rename',
+              'text': 'Rename'},
+              {'id': 'copy',
+              'name': 'form.copy',
+              'class': '',
+              'value': 'copy',
+              'text': 'Copy'},
+              {'id': 'move',
+              'name': 'form.move',
+              'class': '',
+              'value': 'move',
+              'text': 'Move'},
+              {'id': 'duplicate',
+              'name': 'form.duplicate',
+              'class': '',
+              'value': 'duplicate',
+              'text': 'Duplicate'}
+              ]
+
+        buttons.append({'type': 'group', 'buttons':main_buttons})
+
+        delete_buttons = [
+              {'id': 'delete',
+               'name': 'form.delete',
+               'class': 'btn-danger',
+               'value': 'delete',
+               'text': 'Delete'}
+               ]
+
+        buttons.append({'type': 'group', 'buttons':delete_buttons})
+
+    return buttons
 
 def sdi_add_views(request, context=None):
     registry = request.registry
