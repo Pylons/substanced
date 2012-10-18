@@ -343,6 +343,65 @@ def sdi_folder_contents(folder, request):
     the column will have buttons for sorting the rows and whether a row can be
     filtered using a simple text search. The default value for both of those
     parameters is True.
+
+    The contents view is a good place to wire up application specific
+    functionality that depends on content selection, so the button toolbar that
+    shows up at the bottom of the page is customizable. The buttons are defined
+    by a method of the base folder class named ``__sd_buttons__``. This method
+    can be overriden by a folder subclass to provide a customized toolbar.
+
+    The ``__sd_buttons__`` callable will be passed the ``context`` and the
+    ``request``. It must return a list of dictionaries with at least a ``type``
+    key for the button set type and a ``buttons`` key with a list of dictionaries
+    representing the buttons. The ``type`` should be one of the string values
+    ``group`` or ``single``. A group will display its buttons side by side, with
+    no margin, while the single type will display each button separately.
+
+    Each button in a ``buttons`` dictionary is rendered using the button tag and
+    requires five keys: ``id`` for the button's id attribute, ``name`` for the
+    button's name attribute, ``class`` for any additional css classes to be
+    applied to it, ``value`` for the value that will be passed as a request
+    parameter when the form is submitted and ``text`` for the button's text.
+    
+    Most of the time, the best strategy will be to modify the original buttons
+    returned by the Folder's ``__sd_buttons__`` method, like this:
+
+    def __sd_buttons__(context, request):
+        folder_buttons = super(MyFolderSubclass, self).__sd_buttons__()
+        buttons = {'type': 'single',
+                   'buttons': [{'id': 'button1',
+                   'name': 'button1',
+                   'class': 'btn-primary',
+                   'value': 'button1',
+                   'text': 'Button 1'},
+                  {'id': 'button2',
+                   'name': 'button2',
+                   'class': 'btn-primary',
+                   'value': 'button2',
+                   'text': 'Button 2'}]}
+        folder_buttons.append(buttons)
+        return folder_buttons
+
+    Once the buttons are defined, a view needs to be registered to handle the
+    new buttons. The view configuration has to set Folder as a context and
+    include a ``request_param`` predicate with the same name as the ``value``
+    defined for the corresponding button. The following template can be used
+    to register such views, changing only the ``request_param`` value:
+
+    @mgmt_view(
+    context=IFolder,
+    name='contents',
+    renderer='substanced.sdi:templates/contents.pt',
+    permission='sdi.manage-contents',
+    request_method='POST',
+    request_param='form.button1',
+    tab_condition=False,
+    )
+    def button1(context, request):
+        # add button functionality here, then go back to contents
+        request.session.flash('Just did what button1 does')
+        return HTTPFound(request.mgmt_path(context, '@@contents'))
+
     """
     can_manage = has_permission('sdi.manage-contents', folder, request)
     sd_columns = getattr(folder, '__sd_columns__', None)
