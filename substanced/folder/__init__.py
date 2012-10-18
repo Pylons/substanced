@@ -73,12 +73,12 @@ class Folder(Persistent):
             finish_buttons.extend(
                 [
                 {'id': 'copy_finish',
-                  'name': 'copy_finish',
+                  'name': 'form.copy_finish',
                   'class': 'btn-primary',
                   'value': 'copy_finish',
                   'text': 'Copy here'},
                 {'id': 'cancel',
-                 'name': 'copy_finish',
+                 'name': 'form.copy_finish',
                  'class': 'btn-danger',
                  'value': 'cancel',
                  'text': 'Cancel'},
@@ -87,12 +87,12 @@ class Folder(Persistent):
         if 'tomove' in request.session:
             finish_buttons.extend(
                 [{'id': 'move_finish',
-                  'name': 'move_finish',
+                  'name': 'form.move_finish',
                   'class': 'btn-primary',
                   'value': 'move_finish',
                   'text': 'Move here'},
                  {'id': 'cancel',
-                  'name': 'move_finish',
+                  'name': 'form.move_finish',
                   'class': 'btn-danger',
                   'value': 'cancel',
                   'text': 'Cancel'}])
@@ -106,22 +106,22 @@ class Folder(Persistent):
 
             main_buttons = [
                  {'id': 'rename',
-                  'name': 'rename',
+                  'name': 'form.rename',
                   'class': '',
                   'value': 'rename',
                   'text': 'Rename'},
                   {'id': 'copy',
-                  'name': 'copy',
+                  'name': 'form.copy',
                   'class': '',
                   'value': 'copy',
                   'text': 'Copy'},
                   {'id': 'move',
-                  'name': 'move',
+                  'name': 'form.move',
                   'class': '',
                   'value': 'move',
                   'text': 'Move'},
                   {'id': 'duplicate',
-                  'name': 'duplicate',
+                  'name': 'form.duplicate',
                   'class': '',
                   'value': 'duplicate',
                   'text': 'Duplicate'}
@@ -131,7 +131,7 @@ class Folder(Persistent):
 
             delete_buttons = [
                   {'id': 'delete',
-                   'name': 'delete',
+                   'name': 'form.delete',
                    'class': 'btn-danger',
                    'value': 'delete',
                    'text': 'Delete'}
