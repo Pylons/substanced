@@ -558,6 +558,94 @@ class TestFolder(unittest.TestCase):
              'value': '<i class="icon"> </i> <a href="/">fred</a>'}] 
            )
 
+    def test___sd_buttons__novals(self):
+        request = testing.DummyRequest()
+        context = testing.DummyResource()
+        inst = self._makeOne()
+        result = inst.__sd_buttons__(context, request)
+        self.assertEqual(
+            result,
+            [{
+              'type': 'group', 
+              'buttons': 
+                  [{'text': 'Rename', 
+                    'class': '', 
+                    'id': 'rename', 
+                    'value': 'rename', 
+                    'name': 'rename'}, 
+                   {'text': 'Copy', 'class': '', 
+                    'id': 'copy', 
+                    'value': 'copy', 
+                    'name': 'copy'}, 
+                   {'text': 'Move', 
+                    'class': '', 
+                    'id': 'move', 
+                    'value': 'move', 
+                    'name': 'move'}, 
+                   {'text': 'Duplicate', 
+                    'class': '', 
+                    'id': 'duplicate', 
+                    'value': 'duplicate', 
+                    'name': 'duplicate'}]
+                }, 
+             {
+              'type':'group',
+              'buttons': 
+                  [{'text': 'Delete', 
+                    'class': 'btn-danger', 
+                    'id': 'delete', 
+                    'value': 'delete', 
+                    'name': 'delete'}]
+               },
+            ])
+
+
+    def test___sd_buttons__tocopy(self):
+        request = testing.DummyRequest()
+        context = testing.DummyResource()
+        inst = self._makeOne()
+        request.session['tocopy'] = True
+        result = inst.__sd_buttons__(context, request)
+        self.assertEqual(
+            result,
+            [
+              {'buttons': 
+                [{'text': 'Copy here', 
+                  'class': 'btn-primary', 
+                  'id': 'copy_finish', 
+                  'value': 'copy_finish', 
+                  'name': 'copy_finish'}, 
+                 {'text': 'Cancel', 
+                  'class': 'btn-danger', 
+                  'id': 'cancel', 
+                  'value': 'cancel', 
+                  'name': 'copy_finish'}],
+               'type': 'single'}
+               ]
+               )
+
+    def test___sd_buttons__tomove(self):
+        request = testing.DummyRequest()
+        context = testing.DummyResource()
+        inst = self._makeOne()
+        request.session['tomove'] = True
+        result = inst.__sd_buttons__(context, request)
+        self.assertEqual(
+            result, [
+            {'buttons': [
+                {'text': 'Move here',
+                 'class': 'btn-primary',
+                 'id': 'move_finish',
+                 'value': 'move_finish',
+                 'name': 'move_finish'},
+                {'text': 'Cancel',
+                 'class': 'btn-danger',
+                 'id': 'cancel',
+                 'value': 'cancel',
+                 'name':'move_finish'}],
+             'type': 'single'}
+            ]            
+            )
 
 class Test_add_services_folder(unittest.TestCase):
     def _callFUT(self, context, request):
