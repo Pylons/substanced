@@ -115,7 +115,7 @@ class FolderContentsViews(object):
         headers = []
         non_sortable = [0]
         non_filterable = [0]
-        sd_columns = getattr(context, '__sd_columns__', default_sdi_columns)
+        sd_columns = getattr(context, '__sdi_columns__', default_sdi_columns)
         if sd_columns is not None:
             sd_columns = sd_columns(self, None, request)
             for order, column in enumerate(sd_columns):

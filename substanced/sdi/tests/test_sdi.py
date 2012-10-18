@@ -538,7 +538,7 @@ class Test_sdi_folder_contents(unittest.TestCase):
         self.config.testing_securitypolicy(permissive=True)
         context = testing.DummyResource()
         resource = testing.DummyResource()
-        resource.__sd_hidden__ = lambda *arg: True
+        resource.__sdi_hidden__ = lambda *arg: True
         context['object'] = resource
         request = self._makeRequest()
         result = list(self._callFUT(context, request))
@@ -548,7 +548,7 @@ class Test_sdi_folder_contents(unittest.TestCase):
         self.config.testing_securitypolicy(permissive=True)
         context = testing.DummyResource()
         resource = testing.DummyResource()
-        resource.__sd_hidden__ = True
+        resource.__sdi_hidden__ = True
         context['object'] = resource
         request = self._makeRequest()
         result = list(self._callFUT(context, request))
@@ -558,7 +558,7 @@ class Test_sdi_folder_contents(unittest.TestCase):
         self.config.testing_securitypolicy(permissive=True)
         context = testing.DummyResource()
         resource = testing.DummyResource()
-        resource.__sd_deletable__ = lambda *arg: False
+        resource.__sdi_deletable__ = lambda *arg: False
         context['object'] = resource
         request = self._makeRequest()
         result = list(self._callFUT(context, request))
@@ -569,7 +569,7 @@ class Test_sdi_folder_contents(unittest.TestCase):
         self.config.testing_securitypolicy(permissive=True)
         context = testing.DummyResource()
         resource = testing.DummyResource()
-        resource.__sd_deletable__ = False
+        resource.__sdi_deletable__ = False
         context['object'] = resource
         request = self._makeRequest()
         result = list(self._callFUT(context, request))
@@ -584,7 +584,7 @@ class Test_sdi_folder_contents(unittest.TestCase):
                      'value': getattr(subobject, 'col2')}]
         self.config.testing_securitypolicy(permissive=True)
         context = testing.DummyResource()
-        context.__sd_columns__ = get_columns
+        context.__sdi_columns__ = get_columns
         context['a'] = testing.DummyResource()
         context['a'].col1 = 'val1'
         context['a'].col2 = 'val2'
@@ -605,14 +605,14 @@ class Test_sdi_buttons(unittest.TestCase):
 
     def test_no_buttons(self):
         context = testing.DummyResource()
-        context.__sd_buttons__ = None
+        context.__sdi_buttons__ = None
         request = testing.DummyRequest()
         result = self._callFUT(context, request)
         self.assertEqual(result, [])
 
     def test_with_buttons(self):
         context = testing.DummyResource()
-        context.__sd_buttons__ = lambda context, request: 'abc'
+        context.__sdi_buttons__ = lambda context, request: 'abc'
         request = testing.DummyRequest()
         result = self._callFUT(context, request)
         self.assertEqual(result, 'abc')
@@ -797,7 +797,7 @@ class Test_sdi_add_views(unittest.TestCase):
         request.registry.content = DummyContent()
         request.mgmt_path = lambda *arg: '/path'
         context = testing.DummyResource()
-        context.__sd_addable__ = ('Not Content',)
+        context.__sdi_addable__ = ('Not Content',)
         ct_intr = {}
         ct_intr['meta'] = {'add_view':'abc'}
         ct_intr['content_type'] = 'Content'
@@ -821,7 +821,7 @@ class Test_sdi_add_views(unittest.TestCase):
         request.registry.content = DummyContent()
         request.mgmt_path = lambda *arg: '/path'
         context = testing.DummyResource()
-        context.__sd_addable__ = lambda *arg: False
+        context.__sdi_addable__ = lambda *arg: False
         ct_intr = {}
         ct_intr['meta'] = {'add_view':'abc'}
         ct_intr['content_type'] = 'Content'

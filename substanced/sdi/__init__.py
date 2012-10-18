@@ -284,12 +284,12 @@ def sdi_folder_contents(folder, request):
     ``columns``
 
       Any extra column values obtained from this subobject's attributes, as
-      defined by the ``__sd_columns__`` hook.
+      defined by the ``__sdi_columns__`` hook.
 
     This function considers a subobject:
 
     - 'deletable' if the user has the ``sdi.manage-contents`` permission on
-      ``folder`` or if the subobject has a ``__sd_deletable__`` attribute
+      ``folder`` or if the subobject has a ``__sdi_deletable__`` attribute
       which resolves to a boolean ``True`` value.
 
     - 'viewable' if the user has the ``sdi.view`` permission against the
@@ -297,28 +297,28 @@ def sdi_folder_contents(folder, request):
 
     This function honors two subobject hooks.
 
-    The first subobject hook is named ``__sd_hidden__``.  If a subobject has
-    an attribute named ``__sd_hidden__``, it is expected to be either a
-    boolean or a callable.  If ``__sd_hidden__`` is a boolean, the value is
-    used verbatim.  If ``__sd_hidden__`` is a callable, the callable is
+    The first subobject hook is named ``__sdi_hidden__``.  If a subobject has
+    an attribute named ``__sdi_hidden__``, it is expected to be either a
+    boolean or a callable.  If ``__sdi_hidden__`` is a boolean, the value is
+    used verbatim.  If ``__sdi_hidden__`` is a callable, the callable is
     called with two positional arguments: the subobject and the request; the
-    result is expected to be a boolean.  The ``__sd_hidden__`` value (or
+    result is expected to be a boolean.  The ``__sdi_hidden__`` value (or
     callable return value) is used to determine whether or not the a
     dictionary is present which reflects the subobject in the sequence
     returned by this function.  If it is ``True``, a dictionary is not
     created for the subobject and will not present in the returned sequence.
     If it is ``False``, a dictionary *is* created for the subobject and will
     be present in the returned sequence.  If a subobject does not have the
-    ``__sd_hidden__`` attribute, it is assumed to be visible (not hidden) as
-    if ``__sd_hidden__`` was present and ``False``; in such a case a
+    ``__sdi_hidden__`` attribute, it is assumed to be visible (not hidden) as
+    if ``__sdi_hidden__`` was present and ``False``; in such a case a
     dictionary for the subobject will be present in the returned sequence.
 
-    The second subobject hook is named ``__sd_deletable__``.  It works just
-    like ``__sd_hidden__`` (it can be a bare value or a callable, and the
-    callable is called just like ``__sd_hidden__``).  If a subobject has an
-    ``__sd_deletable__`` attribute, and its resolved value is not ``None``,
+    The second subobject hook is named ``__sdi_deletable__``.  It works just
+    like ``__sdi_hidden__`` (it can be a bare value or a callable, and the
+    callable is called just like ``__sdi_hidden__``).  If a subobject has an
+    ``__sdi_deletable__`` attribute, and its resolved value is not ``None``,
     the value will used as the ``deletable`` value returned in the dictionary
-    for the subobject.  If ``__sd_deletable__`` does not exist on a subobject
+    for the subobject.  If ``__sdi_deletable__`` does not exist on a subobject
     or resolves to ``None``, the ``deletable`` value will be the default: a
     boolean indicating whether the current user has the
     ``sdi.manage-contents`` permission on the ``folder``.
@@ -331,7 +331,7 @@ def sdi_folder_contents(folder, request):
     representing a icon name instead of a callable.
 
     To display the contents using a table with any given subobject
-    attributes, a callable named ``__sd_columns__`` can be defined on the
+    attributes, a callable named ``__sdi_columns__`` can be defined on the
     folder.  The callable will be passed the folder, a subobject and the
     ``request``.  It will be called once for every object in the folder to
     obtain column representations for each of its subobjects.  It must return
@@ -349,10 +349,10 @@ def sdi_folder_contents(folder, request):
     The contents view is a good place to wire up application specific
     functionality that depends on content selection, so the button toolbar that
     shows up at the bottom of the page is customizable. The buttons are defined
-    by a method of the base folder class named ``__sd_buttons__``. This method
+    by a method of the base folder class named ``__sdi_buttons__``. This method
     can be overriden by a folder subclass to provide a customized toolbar.
 
-    The ``__sd_buttons__`` callable will be passed the ``context`` and the
+    The ``__sdi_buttons__`` callable will be passed the ``context`` and the
     ``request``. It must return a list of dictionaries with at least a
     ``type`` key for the button set type and a ``buttons`` key with a list of
     dictionaries representing the buttons. The ``type`` should be one of the
@@ -369,7 +369,7 @@ def sdi_folder_contents(folder, request):
     Most of the time, the best strategy will be to modify the default buttons
     returned by the ``substanced.sdi.default_sdi_buttons`` function.
 
-    def __sd_buttons__(context, request):
+    def __sdi_buttons__(context, request):
         from substanced.sdi import default_sdi_buttons
         folder_buttons = default_sdi_buttons(context, request)
         buttons = {'type': 'single',
@@ -408,9 +408,9 @@ def sdi_folder_contents(folder, request):
 
     """
     can_manage = has_permission('sdi.manage-contents', folder, request)
-    sd_columns = getattr(folder, '__sd_columns__', default_sdi_columns)
+    sd_columns = getattr(folder, '__sdi_columns__', default_sdi_columns)
     for k, v in folder.items():
-        hidden = getattr(v, '__sd_hidden__', None)
+        hidden = getattr(v, '__sdi_hidden__', None)
         if hidden is not None:
             if callable(hidden):
                 hidden = hidden(v, request)
@@ -421,7 +421,7 @@ def sdi_folder_contents(folder, request):
         icon = request.registry.content.metadata(v, 'icon')
         if callable(icon):
             icon = icon(v, request)
-        deletable = getattr(v, '__sd_deletable__', None)
+        deletable = getattr(v, '__sdi_deletable__', None)
         if deletable is not None:
             if callable(deletable):
                 deletable = deletable(v, request)
@@ -443,7 +443,7 @@ def sdi_folder_contents(folder, request):
         yield data
 
 def default_sdi_columns(folder, subobject, request):
-    """ The default __sd_columns__ hook """
+    """ The default __sdi_columns__ hook """
     name = getattr(subobject, '__name__', '')
     url = request.mgmt_path(subobject, '@@manage_main')
     link_tag = '<a href="%s">%s</a>' % (url, name)
@@ -456,13 +456,13 @@ def default_sdi_columns(folder, subobject, request):
             'sortable': True}]
 
 def sdi_buttons(context, request):
-    clbl = getattr(context, '__sd_buttons__', default_sdi_buttons)
+    clbl = getattr(context, '__sdi_buttons__', default_sdi_buttons)
     if clbl is None:
         return []
     return clbl(context, request)
 
 def default_sdi_buttons(context, request):
-    """ The default __sd_buttons__ hook """
+    """ The default __sdi_buttons__ hook """
     buttons = []
     finish_buttons = []
 
@@ -561,7 +561,7 @@ def sdi_add_views(request, context=None):
                 viewname = viewname(context, request)
                 if not viewname:
                     continue
-            addable_here = getattr(context, '__sd_addable__', None)
+            addable_here = getattr(context, '__sdi_addable__', None)
             if addable_here is not None:
                 if callable(addable_here):
                     if not addable_here(intr):

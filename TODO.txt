@@ -113,7 +113,7 @@ Docs
 
 - Explain ``after_create`` meta-argument to content.
 
-- Explain __sd_deletable__, __sd_addable__, __sd_hidden__.
+- Explain __sdi_deletable__, __sdi_addable__, __sdi_hidden__.
 
 - Explain event listener decorators and add_content_subscriber.
 
@@ -124,6 +124,6 @@ Docs
 Probably Bad Ideas
 ------------------
 
-- Create "addable here" API that manages the __sd_addable__ attribute of a
+- Create "addable here" API that manages the __sdi_addable__ attribute of a
   folderish object.
 

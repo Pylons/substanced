@@ -55,7 +55,7 @@ class TestRoot(unittest.TestCase):
         self.assertTrue('principals' in services)
         self.assertTrue(registry.group.connected)
         self.assertTrue(inst.__acl__)
-        self.assertFalse(registry.created.__sd_deletable__)
+        self.assertFalse(registry.created.__sdi_deletable__)
 
     def test_after_create_without_password(self):
         from pyramid.exceptions import ConfigurationError
