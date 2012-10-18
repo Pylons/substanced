@@ -572,21 +572,21 @@ class TestFolder(unittest.TestCase):
                     'class': '', 
                     'id': 'rename', 
                     'value': 'rename', 
-                    'name': 'rename'}, 
+                    'name': 'form.rename'}, 
                    {'text': 'Copy', 'class': '', 
                     'id': 'copy', 
                     'value': 'copy', 
-                    'name': 'copy'}, 
+                    'name': 'form.copy'}, 
                    {'text': 'Move', 
                     'class': '', 
                     'id': 'move', 
                     'value': 'move', 
-                    'name': 'move'}, 
+                    'name': 'form.move'}, 
                    {'text': 'Duplicate', 
                     'class': '', 
                     'id': 'duplicate', 
                     'value': 'duplicate', 
-                    'name': 'duplicate'}]
+                    'name': 'form.duplicate'}]
                 }, 
              {
               'type':'group',
@@ -595,7 +595,7 @@ class TestFolder(unittest.TestCase):
                     'class': 'btn-danger', 
                     'id': 'delete', 
                     'value': 'delete', 
-                    'name': 'delete'}]
+                    'name': 'form.delete'}]
                },
             ])
 
@@ -614,12 +614,12 @@ class TestFolder(unittest.TestCase):
                   'class': 'btn-primary', 
                   'id': 'copy_finish', 
                   'value': 'copy_finish', 
-                  'name': 'copy_finish'}, 
+                  'name': 'form.copy_finish'}, 
                  {'text': 'Cancel', 
                   'class': 'btn-danger', 
                   'id': 'cancel', 
                   'value': 'cancel', 
-                  'name': 'copy_finish'}],
+                  'name': 'form.copy_finish'}],
                'type': 'single'}
                ]
                )
@@ -637,12 +637,12 @@ class TestFolder(unittest.TestCase):
                  'class': 'btn-primary',
                  'id': 'move_finish',
                  'value': 'move_finish',
-                 'name': 'move_finish'},
+                 'name': 'form.move_finish'},
                 {'text': 'Cancel',
                  'class': 'btn-danger',
                  'id': 'cancel',
                  'value': 'cancel',
-                 'name':'move_finish'}],
+                 'name':'form.move_finish'}],
              'type': 'single'}
             ]            
             )
