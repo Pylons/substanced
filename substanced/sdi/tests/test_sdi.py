@@ -609,121 +609,12 @@ class Test_sdi_content_buttons(unittest.TestCase):
         result = self._callFUT(context, request)
         self.assertEqual(result, [])
 
-    def test_one_group_no_conditions(self):
-        def buttons():
-            return [{'type': 'group',
-                     'buttons': [{'id': 'button1', 'condition': None},
-                                 {'id': 'button2', 'condition': None}]}]
+    def test_with_buttons(self):
         context = testing.DummyResource()
-        context.__sd_buttons__ = buttons
+        context.__sd_buttons__ = lambda context, request: 'abc'
         request = testing.DummyRequest()
         result = self._callFUT(context, request)
-        self.assertEqual(len(result), 1)
-        self.assertEqual(result[0]['type'], 'group')
-        self.assertEqual(len(result[0]['buttons']), 2)
-        button1 = result[0]['buttons'][0]
-        button2 = result[0]['buttons'][1]
-        self.assertEqual(button1['id'], 'button1')
-        self.assertEqual(button2['id'], 'button2')
-
-    def test_one_group_with_conditions(self):
-        def buttons():
-            return [{'type': 'group',
-                     'buttons': [{'id': 'button1',
-                                  'condition': lambda x,y: True},
-                                 {'id': 'button2',
-                                  'condition': lambda x,y: False}]}]
-        context = testing.DummyResource()
-        context.__sd_buttons__ = buttons
-        request = testing.DummyRequest()
-        result = self._callFUT(context, request)
-        self.assertEqual(len(result), 1)
-        self.assertEqual(result[0]['type'], 'group')
-        self.assertEqual(len(result[0]['buttons']), 1)
-        button1 = result[0]['buttons'][0]
-        self.assertEqual(button1['id'], 'button1')
-
-    def test_one_group_all_false(self):
-        def buttons():
-            return [{'type': 'group',
-                     'buttons': [{'id': 'button1',
-                                  'condition': lambda x,y: False},
-                                 {'id': 'button2',
-                                  'condition': lambda x,y: False}]}]
-        context = testing.DummyResource()
-        context.__sd_buttons__ = buttons
-        request = testing.DummyRequest()
-        result = self._callFUT(context, request)
-        self.assertEqual(len(result), 0)
-
-    def test_multiple_groups_with_conditions(self):
-        def buttons():
-            return [{'type': 'group',
-                     'buttons': [{'id': 'button1',
-                                  'condition': lambda x,y: True},
-                                 {'id': 'button2',
-                                  'condition': lambda x,y: False}]},
-                    {'type': 'single',
-                     'buttons': [{'id': 'button3',
-                                  'condition': lambda x,y: True},
-                                 {'id': 'button4',
-                                  'condition': lambda x,y: True}]}]
-        context = testing.DummyResource()
-        context.__sd_buttons__ = buttons
-        request = testing.DummyRequest()
-        result = self._callFUT(context, request)
-        self.assertEqual(len(result), 2)
-        self.assertEqual(result[0]['type'], 'group')
-        self.assertEqual(result[1]['type'], 'single')
-        self.assertEqual(len(result[0]['buttons']), 1)
-        self.assertEqual(len(result[1]['buttons']), 2)
-        button1 = result[0]['buttons'][0]
-        self.assertEqual(button1['id'], 'button1')
-        button3 = result[1]['buttons'][0]
-        self.assertEqual(button3['id'], 'button3')
-        button4 = result[1]['buttons'][1]
-        self.assertEqual(button4['id'], 'button4')
-
-    def test_multiple_groups_one_empty(self):
-        def buttons():
-            return [{'type': 'group',
-                     'buttons': [{'id': 'button1',
-                                  'condition': lambda x,y: False},
-                                 {'id': 'button2',
-                                  'condition': lambda x,y: False}]},
-                    {'type': 'single',
-                     'buttons': [{'id': 'button3',
-                                  'condition': lambda x,y: True},
-                                 {'id': 'button4',
-                                  'condition': lambda x,y: True}]}]
-        context = testing.DummyResource()
-        context.__sd_buttons__ = buttons
-        request = testing.DummyRequest()
-        result = self._callFUT(context, request)
-        self.assertEqual(len(result), 1)
-        self.assertEqual(result[0]['type'], 'single')
-        self.assertEqual(len(result[0]['buttons']), 2)
-        button3 = result[0]['buttons'][0]
-        self.assertEqual(button3['id'], 'button3')
-        button4 = result[0]['buttons'][1]
-        self.assertEqual(button4['id'], 'button4')
-
-    def test_one_group_with_conditions(self):
-        def buttons():
-            return [{'type': 'group',
-                     'buttons': [{'id': 'button1',
-                                  'condition': lambda x,y: True},
-                                 {'id': 'button2',
-                                  'condition': lambda x,y: False}]}]
-        context = testing.DummyResource()
-        context.__sd_buttons__ = buttons
-        request = testing.DummyRequest()
-        result = self._callFUT(context, request)
-        self.assertEqual(len(result), 1)
-        self.assertEqual(result[0]['type'], 'group')
-        self.assertEqual(len(result[0]['buttons']), 1)
-        button1 = result[0]['buttons'][0]
-        self.assertEqual(button1['id'], 'button1')
+        self.assertEqual(result, 'abc')
 
 class Test_sdi_add_views(unittest.TestCase):
     def _callFUT(self, request, context=None):

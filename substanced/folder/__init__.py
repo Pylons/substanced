@@ -65,74 +65,81 @@ class Folder(Persistent):
                 'value': '%s %s' % (icon_tag, link_tag),
                 'sortable': True}]
 
-    def __sd_buttons__(self):
-        def tocopy(context, request):
-            return 'tocopy' in request.session
-        def tomove(context, request):
-            return 'tomove' in request.session
-        def not_tocopy_tomove(context, request):
-            session = request.session
-            return 'tocopy' not in session and 'tomove' not in session
-        return [{'type': 'single',
-                 'buttons': [{'id': 'copy_finish',
-                              'name': 'copy_finish',
-                              'condition': tocopy,
-                              'class': 'btn-primary',
-                              'value': 'copy_finish',
-                              'text': 'Copy here'},
-                             {'id': 'cancel',
-                              'name': 'copy_finish',
-                              'condition': tocopy,
-                              'class': 'btn-danger',
-                              'value': 'cancel',
-                              'text': 'Cancel'},
-                             {'id': 'move_finish',
-                              'name': 'move_finish',
-                              'condition': tomove,
-                              'class': 'btn-primary',
-                              'value': 'move_finish',
-                              'text': 'Move here'},
-                             {'id': 'cancel',
-                              'name': 'move_finish',
-                              'condition': tomove,
-                              'class': 'btn-danger',
-                              'value': 'cancel',
-                              'text': 'Cancel'}]
-                },
-                {'type': 'group',
-                 'buttons': [{'id': 'rename',
-                              'name': 'rename',
-                              'condition': not_tocopy_tomove,
-                              'class': '',
-                              'value': 'rename',
-                              'text': 'Rename'},
-                             {'id': 'copy',
-                              'name': 'copy',
-                              'condition': not_tocopy_tomove,
-                              'class': '',
-                              'value': 'copy',
-                              'text': 'Copy'},
-                             {'id': 'move',
-                              'name': 'move',
-                              'condition': not_tocopy_tomove,
-                              'class': '',
-                              'value': 'move',
-                              'text': 'Move'},
-                             {'id': 'duplicate',
-                              'name': 'duplicate',
-                              'condition': not_tocopy_tomove,
-                              'class': '',
-                              'value': 'duplicate',
-                              'text': 'Duplicate'}]
-                },
-                {'type': 'group',
-                 'buttons': [{'id': 'delete',
-                              'name': 'delete',
-                              'condition': not_tocopy_tomove,
-                              'class': 'btn-danger',
-                              'value': 'delete',
-                              'text': 'Delete'}]
-                 }]
+    def __sd_buttons__(self, context, request):
+        buttons = []
+        finish_buttons = []
+
+        if 'tocopy' in request.session:
+            finish_buttons.extend(
+                [
+                {'id': 'copy_finish',
+                  'name': 'copy_finish',
+                  'class': 'btn-primary',
+                  'value': 'copy_finish',
+                  'text': 'Copy here'},
+                {'id': 'cancel',
+                 'name': 'copy_finish',
+                 'class': 'btn-danger',
+                 'value': 'cancel',
+                 'text': 'Cancel'},
+                ])
+
+        if 'tomove' in request.session:
+            finish_buttons.extend(
+                [{'id': 'move_finish',
+                  'name': 'move_finish',
+                  'class': 'btn-primary',
+                  'value': 'move_finish',
+                  'text': 'Move here'},
+                 {'id': 'cancel',
+                  'name': 'move_finish',
+                  'class': 'btn-danger',
+                  'value': 'cancel',
+                  'text': 'Cancel'}])
+
+        if finish_buttons:
+            buttons.append(
+              {'type':'single', 'buttons':finish_buttons}
+              )
+
+        if not 'tomove' in request.session and not 'tocopy' in request.session:
+
+            main_buttons = [
+                 {'id': 'rename',
+                  'name': 'rename',
+                  'class': '',
+                  'value': 'rename',
+                  'text': 'Rename'},
+                  {'id': 'copy',
+                  'name': 'copy',
+                  'class': '',
+                  'value': 'copy',
+                  'text': 'Copy'},
+                  {'id': 'move',
+                  'name': 'move',
+                  'class': '',
+                  'value': 'move',
+                  'text': 'Move'},
+                  {'id': 'duplicate',
+                  'name': 'duplicate',
+                  'class': '',
+                  'value': 'duplicate',
+                  'text': 'Duplicate'}
+                  ]
+
+            buttons.append({'type': 'group', 'buttons':main_buttons})
+
+            delete_buttons = [
+                  {'id': 'delete',
+                   'name': 'delete',
+                   'class': 'btn-danger',
+                   'value': 'delete',
+                   'text': 'Delete'}
+                   ]
+
+            buttons.append({'type': 'group', 'buttons':delete_buttons})
+
+        return buttons
 
 
     def _get_order(self):

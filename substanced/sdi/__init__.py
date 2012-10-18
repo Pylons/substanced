@@ -383,20 +383,7 @@ def sdi_content_buttons(context, request):
     groups = getattr(context, '__sd_buttons__', None)
     if groups is None:
         return []
-    button_groups = []
-    for group in groups():
-        buttons = []
-        for button in group['buttons']:
-            condition = button['condition']
-            if callable(condition):
-                result = condition(context, request)
-                if not result:
-                    continue
-            buttons.append(button)
-        if len(buttons) > 0:
-            new_group = {'type': group['type'], 'buttons': buttons}
-            button_groups.append(new_group)
-    return button_groups
+    return groups(context, request)
 
 def sdi_add_views(request, context=None):
     registry = request.registry
