@@ -415,17 +415,15 @@ class Test_find_service(unittest.TestCase):
     def test_unfound(self):
         from ..interfaces import IFolder
         site = testing.DummyResource(__provides__=IFolder)
-        services = testing.DummyResource()
-        site['__services__'] = services
+        site.__services__ = ()
         self.assertEqual(self._callFUT(site, 'catalog'), None)
         
     def test_found(self):
         from ..interfaces import IFolder
         site = testing.DummyResource(__provides__=IFolder)
-        services = testing.DummyResource()
         catalog = testing.DummyResource
-        services['catalog'] = catalog
-        site['__services__'] = services
+        site['catalog'] = catalog
+        site.__services__ = ('catalog',)
         self.assertEqual(self._callFUT(site, 'catalog'), catalog)
 
 class Test_find_services(unittest.TestCase):
@@ -436,32 +434,33 @@ class Test_find_services(unittest.TestCase):
     def test_one_found(self):
         from ..interfaces import IFolder
         site = testing.DummyResource(__provides__=IFolder)
-        services = testing.DummyResource()
         catalog = testing.DummyResource()
-        services['catalog'] = catalog
-        site['__services__'] = services
+        site['catalog'] = catalog
+        site.__services__ = ('catalog,')
         self.assertEqual(self._callFUT(site, 'catalog'), [catalog])
         
     def test_two_found(self):
         from ..interfaces import IFolder
         folder = testing.DummyResource(__provides__=IFolder)
-        services1 = testing.DummyResource()
         catalog1 = testing.DummyResource()
-        services1['catalog'] = catalog1
-        folder['__services__'] = services1
+        folder['catalog'] = catalog1
+        folder.__services__ = ('catalog',)
         site = testing.DummyResource(__provides__=IFolder)
-        services2 = testing.DummyResource()
         catalog2 = testing.DummyResource()
-        services2['catalog'] = catalog2
-        site['__services__'] = services2
+        site['catalog'] = catalog2
+        site.__services__ = ('catalog',)
         site['folder'] = folder
         self.assertEqual(self._callFUT(folder, 'catalog'), [catalog1, catalog2])
     
     def test_unfound(self):
         from ..interfaces import IFolder
         site = testing.DummyResource(__provides__=IFolder)
-        services = testing.DummyResource()
-        site['__services__'] = services
+        self.assertEqual(self._callFUT(site, 'catalog'), [])
+
+    def test_unfound2(self):
+        from ..interfaces import IFolder
+        site = testing.DummyResource(__provides__=IFolder)
+        site.__services__ = ()
         self.assertEqual(self._callFUT(site, 'catalog'), [])
 
 class DummyContentRegistry(object):

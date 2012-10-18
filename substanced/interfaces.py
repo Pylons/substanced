@@ -7,8 +7,6 @@ from zope.interface import (
     Attribute,
     )
 
-RESERVED_NAMES = (u'__services__',)
-
 class IPropertySheet(Interface):
     """ Interface for objects with a set of properties defined by a Colander
     schema.  The class :class:`substanced.property.PropertySheet` (which is
@@ -226,13 +224,13 @@ class IFolder(Interface):
         and ``__parent__`` value.
         """
 
-    def add(name, other, send_events=True, reserved_names=RESERVED_NAMES,
+    def add(name, other, send_events=True, reserved_names=(),
             duplicating=False, registry=None):
         """ Same as ``__setitem__``.
 
         If ``send_events`` is false, suppress the sending of folder events.
         Disallow the addition of the name provided is in the
-        ``RESERVED_NAMES`` list.  If ``duplicating`` is True, the
+        ``reserved_names`` list.  If ``duplicating`` is True, the
         ObjectWillBeAdded event sent will be marked as 'duplicating', which
         typically has the effect that the subobject's object id will be
         overwritten instead of reused.  If ``registry`` is passed, it should
@@ -245,7 +243,7 @@ class IFolder(Interface):
         ``self.check_name(name)``).
         """
 
-    def check_name(name, reserved_names=RESERVED_NAMES):
+    def check_name(name, reserved_names=()):
         """
         Checks the name passed for validity.  If the name is valid, is not
         present in ``reserved_names``, and the name does not already exist in
@@ -497,4 +495,3 @@ class IContentCatalogView(Interface):
 
 marker = object()
 
-SERVICES_NAME = '__services__'

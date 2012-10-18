@@ -27,7 +27,6 @@ class AddUserSchema(UserSchema):
         )
 
 @mgmt_view(
-    content_type='Services',
     name='add_principals_service',
     tab_condition=False,
     permission='sdi.add-services',

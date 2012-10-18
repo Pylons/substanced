@@ -41,9 +41,8 @@ class Root(Folder):
     :class:`substanced.folder.Folder`.
 
     When created as the result of ``registry.content.create``, an instance of
-    a Root will contain a ``__services__`` folder which will contain
-    ``objectmap`` and ``principals`` services.  The principals service will
-    contain a user whose name is specified via the
+    a Root will contain a ``principals`` service.  The principals service
+    will contain a user whose name is specified via the
     ``substanced.initial_login`` deployment setting with a password taken
     from the ``substanced.initial_password`` setting.  This user will also be
     a member of an ``admins`` group.  The ``admins`` group will be granted
@@ -81,8 +80,6 @@ class Root(Folder):
         self.__acl__ = [
             (Allow, oid_of(admins), ALL_PERMISSIONS)
             ]
-        # prevent SDI deletion/renaming of root services folder
-        self['__services__'].__sd_deletable__ = False
 
 def includeme(config): # pragma: no cover
     config.scan('.')

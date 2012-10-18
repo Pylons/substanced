@@ -19,7 +19,6 @@ from ..util import oid_of
 from . import logger
 
 @mgmt_view(
-    content_type='Services',
     name='add_catalog_service',
     tab_condition=False,
     permission='sdi.add-services',

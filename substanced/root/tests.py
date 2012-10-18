@@ -13,8 +13,6 @@ class TestRoot(unittest.TestCase):
     def _makeRegistry(self, settings):
         created = testing.DummyResource()
         group = testing.DummyResource()
-        services = testing.DummyResource()
-        services.add = services.__setitem__
         def connect(other):
             group.connected = other
         memberids = testing.DummyResource()
@@ -32,8 +30,6 @@ class TestRoot(unittest.TestCase):
         registry.settings = settings
         registry.content = testing.DummyResource()
         def create(type, *arg, **kw):
-            if type == 'Services':
-                return services
             return created
         registry.content.create = create
         registry.group = group
@@ -51,8 +47,8 @@ class TestRoot(unittest.TestCase):
         inst = self._makeOne()
         inst.after_create(inst, registry)
         self.assertTrue('__objectmap__' in inst.__dict__)
-        services = inst['__services__']
-        self.assertTrue('principals' in services)
+        self.assertTrue('principals' in inst)
+        self.assertEqual(inst.__services__, ('principals',))
         self.assertTrue(registry.group.connected)
         self.assertTrue(inst.__acl__)
         self.assertFalse(registry.created.__sd_deletable__)

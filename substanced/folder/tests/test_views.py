@@ -87,31 +87,6 @@ class TestAddFolderView(unittest.TestCase):
         self.assertEqual(context['name'], resource)
         self.assertEqual(resp.location, 'http://example.com')
 
-class Test_add_services_folder(unittest.TestCase):
-    def _callFUT(self, context, request):
-        from ..views import add_services_folder
-        return add_services_folder(context, request)
-    
-    def _makeRequest(self, resource):
-        request = testing.DummyRequest()
-        request.mgmt_path = lambda *arg: '/manage'
-        request.registry.content = DummyContent(resource)
-        return request
-    
-    def test_it(self):
-        resource = testing.DummyResource()
-        context = testing.DummyResource()
-        def add(name, ob, reserved_names=None):
-            self.assertEqual(name, '__services__')
-            self.assertEqual(ob, resource)
-            self.assertEqual(reserved_names, ())
-            context[name] = ob
-        context.add = add
-        request = self._makeRequest(resource)
-        result = self._callFUT(context, request)
-        self.assertTrue('__services__' in context)
-        self.assertEqual(result.location, '/manage')
-        
 class TestFolderContentsViews(unittest.TestCase):
     def setUp(self):
         self.config = testing.setUp()

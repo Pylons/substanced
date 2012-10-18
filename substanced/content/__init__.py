@@ -7,10 +7,7 @@ from pyramid.threadlocal import get_current_registry
 
 import venusian
 
-from ..interfaces import (
-    IFolder,
-    SERVICES_NAME
-    )
+from ..interfaces import IFolder
 
 from ..event import ContentCreated
 
@@ -37,14 +34,13 @@ def find_content(resource, content_type, registry=None):
 def _find_services(context, name, one=False):
     L = []
     for obj in lineage(context):
-        if IFolder.providedBy(obj):
-            services = obj.get(SERVICES_NAME)
-            if services is not None:
-                if name in services:
-                    service = services[name]
-                    if one:
-                        return service
-                    L.append(service)
+        services = getattr(obj, '__services__', None)
+        if services is not None:
+            if name in services:
+                service = obj[name]
+                if one:
+                    return service
+                L.append(service)
     if one:
         return None
     return L
@@ -191,10 +187,10 @@ class service(content):
     """
     This class is meant to be used as a decorator for a content factory that
     creates a service object (aka a service factory).  A service object is an
-    instance of a content type only addable within a ``__services__`` folder.
-    Services often have well-known names within the services folder.  For
-    example, the ``principals`` object within a services folder is 'the
-    principals service', the ``catalog`` object within a services folder is
+    instance of a content type that can be looked up by name and which
+    provides a service to application code.  Services have well-known names
+    within a folder.  For example, the ``principals`` service within a folder
+    is 'the principals service', the ``catalog`` object within a folder is
     'the catalog service' and so on.
 
     This decorator accepts a content type, a factory type (optionally), and a
@@ -204,18 +200,12 @@ class service(content):
     information to the object it decorates which is used to call
     :func:`~substanced.content.add_content_type` during a :term:`scan`.
 
-    There are two differences between using the
+    There is only one difference between using the
     :class:`substanced.content.content` decorator and the
-    :class:`substanced.service.service` decorator.
-
-    - Using the ``service`` decorator prevents the content factory it
-      decorates from being used by the SDI UI except to add the service to a
-      ``__services__`` folder.  It won't be addable in any other place.
-
-    - The ``service`` decorator honors a ``service_name`` keyword argument.
-      If this argument is passed, and a service already exists in the
-      ``__services__`` folder by this name, the service will not be shown as
-      addable in the add-content dropdown in the SDI UI.
+    :class:`substanced.service.service` decorator.  The ``service`` decorator
+    honors a ``service_name`` keyword argument.  If this argument is passed,
+    and a service already exists in the folder by this name, the service will
+    not be shown as addable in the add-content dropdown in the SDI UI.
     """
 
     venusian = venusian
@@ -330,24 +320,19 @@ def add_service_type(config, content_type, factory, factory_type=None, **meta):
     
     A service factory is a special kind of content factory.  A service
     factory creates a service object.  A service object is an instance of a
-    content type only addable within a ``__services__`` folder.  Services
-    often have well-known names within the services folder.  For example, the
-    ``principals`` object within a services folder is 'the principals
-    service', the ``catalog`` object within a services folder is 'the catalog
-    service' and so on.
+    content type that can be looked up by name and which provides a service
+    to application code.  Services often have well-known names within the
+    services folder.  For example, the ``principals`` object within a
+    services folder is 'the principals service', the ``catalog`` object
+    within a services folder is 'the catalog service' and so on.
 
-    There are two differences between using the
+    There is only one difference between using the
     :class:`substanced.content.add_content_type` function and the
-    :class:`substanced.service.add_service_tyoe` decorator.
-
-    - Using ``add_service_type`` prevents the content factory it names
-      from being used by the SDI UI except to add the service to a
-      ``__services__`` folder.  It won't be addable in any other place.
-
-    - The ``add_service_type`` function honors a ``service_name`` keyword
-      argument in its ``**meta``.  If this argument is passed, and a service
-      already exists in the ``__services__`` folder by this name, the service
-      will not be shown as addable in the add-content dropdown in the SDI UI.
+    :class:`substanced.service.add_service_type` decorator. The
+    ``add_service_type`` function honors a ``service_name`` keyword argument
+    in its ``**meta``.  If this argument is passed, and a service already
+    exists in the ``__services__`` folder by this name, the service will not
+    be shown as addable in the add-content dropdown in the SDI UI.
     """
     meta['is_service'] = True
     return add_content_type(

@@ -19,7 +19,7 @@ class Test_principal_added(unittest.TestCase):
         from ...testing import make_site
         from ...interfaces import IUser
         site = make_site()
-        groups = site['__services__']['principals']['groups']
+        groups = site['principals']['groups']
         groups['user'] = testing.DummyResource()
         user = testing.DummyResource(__provides__=IUser)
         site['user'] = user
@@ -37,7 +37,7 @@ class Test_principal_added(unittest.TestCase):
     def test_group_in_users(self):
         from ...testing import make_site
         site = make_site()
-        users = site['__services__']['principals']['users']
+        users = site['principals']['users']
         users['group'] = testing.DummyResource()
         group = testing.DummyResource()
         site['group'] = group

@@ -11,12 +11,12 @@ class TestPrincipals(unittest.TestCase):
     def test___sd_addable__True(self):
         intr = {'content_type':'Users'}
         inst = self._makeOne()
-        self.assertTrue(inst.__sd_addable__(intr))
+        self.assertTrue(inst.__sd_addable__(None, intr))
 
     def test___sd_addable__False(self):
         intr = {'content_type':'Wrong'}
         inst = self._makeOne()
-        self.assertFalse(inst.__sd_addable__(intr))
+        self.assertFalse(inst.__sd_addable__(None, intr))
 
     def test_after_create(self):
         inst = self._makeOne()
@@ -66,12 +66,12 @@ class TestUsers(unittest.TestCase):
     def test___sd_addable__True(self):
         intr = {'content_type':'User'}
         inst = self._makeOne()
-        self.assertTrue(inst.__sd_addable__(intr))
+        self.assertTrue(inst.__sd_addable__(None, intr))
 
     def test___sd_addable__False(self):
         intr = {'content_type':'Wrong'}
         inst = self._makeOne()
-        self.assertFalse(inst.__sd_addable__(intr))
+        self.assertFalse(inst.__sd_addable__(None, intr))
 
 class TestPasswordResets(unittest.TestCase):
     def _makeOne(self):
@@ -81,12 +81,12 @@ class TestPasswordResets(unittest.TestCase):
     def test___sd_addable__True(self):
         intr = {'content_type':'Password Reset'}
         inst = self._makeOne()
-        self.assertTrue(inst.__sd_addable__(intr))
+        self.assertTrue(inst.__sd_addable__(None, intr))
 
     def test___sd_addable__False(self):
         intr = {'content_type':'Wrong'}
         inst = self._makeOne()
-        self.assertFalse(inst.__sd_addable__(intr))
+        self.assertFalse(inst.__sd_addable__(None, intr))
 
 class TestGroups(unittest.TestCase):
     def _makeOne(self):
@@ -96,12 +96,12 @@ class TestGroups(unittest.TestCase):
     def test___sd_addable__True(self):
         intr = {'content_type':'Group'}
         inst = self._makeOne()
-        self.assertTrue(inst.__sd_addable__(intr))
+        self.assertTrue(inst.__sd_addable__(None, intr))
 
     def test___sd_addable__False(self):
         intr = {'content_type':'Wrong'}
         inst = self._makeOne()
-        self.assertFalse(inst.__sd_addable__(intr))
+        self.assertFalse(inst.__sd_addable__(None,  intr))
 
 class Test_groupname_validator(unittest.TestCase):
     def _makeOne(self, node, kw):
@@ -111,17 +111,15 @@ class Test_groupname_validator(unittest.TestCase):
     def _makeKw(self):
         request = testing.DummyRequest()
         context = DummyFolder()
-        services = DummyFolder()
         principals = DummyFolder()
         groups = DummyFolder()
         users = DummyFolder()
-        context['__services__'] = services
-        context['__services__']['principals'] = principals
-        context['__services__']['principals']['groups'] = groups
-        context['__services__']['principals']['users'] = users
-        request.services = services
+        context['principals'] = principals
+        context['principals']['groups'] = groups
+        context['principals']['users'] = users
+        context.__services__ = ('principals',)
         request.context = context
-        return dict(request=request)
+        return dict(request=request, context=context)
 
     def test_it_not_adding_with_exception(self):
         kw = self._makeKw()
@@ -130,7 +128,7 @@ class Test_groupname_validator(unittest.TestCase):
         kw['request'].context['abc'] = testing.DummyResource()
         def check_name(*arg, **kw):
             raise Exception('fred')
-        kw['request'].services['principals']['groups'].check_name = check_name
+        kw['context']['principals']['groups'].check_name = check_name
         node = object()
         v = self._makeOne(node, kw)
         self.assertRaises(colander.Invalid, v, node, 'abc')
@@ -148,8 +146,8 @@ class Test_groupname_validator(unittest.TestCase):
         kw = self._makeKw()
         request = kw['request']
         request.registry.content = DummyContentRegistry(False)
-        services = kw['request'].services
-        services['principals']['users']['abc'] = testing.DummyResource()
+        principals = kw['context']['principals']
+        principals['users']['abc'] = testing.DummyResource()
         node = object()
         v = self._makeOne(node, kw)
         self.assertRaises(colander.Invalid, v, node, 'abc')
@@ -164,7 +162,7 @@ class Test_members_widget(unittest.TestCase):
         site = make_site()
         user = testing.DummyResource()
         user.__objectid__ = 1
-        site['__services__']['principals']['users']['user'] = user
+        site['principals']['users']['user'] = user
         request = testing.DummyRequest()
         request.context = site
         kw = dict(request=request)
@@ -178,7 +176,6 @@ class TestGroupPropertysheet(unittest.TestCase):
 
     def _makeParent(self):
         parent = DummyFolder()
-        parent['__services__'] = DummyFolder()
         objectmap = DummyObjectMap()
         parent.__objectmap__ = objectmap
         return parent
@@ -260,7 +257,7 @@ class Test_login_validator(unittest.TestCase):
         user.__objectid__ = 1
         def check_name(v): raise ValueError(v)
         user.check_name = check_name
-        site['__services__']['principals']['users']['user'] = user
+        site['principals']['users']['user'] = user
         request = testing.DummyRequest()
         request.context = user
         request.registry.content = DummyContentRegistry(False)
@@ -275,7 +272,7 @@ class Test_login_validator(unittest.TestCase):
         user.__objectid__ = 1
         def check_name(*arg):
             raise ValueError('a')
-        users = site['__services__']['principals']['users']
+        users = site['principals']['users']
         users['user'] = user
         users.check_name = check_name
         request = testing.DummyRequest()
@@ -292,7 +289,7 @@ class Test_login_validator(unittest.TestCase):
         user.__objectid__ = 1
         def check_name(v): raise ValueError(v)
         user.check_name = check_name
-        site['__services__']['principals']['users']['user'] = user
+        site['principals']['users']['user'] = user
         request = testing.DummyRequest()
         request.context = user
         request.registry.content = DummyContentRegistry(True)
@@ -307,8 +304,8 @@ class Test_login_validator(unittest.TestCase):
         user.__objectid__ = 1
         def check_name(v): raise ValueError(v)
         user.check_name = check_name
-        site['__services__']['principals']['users']['user'] = user
-        site['__services__']['principals']['groups']['group'] = user
+        site['principals']['users']['user'] = user
+        site['principals']['groups']['group'] = user
         request = testing.DummyRequest()
         request.context = user
         request.registry.content = DummyContentRegistry(True)
@@ -326,7 +323,7 @@ class Test_groups_widget(unittest.TestCase):
         site = make_site()
         group = testing.DummyResource()
         group.__objectid__ = 1
-        site['__services__']['principals']['groups']['group'] = group
+        site['principals']['groups']['group'] = group
         request = testing.DummyRequest()
         request.context = site
         kw = dict(request=request)
@@ -417,8 +414,8 @@ class TestUser(unittest.TestCase):
         from ...testing import make_site
         from pyramid_mailer import get_mailer
         site = make_site()
-        principals = site['__services__']['principals']
-        resets = principals['resets'] = testing.DummyResource()
+        principals = site['principals']
+        principals['resets'] = testing.DummyResource()
         def add_reset(user):
             self.assertEqual(user, inst)
         principals.add_reset = add_reset
@@ -440,8 +437,6 @@ class Test_groupfinder(unittest.TestCase):
         from ...interfaces import IFolder
         request = testing.DummyRequest()
         context = testing.DummyResource(__provides__=IFolder)
-        services = testing.DummyResource()
-        context['__services__'] = services
         request.context = context
         result = self._callFUT(1, request)
         self.assertEqual(result, None)

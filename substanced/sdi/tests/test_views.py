@@ -76,7 +76,8 @@ class Test_login(unittest.TestCase):
         request.mgmt_path = lambda *arg: '/path'
         request.params['csrf_token'] = request.session.get_csrf_token()
         context = make_site()
-        context['__services__']['principals']['users']['login'] = DummyUser(0)
+        context['principals']['users']['login'] = DummyUser(0)
+        context.__services__ = ('principals',)
         result = self._callFUT(context, request)
         self.assertEqual(result['url'], '/path')
         self.assertEqual(result['came_from'], 'http://example.com')
@@ -95,7 +96,8 @@ class Test_login(unittest.TestCase):
         context = make_site()
         user = DummyUser(1)
         user.__objectid__ = 1
-        context['__services__']['principals']['users']['login'] = user
+        context['principals']['users']['login'] = user
+        context.__services__ = ('principals',)
         result = self._callFUT(context, request)
         self.assertEqual(result.location, 'http://example.com')
         self.assertTrue(result.headers)

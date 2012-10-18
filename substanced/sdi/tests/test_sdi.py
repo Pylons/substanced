@@ -742,53 +742,6 @@ class Test_sdi_add_views(unittest.TestCase):
             result,
             [{'url': '/path', 'type_name': 'Content', 'icon': ''}])
 
-    def test_trying_to_add_service_to_nonservice_folder(self):
-        request = testing.DummyRequest()
-        request.matched_route = None
-        request.registry.content = DummyContent()
-        request.mgmt_path = lambda *arg: '/path'
-        context = testing.DummyResource()
-        ct_intr = {}
-        ct_intr['meta'] = {'add_view':'abc', 'is_service':True}
-        ct_intr['content_type'] = 'Content'
-        ct_intr = DummyIntrospectable(introspectable=ct_intr)
-        view_intr1 = DummyIntrospectable()
-        view_intr1.category_name = 'views'
-        view_intr1['name'] = 'abc'
-        view_intr1['context'] = None
-        view_intr1['derived_callable'] = None
-        intr = {}
-        intr['tab_title'] = 'abc'
-        intr['tab_condition'] = None
-        intr = DummyIntrospectable(related=(view_intr1,), introspectable=intr)
-        request.registry.introspector = DummyIntrospector([(ct_intr,), (intr,)])
-        result = self._callFUT(request, context)
-        self.assertEqual(result, [])
-
-    def test_trying_to_add_service_to_service_folder(self):
-        request = testing.DummyRequest()
-        request.matched_route = None
-        request.registry.content = DummyContent()
-        request.mgmt_path = lambda *arg: '/path'
-        context = testing.DummyResource()
-        context.__name__ = '__services__'
-        ct_intr = {}
-        ct_intr['meta'] = {'add_view':'abc', 'is_service':True}
-        ct_intr['content_type'] = 'Content'
-        ct_intr = DummyIntrospectable(introspectable=ct_intr)
-        view_intr1 = DummyIntrospectable()
-        view_intr1.category_name = 'views'
-        view_intr1['name'] = 'abc'
-        view_intr1['context'] = None
-        view_intr1['derived_callable'] = None
-        intr = {}
-        intr['tab_title'] = 'abc'
-        intr['tab_condition'] = None
-        intr = DummyIntrospectable(related=(view_intr1,), introspectable=intr)
-        request.registry.introspector = DummyIntrospector([(ct_intr,), (intr,)])
-        result = self._callFUT(request, context)
-        self.assertEqual(len(result), 1)
-
 class Test_get_user(unittest.TestCase):
     def _callFUT(self, request):
         from .. import get_user

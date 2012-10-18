@@ -8,10 +8,9 @@ def _makeSite(**kw):
     from zope.interface import alsoProvides
     site = testing.DummyResource(__provides__=kw.pop('__provides__', None))
     alsoProvides(site, IFolder)
-    services = testing.DummyResource()
     for k, v in kw.items():
-        services[k] = v
-    site['__services__'] = services
+        site[k] = v
+    site.__services__ = tuple(kw.keys())
     return site
 
 class TestPathIndex(unittest.TestCase):

@@ -1,6 +1,5 @@
 from .objectmap import ObjectMap
 from .folder import Folder
-from .folder import Services
 
 def make_site():
     context = Folder()
@@ -10,8 +9,6 @@ def make_site():
     principals = Folder()
     principals['groups'] = groups
     principals['users'] = users
-    services = Services()
-    context.add('__services__', services, reserved_names=())
-    services['principals'] = principals
+    context.add_service('principals', principals)
     return context
 

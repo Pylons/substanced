@@ -61,7 +61,7 @@ class Catalog(Folder):
             self.family = family
         self.reset()
 
-    def __sd_addable__(self, introspectable):
+    def __sd_addable__(self, context, introspectable):
         # The only kinds of objects addable to a Catalog are indexes, so we
         # return True only if the introspectable represents a content type
         # registered with the is_index metadata flag.

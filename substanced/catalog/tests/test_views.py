@@ -91,9 +91,9 @@ class Test_principals_widget(unittest.TestCase):
         group.__objectid__ = 1
         user = testing.DummyResource()
         user.__objectid__ = 2
-        groups = site['__services__']['principals']['groups']
+        groups = site['principals']['groups']
         groups['group'] = group
-        users = site['__services__']['principals']['users']
+        users = site['principals']['users']
         users['user'] = user
         request = testing.DummyRequest()
         request.context = site

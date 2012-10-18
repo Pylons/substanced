@@ -24,7 +24,6 @@ from pyramid.registry import (
     Deferred,
     )
 
-from ..interfaces import SERVICES_NAME
 from ..objectmap import find_objectmap
 
 MANAGE_ROUTE_NAME = 'substanced_manage'
@@ -444,6 +443,14 @@ def sdi_content_buttons(context, request):
         return []
     return groups(context, request)
 
+def default_sd_addable(context, intr):
+    meta = intr['meta']
+    is_service = meta.get('is_service', False)
+    if is_service:
+        service_name = meta.get('service_name', None)
+        return not (service_name and service_name in context)
+    return True
+
 def sdi_add_views(request, context=None):
     registry = request.registry
     if context is None:
@@ -458,19 +465,18 @@ def sdi_add_views(request, context=None):
         content_type = intr['content_type']
         viewname = meta.get('add_view')
         if viewname:
-            if meta.get('is_service'):
-                # services are not addable anywhere except within a
-                # __services__ folder
-                if not context.__name__ == SERVICES_NAME:
-                    continue
             if callable(viewname):
                 viewname = viewname(context, request)
                 if not viewname:
                     continue
-            addable_here = getattr(context, '__sd_addable__', None)
+            addable_here = getattr(
+                context,
+                '__sd_addable__',
+                default_sd_addable
+                )
             if addable_here is not None:
                 if callable(addable_here):
-                    if not addable_here(intr):
+                    if not addable_here(context, intr):
                         continue
                 else:
                     if not content_type in addable_here:

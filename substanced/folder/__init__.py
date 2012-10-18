@@ -4,7 +4,6 @@ import tempfile
 
 from zope.interface import implementer
 from pyramid.threadlocal import get_current_registry
-from pyramid.security import has_permission
 
 from persistent import Persistent
 
@@ -17,8 +16,6 @@ from ..interfaces import (
     IFolder,
     IAutoNamingFolder,
     marker,
-    SERVICES_NAME,
-    RESERVED_NAMES,
     )
 
 from ..event import (
@@ -49,6 +46,7 @@ class Folder(Persistent):
 
     __name__ = None
     __parent__ = None
+    __services__ = ()
 
     # Default uses ordering of underlying BTree.
     _order = None
@@ -166,10 +164,9 @@ class Folder(Persistent):
         self._num_objects = Length(len(data))
 
     def find_service(self, service_name):
-        """ Return a service named by ``service_name`` in this folder's
-        ``__services__`` folder *or any parent service folder* or ``None`` if
-        no such service exists.  A shortcut for
-        :func:`substanced.service.find_service`."""
+        """ Return a service named by ``service_name`` in this folder *or any
+        parent service folder* or ``None`` if no such service exists.  A
+        shortcut for :func:`substanced.service.find_service`."""
         return find_service(self, service_name)
 
     def find_services(self, service_name):
@@ -178,16 +175,13 @@ class Folder(Persistent):
         exists.  A shortcut for :func:`substanced.service.find_services`"""
         return find_services(self, service_name)
 
-    def add_service(self, name, obj, registry=None):
-        """ Add a service to this folder's ``__services__`` folder named
-        ``name``."""
+    def add_service(self, name, obj, registry=None, **kw):
+        """ Add a service to this folder named ``name``."""
         if registry is None:
             registry = get_current_registry()
-        services = self.get(SERVICES_NAME)
-        if services is None:
-            services = registry.content.create('Services')
-            self.add(SERVICES_NAME, services, reserved_names=())
-        services.add(name, obj)
+        self.add(name, obj, **kw)
+        if not name in self.__services__:
+            self.__services__ = self.__services__ + (name,)
 
     def keys(self):
         """ Return an iterable sequence of object names present in the folder.
@@ -293,7 +287,7 @@ class Folder(Persistent):
         """
         return self.add(name, other)
 
-    def check_name(self, name, reserved_names=RESERVED_NAMES):
+    def check_name(self, name, reserved_names=()):
         """
 
         Check the ``name`` passed to ensure that it's addable to the folder.
@@ -340,7 +334,7 @@ class Folder(Persistent):
 
         return name
 
-    def add(self, name, other, send_events=True, reserved_names=RESERVED_NAMES,
+    def add(self, name, other, send_events=True, reserved_names=(),
             duplicating=False, registry=None):
         """ Same as ``__setitem__``.
 
@@ -452,6 +446,9 @@ class Folder(Persistent):
         del self.data[name]
         self._num_objects.change(-1)
 
+        if name in self.__services__:
+            self.__services__ = filter(lambda x: x != name, self.__services__)
+
         if self._order is not None:
             self._order = tuple([x for x in self._order if x != name])
 
@@ -491,10 +488,15 @@ class Folder(Persistent):
         and WillBeRemoved events sent will indicate that the object is
         moving.
         """
+        is_service = False
         if newname is None:
             newname = name
+        if name in self.__services__:
+            is_service = True
         ob = self.remove(name, moving=True)
         other.add(newname, ob)
+        if is_service:
+            other.__services__ = other.__services__ + (name,)
         return ob
 
     def rename(self, oldname, newname):
@@ -520,41 +522,6 @@ class Folder(Persistent):
         if name in self:
             del self[name]
         self[name] = newobject
-
-def add_services_folder(context, request):
-    if IFolder.providedBy(context):
-        if not '__services__' in context:
-            return 'add_services_folder'
-
-@content(
-    'Services',
-    icon='icon-off',
-    add_view=add_services_folder,
-    )
-class Services(Folder):
-    def __sd_addable__(self, introspectable):
-        # The only kinds of objects addable to a Services folder are
-        # services, so we return True iff:
-        #
-        # - The introspectable represents a content type registered with the
-        # @service decorator or config.add_service (it adds ``is_service`` to
-        # the type's metadata).
-        #
-        # - The service name mentioned in the introspectable metadata doesn't
-        #   already exist in this services folder.  If the introspectable
-        #   metadata doesn't mention a service name, however, this condition
-        #   is elided.
-        meta = introspectable['meta']
-        is_service = meta.get('is_service', False)
-        if is_service:
-            service_name = meta.get('service_name', None)
-            return not (service_name and service_name in self)
-        return False
-
-    def __sd_hidden__(self, context, request):
-        # Don't show this item in folder contents view unless the viewer
-        # has permission to add services in the SDI
-        return not has_permission('sdi.add-services', context, request)
 
 class _AutoNamingFolder(object):
     def add_next(
@@ -643,7 +610,7 @@ class SequentialAutoNamingFolder(Folder, _AutoNamingFolder):
     def _zfill(self, name):
         return str(int(name)).zfill(self._autoname_length)
 
-    def add(self, name, other, send_events=True, reserved_names=RESERVED_NAMES,
+    def add(self, name, other, send_events=True, reserved_names=(),
             duplicating=False, registry=None):
         """ The ``add`` method of a SequentialAutoNamingFolder will raise a
         :exc:`ValueError` if the ``name`` it is passed is not intifiable, as

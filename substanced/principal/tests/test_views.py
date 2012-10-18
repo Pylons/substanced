@@ -118,7 +118,7 @@ class TestRequestResetView(unittest.TestCase):
     def test_send_success(self):
         site = self._makeSite()
         user = DummyPrincipal()
-        site['__services__']['principals']['users']['user'] = user
+        site['principals']['users']['user'] = user
         request = self._makeRequest()
         inst = self._makeOne(site, request)
         resp = inst.send_success({'login':'user'})
@@ -154,11 +154,10 @@ class Test_login_validator(unittest.TestCase):
     def _makeSite(self):
         from ...interfaces import IFolder
         site = testing.DummyResource(__provides__=IFolder)
-        services = testing.DummyResource()
         principals = testing.DummyResource()
         users = testing.DummyResource()
-        site['__services__'] = services
-        services['principals'] = principals
+        site['principals'] = principals
+        site.__services__ = ('principals',)
         principals['users'] = users
         return site
 
@@ -173,7 +172,7 @@ class Test_login_validator(unittest.TestCase):
         request = testing.DummyRequest()
         site = self._makeSite()
         fred = testing.DummyResource()
-        site['__services__']['principals']['users']['fred'] = fred
+        site['principals']['users']['fred'] = fred
         inst = self._makeOne(None, dict(request=request, context=site))
         self.assertEqual(inst(None, 'fred'), None)
 

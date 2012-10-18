@@ -141,7 +141,8 @@ class TestFolder(unittest.TestCase):
 
     def test_add_reserved_name(self):
         folder = self._makeOne()
-        self.assertRaises(ValueError, folder.add, '__services__', None)
+        self.assertRaises(ValueError, folder.add, 'foo', None,
+                          reserved_names=('foo',))
 
     def test_add_with_slash_in_name(self):
         folder = self._makeOne()
@@ -485,10 +486,9 @@ class TestFolder(unittest.TestCase):
     def test_find_service_found(self):
         inst = self._makeOne()
         inst2 = self._makeOne()
-        inst3 = self._makeOne()
-        inst.add('__services__', inst2, reserved_names=())
-        inst2['abc'] = inst3
-        self.assertEqual(inst.find_service('abc'), inst3)
+        inst.add('inst2', inst2)
+        inst.__services__ = ('inst2,')
+        self.assertEqual(inst.find_service('inst2'), inst2)
 
     def test_find_services_missing(self):
         inst = self._makeOne()
@@ -497,10 +497,9 @@ class TestFolder(unittest.TestCase):
     def test_find_services_found(self):
         inst = self._makeOne()
         inst2 = self._makeOne()
-        inst3 = self._makeOne()
-        inst.add('__services__', inst2, reserved_names=())
-        inst2['abc'] = inst3
-        self.assertEqual(inst.find_services('abc'), [inst3])
+        inst.add('inst2', inst2)
+        inst.__services__ = ('inst2,')
+        self.assertEqual(inst.find_services('inst2'), [inst2])
 
     def test_add_service(self):
         inst = self._makeOne()
@@ -509,8 +508,8 @@ class TestFolder(unittest.TestCase):
         services.add = services.__setitem__
         self.config.registry.content = DummyContentRegistry(services)
         inst.add_service('foo', foo)
-        self.assertEqual(inst['__services__'], services)
-        self.assertEqual(inst['__services__']['foo'], foo)
+        self.assertEqual(inst['foo'], foo)
+        self.assertEqual(inst.__services__, ('foo',))
 
     def test_add_service_withregistry(self):
         inst = self._makeOne()
@@ -519,8 +518,8 @@ class TestFolder(unittest.TestCase):
         services.add = services.__setitem__
         self.config.registry.content = DummyContentRegistry(services)
         inst.add_service('foo', foo, registry=self.config.registry)
-        self.assertEqual(inst['__services__'], services)
-        self.assertEqual(inst['__services__']['foo'], foo)
+        self.assertEqual(inst['foo'], foo)
+        self.assertEqual(inst.__services__, ('foo',))
 
     def _makesdcolumns_request(self, icon):
         request = testing.DummyResource()
@@ -646,78 +645,6 @@ class TestFolder(unittest.TestCase):
              'type': 'single'}
             ]            
             )
-
-class Test_add_services_folder(unittest.TestCase):
-    def _callFUT(self, context, request):
-        from .. import add_services_folder
-        return add_services_folder(context, request)
-
-    def _makeContext(self):
-        from ...interfaces import IFolder
-        context = testing.DummyResource(__provides__=IFolder)
-        return context
-
-    def test_not_IFolder(self):
-        context = testing.DummyResource()
-        request = testing.DummyRequest()
-        self.assertFalse(self._callFUT(context, request))
-
-    def test_services_in_context(self):
-        context = self._makeContext()
-        request = testing.DummyRequest()
-        context['__services__'] = testing.DummyResource()
-        self.assertFalse(self._callFUT(context, request))
-        
-    def test_services_not_in_context(self):
-        context = self._makeContext()
-        request = testing.DummyRequest()
-        self.assertTrue(self._callFUT(context, request))
-
-class TestServices(unittest.TestCase):
-    def setUp(self):
-        self.config = testing.setUp()
-
-    def tearDown(self):
-        testing.tearDown()
-        
-    def _makeOne(self):
-        from .. import Services
-        return Services()
-
-    def test_sd_addable_not_service(self):
-        intr = {'meta':{}}
-        inst = self._makeOne()
-        self.assertEqual(inst.__sd_addable__(intr), False)
-
-    def test_sd_addable_service_name_exists(self):
-        intr = {'meta':{'is_service':True, 'service_name':'foo'}}
-        inst = self._makeOne()
-        inst['foo'] = testing.DummyResource()
-        self.assertEqual(inst.__sd_addable__(intr), False)
-
-    def test_sd_addable_service_name_free(self):
-        intr = {'meta':{'is_service':True, 'service_name':'foo'}}
-        inst = self._makeOne()
-        self.assertEqual(inst.__sd_addable__(intr), True)
-
-    def test_sd_addable_no_service_name(self):
-        intr = {'meta':{'is_service':True}}
-        inst = self._makeOne()
-        self.assertEqual(inst.__sd_addable__(intr), True)
-
-    def test_sd_hidden_all_permissions(self):
-        self.config.testing_securitypolicy(permissive=True)
-        request = testing.DummyRequest()
-        context = testing.DummyResource()
-        inst = self._makeOne()
-        self.assertEqual(inst.__sd_hidden__(context, request), False)
-
-    def test_sd_hidden_no_permissions(self):
-        self.config.testing_securitypolicy(permissive=False)
-        request = testing.DummyRequest()
-        context = testing.DummyResource()
-        inst = self._makeOne()
-        self.assertEqual(inst.__sd_hidden__(context, request), True)
 
 class TestSequentialAutoNamingFolder(unittest.TestCase):
     def _makeOne(self, d=None, autoname_length=None, autoname_start=None):
