@@ -166,5 +166,5 @@ $(document).ready(function() {
 	    // if no pagination, make sure search moves right
 	    $('div.span6').eq(0).html('&nbsp');
 	}
-	$('div.selectall').html('Select all: <input type="checkbox" onclick="toggleChecked(this.checked)"/>');
+	$('div.selectall').html('&nbsp;<input type="checkbox" onclick="toggleChecked(this.checked)"/> Select all');
 } );
