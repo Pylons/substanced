@@ -107,6 +107,7 @@ class TestFolderContentsViews(unittest.TestCase):
 
     def test_show_no_columns(self):
         context = testing.DummyResource()
+        context.__sdi_columns__ = None
         request = self._makeRequest()
         inst = self._makeOne(context, request)
         inst.sdi_folder_contents = lambda *arg: ('a',)
@@ -129,7 +130,7 @@ class TestFolderContentsViews(unittest.TestCase):
             return [{'name': 'Col 1', 'value': 'col1'},
                     {'name': 'Col 2', 'value': 'col2'}]
         context = testing.DummyResource()
-        context.__sd_columns__ = sd_columns
+        context.__sdi_columns__ = sd_columns
         request = self._makeRequest()
         inst = self._makeOne(context, request)
         inst.sdi_folder_contents = lambda *arg: ('a',)
@@ -152,7 +153,7 @@ class TestFolderContentsViews(unittest.TestCase):
             return [{'name': 'Col 1', 'value': 'col1', 'sortable': False},
                     {'name': 'Col 2', 'value': 'col2'}]
         context = testing.DummyResource()
-        context.__sd_columns__ = sd_columns
+        context.__sdi_columns__ = sd_columns
         request = self._makeRequest()
         inst = self._makeOne(context, request)
         inst.sdi_folder_contents = lambda *arg: ('a',)
@@ -175,7 +176,7 @@ class TestFolderContentsViews(unittest.TestCase):
             return [{'name': 'Col 1', 'value': 'col1'},
                     {'name': 'Col 2', 'value': 'col2', 'filterable': False}]
         context = testing.DummyResource()
-        context.__sd_columns__ = sd_columns
+        context.__sdi_columns__ = sd_columns
         request = self._makeRequest()
         inst = self._makeOne(context, request)
         inst.sdi_folder_contents = lambda *arg: ('a',)

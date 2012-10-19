@@ -504,9 +504,6 @@ class TestFolder(unittest.TestCase):
     def test_add_service(self):
         inst = self._makeOne()
         foo = testing.DummyResource()
-        services = testing.DummyResource()
-        services.add = services.__setitem__
-        self.config.registry.content = DummyContentRegistry(services)
         inst.add_service('foo', foo)
         self.assertEqual(inst['foo'], foo)
         self.assertEqual(inst.__services__, ('foo',))
@@ -514,137 +511,10 @@ class TestFolder(unittest.TestCase):
     def test_add_service_withregistry(self):
         inst = self._makeOne()
         foo = testing.DummyResource()
-        services = testing.DummyResource()
-        services.add = services.__setitem__
-        self.config.registry.content = DummyContentRegistry(services)
         inst.add_service('foo', foo, registry=self.config.registry)
         self.assertEqual(inst['foo'], foo)
         self.assertEqual(inst.__services__, ('foo',))
 
-    def _makesdcolumns_request(self, icon):
-        request = testing.DummyResource()
-        registry = testing.DummyResource()
-        content = testing.DummyResource()
-        content.metadata = lambda *arg: icon
-        request.registry = registry
-        request.registry.content = content
-        request.mgmt_path = lambda *arg: '/'
-        return request
-
-    def test___sd_columns__(self):
-        inst = self._makeOne()
-        fred = testing.DummyResource()
-        fred.__name__ = 'fred'
-        request = self._makesdcolumns_request('icon')
-        result = inst.__sd_columns__(inst, fred, request)
-        self.assertEqual(
-           result,
-           [{'sortable': True, 
-             'name': 'Name', 
-             'value': '<i class="icon"> </i> <a href="/">fred</a>'}] 
-           )
-
-    def test___sd_columns__with_callable_icon(self):
-        inst = self._makeOne()
-        fred = testing.DummyResource()
-        fred.__name__ = 'fred'
-        request = self._makesdcolumns_request(lambda *arg: 'icon')
-        result = inst.__sd_columns__(inst, fred, request)
-        self.assertEqual(
-           result, 
-           [{'sortable': True, 
-             'name': 'Name', 
-             'value': '<i class="icon"> </i> <a href="/">fred</a>'}] 
-           )
-
-    def test___sd_buttons__novals(self):
-        request = testing.DummyRequest()
-        context = testing.DummyResource()
-        inst = self._makeOne()
-        result = inst.__sd_buttons__(context, request)
-        self.assertEqual(
-            result,
-            [{
-              'type': 'group', 
-              'buttons': 
-                  [{'text': 'Rename', 
-                    'class': '', 
-                    'id': 'rename', 
-                    'value': 'rename', 
-                    'name': 'rename'}, 
-                   {'text': 'Copy', 'class': '', 
-                    'id': 'copy', 
-                    'value': 'copy', 
-                    'name': 'copy'}, 
-                   {'text': 'Move', 
-                    'class': '', 
-                    'id': 'move', 
-                    'value': 'move', 
-                    'name': 'move'}, 
-                   {'text': 'Duplicate', 
-                    'class': '', 
-                    'id': 'duplicate', 
-                    'value': 'duplicate', 
-                    'name': 'duplicate'}]
-                }, 
-             {
-              'type':'group',
-              'buttons': 
-                  [{'text': 'Delete', 
-                    'class': 'btn-danger', 
-                    'id': 'delete', 
-                    'value': 'delete', 
-                    'name': 'delete'}]
-               },
-            ])
-
-
-    def test___sd_buttons__tocopy(self):
-        request = testing.DummyRequest()
-        context = testing.DummyResource()
-        inst = self._makeOne()
-        request.session['tocopy'] = True
-        result = inst.__sd_buttons__(context, request)
-        self.assertEqual(
-            result,
-            [
-              {'buttons': 
-                [{'text': 'Copy here', 
-                  'class': 'btn-primary', 
-                  'id': 'copy_finish', 
-                  'value': 'copy_finish', 
-                  'name': 'copy_finish'}, 
-                 {'text': 'Cancel', 
-                  'class': 'btn-danger', 
-                  'id': 'cancel', 
-                  'value': 'cancel', 
-                  'name': 'copy_finish'}],
-               'type': 'single'}
-               ]
-               )
-
-    def test___sd_buttons__tomove(self):
-        request = testing.DummyRequest()
-        context = testing.DummyResource()
-        inst = self._makeOne()
-        request.session['tomove'] = True
-        result = inst.__sd_buttons__(context, request)
-        self.assertEqual(
-            result, [
-            {'buttons': [
-                {'text': 'Move here',
-                 'class': 'btn-primary',
-                 'id': 'move_finish',
-                 'value': 'move_finish',
-                 'name': 'move_finish'},
-                {'text': 'Cancel',
-                 'class': 'btn-danger',
-                 'id': 'cancel',
-                 'value': 'cancel',
-                 'name':'move_finish'}],
-             'type': 'single'}
-            ]            
-            )
 
 class TestSequentialAutoNamingFolder(unittest.TestCase):
     def _makeOne(self, d=None, autoname_length=None, autoname_start=None):
@@ -747,9 +617,3 @@ class DummyExportableModel(object):
     def _p_jar(self):
         return DummyExportImport(self)
 
-class DummyContentRegistry(object):
-    def __init__(self, result):
-        self.result = result
-
-    def create(self, *arg, **kw):
-        return self.result

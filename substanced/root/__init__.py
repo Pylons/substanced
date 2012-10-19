@@ -72,7 +72,7 @@ class Root(Folder):
         # attribute of the argument you pass it.
         principals = registry.content.create('Principals')
         # prevent SDI deletion/renaming of root principals service
-        principals.__sd_deletable__ = False
+        principals.__sdi_deletable__ = False
         self.add_service('principals', principals, registry=registry)
         user = principals.add_user(login, password, email, registry=registry)
         admins = principals.add_group('admins', registry=registry)

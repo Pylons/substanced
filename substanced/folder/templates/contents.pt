@@ -58,7 +58,7 @@
 	     class="${group['type']=='group' and 'btn-group' or 'btn-single'}">
           <button tal:repeat="button group['buttons']"
                   id="${button['id']}"
-                  name="form.${button['name']}"
+                  name="${button['name']}"
                   class="btn ${button['class']}"
                   value="${button['value']}"
                   type="submit"

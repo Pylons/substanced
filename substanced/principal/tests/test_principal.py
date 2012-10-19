@@ -8,15 +8,15 @@ class TestPrincipals(unittest.TestCase):
         from .. import Principals
         return Principals()
 
-    def test___sd_addable__True(self):
+    def test___sdi_addable__True(self):
         intr = {'content_type':'Users'}
         inst = self._makeOne()
-        self.assertTrue(inst.__sd_addable__(None, intr))
+        self.assertTrue(inst.__sdi_addable__(None, intr))
 
-    def test___sd_addable__False(self):
+    def test___sdi_addable__False(self):
         intr = {'content_type':'Wrong'}
         inst = self._makeOne()
-        self.assertFalse(inst.__sd_addable__(None, intr))
+        self.assertFalse(inst.__sdi_addable__(None, intr))
 
     def test_after_create(self):
         inst = self._makeOne()
@@ -63,45 +63,45 @@ class TestUsers(unittest.TestCase):
         from .. import Users
         return Users()
 
-    def test___sd_addable__True(self):
+    def test___sdi_addable__True(self):
         intr = {'content_type':'User'}
         inst = self._makeOne()
-        self.assertTrue(inst.__sd_addable__(None, intr))
+        self.assertTrue(inst.__sdi_addable__(None, intr))
 
-    def test___sd_addable__False(self):
+    def test___sdi_addable__False(self):
         intr = {'content_type':'Wrong'}
         inst = self._makeOne()
-        self.assertFalse(inst.__sd_addable__(None, intr))
+        self.assertFalse(inst.__sdi_addable__(None, intr))
 
 class TestPasswordResets(unittest.TestCase):
     def _makeOne(self):
         from .. import PasswordResets
         return PasswordResets()
 
-    def test___sd_addable__True(self):
+    def test___sdi_addable__True(self):
         intr = {'content_type':'Password Reset'}
         inst = self._makeOne()
-        self.assertTrue(inst.__sd_addable__(None, intr))
+        self.assertTrue(inst.__sdi_addable__(None, intr))
 
-    def test___sd_addable__False(self):
+    def test___sdi_addable__False(self):
         intr = {'content_type':'Wrong'}
         inst = self._makeOne()
-        self.assertFalse(inst.__sd_addable__(None, intr))
+        self.assertFalse(inst.__sdi_addable__(None, intr))
 
 class TestGroups(unittest.TestCase):
     def _makeOne(self):
         from .. import Groups
         return Groups()
 
-    def test___sd_addable__True(self):
+    def test___sdi_addable__True(self):
         intr = {'content_type':'Group'}
         inst = self._makeOne()
-        self.assertTrue(inst.__sd_addable__(None, intr))
+        self.assertTrue(inst.__sdi_addable__(None, intr))
 
-    def test___sd_addable__False(self):
+    def test___sdi_addable__False(self):
         intr = {'content_type':'Wrong'}
         inst = self._makeOne()
-        self.assertFalse(inst.__sd_addable__(None,  intr))
+        self.assertFalse(inst.__sdi_addable__(None,  intr))
 
 class Test_groupname_validator(unittest.TestCase):
     def _makeOne(self, node, kw):
