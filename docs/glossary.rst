@@ -92,8 +92,8 @@ Glossary
      objects to paths and object ids to other object ids in the system.
 
    Service
-     A substanced content object which lives in a specially named
-     ``__services__`` folder.
+     A substanced content object which provides a service to application code
+     (such as a catalog or a principals service).
 
    Global Object
      A Python object that can be obtained via an ``import`` statement.

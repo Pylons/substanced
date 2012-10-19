@@ -1,19 +1,9 @@
 Services
 --------
 
-A :term:`service` is a name for an object that lives inside a folder named
-``__services__``.  For example::
-
-   root
-     |
-     \ __services__
-                   \
-                    |-- catalog
-                    |
-                    |-- principals
-
-In the above example, two services exist within the ``/__services__`` folder.
-One is named ``catalog``, the other is named ``principals``.
+A :term:`service` is a name for a content object that provides a service to
+application code.  It looks just like any other content object, but services
+that are added to a site can be found by name using various Substance D APIs.
 
 Services expose APIs that exist for the benefit of application developers.
 For instance, the ``catalog`` service provides an API that allows a developer
@@ -21,16 +11,24 @@ to index and query for content objects using a structured query API.  The
 ``principals`` service allows a developer to add and enumerate users and
 groups.
 
-A service can be looked up in one of two ways: using the
+A service is added to a folder via the
+:meth:`substanced.folder.Folder.add_service` API.
+
+An existing service can be looked up in one of two ways: using the
 :func:`pryamid.content.find_service` API or the
 :meth:`pyramid.folder.Folder.find_service` API.  They are functionally
 equivalent.  The latter exists only as a convenience so you don't need to
 import a function if you know you're dealing with a :term:`folder`.
 
-Either variation of ``find_service`` will look up the resource hierarchy
-until it finds a parent folder that has a ``__services__`` subfolder.  It
-will then look inside that ``__services__`` folder for an object by some
-name.
+Either variant of ``find_service`` will look down the resource hierarchy
+towards the root until it finds a parent folder that has had ``add_service``
+called on it.  If the name passed in matches the service name, the object
+will be returned, otherwise the search will continue down the tree.
+
+Note that a content object may exist in the folder with the same name as
+you're looking for via ``find_service``, but if that object was not added via
+``add_service`` (instead it's just a "normal" content object), it won't be
+found by ``find_service``.
 
 Here's how to use :func:`pyramid.content.find_service`:
 
@@ -51,3 +49,9 @@ Here's how to use :meth:`pyramid.folder.Folder.find_service`:
 
 ``somefolder`` above is any :class:`substanced.folder.Folder` object (or any
 object which inherits from that class) present in the :term:`resource tree`.
+
+There is also the find-multiple-services variants
+:func:`pyramid.content.find_services` and
+:meth:`pyramid.folder.Folder.find_services`.
+
+

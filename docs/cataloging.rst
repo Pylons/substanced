@@ -1,16 +1,16 @@
 Cataloging
 ==========
 
-Substance D provides application content indexing and querying via a *catalog*.
-A catalog is an object named ``catalog`` which lives in a ``__services__``
-folder within your application's resource tree.  A catalog has a number of
-indexes, each of which keeps a certain kind of information about your content.
+Substance D provides application content indexing and querying via a
+*catalog*.  A catalog is an object named ``catalog`` which lives in a folder
+within your application's resource tree.  A catalog has a number of indexes,
+each of which keeps a certain kind of information about your content.
 
 Adding a Catalog
 ----------------
 
-You can add a catalog to your site by visiting a ``__services__`` folder and
-choosing ``Catalog`` from the ``Add`` dropdown.
+You can add a catalog to your site by visiting a folder and choosing
+``Catalog`` from the ``Add`` dropdown.
 
 Or to add a catalog to your site via code:
 
@@ -20,7 +20,7 @@ Or to add a catalog to your site via code:
    somefolder.add_service('catalog', catalog)
 
 More than one catalog can be added to a site, but typically there's only one,
-in the root ``__services__`` folder.
+in the root folder.
 
 Once you've added a catalog, you can begin to add indexes to it.  As of this
 writing, there is no way to add indexes to a catalog using the SDI.  It must be
@@ -53,7 +53,7 @@ object causes all the indexes in a given category added via
 
 .. code-block:: python
 
-   catalog = root['__services__']['catalog']
+   catalog = root['catalog']
    catalog.update_indexes('system', registry=registry, reindex=True)
    catalog.update_indexes('myapp', registry=registry, reindex=True)
 
@@ -146,7 +146,7 @@ Then during catalog setup:
 
 .. code-block:: python
 
-   catalog = root['__services__']['catalog']
+   catalog = root['catalog']
    catalog.update_indexes('system', registry=registry, reindex=True)
    catalog.update_indexes('myapp', registry=registry, reindex=True)
 
