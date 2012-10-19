@@ -53,85 +53,21 @@
              value="${request.session.get_csrf_token()}"/>
 
       <div class="form-actions btn-toolbar">
-        <tal:block tal:condition="'tocopy' in request.session">
-          <button id="copy_finish"
-                  name="form.copy_finish"
-                  type="submit"
-                  class="btn btn-primary"
-                  value="copy_finish">
-            Copy here
-          </button>
 
-          <button
-              id="cancel"
-              name="form.copy_finish"
-              type="submit"
-              class="btn btn-danger"
-              value="cancel">
-            Cancel
-          </button>
-        </tal:block>
-        <tal:block tal:condition="'tomove' in request.session">
-          <button id="move_finish"
-                  name="form.move_finish"
+	<div tal:repeat="group buttons"
+	     class="${group['type']=='group' and 'btn-group' or 'btn-single'}">
+          <button tal:repeat="button group['buttons']"
+                  id="${button['id']}"
+                  name="${button['name']}"
+                  class="btn ${button['class']}"
+                  value="${button['value']}"
                   type="submit"
-                  class="btn btn-primary"
-                  value="move_finish">
-            Move here
+                  >
+		  ${button['text']}
           </button>
-
-          <button
-              id="cancel"
-              name="form.move_finish"
-              type="submit"
-              class="btn btn-danger"
-              value="cancel">
-            Cancel
-          </button>
-        </tal:block>
+        </div>
 
         <tal:block tal:condition="'tocopy' not in request.session and 'tomove' not in request.session">
-        <div class="btn-group">
-          <button id="rename"
-                  name="form.rename"
-                  type="submit"
-                  class="btn"
-                  value="rename">
-            Rename
-          </button>
-          <button id="copy"
-                  name="form.copy"
-                  type="submit"
-                  class="btn"
-                  value="copy">
-             Copy
-          </button>
-          <button id="move"
-                  name="form.move"
-                  type="submit"
-                  class="btn"
-                  value="move">
-            Move
-          </button>
-          <button id="duplicate"
-                  name="form.duplicate"
-                  type="submit"
-                  class="btn"
-                  value="duplicate">
-            Duplicate
-          </button>
-        </div>
-
-        <div class="btn-group">
-          <button
-              id="delete"
-              name="form.delete"
-              type="submit"
-              class="btn btn-danger"
-              value="delete">
-            Delete
-          </button>
-        </div>
         <div class="btn-group pull-right" tal:condition="addables">
           <a class="btn btn-primary" 
              href="${request.mgmt_path(context, '@@add')}"><i 

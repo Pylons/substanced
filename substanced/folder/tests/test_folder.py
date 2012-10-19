@@ -522,42 +522,6 @@ class TestFolder(unittest.TestCase):
         self.assertEqual(inst['__services__'], services)
         self.assertEqual(inst['__services__']['foo'], foo)
 
-    def _makesdcolumns_request(self, icon):
-        request = testing.DummyResource()
-        registry = testing.DummyResource()
-        content = testing.DummyResource()
-        content.metadata = lambda *arg: icon
-        request.registry = registry
-        request.registry.content = content
-        request.mgmt_path = lambda *arg: '/'
-        return request
-
-    def test___sd_columns__(self):
-        inst = self._makeOne()
-        fred = testing.DummyResource()
-        fred.__name__ = 'fred'
-        request = self._makesdcolumns_request('icon')
-        result = inst.__sd_columns__(inst, fred, request)
-        self.assertEqual(
-           result,
-           [{'sortable': True, 
-             'name': 'Name', 
-             'value': '<i class="icon"> </i> <a href="/">fred</a>'}] 
-           )
-
-    def test___sd_columns__with_callable_icon(self):
-        inst = self._makeOne()
-        fred = testing.DummyResource()
-        fred.__name__ = 'fred'
-        request = self._makesdcolumns_request(lambda *arg: 'icon')
-        result = inst.__sd_columns__(inst, fred, request)
-        self.assertEqual(
-           result, 
-           [{'sortable': True, 
-             'name': 'Name', 
-             'value': '<i class="icon"> </i> <a href="/">fred</a>'}] 
-           )
-
 
 class Test_add_services_folder(unittest.TestCase):
     def _callFUT(self, context, request):
@@ -599,37 +563,37 @@ class TestServices(unittest.TestCase):
     def test_sd_addable_not_service(self):
         intr = {'meta':{}}
         inst = self._makeOne()
-        self.assertEqual(inst.__sd_addable__(intr), False)
+        self.assertEqual(inst.__sdi_addable__(intr), False)
 
     def test_sd_addable_service_name_exists(self):
         intr = {'meta':{'is_service':True, 'service_name':'foo'}}
         inst = self._makeOne()
         inst['foo'] = testing.DummyResource()
-        self.assertEqual(inst.__sd_addable__(intr), False)
+        self.assertEqual(inst.__sdi_addable__(intr), False)
 
     def test_sd_addable_service_name_free(self):
         intr = {'meta':{'is_service':True, 'service_name':'foo'}}
         inst = self._makeOne()
-        self.assertEqual(inst.__sd_addable__(intr), True)
+        self.assertEqual(inst.__sdi_addable__(intr), True)
 
     def test_sd_addable_no_service_name(self):
         intr = {'meta':{'is_service':True}}
         inst = self._makeOne()
-        self.assertEqual(inst.__sd_addable__(intr), True)
+        self.assertEqual(inst.__sdi_addable__(intr), True)
 
     def test_sd_hidden_all_permissions(self):
         self.config.testing_securitypolicy(permissive=True)
         request = testing.DummyRequest()
         context = testing.DummyResource()
         inst = self._makeOne()
-        self.assertEqual(inst.__sd_hidden__(context, request), False)
+        self.assertEqual(inst.__sdi_hidden__(context, request), False)
 
     def test_sd_hidden_no_permissions(self):
         self.config.testing_securitypolicy(permissive=False)
         request = testing.DummyRequest()
         context = testing.DummyResource()
         inst = self._makeOne()
-        self.assertEqual(inst.__sd_hidden__(context, request), True)
+        self.assertEqual(inst.__sdi_hidden__(context, request), True)
 
 class TestSequentialAutoNamingFolder(unittest.TestCase):
     def _makeOne(self, d=None, autoname_length=None, autoname_start=None):

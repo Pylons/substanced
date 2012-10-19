@@ -53,18 +53,6 @@ class Folder(Persistent):
     # Default uses ordering of underlying BTree.
     _order = None
 
-    def __sd_columns__(self, folder, subobject, request):
-        name = getattr(subobject, '__name__', '')
-        url = request.mgmt_path(subobject, '@@manage_main')
-        link_tag = '<a href="%s">%s</a>' % (url, name)
-        icon = request.registry.content.metadata(subobject, 'icon')
-        if callable(icon):
-            icon = icon(subobject, request)
-        icon_tag = '<i class="%s"> </i>' % icon
-        return [{'name': 'Name',
-                'value': '%s %s' % (icon_tag, link_tag),
-                'sortable': True}]
-
     def _get_order(self):
         if self._order is not None:
             return list(self._order)
@@ -455,7 +443,7 @@ def add_services_folder(context, request):
     add_view=add_services_folder,
     )
 class Services(Folder):
-    def __sd_addable__(self, introspectable):
+    def __sdi_addable__(self, introspectable):
         # The only kinds of objects addable to a Services folder are
         # services, so we return True iff:
         #
@@ -474,7 +462,7 @@ class Services(Folder):
             return not (service_name and service_name in self)
         return False
 
-    def __sd_hidden__(self, context, request):
+    def __sdi_hidden__(self, context, request):
         # Don't show this item in folder contents view unless the viewer
         # has permission to add services in the SDI
         return not has_permission('sdi.add-services', context, request)

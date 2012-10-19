@@ -1,6 +1,5 @@
 import inspect
 import operator
-import datetime
 
 from zope.interface.interfaces import IInterface
 
@@ -285,12 +284,12 @@ def sdi_folder_contents(folder, request):
     ``columns``
 
       Any extra column values obtained from this subobject's attributes, as
-      defined by the ``__sd_columns__`` hook.
+      defined by the ``__sdi_columns__`` hook.
 
     This function considers a subobject:
 
     - 'deletable' if the user has the ``sdi.manage-contents`` permission on
-      ``folder`` or if the subobject has a ``__sd_deletable__`` attribute
+      ``folder`` or if the subobject has a ``__sdi_deletable__`` attribute
       which resolves to a boolean ``True`` value.
 
     - 'viewable' if the user has the ``sdi.view`` permission against the
@@ -298,28 +297,28 @@ def sdi_folder_contents(folder, request):
 
     This function honors two subobject hooks.
 
-    The first subobject hook is named ``__sd_hidden__``.  If a subobject has
-    an attribute named ``__sd_hidden__``, it is expected to be either a
-    boolean or a callable.  If ``__sd_hidden__`` is a boolean, the value is
-    used verbatim.  If ``__sd_hidden__`` is a callable, the callable is
+    The first subobject hook is named ``__sdi_hidden__``.  If a subobject has
+    an attribute named ``__sdi_hidden__``, it is expected to be either a
+    boolean or a callable.  If ``__sdi_hidden__`` is a boolean, the value is
+    used verbatim.  If ``__sdi_hidden__`` is a callable, the callable is
     called with two positional arguments: the subobject and the request; the
-    result is expected to be a boolean.  The ``__sd_hidden__`` value (or
+    result is expected to be a boolean.  The ``__sdi_hidden__`` value (or
     callable return value) is used to determine whether or not the a
     dictionary is present which reflects the subobject in the sequence
     returned by this function.  If it is ``True``, a dictionary is not
     created for the subobject and will not present in the returned sequence.
     If it is ``False``, a dictionary *is* created for the subobject and will
     be present in the returned sequence.  If a subobject does not have the
-    ``__sd_hidden__`` attribute, it is assumed to be visible (not hidden) as
-    if ``__sd_hidden__`` was present and ``False``; in such a case a
+    ``__sdi_hidden__`` attribute, it is assumed to be visible (not hidden) as
+    if ``__sdi_hidden__`` was present and ``False``; in such a case a
     dictionary for the subobject will be present in the returned sequence.
 
-    The second subobject hook is named ``__sd_deletable__``.  It works just
-    like ``__sd_hidden__`` (it can be a bare value or a callable, and the
-    callable is called just like ``__sd_hidden__``).  If a subobject has an
-    ``__sd_deletable__`` attribute, and its resolved value is not ``None``,
+    The second subobject hook is named ``__sdi_deletable__``.  It works just
+    like ``__sdi_hidden__`` (it can be a bare value or a callable, and the
+    callable is called just like ``__sdi_hidden__``).  If a subobject has an
+    ``__sdi_deletable__`` attribute, and its resolved value is not ``None``,
     the value will used as the ``deletable`` value returned in the dictionary
-    for the subobject.  If ``__sd_deletable__`` does not exist on a subobject
+    for the subobject.  If ``__sdi_deletable__`` does not exist on a subobject
     or resolves to ``None``, the ``deletable`` value will be the default: a
     boolean indicating whether the current user has the
     ``sdi.manage-contents`` permission on the ``folder``.
@@ -331,24 +330,87 @@ def sdi_folder_contents(folder, request):
     or ``None``.  ``icon`` may alternately be either ``None`` or a string
     representing a icon name instead of a callable.
 
-    To display the contents using a table with any given subobject attributes,
-    a callable named ``__sd_columns__`` can be defined on the folder.  The
-    callable will be passed the folder, the subobject and the ``request``.  It
-    must return a list of dictionaries with at least a ``name`` key for the
-    column header and a ``value`` key with the correct column value given the
-    subobject. The callable should be prepared to receive subobjects that will
-    *not* have the desired attributes.
+    To display the contents using a table with any given subobject
+    attributes, a callable named ``__sdi_columns__`` can be defined on the
+    folder.  The callable will be passed the folder, a subobject and the
+    ``request``.  It will be called once for every object in the folder to
+    obtain column representations for each of its subobjects.  It must return
+    a list of dictionaries with at least a ``name`` key for the column header
+    and a ``value`` key with the correct column value given the
+    subobject. The callable must be prepared to receive subobjects that
+    will *not* have the desired attributes.
 
     In addition to ``name`` and ``value``, the column dictionary can contain
     the keys ``sortable`` and ``filterable``, which specify respectively whether
     the column will have buttons for sorting the rows and whether a row can be
     filtered using a simple text search. The default value for both of those
     parameters is True.
+
+    The contents view is a good place to wire up application specific
+    functionality that depends on content selection, so the button toolbar that
+    shows up at the bottom of the page is customizable. The buttons are defined
+    by a method of the base folder class named ``__sdi_buttons__``. This method
+    can be overriden by a folder subclass to provide a customized toolbar.
+
+    The ``__sdi_buttons__`` callable will be passed the ``context`` and the
+    ``request``. It must return a list of dictionaries with at least a
+    ``type`` key for the button set type and a ``buttons`` key with a list of
+    dictionaries representing the buttons. The ``type`` should be one of the
+    string values ``group`` or ``single``. A group will display its buttons
+    side by side, with no margin, while the single type will display each
+    button separately.
+
+    Each button in a ``buttons`` dictionary is rendered using the button tag and
+    requires five keys: ``id`` for the button's id attribute, ``name`` for the
+    button's name attribute, ``class`` for any additional css classes to be
+    applied to it, ``value`` for the value that will be passed as a request
+    parameter when the form is submitted and ``text`` for the button's text.
+    
+    Most of the time, the best strategy will be to modify the default buttons
+    returned by the ``substanced.sdi.default_sdi_buttons`` function.
+
+    def __sdi_buttons__(context, request):
+        from substanced.sdi import default_sdi_buttons
+        folder_buttons = default_sdi_buttons(context, request)
+        buttons = {'type': 'single',
+                   'buttons': [{'id': 'button1',
+                   'name': 'button1',
+                   'class': 'btn-primary',
+                   'value': 'button1',
+                   'text': 'Button 1'},
+                  {'id': 'button2',
+                   'name': 'button2',
+                   'class': 'btn-primary',
+                   'value': 'button2',
+                   'text': 'Button 2'}]}
+        folder_buttons.append(buttons)
+        return folder_buttons
+
+    Once the buttons are defined, a view needs to be registered to handle the
+    new buttons. The view configuration has to set Folder as a context and
+    include a ``request_param`` predicate with the same name as the ``value``
+    defined for the corresponding button. The following template can be used
+    to register such views, changing only the ``request_param`` value:
+
+    @mgmt_view(
+    context=IFolder,
+    name='contents',
+    renderer='substanced.sdi:templates/contents.pt',
+    permission='sdi.manage-contents',
+    request_method='POST',
+    request_param='button1',
+    tab_condition=False,
+    )
+    def button1(context, request):
+        # add button functionality here, then go back to contents
+        request.session.flash('Just did what button1 does')
+        return HTTPFound(request.mgmt_path(context, '@@contents'))
+
     """
     can_manage = has_permission('sdi.manage-contents', folder, request)
-    sd_columns = getattr(folder, '__sd_columns__', None)
+    sd_columns = getattr(folder, '__sdi_columns__', default_sdi_columns)
     for k, v in folder.items():
-        hidden = getattr(v, '__sd_hidden__', None)
+        hidden = getattr(v, '__sdi_hidden__', None)
         if hidden is not None:
             if callable(hidden):
                 hidden = hidden(v, request)
@@ -359,7 +421,7 @@ def sdi_folder_contents(folder, request):
         icon = request.registry.content.metadata(v, 'icon')
         if callable(icon):
             icon = icon(v, request)
-        deletable = getattr(v, '__sd_deletable__', None)
+        deletable = getattr(v, '__sdi_deletable__', None)
         if deletable is not None:
             if callable(deletable):
                 deletable = deletable(v, request)
@@ -379,6 +441,102 @@ def sdi_folder_contents(folder, request):
             columns=columns,
             )
         yield data
+
+def default_sdi_columns(folder, subobject, request):
+    """ The default __sdi_columns__ hook """
+    name = getattr(subobject, '__name__', '')
+    url = request.mgmt_path(subobject, '@@manage_main')
+    link_tag = '<a href="%s">%s</a>' % (url, name)
+    icon = request.registry.content.metadata(subobject, 'icon')
+    if callable(icon):
+        icon = icon(subobject, request)
+    icon_tag = '<i class="%s"> </i>' % icon
+    return [{'name': 'Name',
+            'value': '%s %s' % (icon_tag, link_tag),
+            'sortable': True}]
+
+def sdi_buttons(context, request):
+    clbl = getattr(context, '__sdi_buttons__', default_sdi_buttons)
+    if clbl is None:
+        return []
+    return clbl(context, request)
+
+def default_sdi_buttons(context, request):
+    """ The default __sdi_buttons__ hook """
+    buttons = []
+    finish_buttons = []
+
+    if 'tocopy' in request.session:
+        finish_buttons.extend(
+            [
+            {'id': 'copy_finish',
+              'name': 'form.copy_finish',
+              'class': 'btn-primary',
+              'value': 'copy_finish',
+              'text': 'Copy here'},
+            {'id': 'cancel',
+             'name': 'form.copy_finish',
+             'class': 'btn-danger',
+             'value': 'cancel',
+             'text': 'Cancel'},
+            ])
+
+    if 'tomove' in request.session:
+        finish_buttons.extend(
+            [{'id': 'move_finish',
+              'name': 'form.move_finish',
+              'class': 'btn-primary',
+              'value': 'move_finish',
+              'text': 'Move here'},
+             {'id': 'cancel',
+              'name': 'form.move_finish',
+              'class': 'btn-danger',
+              'value': 'cancel',
+              'text': 'Cancel'}])
+
+    if finish_buttons:
+        buttons.append(
+          {'type':'single', 'buttons':finish_buttons}
+          )
+
+    if not 'tomove' in request.session and not 'tocopy' in request.session:
+
+        main_buttons = [
+             {'id': 'rename',
+              'name': 'form.rename',
+              'class': '',
+              'value': 'rename',
+              'text': 'Rename'},
+              {'id': 'copy',
+              'name': 'form.copy',
+              'class': '',
+              'value': 'copy',
+              'text': 'Copy'},
+              {'id': 'move',
+              'name': 'form.move',
+              'class': '',
+              'value': 'move',
+              'text': 'Move'},
+              {'id': 'duplicate',
+              'name': 'form.duplicate',
+              'class': '',
+              'value': 'duplicate',
+              'text': 'Duplicate'}
+              ]
+
+        buttons.append({'type': 'group', 'buttons':main_buttons})
+
+        delete_buttons = [
+              {'id': 'delete',
+               'name': 'form.delete',
+               'class': 'btn-danger',
+               'value': 'delete',
+               'text': 'Delete'}
+               ]
+
+        buttons.append({'type': 'group', 'buttons':delete_buttons})
+
+    return buttons
 
 def sdi_add_views(request, context=None):
     registry = request.registry
@@ -403,7 +561,7 @@ def sdi_add_views(request, context=None):
                 viewname = viewname(context, request)
                 if not viewname:
                     continue
-            addable_here = getattr(context, '__sd_addable__', None)
+            addable_here = getattr(context, '__sdi_addable__', None)
             if addable_here is not None:
                 if callable(addable_here):
                     if not addable_here(intr):

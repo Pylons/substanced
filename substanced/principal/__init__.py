@@ -93,7 +93,7 @@ class Principals(Folder):
     call its ``after_create`` method manually after you've created it
     to cause the content subobjects described above to be added to it.
     """
-    def __sd_addable__(self, introspectable):
+    def __sdi_addable__(self, introspectable):
         ct = introspectable.get('content_type')
         if ct in ('Users', 'Groups', 'Password Resets'):
             return True
@@ -103,9 +103,9 @@ class Principals(Folder):
         users = registry.content.create('Users')
         groups = registry.content.create('Groups')
         resets = registry.content.create('Password Resets')
-        users.__sd_deletable__ = False
-        groups.__sd_deletable__ = False
-        resets.__sd_deletable__ = False
+        users.__sdi_deletable__ = False
+        groups.__sdi_deletable__ = False
+        resets.__sdi_deletable__ = False
         self['users'] = users
         self['groups'] = groups
         self['resets'] = resets
@@ -160,7 +160,7 @@ class Users(Folder):
     """ Object representing a collection of users.  Inherits from
     :class:`substanced.folder.Folder`.  Contains objects of content type
     'User'."""
-    def __sd_addable__(self, introspectable):
+    def __sdi_addable__(self, introspectable):
         return introspectable.get('content_type') == 'User'
 
 @content(
@@ -172,7 +172,7 @@ class Groups(Folder):
     """ Object representing a collection of groups.  Inherits from
     :class:`substanced.folder.Folder`.  Contains objects of content type 'Group'
     """
-    def __sd_addable__(self, introspectable):
+    def __sdi_addable__(self, introspectable):
         return introspectable.get('content_type') == 'Group'
 
 @colander.deferred
@@ -413,7 +413,7 @@ class UserToPasswordReset(object):
 @implementer(IPasswordResets)
 class PasswordResets(Folder):
     """ Object representing the current set of password reset requests """
-    def __sd_addable__(self, introspectable):
+    def __sdi_addable__(self, introspectable):
         return introspectable.get('content_type') == 'Password Reset'
 
 @content(

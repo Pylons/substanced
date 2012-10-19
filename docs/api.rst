@@ -381,6 +381,10 @@ Other Helpers
 
 .. autofunction:: check_csrf_token
 
+.. autofunction:: default_sdi_buttons
+
+.. autofunction:: default_sdi_columns
+
 .. autoclass:: mgmt_view
 
 :mod:`substanced.root` API
