@@ -148,13 +148,14 @@ if ( $.fn.DataTable.TableTools ) {
 /* Table initialisation */
 $(document).ready(function() {
 	$('#sdi-contents-table').dataTable( {
-		"sDom": "<'row'<'span6'l><'span6'f>r><'row'<'selectall span6'>r>t<'row'<'span6'i><'span6'p>>",
+		"sDom": "<'row'<'selectall span2'><'pull-right'f>r>t<'row'<'span6'i><'span6'p>>",
 		"sPaginationType": "bootstrap",
 	        "iDisplayLength": 20,
 	        "aLengthMenu": [[20, 50, 100, -1], [20, 50, 100, "All"]],
 	        "bPaginate": pagination_enabled,
 		"oLanguage": {
-			"sLengthMenu": "_MENU_ records per page"
+			"sLengthMenu": "_MENU_ records per page",
+	                "sSearch": "Filter:"
 		},
                 "aoColumnDefs": [
 		        { "sWidth": "25px", "aTargets": [0] },
@@ -162,9 +163,7 @@ $(document).ready(function() {
 		        { "bSearchable": false, "aTargets": non_filterable_cols }
 	        ]	
 	} );
-	if (!pagination_enabled) {
-	    // if no pagination, make sure search moves right
-	    $('div.span6').eq(0).html('&nbsp');
+	if (at_least_one) {
+	    $('div.selectall').html('&nbsp;<input type="checkbox" onclick="toggleChecked(this.checked)"/> Select all');
 	}
-	$('div.selectall').html('&nbsp;<input type="checkbox" onclick="toggleChecked(this.checked)"/> Select all');
 } );

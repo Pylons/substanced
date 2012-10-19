@@ -28,6 +28,7 @@ table.table {
 	clear: both;
 	margin-bottom: 6px !important;
 	max-width: none !important;
+	width: 100% !important;
 }
 
 table.table thead .sorting,
@@ -189,3 +190,6 @@ div.DTFC_LeftFootWrapper table {
 	border-top: none;
 }
 
+.selectall {
+	padding-left: 5px;
+}
