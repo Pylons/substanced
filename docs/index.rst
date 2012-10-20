@@ -23,7 +23,7 @@ Install using setuptools, e.g. (within a virtualenv)::
 Dependencies
 ------------
 
-Substance D depends on :term:`ZODB`, the ``hypata``, ``repoze.evolution``,
+Substance D depends on :term:`ZODB`, the ``hypatia``, ``repoze.evolution``,
 ``deform`` and ``colander`` packages.
 
 .. _optional_dependencies:
