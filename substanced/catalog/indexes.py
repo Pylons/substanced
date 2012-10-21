@@ -5,8 +5,13 @@ from persistent import Persistent
 
 from zope.interface import implementer
 
-from hypatia.util import BaseIndexMixin
-from hypatia.interfaces import IIndex
+import hypatia.query
+import hypatia.interfaces
+import hypatia.field
+import hypatia.facet
+import hypatia.keyword
+import hypatia.text
+import hypatia.util
 
 from pyramid.traversal import resource_path_tuple
 from pyramid.compat import url_unquote_text
@@ -16,8 +21,17 @@ from ..objectmap import find_objectmap
 
 PATH_WITH_OPTIONS = re.compile(r'\[(.+?)\](.+?)$')
 
-@implementer(IIndex)
-class PathIndex(BaseIndexMixin, Persistent):
+class ResolvingIndex(object):
+    def resultset_from_query(self, query, names=None, resolver=None):
+        if resolver is None:
+            objectmap = find_objectmap(self)
+            resolver = objectmap.object_for
+        docids = query._apply(names)
+        numdocs = len(docids)
+        return hypatia.util.ResultSet(docids, numdocs, resolver)
+        
+@implementer(hypatia.interfaces.IIndex)
+class PathIndex(ResolvingIndex, hypatia.util.BaseIndexMixin, Persistent):
     """ Uses the objectmap to apply a query to retrieve object identifiers at
     or under a path"""
     family = BTrees.family64
@@ -131,15 +145,25 @@ class PathIndex(BaseIndexMixin, Persistent):
 
     applyEq = apply
 
-# API below, do not remove
-from hypatia.field import FieldIndex
-from hypatia.facet import FacetIndex
-from hypatia.keyword import KeywordIndex
-from hypatia.text import TextIndex
+    def eq(self, path, depth=None, include_origin=None):
+        if depth is None:
+            depth = self.depth
+        if include_origin is None:
+            include_origin = self.include_origin
+        val = {'path':path,
+               'depth':depth,
+               'include_origin':include_origin}
+        return hypatia.query.Eq(self, val)
 
-# pyflakes:
-FieldIndex = FieldIndex
-FacetIndex = FacetIndex
-KeywordIndex = KeywordIndex
-TextIndex = TextIndex
+class FieldIndex(ResolvingIndex, hypatia.field.FieldIndex):
+    pass
+
+class FacetIndex(ResolvingIndex, hypatia.facet.FacetIndex):
+    pass
+
+class KeywordIndex(ResolvingIndex, hypatia.keyword.KeywordIndex):
+    pass
+
+class TextIndex(ResolvingIndex, hypatia.text.TextIndex):
+    pass
 
