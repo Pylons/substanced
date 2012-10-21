@@ -14,9 +14,13 @@ import hypatia.text
 import hypatia.util
 
 from pyramid.traversal import resource_path_tuple
-from pyramid.compat import url_unquote_text
+from pyramid.compat import (
+    url_unquote_text,
+    is_nonstr_iter,
+    )
 from pyramid.settings import asbool
 from pyramid.security import effective_principals
+from pyramid.interfaces import IRequest
 
 from ..objectmap import find_objectmap
 
@@ -155,8 +159,15 @@ class PathIndex(ResolvingIndex, hypatia.util.BaseIndexMixin, Persistent):
         return hypatia.query.Eq(self, val)
 
 class AllowedIndex(ResolvingIndex, hypatia.keyword.KeywordIndex):
-    def allows(self, request, permission='view'):
-        principals = effective_principals(request)
+    def allows(self, principals, permission='view'):
+        """ ``principals`` may either be 1) a sequence of principal
+        indentifiers, 2) a single principal identifier, or 3) a Pyramid
+        request, which indicates that all the effective principals implied by
+        the request are used."""
+        if IRequest.providedBy(principals):
+            principals = effective_principals(principals)
+        elif not is_nonstr_iter(principals):
+            principals = (principals,)
         values = [(principal, permission) for principal in principals]
         return hypatia.query.Any(self, values)
 

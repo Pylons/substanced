@@ -243,17 +243,27 @@ class TestAllowedIndex(unittest.TestCase):
         index = AllowedIndex(discriminator, family=family)
         return index
 
-    def test_allows_default_permission(self):
+    def test_allows_request_default_permission(self):
         index = self._makeOne()
         request = testing.DummyRequest()
         q = index.allows(request)
         self.assertEqual(q._value, [('system.Everyone', 'view')])
 
-    def test_allows_nondefault_permission(self):
+    def test_allows_request_nondefault_permission(self):
         index = self._makeOne()
         request = testing.DummyRequest()
         q = index.allows(request, 'edit')
         self.assertEqual(q._value, [('system.Everyone', 'edit')])
+
+    def test_allows_iterable(self):
+        index = self._makeOne()
+        q = index.allows(['bob', 'joe'], 'edit')
+        self.assertEqual(q._value, [('bob', 'edit'), ('joe', 'edit')])
+
+    def test_allows_single(self):
+        index = self._makeOne()
+        q = index.allows('bob', 'edit')
+        self.assertEqual(q._value, [('bob', 'edit')])
 
 class DummyCatalog(object):
     family = BTrees.family64
