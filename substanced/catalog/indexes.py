@@ -16,6 +16,7 @@ import hypatia.util
 from pyramid.traversal import resource_path_tuple
 from pyramid.compat import url_unquote_text
 from pyramid.settings import asbool
+from pyramid.security import effective_principals
 
 from ..objectmap import find_objectmap
 
@@ -154,6 +155,12 @@ class PathIndex(ResolvingIndex, hypatia.util.BaseIndexMixin, Persistent):
                'depth':depth,
                'include_origin':include_origin}
         return hypatia.query.Eq(self, val)
+
+class AllowedIndex(ResolvingIndex, hypatia.keyword.KeywordIndex):
+    def allows(self, request, permission='view'):
+        principals = effective_principals(request)
+        values = [(principal, permission) for principal in principals]
+        return hypatia.query.Any(self, values)
 
 class FieldIndex(ResolvingIndex, hypatia.field.FieldIndex):
     pass

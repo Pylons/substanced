@@ -28,6 +28,7 @@ from . import indexes as indexes_module
 
 from .discriminators import (
     CatalogViewDiscriminator,
+    AllowedDiscriminator,
     get_name,
     get_interfaces,
     get_containment,
@@ -597,6 +598,9 @@ def keyword_index_factory(name, category, **kw):
 def facet_index_factory(name, category, **kw):
     return _index_factory(indexes_module.FacetIndex, name, category, **kw)
 
+def allowed_index_factory(name, category, **kw):
+    return _index_factory(indexes_module.AllowedIndex, name, category, **kw)
+
 def path_index_factory(name, category, **kw):
     index =  indexes_module.PathIndex(**kw)
     index.sd_category = category
@@ -615,6 +619,7 @@ def includeme(config): # pragma: no cover
     config.add_catalog_index_factory('facet', facet_index_factory)
     config.add_catalog_index_factory('keyword', keyword_index_factory)
     config.add_catalog_index_factory('path', path_index_factory)
+    config.add_catalog_index_factory('allowed', allowed_index_factory)
     add_system_indexes(config)
     config.scan('.')
 
@@ -642,6 +647,11 @@ def add_system_indexes(config):
       Represents the set of interfaces and classes which are possessed by
       parents of the content object (inclusive of itself)
 
+    - allowed (an AllowedIndex), uses custom discriminator exclusively.
+
+      Represents the set of principals allowed to take some permission against
+      a content object.
+
     """
 
     config.add_catalog_index(
@@ -662,4 +672,8 @@ def add_system_indexes(config):
     config.add_catalog_index(
         'containment', 'keyword', 'system',
         discriminator=get_containment,
+        )
+    config.add_catalog_index(
+        'allowed', 'allowed', 'system',
+        discriminator=AllowedDiscriminator(),
         )

@@ -13,6 +13,28 @@ def _makeSite(**kw):
     site.__services__ = tuple(kw.keys())
     return site
 
+class TestResolvingIndex(unittest.TestCase):
+    def _makeOne(self):
+        from ..indexes import ResolvingIndex
+        return ResolvingIndex()
+
+    def test_resultset_from_query_no_resolver(self):
+        inst = self._makeOne()
+        inst.__objectmap__ = DummyObjectmap()
+        query = DummyQuery()
+        resultset = inst.resultset_from_query(query)
+        self.assertEqual(resultset.ids, [1,2,3])
+        self.assertEqual(resultset.resolver, inst.__objectmap__.object_for)
+
+    def test_resultset_from_query_with_resolver(self):
+        inst = self._makeOne()
+        inst.__objectmap__ = DummyObjectmap()
+        query = DummyQuery()
+        resolver = object()
+        resultset = inst.resultset_from_query(query, resolver=resolver)
+        self.assertEqual(resultset.ids, [1,2,3])
+        self.assertEqual(resultset.resolver, resolver)
+
 class TestPathIndex(unittest.TestCase):
     def _makeOne(self, family=None):
         from ..indexes import PathIndex
@@ -181,9 +203,70 @@ class TestPathIndex(unittest.TestCase):
         result = inst.apply_intersect(obj, objectmap.family.IF.Set([1]))
         self.assertEqual(list(result),  [1])
 
+    def test_eq_defaults(self):
+        inst = self._makeOne()
+        inst.depth = 10
+        result = inst.eq('/abc')
+        self.assertEqual(
+            result._value,
+            {'path': '/abc', 'depth': 10, 'include_origin': True}
+            )
+
+    def test_eq_include_origin_is_False(self):
+        inst = self._makeOne()
+        inst.depth = 10
+        result = inst.eq('/abc', include_origin=False)
+        self.assertEqual(
+            result._value,
+            {'path': '/abc', 'depth': 10, 'include_origin': False}
+            )
+
+    def test_eq_include_depth_is_not_None(self):
+        inst = self._makeOne()
+        inst.depth = 10
+        result = inst.eq('/abc', depth=1)
+        self.assertEqual(
+            result._value,
+            {'path': '/abc', 'depth': 1, 'include_origin': True}
+            )
+
+class TestAllowedIndex(unittest.TestCase):
+    def setUp(self):
+        self.config = testing.setUp()
+
+    def tearDown(self):
+        testing.tearDown()
+        
+    def _makeOne(self, discriminator=None, family=None):
+        if discriminator is None:
+            discriminator = 'allowed'
+        from ..indexes import AllowedIndex
+        index = AllowedIndex(discriminator, family=family)
+        return index
+
+    def test_allows_default_permission(self):
+        index = self._makeOne()
+        request = testing.DummyRequest()
+        q = index.allows(request)
+        self.assertEqual(q._value, [('system.Everyone', 'view')])
+
+    def test_allows_nondefault_permission(self):
+        index = self._makeOne()
+        request = testing.DummyRequest()
+        q = index.allows(request, 'edit')
+        self.assertEqual(q._value, [('system.Everyone', 'edit')])
+
 class DummyCatalog(object):
     family = BTrees.family64
     def __init__(self, objectids=None):
         if objectids is None:
             objectids = self.family.II.TreeSet()
         self.objectids = objectids
+
+class DummyObjectmap(object):
+    def object_for(self, docid): return 'a'
+
+class DummyQuery(object):
+    def _apply(self, names):
+        return [1,2,3]
+    

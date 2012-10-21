@@ -1202,6 +1202,23 @@ class Test_facet_index_factory(unittest.TestCase):
         self.assertEqual(result.sd_category, 'category')
         self.assertEqual(result.discriminator, 'abc')
 
+class Test_allowed_index_factory(unittest.TestCase):
+    def _callFUT(self, name, category, **kw):
+        from .. import allowed_index_factory
+        return allowed_index_factory(name, category, **kw)
+
+    def test_it(self):
+        result = self._callFUT('name', 'category')
+        self.assertEqual(result.__class__.__name__, 'AllowedIndex')
+        self.assertEqual(result.sd_category, 'category')
+        self.assertEqual(result.discriminator.method_name, 'name')
+
+    def test_it_with_discrim(self):
+        result = self._callFUT('name', 'category', discriminator='abc')
+        self.assertEqual(result.__class__.__name__, 'AllowedIndex')
+        self.assertEqual(result.sd_category, 'category')
+        self.assertEqual(result.discriminator, 'abc')
+
 class Test_path_index_factory(unittest.TestCase):
     def _callFUT(self, name, category, **kw):
         from .. import path_index_factory
@@ -1222,7 +1239,7 @@ class Test_add_system_indexes(unittest.TestCase):
         self._callFUT(config)
         self.assertEqual(
             config.indexes,
-            ['path', 'name', 'oid', 'interfaces', 'containment']
+            ['path', 'name', 'oid', 'interfaces', 'containment', 'allowed']
             )
 
 class DummyIntrospectable(dict):

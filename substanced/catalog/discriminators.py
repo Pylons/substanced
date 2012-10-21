@@ -3,6 +3,8 @@ from zope.interface.declarations import Declaration
 
 from pyramid.location import lineage
 from pyramid.security import principals_allowed_by_permission
+from pyramid.compat import is_nonstr_iter
+from pyramid.threadlocal import get_current_registry
 
 _marker = object()
 
@@ -40,19 +42,47 @@ def get_name(wrapper, default):
 class NoWay(object):
     pass
 
+def _get_all_permissions(registry):
+    # we cache the set of all permissions, because it's a bit of an expensive
+    # lookup
+    permissions = getattr(registry, '_allowed_discriminator_permissions', None)
+
+    if permissions is None:
+        intrs = registry.introspector.get_category('permissions')
+        if intrs is None:
+            intrs = []
+        permissions = [ intr['introspectable']['value'] for intr in intrs ]
+        registry._allowed_discriminator_permissions = permissions
+
+    return permissions
+
 class AllowedDiscriminator(object):
-    def __init__(self, permission):
-        self.permission = permission
+    def __init__(self, permissions=None):
+        if permissions is not None and not is_nonstr_iter(permissions):
+            permissions = (permissions,)
+        self.permissions = permissions
 
     def __call__(self, wrapper, default):
         content = wrapper.content
-        principals = principals_allowed_by_permission(content, 'view')
-        if not principals:
-            # An empty value tells the catalog to match anything, whereas when
-            # there are no principals with permission to view we want for there
-            # to be no matches.
-            principals = [NoWay]
-        return principals
+        permissions = self.permissions
+
+        if permissions is None:
+            registry = get_current_registry()
+            permissions = _get_all_permissions(registry)
+
+        values = []
+
+        for permission in permissions:
+            principals = principals_allowed_by_permission(content, permission)
+            values.extend([(principal, permission) for principal in principals])
+
+        if not values:
+            # An empty value tells the catalog to match anything, whereas
+            # when there are no principals with permission to view we
+            # want for there to be no matches. XXX is this true?
+            values = [(NoWay, NoWay)]
+            
+        return values
 
 class CatalogViewDiscriminator(object):
     """ Used as a discriminator for indexes derived from content catalog view 

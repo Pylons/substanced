@@ -52,18 +52,18 @@ class TestAllowedDiscriminator(unittest.TestCase):
     def tearDown(self):
         testing.tearDown()
         
-    def _makeOne(self, name):
+    def _makeOne(self, permissions=None):
         from ..discriminators import AllowedDiscriminator
-        return AllowedDiscriminator(name)
+        return AllowedDiscriminator(permissions)
 
-    def test_it(self):
+    def test_it_namedpermission(self):
         inst = self._makeOne('view')
         context = testing.DummyModel()
         wrapper = DummyContentViewWrapper(context, None)
         result = inst(wrapper, None)
-        self.assertEqual(result, ['system.Everyone'])
+        self.assertEqual(result, [('system.Everyone', 'view')])
 
-    def test_it_notpermitted(self):
+    def test_it_namedpermission_notpermitted(self):
         from pyramid.interfaces import IAuthenticationPolicy
         self.config.testing_securitypolicy(permissive=False)
         from ..discriminators import NoWay
@@ -75,8 +75,27 @@ class TestAllowedDiscriminator(unittest.TestCase):
         wrapper = DummyContentViewWrapper(context, None)
         inst = self._makeOne('view')
         result = inst(wrapper, None)
-        self.assertEqual(len(result), 1)
-        self.assertEqual(result[0], NoWay)
+        self.assertEqual(result, [(NoWay, NoWay)])
+
+    def test_it_unnamedpermission_no_permissions_registered(self):
+        from ..discriminators import NoWay
+        inst = self._makeOne()
+        context = testing.DummyModel()
+        wrapper = DummyContentViewWrapper(context, None)
+        result = inst(wrapper, None)
+        self.assertEqual(result, [(NoWay, NoWay)])
+
+    def test_it_unnamedpermission_two_permissions_registered(self):
+        self.config.add_permission('view')
+        self.config.add_permission('edit')
+        inst = self._makeOne()
+        context = testing.DummyModel()
+        wrapper = DummyContentViewWrapper(context, None)
+        result = inst(wrapper, None)
+        self.assertEqual(
+            sorted(result),
+            [('system.Everyone', 'edit'), ('system.Everyone', 'view')]
+            )
 
 class Test_get_name(unittest.TestCase):
     def setUp(self):
