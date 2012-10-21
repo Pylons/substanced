@@ -677,3 +677,4 @@ def add_system_indexes(config):
         'allowed', 'allowed', 'system',
         discriminator=AllowedDiscriminator(),
         )
+    config.add_permission('view') # for allowed index .allows() default value

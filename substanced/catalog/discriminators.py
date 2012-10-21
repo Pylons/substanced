@@ -79,7 +79,7 @@ class AllowedDiscriminator(object):
         if not values:
             # An empty value tells the catalog to match anything, whereas
             # when there are no principals with permission to view we
-            # want for there to be no matches. XXX is this true?
+            # want for there to be no matches.
             values = [(NoWay, NoWay)]
             
         return values
