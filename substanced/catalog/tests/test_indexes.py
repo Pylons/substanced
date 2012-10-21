@@ -205,11 +205,10 @@ class TestPathIndex(unittest.TestCase):
 
     def test_eq_defaults(self):
         inst = self._makeOne()
-        inst.depth = 10
         result = inst.eq('/abc')
         self.assertEqual(
             result._value,
-            {'path': '/abc', 'depth': 10, 'include_origin': True}
+            {'path': '/abc'}
             )
 
     def test_eq_include_origin_is_False(self):
@@ -218,7 +217,7 @@ class TestPathIndex(unittest.TestCase):
         result = inst.eq('/abc', include_origin=False)
         self.assertEqual(
             result._value,
-            {'path': '/abc', 'depth': 10, 'include_origin': False}
+            {'path': '/abc', 'include_origin': False}
             )
 
     def test_eq_include_depth_is_not_None(self):
@@ -227,7 +226,7 @@ class TestPathIndex(unittest.TestCase):
         result = inst.eq('/abc', depth=1)
         self.assertEqual(
             result._value,
-            {'path': '/abc', 'depth': 1, 'include_origin': True}
+            {'path': '/abc', 'depth': 1}
             )
 
 class TestAllowedIndex(unittest.TestCase):

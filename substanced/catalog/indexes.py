@@ -147,13 +147,11 @@ class PathIndex(ResolvingIndex, hypatia.util.BaseIndexMixin, Persistent):
     applyEq = apply
 
     def eq(self, path, depth=None, include_origin=None):
-        if depth is None:
-            depth = self.depth
-        if include_origin is None:
-            include_origin = self.include_origin
-        val = {'path':path,
-               'depth':depth,
-               'include_origin':include_origin}
+        val = {'path':path}
+        if depth is not None:
+            val['depth'] = depth
+        if include_origin is not None:
+            val['include_origin'] = include_origin
         return hypatia.query.Eq(self, val)
 
 class AllowedIndex(ResolvingIndex, hypatia.keyword.KeywordIndex):
