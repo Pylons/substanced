@@ -1,8 +1,8 @@
 import colander
-import deform_bootstrap.widget
 import deform.widget
 
 from hypatia.interfaces import IIndex
+from hypatia.query import parse_query
 
 from pyramid.httpexceptions import HTTPFound
 
@@ -10,11 +10,10 @@ from pyramid.view import view_defaults
 
 from ..interfaces import ICatalog
 
-from ..content import find_service
 from ..sdi import mgmt_view
 from ..form import FormView
 from ..schema import Schema
-from ..util import oid_of
+from ..objectmap import find_objectmap
 
 from . import logger
 
@@ -94,42 +93,12 @@ class ManageIndex(object):
                 )
         return HTTPFound(location=self.redir_location)
 
-@colander.deferred
-def principals_widget(node, kw):
-    request = kw['request']
-    principals = find_service(request.context, 'principals')
-    groups = [(str(oid_of(group)), name) for name, group in 
-              principals['groups'].items()]
-    users = [(str(oid_of(user)), name) for name, user in 
-              principals['users'].items()]
-    values = (
-        {'label':'Groups', 'values':groups}, 
-        {'label':'Users', 'values':users},
-        )
-    widget = deform_bootstrap.widget.ChosenOptGroupWidget(values=values)
-    return widget
-
-class Principals(colander.SequenceSchema):
-    principal = colander.SchemaNode(
-        colander.Int(),
-        missing=colander.null,
-        widget = principals_widget,
-        )
-
-class Permitted(Schema):
-    permission = colander.SchemaNode(
-        colander.String(),
-        missing='',
-        )
-    principals = Principals(missing=colander.null)
-
 class SearchSchema(Schema):
     cqe_expression = colander.SchemaNode(
         colander.String(),
         widget = deform.widget.TextAreaWidget(rows=10, cols=120),
         title='CQE Expression',
         )
-    permitted = Permitted(title='Principals and Permission Filter')
 
 @mgmt_view(context=ICatalog, name='search_catalog', 
            permission='sdi.manage-catalog', 
@@ -139,6 +108,8 @@ class SearchCatalogView(FormView):
     buttons = ('search',)
     catalog_results = None
     logger = logger
+    parse_query = staticmethod(parse_query) # for testing
+    find_objectmap = staticmethod(find_objectmap) # for testing
 
     def search_success(self, appstruct):
         """ Accept a CQE expression and a permitted value and return a 
@@ -154,24 +125,19 @@ class SearchCatalogView(FormView):
                                              colander.null)
         searchresults = ()
         if appstruct:
-            permitted = appstruct['permitted']
-            permission = permitted['permission']
-            principals = permitted['principals']
-            if not permission:
-                permitted = None
-            else:
-                permitted = principals, permission
             expr = appstruct['cqe_expression']
             try:
-                n, oids, res = self.request.query_catalog(
-                    expr, permitted=permitted)
+                q = self.parse_query(expr, self.context)
+                resultset = q.execute().all(resolve=False)
             except Exception as e:
                 self.logger.exception('During search')
                 cls_name = e.__class__.__name__
                 msg = 'Query failed (%s: %s)' % (cls_name, e.args[0])
                 self.request.session.flash(msg, 'error')
             else:
-                searchresults = list([(x, res(x)) for x in oids])
+                objectmap = self.find_objectmap(self.context)
+                resolve = objectmap.object_for
+                searchresults = list([(oid, resolve(oid)) for oid in resultset])
                 if not searchresults:
                     searchresults = [('', 'No results')]
                 self.request.session.flash('Query succeeded', 'success')

@@ -79,32 +79,6 @@ class TestManageIndex(unittest.TestCase):
         self.assertEqual(catalog.indexes, ['name'])
         self.assertEqual(request.session['_f_'], ['Index "name" reindexed'])
 
-class Test_principals_widget(unittest.TestCase):
-    def _makeOne(self, node, kw):
-        from ..views import principals_widget
-        return principals_widget(node, kw)
-
-    def test_it(self):
-        from ...testing import make_site
-        site = make_site()
-        group = testing.DummyResource()
-        group.__objectid__ = 1
-        user = testing.DummyResource()
-        user.__objectid__ = 2
-        groups = site['principals']['groups']
-        groups['group'] = group
-        users = site['principals']['users']
-        users['user'] = user
-        request = testing.DummyRequest()
-        request.context = site
-        kw = dict(request=request)
-        widget = self._makeOne(None, kw)
-        self.assertEqual(
-            widget.values,
-            ({'values': [('1', 'group')], 'label': 'Groups'},
-             {'values': [('2', 'user')], 'label': 'Users'})
-            )
-
 class TestSearchCatalogView(unittest.TestCase):
     def _makeOne(self, context, request):
         from ..views import SearchCatalogView
@@ -128,54 +102,51 @@ class TestSearchCatalogView(unittest.TestCase):
         self.assertEqual(result, {'searchresults': (),
                                   'form':'form'})
 
-    def test_show_with_appstruct_no_permission(self):
+    def test_show_with_appstruct_no_results(self):
         request = testing.DummyRequest()
         context = testing.DummyResource()
-        appstruct = {'cqe_expression':'abc',
-                     'permitted':{'permission':'', 'principals':()}
-                     }
+        appstruct = {'cqe_expression':"name=='abc'"}
         request.session['catalogsearch.appstruct'] = appstruct
-        def query(expr, permitted):
-            self.assertEqual(expr, 'abc')
-            self.assertEqual(permitted, None)
-            return 0, (), None
-        request.query_catalog = query
         form = DummyForm()
         inst = self._makeOne(context, request)
+        q = DummyQuery([])
+        objectmap = DummyObjectmap()
+        def parse_query(expr, catalog):
+            return q
+        def find_objectmap(context):
+            return objectmap 
+        inst.parse_query = parse_query
+        inst.find_objectmap = find_objectmap
         result = inst.show(form)
         self.assertEqual(result, {'searchresults': [('', 'No results')],
                                   'form':'form'})
         self.assertEqual(request.session['_f_success'], ['Query succeeded'])
 
-    def test_show_with_appstruct_permission(self):
+    def test_show_with_appstruct_and_results(self):
         request = testing.DummyRequest()
         context = testing.DummyResource()
-        appstruct = {'cqe_expression':'abc',
-                     'permitted':{'permission':'view', 'principals':()}
-                     }
+        appstruct = {'cqe_expression':"name=='abc'"}
         request.session['catalogsearch.appstruct'] = appstruct
-        def query(expr, permitted):
-            self.assertEqual(expr, 'abc')
-            self.assertEqual(permitted, ((), 'view'))
-            return 0, (), None
-        request.query_catalog = query
         form = DummyForm()
         inst = self._makeOne(context, request)
+        q = DummyQuery([1,2])
+        objectmap = DummyObjectmap()
+        def parse_query(expr, catalog):
+            return q
+        def find_objectmap(context):
+            return objectmap 
+        inst.parse_query = parse_query
+        inst.find_objectmap = find_objectmap
         result = inst.show(form)
-        self.assertEqual(result, {'searchresults': [('', 'No results')],
+        self.assertEqual(result, {'searchresults': [(1,1), (2,2)],
                                   'form':'form'})
         self.assertEqual(request.session['_f_success'], ['Query succeeded'])
 
     def test_show_with_appstruct_query_exception(self):
         request = testing.DummyRequest()
         context = testing.DummyResource()
-        appstruct = {'cqe_expression':'abc',
-                     'permitted':{'permission':'view', 'principals':()}
-                     }
+        appstruct = {'cqe_expression':"name=='abc'"}
         request.session['catalogsearch.appstruct'] = appstruct
-        def query(expr, permitted):
-            raise ValueError('hello')
-        request.query_catalog = query
         form = DummyForm()
         inst = self._makeOne(context, request)
         inst.logger = DummyLogger()
@@ -183,7 +154,7 @@ class TestSearchCatalogView(unittest.TestCase):
         self.assertEqual(result, {'searchresults': (),
                                   'form':'form'})
         self.assertEqual(request.session['_f_error'],
-                         ['Query failed (ValueError: hello)'])
+                         ['Query failed (KeyError: name)'])
 
 class DummyForm(object):
     def render(self, appstruct):
@@ -220,3 +191,20 @@ class DummyContentRegistry(object):
         
     def create(self, *arg, **kw):
         return self.result
+
+class DummyResultSet(object):
+    def __init__(self, results):
+        self.results = results
+    def all(self, resolve=False):
+        return self.results
+
+class DummyQuery(object):
+    def __init__(self, results):
+        self.results = results
+    def execute(self):
+        return DummyResultSet(self.results)
+
+class DummyObjectmap(object):
+    def object_for(self, oid):
+        return oid
+    

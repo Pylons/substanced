@@ -8,21 +8,12 @@ import BTrees
 
 from zope.interface import implementer
 
-from hypatia.catalog import CatalogQuery
-
 from pyramid.exceptions import ConfigurationError
 from pyramid.traversal import resource_path
 from pyramid.threadlocal import get_current_registry
-from pyramid.security import effective_principals
-from pyramid.interfaces import (
-    IAuthorizationPolicy,
-    PHASE1_CONFIG,
-    )
+from pyramid.interfaces import PHASE1_CONFIG
 
-from ..interfaces import (
-    ISearch,
-    ICatalog,
-    )
+from ..interfaces import ICatalog
 
 from . import indexes as indexes_module
 
@@ -34,15 +25,19 @@ from .discriminators import (
     get_containment,
     )
 
-from ..content import (
-    service,
-    find_service,
-    )
+from ..content import service
 from ..folder import Folder
 from ..objectmap import find_objectmap
 from ..util import oid_of
 
 logger = logging.getLogger(__name__) # API
+
+_marker = object()
+
+def _assertint(docid):
+    if not isinstance(docid, (int, long)):
+        raise ValueError('%r is not an integer value; document ids must be '
+                         'integers' % docid)
 
 @service(
     'Catalog',
@@ -332,99 +327,6 @@ class Catalog(Folder):
             'update_indexes: finished with category %r' %  category
             )
 
-class Search(object):
-    """ Catalog query helper """
-
-    CatalogQuery = CatalogQuery
-    
-    family = BTrees.family64
-    
-    def __init__(self, context, permission_checker=None, family=None):
-        self.context = context
-        self.permission_checker = permission_checker
-        self.catalog = find_service(self.context, 'catalog')
-        self.objectmap = find_objectmap(self.context)
-        if family is not None:
-            self.family = family
-
-    def resolver(self, objectid):
-        resource = self.objectmap.object_for(objectid)
-        if resource is None:
-            logger.warn('Resource for objectid %s missing' % (objectid,))
-        return resource
-
-    def allowed(self, oids):
-        checker = self.permission_checker
-        result = self.family.IF.Set()
-        resolver = self.resolver
-        for oid in oids:
-            ob = resolver(oid)
-            if ob is None:
-                continue
-            if checker(ob):
-                result.insert(oid)
-        return len(result), result
-
-    def query(self, q, **kw):
-        num, oids = self.CatalogQuery(
-            self.catalog, family=self.family).query(q, **kw)
-        if self.permission_checker is not None:
-            num, oids = self.allowed(oids)
-        return num, oids, self.resolver
-
-    def search(self, **kw):
-        num, oids = self.CatalogQuery(
-            self.catalog, family=self.family).search(**kw)
-        if self.permission_checker:
-            num, oids = self.allowed(oids)
-        return num, oids, self.resolver
-
-    def sort(self, *arg, **kw):
-        num, oids = self.CatalogQuery(
-            self.catalog, family=self.family).sort(*arg, **kw)
-        if self.permission_checker:
-            num, oids = self.allowed(oids)
-        return num, oids, self.resolver
-    
-class _catalog_request_api(object):
-    Search = Search
-    def __init__(self, request):
-        self.request = request
-        self.context = request.context
-
-    def _get_permission_checker(self, kw):
-        permitted = kw.pop('permitted', None)
-        if permitted is not None:
-            authz_policy = self.request.registry.queryUtility(
-                IAuthorizationPolicy)
-            if authz_policy is None:
-                return None
-            if hasattr(permitted, '__iter__'):
-                principals, permission = permitted
-            else:
-                principals = effective_principals(self.request)
-                permission =  permitted
-            def permitted(ob):
-                return authz_policy.permits(ob, principals, permission)
-        return permitted
-
-class query_catalog(_catalog_request_api):
-    def __call__(self, *arg, **kw):
-        checker = self._get_permission_checker(kw)
-        return self.Search(self.context, checker).query(*arg, **kw)
-
-class search_catalog(_catalog_request_api):
-    def __call__(self, **kw):
-        checker = self._get_permission_checker(kw)
-        return self.Search(self.context, checker).search(**kw)
-
-def _assertint(docid):
-    if not isinstance(docid, (int, long)):
-        raise ValueError('%r is not an integer value; document ids must be '
-                         'integers' % docid)
-
-_marker = object()
-
 class CatalogViewWrapper(object):
     def __init__(self, content, view_factory):
         self.content = content
@@ -607,10 +509,6 @@ def path_index_factory(name, category, **kw):
     return index
 
 def includeme(config): # pragma: no cover
-    from zope.interface import Interface
-    config.registry.registerAdapter(Search, (Interface,), ISearch)
-    config.add_request_method(query_catalog, reify=True)
-    config.add_request_method(search_catalog, reify=True)
     config.add_view_predicate('catalogable', CatalogablePredicate)
     config.add_directive('add_catalog_index_factory', add_catalog_index_factory)
     config.add_directive('add_catalog_index', add_catalog_index)

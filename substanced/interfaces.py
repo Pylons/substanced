@@ -91,9 +91,6 @@ class IObjectMap(Interface):
         """ Return a set of objectids which have ``obj`` as a relationship
         source using ``reftype``.  ``obj`` can be an object or an object id."""
 
-class ISearch(Interface):
-    """ Adapter for searching the catalog """
-
 class IObjectWillBeAdded(IObjectEvent):
     """ An event type sent when an before an object is added """
     object = Attribute('The object being added')
