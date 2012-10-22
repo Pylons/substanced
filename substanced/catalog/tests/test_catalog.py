@@ -756,20 +756,6 @@ class DummyConfigurator(object):
     def add_permission(self, permission):
         self.permission = permission
 
-class DummySearch(object):
-    def __init__(self, result):
-        self.result = result
-
-    def __call__(self, context, checker=None):
-        self.checker = checker
-        return self
-
-    def query(self, *arg, **kw):
-        return self.result
-
-    def search(self, **kw):
-        return self.result
-
 class DummyQuery(object):
     pass    
 
@@ -788,26 +774,6 @@ class DummyObjectMap(object):
         if data is None:
             return
         return data[0]
-
-class DummyCatalogQuery(object):
-    family = BTrees.family64
-    def __init__(self, result=(0, [])):
-        self.result = result
-
-    def query(self, q, **kw):
-        return self.result
-
-    def search(self, **kw):
-        return self.result
-
-    def sort(self, *arg, **kw):
-        return self.result
-
-    def __call__(self, catalog, family=None):
-        self.catalog = catalog
-        if family is not None:
-            self.family = family
-        return self
 
 class DummyCatalog(dict):
     pass
@@ -851,9 +817,6 @@ class DummyIndex(object):
         self.reindexed_docid = docid
         self.reindexed_ob = object
 
-    def apply(self, query):
-        return self.arg[0]
-
     def apply_intersect(self, query, docids): # pragma: no cover
         if docids is None:
             return self.arg[0]
@@ -862,13 +825,6 @@ class DummyIndex(object):
             if docid in docids:
                 L.append(docid)
         return L
-
-    def sort(self, results, reverse=False, limit=None, sort_type=None):
-        self.limit = limit
-        self.sort_type = sort_type
-        if reverse:
-            return ['sorted3', 'sorted2', 'sorted1']
-        return ['sorted1', 'sorted2', 'sorted3']
 
 class DummyContent(object):
     def metadata(self, resource, name, default=None):
