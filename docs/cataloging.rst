@@ -40,12 +40,13 @@ catalog, but it makes it available to be added to one later. An example:
     config.include('substanced')
     config.add_catalog_index('myindex', 'field', 'myapp')
 
-The first argument to ``add_catalog_index`` is the index name.  It should be a
-simple name without any punctuation in it, as it will be used during queries. It
-should be reasonably unique. The second argument is the factory name, which can
-be one of ``field``, ``text``, ``keyword``, ``facet`` or ``path``.  The third is
-a *category*.  A category is just a string which can be used to group indexes
-belonging to the same application together.
+The first argument to ``add_catalog_index`` is the index name.  It should be
+a simple name without any punctuation in it, as it will be used during
+queries. It should be reasonably unique. The second argument is the factory
+name, which, by default, can be one of ``field``, ``text``, ``keyword``,
+``facet``, ``path`` or ``allowed``.  The third is a *category*.  A category
+is just a string which can be used to group indexes belonging to the same
+application together.
 
 The :meth:`~substanced.catalog.Catalog.update_indexes` method of a catalog
 object causes all the indexes in a given category added via
@@ -79,6 +80,10 @@ A default set of indexes is available in the ``system`` category:
 
   Represents the set of interfaces and classes which are possessed by
   parents of the content object (inclusive of itself)
+
+- allowed (a ``allowed`` index), uses a custom discriminator exclusively.
+
+  Represents the set of users granted a permission to each content object.
 
 It is recommended that you use ``update_indexes('system')`` to install these
 into your main catalog.
@@ -165,4 +170,36 @@ to ``add_catalog_index``.
 
 See the ``substanced.catalog`` module for examples of existing catalog
 index factories.
+
+Querying the Catalog
+--------------------
+
+You execute a catalog query using APIs of the catalog's indexes.
+
+.. code-block:: python
+
+   catalog = find_service(self.context, 'catalog')
+   name = catalog['name']
+   path = catalog['path']
+   # find me all the objects that exist under /somepath with the name 'somename'
+   q = name.eq('somename') & path.eq('/somepath')
+   resultset = q.execute()
+
+The calls to ``name.eq()`` and ``path.eq()`` above each return a query
+object.  Those two queries are ANDed together into a single query via the
+``&`` operator between them.  There's also the ``|`` character to OR the
+queries together.
+
+Different indexes have different methods, but most support the ``eq`` method.
+Other methods that are often supported by indexes: ``noteq``, ``ge``, ``le``,
+``gt``, ``any``, ``notany``, ``all``, ``notall``, ``inrange``, ``notinrange``.
+   
+Query objects support an ``execute`` method.  This method returns a
+ResultSet.  A ResultSet can be iterated over; each iteration returns a
+content object.  ResultSet also has methods like ``one`` and ``first``, which
+return a content object, as well as a ``sort`` method which accepts an index
+object (the sort index) and returns another ResultSet.
+
+
+
 
