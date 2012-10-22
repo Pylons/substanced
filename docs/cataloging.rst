@@ -81,7 +81,7 @@ A default set of indexes is available in the ``system`` category:
   Represents the set of interfaces and classes which are possessed by
   parents of the content object (inclusive of itself)
 
-- allowed (a ``allowed`` index), uses a custom discriminator exclusively.
+- allowed (an ``allowed`` index), uses a custom discriminator exclusively.
 
   Represents the set of users granted a permission to each content object.
 
@@ -107,7 +107,7 @@ via its content type information, e.g.
 
 The ``catalog=True`` line is where the magic happens.
 
-If value to the ``catalog`` argument can is ``True``, the object will only be
+If the value of the ``catalog`` argument is ``True``, the object will only be
 indexed in "system" indexes.  To index the object in custom application indexes,
 you will need to create a *catalog view* for your content, and pass it in as
 ``catalog`` to the content type decorator.
@@ -128,7 +128,7 @@ you will need to create a *catalog view* for your content, and pass it in as
     class Order(Persistent):
        pass
 
-The catalog view must be a class that accepts a single argument ``content`` in
+The catalog view must be a class that accepts a single argument, ``content``, in
 its constructor, and which has one or more methods named after potential index
 names.  When it comes time for the system to index your content, it will create
 an instance of your catalog view class, and it will then call one or more of its
@@ -155,7 +155,7 @@ Then during catalog setup:
    catalog.update_indexes('system', registry=registry, reindex=True)
    catalog.update_indexes('myapp', registry=registry, reindex=True)
 
-Once this is done, whenever an Order objects is added to the system, a value
+Once this is done, whenever an Order object is added to the system, a value
 (the result of the ``freaky()`` method of the catalog view) will be indexed in
 the ``freaky`` field index; system values will also be indexed, but they don't
 require any help from your catalog view.
@@ -190,7 +190,7 @@ You execute a catalog query using APIs of the catalog's indexes.
 The calls to ``name.eq()`` and ``path.eq()`` above each return a query
 object.  Those two queries are ANDed together into a single query via the
 ``&`` operator between them (there's also the ``|`` character to OR the
-queries together, but we don't use it abov).  Parenthesis can be used to
+queries together, but we don't use it above).  Parenthesis can be used to
 group query expressions together for the purpose of priority.
 
 Different indexes have different query methods, but most support the ``eq``
