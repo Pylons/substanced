@@ -4,6 +4,12 @@ import colander
 from zope.interface import implementer
 
 class TestPrincipals(unittest.TestCase):
+    def setUp(self):
+        self.config = testing.setUp()
+
+    def tearDown(self):
+        testing.tearDown()
+        
     def _makeOne(self):
         from .. import Principals
         return Principals()
@@ -32,6 +38,9 @@ class TestPrincipals(unittest.TestCase):
     def test_add_user(self):
         inst = self._makeOne()
         users = inst['users'] = testing.DummyResource()
+        ob = testing.DummyResource()
+        content = DummyContentRegistry(ob)
+        self.config.registry.content = content
         user = inst.add_user('login', 'password')
         self.assertTrue('login' in users)
         self.assertEqual(user.__name__, 'login')
@@ -39,12 +48,18 @@ class TestPrincipals(unittest.TestCase):
     def test_add_group(self):
         inst = self._makeOne()
         groups = inst['groups'] = testing.DummyResource()
+        ob = testing.DummyResource()
+        content = DummyContentRegistry(ob)
+        self.config.registry.content = content
         group = inst.add_group('groupname')
         self.assertTrue('groupname' in groups)
         self.assertEqual(group.__name__, 'groupname')
 
     def test_add_reset(self):
         from .. import UserToPasswordReset
+        ob = testing.DummyResource()
+        content = DummyContentRegistry(ob)
+        self.config.registry.content = content
         resets = testing.DummyResource()
         inst = self._makeOne()
         objectmap = DummyObjectMap()
