@@ -34,8 +34,6 @@
 
 .. autofunction:: add_catalog_index_factory
 
-XXX: request.search_catalog, request.query_catalog
-
 :mod:`substanced.catalog.discriminators` API
 --------------------------------------------
 
@@ -103,6 +101,14 @@ Other Helpers
 
 .. autofunction:: parse_query
 
+:mod:`hypatia.util` API
+-------------------------------
+
+.. module:: hypatia.util
+
+.. autoclass:: ResultSet
+   :members:
+
 :mod:`substanced.catalog.indexes` API
 -------------------------------------
 
@@ -121,6 +127,9 @@ Other Helpers
    :members:
 
 .. autoclass:: PathIndex
+   :members:
+
+.. autoclass:: AllowedIndex
    :members:
 
 :mod:`substanced.catalog.subscribers` API
