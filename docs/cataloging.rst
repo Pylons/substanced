@@ -178,28 +178,45 @@ You execute a catalog query using APIs of the catalog's indexes.
 
 .. code-block:: python
 
-   catalog = find_service(self.context, 'catalog')
+   catalog = find_service(somecontext, 'catalog')
    name = catalog['name']
    path = catalog['path']
    # find me all the objects that exist under /somepath with the name 'somename'
    q = name.eq('somename') & path.eq('/somepath')
    resultset = q.execute()
+   for contentob in resultset:
+       print contentob
 
 The calls to ``name.eq()`` and ``path.eq()`` above each return a query
 object.  Those two queries are ANDed together into a single query via the
-``&`` operator between them.  There's also the ``|`` character to OR the
-queries together.
+``&`` operator between them (there's also the ``|`` character to OR the
+queries together, but we don't use it abov).  Parenthesis can be used to
+group query expressions together for the purpose of priority.
 
-Different indexes have different methods, but most support the ``eq`` method.
-Other methods that are often supported by indexes: ``noteq``, ``ge``, ``le``,
-``gt``, ``any``, ``notany``, ``all``, ``notall``, ``inrange``, ``notinrange``.
+Different indexes have different query methods, but most support the ``eq``
+method.  Other methods that are often supported by indexes: ``noteq``,
+``ge``, ``le``, ``gt``, ``any``, ``notany``, ``all``, ``notall``,
+``inrange``, ``notinrange``.  The Allowed index supports an additional
+``allows`` method.
    
 Query objects support an ``execute`` method.  This method returns a
 ResultSet.  A ResultSet can be iterated over; each iteration returns a
 content object.  ResultSet also has methods like ``one`` and ``first``, which
-return a content object, as well as a ``sort`` method which accepts an index
-object (the sort index) and returns another ResultSet.
+return a single content object instead of a set of content objects. A
+ResultSet also has a ``sort`` method which accepts an index object (the sort
+index) and returns another (sorted) ResultSet.
 
+.. code-block:: python
 
+   catalog = find_service(somecontext, 'catalog')
+   name = catalog['name']
+   path = catalog['path']
+   # find me all the objects that exist under /somepath with the name 'somename'
+   q = name.eq('somename') & path.eq('/somepath')
+   resultset = q.execute()
+   newresultset = resultset.sort(name)
+
+If you don't call ``sort`` on the resultset you get back, the results will
+not be sorted in any particular order.
 
 
