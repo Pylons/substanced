@@ -26,7 +26,7 @@ except IOError:
 install_requires = [
     'pyramid>=1.4dev', # thirdparty predicates
     'ZODB3',
-    'hypatia>=0.1a2', # IIndexEnumeration
+    'hypatia>=0.1a3dev', # index-based querying
     'venusian',
     'deform',
     'colander>=0.9.9.1dev', # subclassable schemanodes
