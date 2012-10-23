@@ -5,6 +5,10 @@ from persistent import Persistent
 
 from zope.interface import implementer
 
+import colander
+import deform
+import deform_bootstrap.widget
+
 import hypatia.query
 import hypatia.interfaces
 import hypatia.field
@@ -24,6 +28,11 @@ from pyramid.interfaces import IRequest
 
 from ..content import content
 from ..objectmap import find_objectmap
+from ..schema import Schema
+from ..property import PropertySheet
+from ..util import get_all_permissions
+
+from .discriminators import AllowedDiscriminator
 
 PATH_WITH_OPTIONS = re.compile(r'\[(.+?)\](.+?)$')
 
@@ -36,11 +45,33 @@ class ResolvingIndex(object):
         numdocs = len(docids)
         return hypatia.util.ResultSet(docids, numdocs, resolver)
 
+class IndexSchema(Schema):
+    category = colander.SchemaNode(
+        colander.String(),
+        missing='',
+        )
+
+class IndexPropertySheet(PropertySheet):
+    schema = IndexSchema()
+    
+    def get(self):
+        context = self.context
+        props = {}
+        props['category'] = context.sd_category
+        return props
+
+    def set(self, struct):
+        context = self.context
+        context.sd_category = struct['category']
+
 @content(
     'Path Index',
     icon='icon-search',
     add_view='add_path_index',
     is_index=True,
+    propertysheets = (
+        ('', IndexPropertySheet),
+        )
     )
 @implementer(hypatia.interfaces.IIndex)
 class PathIndex(ResolvingIndex, hypatia.util.BaseIndexMixin, Persistent):
@@ -166,10 +197,145 @@ class PathIndex(ResolvingIndex, hypatia.util.BaseIndexMixin, Persistent):
         return hypatia.query.Eq(self, val)
 
 @content(
+    'Field Index',
+    icon='icon-search',
+    add_view='add_field_index',
+    is_index=True,
+    propertysheets = (
+        ('', IndexPropertySheet),
+        )
+    )
+class FieldIndex(ResolvingIndex, hypatia.field.FieldIndex):
+    pass
+
+@content(
+    'Keyword Index',
+    icon='icon-search',
+    add_view='add_keyword_index',
+    is_index=True,
+    propertysheets = (
+        ('', IndexPropertySheet),
+        )
+    )
+class KeywordIndex(ResolvingIndex, hypatia.keyword.KeywordIndex):
+    pass
+
+@content(
+    'Text Index',
+    icon='icon-search',
+    add_view='add_text_index',
+    is_index=True,
+    propertysheets = (
+        ('', IndexPropertySheet),
+        )
+    )
+class TextIndex(ResolvingIndex, hypatia.text.TextIndex):
+    pass
+
+class Facets(colander.SequenceSchema):
+    facet = colander.SchemaNode(
+        colander.String(),
+        )
+
+class FacetIndexSchema(IndexSchema):
+    facets = Facets(
+        missing=(),
+        title = 'Facets (any change will cause a reindex)',
+        )
+
+class FacetIndexPropertySheet(PropertySheet):
+    schema = FacetIndexSchema()
+    
+    def get(self):
+        context = self.context
+        props = {}
+        props['category'] = context.sd_category
+        props['facets'] = context.facets
+        return props
+
+    def set(self, struct):
+        context = self.context
+        context.sd_category = struct['category']
+        facets = tuple(struct['facets'])
+        if facets != context.facets:
+            context.facets = facets
+            name = self.context.__name__
+            registry = self.request.registry
+            self.context.__parent__.reindex(indexes=(name,), registry=registry)
+
+@content(
+    'Facet Index',
+    icon='icon-search',
+    add_view='add_facet_index',
+    is_index=True,
+    propertysheets = (
+        ('', FacetIndexPropertySheet),
+        )
+    )
+class FacetIndex(ResolvingIndex, hypatia.facet.FacetIndex):
+    pass
+
+class PermissionsSchemaNode(colander.SchemaNode):
+    def schema_type(self): 
+        return deform.Set(allow_empty=True)
+
+    def _get_all_permissions(self, registry): # pragma: no cover (testing)
+        return get_all_permissions(registry)
+
+    @property
+    def widget(self):
+        request = self.bindings['request']
+        permissions = self._get_all_permissions(request.registry)
+        values = [(p, p) for p in permissions]
+        return deform_bootstrap.widget.ChosenMultipleWidget(values=values)
+
+    def validator(self, node, value):
+        request = self.bindings['request']
+        registry = request.registry
+        permissions = self._get_all_permissions(registry)
+        for perm in value:
+            if not perm in permissions:
+                raise colander.Invalid(
+                    node, 'Unknown permission %s' % value, value
+                    )
+
+
+class AllowedIndexSchema(IndexSchema):
+    permissions = PermissionsSchemaNode(
+        missing=(),
+        title='Permissions (any change will cause a reindex)',
+        )
+
+class AllowedIndexPropertySheet(PropertySheet):
+    schema = AllowedIndexSchema()
+    
+    def get(self):
+        context = self.context
+        props = {}
+        props['category'] = context.sd_category
+        props['permissions'] = tuple(context.discriminator.permissions or ())
+        return props
+
+    def set(self, struct):
+        context = self.context
+        context.sd_category = struct['category']
+        permissions = tuple(sorted(struct['permissions']))
+        if not permissions:
+            permissions = None
+        if permissions != context.discriminator.permissions:
+            context.discriminator = AllowedDiscriminator(permissions)
+            name = self.context.__name__
+            registry = self.request.registry
+            self.context.__parent__.reindex(indexes=(name,), registry=registry)
+
+@content(
     'Allowed Index',
     icon='icon-search',
     add_view='add_allowed_index',
     is_index=True,
+    propertysheets = (
+        ('', AllowedIndexPropertySheet),
+        )
     )
 class AllowedIndex(ResolvingIndex, hypatia.keyword.KeywordIndex):
     def allows(self, principals, permission='view'):
@@ -183,40 +349,4 @@ class AllowedIndex(ResolvingIndex, hypatia.keyword.KeywordIndex):
             principals = (principals,)
         values = [(principal, permission) for principal in principals]
         return hypatia.query.Any(self, values)
-
-@content(
-    'Field Index',
-    icon='icon-search',
-    add_view='add_field_index',
-    is_index=True,
-    )
-class FieldIndex(ResolvingIndex, hypatia.field.FieldIndex):
-    pass
-
-@content(
-    'Facet Index',
-    icon='icon-search',
-    add_view='add_facet_index',
-    is_index=True,
-    )
-class FacetIndex(ResolvingIndex, hypatia.facet.FacetIndex):
-    pass
-
-@content(
-    'Keyword Index',
-    icon='icon-search',
-    add_view='add_keyword_index',
-    is_index=True,
-    )
-class KeywordIndex(ResolvingIndex, hypatia.keyword.KeywordIndex):
-    pass
-
-@content(
-    'Text Index',
-    icon='icon-search',
-    add_view='add_text_index',
-    is_index=True,
-    )
-class TextIndex(ResolvingIndex, hypatia.text.TextIndex):
-    pass
 

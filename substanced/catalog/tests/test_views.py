@@ -168,15 +168,13 @@ class Test_content_is_an_index(unittest.TestCase):
     
     def test_it_true(self):
         request = testing.DummyRequest()
-        md = {'is_index':True}
-        request.registry.content = DummyContent(md)
+        request.registry.content = DummyContent(True)
         context = testing.DummyResource()
         self.assertEqual(self._callFUT(context, request), True)
         
     def test_it_false(self):
         request = testing.DummyRequest()
-        md = {'is_index':False}
-        request.registry.content = DummyContent(md)
+        request.registry.content = DummyContent(False)
         context = testing.DummyResource()
         self.assertEqual(self._callFUT(context, request), False)
 
@@ -305,52 +303,10 @@ class TestAddFacetIndexView(unittest.TestCase):
         self.assertEqual(registry.content.type_name, 'Facet Index')
         self.assertEqual(result, index)
 
-class TestPermissionsSchemaNode(unittest.TestCase):
-    def setUp(self):
-        testing.setUp()
-
-    def tearDown(self):
-        testing.tearDown()
-        
-    def _makeOne(self):
-        from ..views import PermissionsSchemaNode
-        return PermissionsSchemaNode()
-
-    def test_widget(self):
-        request = testing.DummyRequest()
-        bindings = {'request':request}
-        inst = self._makeOne()
-        inst._get_all_permissions = lambda *arg: ['one', 'two']
-        inst.bindings = bindings
-        result = inst.widget
-        self.assertEqual(result.values, [('one', 'one'), ('two', 'two')])
-
-    def test_validator_invalid(self):
-        import colander
-        request = testing.DummyRequest()
-        bindings = {'request':request}
-        inst = self._makeOne()
-        inst._get_all_permissions = lambda *arg: ['one', 'two']
-        inst.bindings = bindings
-        self.assertRaises(colander.Invalid, inst.validator, None, ('nope',))
-
-    def test_validator_valid(self):
-        request = testing.DummyRequest()
-        bindings = {'request':request}
-        inst = self._makeOne()
-        inst._get_all_permissions = lambda *arg: ['one', 'two']
-        inst.bindings = bindings
-        self.assertEqual(inst.validator(None, ('one',)), None)
-
-    def test_schema_type(self):
-        inst = self._makeOne()
-        result = inst.schema_type()
-        self.assertEqual(result.__class__.__name__, 'Set')
-
 class DummyContent(object):
     def __init__(self, result):
         self.result = result
-    def metadata(self, context):
+    def metadata(self, context, name, default=None):
         return self.result
     def create(self, type_name, *arg, **kw):
         self.type_name = type_name

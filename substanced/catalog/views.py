@@ -1,6 +1,5 @@
 import colander
 import deform.widget
-import deform_bootstrap.widget
 
 from hypatia.interfaces import IIndex
 from hypatia.query import parse_query
@@ -15,13 +14,16 @@ from ..sdi import mgmt_view
 from ..form import FormView
 from ..schema import Schema
 from ..objectmap import find_objectmap
-from ..util import (
-    get_all_permissions,
-    NameSchemaNode,
-    )
+from ..util import NameSchemaNode
+
 from .discriminators import (
     AllowedDiscriminator,
     CatalogViewDiscriminator,
+    )
+
+from .indexes import (
+    IndexSchema,
+    PermissionsSchemaNode
     )
 
 from . import logger
@@ -37,19 +39,14 @@ def add_catalog_service(context, request):
     return HTTPFound(location=request.mgmt_path(context))
 
 def context_is_an_index(context, request):
-    md = request.registry.content.metadata(context)
-    return bool(md.get('is_index'))
+    return request.registry.content.metadata(context, 'is_index', False)
 
-class AddIndexSchema(Schema):
-    name = NameSchemaNode(editing=context_is_an_index)
-    category = colander.SchemaNode(
-        colander.String(),
-        missing='',
-        )
+class AddIndexSchema(IndexSchema):
+    name = NameSchemaNode(editing=context_is_an_index,
+                          insert_before='category')
     reindex = colander.SchemaNode(
         colander.Bool(),
         default=True,
-        missing=False,
         )
 
 class _AddIndexView(FormView):
@@ -118,30 +115,6 @@ class AddKeywordIndexView(_AddIndexView):
 class AddTextIndexView(_AddIndexView):
     index_type_name = 'Text Index'
 
-class PermissionsSchemaNode(colander.SchemaNode):
-    def schema_type(self): 
-        return deform.Set(allow_empty=True)
-
-    def _get_all_permissions(self, registry): # pragma: no cover (testing)
-        return get_all_permissions(registry)
-
-    @property
-    def widget(self):
-        request = self.bindings['request']
-        permissions = self._get_all_permissions(request.registry)
-        values = [(p, p) for p in permissions]
-        return deform_bootstrap.widget.ChosenMultipleWidget(values=values)
-
-    def validator(self, node, value):
-        request = self.bindings['request']
-        registry = request.registry
-        permissions = self._get_all_permissions(registry)
-        for perm in value:
-            if not perm in permissions:
-                raise colander.Invalid(
-                    node, 'Unknown permission %s' % value, value
-                    )
-
 class AddAllowedIndexSchema(AddIndexSchema):
     permissions = PermissionsSchemaNode(missing=())
 
@@ -157,8 +130,8 @@ class AddAllowedIndexView(_AddIndexView):
     title = 'Add Allowed Index'
 
     def makeindex(self, appstruct, registry):
-        permissions = appstruct['permissions']
-        discriminator = AllowedDiscriminator(tuple(permissions))
+        permissions = tuple(sorted(appstruct['permissions']))
+        discriminator = AllowedDiscriminator(permissions)
         index = registry.content.create('Allowed Index', discriminator)
         return index
         

@@ -265,12 +265,187 @@ class TestAllowedIndex(unittest.TestCase):
         q = index.allows('bob', 'edit')
         self.assertEqual(q._value, [('bob', 'edit')])
 
+class TestPermissionsSchemaNode(unittest.TestCase):
+    def setUp(self):
+        testing.setUp()
+
+    def tearDown(self):
+        testing.tearDown()
+        
+    def _makeOne(self):
+        from ..indexes import PermissionsSchemaNode
+        return PermissionsSchemaNode()
+
+    def test_widget(self):
+        request = testing.DummyRequest()
+        bindings = {'request':request}
+        inst = self._makeOne()
+        inst._get_all_permissions = lambda *arg: ['one', 'two']
+        inst.bindings = bindings
+        result = inst.widget
+        self.assertEqual(result.values, [('one', 'one'), ('two', 'two')])
+
+    def test_validator_invalid(self):
+        import colander
+        request = testing.DummyRequest()
+        bindings = {'request':request}
+        inst = self._makeOne()
+        inst._get_all_permissions = lambda *arg: ['one', 'two']
+        inst.bindings = bindings
+        self.assertRaises(colander.Invalid, inst.validator, None, ('nope',))
+
+    def test_validator_valid(self):
+        request = testing.DummyRequest()
+        bindings = {'request':request}
+        inst = self._makeOne()
+        inst._get_all_permissions = lambda *arg: ['one', 'two']
+        inst.bindings = bindings
+        self.assertEqual(inst.validator(None, ('one',)), None)
+
+    def test_schema_type(self):
+        inst = self._makeOne()
+        result = inst.schema_type()
+        self.assertEqual(result.__class__.__name__, 'Set')
+
+class TestIndexPropertySheet(unittest.TestCase):
+    def _makeOne(self, context, request):
+        from ..indexes import IndexPropertySheet
+        return IndexPropertySheet(context, request)
+
+    def test_get(self):
+        context = testing.DummyResource()
+        context.sd_category = 'foo'
+        inst = self._makeOne(context, None)
+        self.assertEqual(inst.get(), {'category':'foo'})
+        
+    def test_set(self):
+        context = testing.DummyResource()
+        context.sd_category = 'foo'
+        inst = self._makeOne(context, None)
+        inst.set({'category':'bar'})
+        self.assertEqual(context.sd_category, 'bar')
+                 
+
+class TestFacetIndexPropertySheet(unittest.TestCase):
+    def setUp(self):
+        testing.setUp()
+
+    def tearDown(self):
+        testing.tearDown()
+        
+    def _makeOne(self, context, request):
+        from ..indexes import FacetIndexPropertySheet
+        return FacetIndexPropertySheet(context, request)
+
+    def test_get(self):
+        context = testing.DummyResource()
+        context.sd_category = 'foo'
+        context.facets = ('facets',)
+        inst = self._makeOne(context, None)
+        self.assertEqual(inst.get(), {'category':'foo', 'facets':('facets',)})
+        
+    def test_set_same_facets(self):
+        context = testing.DummyResource()
+        context.sd_category = 'foo'
+        context.facets = ('facets',)
+        inst = self._makeOne(context, None)
+        inst.set({'category':'bar', 'facets':['facets']})
+        self.assertEqual(context.sd_category, 'bar')
+                 
+    def test_set_different_facets(self):
+        context = testing.DummyResource()
+        context.sd_category = 'foo'
+        context.facets = ('facets',)
+        context.__name__ = 'name'
+        catalog = DummyCatalog()
+        context.__parent__ = catalog
+        request = testing.DummyRequest()
+        inst = self._makeOne(context, request)
+        inst.set({'category':'bar', 'facets':['facet1', 'facet2']})
+        self.assertEqual(context.sd_category, 'bar')
+        self.assertEqual(context.facets, ('facet1', 'facet2'))
+        self.assertEqual(catalog.reindexed, ('name',))
+
+class TestFacetAllowedIndexPropertySheet(unittest.TestCase):
+    def setUp(self):
+        testing.setUp()
+
+    def tearDown(self):
+        testing.tearDown()
+        
+    def _makeOne(self, context, request):
+        from ..indexes import AllowedIndexPropertySheet
+        return AllowedIndexPropertySheet(context, request)
+
+    def test_get(self):
+        context = testing.DummyResource()
+        context.sd_category = 'foo'
+        discriminator = Dummy()
+        context.discriminator = discriminator
+        context.discriminator.permissions = ('b', 'a')
+        inst = self._makeOne(context, None)
+        self.assertEqual(inst.get(),
+                         {'category':'foo', 'permissions':('b', 'a')})
+
+    def test_get_permissions_is_None(self):
+        context = testing.DummyResource()
+        context.sd_category = 'foo'
+        discriminator = Dummy()
+        context.discriminator = discriminator
+        context.discriminator.permissions = None
+        inst = self._makeOne(context, None)
+        self.assertEqual(inst.get(),
+                         {'category':'foo', 'permissions':()})
+
+    def test_set_same_permissions(self):
+        context = testing.DummyResource()
+        context.sd_category = 'foo'
+        discriminator = Dummy()
+        context.discriminator = discriminator
+        context.discriminator.permissions = ('a', 'b')
+        inst = self._makeOne(context, None)
+        inst.set({'category':'bar', 'permissions':('b', 'a')})
+        self.assertEqual(context.sd_category, 'bar')
+
+    def test_set_no_permissions(self):
+        context = testing.DummyResource()
+        context.sd_category = 'foo'
+        discriminator = Dummy()
+        context.discriminator = discriminator
+        context.discriminator.permissions = None
+        inst = self._makeOne(context, None)
+        inst.set({'category':'bar', 'permissions':()})
+        self.assertEqual(context.sd_category, 'bar')
+        self.assertEqual(context.discriminator.permissions, None)
+                 
+    def test_set_different_permissions(self):
+        context = testing.DummyResource()
+        context.sd_category = 'foo'
+        discriminator = Dummy()
+        context.discriminator = discriminator
+        context.discriminator.permissions = ('a','b')
+        context.__name__ = 'name'
+        catalog = DummyCatalog()
+        context.__parent__ = catalog
+        request = testing.DummyRequest()
+        inst = self._makeOne(context, request)
+        inst.set({'category':'bar', 'permissions':['d', 'c']})
+        self.assertEqual(context.sd_category, 'bar')
+        self.assertEqual(context.discriminator.permissions, ('c', 'd'))
+        self.assertEqual(catalog.reindexed, ('name',))
+
+class Dummy(object):
+    pass
+
 class DummyCatalog(object):
     family = BTrees.family64
     def __init__(self, objectids=None):
         if objectids is None:
             objectids = self.family.II.TreeSet()
         self.objectids = objectids
+
+    def reindex(self, indexes=None, registry=None):
+        self.reindexed = indexes
 
 class DummyObjectmap(object):
     def object_for(self, docid): return 'a'
