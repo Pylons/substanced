@@ -1,8 +1,3 @@
-UI-Only
--------
-
-- Allow folder contents UI ("Contents" tab) sorting by name and by type.
-
 UI-Plus-Guts
 ------------
 
@@ -79,17 +74,6 @@ Guts-Only
   folder contents view.
 
 - Generalize name validator.
-
-- Provide a less sucky API for searching.  Something like maybe:
-
-  catalog = find_service(self, 'catalog')
-  catalog.query(catalog['interfaces']==IClothingSKU).AND(catalog['path']==here, 
-                depth=2)
-
-  Might expand to:
-
-  'interfaces==IClothingSKU and path=='[depth=2]%s'" % here
-
 
 Nice-to-Have Features
 ---------------------
