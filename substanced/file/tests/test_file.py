@@ -267,12 +267,39 @@ class TestFile(unittest.TestCase):
         self.assertTrue(response.body)
         self.assertEqual(response.content_type, 'text/other')
 
-    def test_get_suize(self):
+    def test_get_size(self):
         inst = self._makeOne(None, None)
         inst.blob = DummyBlob()
         size = inst.get_size()
         self.assertEqual(size, os.stat(__file__).st_size)
+
+class Test_context_is_a_file(unittest.TestCase):
+    def _callFUT(self, context, request):
+        from .. import context_is_a_file
+        return context_is_a_file(context, request)
+    
+    def test_it_true(self):
+        registry = DummyRegistry(True)
+        request = testing.DummyRequest()
+        request.registry = registry
+        self.assertTrue(self._callFUT(None, request))
+
+    def test_it_false(self):
+        registry = DummyRegistry(False)
+        request = testing.DummyRequest()
+        request.registry = registry
+        self.assertFalse(self._callFUT(None, request))
         
+class DummyContent(object):
+    def __init__(self, result):
+        self.result = result
+    def istype(self, context, t):
+        return self.result
+
+class DummyRegistry(object):
+    def __init__(self, result):
+        self.content = DummyContent(result)
+            
 class DummyBlob(object):
     def committed(self):
         return os.path.abspath(__file__)
