@@ -29,6 +29,7 @@ from ..content import service
 from ..folder import Folder
 from ..objectmap import find_objectmap
 from ..util import oid_of
+from ..sdi import default_sdi_buttons
 
 logger = logging.getLogger(__name__) # API
 
@@ -63,6 +64,19 @@ class Catalog(Folder):
         # registered with the is_index metadata flag.
         meta = introspectable['meta']
         return meta.get('is_index', False)
+
+    def __sdi_buttons__(self, context, request):
+        """ Show a reindex button """
+        buttons = default_sdi_buttons(context, request)
+        buttons.insert(
+            0,
+            {'type':'single',
+             'buttons':[{'id':'reindex',
+                         'name':'form.reindex',
+                         'class':'btn-primary',
+                         'value':'reindex',
+                         'text':'Reindex'}]})
+        return buttons
 
     def reset(self):
         """ Clear all indexes in this catalog and clear self.objectids. """

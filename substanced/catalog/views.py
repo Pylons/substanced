@@ -8,7 +8,7 @@ from pyramid.httpexceptions import HTTPFound
 
 from pyramid.view import view_defaults
 
-from ..interfaces import ICatalog
+from ..interfaces import ICatalog, IFolder
 
 from ..sdi import mgmt_view
 from ..form import FormView
@@ -220,7 +220,8 @@ class ManageIndex(object):
         catalog  = self.context.__parent__
         if ICatalog.providedBy(catalog):
             catalog.reindex(indexes=[index_name])
-            self.request.session.flash('Index "%s" reindexed' % index_name)
+            self.request.session.flash('Index "%s" reindexed' % index_name,
+                                       'success')
         else:
             self.request.session.flash(
                 'Cannot reindex an index unless it is contained in a catalog',
@@ -280,4 +281,32 @@ class SearchCatalogView(FormView):
             'searchresults':searchresults,
             'form':form.render(appstruct=appstruct),
             }
+
+# reindex button handler
+
+@mgmt_view(
+    context=IFolder,
+    content_type='Catalog',
+    name='contents',
+    request_param='form.reindex',
+    request_method='POST',
+    renderer='substanced.sdi:templates/contents.pt',
+    permission='sdi.manage-contents',
+    tab_condition=False,
+    )
+def reindex_indexes(context, request):
+    toreindex = request.POST.getall('item-modify')
+    if toreindex:
+        context.reindex(indexes=toreindex, registry=request.registry)
+        request.session.flash(
+            'Reindex of selected indexes succeeded',
+            'success'
+            )
+    else:
+        request.session.flash(
+            'No indexes selected to reindex',
+            'error'
+            )
         
+    return HTTPFound(request.mgmt_path(context, '@@contents'))
+

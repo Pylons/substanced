@@ -36,7 +36,7 @@ class TestManageCatalog(unittest.TestCase):
         inst = self._makeOne(context, request)
         result = inst.reindex()
         self.assertEqual(result.location, '/manage')
-        self.assertEqual(context.reindexed, True)
+        self.assertEqual(context.reindexed, None)
 
 class TestManageIndex(unittest.TestCase):
     def _makeOne(self, context, request):
@@ -77,7 +77,8 @@ class TestManageIndex(unittest.TestCase):
         result = inst.reindex()
         self.assertEqual(result.location, '/manage')
         self.assertEqual(catalog.indexes, ['name'])
-        self.assertEqual(request.session['_f_'], ['Index "name" reindexed'])
+        self.assertEqual(
+            request.session['_f_success'], ['Index "name" reindexed'])
 
 class TestSearchCatalogView(unittest.TestCase):
     def _makeOne(self, context, request):
@@ -303,6 +304,30 @@ class TestAddFacetIndexView(unittest.TestCase):
         self.assertEqual(registry.content.type_name, 'Facet Index')
         self.assertEqual(result, index)
 
+class Test_reindex_indexes(unittest.TestCase):
+    def setUp(self):
+        testing.setUp()
+
+    def tearDown(self):
+        testing.tearDown()
+
+    def _callFUT(self, context, request):
+        from ..views import reindex_indexes
+        return reindex_indexes(context, request)
+
+    def test_with_indexes(self):
+        context = DummyCatalog()
+        request = testing.DummyRequest()
+        request.mgmt_path = lambda *arg: '/manage'
+        request.POST = testing.DummyResource()
+        request.POST.getall = {'item-modify':['a']}.get
+        result = self._callFUT(context, request)
+        self.assertEqual(result.location, '/manage')
+        self.assertEqual(
+            request.session['_f_success'],
+            ['Reindex of selected indexes succeeded'])
+        self.assertEqual(context.reindexed, ['a'])
+
 class DummyContent(object):
     def __init__(self, result):
         self.result = result
@@ -327,9 +352,9 @@ class DummyCatalog(object):
     def __init__(self):
         self.objectids = ()
 
-    def reindex(self, indexes=None):
+    def reindex(self, indexes=None, registry=None):
         self.indexes = indexes
-        self.reindexed = True
+        self.reindexed = indexes
 
 class DummyIndex(object):
     def __init__(self, parent=None):
