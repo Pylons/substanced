@@ -22,13 +22,12 @@ Or to add a catalog to your site via code:
 More than one catalog can be added to a site, but typically there's only one,
 in the root folder.
 
-Once you've added a catalog, you can begin to add indexes to it.  As of this
-writing, there is no way to add indexes to a catalog using the SDI.  It must be
-done via code.
-
-The easiest way to do this is to use a combination of the
-:func:`~substanced.catalog.add_catalog_index` method of the Configurator and the
-:meth:`~substanced.catalog.Catalog.update_indexes` method of a catalog object.
+Once you've added a catalog, you can begin to add indexes to it.  You can add
+an index via the SDI by visiting the catalog and choosing an index type from
+the dropdown.  But another way to do this is to use a combination of the
+:func:`~substanced.catalog.add_catalog_index` method of the Configurator and
+the :meth:`~substanced.catalog.Catalog.update_indexes` method of a catalog
+object.
 
 :func:`substance.catalog.add_catalog_index` adds candidate indexes of a
 particular name, type, and category.  It doesn't actually add an index to a

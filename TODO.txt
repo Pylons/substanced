@@ -15,8 +15,6 @@ UI-Plus-Guts
 
 - Stamp created objects with created date info?
 
-- Allow indexes to be added-to/removed-from catalog service.
-
 - Allow reordering of resources in folder contents view when the folder is
   ordered.
 
