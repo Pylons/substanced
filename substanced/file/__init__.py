@@ -25,13 +25,16 @@ from ..form import FileUploadTempStore
 from ..schema import Schema
 from ..property import PropertySheet
 from ..interfaces import IFile
-from ..util import _make_name_validator
+from ..util import NameSchemaNode
+
+def context_is_a_file(context, request):
+    if request.registry.content.istype(context, 'File'):
+        return True
+
+file_name_node = NameSchemaNode(editing=context_is_a_file)
 
 class FilePropertiesSchema(Schema):
-    name = colander.SchemaNode(
-        colander.String(),
-        validator = _make_name_validator('File'),
-        )
+    name = file_name_node
     title = colander.SchemaNode(
         colander.String(),
         missing='',

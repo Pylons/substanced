@@ -156,6 +156,209 @@ class TestSearchCatalogView(unittest.TestCase):
         self.assertEqual(request.session['_f_error'],
                          ['Query failed (KeyError: name)'])
 
+class Test_content_is_an_index(unittest.TestCase):
+    def setUp(self):
+        testing.setUp()
+    def tearDown(self):
+        testing.tearDown()
+
+    def _callFUT(self, context, request):
+        from ..views import context_is_an_index
+        return context_is_an_index(context, request)
+    
+    def test_it_true(self):
+        request = testing.DummyRequest()
+        md = {'is_index':True}
+        request.registry.content = DummyContent(md)
+        context = testing.DummyResource()
+        self.assertEqual(self._callFUT(context, request), True)
+        
+    def test_it_false(self):
+        request = testing.DummyRequest()
+        md = {'is_index':False}
+        request.registry.content = DummyContent(md)
+        context = testing.DummyResource()
+        self.assertEqual(self._callFUT(context, request), False)
+
+class Test_AddIndexView(unittest.TestCase):
+    def setUp(self):
+        testing.setUp()
+    def tearDown(self):
+        testing.tearDown()
+
+    def _makeOne(self, context, request):
+        from ..views import _AddIndexView
+        return _AddIndexView(context, request)
+
+    def test_add_success_no_reindex(self):
+        context = testing.DummyResource()
+        request = testing.DummyRequest()
+        request.mgmt_path = lambda *arg: '/'
+        inst = self._makeOne(context, request)
+        index = testing.DummyResource()
+        inst.makeindex = lambda *arg: index
+        appstruct = {'name':'name', 'category':'category', 'reindex':False}
+        result = inst.add_success(appstruct)
+        self.assertEqual(result.location, '/')
+        self.assertEqual(context['name'], index)
+        self.assertEqual(index.sd_category, 'category')
+        
+    def test_add_success_with_reindex(self):
+        context = testing.DummyResource()
+        def reindex(indexes, registry):
+            self.assertEqual(indexes, ('name',))
+            registry.reindexed = True
+        context.reindex = reindex
+        request = testing.DummyRequest()
+        request.mgmt_path = lambda *arg: '/'
+        inst = self._makeOne(context, request)
+        index = testing.DummyResource()
+        inst.makeindex = lambda *arg: index
+        appstruct = {'name':'name', 'category':'category', 'reindex':True}
+        inst.add_success(appstruct)
+        self.assertEqual(request.registry.reindexed, True)
+
+    def test_makeindex(self):
+        context = testing.DummyResource()
+        request = testing.DummyRequest()
+        inst = self._makeOne(context, request)
+        inst.index_type_name = 'Foo Index'
+        appstruct = {'name':'name'}
+        index = testing.DummyResource()
+        content = DummyContent(index)
+        request.registry.content = content
+        result = inst.makeindex(appstruct, request.registry)
+        self.assertEqual(result, index)
+        self.assertEqual(content.type_name, 'Foo Index')
+        self.assertEqual(content.arg[0].method_name, 'name')
+
+    def test_title(self):
+        context = testing.DummyResource()
+        request = testing.DummyRequest()
+        inst = self._makeOne(context, request)
+        inst.index_type_name = 'Foo Index'
+        self.assertEqual(inst.title, 'Add Foo Index')
+
+class TestAddPathIndexView(unittest.TestCase):
+    def setUp(self):
+        testing.setUp()
+
+    def tearDown(self):
+        testing.tearDown()
+
+    def _makeOne(self, context, request):
+        from ..views import AddPathIndexView
+        return AddPathIndexView(context, request)
+
+    def test_makeindex(self):
+        context = testing.DummyResource()
+        request = testing.DummyRequest()
+        registry = request.registry
+        index = 'abc'
+        registry.content = DummyContent(index)
+        inst = self._makeOne(context, request)
+        result = inst.makeindex({}, request.registry)
+        self.assertEqual(registry.content.type_name, 'Path Index')
+        self.assertEqual(result, index)
+
+class TestAddAllowedIndexView(unittest.TestCase):
+    def setUp(self):
+        testing.setUp()
+
+    def tearDown(self):
+        testing.tearDown()
+
+    def _makeOne(self, context, request):
+        from ..views import AddAllowedIndexView
+        return AddAllowedIndexView(context, request)
+
+    def test_makeindex(self):
+        context = testing.DummyResource()
+        request = testing.DummyRequest()
+        registry = request.registry
+        index = 'abc'
+        registry.content = DummyContent(index)
+        inst = self._makeOne(context, request)
+        result = inst.makeindex({'permissions':()}, request.registry)
+        self.assertEqual(registry.content.type_name, 'Allowed Index')
+        self.assertEqual(result, index)
+
+class TestAddFacetIndexView(unittest.TestCase):
+    def setUp(self):
+        testing.setUp()
+
+    def tearDown(self):
+        testing.tearDown()
+
+    def _makeOne(self, context, request):
+        from ..views import AddFacetIndexView
+        return AddFacetIndexView(context, request)
+
+    def test_makeindex(self):
+        context = testing.DummyResource()
+        request = testing.DummyRequest()
+        registry = request.registry
+        index = 'abc'
+        registry.content = DummyContent(index)
+        inst = self._makeOne(context, request)
+        result = inst.makeindex({'facets':(), 'name':'name'}, request.registry)
+        self.assertEqual(registry.content.type_name, 'Facet Index')
+        self.assertEqual(result, index)
+
+class TestPermissionsSchemaNode(unittest.TestCase):
+    def setUp(self):
+        testing.setUp()
+
+    def tearDown(self):
+        testing.tearDown()
+        
+    def _makeOne(self):
+        from ..views import PermissionsSchemaNode
+        return PermissionsSchemaNode()
+
+    def test_widget(self):
+        request = testing.DummyRequest()
+        bindings = {'request':request}
+        inst = self._makeOne()
+        inst._get_all_permissions = lambda *arg: ['one', 'two']
+        inst.bindings = bindings
+        result = inst.widget
+        self.assertEqual(result.values, [('one', 'one'), ('two', 'two')])
+
+    def test_validator_invalid(self):
+        import colander
+        request = testing.DummyRequest()
+        bindings = {'request':request}
+        inst = self._makeOne()
+        inst._get_all_permissions = lambda *arg: ['one', 'two']
+        inst.bindings = bindings
+        self.assertRaises(colander.Invalid, inst.validator, None, ('nope',))
+
+    def test_validator_valid(self):
+        request = testing.DummyRequest()
+        bindings = {'request':request}
+        inst = self._makeOne()
+        inst._get_all_permissions = lambda *arg: ['one', 'two']
+        inst.bindings = bindings
+        self.assertEqual(inst.validator(None, ('one',)), None)
+
+    def test_schema_type(self):
+        inst = self._makeOne()
+        result = inst.schema_type()
+        self.assertEqual(result.__class__.__name__, 'Set')
+
+class DummyContent(object):
+    def __init__(self, result):
+        self.result = result
+    def metadata(self, context):
+        return self.result
+    def create(self, type_name, *arg, **kw):
+        self.type_name = type_name
+        self.arg = arg
+        self.kw = kw
+        return self.result
+    
+
 class DummyForm(object):
     def render(self, appstruct):
         return 'form'

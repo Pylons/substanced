@@ -298,10 +298,10 @@ class Test_merge_url_qs(unittest.TestCase):
         result = self._callFUT(url, a=1, b=2)
         self.assertEqual(result, 'http://example.com?a=1&b=2&c=3')
 
-class Test__make_name_validator(unittest.TestCase):
-    def _makeOne(self, content_type):
-        from . import _make_name_validator
-        return _make_name_validator(content_type)
+class TestNameSchemaNode(unittest.TestCase):
+    def _makeOne(self, **kw):
+        from . import NameSchemaNode
+        return NameSchemaNode(**kw)
 
     def setUp(self):
         testing.setUp()
@@ -309,55 +309,78 @@ class Test__make_name_validator(unittest.TestCase):
     def tearDown(self):
         testing.tearDown()
     
-    def _makeKw(self):
+    def _makeBindings(self):
         request = testing.DummyRequest()
         context = testing.DummyResource()
         return dict(request=request, context=context)
 
-    def test_it_not_adding_with_exception(self):
-        kw = self._makeKw()
-        kw['request'].registry.content = DummyContent(True)
-        node = object()
-        factory = self._makeOne('Document')
-        validator = factory(node, kw)
-        self.assertRaises(colander.Invalid, validator, node, 'abc')
+    def test_it_invalid_len(self):
+        bindings = self._makeBindings()
+        node = self._makeOne()
+        def check_name(value): pass
+        bindings['context'].check_name = check_name
+        bindings['request'].registry.content = DummyContent(True)
+        node.bindings = bindings
+        node.max_len = 1
+        self.assertRaises(colander.Invalid, node.validator, node, 'abc')
 
-    def test_it_not_adding_no_exception(self):
+    def test_it_invalid_check_name(self):
+        bindings = self._makeBindings()
+        node = self._makeOne()
+        def check_name(value):
+            self.assertEqual(value, 'abc')
+            raise ValueError('abc')
+        bindings['context'].check_name = check_name
+        bindings['request'].registry.content = DummyContent(True)
+        node.bindings = bindings
+        self.assertRaises(colander.Invalid, node.validator, node, 'abc')
+
+    def test_it_valid(self):
+        bindings = self._makeBindings()
+        node = self._makeOne()
+        def check_name(value): pass
+        bindings['context'].check_name = check_name
+        bindings['request'].registry.content = DummyContent(True)
+        node.bindings = bindings
+        self.assertEqual(node.validator(node, 'abc'), None)
+
+    def test_it_editing_True_invalid(self):
+        bindings = self._makeBindings()
         parent = testing.DummyResource()
         def check_name(value):
-            self.assertEqual(value, 'abc')
-            parent.checked = True
+            raise ValueError('foo')
         parent.check_name = check_name
-        kw = self._makeKw()
-        kw['request'].registry.content = DummyContent(True)
-        kw['context'].__parent__ = parent
-        node = object()
-        factory = self._makeOne('Document')
-        validator = factory(node, kw)
-        validator(node, 'abc')
-        self.assertTrue(parent.checked)
+        bindings['context'].__parent__ = parent
+        bindings['request'].registry.content = DummyContent(True)
+        node = self._makeOne(editing=True)
+        node.bindings = bindings
+        self.assertRaises(colander.Invalid, node.validator, node, 'abc')
 
-    def test_it_adding_with_exception(self):
-        kw = self._makeKw()
-        kw['request'].registry.content = DummyContent(False)
-        node = object()
-        factory = self._makeOne('Document')
-        validator = factory(node, kw)
-        self.assertRaises(colander.Invalid, validator, node, 'abc')
+    def test_it_editing_True_valid(self):
+        bindings = self._makeBindings()
+        parent = testing.DummyResource()
+        def check_name(value): pass
+        parent.check_name = check_name
+        bindings['context'].__parent__ = parent
+        bindings['request'].registry.content = DummyContent(True)
+        node = self._makeOne(editing=True)
+        node.bindings = bindings
+        self.assertEqual(node.validator(node, 'abc'), None)
 
-    def test_it_adding_no_exception(self):
-        kw = self._makeKw()
-        context = kw['context']
-        def check_name(value):
-            self.assertEqual(value, 'abc')
-            context.checked = True
-        kw['request'].registry.content = DummyContent(False)
-        context.check_name = check_name
-        node = object()
-        factory = self._makeOne('Document')
-        validator = factory(node, kw)
-        validator(node, 'abc')
-        self.assertTrue(context.checked)
+    def test_it_editing_is_callable(self):
+        bindings = self._makeBindings()
+        parent = testing.DummyResource()
+        def check_name(value): pass
+        parent.check_name = check_name
+        bindings['context'].__parent__ = parent
+        bindings['request'].registry.content = DummyContent(True)
+        def editing(context, request):
+            self.assertEqual(context, bindings['context'])
+            self.assertEqual(request, bindings['request'])
+            return True
+        node = self._makeOne(editing=editing)
+        node.bindings = bindings
+        self.assertEqual(node.validator(node, 'abc'), None)
 
 class Test_acquire(unittest.TestCase):
     def _callFUT(self, node, name, default=None):
@@ -396,7 +419,3 @@ class Test_coarse_datetime_repr(unittest.TestCase):
 class DummyContent(object):
     def __init__(self, result):
         self.result = result
-
-    def istype(self, *arg):
-        return self.result
-    

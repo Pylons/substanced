@@ -423,6 +423,8 @@ Other Helpers
 
 .. autofunction:: chunks
 
+.. autoclass:: NameSchemaNode
+
 :mod:`substanced.widget` API
 ----------------------------
 

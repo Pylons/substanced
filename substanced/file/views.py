@@ -8,12 +8,12 @@ from pyramid.response import Response
 
 from ..sdi import mgmt_view
 from ..form import FormView
-from ..util import _make_name_validator
 
 from . import (
     FilePropertiesSchema,
     FileUploadTempStore,
     file_upload_widget,
+    file_name_node,
     )
 
 from ..interfaces import (
@@ -54,9 +54,10 @@ def name_or_file(node, kw):
         if not struct['name']:
             filename = struct['file'].get('filename')
             if filename:
-                curried_name_validator = _make_name_validator('File')
-                real_name_validator = curried_name_validator(node, kw)
-                real_name_validator(node['file'], filename)
+                name_node = file_name_node.bind(
+                    context=kw['context'], request=kw['request']
+                    )
+                name_node.validator(node['file'], filename)
             else:
                 raise colander.Invalid(
                     node,

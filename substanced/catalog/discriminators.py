@@ -6,6 +6,8 @@ from pyramid.security import principals_allowed_by_permission
 from pyramid.compat import is_nonstr_iter
 from pyramid.threadlocal import get_current_registry
 
+from ..util import get_all_permissions
+
 _marker = object()
 
 def _get_interfaces(content):
@@ -42,20 +44,6 @@ def get_name(wrapper, default):
 class NoWay(object):
     pass
 
-def _get_all_permissions(registry):
-    # we cache the set of all permissions, because it's a bit of an expensive
-    # lookup
-    permissions = getattr(registry, '_allowed_discriminator_permissions', None)
-
-    if permissions is None:
-        intrs = registry.introspector.get_category('permissions')
-        if intrs is None:
-            intrs = []
-        permissions = [ intr['introspectable']['value'] for intr in intrs ]
-        registry._allowed_discriminator_permissions = permissions
-
-    return permissions
-
 class AllowedDiscriminator(object):
     def __init__(self, permissions=None):
         if permissions is not None and not is_nonstr_iter(permissions):
@@ -68,7 +56,7 @@ class AllowedDiscriminator(object):
 
         if permissions is None:
             registry = get_current_registry()
-            permissions = _get_all_permissions(registry)
+            permissions = get_all_permissions(registry)
 
         values = []
 

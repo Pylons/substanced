@@ -22,6 +22,7 @@ from pyramid.settings import asbool
 from pyramid.security import effective_principals
 from pyramid.interfaces import IRequest
 
+from ..content import content
 from ..objectmap import find_objectmap
 
 PATH_WITH_OPTIONS = re.compile(r'\[(.+?)\](.+?)$')
@@ -34,7 +35,13 @@ class ResolvingIndex(object):
         docids = query._apply(names)
         numdocs = len(docids)
         return hypatia.util.ResultSet(docids, numdocs, resolver)
-        
+
+@content(
+    'Path Index',
+    icon='icon-search',
+    add_view='add_path_index',
+    is_index=True,
+    )
 @implementer(hypatia.interfaces.IIndex)
 class PathIndex(ResolvingIndex, hypatia.util.BaseIndexMixin, Persistent):
     """ Uses the objectmap to apply a query to retrieve object identifiers at
@@ -158,6 +165,12 @@ class PathIndex(ResolvingIndex, hypatia.util.BaseIndexMixin, Persistent):
             val['include_origin'] = include_origin
         return hypatia.query.Eq(self, val)
 
+@content(
+    'Allowed Index',
+    icon='icon-search',
+    add_view='add_allowed_index',
+    is_index=True,
+    )
 class AllowedIndex(ResolvingIndex, hypatia.keyword.KeywordIndex):
     def allows(self, principals, permission='view'):
         """ ``principals`` may either be 1) a sequence of principal
@@ -171,15 +184,39 @@ class AllowedIndex(ResolvingIndex, hypatia.keyword.KeywordIndex):
         values = [(principal, permission) for principal in principals]
         return hypatia.query.Any(self, values)
 
+@content(
+    'Field Index',
+    icon='icon-search',
+    add_view='add_field_index',
+    is_index=True,
+    )
 class FieldIndex(ResolvingIndex, hypatia.field.FieldIndex):
     pass
 
+@content(
+    'Facet Index',
+    icon='icon-search',
+    add_view='add_facet_index',
+    is_index=True,
+    )
 class FacetIndex(ResolvingIndex, hypatia.facet.FacetIndex):
     pass
 
+@content(
+    'Keyword Index',
+    icon='icon-search',
+    add_view='add_keyword_index',
+    is_index=True,
+    )
 class KeywordIndex(ResolvingIndex, hypatia.keyword.KeywordIndex):
     pass
 
+@content(
+    'Text Index',
+    icon='icon-search',
+    add_view='add_text_index',
+    is_index=True,
+    )
 class TextIndex(ResolvingIndex, hypatia.text.TextIndex):
     pass
 

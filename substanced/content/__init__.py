@@ -7,8 +7,6 @@ from pyramid.threadlocal import get_current_registry
 
 import venusian
 
-from ..interfaces import IFolder
-
 from ..event import ContentCreated
 
 _marker = object()

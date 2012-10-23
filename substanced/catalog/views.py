@@ -1,5 +1,6 @@
 import colander
 import deform.widget
+import deform_bootstrap.widget
 
 from hypatia.interfaces import IIndex
 from hypatia.query import parse_query
@@ -14,6 +15,14 @@ from ..sdi import mgmt_view
 from ..form import FormView
 from ..schema import Schema
 from ..objectmap import find_objectmap
+from ..util import (
+    get_all_permissions,
+    NameSchemaNode,
+    )
+from .discriminators import (
+    AllowedDiscriminator,
+    CatalogViewDiscriminator,
+    )
 
 from . import logger
 
@@ -27,11 +36,164 @@ def add_catalog_service(context, request):
     context['catalog'] = catalog
     return HTTPFound(location=request.mgmt_path(context))
 
+def context_is_an_index(context, request):
+    md = request.registry.content.metadata(context)
+    return bool(md.get('is_index'))
+
+class AddIndexSchema(Schema):
+    name = NameSchemaNode(editing=context_is_an_index)
+    category = colander.SchemaNode(
+        colander.String(),
+        missing='',
+        )
+    reindex = colander.SchemaNode(
+        colander.Bool(),
+        default=True,
+        missing=False,
+        )
+
+class _AddIndexView(FormView):
+    schema = AddIndexSchema()
+    buttons = ('add',)
+    def add_success(self, appstruct):
+        registry = self.request.registry
+        name = appstruct['name']
+        index = self.makeindex(appstruct, registry)
+        self.context[name] = index
+        index.sd_category = appstruct['category']
+        if appstruct['reindex']:
+            self.context.reindex(indexes=(name,), registry=registry)
+        return HTTPFound(location=self.request.mgmt_path(self.context))
+
+    def makeindex(self, appstruct, registry):
+        name = appstruct['name']
+        discriminator = CatalogViewDiscriminator(name)
+        index = registry.content.create(self.index_type_name, discriminator)
+        return index
+
+    @property
+    def title(self):
+        return 'Add %s' % self.index_type_name
+
+@mgmt_view(
+    context=ICatalog,
+    name='add_path_index',
+    tab_condition=False,
+    permission='sdi.add-content',
+    renderer='substanced.sdi:templates/form.pt'
+    )
+class AddPathIndexView(_AddIndexView):
+    title = 'Add Path Index'
+    def makeindex(self, appstruct, registry):
+        index = registry.content.create('Path Index')
+        return index
+        
+@mgmt_view(
+    context=ICatalog,
+    name='add_field_index',
+    tab_condition=False,
+    permission='sdi.add-content',
+    renderer='substanced.sdi:templates/form.pt'
+    )
+class AddFieldIndexView(_AddIndexView):
+    index_type_name = 'Field Index'
+
+@mgmt_view(
+    context=ICatalog,
+    name='add_keyword_index',
+    tab_condition=False,
+    permission='sdi.add-content',
+    renderer='substanced.sdi:templates/form.pt'
+    )
+class AddKeywordIndexView(_AddIndexView):
+    index_type_name = 'Keyword Index'
+
+@mgmt_view(
+    context=ICatalog,
+    name='add_text_index',
+    tab_condition=False,
+    permission='sdi.add-content',
+    renderer='substanced.sdi:templates/form.pt'
+    )
+class AddTextIndexView(_AddIndexView):
+    index_type_name = 'Text Index'
+
+class PermissionsSchemaNode(colander.SchemaNode):
+    def schema_type(self): 
+        return deform.Set(allow_empty=True)
+
+    def _get_all_permissions(self, registry): # pragma: no cover (testing)
+        return get_all_permissions(registry)
+
+    @property
+    def widget(self):
+        request = self.bindings['request']
+        permissions = self._get_all_permissions(request.registry)
+        values = [(p, p) for p in permissions]
+        return deform_bootstrap.widget.ChosenMultipleWidget(values=values)
+
+    def validator(self, node, value):
+        request = self.bindings['request']
+        registry = request.registry
+        permissions = self._get_all_permissions(registry)
+        for perm in value:
+            if not perm in permissions:
+                raise colander.Invalid(
+                    node, 'Unknown permission %s' % value, value
+                    )
+
+class AddAllowedIndexSchema(AddIndexSchema):
+    permissions = PermissionsSchemaNode(missing=())
+
+@mgmt_view(
+    context=ICatalog,
+    name='add_allowed_index',
+    tab_condition=False,
+    permission='sdi.add-content',
+    renderer='substanced.sdi:templates/form.pt'
+    )
+class AddAllowedIndexView(_AddIndexView):
+    schema = AddAllowedIndexSchema()
+    title = 'Add Allowed Index'
+
+    def makeindex(self, appstruct, registry):
+        permissions = appstruct['permissions']
+        discriminator = AllowedDiscriminator(tuple(permissions))
+        index = registry.content.create('Allowed Index', discriminator)
+        return index
+        
+class Facets(colander.SequenceSchema):
+    facet = colander.SchemaNode(
+        colander.String(),
+        )
+
+class AddFacetIndexSchema(AddIndexSchema):
+    facets = Facets(missing=())
+
+@mgmt_view(
+    context=ICatalog,
+    name='add_facet_index',
+    tab_condition=False,
+    permission='sdi.add-content',
+    renderer='substanced.sdi:templates/form.pt'
+    )
+class AddFacetIndexView(_AddIndexView):
+    schema = AddFacetIndexSchema()
+    title = 'Add Facet Index'
+
+    def makeindex(self, appstruct, registry):
+        name = appstruct['name']
+        discriminator = CatalogViewDiscriminator(name)
+        facets = tuple(appstruct['facets'])
+        index = registry.content.create('Facet Index', discriminator, facets)
+        return index
+        
 @view_defaults(
     name='manage_catalog',
     context=ICatalog,
     renderer='templates/manage_catalog.pt',
-    permission='sdi.manage-catalog')
+    permission='sdi.manage-catalog'
+    )
 class ManageCatalog(object):
     def __init__(self, context, request):
         self.context = context
