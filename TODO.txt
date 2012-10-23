@@ -95,9 +95,12 @@ Docs
 
 - Explain ``after_create`` meta-argument to content.
 
-- Explain __sdi_deletable__, __sdi_addable__, __sdi_hidden__.
+- Explain __sdi_deletable__, __sdi_addable__, __sdi_hidden__, __sdi_columns__,
+  __sdi_buttons__.
 
 - Explain event listener decorators and add_content_subscriber.
+
+- Explain catalog web UI.
 
 - Narrative docs for reference properties.
 
