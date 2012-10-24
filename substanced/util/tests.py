@@ -409,7 +409,7 @@ class Test_coarse_datetime_repr(unittest.TestCase):
     def test_it(self):
         import calendar
         import datetime
-        d = datetime.datetime.now()
+        d = datetime.datetime.utcnow()
         result = self._callFUT(d)
         timetime = calendar.timegm(d.timetuple())
         val = int(timetime) // 100        

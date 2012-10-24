@@ -1,3 +1,4 @@
+import datetime
 import inspect
 
 from pyramid.compat import is_nonstr_iter
@@ -89,6 +90,9 @@ class ContentRegistry(object):
         """ Return all content types known my this registry as a sequence."""
         return list(self.content_types.keys())
 
+    def _utcnow(self): # broken out for testing
+        return datetime.datetime.utcnow()
+
     def create(self, content_type, *arg, **kw):
         """ Create an instance of ``content_type`` by calling its factory
         with ``*arg`` and ``**kw``.  If the meta of the content type has an
@@ -99,6 +103,7 @@ class ContentRegistry(object):
         created object."""
         factory = self.content_types[content_type]
         inst = factory(*arg, **kw)
+        inst.__created__ = self._utcnow()
         meta = self.meta[content_type].copy()
         aftercreate = meta.get('after_create')
         if aftercreate is not None:

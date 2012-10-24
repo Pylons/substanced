@@ -24,9 +24,12 @@ class TestContentRegistry(unittest.TestCase):
     def test_create(self):
         registry = DummyRegistry()
         inst = self._makeOne(registry)
-        inst.content_types['dummy'] = lambda a: a
+        inst._utcnow = lambda *a: 1
+        content = testing.DummyResource()
+        inst.content_types['dummy'] = lambda a: content
         inst.meta['dummy'] = {}
-        self.assertEqual(inst.create('dummy', 'a'), 'a')
+        self.assertEqual(inst.create('dummy', 'a'), content)
+        self.assertEqual(content.__created__, 1)
         self.assertTrue(registry.notified)
 
     def test_create_with_after_create_str(self):

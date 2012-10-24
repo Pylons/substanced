@@ -13,8 +13,6 @@ UI-Plus-Guts
 
 - Stamp created objects with creator information?
 
-- Stamp created objects with created date info?
-
 - Allow reordering of resources in folder contents view when the folder is
   ordered.
 
@@ -93,6 +91,8 @@ Docs
   example for the sole purpose of overriding the add view.
 
 - Explain ``after_create`` meta-argument to content.
+
+- Explain __created__ attribute.
 
 - Explain __sdi_deletable__, __sdi_addable__, __sdi_hidden__, __sdi_columns__,
   __sdi_buttons__.
