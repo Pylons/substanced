@@ -303,7 +303,8 @@ class PermissionsSchemaNode(colander.SchemaNode):
 class AllowedIndexSchema(IndexSchema):
     permissions = PermissionsSchemaNode(
         missing=(),
-        title='Permissions (any change will cause a reindex)',
+        title=('Permissions (any change will cause a reindex, '
+               'no permissions means index all permissions)'),
         )
 
 class AllowedIndexPropertySheet(PropertySheet):

@@ -194,7 +194,11 @@ class ObjectMap(Persistent):
         """ Remove an object from the object map give an object, an object id
         or a path tuple.  If ``references`` is True, also remove any
         references added via ``connect``, otherwise leave them there
-        (e.g. when moving an object)."""
+        (e.g. when moving an object).
+
+        Return a set of removed oids (including the oid related to the object
+        passed).
+        """
         if hasattr(obj_objectid_or_path_tuple, '__parent__'):
             path_tuple = resource_path_tuple(obj_objectid_or_path_tuple)
         elif isinstance(obj_objectid_or_path_tuple, (int, long)):

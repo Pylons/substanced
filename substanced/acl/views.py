@@ -7,8 +7,12 @@ from pyramid.security import (
 
 from ..content import (
     find_service,
+    find_services,
     )
-from ..catalog import is_catalogable
+from ..catalog import (
+    catalog_view_factory_for,
+    CatalogViewWrapper
+    )
 from ..objectmap import find_objectmap
 from ..sdi import (
     mgmt_view,
@@ -21,24 +25,12 @@ from ..util import (
 
 from . import NO_INHERIT
 
-def get_workflow(*arg, **kw):
-    return # XXX
-
-def get_security_states(*arg, **kw):
-    return [] # XXX
-
-def get_context_workflow(context):
-    """
-    If context is content and part of a workflow will return the workflow.
-    Otherwise returns None.
-    """
-    return
-
 @mgmt_view(name='acl_edit', permission='sdi.change-acls', 
            renderer='templates/acl.pt', tab_title='Security')
 def acl_edit_view(context, request):
     principal_service = find_service(context, 'principals')
     objectmap = find_objectmap(context)
+    registry = request.registry
 
     acl = original_acl = getattr(context, '__acl__', [])
     if acl and acl[-1] == NO_INHERIT:
@@ -117,44 +109,25 @@ def acl_edit_view(context, request):
             epilog = []
             request.flash_with_undo('ACL will inherit from parent')
 
-    elif 'form.security_state' in request.POST:
-        check_csrf_token(request)
-        new_state = request.POST['security_state']
-        if new_state != 'CUSTOM':
-            workflow = get_context_workflow(context)
-            if hasattr(context, '__custom_acl__'):
-                workflow.reset(context)
-                del context.__custom_acl__
-            workflow.transition_to_state(context, request, new_state)
-
     acl = acl + epilog
 
     if acl != original_acl:
-        context.__custom_acl__ = acl # added so we can find customized obs later
         context.__acl__ = acl
-        catalog = find_service(context, 'catalog')
-        if catalog is not None:
-            allowed = catalog.get('allowed')
-            if allowed is not None:
-                for node in postorder(context):
-                    if is_catalogable(node, request.registry):
-                        catalog.reindex_doc(oid_of(node), node)
 
-    workflow = get_context_workflow(context)
-    if workflow is not None:
-        if hasattr(context, '__custom_acl__'):
-            security_state = 'CUSTOM'
-            security_states = [s['name'] for s in
-                               workflow.state_info(context, request)]
-            security_states.insert(0, 'CUSTOM')
-        else:
-            security_state = workflow.state_of(context)
-            security_states = [s['name'] for s in
-                               get_security_states(workflow, context, request)]
+        catalogs = find_services(context, 'catalog')
 
-    else:
-        security_state = None
-        security_states = None
+        for catalog in catalogs:
+            # hellishly expensive
+            indexes = catalog.values()
+            for index in indexes:
+                if registry.content.istype(index, 'Allowed Index'):
+                    for node in postorder(context):
+                        cvf = catalog_view_factory_for(node, registry)
+                        if cvf:
+                            index.reindex_doc(
+                                oid_of(node),
+                                CatalogViewWrapper(node, cvf)
+                                )
 
     parent = context.__parent__
     parent_acl = []
@@ -209,7 +182,7 @@ def acl_edit_view(context, request):
         local_acl.append(new_ace)
 
     permissions = set(['-- ALL --'])
-    introspector = request.registry.introspector
+    introspector = registry.introspector
     for data in introspector.get_category('permissions'): 
         name = data['introspectable']['value']
         if name != NO_PERMISSION_REQUIRED:
@@ -228,8 +201,6 @@ def acl_edit_view(context, request):
         local_acl=local_acl,
         permissions=permissions,
         inheriting=inheriting,
-        security_state=security_state,
-        security_states=security_states,
         users=users,
         groups=groups,
         )

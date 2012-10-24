@@ -47,8 +47,9 @@ Guts-Only
 - Decide whether to split "manage contents" permissions out for folders into
   add, delete, rename.
 
-- ACL edit view currently retatalogs an object based on the presence or
-  absence of an "allowed" index.  This is wrong.
+- ACL edit view currently does a hellishly expensive recatalog of allowed
+  indexes when an ACL is changed.  Not sure if there's even a general way to
+  make this do less work, but could be.
 
 - Emit an ObjectMoving event rather than removed event with a moving flag,
   then an add event?
