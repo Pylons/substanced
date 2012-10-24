@@ -54,7 +54,7 @@ Guts-Only
 - Emit an ObjectMoving event rather than removed event with a moving flag,
   then an add event?
 
-- Undo of catalog reindex doesnt?
+- Undo of catalog reindex doesnt?  Turned off for now.
 
 - Refactor ACL view.
 
@@ -71,8 +71,6 @@ Guts-Only
 - Fix ``Batch`` such that seqlen is a maximum.  Rationale: the sequence that
   the batch receives may be smaller than seqlen due to hidden objects in
   folder contents view.
-
-- Generalize name validator.
 
 Nice-to-Have Features
 ---------------------
