@@ -3,6 +3,8 @@ from pyramid.httpexceptions import (
     HTTPFound
     )
 
+from pyramid.session import check_csrf_token
+
 from pyramid.security import (
     remember,
     forget,
@@ -12,7 +14,6 @@ from . import (
     mgmt_view,
     sdi_mgmt_views,
     sdi_add_views,
-    check_csrf_token,
     )
 
 import json

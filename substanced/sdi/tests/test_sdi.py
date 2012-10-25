@@ -1,21 +1,6 @@
 import unittest
 from pyramid import testing
 
-class check_csrf_token(unittest.TestCase):
-    def _callFUT(self, request, token):
-        from .. import check_csrf_token
-        return check_csrf_token(request, token)
-
-    def test_success(self):
-        request = testing.DummyRequest()
-        request.params['csrf_token'] = request.session.get_csrf_token()
-        self.assertEqual(self._callFUT(request, 'csrf_token'), None)
-
-    def test_failure(self):
-        from pyramid.httpexceptions import HTTPBadRequest
-        request = testing.DummyRequest()
-        self.assertRaises(HTTPBadRequest, self._callFUT, request, 'csrf_token')
-
 class Test_add_mgmt_view(unittest.TestCase):
     def _callFUT(self, config, **kw):
         from .. import add_mgmt_view
@@ -900,33 +885,6 @@ class Test_get_user(unittest.TestCase):
         context.__objectmap__ = objectmap
         request.context = context
         self.assertEqual(self._callFUT(request), 'foo')
-
-class Test_CheckCSRFTokenPredicate(unittest.TestCase):
-    def _makeOne(self, val, config):
-        from .. import _CheckCSRFTokenPredicate
-        return _CheckCSRFTokenPredicate(val, config)
-
-    def test_text(self):
-        inst = self._makeOne(True, None)
-        self.assertEqual(inst.text(), 'check_csrf = True')
-
-    def test_phash(self):
-        inst = self._makeOne(True, None)
-        self.assertEqual(inst.phash(), 'check_csrf = True')
-        
-    def test_it_call_val_True(self):
-        from pyramid.httpexceptions import HTTPBadRequest
-        inst = self._makeOne(True, None)
-        request = testing.DummyRequest()
-        self.assertRaises(HTTPBadRequest, inst, None, request)
-        request = testing.DummyRequest()
-        request.params['csrf_token'] = request.session.get_csrf_token()
-        self.assertTrue(inst(None, request))
-
-    def test_it_call_val_False(self):
-        inst = self._makeOne(False, None)
-        request = testing.DummyRequest()
-        self.assertTrue(inst(None, request))
 
 class Test_PhysicalPathPredicate(unittest.TestCase):
     def _makeOne(self, val, config):

@@ -11,7 +11,6 @@ import venusian
 from pyramid.authentication import SessionAuthenticationPolicy
 from pyramid.authorization import ACLAuthorizationPolicy
 from pyramid.exceptions import ConfigurationError
-from pyramid.httpexceptions import HTTPBadRequest
 from pyramid.request import Request
 from pyramid.security import (
     authenticated_userid,
@@ -603,29 +602,6 @@ def get_user(request):
     objectmap = find_objectmap(request.context)
     return objectmap.object_for(userid)
 
-# XXX check_csrf_token and _CheckCSRFTokenPredicate can be removed once we
-# publish Pyramid 1.4a2 (it has analogues of both)
-
-def check_csrf_token(request, token='csrf_token'):
-    """ Check the CSRF token in the request's session against the value in
-    ``request.params.get(token)``"""
-    if request.params.get(token) != request.session.get_csrf_token():
-        raise HTTPBadRequest('incorrect CSRF token')
-
-class _CheckCSRFTokenPredicate(object):
-    def __init__(self, val, config):
-        self.val = bool(val)
-
-    def text(self):
-        return 'check_csrf = %s' % (self.val,)
-
-    phash = text
-
-    def __call__(self, context, request):
-        if self.val:
-            check_csrf_token(request)
-        return True
-
 class _PhysicalPathPredicate(object):
     def __init__(self, val, config):
         if isinstance(val, basestring):
@@ -642,7 +618,6 @@ class _PhysicalPathPredicate(object):
         return resource_path_tuple(context) == self.val
 
 def includeme(config): # pragma: no cover
-    config.add_view_predicate('check_csrf', _CheckCSRFTokenPredicate)
     config.add_view_predicate('physical_path', _PhysicalPathPredicate)
     config.add_directive('add_mgmt_view', add_mgmt_view, action_wrap=False)
     YEAR = 86400 * 365

@@ -5,6 +5,8 @@ from pyramid.security import (
     Authenticated,
     )
 
+from pyramid.session import check_csrf_token
+
 from ..content import (
     find_service,
     find_services,
@@ -14,10 +16,7 @@ from ..catalog import (
     CatalogViewWrapper
     )
 from ..objectmap import find_objectmap
-from ..sdi import (
-    mgmt_view,
-    check_csrf_token,
-    )
+from ..sdi import mgmt_view
 from ..util import (
     postorder,
     oid_of,
