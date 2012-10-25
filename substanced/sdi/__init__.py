@@ -404,6 +404,9 @@ def sdi_folder_contents(folder, request):
         request.session.flash('Just did what button1 does')
         return HTTPFound(request.mgmt_path(context, '@@contents'))
 
+    Note that context has to be IFolder for this to work. If you need to
+    restrict a button to some specific list of content types, the Pyramid
+    ``content_type`` predicate can be used.
     """
     can_manage = has_permission('sdi.manage-contents', folder, request)
     sd_columns = getattr(folder, '__sdi_columns__', default_sdi_columns)
