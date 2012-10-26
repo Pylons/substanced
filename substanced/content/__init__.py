@@ -387,7 +387,11 @@ class _ContentTypePredicate(object):
     phash = text
 
     def __call__(self, context, request):
-        return self.registry.content.istype(context, self.val)
+        cregistry =  getattr(self.registry, 'content', None)
+        # include() might not have been called
+        if cregistry is not None:
+            return cregistry.istype(context, self.val)
+        return False
 
 def include(config): # pragma: no cover
     config.registry.content = ContentRegistry(config.registry)

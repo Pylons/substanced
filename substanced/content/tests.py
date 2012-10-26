@@ -338,7 +338,15 @@ class Test_ContentTypePredicate(unittest.TestCase):
         context = Dummy()
         result = inst(context, None)
         self.assertFalse(result)
-        
+
+    def test___call___no_cregistry_False(self):
+        config = self._makeConfig(False)
+        del config.registry.content
+        inst = self._makeOne('abc', config)
+        context = Dummy()
+        result = inst(context, None)
+        self.assertFalse(result)
+
     def test_text(self):
         config = self._makeConfig(True)
         inst = self._makeOne('abc', config)
