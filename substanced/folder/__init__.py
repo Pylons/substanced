@@ -595,5 +595,7 @@ class RandomAutoNamingFolder(Folder, _AutoNamingFolder):
             if not name in self:
                 return name
 
-def includeme(config): # pragma: no cover
+def scan(config): # pragma: no cover
     config.scan('.')
+
+includeme = scan

@@ -166,7 +166,9 @@ class _ContentTypePredicate(object):
         # predicate or as a content event predicate.  (yes, it's lame).
         return self.registry.content.istype(event.object, self.val)
     
-def includeme(config): # pragma: no cover
+def include(config): # pragma: no cover
     config.add_directive('add_content_subscriber', add_content_subscriber)
     config.add_subscriber_predicate('content_type', _ContentTypePredicate)
-    
+
+includeme = include
+

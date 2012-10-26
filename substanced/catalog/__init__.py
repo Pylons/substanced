@@ -522,19 +522,6 @@ def path_index_factory(name, category, **kw):
     index.sd_category = category
     return index
 
-def includeme(config): # pragma: no cover
-    config.add_view_predicate('catalogable', CatalogablePredicate)
-    config.add_directive('add_catalog_index_factory', add_catalog_index_factory)
-    config.add_directive('add_catalog_index', add_catalog_index)
-    config.add_catalog_index_factory('text', text_index_factory)
-    config.add_catalog_index_factory('field', field_index_factory)
-    config.add_catalog_index_factory('facet', facet_index_factory)
-    config.add_catalog_index_factory('keyword', keyword_index_factory)
-    config.add_catalog_index_factory('path', path_index_factory)
-    config.add_catalog_index_factory('allowed', allowed_index_factory)
-    add_system_indexes(config)
-    config.scan('.')
-
 def add_system_indexes(config):
     """ Add the default set of Substance D indexes in the ``system`` category:
 
@@ -590,3 +577,22 @@ def add_system_indexes(config):
         discriminator=AllowedDiscriminator(),
         )
     config.add_permission('view') # for allowed index .allows() default value
+
+def include(config): # pragma: no cover
+    config.add_view_predicate('catalogable', CatalogablePredicate)
+    config.add_directive('add_catalog_index_factory', add_catalog_index_factory)
+    config.add_directive('add_catalog_index', add_catalog_index)
+    config.add_catalog_index_factory('text', text_index_factory)
+    config.add_catalog_index_factory('field', field_index_factory)
+    config.add_catalog_index_factory('facet', facet_index_factory)
+    config.add_catalog_index_factory('keyword', keyword_index_factory)
+    config.add_catalog_index_factory('path', path_index_factory)
+    config.add_catalog_index_factory('allowed', allowed_index_factory)
+    add_system_indexes(config)
+
+def scan(config): # pragma: no cover
+    config.scan('.')
+
+def includeme(config): # pragma: no cover
+    config.include(include)
+    config.include(scan)

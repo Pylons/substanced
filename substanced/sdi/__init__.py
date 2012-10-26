@@ -620,7 +620,7 @@ class _PhysicalPathPredicate(object):
     def __call__(self, context, request):
         return resource_path_tuple(context) == self.val
 
-def includeme(config): # pragma: no cover
+def include(config): # pragma: no cover
     config.add_view_predicate('physical_path', _PhysicalPathPredicate)
     config.add_directive('add_mgmt_view', add_mgmt_view, action_wrap=False)
     YEAR = 86400 * 365
@@ -647,5 +647,10 @@ def includeme(config): # pragma: no cover
     config.set_authentication_policy(authn_policy)
     config.set_authorization_policy(authz_policy)
     config.add_permission('sdi.edit-properties') # used by property machinery
+
+def scan(config): # pragma: no cover
     config.scan('.')
 
+def includeme(config): # pragma: no cover
+    config.include(include)
+    config.include(scan)

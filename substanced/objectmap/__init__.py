@@ -865,6 +865,7 @@ def find_objectmap(context):
     ``context``"""
     return acquire(context, '__objectmap__')
             
-def includeme(config): # pragma: no cover
+def scan(config): # pragma: no cover
     config.scan('.')
-    
+
+includeme = scan

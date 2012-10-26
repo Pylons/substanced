@@ -69,7 +69,7 @@ class WidgetRendererFactory(object):
         else:
             return self.loader.load(template_name + '.pt')
 
-def includeme(config): # pragma: no cover
+def include(config): # pragma: no cover
     # specify both deform and deform_bootstrap templates as "fallback"
     # locations; assume user-supplied templates will be specified using asset
     # specs instead.
@@ -78,3 +78,5 @@ def includeme(config): # pragma: no cover
     search_path = (deform_bootstrap_dir, deform_dir)
     renderer = WidgetRendererFactory(search_path)
     deform.Form.set_default_renderer(renderer)
+
+includeme = include

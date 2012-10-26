@@ -246,5 +246,7 @@ class File(Persistent):
         the file"""
         return os.stat(self.blob.committed()).st_size
 
-def includeme(config): # pragma: no cover
+def scan(config): # pragma: no cover
     config.scan('.')
+
+includeme = scan

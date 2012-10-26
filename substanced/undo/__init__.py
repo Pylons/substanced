@@ -60,7 +60,14 @@ def undo_one(request):
             request.session.flash(msg, 'error')
     return HTTPFound(request.referrer or request.mgmt_path(request.context))
             
-def includeme(config): # pragma: no cover
+def include(config): # pragma: no cover
     config.add_request_method(FlashUndo, name='flash_with_undo', reify=True)
+
+def scan(config): # pragma: no cover
     config.scan('.')
+
+def includeme(config): # pragma: no cover
+    config.include(include)
+    config.include(scan)
+    
     

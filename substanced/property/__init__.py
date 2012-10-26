@@ -145,7 +145,12 @@ class _PropertiedPredicate(object):
     def __call__(self, context, request):
         return self.is_propertied(context, self.registry) == self.val
 
-def includeme(config): # pragma: no cover
+def include(config): # pragma: no cover
     config.add_view_predicate('propertied', _PropertiedPredicate)
+
+def scan(config): # pragma: no cover
     config.scan('.')
-    
+
+def includeme(config): # pragma: no cover
+    config.include(include)
+    config.include(scan)
