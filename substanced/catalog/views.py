@@ -12,9 +12,12 @@ from ..interfaces import ICatalog, IFolder
 
 from ..sdi import mgmt_view
 from ..form import FormView
-from ..schema import Schema
+from ..schema import (
+    Schema,
+    NameSchemaNode,
+    )
+    
 from ..objectmap import find_objectmap
-from ..util import NameSchemaNode
 
 from .discriminators import (
     AllowedDiscriminator,

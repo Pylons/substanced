@@ -381,6 +381,8 @@ Other Helpers
 .. autoclass:: Schema
    :members:
 
+.. autoclass:: NameSchemaNode
+
 :mod:`substanced.sdi` API
 ----------------------------
 
@@ -422,8 +424,6 @@ Other Helpers
 .. autofunction:: merge_url_qs
 
 .. autofunction:: chunks
-
-.. autoclass:: NameSchemaNode
 
 :mod:`substanced.widget` API
 ----------------------------

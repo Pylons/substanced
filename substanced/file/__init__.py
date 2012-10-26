@@ -22,10 +22,12 @@ import deform.schema
 from ..content import content
 from ..util import chunks
 from ..form import FileUploadTempStore
-from ..schema import Schema
+from ..schema import (
+    Schema,
+    NameSchemaNode,
+    )
 from ..property import PropertySheet
 from ..interfaces import IFile
-from ..util import NameSchemaNode
 
 def context_is_a_file(context, request):
     if request.registry.content.istype(context, 'File'):
