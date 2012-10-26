@@ -85,11 +85,14 @@ class _FolderEventSubscriber(_Subscriber):
         self.predicates = predicates
 
     def register(self, scanner, name, wrapped):
-        scanner.config.add_content_subscriber(
-            wrapped,
-            [self.event, self.obj, self.container],
-            **self.predicates
-            )
+        add_content_subscriber = getattr(
+            scanner.config, 'add_content_subscriber', None)
+        if add_content_subscriber is not None:
+            add_content_subscriber(
+                wrapped,
+                [self.event, self.obj, self.container],
+                **self.predicates
+                )
 
 # content events have no container associated
 
@@ -101,11 +104,14 @@ class _ContentEventSubscriber(_Subscriber):
         self.predicates = predicates
 
     def register(self, scanner, name, wrapped):
-        scanner.config.add_content_subscriber(
-            wrapped,
-            [self.event, self.obj],
-            **self.predicates
-            )
+        add_content_subscriber = getattr(
+            scanner.config, 'add_content_subscriber', None)
+        if add_content_subscriber is not None:
+            add_content_subscriber(
+                wrapped,
+                [self.event, self.obj],
+                **self.predicates
+                )
 
 class subscribe_added(_FolderEventSubscriber):
     """ Decorator for registering an object added event subscriber

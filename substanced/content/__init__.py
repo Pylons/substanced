@@ -175,12 +175,15 @@ class content(object):
     def __call__(self, wrapped):
         def callback(context, name, ob):
             config = context.config.with_package(info.module)
-            config.add_content_type(
-                self.content_type,
-                wrapped,
-                factory_type=self.factory_type,
-                **self.meta
-                )
+            add_content_type = getattr(config, 'add_content_type', None)
+            # might not have been included
+            if add_content_type is not None:
+                add_content_type(
+                    self.content_type,
+                    wrapped,
+                    factory_type=self.factory_type,
+                    **self.meta
+                    )
         info = self.venusian.attach(wrapped, callback, category='substanced')
         self.meta['_info'] = info.codeinfo # fbo "action_method"
         return wrapped
