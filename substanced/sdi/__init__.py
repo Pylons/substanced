@@ -160,7 +160,10 @@ class mgmt_view(object):
 
         def callback(context, name, ob):
             config = context.config.with_package(info.module)
-            config.add_mgmt_view(view=ob, **settings)
+            # was "substanced.sdi" included?
+            add_mgmt_view = getattr(config, 'add_mgmt_view', None)
+            if add_mgmt_view is not None: 
+                add_mgmt_view(view=ob, **settings)
 
         info = self.venusian.attach(wrapped, callback, category='substanced')
 
@@ -605,29 +608,13 @@ def get_user(request):
     objectmap = find_objectmap(request.context)
     return objectmap.object_for(userid)
 
-class _PhysicalPathPredicate(object):
-    def __init__(self, val, config):
-        if isinstance(val, basestring):
-            val = tuple(filter(None, val.split('/')))
-            val = ('',) + val
-        self.val = tuple(val)
-
-    def text(self):
-        return 'physical_path = %s' % (self.val,)
-
-    phash = text
-
-    def __call__(self, context, request):
-        return resource_path_tuple(context) == self.val
-
 def includeme(config): # pragma: no cover
-    config.add_view_predicate('physical_path', _PhysicalPathPredicate)
-    config.add_directive('add_mgmt_view', add_mgmt_view, action_wrap=False)
+    settings = config.registry.settings
     YEAR = 86400 * 365
+    config.add_directive('add_mgmt_view', add_mgmt_view, action_wrap=False)
     config.add_static_view('deformstatic', 'deform:static', cache_max_age=YEAR)
     config.add_static_view('sdistatic', 'substanced.sdi:static',
                            cache_max_age=YEAR)
-    settings = config.registry.settings
     manage_prefix = settings.get('substanced.manage_prefix', '/manage')
     manage_pattern = manage_prefix + '*traverse'
     config.add_route(MANAGE_ROUTE_NAME, manage_pattern)
@@ -635,7 +622,7 @@ def includeme(config): # pragma: no cover
     config.add_request_method(mgmt_url)
     config.add_request_method(get_user, name='user', reify=True)
     config.include('deform_bootstrap')
-    secret = config.registry.settings.get('substanced.secret')
+    secret = settings.get('substanced.secret')
     if secret is None:
         raise ConfigurationError(
             'You must set a substanced.secret key in your .ini file')
