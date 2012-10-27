@@ -10,7 +10,7 @@ from .. import mgmt_view
 @view_defaults(
     physical_path='/',
     name='manage_db',
-    renderer='templates/manage_db.pt',
+    renderer='templates/db.pt',
     permission='sdi.manage-database'
     )
 class ManageDatabase(object):
