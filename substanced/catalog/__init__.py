@@ -2,8 +2,6 @@ import logging
 
 import transaction
 
-#import venusian
-
 import BTrees
 
 from zope.interface import implementer
@@ -29,7 +27,6 @@ from ..content import service
 from ..folder import Folder
 from ..objectmap import find_objectmap
 from ..util import oid_of
-from ..sdi import default_sdi_buttons
 
 logger = logging.getLogger(__name__) # API
 
@@ -67,6 +64,7 @@ class Catalog(Folder):
 
     def __sdi_buttons__(self, context, request):
         """ Show a reindex button """
+        from ..sdi import default_sdi_buttons
         buttons = default_sdi_buttons(context, request)
         buttons.insert(
             0,
@@ -355,55 +353,6 @@ def catalog_view_factory_for(resource, registry=None):
 def is_catalogable(resource, registry=None):
     return bool(catalog_view_factory_for(resource, registry))
 
-class CatalogablePredicate(object):
-    is_catalogable = staticmethod(is_catalogable) # for testing
-    
-    def __init__(self, val, config):
-        self.val = bool(val)
-        self.registry = config.registry
-
-    def text(self):
-        return 'catalogable = %s' % self.val
-
-    phash = text
-
-    def __call__(self, context, request):
-        return self.is_catalogable(context, self.registry) == self.val
-
-# reenable once we need this
-# 
-# class indexed(object):
-#     """ A method decorator which calls 
-#     :func:`substanced.catalog.add_catalog_index` when scanned, using the
-#     ``factory_name`` and ``factory_args`` passed, where the index's
-#     name is the name of the method being wrapped. """
-
-#     venusian = venusian # for testing
-
-#     def __init__(self, factory_name, category, **factory_args):
-#         self.category = category
-#         self.factory_name = factory_name
-#         self.factory_args = factory_args
-
-#     def __call__(self, wrapped):
-#         index_name = wrapped.__name__
-
-#         factory_args = self.factory_args.copy()
-
-#         def callback(context, name, ob):
-#             config = context.config.with_package(info.module)
-#             factory_args['_info'] = info.codeinfo # FBO action_method
-#             config.add_catalog_index(
-#                 index_name,
-#                 self.factory_name,
-#                 self.category,
-#                 **factory_args
-#                 )
-
-#         info = self.venusian.attach(wrapped, callback, category='substanced')
-
-#         return wrapped        
-
 def get_index_factories(registry):
     factories = getattr(registry, 'sd_index_factories', None)
     if factories is None:
@@ -578,8 +527,23 @@ def add_system_indexes(config):
         )
     config.add_permission('view') # for allowed index .allows() default value
 
+class _CatalogablePredicate(object):
+    is_catalogable = staticmethod(is_catalogable) # for testing
+    
+    def __init__(self, val, config):
+        self.val = bool(val)
+        self.registry = config.registry
+
+    def text(self):
+        return 'catalogable = %s' % self.val
+
+    phash = text
+
+    def __call__(self, context, request):
+        return self.is_catalogable(context, self.registry) == self.val
+
 def include(config): # pragma: no cover
-    config.add_view_predicate('catalogable', CatalogablePredicate)
+    config.add_view_predicate('catalogable', _CatalogablePredicate)
     config.add_directive('add_catalog_index_factory', add_catalog_index_factory)
     config.add_directive('add_catalog_index', add_catalog_index)
     config.add_catalog_index_factory('text', text_index_factory)

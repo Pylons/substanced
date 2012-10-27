@@ -522,34 +522,6 @@ class TestCatalogViewWrapper(unittest.TestCase):
         self.assertEqual(inst.content, content)
         self.assertEqual(inst.view_factory, view_factory)
 
-class TestCatalogablePredicate(unittest.TestCase):
-    def _makeOne(self, val, config):
-        from .. import CatalogablePredicate
-        return CatalogablePredicate(val, config)
-
-    def test_text(self):
-        config = Dummy()
-        config.registry = Dummy()
-        inst = self._makeOne(True, config)
-        self.assertEqual(inst.text(), 'catalogable = True')
-
-    def test_phash(self):
-        config = Dummy()
-        config.registry = Dummy()
-        inst = self._makeOne(True, config)
-        self.assertEqual(inst.phash(), 'catalogable = True')
-
-    def test__call__(self):
-        config = Dummy()
-        config.registry = Dummy()
-        inst = self._makeOne(True, config)
-        def is_catalogable(context, registry):
-            self.assertEqual(context, None)
-            self.assertEqual(registry, config.registry)
-            return True
-        inst.is_catalogable = is_catalogable
-        self.assertEqual(inst(None, None), True)
-
 class Test_add_catalog_index_factory(unittest.TestCase):
     def _callFUT(self, config, name, factory):
         from .. import add_catalog_index_factory
@@ -737,6 +709,35 @@ class Test_add_system_indexes(unittest.TestCase):
             config.indexes,
             ['path', 'name', 'oid', 'interfaces', 'containment', 'allowed']
             )
+
+class Test_CatalogablePredicate(unittest.TestCase):
+    def _makeOne(self, val, config):
+        from .. import _CatalogablePredicate
+        return _CatalogablePredicate(val, config)
+
+    def test_text(self):
+        config = Dummy()
+        config.registry = Dummy()
+        inst = self._makeOne(True, config)
+        self.assertEqual(inst.text(), 'catalogable = True')
+
+    def test_phash(self):
+        config = Dummy()
+        config.registry = Dummy()
+        inst = self._makeOne(True, config)
+        self.assertEqual(inst.phash(), 'catalogable = True')
+
+    def test__call__(self):
+        config = Dummy()
+        config.registry = Dummy()
+        inst = self._makeOne(True, config)
+        def is_catalogable(context, registry):
+            self.assertEqual(context, None)
+            self.assertEqual(registry, config.registry)
+            return True
+        inst.is_catalogable = is_catalogable
+        self.assertEqual(inst(None, None), True)
+
 
 class DummyIntrospectable(dict):
     def __init__(self, *arg, **kw):
