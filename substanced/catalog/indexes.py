@@ -6,8 +6,6 @@ from persistent import Persistent
 from zope.interface import implementer
 
 import colander
-import deform
-import deform_bootstrap.widget
 
 import hypatia.query
 import hypatia.interfaces
@@ -17,20 +15,22 @@ import hypatia.keyword
 import hypatia.text
 import hypatia.util
 
-from pyramid.traversal import resource_path_tuple
 from pyramid.compat import (
     url_unquote_text,
     is_nonstr_iter,
     )
 from pyramid.settings import asbool
 from pyramid.security import effective_principals
+from pyramid.traversal import resource_path_tuple
 from pyramid.interfaces import IRequest
 
 from ..content import content
 from ..objectmap import find_objectmap
-from ..schema import Schema
 from ..property import PropertySheet
-from ..util import get_all_permissions
+from ..schema import (
+    Schema,
+    PermissionsSchemaNode,
+    )
 
 from .discriminators import AllowedDiscriminator
 
@@ -274,31 +274,6 @@ class FacetIndexPropertySheet(PropertySheet):
     )
 class FacetIndex(ResolvingIndex, hypatia.facet.FacetIndex):
     pass
-
-class PermissionsSchemaNode(colander.SchemaNode):
-    def schema_type(self): 
-        return deform.Set(allow_empty=True)
-
-    def _get_all_permissions(self, registry): # pragma: no cover (testing)
-        return get_all_permissions(registry)
-
-    @property
-    def widget(self):
-        request = self.bindings['request']
-        permissions = self._get_all_permissions(request.registry)
-        values = [(p, p) for p in permissions]
-        return deform_bootstrap.widget.ChosenMultipleWidget(values=values)
-
-    def validator(self, node, value):
-        request = self.bindings['request']
-        registry = request.registry
-        permissions = self._get_all_permissions(registry)
-        for perm in value:
-            if not perm in permissions:
-                raise colander.Invalid(
-                    node, 'Unknown permission %s' % value, value
-                    )
-
 
 class AllowedIndexSchema(IndexSchema):
     permissions = PermissionsSchemaNode(

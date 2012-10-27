@@ -265,48 +265,6 @@ class TestAllowedIndex(unittest.TestCase):
         q = index.allows('bob', 'edit')
         self.assertEqual(q._value, [('bob', 'edit')])
 
-class TestPermissionsSchemaNode(unittest.TestCase):
-    def setUp(self):
-        testing.setUp()
-
-    def tearDown(self):
-        testing.tearDown()
-        
-    def _makeOne(self):
-        from ..indexes import PermissionsSchemaNode
-        return PermissionsSchemaNode()
-
-    def test_widget(self):
-        request = testing.DummyRequest()
-        bindings = {'request':request}
-        inst = self._makeOne()
-        inst._get_all_permissions = lambda *arg: ['one', 'two']
-        inst.bindings = bindings
-        result = inst.widget
-        self.assertEqual(result.values, [('one', 'one'), ('two', 'two')])
-
-    def test_validator_invalid(self):
-        import colander
-        request = testing.DummyRequest()
-        bindings = {'request':request}
-        inst = self._makeOne()
-        inst._get_all_permissions = lambda *arg: ['one', 'two']
-        inst.bindings = bindings
-        self.assertRaises(colander.Invalid, inst.validator, None, ('nope',))
-
-    def test_validator_valid(self):
-        request = testing.DummyRequest()
-        bindings = {'request':request}
-        inst = self._makeOne()
-        inst._get_all_permissions = lambda *arg: ['one', 'two']
-        inst.bindings = bindings
-        self.assertEqual(inst.validator(None, ('one',)), None)
-
-    def test_schema_type(self):
-        inst = self._makeOne()
-        result = inst.schema_type()
-        self.assertEqual(result.__class__.__name__, 'Set')
-
 class TestIndexPropertySheet(unittest.TestCase):
     def _makeOne(self, context, request):
         from ..indexes import IndexPropertySheet

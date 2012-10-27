@@ -387,6 +387,8 @@ Other Helpers
 
 .. autoclass:: NameSchemaNode
 
+.. autoclass:: PermissionsSchemaNode
+
 :mod:`substanced.sdi` API
 ----------------------------
 

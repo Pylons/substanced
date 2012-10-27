@@ -1,5 +1,8 @@
 import colander
 import deform.widget
+import deform_bootstrap.widget
+
+from ..util import get_all_permissions
 
 from pyramid.i18n import TranslationStringFactory
 
@@ -126,4 +129,32 @@ class NameSchemaNode(colander.SchemaNode):
                 'Length of name must be %s characters or fewer' % self.max_len,
                 value
                 )
+
+class PermissionsSchemaNode(colander.SchemaNode):
+    """ A SchemaNode which represents a set of permissions; uses a widget which
+    collects all permissions from the introspection system.  Deserializes to a
+    set."""
+    def schema_type(self): 
+        return deform.Set(allow_empty=True)
+
+    def _get_all_permissions(self, registry): # pragma: no cover (testing)
+        return get_all_permissions(registry)
+
+    @property
+    def widget(self):
+        request = self.bindings['request']
+        permissions = self._get_all_permissions(request.registry)
+        values = [(p, p) for p in permissions]
+        return deform_bootstrap.widget.ChosenMultipleWidget(values=values)
+
+    def validator(self, node, value):
+        request = self.bindings['request']
+        registry = request.registry
+        permissions = self._get_all_permissions(registry)
+        for perm in value:
+            if not perm in permissions:
+                raise colander.Invalid(
+                    node, 'Unknown permission %s' % value, value
+                    )
+
 
