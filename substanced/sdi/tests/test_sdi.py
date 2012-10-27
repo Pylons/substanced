@@ -886,6 +886,63 @@ class Test_get_user(unittest.TestCase):
         request.context = context
         self.assertEqual(self._callFUT(request), 'foo')
 
+class Test_is_propertied(unittest.TestCase):
+    def setUp(self):
+        self.config = testing.setUp()
+
+    def tearDown(self):
+        testing.tearDown()
+
+    def _callFUT(self, resource, registry=None):
+        from .. import is_propertied
+        return is_propertied(resource, registry)
+
+    def test_no_registry_passed(self):
+        resource = Dummy()
+        self.config.registry.content = DummyContent(True)
+        self.assertTrue(self._callFUT(resource))
+
+    def test_true(self):
+        resource = Dummy()
+        registry = Dummy()
+        registry.content = DummyContent(())
+        self.assertTrue(self._callFUT(resource, registry))
+
+    def test_false(self):
+        resource = Dummy()
+        registry = Dummy()
+        registry.content = DummyContent(None)
+        self.assertFalse(self._callFUT(resource, registry))
+
+class Test_PropertiedPredicate(unittest.TestCase):
+    def _makeOne(self, val, config):
+        from .. import _PropertiedPredicate
+        return _PropertiedPredicate(val, config)
+
+    def test_text(self):
+        config = Dummy()
+        config.registry = Dummy()
+        inst = self._makeOne(True, config)
+        self.assertEqual(inst.text(), 'propertied = True')
+
+    def test_phash(self):
+        config = Dummy()
+        config.registry = Dummy()
+        inst = self._makeOne(True, config)
+        self.assertEqual(inst.phash(), 'propertied = True')
+
+    def test__call__(self):
+        config = Dummy()
+        config.registry = Dummy()
+        inst = self._makeOne(True, config)
+        def is_propertied(context, registry):
+            self.assertEqual(context, None)
+            self.assertEqual(registry, config.registry)
+            return True
+        inst.is_propertied = is_propertied
+        self.assertEqual(inst(None, None), True)
+
+
 class DummyContent(object):
     def __init__(self, result=None):
         self.result = result

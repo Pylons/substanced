@@ -41,8 +41,8 @@ from ..content import (
     )
 from ..schema import Schema
 from ..folder import Folder
-from ..util import oid_of
 from ..property import PropertySheet
+from ..util import oid_of
 from ..objectmap import (
     find_objectmap,
     multireference_targetid_property,
