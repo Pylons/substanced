@@ -630,6 +630,9 @@ def include(config): # pragma: no cover
     config.add_static_view('deformstatic', 'deform:static', cache_max_age=YEAR)
     config.add_static_view('sdistatic', 'substanced.sdi:static',
                            cache_max_age=YEAR)
+    # b/c alias for template lookups
+    config.override_asset(to_override='substanced.sdi:templates/',
+                          override_with='substanced.sdi.views:templates/')
     manage_prefix = settings.get('substanced.manage_prefix', '/manage')
     manage_pattern = manage_prefix + '*traverse'
     config.add_route(MANAGE_ROUTE_NAME, manage_pattern)

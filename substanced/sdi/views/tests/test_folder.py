@@ -1,15 +1,15 @@
+import colander
 import unittest
 
-import colander
-
 from pyramid import testing
+
 from pyramid.httpexceptions import HTTPFound
 
 import mock
 
 class Test_name_validator(unittest.TestCase):
     def _callFUT(self, node, kw):
-        from ..views import name_validator
+        from ..folder import name_validator
         return name_validator(node, kw)
 
     def _makeKw(self, exc=None):
@@ -32,46 +32,45 @@ class Test_name_validator(unittest.TestCase):
         self.assertEqual(result, None)
 
 class Test_rename_duplicated_resource(unittest.TestCase):
+    def _callFUT(self, context, name):
+        from ..folder import rename_duplicated_resource
+        return rename_duplicated_resource(context, name)
+        
     def test_rename_first(self):
-        from ..views import rename_duplicated_resource
         context = testing.DummyResource()
-        new_name = rename_duplicated_resource(context, 'foobar')
+        new_name = self._callFUT(context, 'foobar')
         self.assertEqual(new_name, 'foobar')
 
     def test_rename_second(self):
-        from ..views import rename_duplicated_resource
         context = testing.DummyResource()
         context['foobar'] = testing.DummyResource()
-        new_name = rename_duplicated_resource(context, 'foobar')
+        new_name = self._callFUT(context, 'foobar')
         self.assertEqual(new_name, 'foobar-1')
 
     def test_rename_twentyfirst(self):
-        from ..views import rename_duplicated_resource
         context = testing.DummyResource()
         context['foobar-21'] = testing.DummyResource()
-        new_name = rename_duplicated_resource(context, 'foobar-21')
+        new_name = self._callFUT(context, 'foobar-21')
         self.assertEqual(new_name, 'foobar-22')
 
     def test_rename_multiple_dashes(self):
-        from ..views import rename_duplicated_resource
         context = testing.DummyResource()
         context['foo-bar'] = testing.DummyResource()
-        new_name = rename_duplicated_resource(context, 'foo-bar')
+        new_name = self._callFUT(context, 'foo-bar')
         self.assertEqual(new_name, 'foo-bar-1')
 
     def test_rename_take_fisrt_available(self):
-        from ..views import rename_duplicated_resource
         context = testing.DummyResource()
         context['foobar'] = testing.DummyResource()
         context['foobar-1'] = testing.DummyResource()
         context['foobar-2'] = testing.DummyResource()
         context['foobar-4'] = testing.DummyResource()
-        new_name = rename_duplicated_resource(context, 'foobar')
+        new_name = self._callFUT(context, 'foobar')
         self.assertEqual(new_name, 'foobar-3')
 
 class TestAddFolderView(unittest.TestCase):
     def _makeOne(self, context, request):
-        from ..views import AddFolderView
+        from ..folder import AddFolderView
         return AddFolderView(context, request)
 
     def _makeRequest(self, resource):
@@ -97,7 +96,7 @@ class TestFolderContentsViews(unittest.TestCase):
         testing.tearDown()
 
     def _makeOne(self, context, request):
-        from ..views import FolderContentsViews
+        from ..folder import FolderContentsViews
         return FolderContentsViews(context, request)
 
     def _makeRequest(self):
@@ -240,7 +239,7 @@ class TestFolderContentsViews(unittest.TestCase):
         self.assertEqual(result.location, '/manage')
         self.assertFalse('a' in context)
 
-    @mock.patch('substanced.sdi.views.rename_duplicated_resource')
+    @mock.patch('substanced.sdi.views.folder.rename_duplicated_resource')
     def test_duplicate_multiple(self, mock_rename_duplicated_resource):
         context = mock.Mock()
         request = mock.Mock()
@@ -268,7 +267,7 @@ class TestFolderContentsViews(unittest.TestCase):
         request.session.flash.assert_called_once_with('No items duplicated')
         request.mgmt_path.called_once_with(context, '@@contents')
 
-    @mock.patch('substanced.sdi.views.rename_duplicated_resource')
+    @mock.patch('substanced.sdi.views.folder.rename_duplicated_resource')
     def test_duplicate_one(self, mock_rename_duplicated_resource):
         mock_rename_duplicated_resource.side_effect = ['a-1']
         context = mock.Mock()
@@ -367,7 +366,7 @@ class TestFolderContentsViews(unittest.TestCase):
         self.assertFalse(context.rename.called)
 
     def test_rename_finish_already_exists(self):
-        from ...exceptions import FolderKeyError
+        from ....exceptions import FolderKeyError
         context = mock.MagicMock()
         context.rename.side_effect = FolderKeyError(u'foobar')
         request = mock.Mock()
@@ -382,7 +381,7 @@ class TestFolderContentsViews(unittest.TestCase):
         context.rename.assert_any_call('foobar', 'foobar0')
         request.session.flash.assert_called_once_with(u'foobar', 'error')
 
-    @mock.patch('substanced.sdi.views.oid_of')
+    @mock.patch('substanced.sdi.views.folder.oid_of')
     def test_copy_one(self, mock_oid_of):
         context = mock.Mock()
         context.get.side_effect = lambda x: {
@@ -399,7 +398,7 @@ class TestFolderContentsViews(unittest.TestCase):
         self.assertEqual(mock_oid_of.mock_calls, [mock.call('foobar')])
         self.assertTrue(request.session.__setitem__.called)
 
-    @mock.patch('substanced.sdi.views.oid_of')
+    @mock.patch('substanced.sdi.views.folder.oid_of')
     def test_copy_multi(self, mock_oid_of):
         context = mock.Mock()
         context.get.side_effect = lambda x: {'foobar': 'foobar',
@@ -417,7 +416,7 @@ class TestFolderContentsViews(unittest.TestCase):
                          [mock.call('foobar'), mock.call('foobar1')])
         self.assertTrue(request.session.__setitem__.called)
 
-    @mock.patch('substanced.sdi.views.oid_of')
+    @mock.patch('substanced.sdi.views.folder.oid_of')
     def test_copy_missing_child(self, mock_oid_of):
         context = mock.Mock()
         context.get.side_effect = lambda x: {
@@ -433,7 +432,7 @@ class TestFolderContentsViews(unittest.TestCase):
         self.assertEqual(mock_oid_of.mock_calls, [mock.call('foobar')])
         self.assertTrue(request.session.__setitem__.called)
 
-    @mock.patch('substanced.sdi.views.oid_of')
+    @mock.patch('substanced.sdi.views.folder.oid_of')
     def test_copy_none(self, mock_oid_of):
         context = mock.Mock()
         context.__contains__ = mock.Mock(return_value=True)
@@ -460,7 +459,7 @@ class TestFolderContentsViews(unittest.TestCase):
         self.assertEqual(request.session.__delitem__.call_args,
                          mock.call('tocopy'))
 
-    @mock.patch('substanced.sdi.views.find_objectmap')
+    @mock.patch('substanced.sdi.views.folder.find_objectmap')
     def test_copy_finish_one(self, mock_find_objectmap):
         context = mock.MagicMock()
         mock_folder = mock_find_objectmap().object_for()
@@ -480,7 +479,7 @@ class TestFolderContentsViews(unittest.TestCase):
         self.assertEqual(request.session.__delitem__.call_args,
                          mock.call('tocopy'))
 
-    @mock.patch('substanced.sdi.views.find_objectmap')
+    @mock.patch('substanced.sdi.views.folder.find_objectmap')
     def test_copy_finish_multi(self, mock_find_objectmap):
         context = mock.MagicMock()
         mock_folder = mock_find_objectmap().object_for()
@@ -504,9 +503,9 @@ class TestFolderContentsViews(unittest.TestCase):
         self.assertEqual(request.session.__delitem__.call_args,
                          mock.call('tocopy'))
 
-    @mock.patch('substanced.sdi.views.find_objectmap')
+    @mock.patch('substanced.sdi.views.folder.find_objectmap')
     def test_copy_finish_already_exists(self, mock_find_objectmap):
-        from ...exceptions import FolderKeyError
+        from ....exceptions import FolderKeyError
         context = mock.MagicMock()
         mock_folder = mock_find_objectmap().object_for()
         mock_folder.__parent__ = mock.MagicMock()
@@ -521,7 +520,7 @@ class TestFolderContentsViews(unittest.TestCase):
         self.assertRaises(HTTPFound, inst.copy_finish)
         request.session.flash.assert_called_once_with(u'foobar', 'error')
 
-    @mock.patch('substanced.sdi.views.oid_of')
+    @mock.patch('substanced.sdi.views.folder.oid_of')
     def test_move_one(self, mock_oid_of):
         context = mock.Mock()
         context.get.side_effect = lambda x: {
@@ -539,7 +538,7 @@ class TestFolderContentsViews(unittest.TestCase):
         self.assertTrue(request.session.__setitem__.call_args,
                         [mock.call('tomove')])
 
-    @mock.patch('substanced.sdi.views.oid_of')
+    @mock.patch('substanced.sdi.views.folder.oid_of')
     def test_move_multi(self, mock_oid_of):
         context = mock.Mock()
         context.get.side_effect = lambda x: {'foobar': 'foobar',
@@ -557,7 +556,7 @@ class TestFolderContentsViews(unittest.TestCase):
         self.assertTrue(request.session.__setitem__.call_args,
                         [mock.call('tomove')])
 
-    @mock.patch('substanced.sdi.views.oid_of')
+    @mock.patch('substanced.sdi.views.folder.oid_of')
     def test_move_missing_child(self, mock_oid_of):
         context = mock.Mock()
         context.get.side_effect = lambda x: {'foobar': 'foobar',
@@ -574,7 +573,7 @@ class TestFolderContentsViews(unittest.TestCase):
         self.assertTrue(request.session.__setitem__.call_args,
                         [mock.call('tomove')])
 
-    @mock.patch('substanced.sdi.views.oid_of')
+    @mock.patch('substanced.sdi.views.folder.oid_of')
     def test_move_none(self, mock_oid_of):
         context = mock.Mock()
         context.get.side_effect = lambda x: {'foobar': 'foobar',
@@ -603,7 +602,7 @@ class TestFolderContentsViews(unittest.TestCase):
         self.assertEqual(request.session.__delitem__.call_args,
                          mock.call('tomove'))
 
-    @mock.patch('substanced.sdi.views.find_objectmap')
+    @mock.patch('substanced.sdi.views.folder.find_objectmap')
     def test_move_finish_one(self, mock_find_objectmap):
         context = mock.MagicMock()
         mock_folder = mock_find_objectmap().object_for()
@@ -623,7 +622,7 @@ class TestFolderContentsViews(unittest.TestCase):
         self.assertEqual(request.session.__delitem__.call_args,
                          mock.call('tomove'))
 
-    @mock.patch('substanced.sdi.views.find_objectmap')
+    @mock.patch('substanced.sdi.views.folder.find_objectmap')
     def test_move_finish_multi(self, mock_find_objectmap):
         context = mock.MagicMock()
         mock_folder = mock_find_objectmap().object_for()
@@ -647,9 +646,9 @@ class TestFolderContentsViews(unittest.TestCase):
                          mock.call('tomove'))
         request.flash_with_undo.assert_called_once_with('Moved 2 items')
 
-    @mock.patch('substanced.sdi.views.find_objectmap')
+    @mock.patch('substanced.sdi.views.folder.find_objectmap')
     def test_move_finish_already_exists(self, mock_find_objectmap):
-        from ...exceptions import FolderKeyError
+        from ....exceptions import FolderKeyError
         context = mock.MagicMock()
         mock_folder = mock_find_objectmap().object_for()
         mock_folder.__parent__ = mock.MagicMock()
@@ -663,257 +662,6 @@ class TestFolderContentsViews(unittest.TestCase):
         inst = self._makeOne(context, request)
         self.assertRaises(HTTPFound, inst.move_finish)
         request.session.flash.assert_called_once_with(u'foobar', 'error')
-
-
-class DummyPost(dict):
-    def __init__(self, result=(), result2=None):
-        self.result = result
-        self.result2 = result2 or {}
-
-    def getall(self, name):
-        return self.result
-
-class Test_logout(unittest.TestCase):
-    def setUp(self):
-        testing.setUp()
-
-    def tearDown(self):
-        testing.tearDown()
-        
-    def _callFUT(self, request):
-        from ..views import logout
-        return logout(request)
-
-    def test_it(self):
-        request = testing.DummyRequest()
-        request.mgmt_path = lambda *arg: '/path'
-        response = self._callFUT(request)
-        self.assertEqual(response.location, '/path')
-
-class Test_login(unittest.TestCase):
-    def setUp(self):
-        testing.setUp()
-
-    def tearDown(self):
-        testing.tearDown()
-        
-    def _callFUT(self, context, request):
-        from ..views import login
-        return login(context, request)
-
-    def test_form_not_submitted(self):
-        request = testing.DummyRequest()
-        request.mgmt_path = lambda *arg: '/path'
-        context = testing.DummyResource()
-        result = self._callFUT(context, request)
-        self.assertEqual(result['url'], '/path')
-        self.assertEqual(result['came_from'], 'http://example.com')
-        self.assertEqual(result['login'], '')
-        self.assertEqual(result['password'], '')
-
-    def test_form_submitted_csrf_error(self):
-        request = testing.DummyRequest()
-        request.params['form.submitted'] = True
-        request.mgmt_path = lambda *arg: '/path'
-        context = testing.DummyResource()
-        result = self._callFUT(context, request)
-        self.assertEqual(result['url'], '/path')
-        self.assertEqual(result['came_from'], 'http://example.com')
-        self.assertEqual(result['login'], '')
-        self.assertEqual(result['password'], '')
-        self.assertEqual(request.session['_f_error'], ['Failed login (CSRF)'])
-        
-    def test_form_submitted_failed_login_no_user(self):
-        from ...testing import make_site
-        request = testing.DummyRequest()
-        request.params['form.submitted'] = True
-        request.params['login'] = 'login'
-        request.params['password'] = 'password'
-        request.mgmt_path = lambda *arg: '/path'
-        request.params['csrf_token'] = request.session.get_csrf_token()
-        context = make_site()
-        result = self._callFUT(context, request)
-        self.assertEqual(result['url'], '/path')
-        self.assertEqual(result['came_from'], 'http://example.com')
-        self.assertEqual(result['login'], 'login')
-        self.assertEqual(result['password'], 'password')
-        self.assertEqual(request.session['_f_error'], ['Failed login'])
-
-    def test_form_submitted_failed_login_wrong_password(self):
-        from ...testing import make_site
-        request = testing.DummyRequest()
-        request.params['form.submitted'] = True
-        request.params['login'] = 'login'
-        request.params['password'] = 'password'
-        request.mgmt_path = lambda *arg: '/path'
-        request.params['csrf_token'] = request.session.get_csrf_token()
-        context = make_site()
-        context['principals']['users']['login'] = DummyUser(0)
-        context.__services__ = ('principals',)
-        result = self._callFUT(context, request)
-        self.assertEqual(result['url'], '/path')
-        self.assertEqual(result['came_from'], 'http://example.com')
-        self.assertEqual(result['login'], 'login')
-        self.assertEqual(result['password'], 'password')
-        self.assertEqual(request.session['_f_error'], ['Failed login'])
-
-    def test_form_submitted_success(self):
-        from ...testing import make_site
-        request = testing.DummyRequest()
-        request.params['form.submitted'] = True
-        request.params['login'] = 'login'
-        request.params['password'] = 'password'
-        request.mgmt_path = lambda *arg: '/path'
-        request.params['csrf_token'] = request.session.get_csrf_token()
-        context = make_site()
-        user = DummyUser(1)
-        user.__objectid__ = 1
-        context['principals']['users']['login'] = user
-        context.__services__ = ('principals',)
-        result = self._callFUT(context, request)
-        self.assertEqual(result.location, 'http://example.com')
-        self.assertTrue(result.headers)
-        self.assertEqual(request.session['_f_success'], ['Welcome!'])
-
-class TestManagementViews(unittest.TestCase):
-    def _makeOne(self, context, request):
-        from ..views import ManagementViews
-        return ManagementViews(context, request)
-
-    def test_manage_main_no_view_data(self):
-        context = testing.DummyResource()
-        request = testing.DummyRequest()
-        def mgmt_path(ctx, value):
-            self.assertEqual(value, '@@login')
-            return '/path'
-        request.mgmt_path = mgmt_path
-        inst = self._makeOne(context, request)
-        inst.sdi_mgmt_views = lambda *arg: []
-        result = inst.manage_main()
-        self.assertEqual(request.session['came_from'], 'http://example.com')
-        self.assertEqual(result.location, '/path')
-
-    def test_manage_main_with_view_data(self):
-        context = testing.DummyResource()
-        request = testing.DummyRequest()
-        def mgmt_path(ctx, value):
-            self.assertEqual(value, '@@fred')
-            return '/path'
-        request.mgmt_path = mgmt_path
-        inst = self._makeOne(context, request)
-        inst.sdi_mgmt_views = lambda *arg: [{'view_name':'fred'}]
-        result = inst.manage_main()
-        self.assertEqual(result.location, '/path')
-
-    def test_add_content_no_views(self):
-        context = testing.DummyResource()
-        request = testing.DummyRequest()
-        inst = self._makeOne(context, request)
-        inst.sdi_add_views = lambda *arg: []
-        result = inst.add_content()
-        self.assertEqual(result, {'views':[]})
-        
-    def test_add_content_with_one_view(self):
-        context = testing.DummyResource()
-        request = testing.DummyRequest()
-        inst = self._makeOne(context, request)
-        inst.sdi_add_views = lambda *arg: [{'url':'http://foo'}]
-        result = inst.add_content()
-        self.assertEqual(result.location, 'http://foo')
-
-class TestManageDatabase(unittest.TestCase):
-    def _makeOne(self, context, request):
-        from ..views import ManageDatabase
-        return ManageDatabase(context, request)
-
-    def test_view_with_activity_monitor(self):
-        context = testing.DummyResource()
-        request = testing.DummyRequest()
-        inst = self._makeOne(context, request)
-        am = DummyActivityMonitor()
-        conn = DummyConnection(am=am)
-        inst.get_connection = lambda *arg: conn
-        result = inst.view()
-        self.assertEqual(result['data_connections'], '[[1000, 1], [1000, 1]]')
-        self.assertEqual(result['data_object_loads'], '[[1000, 1], [1000, 1]]')
-        self.assertEqual(result['data_object_stores'], '[[1000, 1], [1000, 1]]')
-
-    def test_view_no_activity_monitor(self):
-        context = testing.DummyResource()
-        request = testing.DummyRequest()
-        inst = self._makeOne(context, request)
-        conn = DummyConnection(am=None)
-        inst.get_connection = lambda *arg: conn
-        result = inst.view()
-        self.assertEqual(result['data_connections'], '[]')
-        self.assertEqual(result['data_object_loads'], '[]')
-        self.assertEqual(result['data_object_stores'], '[]')
-
-    def test_pack(self):
-        context = testing.DummyResource()
-        request = testing.DummyRequest()
-        inst = self._makeOne(context, request)
-        conn = DummyConnection(am=None)
-        inst.get_connection = lambda *arg: conn
-        request.POST['days'] = '5'
-        request.mgmt_path = lambda *arg: '/'
-        resp = inst.pack()
-        self.assertEqual(conn._db.packed, 5)
-        self.assertEqual(resp.location, '/')
-
-    def test_pack_invalid_days(self):
-        from pyramid.httpexceptions import HTTPFound
-        context = testing.DummyResource()
-        request = testing.DummyRequest()
-        inst = self._makeOne(context, request)
-        conn = DummyConnection(am=None)
-        inst.get_connection = lambda *arg: conn
-        request.POST['days'] = 'p'
-        request.mgmt_path = lambda *arg: '/'
-        self.assertRaises(HTTPFound, inst.pack)
-
-    def test_flush_cache(self):
-        context = testing.DummyResource()
-        request = testing.DummyRequest()
-        inst = self._makeOne(context, request)
-        conn = DummyConnection(am=None)
-        inst.get_connection = lambda *arg: conn
-        request.POST['days'] = '5'
-        request.mgmt_path = lambda *arg: '/'
-        resp = inst.flush_cache()
-        self.assertTrue(conn._db.minimized)
-        self.assertEqual(resp.location, '/')
-
-class DummyDB(object):
-    def __init__(self, am=None):
-        self.am = am
-
-    def getActivityMonitor(self):
-        return self.am
-
-    def pack(self, days=None):
-        self.packed = days
-
-    def cacheMinimize(self):
-        self.minimized = True
-
-class DummyActivityMonitor(object):
-    def getActivityAnalysis(self):
-        return [{'end':1, 'connections':1, 'stores':1, 'loads':1}]*2
-
-class DummyConnection(object):
-    def __init__(self, am=None):
-        self._db = DummyDB(am=am)
-
-    def db(self):
-        return self._db
-
-class DummyUser(object):
-    def __init__(self, result):
-        self.result = result
-
-    def check_password(self, password):
-        return self.result
 
 class DummyFolder(object):
     oid_store = {}
@@ -933,4 +681,12 @@ class DummyContent(object):
     def create(self, iface, *arg, **kw):
         return self.resource
 
+
+class DummyPost(dict):
+    def __init__(self, result=(), result2=None):
+        self.result = result
+        self.result2 = result2 or {}
+
+    def getall(self, name):
+        return self.result
 

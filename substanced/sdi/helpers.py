@@ -13,7 +13,8 @@ from . import sdi_mgmt_views # API used by templates
 sdi_mgmt_views = sdi_mgmt_views # pyflakes
 
 def macros():
-    template = get_renderer('templates/master.pt').implementation()
+    template = get_renderer(
+        'substanced.sdi.views:templates/master.pt').implementation()
     return {'master':template}
 
 def breadcrumbs(request):
