@@ -1,4 +1,7 @@
 from zope.interface import implementer
+
+from pyramid.threadlocal import get_current_registry
+
 from ..interfaces import IPropertySheet
 from ..event import ObjectModified
 
@@ -33,3 +36,28 @@ class PropertySheet(object):
         self.request.registry.subscribers((self.context, event), None)
         self.request.flash_with_undo('Updated properties', 'success')
 
+def is_propertied(resource, registry=None):
+    if registry is None:
+        registry = get_current_registry()
+    sheets = registry.content.metadata(resource, 'propertysheets', None)
+    return sheets is not None
+
+class _PropertiedPredicate(object):
+    is_propertied = staticmethod(is_propertied) # for testing
+    
+    def __init__(self, val, config):
+        self.val = bool(val)
+        self.registry = config.registry
+
+    def text(self):
+        return 'propertied = %s' % self.val
+
+    phash = text
+
+    def __call__(self, context, request):
+        return self.is_propertied(context, self.registry) == self.val
+
+def include(config):
+    config.add_view_predicate('propertied', _PropertiedPredicate)
+
+includeme = include

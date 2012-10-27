@@ -400,4 +400,3 @@ def include(config): # pragma: no cover
     config.add_view_predicate('content_type', _ContentTypePredicate)
 
 includeme = include
-

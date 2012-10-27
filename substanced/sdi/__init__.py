@@ -26,7 +26,6 @@ from pyramid.security import (
     )
 from pyramid.session import UnencryptedCookieSessionFactoryConfig
 from pyramid.traversal import resource_path_tuple
-from pyramid.threadlocal import get_current_registry
 
 from ..objectmap import find_objectmap
 
@@ -628,27 +627,6 @@ class _PhysicalPathPredicate(object):
     def __call__(self, context, request):
         return resource_path_tuple(context) == self.val
 
-def is_propertied(resource, registry=None):
-    if registry is None:
-        registry = get_current_registry()
-    sheets = registry.content.metadata(resource, 'propertysheets', None)
-    return sheets is not None
-
-class _PropertiedPredicate(object):
-    is_propertied = staticmethod(is_propertied) # for testing
-    
-    def __init__(self, val, config):
-        self.val = bool(val)
-        self.registry = config.registry
-
-    def text(self):
-        return 'propertied = %s' % self.val
-
-    phash = text
-
-    def __call__(self, context, request):
-        return self.is_propertied(context, self.registry) == self.val
-
 class FlashUndo(object):
     
     get_connection = staticmethod(get_connection) # testing
@@ -676,11 +654,9 @@ class FlashUndo(object):
             msg = button
         request.session.flash(msg, queue, allow_duplicate=allow_duplicate)
 
-
 def include(config): # pragma: no cover
     settings = config.registry.settings
     YEAR = 86400 * 365
-    config.add_view_predicate('propertied', _PropertiedPredicate)
     config.add_directive('add_mgmt_view', add_mgmt_view, action_wrap=False)
     config.add_static_view('deformstatic', 'deform:static', cache_max_age=YEAR)
     config.add_static_view('sdistatic', 'substanced.sdi:static',
