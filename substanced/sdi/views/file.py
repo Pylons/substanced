@@ -6,20 +6,21 @@ import deform.schema
 from pyramid.httpexceptions import HTTPFound
 from pyramid.response import Response
 
-from ..sdi import mgmt_view
-from ..form import FormView
+from ...form import FormView
 
-from . import (
+from ...file import (
     FilePropertiesSchema,
     FileUploadTempStore,
     file_upload_widget,
     file_name_node,
     )
 
-from ..interfaces import (
+from ...interfaces import (
     IFile,
     IFolder,
     )
+
+from .. import mgmt_view
 
 @mgmt_view(
     context=IFile,
@@ -106,7 +107,7 @@ class AddFileView(FormView):
         return HTTPFound(self.request.mgmt_path(self.context))
 
 onepixel = pkg_resources.resource_filename(
-    'substanced.file', 'static/onepixel.gif')
+    'substanced.sdi', 'static/onepixel.gif')
 
 # this doesn't require a permission, because it's based on session data
 # which the user would have to put there anyway

@@ -7,7 +7,7 @@ from pyramid import testing
 
 class Test_view_file(unittest.TestCase):
     def _callFUT(self, context, request):
-        from ..views import view_file
+        from ..file import view_file
         return view_file(context, request)
 
     def test_it(self):
@@ -22,7 +22,7 @@ class Test_view_file(unittest.TestCase):
 
 class Test_view_tab(unittest.TestCase):
     def _callFUT(self, context, request):
-        from ..views import view_tab
+        from ..file import view_tab
         return view_tab(context, request)
 
     def test_it(self):
@@ -40,7 +40,7 @@ class Test_name_or_file(unittest.TestCase):
         testing.tearDown()
         
     def _makeOne(self, node, kw):
-        from ..views import name_or_file
+        from ..file import name_or_file
         return name_or_file(node, kw)
 
     def test_no_file_no_name(self):
@@ -73,7 +73,7 @@ class TestAddFileView(unittest.TestCase):
         testing.tearDown()
 
     def _makeOne(self, context, request):
-        from ..views import AddFileView
+        from ..file import AddFileView
         return AddFileView(context, request)
 
     def test_add_success_no_filedata(self):
@@ -139,7 +139,7 @@ class Test_preview_image_upload(unittest.TestCase):
         testing.tearDown()
 
     def _callFUT(self, request):
-        from ..views import preview_image_upload
+        from ..file import preview_image_upload
         return preview_image_upload(request)
 
     def test_without_fp(self):
@@ -150,7 +150,7 @@ class Test_preview_image_upload(unittest.TestCase):
         response = self._callFUT(request)
         self.assertEqual(response.content_type, 'image/gif')
         fn = pkg_resources.resource_filename(
-            'substanced.file', 'static/onepixel.gif')
+            'substanced.sdi', 'static/onepixel.gif')
         self.assertEqual(response.body, open(fn, 'rb').read())
 
     def test_with_fp(self):
