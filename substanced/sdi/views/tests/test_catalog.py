@@ -3,7 +3,7 @@ from pyramid import testing
 
 class Test_add_catalog_service(unittest.TestCase):
     def _callFUT(self, context, request):
-        from ..views import add_catalog_service
+        from ..catalog import add_catalog_service
         return add_catalog_service(context, request)
 
     def test_it(self):
@@ -18,7 +18,7 @@ class Test_add_catalog_service(unittest.TestCase):
 
 class TestManageCatalog(unittest.TestCase):
     def _makeOne(self, context, request):
-        from ..views import ManageCatalog
+        from ..catalog import ManageCatalog
         return ManageCatalog(context, request)
 
     def test_view(self):
@@ -40,7 +40,7 @@ class TestManageCatalog(unittest.TestCase):
 
 class TestManageIndex(unittest.TestCase):
     def _makeOne(self, context, request):
-        from ..views import ManageIndex
+        from ..catalog import ManageIndex
         return ManageIndex(context, request)
 
     def test_view(self):
@@ -82,7 +82,7 @@ class TestManageIndex(unittest.TestCase):
 
 class TestSearchCatalogView(unittest.TestCase):
     def _makeOne(self, context, request):
-        from ..views import SearchCatalogView
+        from ..catalog import SearchCatalogView
         return SearchCatalogView(context, request)
 
     def test_search_success(self):
@@ -164,7 +164,7 @@ class Test_content_is_an_index(unittest.TestCase):
         testing.tearDown()
 
     def _callFUT(self, context, request):
-        from ..views import context_is_an_index
+        from ..catalog import context_is_an_index
         return context_is_an_index(context, request)
     
     def test_it_true(self):
@@ -186,7 +186,7 @@ class Test_AddIndexView(unittest.TestCase):
         testing.tearDown()
 
     def _makeOne(self, context, request):
-        from ..views import _AddIndexView
+        from ..catalog import _AddIndexView
         return _AddIndexView(context, request)
 
     def test_add_success_no_reindex(self):
@@ -246,7 +246,7 @@ class TestAddPathIndexView(unittest.TestCase):
         testing.tearDown()
 
     def _makeOne(self, context, request):
-        from ..views import AddPathIndexView
+        from ..catalog import AddPathIndexView
         return AddPathIndexView(context, request)
 
     def test_makeindex(self):
@@ -268,7 +268,7 @@ class TestAddAllowedIndexView(unittest.TestCase):
         testing.tearDown()
 
     def _makeOne(self, context, request):
-        from ..views import AddAllowedIndexView
+        from ..catalog import AddAllowedIndexView
         return AddAllowedIndexView(context, request)
 
     def test_makeindex(self):
@@ -290,7 +290,7 @@ class TestAddFacetIndexView(unittest.TestCase):
         testing.tearDown()
 
     def _makeOne(self, context, request):
-        from ..views import AddFacetIndexView
+        from ..catalog import AddFacetIndexView
         return AddFacetIndexView(context, request)
 
     def test_makeindex(self):
@@ -312,7 +312,7 @@ class Test_reindex_indexes(unittest.TestCase):
         testing.tearDown()
 
     def _callFUT(self, context, request):
-        from ..views import reindex_indexes
+        from ..catalog import reindex_indexes
         return reindex_indexes(context, request)
 
     def test_with_indexes(self):

@@ -8,28 +8,25 @@ from pyramid.httpexceptions import HTTPFound
 
 from pyramid.view import view_defaults
 
-from ..interfaces import ICatalog, IFolder
+from ...objectmap import find_objectmap
+from ...interfaces import ICatalog, IFolder
 
-from ..sdi import mgmt_view
-from ..form import FormView
-from ..schema import (
+from ...catalog import logger
+from ...catalog.discriminators import (
+    AllowedDiscriminator,
+    CatalogViewDiscriminator,
+    )
+from ...catalog.indexes import (
+    IndexSchema,
+    PermissionsSchemaNode
+    )
+from ...form import FormView
+from ...schema import (
     Schema,
     NameSchemaNode,
     )
     
-from ..objectmap import find_objectmap
-
-from .discriminators import (
-    AllowedDiscriminator,
-    CatalogViewDiscriminator,
-    )
-
-from .indexes import (
-    IndexSchema,
-    PermissionsSchemaNode
-    )
-
-from . import logger
+from .. import mgmt_view
 
 @mgmt_view(
     name='add_catalog_service',
@@ -167,7 +164,7 @@ class AddFacetIndexView(_AddIndexView):
 @view_defaults(
     name='manage_catalog',
     context=ICatalog,
-    renderer='templates/manage_catalog.pt',
+    renderer='templates/catalog.pt',
     permission='sdi.manage-catalog'
     )
 class ManageCatalog(object):
@@ -193,7 +190,7 @@ class ManageCatalog(object):
 @view_defaults(
     name='manage_index',
     context=IIndex,
-    renderer='templates/manage_index.pt',
+    renderer='templates/index.pt',
     permission='sdi.manage-catalog')
 class ManageIndex(object):
     def __init__(self, context, request):
@@ -241,7 +238,7 @@ class SearchSchema(Schema):
 
 @mgmt_view(context=ICatalog, name='search_catalog', 
            permission='sdi.manage-catalog', 
-           renderer='templates/searchform.pt', tab_title='Search')
+           renderer='templates/search.pt', tab_title='Search')
 class SearchCatalogView(FormView):
     schema = SearchSchema(title='Expression')
     buttons = ('search',)
