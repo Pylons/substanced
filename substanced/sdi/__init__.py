@@ -181,10 +181,8 @@ class mgmt_view(object):
         settings['_info'] = info.codeinfo # fbo "action_method"
         return wrapped
 
-def sdi_mgmt_views(request, context=None, names=None):
+def sdi_mgmt_views(context, request, names=None):
     registry = request.registry
-    if context is None:
-        context = request.context
     introspector = registry.introspector
     L = []
 
@@ -588,7 +586,7 @@ def sdi_add_views(context, request):
             candidates[viewname] = data
 
     candidate_names = candidates.keys()
-    views = sdi_mgmt_views(request, context, names=candidate_names)
+    views = sdi_mgmt_views(context, request, names=candidate_names)
 
     L = []
 
@@ -609,21 +607,6 @@ def get_user(request):
         return None
     objectmap = find_objectmap(request.context)
     return objectmap.object_for(userid)
-
-class _PhysicalPathPredicate(object):
-    def __init__(self, val, config):
-        if isinstance(val, basestring):
-            val = tuple(filter(None, val.split('/')))
-            val = ('',) + val
-        self.val = tuple(val)
-
-    def text(self):
-        return 'physical_path = %s' % (self.val,)
-
-    phash = text
-
-    def __call__(self, context, request):
-        return resource_path_tuple(context) == self.val
 
 class FlashUndo(object):
     

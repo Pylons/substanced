@@ -21,7 +21,7 @@ class ManagementViews(object):
     @mgmt_view(name='manage_main', tab_condition=False)
     def manage_main(self):
         request = self.request
-        view_data = self.sdi_mgmt_views(request)
+        view_data = self.sdi_mgmt_views(self.context, request)
         if not view_data:
             request.session['came_from'] = request.url
             return HTTPFound(

@@ -170,16 +170,16 @@ class Test_sdi_mgmt_views(unittest.TestCase):
     def tearDown(self):
         testing.tearDown()
         
-    def _callFUT(self, request, context=None, names=None):
+    def _callFUT(self, context, request, names=None):
         from .. import sdi_mgmt_views
-        return sdi_mgmt_views(request, context, names)
+        return sdi_mgmt_views(context, request, names)
 
     def test_no_views_found(self):
         request = testing.DummyRequest()
         request.matched_route = None
         request.registry.content = DummyContent()
         request.registry.introspector = DummyIntrospector()
-        result = self._callFUT(request)
+        result = self._callFUT(None, request)
         self.assertEqual(result, [])
 
     def test_no_related_view(self):
@@ -191,7 +191,7 @@ class Test_sdi_mgmt_views(unittest.TestCase):
         intr['tab_condition'] = None
         intr = DummyIntrospectable(related=(), introspectable=intr)
         request.registry.introspector = DummyIntrospector([(intr,)])
-        result = self._callFUT(request)
+        result = self._callFUT(None, request)
         self.assertEqual(result, [])
 
     def test_one_related_view_gardenpath(self):
@@ -210,7 +210,7 @@ class Test_sdi_mgmt_views(unittest.TestCase):
         intr['tab_condition'] = None
         intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
         request.registry.introspector = DummyIntrospector([(intr,)])
-        result = self._callFUT(request)
+        result = self._callFUT(None, request)
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0]['view_name'], 'name')
         self.assertEqual(result[0]['title'], 'Name')
@@ -235,7 +235,7 @@ class Test_sdi_mgmt_views(unittest.TestCase):
         intr['tab_condition'] = None
         intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
         request.registry.introspector = DummyIntrospector([(intr,)])
-        result = self._callFUT(request)
+        result = self._callFUT(None, request)
         self.assertEqual(result, [])
 
     def test_one_related_view_instcontext_tabcondition_None(self):
@@ -255,7 +255,7 @@ class Test_sdi_mgmt_views(unittest.TestCase):
         intr['tab_condition'] = None
         intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
         request.registry.introspector = DummyIntrospector([(intr,)])
-        result = self._callFUT(request)
+        result = self._callFUT(None, request)
         self.assertEqual(result, [])
 
     def test_one_related_view_anycontext_tabcondition_False(self):
@@ -273,7 +273,7 @@ class Test_sdi_mgmt_views(unittest.TestCase):
         intr['tab_condition'] = False
         intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
         request.registry.introspector = DummyIntrospector([(intr,)])
-        result = self._callFUT(request)
+        result = self._callFUT(None, request)
         self.assertEqual(result, [])
 
     def test_one_related_view_anycontext_tabcondition_True(self):
@@ -291,7 +291,7 @@ class Test_sdi_mgmt_views(unittest.TestCase):
         intr['tab_condition'] = True
         intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
         request.registry.introspector = DummyIntrospector([(intr,)])
-        result = self._callFUT(request)
+        result = self._callFUT(None, request)
         self.assertEqual(len(result), 1)
 
     def test_one_related_view_anycontext_tabcondition_callable(self):
@@ -311,7 +311,7 @@ class Test_sdi_mgmt_views(unittest.TestCase):
         intr['tab_condition'] = tabcondition
         intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
         request.registry.introspector = DummyIntrospector([(intr,)])
-        result = self._callFUT(request)
+        result = self._callFUT(None, request)
         self.assertEqual(result, [])
 
     def test_one_related_view_anycontext_tabcondition_None_not_in_names(self):
@@ -329,7 +329,7 @@ class Test_sdi_mgmt_views(unittest.TestCase):
         intr['tab_condition'] = None
         intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
         request.registry.introspector = DummyIntrospector([(intr,)])
-        result = self._callFUT(request, names=('fred',))
+        result = self._callFUT(None, request, names=('fred',))
         self.assertEqual(result, [])
 
     def test_one_related_view_anycontext_tabcondition_None_predicatefail(self):
@@ -351,7 +351,7 @@ class Test_sdi_mgmt_views(unittest.TestCase):
         intr['tab_condition'] = None
         intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
         request.registry.introspector = DummyIntrospector([(intr,)])
-        result = self._callFUT(request)
+        result = self._callFUT(None, request)
         self.assertEqual(result, [])
 
     def test_one_related_view_anycontext_tabcondition_None_permissionfail(self):
@@ -373,7 +373,7 @@ class Test_sdi_mgmt_views(unittest.TestCase):
         intr['tab_condition'] = None
         intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
         request.registry.introspector = DummyIntrospector([(intr,)])
-        result = self._callFUT(request)
+        result = self._callFUT(None, request)
         self.assertEqual(result, [])
 
     def test_one_related_view_gardenpath_tab_title_sorting(self):
@@ -395,7 +395,7 @@ class Test_sdi_mgmt_views(unittest.TestCase):
         intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
         intr2 = DummyIntrospectable(related=(view_intr,), introspectable=intr2)
         request.registry.introspector = DummyIntrospector([(intr, intr2)])
-        result = self._callFUT(request)
+        result = self._callFUT(None, request)
         self.assertEqual(len(result), 2)
         self.assertEqual(result[0]['view_name'], 'name')
         self.assertEqual(result[0]['title'], 'a')
@@ -431,7 +431,7 @@ class Test_sdi_mgmt_views(unittest.TestCase):
         intr = DummyIntrospectable(related=(view_intr1,), introspectable=intr)
         intr2 = DummyIntrospectable(related=(view_intr2,), introspectable=intr2)
         request.registry.introspector = DummyIntrospector([(intr, intr2)])
-        result = self._callFUT(request)
+        result = self._callFUT(None, request)
         self.assertEqual(len(result), 2)
         self.assertEqual(result[0]['view_name'], 'b')
         self.assertEqual(result[0]['title'], 'b')

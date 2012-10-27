@@ -91,7 +91,7 @@
           <div class="span12">
 
             <ul class="nav nav-tabs" 
-                tal:define="tabs sdi_h.sdi_mgmt_views(request)"
+                tal:define="tabs sdi_h.sdi_mgmt_views(context, request)"
                 tal:condition="tabs">
               <li tal:repeat="tab_data tabs"
                   tal:attributes="class tab_data['class']">
