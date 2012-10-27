@@ -577,31 +577,6 @@ class Test_sdi_folder_contents(unittest.TestCase):
         result = list(self._callFUT(context, request))
         self.assertEqual(result[0]['columns'], ['val1', 'val2'])
 
-class Test_sdi_buttons(unittest.TestCase):
-    def _callFUT(self, context, request):
-        from .. import sdi_buttons
-        return sdi_buttons(context, request)
-
-    def setUp(self):
-        testing.setUp()
-
-    def tearDown(self):
-        testing.tearDown()
-
-    def test_no_buttons(self):
-        context = testing.DummyResource()
-        context.__sdi_buttons__ = None
-        request = testing.DummyRequest()
-        result = self._callFUT(context, request)
-        self.assertEqual(result, [])
-
-    def test_with_buttons(self):
-        context = testing.DummyResource()
-        context.__sdi_buttons__ = lambda context, request: 'abc'
-        request = testing.DummyRequest()
-        result = self._callFUT(context, request)
-        self.assertEqual(result, 'abc')
-
 class Test_default_sdi_columns(unittest.TestCase):
     def _callFUT(self, folder, context, request):
         from .. import default_sdi_columns

@@ -50,20 +50,6 @@ class TestCatalog(unittest.TestCase):
         intr = {'meta':{}}
         self.assertFalse(inst.__sdi_addable__(None, intr))
 
-    def test___sdi_butttons__(self):
-        inst = self._makeOne()
-        context = testing.DummyResource()
-        request = testing.DummyRequest()
-        buttons = inst.__sdi_buttons__(context, request)
-        self.assertEqual(buttons[0],
-                         {'buttons':
-                          [{'text': 'Reindex',
-                            'class': 'btn-primary',
-                            'id': 'reindex',
-                            'value': 'reindex',
-                            'name': 'form.reindex'}],
-                          'type': 'single'})
-
     def test_klass_provides_ICatalog(self):
         klass = self._getTargetClass()
         from zope.interface.verify import verifyClass
@@ -737,6 +723,27 @@ class Test_CatalogablePredicate(unittest.TestCase):
             return True
         inst.is_catalogable = is_catalogable
         self.assertEqual(inst(None, None), True)
+
+class Test_catalog_buttons(unittest.TestCase):
+    def setUp(self):
+        testing.setUp()
+
+    def tearDown(self):
+        testing.tearDown()
+
+    def test_it(self):
+        from .. import catalog_buttons
+        context = testing.DummyResource()
+        request = testing.DummyRequest()
+        buttons = catalog_buttons(context, request)
+        self.assertEqual(buttons[0],
+                         {'buttons':
+                          [{'text': 'Reindex',
+                            'class': 'btn-primary',
+                            'id': 'reindex',
+                            'value': 'reindex',
+                            'name': 'form.reindex'}],
+                          'type': 'single'})
 
 
 class DummyIntrospectable(dict):

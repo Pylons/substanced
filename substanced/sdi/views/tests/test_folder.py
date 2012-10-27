@@ -113,6 +113,7 @@ class TestFolderContentsViews(unittest.TestCase):
         inst = self._makeOne(context, request)
         inst.sdi_folder_contents = lambda *arg: ('a',)
         inst.sdi_add_views = lambda *arg: ('b',)
+        inst.sdi_buttons = lambda *arg: []
         result = inst.show()
         items = result['items']
         self.assertEqual(len(items), 1)
@@ -136,6 +137,7 @@ class TestFolderContentsViews(unittest.TestCase):
         inst = self._makeOne(context, request)
         inst.sdi_folder_contents = lambda *arg: ('a',)
         inst.sdi_add_views = lambda *arg: ('b',)
+        inst.sdi_buttons = lambda *arg: []
         result = inst.show()
         items = result['items']
         self.assertEqual(len(items), 1)
@@ -159,6 +161,7 @@ class TestFolderContentsViews(unittest.TestCase):
         inst = self._makeOne(context, request)
         inst.sdi_folder_contents = lambda *arg: ('a',)
         inst.sdi_add_views = lambda *arg: ('b',)
+        inst.sdi_buttons = lambda *arg: []
         result = inst.show()
         items = result['items']
         self.assertEqual(len(items), 1)
@@ -182,6 +185,7 @@ class TestFolderContentsViews(unittest.TestCase):
         inst = self._makeOne(context, request)
         inst.sdi_folder_contents = lambda *arg: ('a',)
         inst.sdi_add_views = lambda *arg: ('b',)
+        inst.sdi_buttons = lambda *arg: []
         result = inst.show()
         items = result['items']
         self.assertEqual(len(items), 1)
@@ -663,6 +667,24 @@ class TestFolderContentsViews(unittest.TestCase):
         self.assertRaises(HTTPFound, inst.move_finish)
         request.session.flash.assert_called_once_with(u'foobar', 'error')
 
+    def test_sdi_buttons_is_None(self):
+        context = testing.DummyResource()
+        request = testing.DummyRequest()
+        inst = self._makeOne(context, request)
+        request.registry.content = DummyContent(None)
+        result = inst.sdi_buttons(context, request)
+        self.assertEqual(result, [])
+
+    def test_sdi_buttons_is_clbl(self):
+        context = testing.DummyResource()
+        request = testing.DummyRequest()
+        def sdi_buttons(contexr, request):
+            return 'abc'
+        inst = self._makeOne(context, request)
+        request.registry.content = DummyContent(sdi_buttons)
+        result = inst.sdi_buttons(context, request)
+        self.assertEqual(result, 'abc')
+
 class DummyFolder(object):
     oid_store = {}
 
@@ -679,6 +701,9 @@ class DummyContent(object):
         self.resource = resource
 
     def create(self, iface, *arg, **kw):
+        return self.resource
+
+    def metadata(self, *arg, **kw):
         return self.resource
 
 

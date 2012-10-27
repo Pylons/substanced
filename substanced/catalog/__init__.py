@@ -37,11 +37,32 @@ def _assertint(docid):
         raise ValueError('%r is not an integer value; document ids must be '
                          'integers' % docid)
 
+def catalog_buttons(context, request):
+    """ Show a reindex button before default buttons in the folder contents
+    view of a catalog"""
+    from ..sdi import default_sdi_buttons
+    buttons = default_sdi_buttons(context, request)
+    buttons.insert(
+        0,
+        {'type':'single',
+         'buttons':
+         [
+             {'id':'reindex',
+              'name':'form.reindex',
+              'class':'btn-primary',
+              'value':'reindex',
+              'text':'Reindex'}
+             ]
+         }
+        )
+    return buttons
+
 @service(
     'Catalog',
     icon='icon-search',
     service_name='catalog',
     add_view='add_catalog_service',
+    buttons=catalog_buttons,
     )
 @implementer(ICatalog)
 class Catalog(Folder):
@@ -61,20 +82,6 @@ class Catalog(Folder):
         # registered with the is_index metadata flag.
         meta = introspectable['meta']
         return meta.get('is_index', False)
-
-    def __sdi_buttons__(self, context, request):
-        """ Show a reindex button """
-        from ..sdi import default_sdi_buttons
-        buttons = default_sdi_buttons(context, request)
-        buttons.insert(
-            0,
-            {'type':'single',
-             'buttons':[{'id':'reindex',
-                         'name':'form.reindex',
-                         'class':'btn-primary',
-                         'value':'reindex',
-                         'text':'Reindex'}]})
-        return buttons
 
     def reset(self):
         """ Clear all indexes in this catalog and clear self.objectids. """

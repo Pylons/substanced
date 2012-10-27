@@ -17,7 +17,7 @@ from .. import (
     mgmt_view,
     sdi_add_views,
     sdi_folder_contents,
-    sdi_buttons,
+    default_sdi_buttons,
     default_sdi_columns,
     )
 
@@ -89,11 +89,17 @@ class FolderContentsViews(object):
 
     sdi_add_views = staticmethod(sdi_add_views) # for testing
     sdi_folder_contents = staticmethod(sdi_folder_contents) # for testing
-    sdi_buttons = staticmethod(sdi_buttons) # for testing
 
     def __init__(self, context, request):
         self.context = context
         self.request = request
+
+    def sdi_buttons(self, context, request):
+        clbl = request.registry.content.metadata(
+            context, 'buttons', default_sdi_buttons)
+        if clbl is None:
+            return []
+        return clbl(context, request)
 
     @mgmt_view(
         request_method='GET',

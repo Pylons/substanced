@@ -298,7 +298,8 @@ def sdi_folder_contents(folder, request):
     - 'viewable' if the user has the ``sdi.view`` permission against the
       subobject.
 
-    This function honors two subobject hooks.
+    This function honors three subobject hooks:: ``__sdi_hidden__``,
+    ``__sdi_deletable__``, and ``__sdi_columns__``.
 
     The first subobject hook is named ``__sdi_hidden__``.  If a subobject has
     an attribute named ``__sdi_hidden__``, it is expected to be either a
@@ -326,22 +327,16 @@ def sdi_folder_contents(folder, request):
     boolean indicating whether the current user has the
     ``sdi.manage-contents`` permission on the ``folder``.
 
-    This function honors one content type hook.  The content type hook is
-    named ``icon``.  If the ``icon`` supplied to the content type
-    configuration of a subobject is a callable, the callable will be passed
-    the subobject and the ``request``; it is expected to return an icon name
-    or ``None``.  ``icon`` may alternately be either ``None`` or a string
-    representing a icon name instead of a callable.
-
-    To display the contents using a table with any given subobject
-    attributes, a callable named ``__sdi_columns__`` can be defined on the
-    folder.  The callable will be passed the folder, a subobject and the
-    ``request``.  It will be called once for every object in the folder to
-    obtain column representations for each of its subobjects.  It must return
-    a list of dictionaries with at least a ``name`` key for the column header
-    and a ``value`` key with the correct column value given the
-    subobject. The callable must be prepared to receive subobjects that
-    will *not* have the desired attributes.
+    The third subobject hook is named ``__sdi_columns__``.  To display the
+    contents using a table with any given subobject attributes, a callable
+    named ``__sdi_columns__`` can be defined on a folderish object.  The
+    callable will be passed the folder, a subobject and the ``request``.  It
+    will be called once for every object in the folder to obtain column
+    representations for each of its subobjects.  It must return a list of
+    dictionaries with at least a ``name`` key for the column header and a
+    ``value`` key with the correct column value given the subobject. The
+    callable must be prepared to receive subobjects that will *not* have the
+    desired attributes.
 
     In addition to ``name`` and ``value``, the column dictionary can contain
     the keys ``sortable`` and ``filterable``, which specify respectively whether
@@ -349,65 +344,83 @@ def sdi_folder_contents(folder, request):
     filtered using a simple text search. The default value for both of those
     parameters is True.
 
-    The contents view is a good place to wire up application specific
-    functionality that depends on content selection, so the button toolbar that
-    shows up at the bottom of the page is customizable. The buttons are defined
-    by a method of the base folder class named ``__sdi_buttons__``. This method
-    can be overriden by a folder subclass to provide a customized toolbar.
+    This function honors two content type hooks: ``icon`` and ``buttons``.
 
-    The ``__sdi_buttons__`` callable will be passed the ``context`` and the
-    ``request``. It must return a list of dictionaries with at least a
-    ``type`` key for the button set type and a ``buttons`` key with a list of
+    The first content type hook is named ``icon``.  If the ``icon`` supplied to
+    the content type configuration of a subobject is a callable, the callable
+    will be passed the subobject and the ``request``; it is expected to return
+    an icon name or ``None``.  ``icon`` may alternately be either ``None`` or a
+    string representing a icon name instead of a callable.
+
+    The second content type hook is named ``buttons``.  The folder contents
+    view is a good place to wire up application specific functionality that
+    depends on content selection, so the button toolbar that shows up at the
+    bottom of the page is customizable. The default buttons can be overridden
+    by supplying a ``buttons`` keyword argument to the content type argument
+    list.  It must be a callable object which accepts ``context, request`` and
+    which returns a list of dictionaries; each dictionary represents a button
+    or a button group.
+
+    The ``buttons`` callable you supply will be passed the ``context`` and the
+    ``request``. It must return a list of dictionaries with at least a ``type``
+    key for the button set type and a ``buttons`` key with a list of
     dictionaries representing the buttons. The ``type`` should be one of the
     string values ``group`` or ``single``. A group will display its buttons
     side by side, with no margin, while the single type will display each
     button separately.
 
-    Each button in a ``buttons`` dictionary is rendered using the button tag and
-    requires five keys: ``id`` for the button's id attribute, ``name`` for the
-    button's name attribute, ``class`` for any additional css classes to be
+    Each button in a ``buttons`` dictionary is rendered using the button tag
+    and requires five keys: ``id`` for the button's id attribute, ``name`` for
+    the button's name attribute, ``class`` for any additional css classes to be
     applied to it, ``value`` for the value that will be passed as a request
     parameter when the form is submitted and ``text`` for the button's text.
     
     Most of the time, the best strategy will be to modify the default buttons
-    returned by the ``substanced.sdi.default_sdi_buttons`` function.
+    returned by the ``substanced.sdi.default_sdi_buttons`` function.::
 
-    def __sdi_buttons__(context, request):
-        from substanced.sdi import default_sdi_buttons
-        folder_buttons = default_sdi_buttons(context, request)
-        buttons = {'type': 'single',
-                   'buttons': [{'id': 'button1',
-                   'name': 'button1',
-                   'class': 'btn-primary',
-                   'value': 'button1',
-                   'text': 'Button 1'},
-                  {'id': 'button2',
-                   'name': 'button2',
-                   'class': 'btn-primary',
-                   'value': 'button2',
-                   'text': 'Button 2'}]}
-        folder_buttons.append(buttons)
-        return folder_buttons
+      def custom_buttons(context, request):
+          from substanced.sdi import default_sdi_buttons
+          sdi_buttons = default_sdi_buttons(context, request)
+          custom_buttons = {'type': 'single',
+                     'buttons': [{'id': 'button1',
+                     'name': 'button1',
+                     'class': 'btn-primary',
+                     'value': 'button1',
+                     'text': 'Button 1'},
+                    {'id': 'button2',
+                     'name': 'button2',
+                     'class': 'btn-primary',
+                     'value': 'button2',
+                     'text': 'Button 2'}]}
+          sdi_buttons.append(custom_buttons)
+          return sdi_buttons
+
+      @content(
+          'My Custom Folder',
+          buttons=sdi_buttons,
+          )
+      class MyCustomFolder(Persistent):
+          pass
 
     Once the buttons are defined, a view needs to be registered to handle the
     new buttons. The view configuration has to set Folder as a context and
     include a ``request_param`` predicate with the same name as the ``value``
     defined for the corresponding button. The following template can be used
-    to register such views, changing only the ``request_param`` value:
+    to register such views, changing only the ``request_param`` value::
 
-    @mgmt_view(
-    context=IFolder,
-    name='contents',
-    renderer='substanced.sdi:templates/contents.pt',
-    permission='sdi.manage-contents',
-    request_method='POST',
-    request_param='button1',
-    tab_condition=False,
-    )
-    def button1(context, request):
-        # add button functionality here, then go back to contents
-        request.session.flash('Just did what button1 does')
-        return HTTPFound(request.mgmt_path(context, '@@contents'))
+      @mgmt_view(
+      context=IFolder,
+      name='contents',
+      renderer='substanced.sdi:templates/contents.pt',
+      permission='sdi.manage-contents',
+      request_method='POST',
+      request_param='button1',
+      tab_condition=False,
+      )
+      def button1(context, request):
+          # add button functionality here, then go back to contents
+          request.session.flash('Just did what button1 does')
+          return HTTPFound(request.mgmt_path(context, '@@contents'))
 
     Note that context has to be IFolder for this to work. If you need to
     restrict a button to some specific list of content types, the Pyramid
@@ -461,14 +474,8 @@ def default_sdi_columns(folder, subobject, request):
             'value': '%s %s' % (icon_tag, link_tag),
             'sortable': True}]
 
-def sdi_buttons(context, request):
-    clbl = getattr(context, '__sdi_buttons__', default_sdi_buttons)
-    if clbl is None:
-        return []
-    return clbl(context, request)
-
 def default_sdi_buttons(context, request):
-    """ The default __sdi_buttons__ hook """
+    """ The default buttons content-type hook """
     buttons = []
     finish_buttons = []
 
