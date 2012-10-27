@@ -559,7 +559,8 @@ class Test_sdi_folder_contents(unittest.TestCase):
         self.assertEqual(result[0]['deletable'], False)
 
     def test_columns_callable(self):
-        def get_columns(folder, subobject, request):
+        def get_columns(folder, subobject, request, default_columns):
+            self.assertEqual(len(default_columns), 1)
             return [{'name': 'Col 1',
                      'value': getattr(subobject, 'col1')},
                     {'name': 'Col 2',

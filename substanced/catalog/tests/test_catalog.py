@@ -735,15 +735,18 @@ class Test_catalog_buttons(unittest.TestCase):
         from .. import catalog_buttons
         context = testing.DummyResource()
         request = testing.DummyRequest()
-        buttons = catalog_buttons(context, request)
-        self.assertEqual(buttons[0],
-                         {'buttons':
-                          [{'text': 'Reindex',
-                            'class': 'btn-primary',
-                            'id': 'reindex',
-                            'value': 'reindex',
-                            'name': 'form.reindex'}],
-                          'type': 'single'})
+        default_buttons = [1]
+        buttons = catalog_buttons(context, request, default_buttons)
+        self.assertEqual(buttons,
+                         [
+                             {'buttons':
+                              [{'text': 'Reindex',
+                                'class': 'btn-primary',
+                                'id': 'reindex',
+                                'value': 'reindex',
+                                'name': 'form.reindex'}],
+                              'type': 'single'},
+                             1])
 
 
 class DummyIntrospectable(dict):

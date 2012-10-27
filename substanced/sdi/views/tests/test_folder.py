@@ -129,7 +129,8 @@ class TestFolderContentsViews(unittest.TestCase):
         self.assertEqual(non_filterable, [0])
 
     def test_show_with_columns(self):
-        def sd_columns(folder, subobject, request):
+        def sd_columns(folder, subobject, request, default_columns):
+            self.assertEqual(len(default_columns), 1)
             return [{'name': 'Col 1', 'value': 'col1'},
                     {'name': 'Col 2', 'value': 'col2'}]
         context = testing.DummyResource()
@@ -154,7 +155,8 @@ class TestFolderContentsViews(unittest.TestCase):
         self.assertEqual(non_filterable, [0])
 
     def test_show_non_sortable_columns(self):
-        def sd_columns(folder, subobject, request):
+        def sd_columns(folder, subobject, request, default_columns):
+            self.assertEqual(len(default_columns), 1)
             return [{'name': 'Col 1', 'value': 'col1', 'sortable': False},
                     {'name': 'Col 2', 'value': 'col2'}]
         context = testing.DummyResource()
@@ -179,7 +181,8 @@ class TestFolderContentsViews(unittest.TestCase):
         self.assertEqual(non_filterable, [0])
 
     def test_show_non_filterable_columns(self):
-        def sd_columns(folder, subobject, request):
+        def sd_columns(folder, subobject, request, default_columns):
+            self.assertEqual(len(default_columns), 1)
             return [{'name': 'Col 1', 'value': 'col1'},
                     {'name': 'Col 2', 'value': 'col2', 'filterable': False}]
         context = testing.DummyResource()
@@ -682,7 +685,7 @@ class TestFolderContentsViews(unittest.TestCase):
     def test_buttons_is_clbl(self):
         context = testing.DummyResource()
         request = testing.DummyRequest()
-        def sdi_buttons(contexr, request):
+        def sdi_buttons(contexr, request, default_buttons):
             return 'abc'
         inst = self._makeOne(context, request)
         request.registry.content = DummyContent(buttons=sdi_buttons)

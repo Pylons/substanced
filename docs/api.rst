@@ -396,13 +396,9 @@ Other Helpers
 
 .. autofunction:: add_mgmt_view
 
-.. autofunction:: check_csrf_token
-
-.. autofunction:: default_sdi_buttons
-
-.. autofunction:: default_sdi_columns
-
 .. autoclass:: mgmt_view
+
+.. autofunction:: includeme
 
 :mod:`substanced.root` API
 --------------------------

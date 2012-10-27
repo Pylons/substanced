@@ -31,6 +31,8 @@ from ..objectmap import find_objectmap
 
 MANAGE_ROUTE_NAME = 'substanced_manage'
 
+_marker = object()
+
 @viewdefaults
 @action_method
 def add_mgmt_view(
@@ -342,17 +344,18 @@ def sdi_folder_contents(folder, request):
     depends on content selection, so the button toolbar that shows up at the
     bottom of the page is customizable. The default buttons can be overridden
     by supplying a ``buttons`` keyword argument to the content type argument
-    list.  It must be a callable object which accepts ``context, request`` and
-    which returns a list of dictionaries; each dictionary represents a button
-    or a button group.
+    list.  It must be a callable object which accepts ``context, request,
+    default_buttonspec`` and which returns a list of dictionaries; each
+    dictionary represents a button or a button group.
 
     The ``buttons`` callable you supply will be passed the ``context`` and the
-    ``request``. It must return a list of dictionaries with at least a ``type``
-    key for the button set type and a ``buttons`` key with a list of
-    dictionaries representing the buttons. The ``type`` should be one of the
-    string values ``group`` or ``single``. A group will display its buttons
-    side by side, with no margin, while the single type will display each
-    button separately.
+    ``request`` and ``buttonspec`` (a sequence of default button
+    specifications). It must return a list of dictionaries representing button
+    specifications with at least a ``type`` key for the button specification
+    type and a ``buttons`` key with a list of dictionaries representing the
+    buttons. The ``type`` should be one of the string values ``group`` or
+    ``single``. A group will display its buttons side by side, with no margin,
+    while the single type will display each button separately.
 
     Each button in a ``buttons`` dictionary is rendered using the button tag
     and requires five keys: ``id`` for the button's id attribute, ``name`` for
@@ -360,29 +363,27 @@ def sdi_folder_contents(folder, request):
     applied to it, ``value`` for the value that will be passed as a request
     parameter when the form is submitted and ``text`` for the button's text.
     
-    Most of the time, the best strategy will be to modify the default buttons
-    returned by the ``substanced.sdi.default_sdi_buttons`` function.::
+    Most of the time, the best strategy will be to return a value containing
+    the default buttonspec sequence passed in to the function (it will be a
+    list).::
 
-      def custom_buttons(context, request):
-          from substanced.sdi import default_sdi_buttons
-          sdi_buttons = default_sdi_buttons(context, request)
-          custom_buttons = {'type': 'single',
-                     'buttons': [{'id': 'button1',
-                     'name': 'button1',
-                     'class': 'btn-primary',
-                     'value': 'button1',
-                     'text': 'Button 1'},
-                    {'id': 'button2',
-                     'name': 'button2',
-                     'class': 'btn-primary',
-                     'value': 'button2',
-                     'text': 'Button 2'}]}
-          sdi_buttons.append(custom_buttons)
-          return sdi_buttons
+      def custom_buttons(context, request, default_buttonspec):
+          custom_buttonspec = [{'type': 'single',
+                               'buttons': [{'id': 'button1',
+                                            'name': 'button1',
+                                            'class': 'btn-primary',
+                                            'value': 'button1',
+                                            'text': 'Button 1'},
+                                           {'id': 'button2',
+                                            'name': 'button2',
+                                            'class': 'btn-primary',
+                                            'value': 'button2',
+                                            'text': 'Button 2'}]}]
+          return default_buttonspec + custom_buttonspec
 
       @content(
           'My Custom Folder',
-          buttons=sdi_buttons,
+          buttons=custom_buttons,
           )
       class MyCustomFolder(Persistent):
           pass
@@ -413,26 +414,49 @@ def sdi_folder_contents(folder, request):
 
     The third content-type hook is named ``columns``.  To display the contents
     using a table with any given subobject attributes, a callable named
-    ``columns`` can be passed to a content type as metadata.  Assuming the
-    content type is folderish, when the contents SDI view is invoked against an
-    object of the type, the ``columns`` callable will be passed the folder, a
-    subobject and the ``request``.  It will be called once for every object in
-    the folder to obtain column representations for each of its subobjects.  It
-    must return a list of dictionaries with at least a ``name`` key for the
+    ``columns`` can be passed to a content type as metadata.  When the folder
+    contents SDI view is invoked against an object of the type, the ``columns``
+    callable will be passed the folder, a subobject the ``request``, and a set
+    of default column specifications.  It will be called once for every object
+    in the folder to obtain column representations for each of its subobjects.
+    It must return a list of dictionaries with at least a ``name`` key for the
     column header and a ``value`` key with the correct column value given the
-    subobject. The callable must be prepared to receive subobjects that will
-    *not* have the desired attributes.
+    subobject. The callable **must** be prepared to receive subobjects that
+    will *not* have the desired attributes (the subobject passed will be
+    ``None`` at least once in order for the system to compute headers).
 
     In addition to ``name`` and ``value``, the column dictionary can contain
     the keys ``sortable`` and ``filterable``, which specify respectively whether
     the column will have buttons for sorting the rows and whether a row can be
     filtered using a simple text search. The default value for both of those
     parameters is ``True``.
+
+    Here's an example of using the ``columns`` content type hook::
+
+      def custom_columns(folder, subobject, request, default_columnspec):
+          return default_columnspec + [
+              {'name': 'Review date',
+               'value': getattr(subobject, 'review_date', ''),
+               'sortable': True,
+               'filterable': False},
+              {'name': 'Rating',
+               'value': getattr(subobject, 'rating', ''),
+               'filterable': False,
+               'sortable': True}
+              ]
+
+      @content(
+          'My Custom Folder',
+          columns=custom_columns,
+          )
+      class MyCustomFolder(Persistent):
+          pass
+
     
     """
     can_manage = has_permission('sdi.manage-contents', folder, request)
-    sdi_columns = request.registry.content.metadata(
-        folder, 'columns', default_sdi_columns)
+    custom_columns = request.registry.content.metadata(
+        folder, 'columns', _marker)
     for k, v in folder.items():
         hidden = getattr(v, '__sdi_hidden__', None)
         if hidden is not None:
@@ -452,9 +476,11 @@ def sdi_folder_contents(folder, request):
         if deletable is None:
             deletable = can_manage
         url = request.mgmt_path(v, '@@manage_main')
-        columns = []
-        if sdi_columns is not None:
-            columns = sdi_columns(folder, v, request)
+        columns = default_sdi_columns(folder, v, request)
+        if custom_columns is None:
+            columns = []
+        elif custom_columns is not _marker:
+            columns = custom_columns(folder, v, request, columns)
         columns = [column['value'] for column in columns]
         data = dict(
             name=k,
@@ -475,9 +501,11 @@ def default_sdi_columns(folder, subobject, request):
     if callable(icon):
         icon = icon(subobject, request)
     icon_tag = '<i class="%s"> </i>' % icon
-    return [{'name': 'Name',
-            'value': '%s %s' % (icon_tag, link_tag),
-            'sortable': True}]
+    return [
+        {'name': 'Name',
+         'value': '%s %s' % (icon_tag, link_tag),
+         'sortable': True}
+        ]
 
 def default_sdi_buttons(folder, request):
     """ The default buttons content-type hook """

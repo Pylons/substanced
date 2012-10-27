@@ -37,13 +37,10 @@ def _assertint(docid):
         raise ValueError('%r is not an integer value; document ids must be '
                          'integers' % docid)
 
-def catalog_buttons(context, request):
+def catalog_buttons(context, request, default_buttons):
     """ Show a reindex button before default buttons in the folder contents
     view of a catalog"""
-    from ..sdi import default_sdi_buttons
-    buttons = default_sdi_buttons(context, request)
-    buttons.insert(
-        0,
+    buttons = [
         {'type':'single',
          'buttons':
          [
@@ -54,7 +51,7 @@ def catalog_buttons(context, request):
               'text':'Reindex'}
              ]
          }
-        )
+        ] + default_buttons
     return buttons
 
 @service(
