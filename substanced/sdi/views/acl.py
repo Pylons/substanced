@@ -5,26 +5,26 @@ from pyramid.security import (
     Everyone,
     Authenticated,
     )
-
 from pyramid.session import check_csrf_token
 
-NO_INHERIT = (Deny, Everyone, ALL_PERMISSIONS)
-
-from ...content import (
-    find_service,
-    find_services,
-    )
 from ...catalog import (
     catalog_view_factory_for,
     CatalogViewWrapper
+    )
+from ...content import (
+    find_service,
+    find_services,
     )
 from ...objectmap import find_objectmap
 from ...util import (
     postorder,
     oid_of,
+    get_all_permissions,
     )
 
 from .. import mgmt_view
+
+NO_INHERIT = (Deny, Everyone, ALL_PERMISSIONS)
 
 @mgmt_view(name='acl_edit', permission='sdi.change-acls', 
            renderer='templates/acl.pt', tab_title='Security')
@@ -183,9 +183,8 @@ def acl_edit_view(context, request):
         local_acl.append(new_ace)
 
     permissions = set(['-- ALL --'])
-    introspector = registry.introspector
-    for data in introspector.get_category('permissions'): 
-        name = data['introspectable']['value']
+    registered_permissions = get_all_permissions(registry)
+    for name in registered_permissions:
         if name != NO_PERMISSION_REQUIRED:
             permissions.add(name)
     permissions = list(permissions)

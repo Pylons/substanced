@@ -18,7 +18,7 @@ from ...catalog.discriminators import (
     )
 from ...catalog.indexes import (
     IndexSchema,
-    PermissionsSchemaNode
+    PermissionsSchemaNode,
     )
 from ...form import FormView
 from ...schema import (
