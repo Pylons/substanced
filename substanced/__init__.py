@@ -26,7 +26,6 @@ def includeme(config): # pragma: no cover
     config.include('.evolution')
     config.include('.folder')
     config.include('.principal')
-    config.include('.undo')
     config.include('.widget')
     config.include('.file')
     config.include('.workflow')

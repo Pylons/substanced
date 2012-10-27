@@ -1,5 +1,8 @@
 import inspect
 import operator
+import transaction
+
+from pyramid_zodbconn import get_connection
 
 from zope.interface.interfaces import IInterface
 
@@ -11,6 +14,11 @@ import venusian
 from pyramid.authentication import SessionAuthenticationPolicy
 from pyramid.authorization import ACLAuthorizationPolicy
 from pyramid.exceptions import ConfigurationError
+from pyramid.registry import (
+    predvalseq,
+    Deferred,
+    )
+from pyramid.renderers import render
 from pyramid.request import Request
 from pyramid.security import (
     authenticated_userid,
@@ -19,10 +27,6 @@ from pyramid.security import (
 from pyramid.session import UnencryptedCookieSessionFactoryConfig
 from pyramid.traversal import resource_path_tuple
 from pyramid.threadlocal import get_current_registry
-from pyramid.registry import (
-    predvalseq,
-    Deferred,
-    )
 
 from ..objectmap import find_objectmap
 
@@ -645,6 +649,33 @@ class _PropertiedPredicate(object):
     def __call__(self, context, request):
         return self.is_propertied(context, self.registry) == self.val
 
+class FlashUndo(object):
+    
+    get_connection = staticmethod(get_connection) # testing
+    transaction = transaction # testing
+    
+    def __init__(self, request):
+        self.request = request
+
+    def __call__(self, msg, queue='', allow_duplicate=True):
+        request = self.request
+        conn = self.get_connection(request)
+        db = conn.db()
+        has_perm = has_permission('sdi.undo', request.context, request)
+        if db.supportsUndo() and has_perm:
+            hsh = str(id(request)) + str(hash(msg))
+            t = self.transaction.get()
+            t.note(msg)
+            t.note('hash:'+hsh)
+            csrf_token = request.session.get_csrf_token()
+            query = {'csrf_token':csrf_token, 'hash':hsh}
+            url = request.mgmt_path(request.context, '@@undo_one', _query=query)
+            vars = {'msg':msg, 'url':url}
+            button= render(
+                'views/templates/undobutton.pt', vars, request=request)
+            msg = button
+        request.session.flash(msg, queue, allow_duplicate=allow_duplicate)
+
 
 def include(config): # pragma: no cover
     settings = config.registry.settings
@@ -663,6 +694,7 @@ def include(config): # pragma: no cover
     config.add_request_method(mgmt_path)
     config.add_request_method(mgmt_url)
     config.add_request_method(get_user, name='user', reify=True)
+    config.add_request_method(FlashUndo, name='flash_with_undo', reify=True)
     config.include('deform_bootstrap')
     secret = settings.get('substanced.secret')
     if secret is None:
