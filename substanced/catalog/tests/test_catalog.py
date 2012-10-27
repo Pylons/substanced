@@ -495,6 +495,12 @@ class Test_catalog_view_factory_for(unittest.TestCase):
         self.config.registry.content = DummyContent()
         self.assertTrue(self._callFUT(resource))
 
+    def test_false_no_cregistry(self):
+        resource = Dummy()
+        resource.result = True
+        registry = Dummy()
+        self.assertEqual(self._callFUT(resource, registry), False)
+
     def test_true(self):
         resource = Dummy()
         resource.result = True

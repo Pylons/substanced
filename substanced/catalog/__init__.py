@@ -349,8 +349,10 @@ class CatalogViewWrapper(object):
 def catalog_view_factory_for(resource, registry=None):
     if registry is None:
         registry = get_current_registry()
-    value = registry.content.metadata(resource, 'catalog', False)
-    return value
+    cregistry = getattr(registry, 'content', None)
+    if cregistry is not None:
+        return cregistry.metadata(resource, 'catalog', False)
+    return False
 
 def is_catalogable(resource, registry=None):
     return bool(catalog_view_factory_for(resource, registry))
