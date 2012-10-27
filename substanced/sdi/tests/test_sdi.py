@@ -410,7 +410,7 @@ class Test_sdi_mgmt_views(unittest.TestCase):
         request = testing.DummyRequest()
         request.matched_route = None
         request.mgmt_path = lambda context, view_name: '/path/%s' % view_name
-        request.registry.content = DummyContent(('b',))
+        request.registry.content = DummyContent(tab_order=('b',))
         request.view_name = 'b'
         view_intr1 = DummyIntrospectable()
         view_intr1.category_name = 'views'
@@ -455,7 +455,7 @@ class Test_sdi_folder_contents(unittest.TestCase):
 
     def _makeRequest(self):
         request = testing.DummyRequest()
-        request.registry.content = DummyContent('icon')
+        request.registry.content = DummyContent(columns=None, icon=None)
         request.mgmt_path = lambda *arg: '/manage'
         return request
         
@@ -472,6 +472,7 @@ class Test_sdi_folder_contents(unittest.TestCase):
         context = testing.DummyResource()
         context['a'] = testing.DummyResource()
         request = self._makeRequest()
+        request.registry.content = DummyContent(icon='icon')
         result = list(self._callFUT(context, request))
         self.assertEqual(len(result), 1)
         item = result[0]
@@ -486,13 +487,11 @@ class Test_sdi_folder_contents(unittest.TestCase):
         context = testing.DummyResource()
         context['a'] = testing.DummyResource()
         request = self._makeRequest()
-        def computed_icon(v, default=None):
-            def inner(subobject, _request):
-                self.assertEqual(subobject, context['a'])
-                self.assertEqual(_request, request)
-                return 'anicon'
-            return inner
-        request.registry.content.metadata = computed_icon
+        def icon(subobject, _request):
+            self.assertEqual(subobject, context['a'])
+            self.assertEqual(_request, request)
+            return 'anicon'
+        request.registry.content = DummyContent(icon=icon)
         result = list(self._callFUT(context, request))
         self.assertEqual(len(result), 1)
         item = result[0]
@@ -507,9 +506,7 @@ class Test_sdi_folder_contents(unittest.TestCase):
         context = testing.DummyResource()
         context['a'] = testing.DummyResource()
         request = self._makeRequest()
-        def computed_icon(v, default=None):
-            return 'anicon'
-        request.registry.content.metadata = computed_icon
+        request.registry.content = DummyContent(icon='anicon')
         result = list(self._callFUT(context, request))
         self.assertEqual(len(result), 1)
         item = result[0]
@@ -569,11 +566,11 @@ class Test_sdi_folder_contents(unittest.TestCase):
                      'value': getattr(subobject, 'col2')}]
         self.config.testing_securitypolicy(permissive=True)
         context = testing.DummyResource()
-        context.__sdi_columns__ = get_columns
         context['a'] = testing.DummyResource()
         context['a'].col1 = 'val1'
         context['a'].col2 = 'val2'
         request = self._makeRequest()
+        request.registry.content = DummyContent(columns=get_columns)
         result = list(self._callFUT(context, request))
         self.assertEqual(result[0]['columns'], ['val1', 'val2'])
 
@@ -909,11 +906,11 @@ class TestFlashUndo(unittest.TestCase):
         self.assertTrue(inst.transaction.notes)
 
 class DummyContent(object):
-    def __init__(self, result=None):
-        self.result = result
+    def __init__(self, **kw):
+        self.__dict__.update(kw)
         
-    def metadata(self, *arg, **kw):
-        return self.result
+    def metadata(self, context, name, default=None):
+        return getattr(self, name, default)
 
 class DummyIntrospector(object):
     def __init__(self, results=()):

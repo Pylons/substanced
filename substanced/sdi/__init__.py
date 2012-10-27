@@ -286,8 +286,9 @@ def sdi_folder_contents(folder, request):
 
     ``columns``
 
-      Any extra column values obtained from this subobject's attributes, as
-      defined by the ``__sdi_columns__`` hook.
+      The column values obtained from this subobject's attributes, as
+      defined by the ``columns`` content-type hook (or the default columns,
+      if no hook was supplied).
 
     This function considers a subobject:
 
@@ -298,8 +299,8 @@ def sdi_folder_contents(folder, request):
     - 'viewable' if the user has the ``sdi.view`` permission against the
       subobject.
 
-    This function honors three subobject hooks:: ``__sdi_hidden__``,
-    ``__sdi_deletable__``, and ``__sdi_columns__``.
+    This function honors two subobject hooks:: ``__sdi_hidden__``,
+    and ``__sdi_deletable__``.
 
     The first subobject hook is named ``__sdi_hidden__``.  If a subobject has
     an attribute named ``__sdi_hidden__``, it is expected to be either a
@@ -327,24 +328,8 @@ def sdi_folder_contents(folder, request):
     boolean indicating whether the current user has the
     ``sdi.manage-contents`` permission on the ``folder``.
 
-    The third subobject hook is named ``__sdi_columns__``.  To display the
-    contents using a table with any given subobject attributes, a callable
-    named ``__sdi_columns__`` can be defined on a folderish object.  The
-    callable will be passed the folder, a subobject and the ``request``.  It
-    will be called once for every object in the folder to obtain column
-    representations for each of its subobjects.  It must return a list of
-    dictionaries with at least a ``name`` key for the column header and a
-    ``value`` key with the correct column value given the subobject. The
-    callable must be prepared to receive subobjects that will *not* have the
-    desired attributes.
-
-    In addition to ``name`` and ``value``, the column dictionary can contain
-    the keys ``sortable`` and ``filterable``, which specify respectively whether
-    the column will have buttons for sorting the rows and whether a row can be
-    filtered using a simple text search. The default value for both of those
-    parameters is True.
-
-    This function honors two content type hooks: ``icon`` and ``buttons``.
+    This function honors two content type hooks: ``icon``, ``buttons``, and
+    ``columns``.
 
     The first content type hook is named ``icon``.  If the ``icon`` supplied to
     the content type configuration of a subobject is a callable, the callable
@@ -425,9 +410,29 @@ def sdi_folder_contents(folder, request):
     Note that context has to be IFolder for this to work. If you need to
     restrict a button to some specific list of content types, the Pyramid
     ``content_type`` predicate can be used.
+
+    The third content-type hook is named ``columns``.  To display the contents
+    using a table with any given subobject attributes, a callable named
+    ``columns`` can be passed to a content type as metadata.  Assuming the
+    content type is folderish, when the contents SDI view is invoked against an
+    object of the type, the ``columns`` callable will be passed the folder, a
+    subobject and the ``request``.  It will be called once for every object in
+    the folder to obtain column representations for each of its subobjects.  It
+    must return a list of dictionaries with at least a ``name`` key for the
+    column header and a ``value`` key with the correct column value given the
+    subobject. The callable must be prepared to receive subobjects that will
+    *not* have the desired attributes.
+
+    In addition to ``name`` and ``value``, the column dictionary can contain
+    the keys ``sortable`` and ``filterable``, which specify respectively whether
+    the column will have buttons for sorting the rows and whether a row can be
+    filtered using a simple text search. The default value for both of those
+    parameters is ``True``.
+    
     """
     can_manage = has_permission('sdi.manage-contents', folder, request)
-    sd_columns = getattr(folder, '__sdi_columns__', default_sdi_columns)
+    sdi_columns = request.registry.content.metadata(
+        folder, 'columns', default_sdi_columns)
     for k, v in folder.items():
         hidden = getattr(v, '__sdi_hidden__', None)
         if hidden is not None:
@@ -448,8 +453,8 @@ def sdi_folder_contents(folder, request):
             deletable = can_manage
         url = request.mgmt_path(v, '@@manage_main')
         columns = []
-        if sd_columns is not None:
-            columns = sd_columns(folder, v, request)
+        if sdi_columns is not None:
+            columns = sdi_columns(folder, v, request)
         columns = [column['value'] for column in columns]
         data = dict(
             name=k,
@@ -462,7 +467,7 @@ def sdi_folder_contents(folder, request):
         yield data
 
 def default_sdi_columns(folder, subobject, request):
-    """ The default __sdi_columns__ hook """
+    """ The default columns content-type hook """
     name = getattr(subobject, '__name__', '')
     url = request.mgmt_path(subobject, '@@manage_main')
     link_tag = '<a href="%s">%s</a>' % (url, name)
@@ -474,7 +479,7 @@ def default_sdi_columns(folder, subobject, request):
             'value': '%s %s' % (icon_tag, link_tag),
             'sortable': True}]
 
-def default_sdi_buttons(context, request):
+def default_sdi_buttons(folder, request):
     """ The default buttons content-type hook """
     buttons = []
     finish_buttons = []

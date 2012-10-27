@@ -1,3 +1,4 @@
+import itertools
 import re
 
 import colander
@@ -94,12 +95,33 @@ class FolderContentsViews(object):
         self.context = context
         self.request = request
 
-    def sdi_buttons(self, context, request):
+    def _buttons(self, context, request):
         clbl = request.registry.content.metadata(
             context, 'buttons', default_sdi_buttons)
         if clbl is None:
             return []
         return clbl(context, request)
+
+    def _column_headers(self, context, request):
+        headers = []
+        non_sortable = [0]
+        non_filterable = [0]
+
+        sdi_columns = request.registry.content.metadata(
+            context, 'columns', default_sdi_columns)
+
+        if sdi_columns is not None:
+            columns = sdi_columns(self, None, request)
+            for order, column in enumerate(columns):
+                headers.append(column['name'])
+                sortable = column.get('sortable', True)
+                if not sortable:
+                    non_sortable.append(order + 1)
+                filterable = column.get('filterable', True)
+                if not filterable:
+                    non_filterable.append(order + 1)
+
+        return headers, non_sortable, non_filterable
 
     @mgmt_view(
         request_method='GET',
@@ -108,30 +130,35 @@ class FolderContentsViews(object):
     def show(self):
         request = self.request
         context = self.context
-        headers = []
-        non_sortable = [0]
-        non_filterable = [0]
-        sd_columns = getattr(context, '__sdi_columns__', default_sdi_columns)
-        if sd_columns is not None:
-            sd_columns = sd_columns(self, None, request)
-            for order, column in enumerate(sd_columns):
-                headers.append(column['name'])
-                sortable = column.get('sortable', True)
-                if not sortable:
-                    non_sortable.append(order + 1)
-                filterable = column.get('filterable', True)
-                if not filterable:
-                    non_filterable.append(order + 1)
-        seq = self.sdi_folder_contents(context, request) # generator
-        buttons = self.sdi_buttons(context, request)
+
+        headers, non_sortable, non_filterable = self._column_headers(
+            context, request
+            )
+        buttons = self._buttons(context, request)
+
         addables = self.sdi_add_views(context, request)
-        return dict(items=seq,
-                    num_items=len(context),
-                    addables=addables,
-                    headers=headers,
-                    buttons=buttons,
-                    non_filterable=str(non_filterable),
-                    non_sortable=str(non_sortable))
+
+        seq = self.sdi_folder_contents(context, request) # generator
+
+        # We need an accurate length but len(self.context) will not take into
+        # account hidden items. To gen an accurate length we tee the generator
+        # and exaust one copy to produce a sum, we use the other copy as the
+        # items we pass to the template.  This is probably unsat for huge
+        # folders, but at least has a slight advantage over doing
+        # len(list(seq)) because we don't unnecessarily create a large data
+        # structure in memory.
+        items, items_copy = itertools.tee(seq)
+        num_items = sum(1 for _ in items_copy) 
+
+        return dict(
+            items=items, # NB: do not use "seq" here, we teed it above
+            num_items=num_items,
+            addables=addables,
+            headers=headers,
+            buttons=buttons,
+            non_filterable=non_filterable,
+            non_sortable=non_sortable,
+            )
 
     @mgmt_view(
         request_method='POST',

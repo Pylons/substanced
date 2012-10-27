@@ -73,15 +73,15 @@ class TestAddFolderView(unittest.TestCase):
         from ..folder import AddFolderView
         return AddFolderView(context, request)
 
-    def _makeRequest(self, resource):
+    def _makeRequest(self, **kw):
         request = testing.DummyRequest()
-        request.registry.content = DummyContent(resource)
+        request.registry.content = DummyContent(**kw)
         request.mgmt_path = lambda *arg: 'http://example.com'
         return request
 
     def test_add_success(self):
         resource = testing.DummyResource()
-        request = self._makeRequest(resource)
+        request = self._makeRequest(Folder=resource)
         context = testing.DummyResource()
         inst = self._makeOne(context, request)
         resp = inst.add_success({'name': 'name'})
@@ -99,105 +99,109 @@ class TestFolderContentsViews(unittest.TestCase):
         from ..folder import FolderContentsViews
         return FolderContentsViews(context, request)
 
-    def _makeRequest(self):
+    def _makeRequest(self, **kw):
         request = testing.DummyRequest()
         request.mgmt_path = lambda *arg: '/manage'
-        request.registry.content = DummyContent()
+        request.registry.content = DummyContent(**kw)
         request.flash_with_undo = request.session.flash
         return request
 
     def test_show_no_columns(self):
         context = testing.DummyResource()
-        context.__sdi_columns__ = None
-        request = self._makeRequest()
+        request = self._makeRequest(columns=None)
         inst = self._makeOne(context, request)
         inst.sdi_folder_contents = lambda *arg: ('a',)
         inst.sdi_add_views = lambda *arg: ('b',)
-        inst.sdi_buttons = lambda *arg: []
         result = inst.show()
         items = result['items']
-        self.assertEqual(len(items), 1)
-        self.assertEqual(items[0], 'a')
+        num_items = result['num_items']
+        expanded = list(items)
+        self.assertEqual(len(expanded), 1)
+        self.assertEqual(num_items, 1)
+        self.assertEqual(expanded[0], 'a')
         addables = result['addables']
         self.assertEqual(addables, ('b',))
         headers = result['headers']
         self.assertEqual(headers, [])
         non_sortable = result['non_sortable']
-        self.assertEqual(non_sortable, '[0]')
+        self.assertEqual(non_sortable, [0])
         non_filterable = result['non_filterable']
-        self.assertEqual(non_filterable, '[0]')
+        self.assertEqual(non_filterable, [0])
 
     def test_show_with_columns(self):
         def sd_columns(folder, subobject, request):
             return [{'name': 'Col 1', 'value': 'col1'},
                     {'name': 'Col 2', 'value': 'col2'}]
         context = testing.DummyResource()
-        context.__sdi_columns__ = sd_columns
-        request = self._makeRequest()
+        request = self._makeRequest(columns=sd_columns)
         inst = self._makeOne(context, request)
         inst.sdi_folder_contents = lambda *arg: ('a',)
         inst.sdi_add_views = lambda *arg: ('b',)
-        inst.sdi_buttons = lambda *arg: []
         result = inst.show()
         items = result['items']
-        self.assertEqual(len(items), 1)
-        self.assertEqual(items[0], 'a')
+        num_items = result['num_items']
+        self.assertEqual(num_items, 1)
+        expanded = list(items)
+        self.assertEqual(len(expanded), 1)
+        self.assertEqual(expanded[0], 'a')
         addables = result['addables']
         self.assertEqual(addables, ('b',))
         headers = result['headers']
         self.assertEqual(headers, ['Col 1', 'Col 2'])
         non_sortable = result['non_sortable']
-        self.assertEqual(non_sortable, '[0]')
+        self.assertEqual(non_sortable, [0])
         non_filterable = result['non_filterable']
-        self.assertEqual(non_filterable, '[0]')
+        self.assertEqual(non_filterable, [0])
 
     def test_show_non_sortable_columns(self):
         def sd_columns(folder, subobject, request):
             return [{'name': 'Col 1', 'value': 'col1', 'sortable': False},
                     {'name': 'Col 2', 'value': 'col2'}]
         context = testing.DummyResource()
-        context.__sdi_columns__ = sd_columns
-        request = self._makeRequest()
+        request = self._makeRequest(columns=sd_columns)
         inst = self._makeOne(context, request)
         inst.sdi_folder_contents = lambda *arg: ('a',)
         inst.sdi_add_views = lambda *arg: ('b',)
-        inst.sdi_buttons = lambda *arg: []
         result = inst.show()
         items = result['items']
-        self.assertEqual(len(items), 1)
-        self.assertEqual(items[0], 'a')
+        num_items = result['num_items']
+        expanded = list(items)
+        self.assertEqual(num_items, 1)
+        self.assertEqual(expanded[0], 'a')
+        self.assertEqual(len(expanded), 1)
         addables = result['addables']
         self.assertEqual(addables, ('b',))
         headers = result['headers']
         self.assertEqual(headers, ['Col 1', 'Col 2'])
         non_sortable = result['non_sortable']
-        self.assertEqual(non_sortable, '[0, 1]')
+        self.assertEqual(non_sortable, [0, 1])
         non_filterable = result['non_filterable']
-        self.assertEqual(non_filterable, '[0]')
+        self.assertEqual(non_filterable, [0])
 
     def test_show_non_filterable_columns(self):
         def sd_columns(folder, subobject, request):
             return [{'name': 'Col 1', 'value': 'col1'},
                     {'name': 'Col 2', 'value': 'col2', 'filterable': False}]
         context = testing.DummyResource()
-        context.__sdi_columns__ = sd_columns
-        request = self._makeRequest()
+        request = self._makeRequest(columns=sd_columns)
         inst = self._makeOne(context, request)
         inst.sdi_folder_contents = lambda *arg: ('a',)
         inst.sdi_add_views = lambda *arg: ('b',)
-        inst.sdi_buttons = lambda *arg: []
         result = inst.show()
         items = result['items']
-        self.assertEqual(len(items), 1)
-        self.assertEqual(items[0], 'a')
+        num_items = result['num_items']
+        expanded = list(items)
+        self.assertEqual(len(expanded), 1)
+        self.assertEqual(num_items, 1)
+        self.assertEqual(expanded[0], 'a')
         addables = result['addables']
         self.assertEqual(addables, ('b',))
         headers = result['headers']
         self.assertEqual(headers, ['Col 1', 'Col 2'])
         non_sortable = result['non_sortable']
-        self.assertEqual(non_sortable, '[0]')
+        self.assertEqual(non_sortable, [0])
         non_filterable = result['non_filterable']
-        self.assertEqual(non_filterable, '[0, 2]')
+        self.assertEqual(non_filterable, [0, 2])
 
     def test_delete_none_deleted(self):
         context = testing.DummyResource()
@@ -667,22 +671,22 @@ class TestFolderContentsViews(unittest.TestCase):
         self.assertRaises(HTTPFound, inst.move_finish)
         request.session.flash.assert_called_once_with(u'foobar', 'error')
 
-    def test_sdi_buttons_is_None(self):
+    def test_buttons_is_None(self):
         context = testing.DummyResource()
         request = testing.DummyRequest()
         inst = self._makeOne(context, request)
-        request.registry.content = DummyContent(None)
-        result = inst.sdi_buttons(context, request)
+        request.registry.content = DummyContent(buttons=None)
+        result = inst._buttons(context, request)
         self.assertEqual(result, [])
 
-    def test_sdi_buttons_is_clbl(self):
+    def test_buttons_is_clbl(self):
         context = testing.DummyResource()
         request = testing.DummyRequest()
         def sdi_buttons(contexr, request):
             return 'abc'
         inst = self._makeOne(context, request)
-        request.registry.content = DummyContent(sdi_buttons)
-        result = inst.sdi_buttons(context, request)
+        request.registry.content = DummyContent(buttons=sdi_buttons)
+        result = inst._buttons(context, request)
         self.assertEqual(result, 'abc')
 
 class DummyFolder(object):
@@ -697,14 +701,14 @@ class DummyFolder(object):
         return name
 
 class DummyContent(object):
-    def __init__(self, resource=None):
-        self.resource = resource
+    def __init__(self, **kw):
+        self.__dict__.update(kw)
 
     def create(self, iface, *arg, **kw):
-        return self.resource
+        return getattr(self, iface, None)
 
-    def metadata(self, *arg, **kw):
-        return self.resource
+    def metadata(self, context, name, default=None):
+        return getattr(self, name, default)
 
 
 class DummyPost(dict):
