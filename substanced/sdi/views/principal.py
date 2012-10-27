@@ -3,19 +3,20 @@ import deform.widget
 
 from pyramid.httpexceptions import HTTPFound
 
-from ..form import FormView
-from ..sdi import mgmt_view
-from ..schema import Schema
-from ..content import find_service
+from ...form import FormView
+from ...schema import Schema
+from ...content import find_service
 
-from ..interfaces import (
+from ...interfaces import (
     IUsers,
     IUser,
     IGroups,
     IPasswordReset,
     )
 
-from . import (
+from .. import mgmt_view
+
+from ...principal import (
     UserSchema,
     GroupSchema,
     )
@@ -40,7 +41,7 @@ def add_principals_service(context, request):
     context=IUsers,
     name='add_user',
     permission='sdi.add-user', 
-    renderer='substanced.sdi:templates/form.pt',
+    renderer='templates/form.pt',
     tab_condition=False
     )
 class AddUserView(FormView):
@@ -61,7 +62,7 @@ class AddUserView(FormView):
     context=IGroups,
     name='add_group',
     permission='sdi.add-group', 
-    renderer='substanced.sdi:templates/form.pt',
+    renderer='templates/form.pt',
     tab_condition=False
     )
 class AddGroupView(FormView):
@@ -108,7 +109,7 @@ class UserPasswordSchema(Schema):
     name='change_password',
     tab_title='Change Password',
     permission='sdi.change-password',
-    renderer='substanced.sdi:templates/form.pt'
+    renderer='templates/form.pt'
     )
 class ChangePasswordView(FormView):
     title = 'Change Password'
@@ -142,7 +143,7 @@ class ResetRequestSchema(Schema):
 @mgmt_view(
     name='resetpassword',
     tab_condition=False,
-    renderer='substanced.sdi:templates/form.pt'
+    renderer='templates/form.pt'
     )
 class ResetRequestView(FormView):
     title = 'Request Password Reset'
@@ -173,7 +174,7 @@ class ResetSchema(Schema):
     context=IPasswordReset,
     name='',
     tab_condition=False,
-    renderer='substanced.sdi:templates/form.pt'
+    renderer='templates/form.pt'
     )
 class ResetView(FormView):
     title = 'Reset Password'
