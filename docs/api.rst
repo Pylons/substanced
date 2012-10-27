@@ -28,6 +28,10 @@
 
    Retrieve an index or return failobj.
 
+.. autofunction:: is_catalogable
+
+.. autofunction:: catalog_view_factory_for
+
 .. autofunction:: includeme
 
 .. autofunction:: add_catalog_index
