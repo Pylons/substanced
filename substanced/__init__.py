@@ -20,7 +20,6 @@ def includeme(config): # pragma: no cover
     config.include('.sdi')
     config.include('.content')
     config.include('.event')
-    config.include('.acl')
     config.include('.objectmap')
     config.include('.catalog')
     config.include('.root')

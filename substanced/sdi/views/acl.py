@@ -1,28 +1,30 @@
 from pyramid.security import (
     NO_PERMISSION_REQUIRED,
     ALL_PERMISSIONS,
+    Deny,
     Everyone,
     Authenticated,
     )
 
 from pyramid.session import check_csrf_token
 
-from ..content import (
+NO_INHERIT = (Deny, Everyone, ALL_PERMISSIONS)
+
+from ...content import (
     find_service,
     find_services,
     )
-from ..catalog import (
+from ...catalog import (
     catalog_view_factory_for,
     CatalogViewWrapper
     )
-from ..objectmap import find_objectmap
-from ..sdi import mgmt_view
-from ..util import (
+from ...objectmap import find_objectmap
+from ...util import (
     postorder,
     oid_of,
     )
 
-from . import NO_INHERIT
+from .. import mgmt_view
 
 @mgmt_view(name='acl_edit', permission='sdi.change-acls', 
            renderer='templates/acl.pt', tab_title='Security')
