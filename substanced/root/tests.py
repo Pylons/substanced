@@ -2,6 +2,12 @@ import unittest
 from pyramid import testing
 
 class TestRoot(unittest.TestCase):
+    def setUp(self):
+        testing.setUp()
+
+    def tearDown(self):
+        testing.tearDown()
+        
     def _makeOne(self):
         from . import Root
         return Root()
@@ -35,6 +41,7 @@ class TestRoot(unittest.TestCase):
         registry.group = group
         registry.user = user
         registry.created = created
+        registry.subscribers = lambda *arg: True
         return registry
 
     def test_after_create_with_password(self):

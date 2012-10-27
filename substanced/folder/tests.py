@@ -11,6 +11,9 @@ class TestFolder(unittest.TestCase):
     def setUp(self):
         self.config = testing.setUp()
 
+    def tearDown(self):
+        testing.tearDown()
+
     def _getTargetClass(self):
         from . import Folder
         return Folder

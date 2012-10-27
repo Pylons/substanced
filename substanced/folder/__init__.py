@@ -62,6 +62,7 @@ class Folder(Persistent):
 
     def _del_order(self):
         del self._order
+
     order = property(_get_order, _set_order, _del_order)
 
     def __init__(self, data=None, family=None):
@@ -90,6 +91,7 @@ class Folder(Persistent):
         """ Add a service to this folder named ``name``."""
         if registry is None:
             registry = get_current_registry()
+        kw['registry'] = registry
         self.add(name, obj, **kw)
         if not name in self.__services__:
             self.__services__ = self.__services__ + (name,)
@@ -281,7 +283,7 @@ class Folder(Persistent):
 
         return name
 
-    def pop(self, name, default=marker):
+    def pop(self, name, default=marker, registry=None):
         """ Remove the item stored in the under ``name`` and return it.
 
         If ``name`` doesn't exist in the folder, and ``default`` **is not**
@@ -299,8 +301,10 @@ class Folder(Persistent):
         :class:`substanced.event.ObjectRemoved` after the object loses its
         ``__name__`` and ``__parent__`` value,
         """
+        if registry is None:
+            registry = get_current_registry()
         try:
-            result = self.remove(name)
+            result = self.remove(name, registry=registry)
         except KeyError:
             if default is marker:
                 raise
@@ -334,7 +338,7 @@ class Folder(Persistent):
         """
         return self.remove(name)
 
-    def remove(self, name, send_events=True, moving=False):
+    def remove(self, name, send_events=True, moving=False, registry=None):
         """ Same thing as ``__delitem__``.
 
         If ``send_events`` is false, suppress the sending of folder events.
@@ -344,9 +348,12 @@ class Folder(Persistent):
         name = unicode(name)
         other = self.data[name]
 
+        if registry is None:
+            registry = get_current_registry()
+
         if send_events:
             event = ObjectWillBeRemoved(other, self, name, moving)
-            self._notify(event)
+            self._notify(event, registry)
 
         if hasattr(other, '__parent__'):
             del other.__parent__
@@ -365,11 +372,11 @@ class Folder(Persistent):
 
         if send_events:
             event = ObjectRemoved(other, self, name, moving)
-            self._notify(event)
+            self._notify(event, registry)
 
         return other
 
-    def copy(self, name, other, newname=None):
+    def copy(self, name, other, newname=None, registry=None):
         """
         Copy a subobject named ``name`` from this folder to the folder
         represented by ``other``.  If ``newname`` is not none, it is used as
@@ -379,16 +386,20 @@ class Folder(Persistent):
         if newname is None:
             newname = name
 
+        if registry is None:
+            registry = get_current_registry()
+
         with tempfile.TemporaryFile() as f:
             obj = self.get(name)
             obj._p_jar.exportFile(obj._p_oid, f)
             f.seek(0)
             new_obj = obj._p_jar.importFile(f)
             del new_obj.__parent__
-            obj = other.add(newname, new_obj, duplicating=True)
+            obj = other.add(newname, new_obj, duplicating=True,
+                            registry=registry)
             return obj
 
-    def move(self, name, other, newname=None):
+    def move(self, name, other, newname=None, registry=None):
         """
         Move a subobject named ``name`` from this folder to the folder
         represented by ``other``.  If ``newname`` is not none, it is used as
@@ -404,13 +415,15 @@ class Folder(Persistent):
             newname = name
         if name in self.__services__:
             is_service = True
-        ob = self.remove(name, moving=True)
-        other.add(newname, ob)
+        if registry is None:
+            registry = get_current_registry()
+        ob = self.remove(name, moving=True, registry=registry)
+        other.add(newname, ob, registry=registry)
         if is_service:
             other.__services__ = other.__services__ + (name,)
         return ob
 
-    def rename(self, oldname, newname):
+    def rename(self, oldname, newname, registry=None):
         """
         Rename a subobject from oldname to newname.
 
@@ -418,9 +431,11 @@ class Folder(Persistent):
         and WillBeRemoved events sent will indicate that the object is
         moving.
         """
-        return self.move(oldname, self, newname)
+        if registry is None:
+            registry = get_current_registry()
+        return self.move(oldname, self, newname, registry=registry)
 
-    def replace(self, name, newobject):
+    def replace(self, name, newobject, registry=None):
         """ Replace an existing object named ``name`` in this folder with a
         new object ``newobject``.  If there isn't an object named ``name`` in
         this folder, an exception will *not* be raised; instead, the new
@@ -430,9 +445,11 @@ class Folder(Persistent):
         and WillBeRemoved events will be sent for the old object, and the
         WillBeAdded and Add events will be sent for the new object.
         """
+        if registry is None:
+            registry = get_current_registry()
         if name in self:
-            del self[name]
-        self[name] = newobject
+            self.remove(name)
+        self.add(name, newobject, registry=registry)
 
 class _AutoNamingFolder(object):
     def add_next(

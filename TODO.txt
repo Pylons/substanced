@@ -105,6 +105,8 @@ Docs
 
 - Docstrings for multireference property implementations.
 
+- Explain divide between includeme/include/scan funcs in sd packages.
+
 Probably Bad Ideas
 ------------------
 
