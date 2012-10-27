@@ -118,7 +118,7 @@ class FolderContentsViews(object):
                     non_filterable.append(order + 1)
         seq = self.sdi_folder_contents(context, request) # generator
         buttons = self.sdi_buttons(context, request)
-        addables = self.sdi_add_views(request, context)
+        addables = self.sdi_add_views(context, request)
         return dict(items=seq,
                     num_items=len(context),
                     addables=addables,

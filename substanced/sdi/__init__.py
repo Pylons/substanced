@@ -554,10 +554,8 @@ def default_sdi_addable(context, intr):
         return not (service_name and service_name in context)
     return True
 
-def sdi_add_views(request, context=None):
+def sdi_add_views(context, request):
     registry = request.registry
-    if context is None:
-        context = request.context
     introspector = registry.introspector
 
     candidates = {}

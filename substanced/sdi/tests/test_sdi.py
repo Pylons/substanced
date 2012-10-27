@@ -734,9 +734,9 @@ class Test_default_sdi_buttons(unittest.TestCase):
 
 
 class Test_sdi_add_views(unittest.TestCase):
-    def _callFUT(self, request, context=None):
+    def _callFUT(self, context, request):
         from .. import sdi_add_views
-        return sdi_add_views(request, context)
+        return sdi_add_views(context, request)
 
     def setUp(self):
         testing.setUp()
@@ -749,7 +749,7 @@ class Test_sdi_add_views(unittest.TestCase):
         request.matched_route = None
         request.registry.content = DummyContent()
         request.registry.introspector = DummyIntrospector()
-        result = self._callFUT(request)
+        result = self._callFUT(None, request)
         self.assertEqual(result, [])
 
     def test_one_content_type(self):
@@ -771,7 +771,7 @@ class Test_sdi_add_views(unittest.TestCase):
         intr['tab_condition'] = None
         intr = DummyIntrospectable(related=(view_intr1,), introspectable=intr)
         request.registry.introspector = DummyIntrospector([(ct_intr,), (intr,)])
-        result = self._callFUT(request)
+        result = self._callFUT(None, request)
         self.assertEqual(
             result,
             [{'url': '/path', 'type_name': 'Content', 'icon': ''}])
@@ -797,7 +797,7 @@ class Test_sdi_add_views(unittest.TestCase):
         intr['tab_condition'] = None
         intr = DummyIntrospectable(related=(view_intr1,), introspectable=intr)
         request.registry.introspector = DummyIntrospector([(ct_intr,), (intr,)])
-        result = self._callFUT(request, context)
+        result = self._callFUT(context, request)
         self.assertEqual(result, [])
 
     def test_one_content_type_not_addable_callable(self):
@@ -821,7 +821,7 @@ class Test_sdi_add_views(unittest.TestCase):
         intr['tab_condition'] = None
         intr = DummyIntrospectable(related=(view_intr1,), introspectable=intr)
         request.registry.introspector = DummyIntrospector([(ct_intr,), (intr,)])
-        result = self._callFUT(request, context)
+        result = self._callFUT(context, request)
         self.assertEqual(result, [])
         
     def test_content_type_not_addable_to(self):
@@ -853,7 +853,7 @@ class Test_sdi_add_views(unittest.TestCase):
         intr = DummyIntrospectable(related=(view_intr1,), introspectable=intr)
         request.registry.introspector = DummyIntrospector(
             [(ct_intr, ct2_intr), (intr,)])
-        result = self._callFUT(request, context)
+        result = self._callFUT(context, request)
         self.assertEqual(checked, [True])
         self.assertEqual(
             result,
