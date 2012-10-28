@@ -50,16 +50,6 @@ default_resources = {
                   'deform:static/scripts/deform.js',
                   'deform_bootstrap:static/deform_bootstrap.js'),
             'css':'deform:static/css/form.css',
-# Don't depend on deform_bootstrap.css, it uses less, and its .less includes
-# 1) the bootstrap css, 2) the datepicker css and 3) the chosen css.
-# We already depend on the bootstrap and chosen css sitewide.  We don't yet
-# depend on the datepicker css, but when we do, we'll also just add it
-# sitewide.  Rationale: the deform_bootstrap css when included causes the
-# halfling images to go missing and it makes the CSS harder to debug due
-# to all the repetition with the sitewide-loaded bootstrap CSS.  I should fix
-# at least the halflings images portion of this and submit a patch upstream .
-#                   'deform_bootstrap:static/deform_bootstrap.css')
-
             },
         },
     'tinymce': {
@@ -67,8 +57,24 @@ default_resources = {
             'js':'deform:static/tinymce/jscripts/tiny_mce/tiny_mce.js',
             },
         },
+    'chosen': {
+        None:{
+            'js':'deform_bootstrap:static/jquery_chosen/chosen.jquery.js',
+            'css':('deform_bootstrap:static/chosen_bootstrap.css',
+                   'deform_bootstrap:static/jquery_chosen/chosen.css')
+            },
+        },
     }
 
+# NB: don't depend on deform_bootstrap.css, it uses less, and its .less
+# includes 1) the bootstrap css, 2) the datepicker css and 3) the chosen css.
+# We supply chosen requirements above, and we already depend on the bootstrap
+# css sitewide.  We don't yet depend on the datepicker css, but when we do,
+# we'll also just add it sitewide.  Rationale: the deform_bootstrap css when
+# included causes the halfling images to go missing and it makes the CSS harder
+# to debug due to all the repetition with the sitewide-loaded bootstrap CSS.  I
+# should fix at least the halflings images portion of this and submit a patch
+# upstream.
 
 resource_registry = deform.widget.ResourceRegistry(use_defaults=False)
 resource_registry.registry = default_resources

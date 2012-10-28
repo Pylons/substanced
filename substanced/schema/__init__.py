@@ -157,4 +157,3 @@ class PermissionsSchemaNode(colander.SchemaNode):
                     node, 'Unknown permission %s' % value, value
                     )
 
-
