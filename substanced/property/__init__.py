@@ -1,3 +1,5 @@
+import colander
+
 from zope.interface import implementer
 
 from pyramid.threadlocal import get_current_registry
@@ -23,9 +25,12 @@ class PropertySheet(object):
 
     def get(self):
         context = self.context
-        if hasattr(context, '_p_activate'):
-            context._p_activate()
-        return dict(context.__dict__)
+        result = {}
+        for child in self.schema:
+            name = child.name
+            val = getattr(context, name, colander.null)
+            result[name] = val
+        return result
 
     def set(self, struct):
         for k in struct:

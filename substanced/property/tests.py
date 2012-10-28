@@ -1,6 +1,8 @@
 import unittest
 from pyramid import testing
 
+import colander
+
 class TestPropertySheet(unittest.TestCase):
     def _makeOne(self, context, request):
         from . import PropertySheet
@@ -10,24 +12,15 @@ class TestPropertySheet(unittest.TestCase):
         context = testing.DummyResource()
         request = testing.DummyRequest()
         inst = self._makeOne(context, request)
+        inst.schema = [DummySchemaNode('title'),
+                       DummySchemaNode('description'),
+                       DummySchemaNode('another')]
         context.title = 'title'
         context.description = 'description'
         vals = inst.get()
         self.assertEqual(vals['title'], 'title')
         self.assertEqual(vals['description'], 'description')
-
-    def test_get_with_activateable(self):
-        context = testing.DummyResource()
-        L = []
-        context._p_activate = lambda *arg: L.append(True)
-        request = testing.DummyRequest()
-        inst = self._makeOne(context, request)
-        context.title = 'title'
-        context.description = 'description'
-        vals = inst.get()
-        self.assertEqual(vals['title'], 'title')
-        self.assertEqual(vals['description'], 'description')
-        self.assertEqual(L, [True])
+        self.assertEqual(vals['another'], colander.null)
 
     def test_set(self):
         context = testing.DummyResource()
@@ -125,3 +118,7 @@ class DummyContent(object):
         
     def metadata(self, *arg, **kw):
         return self.result
+
+class DummySchemaNode(object):
+    def __init__(self, name):
+        self.name = name
