@@ -2,7 +2,6 @@ from collections import defaultdict
 
 from pyramid.config import ConfigurationError
 from pyramid.security import has_permission
-from pyramid.threadlocal import get_current_registry
 from zope.interface import implementer
 
 from ..interfaces import (
@@ -11,7 +10,7 @@ from ..interfaces import (
     )
 from ..content import get_content_type
 from ..event import subscribe_added
-
+from ..util import postorder
 
 STATE_ATTR = '__workflow_state__'
 
@@ -469,17 +468,16 @@ def add_workflow(config, workflow, content_types=(None,)):
 def init_workflows_for_object(event):
     """Initialize workflows when object is added to db.
     """
-    obj = event.object
-    content_type = get_content_type(obj)
-    registry = get_current_registry()
+    added = event.object
+    registry = event.registry
 
-    if content_type is None:
-        # maybe we should register workflows not relevant
-        # to specific content type?
-        return
-
-    for wf in registry.workflow.get_all_types(content_type):
-        wf.initialize(obj)
+    for obj in postorder(added):
+        content_type = get_content_type(obj)
+        if content_type is not None:
+            # XXX maybe we should register workflows not relevant
+            # to specific content type?
+            for wf in registry.workflow.get_all_types(content_type):
+                wf.initialize(obj)
 
 class WorkflowRegistry(object):
 
