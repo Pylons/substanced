@@ -1032,6 +1032,7 @@ class init_workflows_for_objectTests(unittest.TestCase):
         wf.type = "basic"
         wf_specific = mock.Mock()
         wf_specific.type = "basic"
+        wf_specific.has_state.return_value = False
         workflow.add(wf, IDefaultWorkflow)
         workflow.add(wf_specific, 'Folder')
         obj = mock.Mock()
@@ -1042,7 +1043,9 @@ class init_workflows_for_objectTests(unittest.TestCase):
         self._callFUT(event)
         self.assertEqual(obj.mock_calls, [])
         self.assertEqual(wf.mock_calls, [])
-        self.assertEqual(wf_specific.mock_calls, [mock.call.initialize(obj)])
+        self.assertEqual(wf_specific.mock_calls,
+                         [mock.call.has_state(obj),
+                          mock.call.initialize(obj)])
 
     @mock.patch('substanced.workflow.get_content_type')
     def test_apply_defaults_and_specific(self, mock_get_content_type):
@@ -1052,8 +1055,10 @@ class init_workflows_for_objectTests(unittest.TestCase):
         workflow = WorkflowRegistry()
         wf = mock.Mock()
         wf.type = "basic"
+        wf.has_state.return_value = False
         wf_specific = mock.Mock()
         wf_specific.type = "basic_2"
+        wf_specific.has_state.return_value = False
         workflow.add(wf, IDefaultWorkflow)
         workflow.add(wf_specific, 'Folder')
         obj = mock.Mock()
@@ -1064,8 +1069,13 @@ class init_workflows_for_objectTests(unittest.TestCase):
         event.object = obj
         self._callFUT(event)
         self.assertEqual(obj.mock_calls, [])
-        self.assertEqual(wf.mock_calls, [mock.call.initialize(obj)])
-        self.assertEqual(wf_specific.mock_calls, [mock.call.initialize(obj)])
+        self.assertEqual(
+            wf.mock_calls,
+            [mock.call.has_state(obj), mock.call.initialize(obj)]
+            )
+        self.assertEqual(
+            wf_specific.mock_calls,
+            [mock.call.has_state(obj), mock.call.initialize(obj)])
 
     @mock.patch('substanced.workflow.get_content_type')
     def test_apply_only_specific(self, mock_get_content_type):
@@ -1074,6 +1084,7 @@ class init_workflows_for_objectTests(unittest.TestCase):
         workflow = WorkflowRegistry()
         wf = mock.Mock()
         wf.type = "basic"
+        wf.has_state.return_value = False
         workflow.add(wf, 'Folder')
         obj = mock.Mock()
         event = mock.Mock()
@@ -1082,7 +1093,11 @@ class init_workflows_for_objectTests(unittest.TestCase):
         event.object = obj
         self._callFUT(event)
         self.assertEqual(obj.mock_calls, [])
-        self.assertEqual(wf.mock_calls, [mock.call.initialize(obj)])
+        self.assertEqual(
+            wf.mock_calls,
+            [mock.call.has_state(obj),
+             mock.call.initialize(obj),]
+            )
 
     @mock.patch('substanced.workflow.get_content_type')
     def test_apply_hierarchy(self, mock_get_content_type):
@@ -1093,6 +1108,7 @@ class init_workflows_for_objectTests(unittest.TestCase):
         workflow = WorkflowRegistry()
         wf = mock.Mock()
         wf.type = "basic"
+        wf.has_state.return_value = False
         workflow.add(wf, 'Folder')
         obj = DummyContent()
         obj2 = mock.Mock()
@@ -1106,8 +1122,13 @@ class init_workflows_for_objectTests(unittest.TestCase):
         self.assertEqual(obj2.mock_calls, [])
         self.assertEqual(
             wf.mock_calls,
-            [mock.call.initialize(obj2),
-             mock.call.initialize(obj)])
+            [
+                mock.call.has_state(obj2),
+                mock.call.initialize(obj2),
+                mock.call.has_state(obj),
+                mock.call.initialize(obj)
+                ]
+            )
 
 class DummyContent:
     pass

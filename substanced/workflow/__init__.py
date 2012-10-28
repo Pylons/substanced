@@ -477,7 +477,10 @@ def init_workflows_for_object(event):
             # XXX maybe we should register workflows not relevant
             # to specific content type?
             for wf in registry.workflow.get_all_types(content_type):
-                wf.initialize(obj)
+                if not wf.has_state(obj):
+                    # it might be an add resulting from a move, and we
+                    # don't want to initialize it if so.
+                    wf.initialize(obj)
 
 class WorkflowRegistry(object):
 
