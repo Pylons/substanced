@@ -997,14 +997,6 @@ class DummyDB(object):
     def supportsUndo(self):
         return self.supports_undo
 
-    def undoInfo(self):
-        return self.undo_info
-
-    def undo(self, id):
-        if self.undo_exc:
-            raise self.undo_exc
-        self.undone.append(id)
-        
 class DummyConnection(object):
     def __init__(self, supports_undo=True, undo_info=(), undo_exc=None):
         self._db = DummyDB(supports_undo, undo_info, undo_exc)
