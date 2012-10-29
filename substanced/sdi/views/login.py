@@ -6,6 +6,7 @@ from pyramid.session import check_csrf_token
 from pyramid.security import (
     remember,
     forget,
+    Authenticated,
     )
 
 from ...content import find_service
@@ -16,6 +17,8 @@ from .. import mgmt_view
 @mgmt_view(name='login', renderer='templates/login.pt', tab_condition=False)
 @mgmt_view(renderer='templates/login.pt', context=HTTPForbidden, 
            tab_condition=False)
+@mgmt_view(renderer='templates/forbidden.pt', context=HTTPForbidden, 
+           effective_principals=Authenticated, tab_condition=False)
 def login(context, request):
     login_url = request.mgmt_path(request.context, 'login')
     referrer = request.url
@@ -54,4 +57,3 @@ def logout(request):
     headers = forget(request)
     return HTTPFound(location = request.mgmt_path(request.context),
                      headers = headers)
-
