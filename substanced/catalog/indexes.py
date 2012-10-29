@@ -46,24 +46,15 @@ class ResolvingIndex(object):
         return hypatia.util.ResultSet(docids, numdocs, resolver)
 
 class IndexSchema(Schema):
-    category = colander.SchemaNode(
+    sd_category = colander.SchemaNode(
         colander.String(),
         missing='',
+        title='Category',
         )
 
 class IndexPropertySheet(PropertySheet):
     schema = IndexSchema()
     
-    def get(self):
-        context = self.context
-        props = {}
-        props['category'] = context.sd_category
-        return props
-
-    def set(self, struct):
-        context = self.context
-        context.sd_category = struct['category']
-
 @content(
     'Path Index',
     icon='icon-search',
@@ -285,21 +276,12 @@ class AllowedIndexSchema(IndexSchema):
 class AllowedIndexPropertySheet(PropertySheet):
     schema = AllowedIndexSchema()
     
-    def get(self):
-        context = self.context
-        props = {}
-        props['category'] = context.sd_category
-        props['permissions'] = tuple(context.discriminator.permissions or ())
-        return props
-
     def set(self, struct):
         context = self.context
-        context.sd_category = struct['category']
-        permissions = tuple(sorted(struct['permissions']))
-        if not permissions:
-            permissions = None
-        if permissions != context.discriminator.permissions:
-            context.discriminator = AllowedDiscriminator(permissions)
+        old_permissions = context.permissions
+        PropertySheet.set(self, struct)
+        permissions = set(struct['permissions'])
+        if permissions != old_permissions:
             name = self.context.__name__
             registry = self.request.registry
             self.context.__parent__.reindex(indexes=(name,), registry=registry)
@@ -314,6 +296,16 @@ class AllowedIndexPropertySheet(PropertySheet):
         )
     )
 class AllowedIndex(ResolvingIndex, hypatia.keyword.KeywordIndex):
+    def _get_permissions(self):
+        return set(self.discriminator.permissions or ())
+
+    def _set_permissions(self, permissions):
+        permissions = set(permissions)
+        if permissions != self.discriminator.permissions:
+            self.discriminator = AllowedDiscriminator(permissions)
+
+    permissions = property(_get_permissions, _set_permissions)
+        
     def allows(self, principals, permission='view'):
         """ ``principals`` may either be 1) a sequence of principal
         indentifiers, 2) a single principal identifier, or 3) a Pyramid

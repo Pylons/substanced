@@ -2,6 +2,8 @@ import colander
 import deform.widget
 import deform_bootstrap.widget
 
+from deform.i18n import _ as deform_i18n
+
 from ..util import get_all_permissions
 
 from pyramid.i18n import TranslationStringFactory
@@ -157,3 +159,39 @@ class PermissionsSchemaNode(colander.SchemaNode):
                     node, 'Unknown permission %s' % value, value
                     )
 
+class IdSet(object):
+    def _check_iterable(self, node, value):
+        if not hasattr(value, '__iter__'):
+            raise colander.Invalid(
+                node,
+                deform_i18n('${value} is not iterable', mapping={'value':value})
+                )
+        
+    def serialize(self, node, value):
+        if value is colander.null:
+            value = ()
+        self._check_iterable(node, value)
+        return map(str, value)
+
+    def deserialize(self, node, value):
+        if value is colander.null:
+            value = ()
+        self._check_iterable(node, value)
+        return map(int, value)
+
+    def cstruct_children(self, node, cstruct):
+        return []
+
+class MultireferenceIdSchemaNode(colander.SchemaNode):
+    def schema_type(self):
+        return IdSet()
+
+    def _get_choices(self):
+        context = self.bindings['context']
+        request = self.bindings['request']
+        return self.choices_getter(context, request)
+
+    @property
+    def widget(self):
+        values = self._get_choices()
+        return deform_bootstrap.widget.ChosenMultipleWidget(values=values)

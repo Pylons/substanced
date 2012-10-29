@@ -13,17 +13,19 @@ class IPropertySheet(Interface):
     meant to be subclassed for specialization) implements this interface."""
     context = Attribute('The context of the property sheet (a resource)')
     request = Attribute('The current request')
-    schema = Attribute('The unbound colander schema instance which defines '
+    schema = Attribute('The Colander schema instance which defines '
                        'the fields related to this property sheet')
 
     def get():
         """ Return a dictionary representing the current property state
         compatible with the schema for serialization"""
 
-    def set(struct):
+    def set(struct, omit=()):
         """ Accept ``struct`` (a dictionary representing the property state)
-        and persist it to the context.  The data structure will have already
-        been validated against the propertysheet schema."""
+        and persist it to the context, refraining from persisting the keys in
+        the struct that are named in ``omit`` (a sequence of strings or a
+        string).  The data structure will have already been validated against
+        the propertysheet schema."""
 
     def after_set():
         """ Perform operations after a successful set. The default

@@ -48,6 +48,8 @@ class AllowedDiscriminator(object):
     def __init__(self, permissions=None):
         if permissions is not None and not is_nonstr_iter(permissions):
             permissions = (permissions,)
+        if is_nonstr_iter(permissions):
+            permissions = set(permissions)
         self.permissions = permissions
 
     def __call__(self, wrapper, default):

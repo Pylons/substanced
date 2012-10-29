@@ -51,12 +51,12 @@ class AddUserView(FormView):
 
     def add_success(self, appstruct):
         registry = self.request.registry
-        name = appstruct.pop('login')
-        groups = appstruct.pop('groups')
+        name = appstruct.pop('name')
+        groupids = appstruct.pop('groupids')
         user = registry.content.create('User', **appstruct)
         self.context[name] = user
-        user.groups = groups
-        return HTTPFound(self.request.mgmt_path(self.context))
+        user.groupids = groupids
+        return HTTPFound(self.request.mgmt_path(self.context, '@@contents'))
 
 @mgmt_view(
     context=IGroups,
@@ -73,11 +73,11 @@ class AddGroupView(FormView):
     def add_success(self, appstruct):
         registry = self.request.registry
         name = appstruct.pop('name')
-        members = appstruct.pop('members')
+        memberids = appstruct.pop('memberids')
         group = registry.content.create('Group', **appstruct)
         self.context[name] = group
-        group.members = members
-        return HTTPFound(self.request.mgmt_path(self.context))
+        group.memberids = memberids
+        return HTTPFound(self.request.mgmt_path(self.context, '@@contents'))
 
 @colander.deferred
 def password_validator(node, kw):

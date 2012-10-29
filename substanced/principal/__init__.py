@@ -10,9 +10,6 @@ from zope.interface import (
     )
 
 import colander
-import deform
-import deform.widget
-import deform_bootstrap.widget
 
 from pyramid.renderers import render
 from pyramid.security import (
@@ -39,16 +36,22 @@ from ..content import (
     service,
     find_service,
     )
-from ..schema import Schema
 from ..folder import Folder
-from ..property import PropertySheet
-from ..util import oid_of
 from ..objectmap import (
     find_objectmap,
     multireference_targetid_property,
     multireference_target_property,
     multireference_sourceid_property,
     multireference_source_property,
+    )
+from ..property import PropertySheet
+from ..schema import (
+    MultireferenceIdSchemaNode,
+    Schema
+    )
+from ..util import (
+    oid_of,
+    renamer,
     )
 
 class UserToGroup(Interface):
@@ -205,15 +208,12 @@ def groupname_validator(node, kw):
         exists,
         )
 
-@colander.deferred
-def members_widget(node, kw):
-    request = kw['request']
+def members_choices(context, request):
     principals = find_service(request.context, 'principals')
-    values = [(str(oid_of(user)), name) for name, user in 
+    values = [(oid_of(group), name) for name, group in 
               principals['users'].items()]
-    widget = deform_bootstrap.widget.ChosenMultipleWidget(values=values)
-    return widget
-    
+    return values
+
 class GroupSchema(Schema):
     """ The property schema for :class:`substanced.principal.Group`
     objects."""
@@ -226,36 +226,13 @@ class GroupSchema(Schema):
         validator=colander.Length(max=100),
         missing='',
         )
-    members = colander.SchemaNode(
-        deform.Set(allow_empty=True),
-        widget=members_widget,
-        missing=colander.null,
-        preparer=lambda users: set(map(int, users)),
+    memberids = MultireferenceIdSchemaNode(
+        choices_getter=members_choices,
+        title='Members',
         )
 
 class GroupPropertySheet(PropertySheet):
     schema = GroupSchema()
-    
-    def get(self):
-        context = self.context
-        props = {}
-        props['description'] = context.description
-        props['name'] = context.__name__
-        member_strs = map(str, context.memberids)
-        props['members'] = member_strs
-        return props
-
-    def set(self, struct):
-        context = self.context
-        if struct['description']:
-            context.description = struct['description']
-        newname = struct['name']
-        oldname = context.__name__
-        if newname != oldname:
-            parent = context.__parent__
-            parent.rename(oldname, newname)
-        context.memberids.clear()
-        context.memberids.connect(struct['members'])
 
 @content(
     'Group',
@@ -275,6 +252,7 @@ class Group(Folder):
 
     memberids = multireference_targetid_property(UserToGroup)
     members = multireference_target_property(UserToGroup)
+    name = renamer()
 
 @colander.deferred
 def login_validator(node, kw):
@@ -306,54 +284,34 @@ def login_validator(node, kw):
         exists,
         )
 
-@colander.deferred
-def groups_widget(node, kw):
-    request = kw['request']
+def groups_choices(context, request):
     principals = find_service(request.context, 'principals')
-    values = [(str(oid_of(group)), name) for name, group in 
+    values = [(oid_of(group), name) for name, group in 
               principals['groups'].items()]
-    widget = deform_bootstrap.widget.ChosenMultipleWidget(values=values)
-    return widget
+    return values
 
 class UserSchema(Schema):
     """ The property schema for :class:`substanced.principal.User`
     objects."""
-    login = colander.SchemaNode(
+    name = colander.SchemaNode(
         colander.String(),
         validator=login_validator,
+        title='Login',
         )
     email = colander.SchemaNode(
         colander.String(),
-        validator=colander.All(colander.Email(), colander.Length(max=100)),
+        validator=colander.All(
+            colander.Email(),
+            colander.Length(max=100)
+            ),
         )
-    groups = colander.SchemaNode(
-        deform.Set(allow_empty=True),
-        widget=groups_widget,
-        missing=colander.null,
-        preparer=lambda groups: set(map(int, groups)),
+    groupids = MultireferenceIdSchemaNode(
+        choices_getter=groups_choices,
+        title='Groups',
         )
 
 class UserPropertySheet(PropertySheet):
     schema = UserSchema()
-    
-    def get(self):
-        context = self.context
-        props = {}
-        props['email'] = context.email
-        props['login'] = context.__name__
-        props['groups'] = map(str, context.groupids)
-        return props
-
-    def set(self, struct):
-        context = self.context
-        context.email = struct['email']
-        newname = struct['login']
-        oldname = context.__name__
-        if newname != oldname:
-            parent = context.__parent__
-            parent.rename(oldname, newname)
-        context.groupids.clear()
-        context.groupids.connect(struct['groups'])
 
 @content(
     'User',
@@ -372,6 +330,7 @@ class User(Folder):
 
     groupids = multireference_sourceid_property(UserToGroup)
     groups = multireference_source_property(UserToGroup)
+    name = renamer()
 
     def __init__(self, password, email):
         Folder.__init__(self)

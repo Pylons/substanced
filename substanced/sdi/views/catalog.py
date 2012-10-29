@@ -43,7 +43,7 @@ def context_is_an_index(context, request):
 
 class AddIndexSchema(IndexSchema):
     name = NameSchemaNode(editing=context_is_an_index,
-                          insert_before='category')
+                          insert_before='sd_category')
     reindex = colander.SchemaNode(
         colander.Bool(),
         default=True,

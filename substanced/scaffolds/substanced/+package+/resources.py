@@ -3,33 +3,19 @@ import deform.widget
 
 from persistent import Persistent
 
-from substanced.schema import Schema
 from substanced.content import content
 from substanced.property import PropertySheet
+from substanced.schema import (
+    Schema,
+    NameSchemaNode
+    )
 
-@colander.deferred
-def name_validator(node, kw):
-    request = kw['request']
-    context = request.context
-    def exists(node, value):
-        if request.registry.content.istype(context, 'Document'):
-            if value != context.__name__:
-                try:
-                    context.__parent__.check_name(value)
-                except Exception as e:
-                    raise colander.Invalid(node, e.args[0], value)
-        else:
-            try:
-                context.check_name(value)
-            except Exception as e:
-                raise colander.Invalid(node, e.args[0], value)
-
-    return exists
+def context_is_a_document(context, request):
+    return request.registry.content.istype(context, 'Document')
 
 class DocumentSchema(Schema):
-    name = colander.SchemaNode(
-        colander.String(),
-        validator = name_validator,
+    name = NameSchemaNode(
+        editing=context_is_a_document,
         )
     title = colander.SchemaNode(
         colander.String(),
@@ -78,6 +64,4 @@ class Document(Persistent):
         self.title = title
         self.body = body
 
-    def texts(self): # for indexing
-        return self.title, self.body
         

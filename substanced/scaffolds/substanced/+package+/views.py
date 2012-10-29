@@ -54,5 +54,5 @@ class AddDocumentView(FormView):
         name = appstruct.pop('name')
         document = registry.content.create('Document', **appstruct)
         self.context[name] = document
-        return HTTPFound(self.request.mgmt_path(document, '@@properties'))
+        return HTTPFound(self.request.mgmt_path(self.context, '@@contents'))
 

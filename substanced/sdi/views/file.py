@@ -77,7 +77,7 @@ def name_or_file(node, kw):
 class AddFileView(FormView):
     title = 'Add File'
     schema = AddFileSchema(validator=name_or_file).clone()
-    schema['name'].missing = colander.null
+    schema['__name__'].missing = colander.null
     schema['mimetype'].missing = colander.null
     buttons = ('add',)
 
@@ -89,7 +89,7 @@ class AddFileView(FormView):
             )
 
     def add_success(self, appstruct):
-        name = appstruct['name']
+        name = appstruct['__name__']
         title = appstruct['title'] or None
         filedata = appstruct['file']
         stream = None

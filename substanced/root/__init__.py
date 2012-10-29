@@ -20,7 +20,7 @@ class RootSchema(Schema):
     """ The schema representing site properties. """
     sdi_title = colander.SchemaNode(
         colander.String(),
-        missing=colander.null
+        missing='',
         )
 
 class RootPropertySheet(PropertySheet):

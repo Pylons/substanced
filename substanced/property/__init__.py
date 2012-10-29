@@ -3,6 +3,7 @@ import colander
 from zope.interface import implementer
 
 from pyramid.threadlocal import get_current_registry
+from pyramid.compat import is_nonstr_iter
 
 from ..interfaces import IPropertySheet
 from ..event import ObjectModified
@@ -32,9 +33,12 @@ class PropertySheet(object):
             result[name] = val
         return result
 
-    def set(self, struct):
+    def set(self, struct, omit=()):
+        if not is_nonstr_iter(omit):
+            omit = (omit,)
         for k in struct:
-            setattr(self.context, k, struct[k])
+            if not k in omit:
+                setattr(self.context, k, struct[k])
 
     def after_set(self):
         event = ObjectModified(self.context)

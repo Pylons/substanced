@@ -281,3 +281,21 @@ def get_all_permissions(registry):
 
     return permissions
 
+def renamer():
+    """ Returns a property.  The getter of the property returns the
+    ``__name__`` attribute of the instance on which it's defined.  The setter
+    of the property calls ``rename()`` on the ``__parent__`` of the instance on
+    which it's defined if the new value doesn't match the existing ``__name__``
+    of the instance (this will cause ``__name__`` to be reset if the parent is
+    a normal Substance D folder )."""
+    def _get(self):
+        return self.__name__
+
+    def _set(self, newname):
+        oldname = self.__name__
+        if newname != oldname:
+            parent = self.__parent__
+            parent.rename(oldname, newname)
+
+    return property(_get, _set)
+

@@ -33,7 +33,11 @@ def context_is_a_file(context, request):
     if request.registry.content.istype(context, 'File'):
         return True
 
-file_name_node = NameSchemaNode(editing=context_is_a_file)
+file_name_node = NameSchemaNode(
+    editing=context_is_a_file,
+    title='Name',
+    name='__name__'
+    )
 
 class FilePropertiesSchema(Schema):
     name = file_name_node
@@ -48,22 +52,11 @@ class FilePropertiesSchema(Schema):
 class FilePropertySheet(PropertySheet):
     schema = FilePropertiesSchema()
 
-    def get(self):
-        context = self.context
-        return dict(
-            name=context.__name__,
-            mimetype=context.mimetype,
-            title=context.title,
-            )
-
     def set(self, struct):
+        PropertySheet.set(self, struct, omit='__name__')
         context = self.context
-        newname = struct['name']
-        mimetype = struct['mimetype']
-        title = struct['title']
-        context.mimetype = mimetype
-        context.title = title
         oldname = context.__name__
+        newname = struct['__name__']
         if newname and newname != oldname:
             context.__parent__.rename(oldname, newname)
 

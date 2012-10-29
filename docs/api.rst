@@ -427,6 +427,8 @@ Other Helpers
 
 .. autofunction:: chunks
 
+.. autofunction:: renamer
+
 :mod:`substanced.widget` API
 ----------------------------
 
