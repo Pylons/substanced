@@ -1,4 +1,7 @@
-from pyramid.httpexceptions import HTTPFound
+from pyramid.httpexceptions import (
+    HTTPFound,
+    HTTPForbidden,
+    )
 
 from ...interfaces import IFolder
 
@@ -24,7 +27,7 @@ class ManagementViews(object):
         view_data = self.sdi_mgmt_views(self.context, request)
         if not view_data:
             request.session['came_from'] = request.url
-            return HTTPFound(
+            raise HTTPForbidden(
                 location=request.mgmt_path(request.root, '@@login')
                 )
         view_name = view_data[0]['view_name']

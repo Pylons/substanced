@@ -101,7 +101,6 @@ class Test_login(unittest.TestCase):
         result = self._callFUT(context, request)
         self.assertEqual(result.location, 'http://example.com')
         self.assertTrue(result.headers)
-        self.assertEqual(request.session['_f_success'], ['Welcome!'])
 
 class DummyUser(object):
     def __init__(self, result):

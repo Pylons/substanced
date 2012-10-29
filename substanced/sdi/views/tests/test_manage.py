@@ -7,6 +7,7 @@ class TestManagementViews(unittest.TestCase):
         return ManagementViews(context, request)
 
     def test_manage_main_no_view_data(self):
+        from pyramid.httpexceptions import HTTPForbidden
         context = testing.DummyResource()
         request = testing.DummyRequest()
         def mgmt_path(ctx, value):
@@ -15,9 +16,8 @@ class TestManagementViews(unittest.TestCase):
         request.mgmt_path = mgmt_path
         inst = self._makeOne(context, request)
         inst.sdi_mgmt_views = lambda *arg: []
-        result = inst.manage_main()
+        self.assertRaises(HTTPForbidden, inst.manage_main)
         self.assertEqual(request.session['came_from'], 'http://example.com')
-        self.assertEqual(result.location, '/path')
 
     def test_manage_main_with_view_data(self):
         context = testing.DummyResource()

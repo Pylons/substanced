@@ -41,7 +41,6 @@ def login(context, request):
             user = users.get(login)
             if user is not None and user.check_password(password):
                 headers = remember(request, oid_of(user))
-                request.session.flash('Welcome!', 'success')
                 return HTTPFound(location = came_from, headers = headers)
             request.session.flash('Failed login', 'error')
 
