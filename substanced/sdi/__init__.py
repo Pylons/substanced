@@ -13,6 +13,7 @@ import venusian
 
 from pyramid.authentication import SessionAuthenticationPolicy
 from pyramid.authorization import ACLAuthorizationPolicy
+from pyramid.httpexceptions import HTTPForbidden
 from pyramid.exceptions import ConfigurationError
 from pyramid.registry import (
     predvalseq,
@@ -184,6 +185,10 @@ class mgmt_view(object):
         return wrapped
 
 def sdi_mgmt_views(context, request, names=None):
+    if isinstance(context, HTTPForbidden):
+        # shortcut if this is used in login page
+        return []
+
     registry = request.registry
     introspector = registry.introspector
     L = []
