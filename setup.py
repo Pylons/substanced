@@ -24,7 +24,7 @@ except IOError:
     README = CHANGES = ''
 
 install_requires = [
-    'pyramid>=1.4dev', # thirdparty predicates
+    'pyramid>=1.4dev', # effective_principals predicate
     'ZODB3',
     'hypatia>=0.1a3dev', # index-based querying
     'venusian',
