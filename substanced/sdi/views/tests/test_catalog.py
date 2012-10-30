@@ -328,6 +328,18 @@ class Test_reindex_indexes(unittest.TestCase):
             ['Reindex of selected indexes succeeded'])
         self.assertEqual(context.reindexed, ['a'])
 
+    def test_without_indexes(self):
+        context = DummyCatalog()
+        request = testing.DummyRequest()
+        request.mgmt_path = lambda *arg: '/manage'
+        request.POST = testing.DummyResource()
+        request.POST.getall = {}.get
+        result = self._callFUT(context, request)
+        self.assertEqual(result.location, '/manage')
+        self.assertEqual(
+            request.session['_f_error'],
+            ['No indexes selected to reindex'])
+
 class DummyContent(object):
     def __init__(self, result):
         self.result = result
