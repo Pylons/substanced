@@ -575,6 +575,31 @@ class Test_sdi_folder_contents(unittest.TestCase):
         result = list(self._callFUT(context, request))
         self.assertEqual(result[0]['columns'], ['val1', 'val2'])
 
+class Test_default_sdi_addable(unittest.TestCase):
+    def _callFUT(self, context, intr):
+        from .. import default_sdi_addable
+        return default_sdi_addable(context, intr)
+
+    def test_is_service_with_service_name_in_context(self):
+        context = {'catalog':True}
+        intr = {'meta':{'is_service':True, 'service_name':'catalog'}}
+        self.assertFalse(self._callFUT(context, intr))
+                         
+    def test_is_service_with_service_name_not_in_context(self):
+        context = {}
+        intr = {'meta':{'is_service':True, 'service_name':'catalog'}}
+        self.assertTrue(self._callFUT(context, intr))
+    
+    def test_is_service_without_service_name(self):
+        context = {'catalog':True}
+        intr = {'meta':{'is_service':True}}
+        self.assertTrue(self._callFUT(context, intr))
+
+    def test_is_not_service(self):
+        context = {'catalog':True}
+        intr = {'meta':{}}
+        self.assertTrue(self._callFUT(context, intr))
+
 class Test_default_sdi_columns(unittest.TestCase):
     def _callFUT(self, folder, context, request):
         from .. import default_sdi_columns
