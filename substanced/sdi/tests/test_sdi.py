@@ -174,6 +174,12 @@ class Test_sdi_mgmt_views(unittest.TestCase):
         from .. import sdi_mgmt_views
         return sdi_mgmt_views(context, request, names)
 
+    def test_context_is_httpforbidden(self):
+        from pyramid.httpexceptions import HTTPForbidden
+        context = HTTPForbidden()
+        result = self._callFUT(context, None)
+        self.assertEqual(result, [])
+
     def test_no_views_found(self):
         request = testing.DummyRequest()
         request.matched_route = None
