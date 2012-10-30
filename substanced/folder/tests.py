@@ -350,6 +350,16 @@ class TestFolder(unittest.TestCase):
         self.assertFalse('a' in other)
         self.assertFalse('a' in folder)
 
+    def test_move_is_service(self):
+        folder = self._makeOne()
+        folder.__services__ = ('a',)
+        other = self._makeOne()
+        model = DummyModel()
+        folder['a'] = model
+        folder.move('a', other)
+        self.assertEqual(other['a'], model)
+        self.assertEqual(other.__services__, ('a',))
+
     def test_copy_no_newname(self):
         folder = self._makeOne()
         other = self._makeOne()
@@ -518,6 +528,15 @@ class TestFolder(unittest.TestCase):
         self.assertEqual(inst['foo'], foo)
         self.assertEqual(inst.__services__, ('foo',))
 
+    def test__notify_no_registry(self):
+        def f(t, n):
+            self.assertEqual(t, (event, event.object, inst))
+            self.assertEqual(n, None)
+        self.config.registry.subscribers = f
+        inst = self._makeOne()
+        event = DummyModel()
+        event.object = DummyModel()
+        inst._notify(event)
 
 class TestSequentialAutoNamingFolder(unittest.TestCase):
     def _makeOne(self, d=None, autoname_length=None, autoname_start=None):
