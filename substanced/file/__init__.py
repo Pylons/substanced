@@ -72,7 +72,7 @@ def file_upload_widget(node, kw):
     request = kw['request']
     tmpstore = FileUploadTempStore(request)
     widget = deform.widget.FileUploadWidget(tmpstore)
-    widget.template = 'substanced.file:templates/file_upload.pt'
+    widget.template = 'substanced.sdi:templates/fileupload.pt'
     return widget
 
 class FileNode(colander.SchemaNode):

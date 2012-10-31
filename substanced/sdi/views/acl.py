@@ -1,3 +1,5 @@
+import logging
+
 from pyramid.security import (
     NO_PERMISSION_REQUIRED,
     ALL_PERMISSIONS,
@@ -23,6 +25,8 @@ from ...util import (
     )
 
 from .. import mgmt_view
+
+logger = logging.getLogger(__name__)
 
 NO_INHERIT = (Deny, Everyone, ALL_PERMISSIONS)
 
@@ -125,6 +129,7 @@ def acl_edit_view(context, request):
                     for node in postorder(context):
                         cvf = catalog_view_factory_for(node, registry)
                         if cvf:
+                            logger.info('Reindexing %s' % node)
                             index.reindex_doc(
                                 oid_of(node),
                                 CatalogViewWrapper(node, cvf)
