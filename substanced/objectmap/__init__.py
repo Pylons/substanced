@@ -7,18 +7,12 @@ import BTrees
 from zope.interface import implementer
 
 from pyramid.compat import is_nonstr_iter
-from pyramid.location import lineage
 from pyramid.traversal import (
     resource_path_tuple,
     find_resource,
     )
 
-from ..event import (
-    subscribe_will_be_added,
-    subscribe_removed,
-    )
 from ..util import (
-    postorder,
     oid_of,
     acquire,
     )
@@ -219,7 +213,7 @@ class ObjectMap(Persistent):
         if omap is None:
             return set()
 
-        removed = set()
+        removed = self.family.IF.Set()
         items = omap.items()
         removepaths = []
         
@@ -494,52 +488,6 @@ class ReferenceSet(Persistent):
                         del self.src2target[source]
         return removed
     
-def node_path_tuple(resource):
-    # cant use resource_path_tuple from pyramid, it wants everything to 
-    # have a __name__
-    return tuple(reversed([getattr(loc, '__name__', '') for 
-                           loc in lineage(resource)]))
-
-@subscribe_will_be_added()
-def object_will_be_added(event):
-    """ Objects added to folders must always have an __objectid__.  This must
-     be an :class:`substanced.event.ObjectWillBeAdded` event subscriber
-     so that a resulting object will have an __objectid__ within the (more
-     convenient) :class:`substanced.event.ObjectAdded` fired later."""
-    obj = event.object
-    parent = event.parent
-    objectmap = find_objectmap(parent)
-    if objectmap is None:
-        return
-    if getattr(obj, '__parent__', None):
-        raise ValueError(
-            'obj %s added to folder %s already has a __parent__ attribute, '
-            'please remove it completely from its existing parent (%s) before '
-            'trying to readd it to this one' % (obj, parent, obj.__parent__)
-            )
-    basepath = resource_path_tuple(event.parent)
-    name = event.name
-    for node in postorder(obj):
-        node_path = node_path_tuple(node)
-        path_tuple = basepath + (name,) + node_path[1:]
-        # the below gives node an objectid; if the will-be-added event is
-        # the result of a duplication, replace the oid of the node with a new
-        # one
-        objectmap.add(node, path_tuple, replace_oid=event.duplicating)
-
-@subscribe_removed()
-def object_removed(event):
-    """ :class:`substanced.event.ObjectRemoved` event subscriber.
-    """
-    obj = event.object
-    parent = event.parent
-    moving = event.moving
-    objectmap = find_objectmap(parent)
-    if objectmap is None:
-        return
-    objectid = oid_of(obj)
-    objectmap.remove(objectid, references=not moving)
-
 def _reference_property(reftype, resolve, orientation='source'):
     def _get(self, resolve=resolve):
         objectmap = find_objectmap(self)
@@ -865,7 +813,3 @@ def find_objectmap(context):
     ``context``"""
     return acquire(context, '__objectmap__')
             
-def scan(config): # pragma: no cover
-    config.scan('.')
-
-includeme = scan

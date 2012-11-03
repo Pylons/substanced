@@ -21,7 +21,6 @@ def includeme(config): # pragma: no cover
     config.include('.content')
     config.include('.property')
     config.include('.event')
-    config.include('.objectmap')
     config.include('.catalog')
     config.include('.root')
     config.include('.evolution')

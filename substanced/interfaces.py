@@ -120,6 +120,10 @@ class IObjectRemoved(IObjectEvent):
     name = Attribute('The name of the object within the folder')
     moving = Attribute('Boolean indicating that this removal is part of an '
                        'object move')
+    removed_oids = Attribute('The set of oids removed as the result of '
+                             'this object being removed (including the oid '
+                             'of the object itself).  This may be any number '
+                             'of oids if the object was folderish')
 
 class IObjectModified(IObjectEvent):
     """ May be sent when an object is modified """

@@ -3,12 +3,15 @@ import string
 import tempfile
 
 from zope.interface import implementer
-from pyramid.threadlocal import get_current_registry
 
 from persistent import Persistent
 
 import BTrees
 from BTrees.Length import Length
+
+from pyramid.location import lineage
+from pyramid.threadlocal import get_current_registry
+from pyramid.traversal import resource_path_tuple
 
 from ..exceptions import FolderKeyError
 
@@ -18,6 +21,12 @@ from ..interfaces import (
     marker,
     )
 
+from ..content import (
+    content,
+    find_service,
+    find_services,
+    )
+
 from ..event import (
     ObjectAdded,
     ObjectWillBeAdded,
@@ -25,11 +34,12 @@ from ..event import (
     ObjectWillBeRemoved,
     )
 
-from ..content import (
-    content,
-    find_service,
-    find_services,
+from ..util import (
+    oid_of,
+    postorder,
     )
+
+from ..objectmap import find_objectmap
 
 @content(
     'Folder',
@@ -184,19 +194,20 @@ class Folder(Persistent):
 
         ``name`` cannot be the empty string.
 
-        When ``other`` is seated into this folder, it will also be
-        decorated with a ``__parent__`` attribute (a reference to the
-        folder into which it is being seated) and ``__name__``
-        attribute (the name passed in to this function.
+        When ``other`` is seated into this folder, it will also be decorated
+        with a ``__parent__`` attribute (a reference to the folder into which
+        it is being seated) and ``__name__`` attribute (the name passed in to
+        this function.  It must not already have a ``__parent__`` attribute
+        before being seated into the folder, or an exception will be raised.
 
         If a value already exists in the foldr under the name ``name``, raise
         :exc:`KeyError`.
 
-        When this method is called, emit an
-        :class:`substanced.event.ObjectWillBeAdded` event before the
-        object obtains a ``__name__`` or ``__parent__`` value.  Emit an
-        :class:`substanced.event.ObjectAdded` after the object obtains a
-        ``__name__`` and ``__parent__`` value.
+        When this method is called, the object will be added to the objectmap,
+        an :class:`substanced.event.ObjectWillBeAdded` event will be emitted
+        before the object obtains a ``__name__`` or ``__parent__`` value, then
+        a :class:`substanced.event.ObjectAdded` will be emitted after the
+        object obtains a ``__name__`` and ``__parent__`` value.
         """
         return self.add(name, other)
 
@@ -264,6 +275,28 @@ class Folder(Persistent):
             registry = get_current_registry()
         name = self.check_name(name, reserved_names)
 
+        if getattr(other, '__parent__', None):
+            raise ValueError(
+                'obj %s added to folder %s already has a __parent__ attribute, '
+                'please remove it completely from its existing parent (%s) '
+                'before trying to readd it to this one' % (
+                    other, self, self.__parent__)
+                )
+
+        objectmap = find_objectmap(self)
+
+        if objectmap is not None:
+
+            basepath = resource_path_tuple(self)
+
+            for node in postorder(other):
+                node_path = node_path_tuple(node)
+                path_tuple = basepath + (name,) + node_path[1:]
+                # the below gives node an objectid; if the will-be-added event
+                # is the result of a duplication, replace the oid of the node
+                # with a new one
+                objectmap.add(node, path_tuple, replace_oid=duplicating)
+
         if send_events:
             event = ObjectWillBeAdded(other, self, name, duplicating)
             self._notify(event, registry)
@@ -330,11 +363,11 @@ class Folder(Persistent):
         When the object stored under ``name`` is removed from this folder,
         remove its ``__parent__`` and ``__name__`` values.
 
-        When this method is called, emit an
-        :class:`substanced.event.ObjectWillBeRemoved` event before the
-        object loses its ``__name__`` or ``__parent__`` values.  Emit an
-        :class:`substanced.event.ObjectRemoved` after the object loses
-        its ``__name__`` and ``__parent__`` value,
+        When this method is called, the removed object will be removed from the
+        objectmap, a :class:`substanced.event.ObjectWillBeRemoved` event will
+        be emitted before the object loses its ``__name__`` or ``__parent__``
+        values and a :class:`substanced.event.ObjectRemoved` will be emitted
+        after the object loses its ``__name__`` and ``__parent__`` value,
         """
         return self.remove(name)
 
@@ -347,12 +380,13 @@ class Folder(Persistent):
         """
         name = unicode(name)
         other = self.data[name]
+        oid = oid_of(other, None)
 
         if registry is None:
             registry = get_current_registry()
 
         if send_events:
-            event = ObjectWillBeRemoved(other, self, name, moving)
+            event = ObjectWillBeRemoved(other, self, name, moving=moving)
             self._notify(event, registry)
 
         if hasattr(other, '__parent__'):
@@ -370,8 +404,16 @@ class Folder(Persistent):
         if self._order is not None:
             self._order = tuple([x for x in self._order if x != name])
 
+        objectmap = find_objectmap(self)
+
+        removed_oids = set([oid])
+
+        if objectmap is not None and oid is not None:
+            removed_oids = objectmap.remove(oid, references=not moving)
+
         if send_events:
-            event = ObjectRemoved(other, self, name, moving)
+            event = ObjectRemoved(other, self, name, removed_oids,
+                                  moving=moving)
             self._notify(event, registry)
 
         return other
@@ -611,6 +653,12 @@ class RandomAutoNamingFolder(Folder, _AutoNamingFolder):
             name = ''.join([randchar() for x in range(self._autoname_length)])
             if not name in self:
                 return name
+
+def node_path_tuple(resource):
+    # cant use resource_path_tuple from pyramid, it wants everything to 
+    # have a __name__
+    return tuple(reversed([getattr(loc, '__name__', '') for 
+                           loc in lineage(resource)]))
 
 def scan(config): # pragma: no cover
     config.scan('.')

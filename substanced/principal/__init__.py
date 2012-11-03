@@ -106,9 +106,9 @@ class Principals(Folder):
         users.__sdi_deletable__ = False
         groups.__sdi_deletable__ = False
         resets.__sdi_deletable__ = False
-        self['users'] = users
-        self['groups'] = groups
-        self['resets'] = resets
+        self.add('users', users, registry=registry)
+        self.add('groups', groups, registry=registry)
+        self.add('resets', resets, registry=registry)
 
     def add_user(self, login, *arg, **kw):
         """ Add a user to this principal service using the login ``login``.

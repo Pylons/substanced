@@ -110,63 +110,51 @@ class Test_object_added(unittest.TestCase):
             self.assertEqual(indexed[1][0], 1)
             self.assertEqual(indexed[1][1].content, model1)
 
-class Test_object_will_be_removed(unittest.TestCase):
+class Test_object_removed(unittest.TestCase):
     def _callFUT(self, event):
-        from ..subscribers import object_will_be_removed
-        return object_will_be_removed(event)
+        from ..subscribers import object_removed
+        return object_removed(event)
 
     def test_no_objectmap(self):
         model = testing.DummyResource()
-        event = testing.DummyResource(object=model)
+        parent = testing.DummyResource()
+        event = testing.DummyResource(object=model, parent=parent)
         self._callFUT(event) # doesnt blow up
 
     def test_no_catalog(self):
-        model = testing.DummyResource()
-        objectmap = DummyObjectMap()
-        site = _makeSite(objectmap=objectmap)
-        site['model'] = model
-        model.__objectid__ = 1
-        event = DummyEvent(model, None)
+        site = _makeSite()
+        event = DummyEvent(None, site)
         self._callFUT(event) # doesnt blow up
 
-    def test_with_pathlookup(self):
-        model = testing.DummyResource()
+    def test_with_removed_oids(self):
         catalog = DummyCatalog()
         catalog.objectids = catalog.family.IF.Set([1,2])
-        objectmap = DummyObjectMap()
-        site = _makeSite(objectmap=objectmap, catalog=catalog)
-        site['model'] = model
-        model.__objectid__ = 1
-        event = DummyEvent(model, None)
+        site = _makeSite(catalog=catalog)
+        event = DummyEvent(None, site)
+        event.removed_oids = catalog.family.IF.Set([1,2])
         self._callFUT(event)
         self.assertEqual(catalog.unindexed, [1,2])
 
     def test_with_pathlookup_limited_by_objectids(self):
-        model = testing.DummyResource()
         catalog = DummyCatalog()
         catalog.objectids = catalog.family.IF.Set([1])
-        objectmap = DummyObjectMap()
-        site = _makeSite(objectmap=objectmap, catalog=catalog)
-        site['model'] = model
-        model.__objectid__ = 1
-        event = DummyEvent(model, None)
+        site = _makeSite(catalog=catalog)
+        event = DummyEvent(None, site)
+        event.removed_oids = catalog.family.IF.Set([1,2])
         self._callFUT(event)
         self.assertEqual(catalog.unindexed, [1])
 
     def test_multiple_catalogs(self):
-        model = testing.DummyResource()
         catalog1 = DummyCatalog()
         catalog1.objectids = catalog1.family.IF.Set([1])
         catalog2 = DummyCatalog()
         catalog2.objectids = catalog2.family.IF.Set([2])
-        objectmap = DummyObjectMap()
-        outer = _makeSite(objectmap=objectmap, catalog=catalog1)
+        outer = _makeSite(catalog=catalog1)
         inner = _makeSite(catalog=catalog2)
         inner.__objectid__ = -1
-        inner['model'] = model
         outer['inner'] = inner
-        model.__objectid__ = 1
-        event = DummyEvent(model, None)
+        event = DummyEvent(None, inner)
+        event.removed_oids = catalog1.family.IF.Set([1,2])
         self._callFUT(event)
         self.assertEqual(catalog1.unindexed, [1])
         self.assertEqual(catalog2.unindexed, [2])
@@ -257,9 +245,6 @@ class DummyCatalog(dict):
 class DummyObjectMap:
     family = BTrees.family64
     
-    def pathlookup(self, obj):
-        return self.family.IF.Set([1,2])
-
 class DummyEvent(object):
     def __init__(self, object, parent):
         self.object = object
