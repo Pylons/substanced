@@ -6,8 +6,6 @@ from ..event import (
     subscribe_modified,
     )
 
-from ..objectmap import find_objectmap
-
 from ..util import (
     postorder,
     oid_of,
