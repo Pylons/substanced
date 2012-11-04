@@ -121,6 +121,9 @@ Docs
 
 - Explain divide between includeme/include/scan funcs in sd packages.
 
+- Explain ``tab_before`` and ``tab_after`` arguments to mgmt_view (as well as
+  related ``FIRST``, ``LAST``, and ``MIDDLE`` sentinels).
+
 Probably Bad Ideas
 ------------------
 

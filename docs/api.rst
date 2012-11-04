@@ -143,7 +143,7 @@ Other Helpers
 
 .. autofunction:: object_added
 
-.. autofunction:: object_will_be_removed
+.. autofunction:: object_removed
 
 .. autofunction:: object_modified
 
@@ -334,8 +334,6 @@ Other Helpers
 
 .. autofunction:: multireference_target_property
 
-.. autofunction:: includeme
-
 
 :mod:`substanced.principal` API
 --------------------------------
@@ -397,6 +395,12 @@ Other Helpers
 .. autofunction:: add_mgmt_view
 
 .. autoclass:: mgmt_view
+
+.. attribute:: FIRST
+
+.. attribute:: MIDDLE
+
+.. attribute:: LAST
 
 .. autofunction:: includeme
 

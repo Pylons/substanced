@@ -27,6 +27,14 @@ from pyramid.security import (
     )
 from pyramid.session import UnencryptedCookieSessionFactoryConfig
 from pyramid.traversal import resource_path_tuple
+from pyramid.util import (
+    TopologicalSorter,
+    FIRST,
+    LAST,
+    Sentinel,
+    )
+
+MIDDLE = Sentinel('MIDDLE')
 
 from ..objectmap import find_objectmap
 
@@ -60,6 +68,8 @@ def add_mgmt_view(
     match_param=None,
     tab_title=None,
     tab_condition=None,
+    tab_before=None,
+    tab_after=None,
     **predicates
     ):
     
@@ -137,6 +147,8 @@ def add_mgmt_view(
         'sdi views', discriminator, view_desc, 'sdi view')
     intr['tab_title'] = tab_title
     intr['tab_condition'] = tab_condition
+    intr['tab_before'] = tab_before
+    intr['tab_after'] = tab_after
     intr.relate('views', view_discriminator)
     config.action(discriminator, introspectables=(intr,))
 
@@ -191,7 +203,7 @@ def sdi_mgmt_views(context, request, names=None):
 
     registry = request.registry
     introspector = registry.introspector
-    L = []
+    unordered = []
 
     # create a dummy request signaling our intent
     req = Request(request.environ.copy())
@@ -206,6 +218,8 @@ def sdi_mgmt_views(context, request, names=None):
         sdi_intr = data['introspectable']
         tab_title = sdi_intr['tab_title']
         tab_condition = sdi_intr['tab_condition']
+        tab_before = sdi_intr['tab_before']
+        tab_after = sdi_intr['tab_after']
         def is_view(intr):
             return intr.category_name == 'views'
         for view_intr in filter(is_view, related):
@@ -241,27 +255,56 @@ def sdi_mgmt_views(context, request, names=None):
                 css_class = 'active'
             else:
                 css_class = None
-            L.append({'view_name': view_name,
-                      'title': tab_title or view_name.capitalize(),
-                      'class': css_class,
-                      'url': request.mgmt_path(request.context,
-                                               '@@%s' % view_name)
-                     })
+            unordered.append(
+                {'view_name': view_name,
+                 'tab_before':tab_before,
+                 'tab_after':tab_after,
+                 'title': tab_title or view_name.capitalize(),
+                 'class': css_class,
+                 'url': request.mgmt_path(request.context, '@@%s' % view_name)
+                 }
+                )
 
-    ordered = []
+    manually_ordered = []
 
     tab_order = request.registry.content.metadata(context, 'tab_order')
     
     if tab_order is not None:
-        ordered_names_available = [ y for y in tab_order if y in
-                                    [ x['view_name'] for x in L ] ]
-        for ordered_name in ordered_names_available:
-            for view_data in L:
+        ordered_names = [ y for y in tab_order if y in
+                          [ x['view_name'] for x in unordered ] ]
+        for ordered_name in ordered_names:
+            for view_data in unordered[:]:
                 if view_data['view_name'] == ordered_name:
-                    L.remove(view_data)
-                    ordered.append(view_data)
-                    
-    return ordered + sorted(L, key=operator.itemgetter('title'))
+                    unordered.remove(view_data)
+                    manually_ordered.append(view_data)
+
+    # first sort non-manually-ordered views lexically by title
+    lexically_ordered = sorted(unordered, key=operator.itemgetter('title'))
+
+    # then sort the lexically-presorted unordered views topologically based on
+    # any tab_before and tab_after values in the view data
+    tsorter = TopologicalSorter(default_before=MIDDLE, default_after=None)
+
+    tsorter.add(
+        MIDDLE,
+        None,
+        before=LAST,
+        after=FIRST,
+        )
+
+    for view_data in lexically_ordered:
+        before=view_data.get('tab_before', None)
+        after=view_data.get('tab_after', None)
+        tsorter.add(
+            view_data['view_name'],
+            view_data,
+            before=before,
+            after=after,
+            )
+
+    topo_ordered = [ x[1] for x in tsorter.sorted() if x[0] is not MIDDLE ]
+
+    return manually_ordered + topo_ordered
 
 def sdi_folder_contents(folder, request):
     """
