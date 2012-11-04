@@ -124,6 +124,8 @@ Docs
 - Explain ``tab_before`` and ``tab_after`` arguments to mgmt_view (as well as
   related ``FIRST``, ``LAST``, and ``MIDDLE`` sentinels).
 
+- Explain "Indexing" view.
+
 Probably Bad Ideas
 ------------------
 
