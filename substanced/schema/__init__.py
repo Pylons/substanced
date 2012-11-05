@@ -171,7 +171,7 @@ class IdSet(object):
         if value is colander.null:
             value = ()
         self._check_iterable(node, value)
-        return map(str, value)
+        return value
 
     def deserialize(self, node, value):
         if value is colander.null:
