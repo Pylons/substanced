@@ -1,5 +1,4 @@
 import unittest
-import colander
 
 from pyramid import testing
 
@@ -331,7 +330,60 @@ class Test_coarse_datetime_repr(unittest.TestCase):
         val = int(timetime) // 100        
         self.assertEqual(result, val)
 
+class Test_renamer(unittest.TestCase):
+    def _makeOne(self):
+        from . import renamer
+        return renamer()
+
+    def test_get_has_no_name(self):
+        class Foo(object):
+            name = self._makeOne()
+        foo = Foo()
+        self.assertEqual(foo.name, None)
+
+    def test_get_has_a_name(self):
+        class Foo(object):
+            name = self._makeOne()
+        foo = Foo()
+        foo.__name__ = 'fred'
+        self.assertEqual(foo.name, 'fred')
+
+    def test_set_has_no_parent(self):
+        class Foo(object):
+            name = self._makeOne()
+        foo = Foo()
+        foo.__name__ = 'fred'
+        foo.name = 'bar' # doesn't blow up
+        self.assertEqual(foo.name, 'fred')
+
+    def test_set_has_parent_same_value(self):
+        class Foo(object):
+            name = self._makeOne()
+        foo = Foo()
+        foo.__name__ = 'fred'
+        parent = DummyContent()
+        foo.__parent__ = parent
+        foo.name = 'fred' # doesn't blow up
+        self.assertEqual(foo.name, 'fred')
+        self.assertEqual(parent.renamed_from, None)
+
+    def test_set_has_parent_different_value(self):
+        class Foo(object):
+            name = self._makeOne()
+        foo = Foo()
+        foo.__name__ = 'fred'
+        parent = DummyContent()
+        foo.__parent__ = parent
+        foo.name = 'bob'
+        self.assertEqual(parent.renamed_from, 'fred')
+        self.assertEqual(parent.renamed_to, 'bob')
 
 class DummyContent(object):
-    def __init__(self, result):
+    renamed_from = None
+    renamed_to = None
+    def __init__(self, result=None):
         self.result = result
+
+    def rename(self, old, new):
+        self.renamed_from = old
+        self.renamed_to = new

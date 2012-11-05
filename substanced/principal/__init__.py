@@ -209,7 +209,7 @@ def groupname_validator(node, kw):
         )
 
 def members_choices(context, request):
-    principals = find_service(request.context, 'principals')
+    principals = find_service(context, 'principals')
     values = [(oid_of(group), name) for name, group in 
               principals['users'].items()]
     return values
@@ -285,7 +285,7 @@ def login_validator(node, kw):
         )
 
 def groups_choices(context, request):
-    principals = find_service(request.context, 'principals')
+    principals = find_service(context, 'principals')
     values = [(oid_of(group), name) for name, group in 
               principals['groups'].items()]
     return values

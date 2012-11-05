@@ -175,6 +175,59 @@ class TestPermissionsSchemaNode(unittest.TestCase):
         result = inst.schema_type()
         self.assertEqual(result.__class__.__name__, 'Set')
 
+class TestIdSet(unittest.TestCase):
+    def _makeOne(self):
+        from . import IdSet
+        return IdSet()
+
+    def test_serialize_null(self):
+        inst = self._makeOne()
+        result = inst.serialize(None, colander.null)
+        self.assertEqual(result, ())
+
+    def test_serialize_noniterable(self):
+        inst = self._makeOne()
+        self.assertRaises(colander.Invalid, inst.serialize, None, None)
+
+    def test_serialize_non_null(self):
+        inst = self._makeOne()
+        result = inst.serialize(None, [1,2,3])
+        self.assertEqual(result, [1,2,3])
+
+    def test_deserialize_null(self):
+        inst = self._makeOne()
+        result = inst.deserialize(None, colander.null)
+        self.assertEqual(result, [])
+
+    def test_deserialize_noniterable(self):
+        inst = self._makeOne()
+        self.assertRaises(colander.Invalid, inst.deserialize, None, None)
+
+    def test_deserialize_non_null(self):
+        inst = self._makeOne()
+        result = inst.deserialize(None, ['1','2','3'])
+        self.assertEqual(result, [1,2,3])
+
+    def test_cstruct_children(self):
+        inst = self._makeOne()
+        self.assertEqual(inst.cstruct_children(None, None), [])
+
+class TestMultireferenceIdSchemaNode(unittest.TestCase):
+    def _makeOne(self):
+        from . import MultireferenceIdSchemaNode
+        return MultireferenceIdSchemaNode()
+
+    def test__get_choices(self):
+        inst = self._makeOne()
+        inst.bindings = {'context':None, 'request':None}
+        inst.choices_getter = lambda *arg: 123
+        self.assertEqual(inst._get_choices(), 123)
+
+    def test_widget(self):
+        inst = self._makeOne()
+        inst._get_choices = lambda: [1]
+        widget = inst.widget
+        self.assertEqual(widget.values, [1])
 
 class DummySession(dict):
     def get_csrf_token(self):

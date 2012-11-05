@@ -23,51 +23,6 @@ class Test_file_upload_widget(unittest.TestCase):
         widget = self._callFUT(None, kw)
         self.assertEqual(widget.__class__.__name__, 'FileUploadWidget')
         
-class TestFilePropertySheet(unittest.TestCase):
-    def _makeOne(self, context, request):
-        from . import FilePropertySheet
-        return FilePropertySheet(context, request)
-    
-    def test_get(self):
-        context = testing.DummyResource()
-        context.__name__ = 'name'
-        context.mimetype = 'mimetype'
-        context.title = 'title'
-        request = testing.DummyRequest()
-        inst = self._makeOne(context, request)
-        self.assertEqual(inst.get(), {'name':'name', 'mimetype':'mimetype',
-                                      'title':'title'})
-        
-    def test_set_no_name_change(self):
-        context = testing.DummyResource()
-        context.__name__ = 'name'
-        context.mimetype = 'mimetype'
-        request = testing.DummyRequest()
-        inst = self._makeOne(context, request)
-        inst.set({'mimetype':'newmimetype', 'name':'name',
-                  'title':'newtitle'})
-        self.assertEqual(inst.context.title, 'newtitle')
-        self.assertEqual(inst.context.mimetype, 'newmimetype')
-
-    def test_set_with_name_change(self):
-        parent = testing.DummyResource()
-        def rename(oldname, newname):
-            self.assertEqual(oldname, 'name')
-            self.assertEqual(newname, 'newname')
-            context.renamed = True
-        parent.rename = rename
-        context = testing.DummyResource()
-        context.__parent__ = parent
-        context.__name__ = 'name'
-        context.mimetype = 'mimetype'
-        request = testing.DummyRequest()
-        inst = self._makeOne(context, request)
-        inst.set({'mimetype':'newmimetype', 'name':'newname',
-                  'title':'newtitle'})
-        self.assertEqual(inst.context.title, 'newtitle')
-        self.assertEqual(inst.context.mimetype, 'newmimetype')
-        self.assertTrue(context.renamed)
-
 class TestFileUploadPropertySheet(unittest.TestCase):
     def setUp(self):
         testing.setUp()

@@ -32,6 +32,26 @@ class TestPropertySheet(unittest.TestCase):
         self.assertEqual(context.title, 't')
         self.assertEqual(context.description, 'd')
 
+    def test_set_with_omit_iter(self):
+        context = testing.DummyResource()
+        request = testing.DummyRequest()
+        inst = self._makeOne(context, request)
+        context.title = 'title'
+        context.description = 'description'
+        inst.set(dict(title='t', description='d'), omit=('title',))
+        self.assertEqual(context.title, 'title')
+        self.assertEqual(context.description, 'd')
+
+    def test_set_with_omit_noniter(self):
+        context = testing.DummyResource()
+        request = testing.DummyRequest()
+        inst = self._makeOne(context, request)
+        context.title = 'title'
+        context.description = 'description'
+        inst.set(dict(title='t', description='d'), omit='title')
+        self.assertEqual(context.title, 'title')
+        self.assertEqual(context.description, 'd')
+
     def test_after_set(self):
         from substanced.event import ObjectModified
         request = testing.DummyRequest()

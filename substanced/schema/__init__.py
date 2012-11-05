@@ -183,8 +183,7 @@ class IdSet(object):
         return []
 
 class MultireferenceIdSchemaNode(colander.SchemaNode):
-    def schema_type(self):
-        return IdSet()
+    schema_type = IdSet
 
     def _get_choices(self):
         context = self.bindings['context']

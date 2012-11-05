@@ -308,7 +308,7 @@ class AllowedIndex(ResolvingIndex, hypatia.keyword.KeywordIndex):
 
     def _set_permissions(self, permissions):
         permissions = set(permissions)
-        if permissions != self.discriminator.permissions:
+        if permissions != set(self.discriminator.permissions):
             self.discriminator = AllowedDiscriminator(permissions)
 
     permissions = property(_get_permissions, _set_permissions)

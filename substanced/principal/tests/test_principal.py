@@ -171,10 +171,10 @@ class Test_groupname_validator(unittest.TestCase):
         v = self._makeOne(node, kw)
         self.assertRaises(colander.Invalid, v, node, 'abc')
 
-class Test_members_widget(unittest.TestCase):
-    def _makeOne(self, node, kw):
-        from .. import members_widget
-        return members_widget(node, kw)
+class Test_members_choices(unittest.TestCase):
+    def _makeOne(self, context, request):
+        from .. import members_choices
+        return members_choices(context, request)
 
     def test_it(self):
         from ...testing import make_site
@@ -183,77 +183,8 @@ class Test_members_widget(unittest.TestCase):
         user.__objectid__ = 1
         site['principals']['users']['user'] = user
         request = testing.DummyRequest()
-        request.context = site
-        kw = dict(request=request)
-        result = self._makeOne(None, kw)
-        self.assertEqual(result.values, [('1', 'user')])
-
-class TestGroupPropertysheet(unittest.TestCase):
-    def _makeOne(self, context, request):
-        from .. import GroupPropertySheet
-        return GroupPropertySheet(context, request)
-
-    def _makeParent(self):
-        parent = DummyFolder()
-        objectmap = DummyObjectMap()
-        parent.__objectmap__ = objectmap
-        return parent
-
-    def test_get(self):
-        context = testing.DummyResource()
-        context.__name__ = 'name'
-        context.memberids = [1]
-        context.description = 'desc'
-        request = testing.DummyRequest()
-        inst = self._makeOne(context, request)
-        props = inst.get()
-        self.assertEqual(props['description'], 'desc')
-        self.assertEqual(props['members'], ['1'])
-        self.assertEqual(props['name'], 'name')
-
-    def test_set_newname_different_than_oldname(self):
-        context = testing.DummyResource()
-        request = testing.DummyRequest()
-        parent = self._makeParent()
-        parent['oldname'] = context
-        def rename(old, new):
-            self.assertEqual(old, 'oldname')
-            self.assertEqual(new, 'name')
-            context.renamed = True
-        parent.rename = rename
-        def clear():
-            context.cleared = True
-        def connect(members):
-            self.assertEqual(members, (1,))
-            context.connected = True
-        context.memberids = testing.DummyResource()
-        context.memberids.clear = clear
-        context.memberids.connect = connect
-        inst = self._makeOne(context, request)
-        inst.set({'description':'desc', 'name':'name', 'members':(1,)})
-        self.assertEqual(context.description, 'desc')
-        self.assertTrue(context.renamed)
-        self.assertTrue(context.cleared)
-        self.assertTrue(context.connected)
-
-    def test_set_newname_same_as_oldname(self):
-        context = testing.DummyResource()
-        request = testing.DummyRequest()
-        parent = self._makeParent()
-        parent['oldname'] = context
-        def clear():
-            context.cleared = True
-        def connect(members):
-            self.assertEqual(members, (1,))
-            context.connected = True
-        context.memberids = testing.DummyResource()
-        context.memberids.clear = clear
-        context.memberids.connect = connect
-        inst = self._makeOne(context, request)
-        inst.set({'description':'desc', 'name':'name', 'members':(1,)})
-        self.assertEqual(context.description, 'desc')
-        self.assertTrue(context.cleared)
-        self.assertTrue(context.connected)
+        result = self._makeOne(site, request)
+        self.assertEqual(result, [(1, 'user')])
 
 class TestGroup(unittest.TestCase):
     def _makeOne(self, description=''):
@@ -333,10 +264,10 @@ class Test_login_validator(unittest.TestCase):
         inst = self._makeOne(None, kw)
         self.assertRaises(colander.Invalid, inst, None, 'group')
 
-class Test_groups_widget(unittest.TestCase):
-    def _makeOne(self, node, kw):
-        from .. import groups_widget
-        return groups_widget(node, kw)
+class Test_groups_choices(unittest.TestCase):
+    def _makeOne(self, context, request):
+        from .. import groups_choices
+        return groups_choices(context, request)
 
     def test_it(self):
         from ...testing import make_site
@@ -345,69 +276,8 @@ class Test_groups_widget(unittest.TestCase):
         group.__objectid__ = 1
         site['principals']['groups']['group'] = group
         request = testing.DummyRequest()
-        request.context = site
-        kw = dict(request=request)
-        result = self._makeOne(None, kw)
-        self.assertEqual(result.values, [('1', 'group')])
-
-class TestUserPropertySheet(unittest.TestCase):
-    def _makeOne(self, context, request):
-        from .. import UserPropertySheet
-        return UserPropertySheet(context, request)
-
-    def test_get(self):
-        context = testing.DummyResource()
-        context.__name__ = 'fred'
-        context.email = 'email'
-        context.groupids = [1,2]
-        request = testing.DummyRequest()
-        inst = self._makeOne(context, request)
-        self.assertEqual(inst.get(),
-                         {'email':'email', 'login':'fred', 'groups':['1', '2']})
-        
-    def test_set_newname_different_than_oldname(self):
-        context = testing.DummyResource()
-        request = testing.DummyRequest()
-        parent = testing.DummyResource()
-        parent['oldname'] = context
-        def rename(old, new):
-            self.assertEqual(old, 'oldname')
-            self.assertEqual(new, 'name')
-            context.renamed = True
-        parent.rename = rename
-        def clear():
-            context.cleared = True
-        def connect(members):
-            self.assertEqual(members, (1,))
-            context.connected = True
-        context.groupids = testing.DummyResource()
-        context.groupids.clear = clear
-        context.groupids.connect = connect
-        inst = self._makeOne(context, request)
-        inst.set({'email':'email', 'login':'name', 'groups':(1,)})
-        self.assertEqual(context.email, 'email')
-        self.assertTrue(context.renamed)
-        self.assertTrue(context.cleared)
-        self.assertTrue(context.connected)
-
-    def test_set_newname_same_as_oldname(self):
-        context = testing.DummyResource()
-        request = testing.DummyRequest()
-        parent = testing.DummyResource()
-        parent['name'] = context
-        def clear():
-            context.cleared = True
-        def connect(members):
-            self.assertEqual(members, (1,))
-            context.connected = True
-        context.groupids = testing.DummyResource()
-        context.groupids.clear = clear
-        context.groupids.connect = connect
-        inst = self._makeOne(context, request)
-        inst.set({'email':'email', 'login':'name', 'groups':(1,)})
-        self.assertEqual(context.email, 'email')
-        self.assertTrue(context.cleared)
-        self.assertTrue(context.connected)
+        result = self._makeOne(site, request)
+        self.assertEqual(result, [(1, 'group')])
 
 class TestUser(unittest.TestCase):
     def setUp(self):
@@ -513,11 +383,6 @@ class DummyFolder(testing.DummyResource):
     def check_name(self, value):
         if value in self:
             raise KeyError(value)
-
-    def rename(self, oldname, newname):
-        old = self[oldname]
-        del self[oldname]
-        self[newname] = old
 
 class DummyObjectMap(object):
     def __init__(self, result=()):

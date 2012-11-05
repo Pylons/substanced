@@ -34,10 +34,10 @@ class TestAddUserView(unittest.TestCase):
         request = self._makeRequest(resource)
         context = testing.DummyResource()
         inst = self._makeOne(context, request)
-        resp = inst.add_success({'login':'name', 'groups':(1,)})
+        resp = inst.add_success({'name':'name', 'groupids':(1,)})
         self.assertEqual(context['name'], resource)
         self.assertEqual(resp.location, 'http://example.com')
-        self.assertEqual(resource.groups, (1,))
+        self.assertEqual(resource.groupids, (1,))
 
 class TestAddGroupView(unittest.TestCase):
     def _makeOne(self, context, request):
@@ -56,10 +56,10 @@ class TestAddGroupView(unittest.TestCase):
         request = self._makeRequest(resource)
         context = testing.DummyResource()
         inst = self._makeOne(context, request)
-        resp = inst.add_success({'name':'name', 'members':(1,)})
+        resp = inst.add_success({'name':'name', 'memberids':(1,)})
         self.assertEqual(context['name'], resource)
         self.assertEqual(resp.location, 'http://example.com')
-        self.assertEqual(resource.members, (1,))
+        self.assertEqual(resource.memberids, (1,))
 
 class Test_password_validator(unittest.TestCase):
     def _makeOne(self, node, kw):

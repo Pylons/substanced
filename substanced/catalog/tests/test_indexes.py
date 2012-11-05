@@ -257,6 +257,23 @@ class TestAllowedIndex(unittest.TestCase):
         index = AllowedIndex(discriminator, family=family)
         return index
 
+    def test_get_permissions(self):
+        discriminator = DummyDiscriminator()
+        index = self._makeOne(discriminator)
+        self.assertEqual(index.permissions, set([1,2]))
+        
+    def test_set_permissions_same(self):
+        discriminator = DummyDiscriminator()
+        index = self._makeOne(discriminator)
+        index.permissions = (1,2)
+        self.assertEqual(index.discriminator, discriminator)
+
+    def test_set_permissions_different(self):
+        discriminator = DummyDiscriminator()
+        index = self._makeOne(discriminator)
+        index.permissions = (1,2,3)
+        self.assertNotEqual(index.discriminator, discriminator)
+
     def test_allows_request_default_permission(self):
         index = self._makeOne()
         request = testing.DummyRequest()
@@ -278,25 +295,6 @@ class TestAllowedIndex(unittest.TestCase):
         index = self._makeOne()
         q = index.allows('bob', 'edit')
         self.assertEqual(q._value, [('bob', 'edit')])
-
-class TestIndexPropertySheet(unittest.TestCase):
-    def _makeOne(self, context, request):
-        from ..indexes import IndexPropertySheet
-        return IndexPropertySheet(context, request)
-
-    def test_get(self):
-        context = testing.DummyResource()
-        context.sd_category = 'foo'
-        inst = self._makeOne(context, None)
-        self.assertEqual(inst.get(), {'category':'foo'})
-        
-    def test_set(self):
-        context = testing.DummyResource()
-        context.sd_category = 'foo'
-        inst = self._makeOne(context, None)
-        inst.set({'category':'bar'})
-        self.assertEqual(context.sd_category, 'bar')
-                 
 
 class TestFacetIndexPropertySheet(unittest.TestCase):
     def setUp(self):
@@ -338,7 +336,7 @@ class TestFacetIndexPropertySheet(unittest.TestCase):
         self.assertEqual(context.facets, ('facet1', 'facet2'))
         self.assertEqual(catalog.reindexed, ('name',))
 
-class TestFacetAllowedIndexPropertySheet(unittest.TestCase):
+class TestAllowedIndexPropertySheet(unittest.TestCase):
     def setUp(self):
         testing.setUp()
 
@@ -352,58 +350,33 @@ class TestFacetAllowedIndexPropertySheet(unittest.TestCase):
     def test_get(self):
         context = testing.DummyResource()
         context.sd_category = 'foo'
-        discriminator = Dummy()
-        context.discriminator = discriminator
-        context.discriminator.permissions = ('b', 'a')
+        context.permissions = ('b', 'a')
         inst = self._makeOne(context, None)
-        self.assertEqual(inst.get(),
-                         {'category':'foo', 'permissions':('b', 'a')})
-
-    def test_get_permissions_is_None(self):
-        context = testing.DummyResource()
-        context.sd_category = 'foo'
-        discriminator = Dummy()
-        context.discriminator = discriminator
-        context.discriminator.permissions = None
-        inst = self._makeOne(context, None)
-        self.assertEqual(inst.get(),
-                         {'category':'foo', 'permissions':()})
+        values = inst.get()
+        self.assertEqual(values['sd_category'], 'foo')
+        self.assertEqual(values['permissions'], ('b', 'a'))
 
     def test_set_same_permissions(self):
         context = testing.DummyResource()
         context.sd_category = 'foo'
-        discriminator = Dummy()
-        context.discriminator = discriminator
-        context.discriminator.permissions = ('a', 'b')
-        inst = self._makeOne(context, None)
-        inst.set({'category':'bar', 'permissions':('b', 'a')})
+        context.permissions = set(['a', 'b'])
+        request = testing.DummyRequest()
+        inst = self._makeOne(context, request)
+        inst.set({'sd_category':'bar', 'permissions':('b', 'a')})
         self.assertEqual(context.sd_category, 'bar')
 
-    def test_set_no_permissions(self):
-        context = testing.DummyResource()
-        context.sd_category = 'foo'
-        discriminator = Dummy()
-        context.discriminator = discriminator
-        context.discriminator.permissions = None
-        inst = self._makeOne(context, None)
-        inst.set({'category':'bar', 'permissions':()})
-        self.assertEqual(context.sd_category, 'bar')
-        self.assertEqual(context.discriminator.permissions, None)
-                 
     def test_set_different_permissions(self):
         context = testing.DummyResource()
         context.sd_category = 'foo'
-        discriminator = Dummy()
-        context.discriminator = discriminator
-        context.discriminator.permissions = ('a','b')
+        context.permissions = ('a','b')
         context.__name__ = 'name'
         catalog = DummyCatalog()
         context.__parent__ = catalog
         request = testing.DummyRequest()
         inst = self._makeOne(context, request)
-        inst.set({'category':'bar', 'permissions':['d', 'c']})
+        inst.set({'sd_category':'bar', 'permissions':('c', 'd')})
         self.assertEqual(context.sd_category, 'bar')
-        self.assertEqual(context.discriminator.permissions, ('c', 'd'))
+        self.assertEqual(context.permissions, ('c', 'd'))
         self.assertEqual(catalog.reindexed, ('name',))
 
 class Dummy(object):
@@ -426,3 +399,6 @@ class DummyQuery(object):
     def _apply(self, names):
         return [1,2,3]
     
+class DummyDiscriminator(object):
+    permissions = (1, 2)
+    def __call__(self): pass
