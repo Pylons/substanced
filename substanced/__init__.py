@@ -18,6 +18,7 @@ def includeme(config): # pragma: no cover
     config.include('pyramid_zodbconn')
     config.include('pyramid_mailer')
     config.include('.sdi')
+    config.include('.objectmap')
     config.include('.content')
     config.include('.property')
     config.include('.event')

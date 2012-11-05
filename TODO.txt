@@ -125,6 +125,8 @@ Docs
 
 - Explain ``renamer``.
 
+- Explain various view predicates.
+
 Probably Bad Ideas
 ------------------
 

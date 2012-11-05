@@ -585,6 +585,27 @@ class TestObjectMap(unittest.TestCase):
         obj = object()
         inst._find_resource = lambda *arg: obj
         self.assertEqual(list(inst.targets(1, 'ref')), [obj, obj])
+
+    def test_has_references_obj(self):
+        inst = self._makeOne()
+        inst.referencemap = DummyReferenceMap(has_references=True)
+        inst.objectid_to_path[1] = (u'',)
+        obj = testing.DummyResource()
+        obj.__objectid__ = 1
+        self.assertTrue(inst.has_references(obj))
+        self.assertEqual(inst.referencemap.oid_arg, 1)
+
+    def test_has_references_oid(self):
+        inst = self._makeOne()
+        inst.referencemap = DummyReferenceMap(has_references=True)
+        inst.objectid_to_path[1] = (u'',)
+        self.assertTrue(inst.has_references(1))
+        self.assertEqual(inst.referencemap.oid_arg, 1)
+
+    def test_get_reftypes(self):
+        inst = self._makeOne()
+        inst.referencemap = DummyReferenceMap(reftypes=(1,2))
+        self.assertTrue(inst.get_reftypes(), (1,2))
         
 class TestReferenceSet(unittest.TestCase):
     def _makeOne(self):
@@ -677,6 +698,25 @@ class TestReferenceSet(unittest.TestCase):
             {5:DummyTreeSet([3])}
             )
 
+    def test_is_target_True(self):
+        refset = self._makeOne()
+        refset.target2src[1] = True
+        self.assertTrue(refset.is_target(1))
+
+    def test_is_target_False(self):
+        refset = self._makeOne()
+        self.assertFalse(refset.is_target(1))
+
+    def test_is_source_True(self):
+        refset = self._makeOne()
+        refset.src2target[1] = True
+        self.assertTrue(refset.is_source(1))
+
+    def test_is_source_False(self):
+        refset = self._makeOne()
+        self.assertFalse(refset.is_source(1))
+        
+
 class TestReferenceMap(unittest.TestCase):
     def _makeOne(self, map=None):
         from . import ReferenceMap
@@ -730,6 +770,23 @@ class TestReferenceMap(unittest.TestCase):
         refs = self._makeOne(map)
         refs.remove([1,2])
         self.assertEqual(L, [[1,2], [1,2]])
+
+    def test_has_references_True(self):
+        refset = DummyReferenceSet(True)
+        map = {'reftype':refset}
+        refs = self._makeOne(map)
+        self.assertTrue(refs.has_references(1))
+
+    def test_has_references_False(self):
+        refset = DummyReferenceSet(False)
+        map = {'reftype':refset}
+        refs = self._makeOne(map)
+        self.assertFalse(refs.has_references(1))
+
+    def test_get_reftypes(self):
+        map = {'reftype':None}
+        refs = self._makeOne(map)
+        self.assertEqual(refs.get_reftypes(), ['reftype'])
 
 class Test_reference_sourceid_property(unittest.TestCase):
     def setUp(self):
@@ -1793,6 +1850,56 @@ class Test_find_objectmap(unittest.TestCase):
         inst = Dummy()
         self.assertEqual(self._callFUT(inst), None)
 
+class Test_ReferencedPredicate(unittest.TestCase):
+    def _makeOne(self, val, config):
+        from . import _ReferencedPredicate
+        return _ReferencedPredicate(val, config)
+
+    def test_text(self):
+        config = Dummy()
+        config.registry = Dummy()
+        inst = self._makeOne(True, config)
+        self.assertEqual(inst.text(), 'referenced = True')
+
+    def test_phash(self):
+        config = Dummy()
+        config.registry = Dummy()
+        inst = self._makeOne(True, config)
+        self.assertEqual(inst.phash(), 'referenced = True')
+
+    def test__call__(self):
+        config = Dummy()
+        config.registry = Dummy()
+        inst = self._makeOne(True, config)
+        def has_references(context, registry):
+            self.assertEqual(context, None)
+            self.assertEqual(registry, config.registry)
+            return True
+        inst.has_references = has_references
+        self.assertEqual(inst(None, None), True)
+
+class Test_has_references(unittest.TestCase):
+    def _callFUT(self, context):
+        from . import has_references
+        return has_references(context)
+    
+    def test_objectmap_is_None(self):
+        result = self._callFUT(None)
+        self.assertEqual(result, False)
+
+    def test_oid_is_None(self):
+        context = testing.DummyResource()
+        context.__objectmap__ = True
+        result = self._callFUT(context)
+        self.assertEqual(result, False)
+
+    def test_gardenpath(self):
+        context = testing.DummyResource()
+        context.__objectmap__ = DummyObjectMap(result=True)
+        context.__objectid__ = 1
+        result = self._callFUT(context)
+        self.assertEqual(result, True)
+
 class Dummy(object):
     pass
 
@@ -1841,6 +1948,9 @@ class DummyObjectMap(object):
             raise self.toraise
         self.connected.append((source, target, reftype))
 
+    def has_references(self, oid):
+        return self.result
+
 
 class DummyTreeSet(set):
     def insert(self, val):
@@ -1864,10 +1974,20 @@ class DummyReferenceSet(object):
     def sourceids(self, src):
         return self.result
 
+    def is_target(self, oid):
+        return self.result
+
+    is_source = is_target
+
 class DummyReferenceMap(dict):
-    def __init__(self, sourceids=(), targetids=()):
+    oid_args = None
+
+    def __init__(self, sourceids=(), targetids=(), has_references=False,
+                 reftypes=()):
         self._sourceids = sourceids
         self._targetids = targetids
+        self._has_references = has_references
+        self._reftypes = reftypes
         
     def connect(self, src, target, reftype):
         self[reftype] = (src, target)
@@ -1880,6 +2000,13 @@ class DummyReferenceMap(dict):
 
     def targetids(self, oid, reftype):
         return self._targetids
+
+    def has_references(self, oid):
+        self.oid_arg = oid
+        return self._has_references
+
+    def get_reftypes(self):
+        return self._reftypes
 
 class DummyRoot(object):
     pass

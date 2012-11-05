@@ -397,6 +397,16 @@ class ObjectMap(Persistent):
         for oid in self.targetids(obj, reftype):
             yield self.object_for(oid)
 
+    def has_references(self, obj):
+        """ Return true if the object participates in any reference as a source
+        or a target.  ``obj`` may be an object or an oid."""
+        oid = self._refid_for(obj)
+        return self.referencemap.has_references(oid)
+
+    def get_reftypes(self):
+        """ Return a sequence of reference types known by this objectmap. """
+        return self.referencemap.get_reftypes()
+
 class ReferenceMap(Persistent):
     
     family = BTrees.family64
@@ -431,6 +441,15 @@ class ReferenceMap(Persistent):
         for refset in self.refmap.values():
             refset.remove(oids)
 
+    def has_references(self, oid):
+        for reftype, refset in self.refmap.items():
+            if refset.is_target(oid) or refset.is_source(oid):
+                return True
+        return False
+
+    def get_reftypes(self):
+        return self.refmap.keys()
+
 class ReferenceSet(Persistent):
     
     family = BTrees.family64
@@ -463,8 +482,14 @@ class ReferenceSet(Persistent):
     def targetids(self, oid):
         return self.src2target.get(oid, self.family.IF.Set())
 
+    def is_target(self, oid):
+        return oid in self.target2src
+
     def sourceids(self, oid):
         return self.target2src.get(oid, self.family.IF.Set())
+
+    def is_source(self, oid):
+        return oid in self.src2target
 
     def remove(self, oidset):
         # XXX is there a way to make this less expensive?
@@ -812,4 +837,32 @@ def find_objectmap(context):
     """ Returns the object map for the root object in the lineage of the
     ``context``"""
     return acquire(context, '__objectmap__')
-            
+
+def has_references(context):
+    objectmap = find_objectmap(context)
+    if objectmap is None:
+        return False
+    oid = oid_of(context, None)
+    if oid is None:
+        return False
+    return objectmap.has_references(oid)
+
+class _ReferencedPredicate(object):
+    has_references = staticmethod(has_references) # for testing
+    
+    def __init__(self, val, config):
+        self.val = bool(val)
+        self.registry = config.registry
+
+    def text(self):
+        return 'referenced = %s' % self.val
+
+    phash = text
+
+    def __call__(self, context, request):
+        return self.has_references(context, self.registry) == self.val
+
+def include(config): # pragma: no cover
+    config.add_view_predicate('referenced', _ReferencedPredicate)
+
+includeme = include
