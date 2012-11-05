@@ -85,11 +85,6 @@ Nice-to-Have Features
 
 - Ability to add and edit principals in existing ACEs in ACL edit view.
 
-- How do we make creating propertysheet set/get less boilerplatey?  Ideas: add
-  a "set_context(struct, omit=None)" method to PropertySheet, change nodes that
-  use "name" to use "__name__" with a title, scrape values from propertysheet
-  in get using schema definition rather than __dict__.
-
 Docs
 ----
 
