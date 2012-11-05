@@ -20,6 +20,9 @@ from .. import (
     permission='sdi.manage-catalog',
     )
 class IndexingView(object):
+
+    catalog_view_factory_for = staticmethod(catalog_view_factory_for) # testing
+
     def __init__(self, context, request):
         self.context = context
         self.request = request
@@ -46,7 +49,7 @@ class IndexingView(object):
         request = self.request
         check_csrf_token(request)
         oid = oid_of(self.context)
-        catalog_view_factory = catalog_view_factory_for(
+        catalog_view_factory = self.catalog_view_factory_for(
             context, request.registry)
         if catalog_view_factory:
             wrapper = CatalogViewWrapper(context, catalog_view_factory)
