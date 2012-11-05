@@ -19,28 +19,28 @@ USE_MAGIC = object()
 import deform.widget
 import deform.schema
 
+from ..interfaces import IFile
+
 from ..content import content
-from ..util import chunks
 from ..form import FileUploadTempStore
+from ..property import PropertySheet
 from ..schema import (
     Schema,
     NameSchemaNode,
     )
-from ..property import PropertySheet
-from ..interfaces import IFile
+from ..util import (
+    chunks,
+    renamer,
+    )
 
 def context_is_a_file(context, request):
     if request.registry.content.istype(context, 'File'):
         return True
 
-file_name_node = NameSchemaNode(
-    editing=context_is_a_file,
-    title='Name',
-    name='__name__'
-    )
+file_name_node = NameSchemaNode(editing=context_is_a_file)
 
 class FilePropertiesSchema(Schema):
-    name = file_name_node
+    name = file_name_node.clone()
     title = colander.SchemaNode(
         colander.String(),
         missing='',
@@ -51,14 +51,6 @@ class FilePropertiesSchema(Schema):
 
 class FilePropertySheet(PropertySheet):
     schema = FilePropertiesSchema()
-
-    def set(self, struct):
-        PropertySheet.set(self, struct, omit='__name__')
-        context = self.context
-        oldname = context.__name__
-        newname = struct['__name__']
-        if newname and newname != oldname:
-            context.__parent__.rename(oldname, newname)
 
 @colander.deferred
 def file_upload_widget(node, kw):
@@ -123,6 +115,8 @@ class FileUploadPropertySheet(PropertySheet):
 class File(Persistent):
 
     title = u''
+
+    name = renamer()
 
     def __init__(self, stream=None, mimetype=None, title=u''):
         """ The constructor of a File object.

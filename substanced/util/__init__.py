@@ -287,15 +287,20 @@ def renamer():
     of the property calls ``rename()`` on the ``__parent__`` of the instance on
     which it's defined if the new value doesn't match the existing ``__name__``
     of the instance (this will cause ``__name__`` to be reset if the parent is
-    a normal Substance D folder )."""
+    a normal Substance D folder ).  Sample usage::
+
+      class SomeContentType(Persistent):
+          name = renamer()
+    """
     def _get(self):
-        return self.__name__
+        return getattr(self, '__name__', None)
 
     def _set(self, newname):
-        oldname = self.__name__
+        oldname = _get(self)
         if newname != oldname:
-            parent = self.__parent__
-            parent.rename(oldname, newname)
+            parent = getattr(self, '__parent__', None)
+            if parent is not None:
+                parent.rename(oldname, newname)
 
     return property(_get, _set)
 
