@@ -77,6 +77,13 @@ class PathIndex(ResolvingIndex, hypatia.util.BaseIndexMixin, Persistent):
             self.family = family
         self.reset()
 
+    def document_repr(self, docid, default=None):
+        objectmap = find_objectmap(self.__parent__)
+        path = objectmap.path_for(docid)
+        if path is None:
+            return default
+        return path
+
     def reset(self):
         self._not_indexed = self.family.IF.Set()
 

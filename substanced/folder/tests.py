@@ -18,6 +18,15 @@ class TestFolder(unittest.TestCase):
         from . import Folder
         return Folder
 
+    def _makeSite(self, objectmap=None):
+        from ..interfaces import IFolder
+        from zope.interface import alsoProvides
+        site = testing.DummyResource()
+        if objectmap:
+            site.__objectmap__ = objectmap
+        alsoProvides(site, IFolder)
+        return site
+
     def _makeOne(self, data=None, family=None):
         klass = self._getTargetClass()
         return klass(data, family=family)
@@ -205,6 +214,67 @@ class TestFolder(unittest.TestCase):
         folder.add('b', DummyModel())
         self.assertEqual(folder.order, ['a', 'b'])
 
+    def test_add_with_object_has_parent(self):
+        folder = self._makeOne()
+        objectmap = DummyObjectMap()
+        folder.__objectmap__ = objectmap
+        a = DummyModel()
+        site = self._makeSite()
+        a.__parent__ = site
+        self.assertRaises(ValueError, folder.add, 'a', a)
+
+    def test_add_with_objectmap(self):
+        folder = self._makeOne()
+        objectmap = DummyObjectMap()
+        folder.__objectmap__ = objectmap
+        a = DummyModel()
+        folder.add('a', a)
+        self.assertEqual(objectmap.added, [(a, ('', 'a'))])
+
+    def test_add_with_objectmap_object_has_children(self):
+        from substanced.interfaces import IFolder
+        folder = self._makeOne()
+        objectmap = DummyObjectMap()
+        folder.__objectmap__ = objectmap
+        one = testing.DummyModel(__provides__=IFolder)
+        two = testing.DummyModel()
+        one['two'] = two
+        folder.add('one', one)
+        self.assertEqual(
+            objectmap.added,
+            [(two, ('', 'one', 'two')), (one, ('', 'one'))]
+        )
+
+    def test_add_with_objectmap_object_has_children_object_has_no_name(self):
+        from substanced.interfaces import IFolder
+        folder = self._makeOne()
+        objectmap = DummyObjectMap()
+        folder.__objectmap__ = objectmap
+        one = testing.DummyModel(__provides__=IFolder)
+        two = testing.DummyModel()
+        one['two'] = two
+        del one.__name__
+        folder.add('one', one)
+        self.assertEqual(
+            objectmap.added,
+            [(two, ('', 'one', 'two')), (one, ('', 'one'))]
+        )
+
+    def test_add_with_objectmap_object_has_children_not_adding_to_root(self):
+        from substanced.interfaces import IFolder
+        folder = self._makeOne()
+        objectmap = DummyObjectMap()
+        site = self._makeSite(objectmap)
+        site['folder'] = folder
+        one = testing.DummyModel(__provides__=IFolder)
+        two = testing.DummyModel()
+        one['two'] = two
+        folder.add('one', one)
+        self.assertEqual(
+            objectmap.added,
+            [(two, ('', 'folder', 'one', 'two')), (one, ('', 'folder', 'one'))]
+        )
+
     def test___setitem__exists(self):
         from ..exceptions import FolderKeyError
         dummy = DummyModel()
@@ -327,6 +397,30 @@ class TestFolder(unittest.TestCase):
         self.assertEqual(events[1].name, 'a')
         self.assertTrue(events[1].moving)
 
+    def test_remove_with_objectmap(self):
+        dummy = DummyModel()
+        dummy.__parent__ = None
+        dummy.__name__ = None
+        dummy.__objectid__ = 1
+        folder = self._makeOne({'a': dummy})
+        objectmap = DummyObjectMap()
+        folder.__objectmap__ = objectmap
+        folder.remove("a")
+        self.assertEqual(objectmap.removed, [1])
+        self.assertTrue(objectmap.references_removed, True)
+
+    def test_remove_with_objectmap_moving(self):
+        dummy = DummyModel()
+        dummy.__parent__ = None
+        dummy.__name__ = None
+        dummy.__objectid__ = 1
+        folder = self._makeOne({'a': dummy})
+        objectmap = DummyObjectMap()
+        folder.__objectmap__ = objectmap
+        folder.remove("a", moving=True)
+        self.assertEqual(objectmap.removed, [1])
+        self.assertFalse(objectmap.references_removed)
+
     def test_move_no_newname(self):
         folder = self._makeOne()
         other = self._makeOne()
@@ -349,6 +443,16 @@ class TestFolder(unittest.TestCase):
         self.assertEqual(other['b'].__parent__, other)
         self.assertFalse('a' in other)
         self.assertFalse('a' in folder)
+
+    def test_move_is_service(self):
+        folder = self._makeOne()
+        folder.__services__ = ('a',)
+        other = self._makeOne()
+        model = DummyModel()
+        folder['a'] = model
+        folder.move('a', other)
+        self.assertEqual(other['a'], model)
+        self.assertEqual(other.__services__, ('a',))
 
     def test_copy_no_newname(self):
         folder = self._makeOne()
@@ -518,6 +622,15 @@ class TestFolder(unittest.TestCase):
         self.assertEqual(inst['foo'], foo)
         self.assertEqual(inst.__services__, ('foo',))
 
+    def test__notify_no_registry(self):
+        def f(t, n):
+            self.assertEqual(t, (event, event.object, inst))
+            self.assertEqual(n, None)
+        self.config.registry.subscribers = f
+        inst = self._makeOne()
+        event = DummyModel()
+        event.object = DummyModel()
+        inst._notify(event)
 
 class TestSequentialAutoNamingFolder(unittest.TestCase):
     def _makeOne(self, d=None, autoname_length=None, autoname_start=None):
@@ -619,4 +732,24 @@ class DummyExportableModel(object):
     @property
     def _p_jar(self):
         return DummyExportImport(self)
+
+
+class DummyObjectMap(object):
+    def __init__(self):
+        self.added = []
+        self.removed = []
+        self.references_removed = False
+
+    def add(self, obj, path, replace_oid=False):
+        self.added.append((obj, path))
+        objectid = getattr(obj, '__objectid__', None)
+        if objectid is None:
+            objectid = 1
+            obj.__objectid__ = objectid
+        return objectid
+
+    def remove(self, objectid, references=True):
+        self.references_removed = references
+        self.removed.append(objectid)
+        return [objectid]
 

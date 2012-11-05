@@ -35,20 +35,24 @@ class ObjectWillBeAdded(_ObjectEvent):
         self.name = name
         self.duplicating = duplicating
 
-class _ObjectRemovalEvent(object):
+@implementer(IObjectRemoved)
+class ObjectRemoved(object):
+    """ An event sent just after an object has been removed from a folder."""
+    def __init__(self, object, parent, name, removed_oids, moving=False):
+        self.object = object
+        self.parent = parent
+        self.name = name
+        self.removed_oids = removed_oids
+        self.moving = moving
+
+@implementer(IObjectWillBeRemoved)
+class ObjectWillBeRemoved(object):
+    """ An event sent just before an object has been removed from a folder."""
     def __init__(self, object, parent, name, moving=False):
         self.object = object
         self.parent = parent
         self.name = name
         self.moving = moving
-
-@implementer(IObjectRemoved)
-class ObjectRemoved(_ObjectRemovalEvent):
-    """ An event sent just after an object has been removed from a folder."""
-
-@implementer(IObjectWillBeRemoved)
-class ObjectWillBeRemoved(_ObjectRemovalEvent):
-    """ An event sent just before an object has been removed from a folder."""
 
 @implementer(IObjectModified)
 class ObjectModified(object): # pragma: no cover

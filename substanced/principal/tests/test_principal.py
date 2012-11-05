@@ -26,14 +26,18 @@ class TestPrincipals(unittest.TestCase):
 
     def test_after_create(self):
         inst = self._makeOne()
+        D = {}
+        def add(name, val, registry=None):
+            D[name] = val
+        inst.add = add
         ob = testing.DummyResource()
         content = DummyContentRegistry(ob)
         registry = testing.DummyResource()
         registry.content = content
         inst.after_create(None, registry)
-        self.assertEqual(inst['users'], ob)
-        self.assertEqual(inst['groups'], ob)
-        self.assertEqual(inst['resets'], ob)
+        self.assertEqual(D['users'], ob)
+        self.assertEqual(D['groups'], ob)
+        self.assertEqual(D['resets'], ob)
 
     def test_add_user(self):
         inst = self._makeOne()
@@ -319,8 +323,9 @@ class Test_login_validator(unittest.TestCase):
         user.__objectid__ = 1
         def check_name(v): raise ValueError(v)
         user.check_name = check_name
+        group = testing.DummyResource()
         site['principals']['users']['user'] = user
-        site['principals']['groups']['group'] = user
+        site['principals']['groups']['group'] = group
         request = testing.DummyRequest()
         request.context = user
         request.registry.content = DummyContentRegistry(True)
@@ -524,6 +529,9 @@ class DummyObjectMap(object):
 
     def connect(self, source, target, reftype):
         self.connections.append((source, target, reftype))
+
+    def add(self, node, path_tuple, replace_oid=False):
+        pass
 
 class DummyContentRegistry(object):
     def __init__(self, result):

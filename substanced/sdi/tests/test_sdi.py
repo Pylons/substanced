@@ -174,6 +174,12 @@ class Test_sdi_mgmt_views(unittest.TestCase):
         from .. import sdi_mgmt_views
         return sdi_mgmt_views(context, request, names)
 
+    def test_context_is_httpforbidden(self):
+        from pyramid.httpexceptions import HTTPForbidden
+        context = HTTPForbidden()
+        result = self._callFUT(context, None)
+        self.assertEqual(result, [])
+
     def test_no_views_found(self):
         request = testing.DummyRequest()
         request.matched_route = None
@@ -189,6 +195,8 @@ class Test_sdi_mgmt_views(unittest.TestCase):
         intr = {}
         intr['tab_title'] = None
         intr['tab_condition'] = None
+        intr['tab_before'] = None
+        intr['tab_after'] = None
         intr = DummyIntrospectable(related=(), introspectable=intr)
         request.registry.introspector = DummyIntrospector([(intr,)])
         result = self._callFUT(None, request)
@@ -208,6 +216,8 @@ class Test_sdi_mgmt_views(unittest.TestCase):
         intr = {}
         intr['tab_title'] = None
         intr['tab_condition'] = None
+        intr['tab_before'] = None
+        intr['tab_after'] = None
         intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
         request.registry.introspector = DummyIntrospector([(intr,)])
         result = self._callFUT(None, request)
@@ -233,6 +243,8 @@ class Test_sdi_mgmt_views(unittest.TestCase):
         intr = {}
         intr['tab_title'] = None
         intr['tab_condition'] = None
+        intr['tab_before'] = None
+        intr['tab_after'] = None
         intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
         request.registry.introspector = DummyIntrospector([(intr,)])
         result = self._callFUT(None, request)
@@ -253,6 +265,8 @@ class Test_sdi_mgmt_views(unittest.TestCase):
         intr = {}
         intr['tab_title'] = None
         intr['tab_condition'] = None
+        intr['tab_before'] = None
+        intr['tab_after'] = None
         intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
         request.registry.introspector = DummyIntrospector([(intr,)])
         result = self._callFUT(None, request)
@@ -271,6 +285,8 @@ class Test_sdi_mgmt_views(unittest.TestCase):
         intr = {}
         intr['tab_title'] = None
         intr['tab_condition'] = False
+        intr['tab_before'] = None
+        intr['tab_after'] = None
         intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
         request.registry.introspector = DummyIntrospector([(intr,)])
         result = self._callFUT(None, request)
@@ -289,6 +305,8 @@ class Test_sdi_mgmt_views(unittest.TestCase):
         intr = {}
         intr['tab_title'] = None
         intr['tab_condition'] = True
+        intr['tab_before'] = None
+        intr['tab_after'] = None
         intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
         request.registry.introspector = DummyIntrospector([(intr,)])
         result = self._callFUT(None, request)
@@ -309,6 +327,8 @@ class Test_sdi_mgmt_views(unittest.TestCase):
             return False
         intr['tab_title'] = None
         intr['tab_condition'] = tabcondition
+        intr['tab_before'] = None
+        intr['tab_after'] = None
         intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
         request.registry.introspector = DummyIntrospector([(intr,)])
         result = self._callFUT(None, request)
@@ -327,6 +347,8 @@ class Test_sdi_mgmt_views(unittest.TestCase):
         intr = {}
         intr['tab_title'] = None
         intr['tab_condition'] = None
+        intr['tab_before'] = None
+        intr['tab_after'] = None
         intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
         request.registry.introspector = DummyIntrospector([(intr,)])
         result = self._callFUT(None, request, names=('fred',))
@@ -349,6 +371,8 @@ class Test_sdi_mgmt_views(unittest.TestCase):
         intr = {}
         intr['tab_title'] = None
         intr['tab_condition'] = None
+        intr['tab_before'] = None
+        intr['tab_after'] = None
         intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
         request.registry.introspector = DummyIntrospector([(intr,)])
         result = self._callFUT(None, request)
@@ -371,12 +395,14 @@ class Test_sdi_mgmt_views(unittest.TestCase):
         intr = {}
         intr['tab_title'] = None
         intr['tab_condition'] = None
+        intr['tab_before'] = None
+        intr['tab_after'] = None
         intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
         request.registry.introspector = DummyIntrospector([(intr,)])
         result = self._callFUT(None, request)
         self.assertEqual(result, [])
 
-    def test_one_related_view_gardenpath_tab_title_sorting(self):
+    def test_one_related_view_two_tabs_gardenpath_tab_title_sorting(self):
         request = testing.DummyRequest()
         request.matched_route = None
         request.mgmt_path = lambda context, view_name: '/path/%s' % view_name
@@ -389,22 +415,24 @@ class Test_sdi_mgmt_views(unittest.TestCase):
         intr = {}
         intr['tab_title'] = 'b'
         intr['tab_condition'] = None
+        intr['tab_before'] = None
+        intr['tab_after'] = None
         intr2 = {}
         intr2['tab_title'] = 'a'
         intr2['tab_condition'] = None
+        intr2['tab_before'] = None
+        intr2['tab_after'] = None
         intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
         intr2 = DummyIntrospectable(related=(view_intr,), introspectable=intr2)
         request.registry.introspector = DummyIntrospector([(intr, intr2)])
         result = self._callFUT(None, request)
-        self.assertEqual(len(result), 2)
+        self.assertEqual(len(result), 1)
         self.assertEqual(result[0]['view_name'], 'name')
-        self.assertEqual(result[0]['title'], 'a')
+        self.assertEqual(result[0]['title'], 'b')
         self.assertEqual(result[0]['class'], None)
         self.assertEqual(result[0]['url'], '/path/@@name')
-        self.assertEqual(result[1]['view_name'], 'name')
-        self.assertEqual(result[1]['title'], 'b')
-        self.assertEqual(result[1]['class'], None)
-        self.assertEqual(result[1]['url'], '/path/@@name')
+        # "a" is gone because we use topological sorting and it conflates
+        # view data with the same view name
 
     def test_one_related_view_gardenpath_with_taborder(self):
         request = testing.DummyRequest()
@@ -425,9 +453,53 @@ class Test_sdi_mgmt_views(unittest.TestCase):
         intr = {}
         intr['tab_title'] = 'b'
         intr['tab_condition'] = None
+        intr['tab_before'] = None
+        intr['tab_after'] = None
         intr2 = {}
         intr2['tab_title'] = 'a'
         intr2['tab_condition'] = None
+        intr2['tab_before'] = None
+        intr2['tab_after'] = None
+        intr = DummyIntrospectable(related=(view_intr1,), introspectable=intr)
+        intr2 = DummyIntrospectable(related=(view_intr2,), introspectable=intr2)
+        request.registry.introspector = DummyIntrospector([(intr, intr2)])
+        result = self._callFUT(None, request)
+        self.assertEqual(len(result), 2)
+        self.assertEqual(result[0]['view_name'], 'b')
+        self.assertEqual(result[0]['title'], 'b')
+        self.assertEqual(result[0]['class'], 'active')
+        self.assertEqual(result[0]['url'], '/path/@@b')
+        self.assertEqual(result[1]['view_name'], 'a')
+        self.assertEqual(result[1]['title'], 'a')
+        self.assertEqual(result[1]['class'], None)
+        self.assertEqual(result[1]['url'], '/path/@@a')
+
+    def test_one_related_view_gardenpath_with_tab_before(self):
+        request = testing.DummyRequest()
+        request.matched_route = None
+        request.mgmt_path = lambda context, view_name: '/path/%s' % view_name
+        request.registry.content = DummyContent()
+        request.view_name = 'b'
+        view_intr1 = DummyIntrospectable()
+        view_intr1.category_name = 'views'
+        view_intr1['name'] = 'b'
+        view_intr1['context'] = None
+        view_intr1['derived_callable'] = None
+        view_intr2 = DummyIntrospectable()
+        view_intr2.category_name = 'views'
+        view_intr2['name'] = 'a'
+        view_intr2['context'] = None
+        view_intr2['derived_callable'] = None
+        intr = {}
+        intr['tab_title'] = 'b'
+        intr['tab_condition'] = None
+        intr['tab_before'] = 'a'
+        intr['tab_after'] = None
+        intr2 = {}
+        intr2['tab_title'] = 'a'
+        intr2['tab_condition'] = None
+        intr2['tab_before'] = None
+        intr2['tab_after'] = None
         intr = DummyIntrospectable(related=(view_intr1,), introspectable=intr)
         intr2 = DummyIntrospectable(related=(view_intr2,), introspectable=intr2)
         request.registry.introspector = DummyIntrospector([(intr, intr2)])
@@ -574,6 +646,31 @@ class Test_sdi_folder_contents(unittest.TestCase):
         request.registry.content = DummyContent(columns=get_columns)
         result = list(self._callFUT(context, request))
         self.assertEqual(result[0]['columns'], ['val1', 'val2'])
+
+class Test_default_sdi_addable(unittest.TestCase):
+    def _callFUT(self, context, intr):
+        from .. import default_sdi_addable
+        return default_sdi_addable(context, intr)
+
+    def test_is_service_with_service_name_in_context(self):
+        context = {'catalog':True}
+        intr = {'meta':{'is_service':True, 'service_name':'catalog'}}
+        self.assertFalse(self._callFUT(context, intr))
+                         
+    def test_is_service_with_service_name_not_in_context(self):
+        context = {}
+        intr = {'meta':{'is_service':True, 'service_name':'catalog'}}
+        self.assertTrue(self._callFUT(context, intr))
+    
+    def test_is_service_without_service_name(self):
+        context = {'catalog':True}
+        intr = {'meta':{'is_service':True}}
+        self.assertTrue(self._callFUT(context, intr))
+
+    def test_is_not_service(self):
+        context = {'catalog':True}
+        intr = {'meta':{}}
+        self.assertTrue(self._callFUT(context, intr))
 
 class Test_default_sdi_columns(unittest.TestCase):
     def _callFUT(self, folder, context, request):
@@ -742,6 +839,8 @@ class Test_sdi_add_views(unittest.TestCase):
         intr = {}
         intr['tab_title'] = 'abc'
         intr['tab_condition'] = None
+        intr['tab_before'] = None
+        intr['tab_after'] = None
         intr = DummyIntrospectable(related=(view_intr1,), introspectable=intr)
         request.registry.introspector = DummyIntrospector([(ct_intr,), (intr,)])
         result = self._callFUT(None, request)
@@ -768,6 +867,8 @@ class Test_sdi_add_views(unittest.TestCase):
         intr = {}
         intr['tab_title'] = 'abc'
         intr['tab_condition'] = None
+        intr['tab_before'] = None
+        intr['tab_after'] = None
         intr = DummyIntrospectable(related=(view_intr1,), introspectable=intr)
         request.registry.introspector = DummyIntrospector([(ct_intr,), (intr,)])
         result = self._callFUT(context, request)
@@ -792,6 +893,8 @@ class Test_sdi_add_views(unittest.TestCase):
         intr = {}
         intr['tab_title'] = 'abc'
         intr['tab_condition'] = None
+        intr['tab_before'] = None
+        intr['tab_after'] = None
         intr = DummyIntrospectable(related=(view_intr1,), introspectable=intr)
         request.registry.introspector = DummyIntrospector([(ct_intr,), (intr,)])
         result = self._callFUT(context, request)
@@ -823,6 +926,8 @@ class Test_sdi_add_views(unittest.TestCase):
         intr = {}
         intr['tab_title'] = 'abc'
         intr['tab_condition'] = None
+        intr['tab_before'] = None
+        intr['tab_after'] = None
         intr = DummyIntrospectable(related=(view_intr1,), introspectable=intr)
         request.registry.introspector = DummyIntrospector(
             [(ct_intr, ct2_intr), (intr,)])
@@ -997,14 +1102,6 @@ class DummyDB(object):
     def supportsUndo(self):
         return self.supports_undo
 
-    def undoInfo(self):
-        return self.undo_info
-
-    def undo(self, id):
-        if self.undo_exc:
-            raise self.undo_exc
-        self.undone.append(id)
-        
 class DummyConnection(object):
     def __init__(self, supports_undo=True, undo_info=(), undo_exc=None):
         self._db = DummyDB(supports_undo, undo_info, undo_exc)

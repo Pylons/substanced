@@ -49,9 +49,6 @@ Guts-Only
   indexes when an ACL is changed.  Not sure if there's even a general way to
   make this do less work, but could be.
 
-- Emit an ObjectMoving event rather than removed event with a moving flag,
-  then an add event?
-
 - Undo of catalog reindex doesnt?  Turned off for now.
 
 - Refactor ACL view.
@@ -69,6 +66,15 @@ Guts-Only
 - Fix ``Batch`` such that seqlen is a maximum.  Rationale: the sequence that
   the batch receives may be smaller than seqlen due to hidden objects in
   folder contents view.
+
+- Ditch the Zope event system (in particular, ditch "registry.registerHandler"
+  used by config.add_subscriber as well as registry.subscribers used by
+  registry.notify).  Come up with an alternate event subscription and
+  notification system which ensures that subscribers receive only the event
+  object, and senders need send only the event object, even if under the hood
+  other adaptations are done to find the right subscribers. A bonus: I will
+  never have to pdb-step my way through the insanity of
+  "components.subscribers" method again.
 
 Nice-to-Have Features
 ---------------------
@@ -112,9 +118,17 @@ Docs
 
 - Explain divide between includeme/include/scan funcs in sd packages.
 
+- Explain ``tab_before`` and ``tab_after`` arguments to mgmt_view (as well as
+  related ``FIRST``, ``LAST``, and ``MIDDLE`` sentinels).
+
+- Explain "Indexing" view.
+
 Probably Bad Ideas
 ------------------
 
 - Create "addable here" API that manages the __sdi_addable__ attribute of a
   folderish object.
+
+- Emit an ObjectMoving event rather than removed event with a moving flag,
+  then an add event?
 

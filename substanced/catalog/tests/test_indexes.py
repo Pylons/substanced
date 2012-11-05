@@ -51,6 +51,20 @@ class TestPathIndex(unittest.TestCase):
         from substanced.util import acquire
         return acquire(inst, name)
 
+    def test_document_repr(self):
+        from substanced.util import oid_of
+        inst = self._makeOne()
+        obj = testing.DummyResource()
+        objectmap = self._acquire(inst, '__objectmap__')
+        objectmap.add(obj, (u'',))
+        result = inst.document_repr(oid_of(obj))
+        self.assertEqual(result, (u'',))
+
+    def test_document_repr_missing(self):
+        inst = self._makeOne()
+        result = inst.document_repr(1)
+        self.assertEqual(result, None)
+
     def test_ctor_alternate_family(self):
         inst = self._makeOne(family=BTrees.family32)
         self.assertEqual(inst.family, BTrees.family32)

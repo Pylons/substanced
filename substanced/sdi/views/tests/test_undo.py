@@ -79,9 +79,6 @@ class DummyDB(object):
         self.undone = []
         self.undo_exc = undo_exc
 
-    def supportsUndo(self):
-        return self.supports_undo
-
     def undoInfo(self):
         return self.undo_info
 

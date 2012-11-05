@@ -800,6 +800,9 @@ class DummyObjectMap(object):
             return
         return data[0]
 
+    def add(self, node, path_tuple, replace_oid=False):
+        pass
+
 class DummyCatalog(dict):
     pass
 

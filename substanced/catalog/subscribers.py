@@ -2,11 +2,9 @@ from ..content import find_services
 
 from ..event import (
     subscribe_added,
-    subscribe_will_be_removed,
+    subscribe_removed,
     subscribe_modified,
     )
-
-from ..objectmap import find_objectmap
 
 from ..util import (
     postorder,
@@ -40,19 +38,17 @@ def object_added(event):
                     CatalogViewWrapper(node, catalog_view_factory)
                     )
 
-@subscribe_will_be_removed()
-def object_will_be_removed(event):
+@subscribe_removed()
+def object_removed(event):
     """ Unindex an object and its children from every catalog service object's
-    lineage; an :class:`substanced.event.ObjectWillBeRemoved` event
+    lineage; an :class:`substanced.event.ObjectRemoved` event
     subscriber"""
-    obj = event.object
-    objectmap = find_objectmap(obj)
-    catalogs = find_services(obj, 'catalog')
-    if objectmap is None or not catalogs:
-        return
-    objectids = objectmap.pathlookup(obj)
+    parent = event.parent
+    catalogs = find_services(parent, 'catalog')
     for catalog in catalogs:
-        for oid in catalog.family.IF.intersection(objectids, catalog.objectids):
+        for oid in catalog.family.IF.intersection(
+            event.removed_oids, catalog.objectids
+            ):
             catalog.unindex_doc(oid)
 
 @subscribe_modified()

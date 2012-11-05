@@ -401,7 +401,7 @@ class TestObjectMap(unittest.TestCase):
 
         # remove '/a/b'
         removed = objmap.remove(oid1)
-        assert removed == set([1,2])
+        assert set(removed) == set([1,2])
 
         # /a/b/c
         nodepth = l('/a/b/c')
@@ -473,7 +473,7 @@ class TestObjectMap(unittest.TestCase):
 
         # remove '/'
         removed = objmap.remove((u'',))
-        self.assertEqual(removed, set([3,4,5]))
+        self.assertEqual(set(removed), set([3,4,5]))
 
         assert dict(objmap.pathindex) == {}
         assert dict(objmap.objectid_to_path) == {}
@@ -730,111 +730,6 @@ class TestReferenceMap(unittest.TestCase):
         refs = self._makeOne(map)
         refs.remove([1,2])
         self.assertEqual(L, [[1,2], [1,2]])
-
-class Test_object_will_be_added(unittest.TestCase):
-    def _callFUT(self, event):
-        from . import object_will_be_added
-        return object_will_be_added(event)
-
-    def test_no_objectmap(self):
-        model = testing.DummyResource()
-        event = DummyEvent(model, None)
-        self._callFUT(event) # doesnt blow up
-
-    def test_added_object_has_children(self):
-        from ..interfaces import IFolder
-        objectmap = DummyObjectMap()
-        site = _makeSite(objectmap=objectmap)
-        one = testing.DummyModel(__provides__=IFolder)
-        two = testing.DummyModel(__provides__=IFolder)
-        one['two'] = two
-        event = DummyEvent(one, site)
-        event.name = 'one'
-        self._callFUT(event)
-        self.assertEqual(
-            objectmap.added,
-            [(two, ('', 'one', 'two')), (one, ('', 'one'))]
-            )
-
-    def test_added_object_has_children_object_has_no_name(self):
-        from ..interfaces import IFolder
-        objectmap = DummyObjectMap()
-        site = _makeSite(objectmap=objectmap)
-        one = testing.DummyModel(__provides__=IFolder)
-        two = testing.DummyModel(__provides__=IFolder)
-        one['two'] = two
-        event = DummyEvent(one, site)
-        event.name = 'one'
-        del one.__name__
-        self._callFUT(event)
-        self.assertEqual(
-            objectmap.added,
-            [(two, ('', 'one', 'two')), (one, ('', 'one'))]
-            )
-        
-    def test_added_object_has_children_not_adding_to_root(self):
-        from ..interfaces import IFolder
-        objectmap = DummyObjectMap()
-        site = _makeSite(objectmap=objectmap)
-        one = testing.DummyModel(__provides__=IFolder)
-        two = testing.DummyModel(__provides__=IFolder)
-        inter = testing.DummyModel()
-        site['inter'] = inter
-        one['two'] = two
-        event = DummyEvent(one, inter)
-        event.name = 'one'
-        self._callFUT(event)
-        self.assertEqual(
-            objectmap.added,
-            [(two, ('', 'inter', 'one', 'two')), (one, ('', 'inter', 'one'))]
-            )
-        
-    def test_object_has_a_parent(self):
-        from ..interfaces import IFolder
-        from pyramid.traversal import resource_path_tuple
-        objectmap = DummyObjectMap()
-        site = _makeSite(objectmap=objectmap)
-        bogusroot = testing.DummyModel(__provides__=IFolder)
-        bogusparent2 = testing.DummyModel(__provides__=IFolder)
-        one = testing.DummyModel(__provides__=IFolder)
-        two = testing.DummyModel(__provides__=IFolder)
-        bogusroot['bogusparent2'] = bogusparent2
-        bogusparent2['one'] = one
-        one['two'] = two
-        self.assertEqual(resource_path_tuple(one), 
-                         ('', 'bogusparent2', 'one'))
-        event = DummyEvent(one, site)
-        self.assertRaises(ValueError, self._callFUT, event)
-
-class Test_object_removed(unittest.TestCase):
-    def _callFUT(self, event):
-        from . import object_removed
-        return object_removed(event)
-
-    def test_no_objectmap(self):
-        model = testing.DummyResource()
-        event = DummyEvent(model, None)
-        self._callFUT(event) # doesnt blow up
-
-    def test_it(self):
-        model = testing.DummyResource()
-        model.__objectid__ = 1
-        objectmap = DummyObjectMap()
-        site = _makeSite(objectmap=objectmap)
-        event = DummyEvent(model, site)
-        self._callFUT(event)
-        self.assertEqual(objectmap.removed, [1])
-        self.assertTrue(objectmap.references_removed)
-
-    def test_moving(self):
-        model = testing.DummyResource()
-        model.__objectid__ = 1
-        objectmap = DummyObjectMap()
-        site = _makeSite(objectmap=objectmap)
-        event = DummyEvent(model, site, moving=True)
-        self._callFUT(event)
-        self.assertEqual(objectmap.removed, [1])
-        self.assertFalse(objectmap.references_removed)
 
 class Test_reference_sourceid_property(unittest.TestCase):
     def setUp(self):
@@ -1927,19 +1822,6 @@ class DummyObjectMap(object):
         self.result = result
         self.toraise = toraise
 
-    def add(self, obj, path, replace_oid=False):
-        self.added.append((obj, path))
-        objectid = getattr(obj, '__objectid__', None)
-        if objectid is None:
-            objectid = 1
-            obj.__objectid__ = objectid
-        return objectid
-
-    def remove(self, objectid, references=True):
-        self.references_removed = references
-        self.removed.append(objectid)
-        return [objectid]
-
     def object_for(self, objectid):
         return self.result
 
@@ -1959,13 +1841,6 @@ class DummyObjectMap(object):
             raise self.toraise
         self.connected.append((source, target, reftype))
 
-
-class DummyEvent(object):
-    def __init__(self, object, parent, moving=False, duplicating=False):
-        self.object = object
-        self.parent = parent
-        self.moving = moving
-        self.duplicating = duplicating
 
 class DummyTreeSet(set):
     def insert(self, val):
@@ -2005,14 +1880,6 @@ class DummyReferenceMap(dict):
 
     def targetids(self, oid, reftype):
         return self._targetids
-
-def _makeSite(objectmap):
-    from ..interfaces import IFolder
-    from zope.interface import alsoProvides
-    site = testing.DummyResource()
-    site.__objectmap__ = objectmap
-    alsoProvides(site, IFolder)
-    return site
 
 class DummyRoot(object):
     pass
