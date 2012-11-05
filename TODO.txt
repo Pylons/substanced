@@ -49,9 +49,6 @@ Guts-Only
   indexes when an ACL is changed.  Not sure if there's even a general way to
   make this do less work, but could be.
 
-- Emit an ObjectMoving event rather than removed event with a moving flag,
-  then an add event?
-
 - Undo of catalog reindex doesnt?  Turned off for now.
 
 - Refactor ACL view.
@@ -131,4 +128,7 @@ Probably Bad Ideas
 
 - Create "addable here" API that manages the __sdi_addable__ attribute of a
   folderish object.
+
+- Emit an ObjectMoving event rather than removed event with a moving flag,
+  then an add event?
 
