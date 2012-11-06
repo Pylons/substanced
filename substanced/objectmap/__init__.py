@@ -441,14 +441,14 @@ class ReferenceMap(Persistent):
         for refset in self.refmap.values():
             refset.remove(oids)
 
+    def get_reftypes(self):
+        return self.refmap.keys()
+
     def has_references(self, oid):
         for reftype, refset in self.refmap.items():
             if refset.is_target(oid) or refset.is_source(oid):
                 return True
         return False
-
-    def get_reftypes(self):
-        return self.refmap.keys()
 
 class ReferenceSet(Persistent):
     
@@ -860,7 +860,7 @@ class _ReferencedPredicate(object):
     phash = text
 
     def __call__(self, context, request):
-        return self.has_references(context, self.registry) == self.val
+        return self.has_references(context) == self.val
 
 def include(config): # pragma: no cover
     config.add_view_predicate('referenced', _ReferencedPredicate)

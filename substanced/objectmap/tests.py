@@ -1871,9 +1871,8 @@ class Test_ReferencedPredicate(unittest.TestCase):
         config = Dummy()
         config.registry = Dummy()
         inst = self._makeOne(True, config)
-        def has_references(context, registry):
+        def has_references(context):
             self.assertEqual(context, None)
-            self.assertEqual(registry, config.registry)
             return True
         inst.has_references = has_references
         self.assertEqual(inst(None, None), True)
