@@ -1,103 +1,54 @@
+import colander
 import datetime
 import time
 
+import deform.widget
+
 from persistent import Persistent
-from pytz import timezone
 
 from pyramid.security import (
     Allow,
     Everyone,
     )
 
-from colander import (
-    DateTime,
-    deferred,
-    Invalid,
-    OneOf,
-    SchemaNode,
-    String,
-    )
-
-from deform.widget import (
-    SelectWidget,
-    TextAreaWidget,
-    )
-
 from substanced.content import content
-from substanced.event import subscribe_created
-from substanced.schema import Schema
 from substanced.folder import Folder
 from substanced.property import PropertySheet
 from substanced.root import Root
+from substanced.schema import (
+    Schema,
+    NameSchemaNode,
+    )
+from substanced.util import renamer
 
-def make_name_validator(content_type):
-    @deferred
-    def name_validator(node, kw):
-        request = kw['request']
-        context = request.context
-        def exists(node, value):
-            if request.registry.content.istype(context, content_type):
-                if value != context.__name__:
-                    try:
-                        context.__parent__.check_name(value)
-                    except Exception as e:
-                        raise Invalid(node, e.args[0], value)
-            else:
-                try:
-                    context.check_name(value)
-                except Exception as e:
-                    raise Invalid(node, e.args[0], value)
-
-        return exists
-    return name_validator
-
-@deferred
+@colander.deferred
 def now_default(node, kw):
     return datetime.date.today()
 
-eastern = timezone('America/New_York')
-
 class BlogEntrySchema(Schema):
-    name = SchemaNode(
-        String(),
-        validator = make_name_validator('Blog Entry'),
+    name = NameSchemaNode(
+        editing=lambda c, r: r.registry.content.istype(c, 'BlogEntry')
         )
-    title = SchemaNode(
-        String(),
+    title = colander.SchemaNode(
+        colander.String(),
         )
-    entry = SchemaNode(
-        String(),
-        widget = TextAreaWidget(rows=20, cols=70),
+    entry = colander.SchemaNode(
+        colander.String(),
+        widget = deform.widget.TextAreaWidget(rows=20, cols=70),
         )
-    format = SchemaNode(
-        String(),
-        validator = OneOf(['rst', 'html']),
-        widget = SelectWidget(
+    format = colander.SchemaNode(
+        colander.String(),
+        validator = colander.OneOf(['rst', 'html']),
+        widget = deform.widget.SelectWidget(
             values=[('rst', 'rst'), ('html', 'html')]),
         )
-    pubdate = SchemaNode(
-       DateTime(default_tzinfo=eastern),
+    pubdate = colander.SchemaNode(
+       colander.DateTime(default_tzinfo=None),
        default = now_default,
        )
 
 class BlogEntryPropertySheet(PropertySheet):
     schema = BlogEntrySchema()
-    def get(self):
-        context = self.context
-        return dict(title=context.title,
-                    entry=context.entry,
-                    format=context.format,
-                    pubdate=context.pubdate,
-                    name=context.__name__)
-
-    def set(self, struct):
-        context = self.context
-        if struct['name'] != context.__name__:
-            context.__parent__.rename(context.__name__, struct['name'])
-        context.title = struct['title']
-        context.entry = struct['entry']
-        context.format = struct['format']
-        context.pubdate = struct['pubdate']
 
 @content(
     'Blog Entry',
@@ -110,9 +61,12 @@ class BlogEntryPropertySheet(PropertySheet):
     tab_order=('properties', 'contents', 'acl_edit'),
     )
 class BlogEntry(Folder):
+
+    name = renamer()
+
     def __init__(self, title, entry, format, pubdate):
         Folder.__init__(self)
-        self.modified = datetime.datetime.now()
+        self.modified = datetime.datetime.utcnow()
         self.title = title
         self.entry = entry
         self.pubdate = pubdate
@@ -128,14 +82,14 @@ class BlogEntry(Folder):
                 break
 
 class CommentSchema(Schema):
-    commenter = SchemaNode(
-       String(),
+    commenter = colander.SchemaNode(
+       colander.String(),
        )
-    text = SchemaNode(
-       String(),
+    text = colander.SchemaNode(
+       colander.String(),
        )
-    pubdate = SchemaNode(
-       DateTime(),
+    pubdate = colander.SchemaNode(
+       colander.DateTime(),
        default = now_default,
        )
 
@@ -157,9 +111,37 @@ class Comment(Persistent):
         self.text = text
         self.pubdate = pubdate
 
-@subscribe_created(Root)
-def after_root_created(event):
-    root = event.object
-    acl = getattr(root, '__acl__', [])
-    acl.append((Allow, Everyone, 'view'))
-    root.__acl__ = acl
+class BlogSchema(Schema):
+    """ The schema representing the blog root. """
+    title = colander.SchemaNode(
+        colander.String(),
+        missing=''
+        )
+    description = colander.SchemaNode(
+        colander.String(),
+        missing=''
+        )
+
+class BlogPropertySheet(PropertySheet):
+    schema = BlogSchema()
+
+@content(
+    'Root',
+    icon='icon-home',
+    propertysheets = (
+        ('', BlogPropertySheet),
+        ),
+    after_create= ('after_create', 'after_create2')
+    )
+class Blog(Root):
+    title = ''
+    description = ''
+
+    @property
+    def sdi_title(self):
+        return self.title
+    
+    def after_create2(self, inst, registry):
+        acl = getattr(self, '__acl__', [])
+        acl.append((Allow, Everyone, 'view'))
+        self.__acl__ = acl
