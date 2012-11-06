@@ -9,6 +9,8 @@ from pyramid.events import (
     BeforeRender,
     )
 
+from ..util import acquire
+
 from . import sdi_mgmt_views # API used by templates
 sdi_mgmt_views = sdi_mgmt_views # pyflakes
 
@@ -31,11 +33,7 @@ def breadcrumbs(request):
     return breadcrumbs
 
 def get_sdi_title(request):
-    for location in lineage(request.context):
-        sdi_title = getattr(location, 'sdi_title', None)
-        if sdi_title is not None:
-            return sdi_title
-    return 'Substance D'
+    return acquire(request.context, 'sdi_title', 'Substance D')
 
 @subscriber(BeforeRender)
 def add_renderer_globals(event):
