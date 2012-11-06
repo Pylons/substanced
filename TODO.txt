@@ -18,8 +18,6 @@ UI-Plus-Guts
 
 - Referential integrity options to referenceid properties.
 
-- Create "references" view.
-
 Guts-Only
 ---------
 
