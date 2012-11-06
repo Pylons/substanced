@@ -1,0 +1,44 @@
+<div metal:use-macro="sdi_h.macros()['master']">
+
+  <div metal:fill-slot="main"
+       tal:define="root_url request.mgmt_url(request.root)">
+
+    <h1>References</h1>
+
+    <div tal:repeat="(title, ids) [('As source', targets), ('As target', sources)]">
+
+      <div tal:condition="ids">
+    
+        <h2>${title}</h2>
+        
+        <table class="table table-striped">
+          
+          <thead>
+            <tr>
+              <th>Relationship type</th>
+              <th>Objects</th>
+            </tr>
+          </thead>
+          
+          <tbody>
+            <tr tal:repeat="(reftype, paths) ids">
+              <td>${reftype}</td>
+              <td>
+                <a tal:repeat="path paths" href="${root_url+path}">${path or '/'}</a>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+      </div>
+
+      <div tal:condition="not ids">
+        <h2>${title}</h2>
+        <div>(none)</div>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
