@@ -13,8 +13,6 @@ from pyramid.location import lineage
 from pyramid.threadlocal import get_current_registry
 from pyramid.traversal import resource_path_tuple
 
-from ..exceptions import FolderKeyError
-
 from ..interfaces import (
     IFolder,
     IAutoNamingFolder,
@@ -40,6 +38,9 @@ from ..util import (
     )
 
 from ..objectmap import find_objectmap
+
+class FolderKeyError(KeyError):
+    pass
 
 @content(
     'Folder',

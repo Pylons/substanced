@@ -7,7 +7,7 @@ import colander
 from pyramid.httpexceptions import HTTPFound
 from pyramid.view import view_defaults
 
-from ...exceptions import FolderKeyError
+from ...folder import FolderKeyError
 from ...form import FormView
 from ...interfaces import IFolder
 from ...objectmap import find_objectmap

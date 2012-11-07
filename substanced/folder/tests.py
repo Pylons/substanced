@@ -276,7 +276,7 @@ class TestFolder(unittest.TestCase):
         )
 
     def test___setitem__exists(self):
-        from ..exceptions import FolderKeyError
+        from . import FolderKeyError
         dummy = DummyModel()
         folder = self._makeOne({'a': dummy})
         self.assertEqual(folder._num_objects(), 1)

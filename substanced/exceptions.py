@@ -1,2 +1,0 @@
-class FolderKeyError(KeyError):
-    """"""

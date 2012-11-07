@@ -377,7 +377,7 @@ class TestFolderContentsViews(unittest.TestCase):
         self.assertFalse(context.rename.called)
 
     def test_rename_finish_already_exists(self):
-        from ....exceptions import FolderKeyError
+        from ....folder import FolderKeyError
         context = mock.MagicMock()
         context.rename.side_effect = FolderKeyError(u'foobar')
         request = mock.Mock()
@@ -516,7 +516,7 @@ class TestFolderContentsViews(unittest.TestCase):
 
     @mock.patch('substanced.sdi.views.folder.find_objectmap')
     def test_copy_finish_already_exists(self, mock_find_objectmap):
-        from ....exceptions import FolderKeyError
+        from ....folder import FolderKeyError
         context = mock.MagicMock()
         mock_folder = mock_find_objectmap().object_for()
         mock_folder.__parent__ = mock.MagicMock()
@@ -659,7 +659,7 @@ class TestFolderContentsViews(unittest.TestCase):
 
     @mock.patch('substanced.sdi.views.folder.find_objectmap')
     def test_move_finish_already_exists(self, mock_find_objectmap):
-        from ....exceptions import FolderKeyError
+        from ....folder import FolderKeyError
         context = mock.MagicMock()
         mock_folder = mock_find_objectmap().object_for()
         mock_folder.__parent__ = mock.MagicMock()
