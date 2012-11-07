@@ -17,11 +17,17 @@ def root_factory(request, t=transaction, g=get_connection):
 def includeme(config): # pragma: no cover
     config.include('pyramid_zodbconn')
     config.include('pyramid_mailer')
+    # include('.event') must be done before scans of packages which use
+    # @subscribe_* decorators
+    config.include('.event') 
+    # include('.sdi') must be done before scans of packages which use
+    # @mgmt_view decorators
     config.include('.sdi')
-    config.include('.objectmap')
+    # include('.content') must be done before scans of packages which use
+    # @content decorators
     config.include('.content')
+    config.include('.objectmap')
     config.include('.property')
-    config.include('.event')
     config.include('.catalog')
     config.include('.root')
     config.include('.evolution')
