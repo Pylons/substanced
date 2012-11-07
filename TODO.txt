@@ -76,6 +76,12 @@ Guts-Only
   never have to pdb-step my way through the insanity of
   "components.subscribers" method again.
 
+- Split initialization into an include phase and a scan phase (venusian
+  decorator usage depends on the effect of the include of their associated
+  package).
+
+- Rename __objectid__ to __oid__.
+
 Nice-to-Have Features
 ---------------------
 
