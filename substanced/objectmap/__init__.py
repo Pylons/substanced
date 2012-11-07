@@ -12,6 +12,8 @@ from pyramid.traversal import (
     find_resource,
     )
 
+from ..event import subscribe_will_be_removed
+
 from ..util import (
     oid_of,
     acquire,
@@ -397,11 +399,11 @@ class ObjectMap(Persistent):
         for oid in self.targetids(obj, reftype):
             yield self.object_for(oid)
 
-    def has_references(self, obj):
+    def has_references(self, obj, reftype=None):
         """ Return true if the object participates in any reference as a source
         or a target.  ``obj`` may be an object or an oid."""
         oid = self._refid_for(obj)
-        return self.referencemap.has_references(oid)
+        return self.referencemap.has_references(oid, reftype)
 
     def get_reftypes(self):
         """ Return a sequence of reference types known by this objectmap. """
@@ -444,11 +446,15 @@ class ReferenceMap(Persistent):
     def get_reftypes(self):
         return self.refmap.keys()
 
-    def has_references(self, oid):
-        for reftype, refset in self.refmap.items():
-            if refset.is_target(oid) or refset.is_source(oid):
-                return True
-        return False
+    def has_references(self, oid, reftype=None):
+        if reftype is None: # any reference type
+            for reftype, refset in self.refmap.items():
+                if refset.is_target(oid) or refset.is_source(oid):
+                    return True
+            return False
+        else:
+            refset = self.refmap[reftype]
+            return refset.is_target(oid) or refset.is_source(oid)
 
 class ReferenceSet(Persistent):
     
@@ -862,7 +868,58 @@ class _ReferencedPredicate(object):
     def __call__(self, context, request):
         return self.has_references(context) == self.val
 
+@subscribe_will_be_removed()
+def referential_integrity(event):
+    if event.moving:
+        return
+    obj = event.object
+    objectmap = find_objectmap(obj)
+    if objectmap is None:
+        return
+    for reftype in objectmap.get_reftypes():
+        if getattr(reftype, 'source_integrity', False):
+            targetids = objectmap.targetids(obj, reftype)
+            if targetids:
+                # object is a source
+                raise SourceIntegrityError(obj, reftype, targetids)
+
+        if getattr(reftype, 'target_integrity', False):
+            sourceids = objectmap.sourceids(obj, reftype)
+            if sourceids:
+                # object is a target
+                raise TargetIntegrityError(obj, reftype, sourceids)
+
+class ReferentialIntegrityError(Exception):
+    """ Exception raised when a referential integrity constraint is violated.
+    Raised before an object involved in a relation with an integrity constraint
+    is removed from a folder.
+    """
+    def __init__(self, obj, reftype, oids):
+        self.obj = obj
+        self.reftype = reftype
+        self.oids = oids
+
+    def get_objects(self):
+        """ Return the objects which hold a reference to the object inovlved in
+        the integrity error. """
+        objectmap = find_objectmap(self.obj)
+        if objectmap is not None:
+            for oid in self.oids:
+                yield objectmap.object_for(oid)
+
+class SourceIntegrityError(ReferentialIntegrityError):
+    pass
+
+class TargetIntegrityError(ReferentialIntegrityError):
+    pass
+
+def scan(config): # pragma: no cover
+    config.scan('.')
+
 def include(config): # pragma: no cover
     config.add_view_predicate('referenced', _ReferencedPredicate)
 
-includeme = include
+def includeme(config): # pragma: no cover
+    config.include(include)
+    config.include(scan)
+

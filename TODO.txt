@@ -16,8 +16,6 @@ UI-Plus-Guts
 - Allow reordering of resources in folder contents view when the folder is
   ordered.
 
-- Referential integrity options to referenceid properties.
-
 Guts-Only
 ---------
 
@@ -130,6 +128,8 @@ Docs
 - Explain ``renamer``.
 
 - Explain various view predicates.
+
+- Explain referential integrity.
 
 Probably Bad Ideas
 ------------------

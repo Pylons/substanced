@@ -594,6 +594,7 @@ class TestObjectMap(unittest.TestCase):
         obj.__objectid__ = 1
         self.assertTrue(inst.has_references(obj))
         self.assertEqual(inst.referencemap.oid_arg, 1)
+        self.assertEqual(inst.referencemap.reftype_arg, None)
 
     def test_has_references_oid(self):
         inst = self._makeOne()
@@ -601,6 +602,15 @@ class TestObjectMap(unittest.TestCase):
         inst.objectid_to_path[1] = (u'',)
         self.assertTrue(inst.has_references(1))
         self.assertEqual(inst.referencemap.oid_arg, 1)
+        self.assertEqual(inst.referencemap.reftype_arg, None)
+
+    def test_has_references_with_reftype(self):
+        inst = self._makeOne()
+        inst.referencemap = DummyReferenceMap(has_references=True)
+        inst.objectid_to_path[1] = (u'',)
+        self.assertTrue(inst.has_references(1, 'abc'))
+        self.assertEqual(inst.referencemap.oid_arg, 1)
+        self.assertEqual(inst.referencemap.reftype_arg, 'abc')
 
     def test_get_reftypes(self):
         inst = self._makeOne()
@@ -782,6 +792,12 @@ class TestReferenceMap(unittest.TestCase):
         map = {'reftype':refset}
         refs = self._makeOne(map)
         self.assertFalse(refs.has_references(1))
+
+    def test_has_references_with_reftype(self):
+        refset = DummyReferenceSet(True)
+        map = {'reftype':refset}
+        refs = self._makeOne(map)
+        self.assertTrue(refs.has_references(1, 'reftype'))
 
     def test_get_reftypes(self):
         map = {'reftype':None}
@@ -1899,6 +1915,86 @@ class Test_has_references(unittest.TestCase):
         result = self._callFUT(context)
         self.assertEqual(result, True)
 
+class Test_referential_integrity(unittest.TestCase):
+    def _callFUT(self, event):
+        from . import referential_integrity
+        return referential_integrity(event)
+
+    def test_moving(self):
+        event = DummyEvent(None, moving=True)
+        self.assertFalse(self._callFUT(event))
+
+    def test_no_objectmap(self):
+        event = DummyEvent(None)
+        self.assertFalse(self._callFUT(event))
+
+    def test_no_reftypes(self):
+        obj = testing.DummyResource()
+        obj.__objectmap__ = DummyObjectMap()
+        event = DummyEvent(obj)
+        self.assertFalse(self._callFUT(event))
+
+    def test_reftype_without_integrity(self):
+        obj = testing.DummyResource()
+        obj.__objectmap__ = DummyObjectMap(reftypes=('abc',))
+        event = DummyEvent(obj)
+        self.assertFalse(self._callFUT(event))
+
+    def test_reftype_with_source_integrity_no_targetids(self):
+        obj = testing.DummyResource()
+        class Reference(object):
+            source_integrity = True
+        obj.__objectmap__ = DummyObjectMap(reftypes=(Reference(),))
+        event = DummyEvent(obj)
+        self.assertFalse(self._callFUT(event))
+
+    def test_reftype_with_source_integrity_with_targetids(self):
+        from . import SourceIntegrityError
+        obj = testing.DummyResource()
+        class Reference(object):
+            source_integrity = True
+        obj.__objectmap__ = DummyObjectMap(
+            reftypes=(Reference(),), targetids=(1,)
+            )
+        event = DummyEvent(obj)
+        self.assertRaises(SourceIntegrityError, self._callFUT, event)
+
+    def test_reftype_with_target_integrity_no_sourceids(self):
+        obj = testing.DummyResource()
+        class Reference(object):
+            target_integrity = True
+        obj.__objectmap__ = DummyObjectMap(reftypes=(Reference(),))
+        event = DummyEvent(obj)
+        self.assertFalse(self._callFUT(event))
+
+    def test_reftype_with_target_integrity_with_sourceids(self):
+        from . import TargetIntegrityError
+        obj = testing.DummyResource()
+        class Reference(object):
+            target_integrity = True
+        obj.__objectmap__ = DummyObjectMap(
+            reftypes=(Reference(),), sourceids=(1,)
+            )
+        event = DummyEvent(obj)
+        self.assertRaises(TargetIntegrityError, self._callFUT, event)
+
+class TestReferentialIntegrityError(unittest.TestCase):
+    def _makeOne(self, obj, reftype, oids):
+        from . import ReferentialIntegrityError
+        return ReferentialIntegrityError(obj, reftype, oids)
+
+    def test_get_objects(self):
+        objectmap = DummyObjectMap(result='one')
+        obj = testing.DummyResource()
+        obj.__objectmap__ = objectmap
+        inst = self._makeOne(obj, 'reftype', (1,))
+        self.assertEqual(list(inst.get_objects()), ['one'])
+
+class DummyEvent(object):
+    def __init__(self, object, moving=False):
+        self.object = object
+        self.moving = moving
+
 class Dummy(object):
     pass
 
@@ -1918,13 +2014,15 @@ def split(s):
     return (u'',) + tuple(filter(None, s.split(u'/')))
 
 class DummyObjectMap(object):
-    def __init__(self, targetids=(), sourceids=(), result=None, toraise=None):
+    def __init__(self, targetids=(), sourceids=(), result=None, toraise=None,
+                 reftypes=()):
         self.added = []
         self.removed = []
         self.connected = []
         self.disconnected = []
         self._targetids = targetids
         self._sourceids = sourceids
+        self._reftypes = reftypes
         self.result = result
         self.toraise = toraise
 
@@ -1950,6 +2048,8 @@ class DummyObjectMap(object):
     def has_references(self, oid):
         return self.result
 
+    def get_reftypes(self):
+        return self._reftypes
 
 class DummyTreeSet(set):
     def insert(self, val):
@@ -2000,8 +2100,9 @@ class DummyReferenceMap(dict):
     def targetids(self, oid, reftype):
         return self._targetids
 
-    def has_references(self, oid):
+    def has_references(self, oid, reftype):
         self.oid_arg = oid
+        self.reftype_arg = reftype
         return self._has_references
 
     def get_reftypes(self):

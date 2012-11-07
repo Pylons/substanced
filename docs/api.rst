@@ -334,6 +334,12 @@ Other Helpers
 
 .. autofunction:: multireference_target_property
 
+.. autoclass:: ReferentialIntegrityError
+   :members:
+
+.. autoclass:: SourceIntegrityError
+
+.. autoclass:: TargetIntegrityError
 
 :mod:`substanced.principal` API
 --------------------------------
