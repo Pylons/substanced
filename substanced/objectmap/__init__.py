@@ -893,6 +893,15 @@ class ReferentialIntegrityError(Exception):
     """ Exception raised when a referential integrity constraint is violated.
     Raised before an object involved in a relation with an integrity constraint
     is removed from a folder.
+
+    Attributes::
+
+      obj: the object which would have been removed were its removal not
+           prevented by the raising of this exception
+
+      reftype: the reference type (usually a class)
+
+      oids: the oids that reference the to-be-removed object.
     """
     def __init__(self, obj, reftype, oids):
         self.obj = obj
