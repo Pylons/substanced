@@ -34,8 +34,7 @@ from ..util import (
     )
 
 def context_is_a_file(context, request):
-    if request.registry.content.istype(context, 'File'):
-        return True
+    return request.registry.content.istype(context, 'File')
 
 file_name_node = NameSchemaNode(editing=context_is_a_file)
 
