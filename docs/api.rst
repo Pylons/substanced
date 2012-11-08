@@ -259,6 +259,8 @@ Other Helpers
 
 .. automodule:: substanced.folder
 
+.. autoclass:: FolderKeyError
+
 .. autoclass:: Folder
    :members:
 
