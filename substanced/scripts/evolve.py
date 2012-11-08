@@ -8,8 +8,7 @@ from pyramid.paster import (
     bootstrap,
     )
 
-from repoze.evolution import IEvolutionManager
-from repoze.evolution import evolve_to_latest
+from substanced.evolution import evolve_packages
 
 def usage(e=None):
     if e is not None:
@@ -74,35 +73,18 @@ def main(argv=sys.argv):
     env = bootstrap(config_uri)
     root = env['root']
     registry = env['registry']
-    managers = registry.getUtilitiesFor(IEvolutionManager)
 
-    if package and package not in [x[0] for x in managers]:
-        usage('No such package "%s"' % package)
+    try:
+        results = evolve_packages(registry, root, package, set_version, latest)
+    except Exception as e:
+        usage(e.args[0])
 
-    for pkg_name, factory in managers:
-        if (package is None) or (pkg_name == package):
-            __import__(pkg_name)
-            pkg = sys.modules[pkg_name]
-            VERSION = pkg.VERSION
-            print 'Package %s' % pkg_name
-            manager = factory(root, pkg_name, VERSION, 0)
-            db_version = manager.get_db_version()
-            print 'Code at software version %s' % VERSION
-            print 'Database at version %s' % db_version
-            if set_version is not None:
-                manager._set_db_version(set_version)
-                manager.transaction.commit()
-                print 'Database version set to %s' % set_version
-            else:
-                if VERSION <= db_version:
-                    print 'Nothing to do'
-                elif latest:
-                    evolve_to_latest(manager)
-                    ver = manager.get_db_version()
-                    print 'Evolved %s to %s' % (pkg_name, ver)
-                else:
-                    print 'Not evolving (use --latest to do actual evolution)'
-            print ''
+    for result in results:
+        print 'Package %(package)s' % result
+        print 'Code at software version %(sw_version)s' % result
+        print 'Database at version %(db_version)s' % result
+        print result['message']
+        print ''
 
 if __name__ == '__main__':
     main()

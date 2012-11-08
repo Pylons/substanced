@@ -1,5 +1,6 @@
 import transaction
 from pyramid_zodbconn import get_connection
+import substanced.evolution
 
 def root_factory(request, t=transaction, g=get_connection):
     """ A function which can be used as a Pyramid ``root_factory``.  It
@@ -11,6 +12,13 @@ def root_factory(request, t=transaction, g=get_connection):
         registry = request.registry
         app_root = registry.content.create('Root')
         zodb_root['app_root'] = app_root
+        t.savepoint() # give app_root a _p_jar
+        substanced.evolution.evolve_packages(
+            registry,
+            app_root,
+            'substanced.evolution',
+            set_db_version=substanced.evolution.VERSION,
+            )
         t.commit()
     return zodb_root['app_root']
 
