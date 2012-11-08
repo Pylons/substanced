@@ -81,7 +81,3 @@ class Root(Folder):
             (Allow, oid_of(admins), ALL_PERMISSIONS)
             ]
 
-def scan(config): # pragma: no cover
-    config.scan('.')
-
-includeme = scan

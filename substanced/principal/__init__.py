@@ -404,7 +404,3 @@ def groupfinder(userid, request):
         return None
     return user.groupids
 
-def scan(config): # pragma: no cover
-    config.scan('.')
-    
-includeme = scan

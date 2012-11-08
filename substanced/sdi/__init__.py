@@ -723,7 +723,7 @@ class FlashUndo(object):
             msg = button
         request.session.flash(msg, queue, allow_duplicate=allow_duplicate)
 
-def include(config): # pragma: no cover
+def includeme(config): # pragma: no cover
     settings = config.registry.settings
     YEAR = 86400 * 365
     config.add_directive('add_mgmt_view', add_mgmt_view, action_wrap=False)
@@ -754,9 +754,3 @@ def include(config): # pragma: no cover
     config.set_authorization_policy(authz_policy)
     config.add_permission('sdi.edit-properties') # used by property machinery
 
-def scan(config): # pragma: no cover
-    config.scan('.')
-
-def includeme(config): # pragma: no cover
-    config.include(include)
-    config.include(scan)

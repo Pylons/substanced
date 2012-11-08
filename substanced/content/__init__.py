@@ -393,10 +393,8 @@ class _ContentTypePredicate(object):
             return cregistry.istype(context, self.val)
         return False
 
-def include(config): # pragma: no cover
+def includeme(config): # pragma: no cover
     config.registry.content = ContentRegistry(config.registry)
     config.add_directive('add_content_type', add_content_type)
     config.add_directive('add_service_type', add_service_type)
     config.add_view_predicate('content_type', _ContentTypePredicate)
-
-includeme = include

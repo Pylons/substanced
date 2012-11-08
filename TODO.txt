@@ -74,10 +74,6 @@ Guts-Only
   never have to pdb-step my way through the insanity of
   "components.subscribers" method again.
 
-- Split initialization into an include phase and a scan phase (venusian
-  decorator usage depends on the effect of the include of their associated
-  package).
-
 - Rename __objectid__ to __oid__.
 
 Nice-to-Have Features
@@ -115,8 +111,6 @@ Docs
 
 - Docstrings for multireference property implementations.
 
-- Explain divide between includeme/include/scan funcs in sd packages.
-
 - Explain ``tab_before`` and ``tab_after`` arguments to mgmt_view (as well as
   related ``FIRST``, ``LAST``, and ``MIDDLE`` sentinels).
 
@@ -130,6 +124,9 @@ Docs
 - Explain various view predicates.
 
 - Explain referential integrity.
+
+- Explain __init__.py include-then-scan done by includeme and how to avoid
+  scanning.
 
 Probably Bad Ideas
 ------------------

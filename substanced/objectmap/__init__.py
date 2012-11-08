@@ -922,13 +922,6 @@ class SourceIntegrityError(ReferentialIntegrityError):
 class TargetIntegrityError(ReferentialIntegrityError):
     pass
 
-def scan(config): # pragma: no cover
-    config.scan('.')
-
-def include(config): # pragma: no cover
-    config.add_view_predicate('referenced', _ReferencedPredicate)
-
 def includeme(config): # pragma: no cover
-    config.include(include)
-    config.include(scan)
+    config.add_view_predicate('referenced', _ReferencedPredicate)
 

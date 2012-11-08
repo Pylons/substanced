@@ -11,8 +11,5 @@ def add_evolution_package(config, package_name):
     config.registry.registerUtility(ZODBEvolutionManager, IEvolutionManager, 
                                     name=package_name)
 
-def include(config): #pragma: no cover
+def includeme(config): #pragma: no cover
     config.add_directive('add_evolution_package', add_evolution_package)
-
-includeme = include
-

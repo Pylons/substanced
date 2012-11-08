@@ -661,7 +661,3 @@ def node_path_tuple(resource):
     return tuple(reversed([getattr(loc, '__name__', '') for 
                            loc in lineage(resource)]))
 
-def scan(config): # pragma: no cover
-    config.scan('.')
-
-includeme = scan

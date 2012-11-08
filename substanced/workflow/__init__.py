@@ -502,8 +502,6 @@ class WorkflowRegistry(object):
         types.update(dict(self.content_types.get(content_type, {})))
         return types.values()
 
-def include(config): # pragma: no cover
+def includeme(config): # pragma: no cover
     config.add_directive('add_workflow', add_workflow)
     config.registry.workflow = WorkflowRegistry()
-
-includeme = include

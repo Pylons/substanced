@@ -546,7 +546,7 @@ class _CatalogablePredicate(object):
     def __call__(self, context, request):
         return self.is_catalogable(context, self.registry) == self.val
 
-def include(config): # pragma: no cover
+def includeme(config): # pragma: no cover
     config.add_view_predicate('catalogable', _CatalogablePredicate)
     config.add_directive('add_catalog_index_factory', add_catalog_index_factory)
     config.add_directive('add_catalog_index', add_catalog_index)
@@ -558,9 +558,3 @@ def include(config): # pragma: no cover
     config.add_catalog_index_factory('allowed', allowed_index_factory)
     add_system_indexes(config)
 
-def scan(config): # pragma: no cover
-    config.scan('.')
-
-def includeme(config): # pragma: no cover
-    config.include(include)
-    config.include(scan)

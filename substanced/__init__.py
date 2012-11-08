@@ -14,25 +14,33 @@ def root_factory(request, t=transaction, g=get_connection):
         t.commit()
     return zodb_root['app_root']
 
-def includeme(config): # pragma: no cover
+def include(config): # pragma: no cover
     config.include('pyramid_zodbconn')
     config.include('pyramid_mailer')
-    # include('.event') must be done before scans of packages which use
-    # @subscribe_* decorators
-    config.include('.event') 
-    # include('.sdi') must be done before scans of packages which use
-    # @mgmt_view decorators
+    config.include('.event')
     config.include('.sdi')
-    # include('.content') must be done before scans of packages which use
-    # @content decorators
     config.include('.content')
     config.include('.objectmap')
     config.include('.property')
     config.include('.catalog')
-    config.include('.root')
     config.include('.evolution')
-    config.include('.folder')
-    config.include('.principal')
     config.include('.widget')
-    config.include('.file')
     config.include('.workflow')
+
+def scan(config): # pragma: no cover
+    config.scan('.catalog')
+    config.scan('.file')
+    config.scan('.folder')
+    config.scan('.objectmap')
+    config.scan('.principal')
+    config.scan('.root')
+    config.scan('.sdi')
+    
+def includeme(config): # pragma: no cover
+    # NB: includes of packages which register directives must be done before
+    # scans of packages which use venusian decorators that use those directives
+    # e.g. (@subscribe_*, @mgmt_view, @content).  This is why we do all
+    # includes first, then we scan afterwards instead of intermingling scans
+    # and includes.
+    config.include(include)
+    config.include(scan)
