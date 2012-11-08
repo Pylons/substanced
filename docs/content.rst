@@ -4,12 +4,12 @@ Defining Content
 :term:`Resource` is the term that Substance D uses to describe an object
 placed in the :term:`resource tree`.  
 
-Ideally, all resources in your resource tree will be
-:term:`content`. "Content" is the term that Substance D uses to describe
-resource objects that are particularly well-behaved when they appear in the
-SDI management interface.  The Substance D management interface (aka
-:term:`SDI`) is a set of views imposed upon the resource tree that allow you
-to add, delete, change and otherwise manage resources.
+Ideally, all resources in your resource tree will be :term:`content`. "Content"
+is the term that Substance D uses to describe resource objects that are
+particularly well-behaved when they appear in the SDI management interface.
+The Substance D management interface (aka :term:`SDI`) is a set of views
+imposed upon the resource tree that allow you to add, delete, change and
+otherwise manage resources.
 
 You can convince the management interface that your particular resources are
 content.  To define a resource as content, you need to associate a resource
@@ -19,8 +19,8 @@ Registering Content
 -------------------
 
 In order to add new content to the system, you need to associate a
-:term:`resource factory` with a :term:`content type`.  A resource factory
-that generates content must have these properties:
+:term:`resource factory` with a :term:`content type`.  A resource factory that
+generates content must have these properties:
 
 - It must be a class, or a factory function that returns an instance of a
   resource class.
@@ -159,9 +159,9 @@ and scanned.
 Metadata
 --------
 
-A content's type can be associated with metadata about that type, including
-the content type's name, its icon in the SDI management interface, an add
-view name, and other things.  Pass keyword arguments to the ``@content``
+A content's type can be associated with metadata about that type, including the
+content type's name, its icon in the SDI management interface, an add view
+name, and other things.  Pass arbitrary keyword arguments to the ``@content``
 decorator or ``config.add_content_type`` to specify metadata.
 
 Names
@@ -212,6 +212,33 @@ the icon next to it in the contents view of the management interface and in
 the breadcrumb list.  The available icon names are listed at
 http://twitter.github.com/bootstrap/base-css.html#icons .
 
+You can also pass a callback as an ``icon`` argument:
+
+.. code-block:: python
+
+   from persistent import Persistent
+   from substanced.content import content
+
+   def blogentry_icon(context, request):
+       if context.body:
+           return 'icon-file'
+       else:
+           return 'icon-gift'
+
+   @content('Blog Entry', icon=blogentry_icon)
+   class BlogEntry(Persistent):
+       def __init__(self, title, body):
+           self.title = title
+           self.body = body
+
+A callable used as ``icon`` must accept two arguments: ``context`` and
+``request``.  ``context`` will be an instance of the type and ``request`` will
+be the current request; your callback will be called at the time the folder
+view is drawn.  The callable should return either an icon name or ``None``.
+For example, the above ``blogentry_icon`` callable tells the SDI to use an icon
+representing a file if the blogentry has a body, otherwise show an icon
+representing gift.
+
 Add Views
 ~~~~~~~~~
 
@@ -234,6 +261,38 @@ added by passing the name of the add view as a keyword argument to
 
 Once you've done this, if the button is clicked in the "Add" tab for this
 content type, the related view will be presented to the user.
+
+You can also pass a callback as an ``add_view`` argument:
+
+.. code-block:: python
+
+   from persistent import Persistent
+   from substanced.content import content
+   from substanced.folder import Folder
+
+   def add_blog_entry(context, request):
+       if request.registry.content.istype(context, 'Blog'):
+           return 'add_blog_entry'
+
+   @content('Blog')
+   class Blog(Folder):
+       pass
+
+   @content('Blog Entry', add_view=add_blog_entry)
+   class BlogEntry(Persistent):
+       def __init__(self, title, body):
+           self.title = title
+           self.body = body
+
+A callable used as ``add_view`` must accept two arguments: ``context`` and
+``request``.  ``context`` will be the potential parent object of the content
+(when the SDI folder view is drawn), and ``request`` will be the current
+request at the time the folder view is drawn.  The callable should return
+either a view name or ``None`` if the content should not be addable in this
+circumstance.  For example, the above ``add_blog_entry`` callable asserts that
+Blog Entry content should only be addable if the context we're adding to is of
+type Blog; it returns None otherwise, signifying that the content is not
+addable in this circumstance.
 
 Obtaining Metadata About a Content Object's Type
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

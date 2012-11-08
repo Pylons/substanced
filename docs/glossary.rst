@@ -102,3 +102,8 @@ Glossary
      A function that wraps a content factory when the content factory is not
      a class or when a ``factory_name`` is used within the content type
      declaration.
+
+   Zope
+     An application server from which much of the spirit of Substance D is
+     derived.  See http://zope.org.
+

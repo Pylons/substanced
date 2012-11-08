@@ -403,4 +403,3 @@ def groupfinder(userid, request):
     if user is None:
         return None
     return user.groupids
-

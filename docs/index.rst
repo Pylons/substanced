@@ -9,7 +9,7 @@ framework. It can be used as a base to build a general-purpose web application
 like a blog, a shopping cart application, a scheduling application, or any
 other web app that requires both an administration and a retail interface.
 
-Substance D owes much of its spirit to the Zope 2 application server.  
+Substance D owes much of its spirit to the :term:`Zope` application server.
 
 It will run under CPython 2.6, and 2.7.  
 
@@ -19,6 +19,12 @@ Installation
 Install using setuptools, e.g. (within a virtualenv)::
 
   $ easy_install substanced
+
+.. warning:: 
+
+   During Substance D's pre-alpha period, it may be necessary to use a checkout
+   of Substance D as well as checkouts of the most recent versions of the
+   libraries upon which Substance D depends.
 
 Dependencies
 ------------

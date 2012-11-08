@@ -7,6 +7,10 @@
 
 .. autofunction:: includeme
 
+.. autofunction:: include
+
+.. autofunction:: scan
+
 .. autofunction:: root_factory
 
 :mod:`substanced.catalog` API
@@ -252,8 +256,6 @@ Other Helpers
  
       The mimetype of this file object (a string).
 
-.. autofunction:: includeme
-
 :mod:`substanced.folder` API
 ----------------------------
 
@@ -289,8 +291,6 @@ Other Helpers
    .. automethod:: add_next
 
    .. automethod:: next_name
-
-.. autofunction:: includeme
 
 :mod:`substanced.form` API
 ----------------------------
@@ -374,8 +374,6 @@ Other Helpers
 
 .. autofunction:: groupfinder
 
-.. autofunction:: includeme
-
 :mod:`substanced.property` API
 --------------------------------
 
@@ -419,8 +417,6 @@ Other Helpers
 
 .. autoclass:: Root
    :members:
-
-.. autofunction:: includeme
 
 :mod:`substanced.util` API
 --------------------------

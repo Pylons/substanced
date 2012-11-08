@@ -37,9 +37,9 @@ Substance D is an application server.  It provides the following features:
 - Facilities that allow developers to define "content" (e.g. "a blog   entry",
   "a product", or "a news item", etc).
 
-- A management (aka "admin") web UI which allows nonexpert but privileged
-  users to create, edit, update, and delete developer-defined content as well
-  as managing other aspects of the system such as users.
+- A management (aka "admin") web UI which allows nonexpert but privileged users
+  to create, edit, update, and delete developer-defined content as well as
+  managing other aspects of the system such as users, groups, security, etc.
 
 - "Undo" capability for actions taken via the management UI.
 
@@ -53,7 +53,8 @@ Substance D is an application server.  It provides the following features:
 
 - Indexing and searching of content (field, keyword, facet, and full-text).
 
-- A facility for relating content objects to each other.
+- A facility for relating content objects to each other (with optional
+  referential integrity).
 
 - An "evolve" mechanism for evolving content over time as it changes.
 
@@ -81,5 +82,5 @@ resources.
 
 The SDI is extensible and allows you to plug your own views into it, so you
 can present nontechnical users with a way to manage arbitrary kinds of
-content.
+custom content.
 

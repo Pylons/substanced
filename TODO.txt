@@ -88,11 +88,6 @@ Nice-to-Have Features
 Docs
 ----
 
-- Document that add_view arg to @content can be a callable (accepting
-  context/request).
-
-- Document that icon to @content can be a callable (accepting context/request).
-
 - Document how to override a content registration.  Include an override
   example for the sole purpose of overriding the add view.
 
