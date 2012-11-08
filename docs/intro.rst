@@ -84,3 +84,5 @@ The SDI is extensible and allows you to plug your own views into it, so you
 can present nontechnical users with a way to manage arbitrary kinds of
 custom content.
 
+.. image:: sdi.png
+
