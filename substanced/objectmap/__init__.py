@@ -165,7 +165,7 @@ class ObjectMap(Persistent):
 
         if objectid is _marker or replace_oid:
             objectid = self.new_objectid()
-            obj.__objectid__ = objectid
+            obj.__oid__ = objectid
         elif objectid in self.objectid_to_path:
             raise ValueError('objectid %s already exists' % (objectid,))
 

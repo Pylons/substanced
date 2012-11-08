@@ -78,7 +78,7 @@ class Test_user_added(unittest.TestCase):
     def test_it(self):
         from pyramid.security import Allow
         user = testing.DummyResource()
-        user.__objectid__ = 1
+        user.__oid__ = 1
         event = testing.DummyResource(object=user)
         self._callFUT(event)
         self.assertEqual(

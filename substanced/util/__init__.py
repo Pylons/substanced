@@ -34,7 +34,7 @@ def oid_of(obj, default=_marker):
     passed a value; if ``default`` was passed a value, return the default in
     that case."""
     try:
-        return obj.__objectid__
+        return obj.__oid__
     except AttributeError:
         if default is _marker:
             raise

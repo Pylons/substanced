@@ -56,7 +56,7 @@ class Test_oid_of(unittest.TestCase):
 
     def test_gardenpath(self):
         obj = testing.DummyResource()
-        obj.__objectid__ = 1
+        obj.__oid__ = 1
         self.assertEqual(self._callFUT(obj), 1)
 
     def test_no_objectid_no_default(self):

@@ -141,21 +141,21 @@ class TestObjectMap(unittest.TestCase):
     def test_add_already_in_path_to_objectid(self):
         inst = self._makeOne()
         obj = testing.DummyResource()
-        obj.__objectid__ = 1
+        obj.__oid__ = 1
         inst.path_to_objectid[(u'',)] = 1
         self.assertRaises(ValueError, inst.add, obj, (u'',))
 
     def test_add_duplicating(self):
         inst = self._makeOne()
         obj = testing.DummyResource()
-        obj.__objectid__ = 1
+        obj.__oid__ = 1
         inst.path_to_objectid[(u'',)] = 1
         self.assertRaises(ValueError, inst.add, obj, (u'',), True)
 
     def test_add_already_in_objectid_to_path(self):
         inst = self._makeOne()
         obj = testing.DummyResource()
-        obj.__objectid__ = 1
+        obj.__oid__ = 1
         inst.objectid_to_path[1] = True
         self.assertRaises(ValueError, inst.add, obj, (u'',))
 
@@ -169,7 +169,7 @@ class TestObjectMap(unittest.TestCase):
         obj = testing.DummyResource()
         inst.add(obj, (u'',))
         self.assertEqual(inst.objectid_to_path[1], (u'',))
-        self.assertEqual(obj.__objectid__, 1)
+        self.assertEqual(obj.__oid__, 1)
         
     def test_add_not_valid(self):
         inst = self._makeOne()
@@ -499,9 +499,9 @@ class TestObjectMap(unittest.TestCase):
     def test__refids_for_success_objects(self):
         inst = self._makeOne()
         one = testing.DummyResource()
-        one.__objectid__ = 1
+        one.__oid__ = 1
         two = testing.DummyResource()
-        two.__objectid__ = 2
+        two.__oid__ = 2
         inst.objectid_to_path[1] = (u'',)
         inst.objectid_to_path[2] = (u'',)
         s, t = inst._refids_for(one, two)
@@ -521,7 +521,7 @@ class TestObjectMap(unittest.TestCase):
     def test__refid_for_success_object(self):
         inst = self._makeOne()
         obj = testing.DummyResource()
-        obj.__objectid__ = 1
+        obj.__oid__ = 1
         inst.objectid_to_path[1] = (u'',)
         oid = inst._refid_for(obj)
         self.assertEqual(oid, 1)
@@ -544,8 +544,8 @@ class TestObjectMap(unittest.TestCase):
         self.assertTrue('ref' not in inst.referencemap)
 
     def test_disconnect_with_objects(self):
-        one = testing.DummyResource(__objectid__=1)
-        two = testing.DummyResource(__objectid__=2)
+        one = testing.DummyResource(__oid__=1)
+        two = testing.DummyResource(__oid__=2)
         inst = self._makeOne()
         inst.objectid_to_path[1] = (u'',)
         inst.objectid_to_path[2] = (u'', u'a')
@@ -591,7 +591,7 @@ class TestObjectMap(unittest.TestCase):
         inst.referencemap = DummyReferenceMap(has_references=True)
         inst.objectid_to_path[1] = (u'',)
         obj = testing.DummyResource()
-        obj.__objectid__ = 1
+        obj.__oid__ = 1
         self.assertTrue(inst.has_references(obj))
         self.assertEqual(inst.referencemap.oid_arg, 1)
         self.assertEqual(inst.referencemap.reftype_arg, None)
@@ -941,7 +941,7 @@ class Test_reference_source_property(unittest.TestCase):
         class Inner(self.DummyFolder):
             prop = reference_source_property(reftype)
         inst = Inner()
-        inst.__objectid__ = 1
+        inst.__oid__ = 1
         return inst
 
     def test_get_no_targetids(self):
@@ -1006,7 +1006,7 @@ class Test_reference_target_property(unittest.TestCase):
         class Inner(self.DummyFolder):
             prop = reference_target_property(reftype)
         inst = Inner()
-        inst.__objectid__ = 1
+        inst.__oid__ = 1
         return inst
 
     def test_get_no_sourceids(self):
@@ -1074,7 +1074,7 @@ class Test_multireference_sourceid_property(unittest.TestCase):
                 ignore_missing=ignore_missing,
                 )
         inst = Inner()
-        inst.__objectid__ = -1
+        inst.__oid__ = -1
         return inst
 
     def test_get_zero(self):
@@ -1226,7 +1226,7 @@ class Test_multireference_source_property(unittest.TestCase):
                 ignore_missing=ignore_missing
                 )
         inst = Inner()
-        inst.__objectid__ = -1
+        inst.__oid__ = -1
         return inst
 
     def test_get_zero(self):
@@ -1379,7 +1379,7 @@ class Test_multireference_targetid_property(unittest.TestCase):
                 ignore_missing=ignore_missing
                 )
         inst = Inner()
-        inst.__objectid__ = -1
+        inst.__oid__ = -1
         return inst
 
     def test_get_zero(self):
@@ -1532,7 +1532,7 @@ class Test_multireference_target_property(unittest.TestCase):
                 ignore_missing=ignore_missing
                 )
         inst = Inner()
-        inst.__objectid__ = -1
+        inst.__oid__ = -1
         return inst
 
     def test_get_zero(self):
@@ -1690,7 +1690,7 @@ class TestMultireference(unittest.TestCase):
 
     def _makeContext(self):
         resource = testing.DummyResource()
-        resource.__objectid__ = -1
+        resource.__oid__ = -1
         return resource
 
     def test___nonzero__True(self):
@@ -1911,7 +1911,7 @@ class Test_has_references(unittest.TestCase):
     def test_gardenpath(self):
         context = testing.DummyResource()
         context.__objectmap__ = DummyObjectMap(result=True)
-        context.__objectid__ = 1
+        context.__oid__ = 1
         result = self._callFUT(context)
         self.assertEqual(result, True)
 

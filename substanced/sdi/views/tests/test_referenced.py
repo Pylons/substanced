@@ -16,7 +16,7 @@ class TestReferencedView(unittest.TestCase):
     def test_show(self):
         context = testing.DummyResource()
         request = testing.DummyRequest()
-        context.__objectid__ = 1
+        context.__oid__ = 1
         objectmap = DummyObjectMap(('foo-to-bar',), (1,), (2,))
         context.__objectmap__ = objectmap
         inst = self._makeOne(context, request)

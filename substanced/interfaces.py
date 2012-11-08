@@ -46,7 +46,7 @@ class IObjectMap(Interface):
 
     def add(obj):
         """ Add a new object to the object map.  Assigns a new objectid to
-        obj.__objectid__ to the object if it doesn't already have one.  The
+        obj.__oid__ to the object if it doesn't already have one.  The
         object's path or objectid must not already exist in the map.  Returns
         the object id.
         """

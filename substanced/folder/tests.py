@@ -401,7 +401,7 @@ class TestFolder(unittest.TestCase):
         dummy = DummyModel()
         dummy.__parent__ = None
         dummy.__name__ = None
-        dummy.__objectid__ = 1
+        dummy.__oid__ = 1
         folder = self._makeOne({'a': dummy})
         objectmap = DummyObjectMap()
         folder.__objectmap__ = objectmap
@@ -413,7 +413,7 @@ class TestFolder(unittest.TestCase):
         dummy = DummyModel()
         dummy.__parent__ = None
         dummy.__name__ = None
-        dummy.__objectid__ = 1
+        dummy.__oid__ = 1
         folder = self._makeOne({'a': dummy})
         objectmap = DummyObjectMap()
         folder.__objectmap__ = objectmap
@@ -723,7 +723,7 @@ class DummyExportImport(object):
     def importFile(self, f):
         import copy
         new_obj = copy.deepcopy(self.obj)
-        new_obj.__objectid__ = 0
+        new_obj.__oid__ = 0
         return new_obj
 
 class DummyExportableModel(object):
@@ -742,10 +742,10 @@ class DummyObjectMap(object):
 
     def add(self, obj, path, replace_oid=False):
         self.added.append((obj, path))
-        objectid = getattr(obj, '__objectid__', None)
+        objectid = getattr(obj, '__oid__', None)
         if objectid is None:
             objectid = 1
-            obj.__objectid__ = objectid
+            obj.__oid__ = objectid
         return objectid
 
     def remove(self, objectid, references=True):
