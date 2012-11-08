@@ -29,7 +29,8 @@ class ConflictingFlags(Exception):
         self.flag2 = flag2
 
     def __repr__(self):
-        return 'Conflicting flags: %s vs. %s' % (self.flag1, self.flag2)
+        return 'Conflicting flags: %s cannot be used when %s is used' % (
+            self.flag1, self.flag2)
 
 class NoSuchPackage(Exception):
     def __init__(self, pkg_name):
@@ -40,7 +41,7 @@ class NoSuchPackage(Exception):
 
 class NoPackageSpecified(Exception):
     def __repr__(self):
-        return 'No package specified: %s' % (self.arg[0],)
+        return 'No package specified: %s' % (self.args[0],)
 
 def evolve_packages(
     registry,

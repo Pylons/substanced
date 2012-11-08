@@ -13,6 +13,7 @@ from substanced.evolution import evolve_packages
 def usage(e=None):
     if e is not None:
         print e
+        print ''
     print "sd_evolve [--latest] [--set-db-version=num] [--package=name] config_uri"
     print "  Evolves new database with changes from scripts in evolve packages"
     print "     - with no arguments, evolve just displays versions"
@@ -29,7 +30,7 @@ def usage(e=None):
 def main(argv=sys.argv):
     name, argv = argv[0], argv[1:]
     latest = False
-    set_version = None
+    set_db_version = None
     package = None
 
     try:
@@ -56,8 +57,8 @@ def main(argv=sys.argv):
             package = v
         if k in ('-s', '--set-db-version'):
             try:
-                set_version = int(v)
-                if set_version < 0:
+                set_db_version = int(v)
+                if set_db_version < 0:
                     raise Exception
             except:
                 usage('Bad version number %s' % v)
@@ -72,7 +73,7 @@ def main(argv=sys.argv):
             registry,
             root,
             package=package,
-            set_db_version=set_version,
+            set_db_version=set_db_version,
             latest=latest,
             )
     except Exception as e:
