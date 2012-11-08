@@ -8,7 +8,6 @@ from repoze.evolution import (
     evolve_to_latest,
     )
 
-
 VERSION = 1
 NAME = 'substanced'
 
@@ -22,74 +21,104 @@ def add_evolution_package(config, package_name):
         name=package_name
         )
 
+# custom exceptions FBO defining reprs for command-line display
+
+class ConflictingFlags(Exception):
+    def __init__(self, flag1, flag2):
+        self.flag1 = flag1
+        self.flag2 = flag2
+
+    def __repr__(self):
+        return 'Conflicting flags: %s vs. %s' % (self.flag1, self.flag2)
+
+class NoSuchPackage(Exception):
+    def __init__(self, pkg_name):
+        self.pkg_name = pkg_name
+
+    def __repr__(self):
+        return 'No such package named %s' % (self.pkg_name,)
+
+class NoPackageSpecified(Exception):
+    def __repr__(self):
+        return 'No package specified: %s' % (self.arg[0],)
+
 def evolve_packages(
     registry,
     root,
-    pkg_name,
+    package=None,
     set_db_version=None,
-    latest=False
+    latest=False,
+    mark_all_current=False,
     ):
-    """ Evolve the package named ``pkg_name`` """
-    results = []
-    managers = list(registry.getUtilitiesFor(IEvolutionManager))
+    """ Evolve the package named ``package`` """
 
     if latest and (set_db_version is not None):
-        # FBO scripts.evolve.main
-        raise ValueError(
-            'Cannot use both --latest and --set--db-version together'
+        raise ConflictingFlags('latest', 'set_db_version')
+
+    if mark_all_current and (set_db_version is not None):
+        raise ConflictingFlags('mark_all_current', 'set_db_version')
+
+    if set_db_version and not package:
+        raise NoPackageSpecified(
+            'Not setting db version to %s ' % set_db_version
             )
 
-    if set_db_version and not pkg_name:
-        # FBO scripts.evolve.main
-        raise ValueError(
-            'Not setting db version to %s (specify --package to '
-            'specify which package to set the db version for)' %
-            set_db_version
-            )
+    managers = list(registry.getUtilitiesFor(IEvolutionManager))
 
+    if package and package not in [x[0] for x in managers]:
+        raise NoSuchPackage(package)
 
-    if pkg_name and pkg_name not in [x[0] for x in managers]:
-        raise ValueError('No such package "%s"' % pkg_name)
+    results = []
 
     for pkg_name, factory in managers:
-        result = {'package':pkg_name}
-        __import__(pkg_name)
-        pkg = sys.modules[pkg_name]
-        sw_version = pkg.VERSION
-        manager = factory(root, pkg_name, sw_version, 0)
-        db_version = manager.get_db_version()
-        result['sw_version'] = sw_version
-        result['db_version'] = db_version
+        if (package is None) or (pkg_name == package):
+            
+            result = {'package':pkg_name}
 
-        if set_db_version is None:
+            __import__(pkg_name)
 
-            if latest:
-                evolve_to_latest(manager)
-                new_version = manager.get_db_version()
-                result['new_version'] = new_version
-                result['message'] = 'Evolved %s to %s' % (pkg_name, new_version)
+            pkg = sys.modules[pkg_name]
+            sw_version = pkg.VERSION
+            manager = factory(root, pkg_name, sw_version, 0)
+            db_version = manager.get_db_version()
+            result['sw_version'] = sw_version
+            result['db_version'] = db_version
+
+            if set_db_version is None:
+
+                if latest:
+                    evolve_to_latest(manager)
+                    new_version = manager.get_db_version()
+                    result['new_version'] = new_version
+                    result['message'] = 'Evolved %s to %s' % (
+                        pkg_name, new_version)
+
+                elif mark_all_current:
+                    manager._set_db_version(sw_version)
+                    transaction.commit()
+                    result['new_version'] = sw_version
+                    result['message'] = 'Evolved %s to %s' % (
+                        pkg_name, sw_version)
+
+                else:
+                    result['new_version'] = db_version
+                    result['message'] = 'Not evolving (latest not specified)'
 
             else:
-                result['new_version'] = db_version
-                # FBO scripts.evolve.main
-                result['message'] = (
-                    'Not evolving (use --latest to do actual evolution)')
 
-        else:
+                if set_db_version <= db_version:
+                    result['new_version'] = db_version
+                    result['message'] = 'Nothing to do'
 
-            if set_db_version <= db_version:
-                result['new_version'] = db_version
-                result['message'] = 'Nothing to do'
+                else:
+                    manager._set_db_version(set_db_version)
+                    transaction.commit()
+                    result['new_version'] = set_db_version
+                    result['message'] = (
+                        'Database version set to %s' % set_db_version
+                        )
 
-            else:
-                manager._set_db_version(set_db_version)
-                transaction.commit()
-                result['new_version'] = set_db_version
-                result['message'] = (
-                    'Database version set to %s' % set_db_version
-                    )
-
-        results.append(result)
+            results.append(result)
 
     return results
 

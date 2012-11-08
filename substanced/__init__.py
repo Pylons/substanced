@@ -1,11 +1,12 @@
 import transaction
 from pyramid_zodbconn import get_connection
-import substanced.evolution
+from substanced.evolution import evolve_packages
 
-def root_factory(request, t=transaction, g=get_connection):
+def root_factory(request, t=transaction, g=get_connection,
+                 evolve_packages=evolve_packages):
     """ A function which can be used as a Pyramid ``root_factory``.  It
     accepts a request and returns an instance of the ``Root`` content type."""
-    # accepts "t" and "g" for unit testing purposes only
+    # accepts "t", "g", and "evolve_packages" for unit testing purposes only
     conn = g(request)
     zodb_root = conn.root()
     if not 'app_root' in zodb_root:
@@ -13,11 +14,10 @@ def root_factory(request, t=transaction, g=get_connection):
         app_root = registry.content.create('Root')
         zodb_root['app_root'] = app_root
         t.savepoint() # give app_root a _p_jar
-        substanced.evolution.evolve_packages(
+        evolve_packages(
             registry,
             app_root,
-            'substanced.evolution',
-            set_db_version=substanced.evolution.VERSION,
+            mark_all_current=True,
             )
         t.commit()
     return zodb_root['app_root']

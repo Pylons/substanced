@@ -62,22 +62,21 @@ def main(argv=sys.argv):
             except:
                 usage('Bad version number %s' % v)
 
-    if latest and (set_version is not None):
-        usage('Cannot use both --latest and --set-version together')
-
-    if set_version and not package:
-        usage('Not setting db version to %s (specify --package to '
-              'specify which package to set the db version for)' % set_version)
-
     setup_logging(config_uri)
     env = bootstrap(config_uri)
     root = env['root']
     registry = env['registry']
 
     try:
-        results = evolve_packages(registry, root, package, set_version, latest)
+        results = evolve_packages(
+            registry,
+            root,
+            package=package,
+            set_db_version=set_version,
+            latest=latest,
+            )
     except Exception as e:
-        usage(e.args[0])
+        usage(repr(e))
 
     for result in results:
         print 'Package %(package)s' % result
