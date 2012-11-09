@@ -86,6 +86,8 @@ Nice-to-Have Features
 Docs
 ----
 
+- Explain creating references between content.
+
 - Document how to override a content registration.  Include an override
   example for the sole purpose of overriding the add view.
 
