@@ -16,6 +16,8 @@ UI-Plus-Guts
 - Allow reordering of resources in folder contents view when the folder is
   ordered.
 
+- Batching in large folders.
+
 Guts-Only
 ---------
 
