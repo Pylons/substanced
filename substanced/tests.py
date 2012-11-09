@@ -8,9 +8,10 @@ class Test_root_factory(unittest.TestCase):
     def tearDown(self):
         testing.tearDown()
         
-    def _callFUT(self, request, transaction, get_connection):
+    def _callFUT(self, request, transaction, get_connection, evolve_packages):
         from . import root_factory
-        return root_factory(request, transaction, get_connection)
+        return root_factory(request, transaction, get_connection,
+                            evolve_packages)
 
     def _makeRequest(self, app_root=None):
         request = Dummy()
@@ -23,27 +24,34 @@ class Test_root_factory(unittest.TestCase):
         txn = DummyTransaction()
         root = {}
         gc = Dummy_get_connection(root)
+        ep = DummyFunction(True)
         app_root = object()
         request = self._makeRequest(app_root)
-        result = self._callFUT(request, txn, gc)
+        result = self._callFUT(request, txn, gc, ep)
         self.assertEqual(result, app_root)
         self.assertTrue(txn.committed)
-        #self.assertEqual(len(request.registry.notified), 2)
+        self.assertTrue(txn.savepointed)
+        self.assertTrue(ep.called)
         
     def test_with_app_root(self):
         txn = DummyTransaction()
         app_root = object()
         root = {'app_root':app_root}
         gc = Dummy_get_connection(root)
+        ep = DummyFunction(True)
         request = testing.DummyRequest()
-        result = self._callFUT(request, txn, gc)
+        result = self._callFUT(request, txn, gc, ep)
         self.assertEqual(result, app_root)
         self.assertFalse(txn.committed)
 
 class DummyTransaction(object):
     committed = False
+    savepointed = False
     def commit(self):
         self.committed = True
+
+    def savepoint(self):
+        self.savepointed = True
 
 class Dummy_get_connection(object):
     def __init__(self, root):
@@ -54,6 +62,16 @@ class Dummy_get_connection(object):
 
     def __call__(self, request):
         return self
+
+class DummyFunction(object):
+    called = False
+    def __init__(self, result):
+        self.result = result
+    def __call__(self, *args, **kw):
+        self.called = True
+        self.args = args
+        self.kw = kw
+        return self.result
 
 class Dummy(object):
     pass

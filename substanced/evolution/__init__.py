@@ -43,6 +43,10 @@ class NoPackageSpecified(Exception):
     def __repr__(self):
         return 'No package specified: %s' % (self.args[0],)
 
+def importer(pkg_name):
+    __import__(pkg_name)
+    return sys.modules[pkg_name]
+
 def evolve_packages(
     registry,
     root,
@@ -50,8 +54,10 @@ def evolve_packages(
     set_db_version=None,
     latest=False,
     mark_all_current=False,
+    importer=importer,
     ):
     """ Evolve the package named ``package`` """
+    # importer in kwarg list for testing purposes only
 
     if latest and (set_db_version is not None):
         raise ConflictingFlags('latest', 'set_db_version')
@@ -76,9 +82,8 @@ def evolve_packages(
             
             result = {'package':pkg_name}
 
-            __import__(pkg_name)
+            pkg = importer(pkg_name)
 
-            pkg = sys.modules[pkg_name]
             sw_version = pkg.VERSION
             manager = factory(root, pkg_name, sw_version, 0)
             db_version = manager.get_db_version()
