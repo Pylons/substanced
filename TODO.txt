@@ -121,6 +121,10 @@ Docs
 - Explain __init__.py include-then-scan done by includeme and how to avoid
   scanning.
 
+- Explain evolution.
+
+- Explain that evolution is baselined at first startup.
+
 Probably Bad Ideas
 ------------------
 
