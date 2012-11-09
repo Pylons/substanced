@@ -155,14 +155,14 @@ class Test_evolve_packages(unittest.TestCase):
             )
         self.assertEqual(manager.db_version, 1)
 
-    def test_set_db_version_lt_db_version(self):
+    def test_set_db_version_eq_db_version(self):
         manager = DummyManager(1)
         factory = DummyFactory(manager)
         registry = DummyRegistry([('fred', factory)])
         module = DummyModule(VERSION=1, NAME='fred')
         importer = DummyFactory(module)
         result = self._callFUT(
-            registry, None, package='fred', set_db_version=0,
+            registry, None, package='fred', set_db_version=1,
             importer=importer
             )
         self.assertEqual(
