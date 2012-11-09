@@ -98,10 +98,130 @@ class Test_evolve_packages(unittest.TestCase):
             NoSuchPackage,
             self._callFUT, registry, None, package='fred',
             )
-        
+
+    def test_dryrun(self):
+        manager = DummyManager(0)
+        factory = DummyFactory(manager)
+        registry = DummyRegistry([('fred', factory)])
+        module = DummyModule(VERSION=1, NAME='fred')
+        importer = DummyFactory(module)
+        result = self._callFUT(
+            registry, None, package='fred', importer=importer
+            )
+        self.assertEqual(
+            result,
+            [{'db_version': 0,
+              'sw_version': 1,
+              'message': 'Not evolving (latest not specified)',
+              'new_version': 0,
+              'package': 'fred'}]
+            )
+
+    def test_latest(self):
+        manager = DummyManager(0)
+        factory = DummyFactory(manager)
+        registry = DummyRegistry([('fred', factory)])
+        module = DummyModule(VERSION=1, NAME='fred')
+        importer = DummyFactory(module)
+        result = self._callFUT(
+            registry, None, package='fred', latest=True, importer=importer
+            )
+        self.assertEqual(
+            result,
+            [{'db_version': 0,
+              'sw_version': 1,
+              'message': 'Evolved fred to 0',
+              'new_version': 0,
+              'package': 'fred'}]
+            )
+
+    def test_mark_all_current(self):
+        manager = DummyManager(0)
+        factory = DummyFactory(manager)
+        registry = DummyRegistry([('fred', factory)])
+        module = DummyModule(VERSION=1, NAME='fred')
+        importer = DummyFactory(module)
+        result = self._callFUT(
+            registry, None, package='fred', mark_all_current=True,
+            importer=importer
+            )
+        self.assertEqual(
+            result,
+            [{'db_version': 0,
+              'sw_version': 1,
+              'message': 'Evolved fred to 1',
+              'new_version': 1,
+              'package': 'fred'}]
+            )
+        self.assertEqual(manager.db_version, 1)
+
+    def test_set_db_version_lt_db_version(self):
+        manager = DummyManager(1)
+        factory = DummyFactory(manager)
+        registry = DummyRegistry([('fred', factory)])
+        module = DummyModule(VERSION=1, NAME='fred')
+        importer = DummyFactory(module)
+        result = self._callFUT(
+            registry, None, package='fred', set_db_version=0,
+            importer=importer
+            )
+        self.assertEqual(
+            result,
+            [{'db_version': 1,
+              'sw_version': 1,
+              'message': 'Nothing to do',
+              'new_version': 1,
+              'package': 'fred'}]
+            )
+
+    def test_set_db_version_gt_db_version(self):
+        manager = DummyManager(0)
+        factory = DummyFactory(manager)
+        registry = DummyRegistry([('fred', factory)])
+        module = DummyModule(VERSION=1, NAME='fred')
+        importer = DummyFactory(module)
+        result = self._callFUT(
+            registry, None, package='fred', set_db_version=1,
+            importer=importer
+            )
+        self.assertEqual(
+            result,
+            [{'db_version': 0,
+              'sw_version': 1,
+              'message': 'Database version set to 1',
+              'new_version': 1,
+              'package': 'fred'}]
+            )
+
+class DummyModule(object):
+    def __init__(self, **kw):
+        self.__dict__.update(kw)
+
 class DummyRegistry(object):
     def __init__(self, result):
         self.result = result
 
     def getUtilitiesFor(self, whatever):
         return self.result
+
+class DummyFactory(object):
+    def __init__(self, result):
+        self.result = result
+
+    def __call__(self, *arg, **kw):
+        return self.result
+
+class DummyManager(object):
+    def __init__(self, result):
+        self.result = result
+
+    def get_db_version(self):
+        return self.result
+
+    def get_sw_version(self):
+        return self.result
+
+    def _set_db_version(self, version):
+        self.db_version = version
+
+    

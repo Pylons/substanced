@@ -80,19 +80,22 @@ def evolve_packages(
     for pkg_name, factory in managers:
         if (package is None) or (pkg_name == package):
             
-            result = {'package':pkg_name}
-
             pkg = importer(pkg_name)
 
             sw_version = pkg.VERSION
+
             manager = factory(root, pkg_name, sw_version, 0)
+
             db_version = manager.get_db_version()
+
+            result = {'package':pkg_name}
             result['sw_version'] = sw_version
             result['db_version'] = db_version
 
             if set_db_version is None:
 
                 if latest:
+                    # does its own commit
                     evolve_to_latest(manager)
                     new_version = manager.get_db_version()
                     result['new_version'] = new_version
