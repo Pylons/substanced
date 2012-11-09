@@ -115,7 +115,7 @@ def evolve_packages(
 
             else:
 
-                if set_db_version <= db_version:
+                if set_db_version == db_version:
                     result['new_version'] = db_version
                     result['message'] = 'Nothing to do'
 
