@@ -74,8 +74,6 @@ Guts-Only
   never have to pdb-step my way through the insanity of
   "components.subscribers" method again.
 
-- Rename __objectid__ to __oid__.
-
 Nice-to-Have Features
 ---------------------
 

@@ -180,7 +180,7 @@ class Test_members_choices(unittest.TestCase):
         from ...testing import make_site
         site = make_site()
         user = testing.DummyResource()
-        user.__objectid__ = 1
+        user.__oid__ = 1
         site['principals']['users']['user'] = user
         request = testing.DummyRequest()
         result = self._makeOne(site, request)
@@ -204,7 +204,7 @@ class Test_login_validator(unittest.TestCase):
         from ...testing import make_site
         site = make_site()
         user = testing.DummyResource()
-        user.__objectid__ = 1
+        user.__oid__ = 1
         def check_name(v): raise ValueError(v)
         user.check_name = check_name
         site['principals']['users']['user'] = user
@@ -219,7 +219,7 @@ class Test_login_validator(unittest.TestCase):
         from ...testing import make_site
         site = make_site()
         user = testing.DummyResource()
-        user.__objectid__ = 1
+        user.__oid__ = 1
         def check_name(*arg):
             raise ValueError('a')
         users = site['principals']['users']
@@ -236,7 +236,7 @@ class Test_login_validator(unittest.TestCase):
         from ...testing import make_site
         site = make_site()
         user = testing.DummyResource()
-        user.__objectid__ = 1
+        user.__oid__ = 1
         def check_name(v): raise ValueError(v)
         user.check_name = check_name
         site['principals']['users']['user'] = user
@@ -251,7 +251,7 @@ class Test_login_validator(unittest.TestCase):
         from ...testing import make_site
         site = make_site()
         user = testing.DummyResource()
-        user.__objectid__ = 1
+        user.__oid__ = 1
         def check_name(v): raise ValueError(v)
         user.check_name = check_name
         group = testing.DummyResource()
@@ -273,7 +273,7 @@ class Test_groups_choices(unittest.TestCase):
         from ...testing import make_site
         site = make_site()
         group = testing.DummyResource()
-        group.__objectid__ = 1
+        group.__oid__ = 1
         site['principals']['groups']['group'] = group
         request = testing.DummyRequest()
         result = self._makeOne(site, request)

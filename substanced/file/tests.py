@@ -36,7 +36,7 @@ class TestFileUploadPropertySheet(unittest.TestCase):
     
     def test_get_not_an_image(self):
         context = testing.DummyResource()
-        context.__objectid__ = 'oid'
+        context.__oid__ = 'oid'
         context.get_size = lambda *arg: 80
         context.mimetype = 'application/octet-stream'
         request = testing.DummyRequest()
@@ -50,7 +50,7 @@ class TestFileUploadPropertySheet(unittest.TestCase):
 
     def test_get_is_an_image(self):
         context = testing.DummyResource()
-        context.__objectid__ = 'oid'
+        context.__oid__ = 'oid'
         context.get_size = lambda *arg: 80
         context.mimetype = 'image/foo'
         request = testing.DummyRequest()

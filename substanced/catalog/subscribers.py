@@ -21,7 +21,7 @@ def object_added(event):
     """ An IObjectAdded event subscriber which indexes an object and and its
     children in every catalog service in the lineage of the object. Depends
     upon the fact that ``substanced.objectmap.object_will_be_added`` to
-    assign an ``__objectid__`` to the object and its children will have been
+    assign an ``__oid__`` to the object and its children will have been
     fired before this gets fired.
     """
     obj = event.object

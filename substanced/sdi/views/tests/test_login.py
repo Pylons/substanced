@@ -95,7 +95,7 @@ class Test_login(unittest.TestCase):
         request.params['csrf_token'] = request.session.get_csrf_token()
         context = make_site()
         user = DummyUser(1)
-        user.__objectid__ = 1
+        user.__oid__ = 1
         context['principals']['users']['login'] = user
         context.__services__ = ('principals',)
         result = self._callFUT(context, request)

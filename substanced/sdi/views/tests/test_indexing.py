@@ -16,7 +16,7 @@ class TestIndexingView(unittest.TestCase):
     def test_show(self):
         context = testing.DummyResource()
         request = testing.DummyRequest()
-        context.__objectid__ = 1
+        context.__oid__ = 1
         context.__services__ = ('catalog',)
         catalog = DummyCatalog()
         context['catalog'] = catalog
@@ -37,7 +37,7 @@ class TestIndexingView(unittest.TestCase):
         request.POST['csrf_token'] = token
         request.flash_with_undo = fwu
         request.mgmt_url = lambda *arg: '/'
-        context.__objectid__ = 1
+        context.__oid__ = 1
         context.__services__ = ('catalog',)
         catalog = DummyCatalog()
         context['catalog'] = catalog

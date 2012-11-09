@@ -9,6 +9,8 @@ from zope.interface import implementer
 
 from pyramid.response import FileResponse
 
+from ..util import oid_of
+
 try:
     import magic
 except ImportError: # pragma: no cover
@@ -72,7 +74,7 @@ class FileUploadPropertySheet(PropertySheet):
     def get(self):
         context = self.context
         request = self.request
-        uid = str(context.__objectid__)
+        uid = str(oid_of(context))
         filedata = dict(
             fp=None,
             uid=uid,

@@ -33,10 +33,10 @@ class Test_object_added(unittest.TestCase):
         objectmap = DummyObjectMap()
         site = _makeSite(objectmap=objectmap, catalog=catalog)
         model1 = testing.DummyResource(__provides__=(IFolder,))
-        model1.__objectid__ = 1
+        model1.__oid__ = 1
         model1.__factory_type__ = 'factory1'
         model2 = testing.DummyResource()
-        model2.__objectid__ = 2
+        model2.__oid__ = 2
         model2.__factory_type__ = 'factory2'
         model1['model2'] = model2
         site['model1'] = model1
@@ -63,7 +63,7 @@ class Test_object_added(unittest.TestCase):
         model1 = testing.DummyResource(__provides__=IFolder)
         model1.__factory_type__ = 'factory1'
         model2 = testing.DummyResource()
-        model2.__objectid__ = 1
+        model2.__oid__ = 1
         model2.__factory_type__ = 'factory2'
         model1['model2'] = model2
         site['model1'] = model1
@@ -84,14 +84,14 @@ class Test_object_added(unittest.TestCase):
         catalog2 = DummyCatalog()
         objectmap = DummyObjectMap()
         inner_site = _makeSite(catalog=catalog2)
-        inner_site.__objectid__ = -1
+        inner_site.__oid__ = -1
         outer_site = _makeSite(objectmap=objectmap, catalog=catalog1)
         outer_site['inner'] = inner_site
         model1 = testing.DummyResource(__provides__=(IFolder,))
-        model1.__objectid__ = 1
+        model1.__oid__ = 1
         model1.__factory_type__ = 'factory1'
         model2 = testing.DummyResource()
-        model2.__objectid__ = 2
+        model2.__oid__ = 2
         model2.__factory_type__ = 'factory2'
         model1['model2'] = model2
         inner_site['model1'] = model1
@@ -151,7 +151,7 @@ class Test_object_removed(unittest.TestCase):
         catalog2.objectids = catalog2.family.IF.Set([2])
         outer = _makeSite(catalog=catalog1)
         inner = _makeSite(catalog=catalog2)
-        inner.__objectid__ = -1
+        inner.__oid__ = -1
         outer['inner'] = inner
         event = DummyEvent(None, inner)
         event.removed_oids = catalog1.family.IF.Set([1,2])
@@ -168,7 +168,7 @@ class Test_object_modified(unittest.TestCase):
         objectmap = DummyObjectMap()
         site = _makeSite(objectmap=objectmap)
         model = testing.DummyResource()
-        model.__objectid__ = 1
+        model.__oid__ = 1
         model.__factory_type__ = 'factory1'
         site['model'] = model
         event = DummyEvent(model, site)
@@ -183,7 +183,7 @@ class Test_object_modified(unittest.TestCase):
         catalog = DummyCatalog()
         site = _makeSite(objectmap=objectmap, catalog=catalog)
         model = testing.DummyResource()
-        model.__objectid__ = 1
+        model.__oid__ = 1
         model.__factory_type__ = 'factory1'
         site['model'] = model
         event = DummyEvent(model, site)
@@ -203,10 +203,10 @@ class Test_object_modified(unittest.TestCase):
         catalog2 = DummyCatalog()
         outer = _makeSite(objectmap=objectmap, catalog=catalog1)
         inner = _makeSite(catalog=catalog2)
-        inner.__objectid__ = -1
+        inner.__oid__ = -1
         outer['inner'] = inner
         model = testing.DummyResource()
-        model.__objectid__ = 1
+        model.__oid__ = 1
         model.__factory_type__ = 'factory1'
         inner['model'] = model
         outer['inner'] = inner

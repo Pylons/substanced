@@ -24,7 +24,7 @@ class TestRoot(unittest.TestCase):
         memberids = testing.DummyResource()
         memberids.connect = connect
         group.memberids = memberids
-        group.__objectid__ = 1
+        group.__oid__ = 1
         user = testing.DummyResource()
         def add_user(*arg, **kw):
             return user
