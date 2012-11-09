@@ -55,6 +55,15 @@ class TestNoPackageSpecificed(unittest.TestCase):
             repr(inst),
             'No package specified: p1'
             )
+
+class Test_importer(unittest.TestCase):
+    def _callFUT(self, pkg_name):
+        from . import importer
+        return importer(pkg_name)
+
+    def test_it(self):
+        import substanced
+        self.assertEqual(self._callFUT('substanced'), substanced)
     
 class Test_evolve_packages(unittest.TestCase):
     def _callFUT(self, registry, root, **kw):
