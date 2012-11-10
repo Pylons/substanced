@@ -249,7 +249,7 @@ class Workflow(object):
         if state is None:
             return self.initialize(content)
         try:
-            stateinfo = self._states[state]
+            self._states[state]
         except KeyError:
             raise WorkflowError('No such state %s for workflow %s' %
                                 (state, self.name))
@@ -285,14 +285,7 @@ class Workflow(object):
                     permission, self.name)
                     )
 
-        from_state = transition['from_state']
         to_state = transition['to_state']
-
-        info = {
-            'workflow': self,
-            'transition': transition,
-            'request': request,
-        }
 
         callback = getattr(transition, '__call__', None)
         if callback is None:
