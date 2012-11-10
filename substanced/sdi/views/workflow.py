@@ -52,6 +52,7 @@ class WorkflowViews(object):
 
     @mgmt_view(
         request_method='POST',
+        check_csrf=True,
         )
     def transition(self):
         workflows = self._get_workflows()
@@ -65,6 +66,7 @@ class WorkflowViews(object):
                         workflow.name or workflow.type, transition),
                     'info',
                     )
+                break
         return HTTPFound(self.request.mgmt_url(self.context, '@@workflows'))
             
         

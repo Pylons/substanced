@@ -506,7 +506,7 @@ def is_workflowed(context, registry):
     workflow_reg = getattr(registry, 'workflow', None)
     if workflow_reg is None:
         return False
-    content_type = get_content_type(context)
+    content_type = get_content_type(context, registry=registry)
     if content_type is None:
         return False
     workflows = workflow_reg.get_all_types(content_type)

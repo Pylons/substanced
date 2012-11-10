@@ -18,6 +18,8 @@
                   value="${transition.name}">${transition.name}</option>
         </select>
 
+        <input type="hidden" name="csrf_token" 
+               value="${request.session.get_csrf_token()}"/>
         <input type="submit" name="submit" value="Transition"/>
 
       </form>

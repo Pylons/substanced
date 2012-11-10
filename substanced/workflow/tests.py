@@ -1130,5 +1130,77 @@ class init_workflows_for_objectTests(unittest.TestCase):
                 ]
             )
 
+class Test_WorkflowedPredicate(unittest.TestCase):
+    def _makeOne(self, val, config):
+        from . import _WorkflowedPredicate
+        return _WorkflowedPredicate(val, config)
+
+    def test_text(self):
+        config = DummyContent()
+        config.registry = DummyContent()
+        inst = self._makeOne(True, config)
+        self.assertEqual(inst.text(), 'workflowed = True')
+
+    def test_phash(self):
+        config = DummyContent()
+        config.registry = DummyContent()
+        inst = self._makeOne(True, config)
+        self.assertEqual(inst.phash(), 'workflowed = True')
+
+    def test__call__(self):
+        config = DummyContent()
+        config.registry = DummyContent()
+        inst = self._makeOne(True, config)
+        def is_workflowed(context, registry):
+            self.assertEqual(context, None)
+            self.assertEqual(registry, config.registry)
+            return True
+        inst.is_workflowed = is_workflowed
+        self.assertEqual(inst(None, None), True)
+
+class Test_is_workflowed(unittest.TestCase):
+    def setUp(self):
+        self.config = testing.setUp()
+
+    def tearDown(self):
+        testing.tearDown()
+
+    def _callFUT(self, context, registry):
+        from . import is_workflowed
+        return is_workflowed(context, registry)
+
+    def test_no_workflow_registry(self):
+        content = DummyContent()
+        registry = DummyContent()
+        self.assertEqual(self._callFUT(content, registry), False)
+
+    def test_no_content_type(self):
+        content = DummyContent()
+        registry = DummyContent()
+        registry.workflow = True
+        registry.content = DummyContentRegistry(None)
+        self.assertEqual(self._callFUT(content, registry), False)
+
+    def test_gardenpath(self):
+        content = DummyContent()
+        registry = DummyContent()
+        workflow = DummyContent()
+        registry.workflow = DummyWorkflowRegistry(workflow)
+        registry.content = DummyContentRegistry('abc')
+        self.assertEqual(self._callFUT(content, registry), True)
+        
+
 class DummyContent:
     pass
+
+class DummyContentRegistry(object):
+    def __init__(self, result):
+        self.result = result
+    def typeof(self, context):
+        return self.result
+
+class DummyWorkflowRegistry(object):
+    def __init__(self, result):
+        self.result = result
+    def get_all_types(self, content_type):
+        return self.result
