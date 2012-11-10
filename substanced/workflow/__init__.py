@@ -502,6 +502,32 @@ class WorkflowRegistry(object):
         types.update(dict(self.content_types.get(content_type, {})))
         return types.values()
 
+def is_workflowed(context, registry):
+    workflow_reg = getattr(registry, 'workflow', None)
+    if workflow_reg is None:
+        return False
+    content_type = get_content_type(context)
+    if content_type is None:
+        return False
+    workflows = workflow_reg.get_all_types(content_type)
+    return bool(workflows)
+
+class _WorkflowedPredicate(object):
+    is_workflowed = staticmethod(is_workflowed) # for testing
+    
+    def __init__(self, val, config):
+        self.val = bool(val)
+        self.registry = config.registry
+
+    def text(self):
+        return 'workflowed = %s' % self.val
+
+    phash = text
+
+    def __call__(self, context, request):
+        return self.is_workflowed(context, self.registry) == self.val
+
 def includeme(config): # pragma: no cover
     config.add_directive('add_workflow', add_workflow)
+    config.add_view_predicate('workflowed', _WorkflowedPredicate)
     config.registry.workflow = WorkflowRegistry()
