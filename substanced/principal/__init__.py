@@ -4,10 +4,7 @@ import string
 from persistent import Persistent
 from cryptacular.bcrypt import BCRYPTPasswordManager
 
-from zope.interface import (
-    Interface,
-    implementer,
-    )
+from zope.interface import implementer
 
 import colander
 
@@ -54,7 +51,7 @@ from ..util import (
     renamer,
     )
 
-class UserToGroup(Interface):
+class UserToGroup(object): # cannot be moved, persisted
     """ The reference type used to store users-to-groups references in the
     object map"""
 
