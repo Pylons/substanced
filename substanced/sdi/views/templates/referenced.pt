@@ -24,7 +24,9 @@
             <tr tal:repeat="(reftype, paths) ids">
               <td>${reftype}</td>
               <td>
-                <a tal:repeat="path paths" href="${root_url+path}">${path or '/'}</a>
+                <span tal:repeat="path paths">
+                  <a href="${root_url+path}">${path or '/'}</a>${repeat.path.end and ' ' or ','}
+                </span>
               </td>
             </tr>
           </tbody>
