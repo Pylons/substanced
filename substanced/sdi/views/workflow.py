@@ -41,11 +41,13 @@ class WorkflowViews(object):
             transitions = workflow.get_transitions(self.context, self.request)
             states = workflow.get_states(self.context, self.request)
             wfid = str(workflow.type)
+            current_state = workflow.state_of(self.context)
             result = {
                 'id':wfid,
                 'workflow':workflow,
                 'transitions':transitions,
                 'states':states,
+                'current_state':current_state,
                 }
             results.append(result)
         return {'workflows':results}

@@ -8,6 +8,7 @@
     <div tal:repeat="workflow workflows">
 
       <h2>${workflow.workflow.name or workflow.workflow.type}</h2>
+      <h3>Current state: ${workflow.current_state}</h3>
 
       <form action="${request.mgmt_url(request.context, '@@workflows')}"
             method="POST">

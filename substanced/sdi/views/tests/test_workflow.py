@@ -37,6 +37,7 @@ class TestIndexingView(unittest.TestCase):
                 {'states': 'result',
                  'transitions': 'result',
                  'id': 'workflow',
+                 'current_state':'result',
                  'workflow': workflow}]
              }
             )
@@ -68,6 +69,9 @@ class DummyWorkflow(object):
 
     def transition(self, context, request, name):
         self.transitioned = True
+
+    def state_of(self, context):
+        return self.result
         
 class DummyWorkflowRegistry(object):
     def __init__(self, result):
