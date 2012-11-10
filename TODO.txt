@@ -127,6 +127,8 @@ Docs
 
 - Explain that evolution is baselined at first startup.
 
+- Explain "Workflows" tab.
+
 Probably Bad Ideas
 ------------------
 
