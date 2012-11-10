@@ -43,6 +43,7 @@ def scan(config): # pragma: no cover
     config.scan('.principal')
     config.scan('.root')
     config.scan('.sdi')
+    config.scan('.workflow')
     
 def includeme(config): # pragma: no cover
     # NB: includes of packages which register directives must be done before
