@@ -122,7 +122,10 @@ class NameSchemaNode(colander.SchemaNode):
                 # ``check_name`` against.
                 context = context.__parent__
         try:
-            context.check_name(value)
+            if editing:
+                value = context.validate_name(value)
+            else:
+                value = context.check_name(value)
         except Exception as e:
             raise colander.Invalid(node, e.args[0], value)
         if len(value) > self.max_len:

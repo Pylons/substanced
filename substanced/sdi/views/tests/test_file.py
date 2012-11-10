@@ -57,7 +57,7 @@ class Test_name_or_file(unittest.TestCase):
 
     def test_no_name_with_filename(self):
         context = testing.DummyResource()
-        context.check_name = lambda *arg: None
+        context.check_name = lambda name: name
         request = testing.DummyRequest()
         request.registry.content = DummyContent(False)
         node = {'file':None}

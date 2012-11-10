@@ -68,7 +68,7 @@ class TestNameSchemaNode(unittest.TestCase):
     def test_it_invalid_len(self):
         bindings = self._makeBindings()
         node = self._makeOne()
-        def check_name(value): pass
+        def check_name(value): return value
         bindings['context'].check_name = check_name
         bindings['request'].registry.content = DummyContent(True)
         node.bindings = bindings
@@ -89,7 +89,7 @@ class TestNameSchemaNode(unittest.TestCase):
     def test_it_valid(self):
         bindings = self._makeBindings()
         node = self._makeOne()
-        def check_name(value): pass
+        def check_name(value): return value
         bindings['context'].check_name = check_name
         bindings['request'].registry.content = DummyContent(True)
         node.bindings = bindings
@@ -100,7 +100,7 @@ class TestNameSchemaNode(unittest.TestCase):
         parent = testing.DummyResource()
         def check_name(value):
             raise ValueError('foo')
-        parent.check_name = check_name
+        parent.validate_name = check_name
         bindings['context'].__parent__ = parent
         bindings['request'].registry.content = DummyContent(True)
         node = self._makeOne(editing=True)
@@ -110,8 +110,8 @@ class TestNameSchemaNode(unittest.TestCase):
     def test_it_editing_True_valid(self):
         bindings = self._makeBindings()
         parent = testing.DummyResource()
-        def check_name(value): pass
-        parent.check_name = check_name
+        def check_name(value): return value
+        parent.validate_name = check_name
         bindings['context'].__parent__ = parent
         bindings['request'].registry.content = DummyContent(True)
         node = self._makeOne(editing=True)
@@ -121,8 +121,8 @@ class TestNameSchemaNode(unittest.TestCase):
     def test_it_editing_is_callable(self):
         bindings = self._makeBindings()
         parent = testing.DummyResource()
-        def check_name(value): pass
-        parent.check_name = check_name
+        def check_name(value): return value
+        parent.validate_name = check_name
         bindings['context'].__parent__ = parent
         bindings['request'].registry.content = DummyContent(True)
         def editing(context, request):

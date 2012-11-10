@@ -246,12 +246,17 @@ class IFolder(Interface):
         ``self.check_name(name)``).
         """
 
-    def check_name(name, reserved_names=()):
+    def validate_name(name, reserved_names=()):
         """
-        Checks the name passed for validity.  If the name is valid, is not
-        present in ``reserved_names``, and the name does not already exist in
-        the folder, returns a validated name.  Otherwise a :exc:`ValueError`
-        will be raised."""
+        Checks the name passed for validity.  If the name is valid and is not
+        present in ``reserved_names`` returns a validated name.  Otherwise a
+        :exc:`ValueError` will be raised."""
+
+    def check_name(name, reserved_names=()):
+        """ Performs all checks associated with ``validate_name`` but also
+        raises a :class:`substanced.folder.FolderKeyError` if an object with
+        the name ``name`` already exists in the folder.  Returns the name (with
+        any modifications) returned by ``validate_name``."""
 
     def pop(name, default=None):
         """ Remove the item stored in the under ``name`` and return it.

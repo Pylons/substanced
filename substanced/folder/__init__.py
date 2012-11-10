@@ -212,14 +212,11 @@ class Folder(Persistent):
         """
         return self.add(name, other)
 
-    def check_name(self, name, reserved_names=()):
+    def validate_name(self, name, reserved_names=()):
         """
-
-        Check the ``name`` passed to ensure that it's addable to the folder.
+        Validate the ``name`` passed to ensure that it's addable to the folder.
         Returns the name decoded to Unicode if it passes all addable checks.
         It's not addable if:
-
-        -  an object by the name already exists in the folder
 
         - the name is not decodeable to Unicode.
 
@@ -253,6 +250,17 @@ class Folder(Persistent):
         if '/' in name:
             raise ValueError('Names which contain a slash ("/") are not '
                              'allowed')
+
+        return name
+
+    def check_name(self, name, reserved_names=()):
+        """ Perform all the validation checks implied by
+        :meth:`~substanced.folder.Folder.validate_name` against the ``name``
+        supplied but also fail with a
+        :class:`~substanced.folder.FolderKeyError` if an object with the name
+        ``name`` already exists in the folder."""
+
+        name = self.validate_name(name, reserved_names=reserved_names)
 
         if name in self.data:
             raise FolderKeyError('An object named %s already exists' % name)
