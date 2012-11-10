@@ -4,8 +4,6 @@ UI-Plus-Guts
 - Create object map management UI (view relationships, view paths, view
   objectids).
 
-- Create workflow management UI.
-
 - Import/export from folder contents view.
 
 - Add Undo tab to Site (or per folder?) which will allow admins to undo recent
