@@ -8,13 +8,17 @@ import colander
 
 from zope.interface import implementer
 
-from ..schema import Schema
-from ..folder import Folder
-from ..content import content
-from ..property import PropertySheet
 from ..interfaces import IRoot
-from ..util import oid_of
+
+from ..content import content
+from ..folder import Folder
 from ..objectmap import ObjectMap
+from ..property import PropertySheet
+from ..schema import Schema
+from ..util import (
+    oid_of,
+    change_acl,
+    )
 
 class RootSchema(Schema):
     """ The schema representing site properties. """
@@ -77,7 +81,9 @@ class Root(Folder):
         user = principals.add_user(login, password, email, registry=registry)
         admins = principals.add_group('admins', registry=registry)
         admins.memberids.connect([user])
-        self.__acl__ = [
-            (Allow, oid_of(admins), ALL_PERMISSIONS)
-            ]
+        change_acl(
+            self,
+            [(Allow, oid_of(admins), ALL_PERMISSIONS)],
+            registry=registry,
+            )
 

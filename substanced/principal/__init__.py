@@ -49,11 +49,17 @@ from ..schema import (
 from ..util import (
     oid_of,
     renamer,
+    change_acl,
     )
 
 class UserToGroup(object): # cannot be moved, persisted
     """ The reference type used to store users-to-groups references in the
     object map"""
+
+class PrincipalToACLBearing(object): # cannot be moved, persisted
+    """ The reference type used to store principal-to-ACL-bearing-object
+    references in the object map"""
+    source_integrity = True
 
 def _gen_random_token():
     length = random.choice(range(10, 16))
@@ -146,7 +152,7 @@ class Principals(Folder):
                 break
         reset = registry.content.create('Password Reset', *arg, **kw)
         self['resets'][token] = reset
-        reset.__acl__ = [(Allow, Everyone, ('sdi.view',))]
+        change_acl(reset, [(Allow, Everyone, ('sdi.view',))], registry=registry)
         objectmap = find_objectmap(self)
         objectmap.connect(user, reset, UserToPasswordReset)
         return reset
@@ -400,3 +406,4 @@ def groupfinder(userid, request):
     if user is None:
         return None
     return user.groupids
+

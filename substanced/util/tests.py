@@ -378,6 +378,50 @@ class Test_renamer(unittest.TestCase):
         self.assertEqual(parent.renamed_from, 'fred')
         self.assertEqual(parent.renamed_to, 'bob')
 
+class Test_change_acl(unittest.TestCase):
+    def setUp(self):
+        self.config = testing.setUp()
+
+    def tearDown(self):
+        testing.tearDown()
+
+    def _callFUT(self, context, acl, registry=None):
+        from . import change_acl
+        return change_acl(context, acl, registry)
+
+    def test_no_change_context_has_no_acl(self):
+        context = testing.DummyResource()
+        result = self._callFUT(context, None)
+        self.assertFalse(result)
+
+    def test_change_context_has_no_acl(self):
+        context = testing.DummyResource()
+        registry = DummyRegistry()
+        result = self._callFUT(context, 1, registry)
+        self.assertTrue(result)
+        self.assertEqual(registry.event.old_acl, None)
+        self.assertEqual(registry.event.new_acl, 1)
+        self.assertEqual(context.__acl__, 1)
+
+    def test_change_remove_acl(self):
+        context = testing.DummyResource()
+        context.__acl__ = 1
+        registry = DummyRegistry()
+        result = self._callFUT(context, None, registry)
+        self.assertTrue(result)
+        self.assertEqual(registry.event.old_acl, 1)
+        self.assertEqual(registry.event.new_acl, None)
+        self.assertFalse(hasattr(context, '__acl__'))
+        
+    def test_no_registry(self):
+        context = testing.DummyResource()
+        L = []
+        self.config.registry.subscribers = lambda *arg: L.append(arg)
+        result = self._callFUT(context, 1)
+        self.assertTrue(result)
+        self.assertEqual(context.__acl__, 1)
+        self.assertEqual(L[0][1], None)
+
 class DummyContent(object):
     renamed_from = None
     renamed_to = None
@@ -387,3 +431,10 @@ class DummyContent(object):
     def rename(self, old, new):
         self.renamed_from = old
         self.renamed_to = new
+
+class DummyRegistry(object):
+    def subscribers(self, (event, context), whatever):
+        self.event = event
+        self.context = context
+        self.whatever = whatever
+        

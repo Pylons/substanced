@@ -16,36 +16,17 @@ UI-Plus-Guts
 
 - Batching in large folders.
 
+- Create exception views for integrity errors.
+
 Guts-Only
 ---------
-
-- Substance D ACLs contain object identifiers which refer to principals.
-  Currently, when a principal is deleted, ACLs which refer to the principal
-  are not adjusted.  This is both a security issue and a sanity issue.  The
-  object id of a deleted principal is put back into the set of object ids
-  that are grantable to future objects.  As a result, some other principal
-  may wind up with an object id that used to belong to a deleted principal,
-  and he may inappropriately be granted access due to stale ACLs that
-  possesses that object id.  Or some other object that is not a principal
-  might wind up with that object id, and undefined things will happen.
-
-  Here's what would be nice: when an ACL is changed or added, using the
-  object map, form relationships between the principal objects it names and
-  the ACL-bearing object.  When a principal is deleted, change the ACL of all
-  such-related objects so that the deleted principal id in the ACL is
-  replaced by an unobtainable object id.
-
-  Note that a variant of this bug/feature has existed in Zope for 13 years,
-  and it hasn't seemed to have raised much ire, but it always bugged me.
-
-- Add a change_acl API that sends an event when an ACL is changed.
 
 - Decide whether to split "manage contents" permissions out for folders into
   add, delete, rename.
 
-- ACL edit view currently does a hellishly expensive recatalog of allowed
-  indexes when an ACL is changed.  Not sure if there's even a general way to
-  make this do less work, but could be.
+- Catalog event subscriber currently does a hellishly expensive recatalog of
+  allowed indexes when an ACL is changed.  Not sure if there's even a general
+  way to make this do less work, but could be.
 
 - Undo of catalog reindex doesnt?  Turned off for now.
 
@@ -128,6 +109,19 @@ Docs
 - Explain that evolution is baselined at first startup.
 
 - Explain "Workflows" tab.
+
+- Explain exception views for integrity errors.
+
+- Explain that allowed indexes are reindexed when an object's ACL is changed.
+
+- Explain subscribe_acl_modified.
+
+- Explain change_acl.
+
+- Explain "moving" and "duplicating" flags on added and removed events.
+
+- Explain that source-integral PrincipalToACLBearing relationships are set up
+  between an ACL-bearing object and the principals referred to within the ACL.
 
 Probably Bad Ideas
 ------------------

@@ -1,9 +1,12 @@
+import logging
+
 from ..content import find_services
 
 from ..event import (
     subscribe_added,
     subscribe_removed,
     subscribe_modified,
+    subscribe_acl_modified,
     )
 
 from ..util import (
@@ -15,6 +18,8 @@ from . import (
     catalog_view_factory_for, 
     CatalogViewWrapper,
     )
+
+logger = logging.getLogger(__name__)
 
 @subscribe_added()
 def object_added(event):
@@ -64,4 +69,24 @@ def object_modified(event):
         for catalog in catalogs:
             objectid = oid_of(obj)
             catalog.reindex_doc(objectid, wrapper)
+
+@subscribe_acl_modified()
+def acl_modified(event):
+    context = event.object
+    registry = event.registry
+    catalogs = find_services(context, 'catalog')
+
+    for catalog in catalogs:
+        # hellishly expensive
+        indexes = catalog.values()
+        for index in indexes:
+            if registry.content.istype(index, 'Allowed Index'):
+                for node in postorder(context):
+                    cvf = catalog_view_factory_for(node, registry)
+                    if cvf:
+                        logger.info('Reindexing %s' % node)
+                        index.reindex_doc(
+                            oid_of(node),
+                            CatalogViewWrapper(node, cvf)
+                            )
 

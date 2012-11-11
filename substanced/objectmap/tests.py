@@ -1959,6 +1959,17 @@ class Test_referential_integrity(unittest.TestCase):
         event = DummyEvent(obj)
         self.assertRaises(SourceIntegrityError, self._callFUT, event)
 
+    def test_reftype_with_source_integrity_with_only_self_targetid(self):
+        obj = testing.DummyResource()
+        obj.__oid__ = 1
+        class Reference(object):
+            source_integrity = True
+        obj.__objectmap__ = DummyObjectMap(
+            reftypes=(Reference(),), targetids=set([1])
+            )
+        event = DummyEvent(obj)
+        self.assertEqual(None, self._callFUT(event)) # self-reference ignored
+
     def test_reftype_with_target_integrity_no_sourceids(self):
         obj = testing.DummyResource()
         class Reference(object):
@@ -1977,6 +1988,17 @@ class Test_referential_integrity(unittest.TestCase):
             )
         event = DummyEvent(obj)
         self.assertRaises(TargetIntegrityError, self._callFUT, event)
+
+    def test_reftype_with_target_integrity_with_only_self_sourceid(self):
+        obj = testing.DummyResource()
+        obj.__oid__ = 1
+        class Reference(object):
+            target_integrity = True
+        obj.__objectmap__ = DummyObjectMap(
+            reftypes=(Reference(),), sourceids=set([1])
+            )
+        event = DummyEvent(obj)
+        self.assertEqual(None, self._callFUT(event)) # self-reference ignored
 
 class TestReferentialIntegrityError(unittest.TestCase):
     def _makeOne(self, obj, reftype, oids):

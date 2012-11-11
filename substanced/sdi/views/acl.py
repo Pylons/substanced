@@ -9,19 +9,12 @@ from pyramid.security import (
     )
 from pyramid.session import check_csrf_token
 
-from ...catalog import (
-    catalog_view_factory_for,
-    CatalogViewWrapper
-    )
-from ...content import (
-    find_service,
-    find_services,
-    )
+from ...content import find_service
 from ...objectmap import find_objectmap
 from ...util import (
-    postorder,
     oid_of,
     get_all_permissions,
+    change_acl,
     )
 
 from .. import mgmt_view
@@ -117,23 +110,7 @@ def acl_edit_view(context, request):
     acl = acl + epilog
 
     if acl != original_acl:
-        context.__acl__ = acl
-
-        catalogs = find_services(context, 'catalog')
-
-        for catalog in catalogs:
-            # hellishly expensive
-            indexes = catalog.values()
-            for index in indexes:
-                if registry.content.istype(index, 'Allowed Index'):
-                    for node in postorder(context):
-                        cvf = catalog_view_factory_for(node, registry)
-                        if cvf:
-                            logger.info('Reindexing %s' % node)
-                            index.reindex_doc(
-                                oid_of(node),
-                                CatalogViewWrapper(node, cvf)
-                                )
+        change_acl(context, acl, registry=registry)
 
     parent = context.__parent__
     parent_acl = []
@@ -209,4 +186,3 @@ def acl_edit_view(context, request):
         users=users,
         groups=groups,
         )
-

@@ -80,16 +80,105 @@ class Test_user_added(unittest.TestCase):
         user = testing.DummyResource()
         user.__oid__ = 1
         event = testing.DummyResource(object=user)
+        event.registry = DummyRegistry()
         self._callFUT(event)
         self.assertEqual(
             user.__acl__,
             [(Allow, 1, ('sdi.view', 'sdi.change-password'))]
             )
 
+class Test_acl_maybe_added(unittest.TestCase):
+    def _callFUT(self, event):
+        from ..subscribers import acl_maybe_added
+        return acl_maybe_added(event)
+
+    def test_moving(self):
+        event = DummyEvent(moving=True)
+        self.assertEqual(self._callFUT(event), False)
+
+    def test_objectmap_is_None(self):
+        event = DummyEvent(moving=False, object=None)
+        self.assertEqual(self._callFUT(event), None)
+
+    def test_no_acls(self):
+        from substanced.interfaces import IFolder
+        resource1 = testing.DummyResource(__provides__=IFolder)
+        resource2 = testing.DummyResource()
+        resource1['resource2'] = resource2
+        objectmap = DummyObjectMap()
+        resource1.__objectmap__ = objectmap
+        event = DummyEvent(moving=False, object=resource1)
+        self._callFUT(event)
+        self.assertEqual(objectmap.connections, [])
+
+    def test_with_acls(self):
+        from .. import PrincipalToACLBearing
+        from substanced.interfaces import IFolder
+        resource1 = testing.DummyResource(__provides__=IFolder)
+        resource2 = testing.DummyResource()
+        resource1['resource2'] = resource2
+        resource1.__acl__ = [(None, 'fred', None), (None, 1, None)]
+        resource2.__acl__ = [(None, 'bob', None), (None, 2, None)]
+        objectmap = DummyObjectMap()
+        resource1.__objectmap__ = objectmap
+        event = DummyEvent(moving=False, object=resource1)
+        self._callFUT(event)
+        self.assertEqual(
+            objectmap.connections,
+            [(2, resource2, PrincipalToACLBearing),
+             (1, resource1, PrincipalToACLBearing)]
+            )
+
+class Test_acl_modified(unittest.TestCase):
+    def _callFUT(self, event):
+        from ..subscribers import acl_modified
+        return acl_modified(event)
+
+    def test_objectmap_is_None(self):
+        event = DummyEvent(object=None)
+        self.assertEqual(self._callFUT(event), None)
+
+    def test_gardenpath(self):
+        from .. import PrincipalToACLBearing
+        resource = testing.DummyResource()
+        objectmap = DummyObjectMap()
+        resource.__objectmap__ = objectmap
+        event = DummyEvent(
+            object=resource,
+            new_acl=[(None, 'fred', None), (None, 1, None)],
+            old_acl=[(None, 'bob', None), (None, 2, None)],
+            )
+        self._callFUT(event) 
+        self.assertEqual(
+            objectmap.connections,
+            [(1, resource, PrincipalToACLBearing)]
+            )
+        self.assertEqual(
+            objectmap.disconnections,
+            [(2, resource, PrincipalToACLBearing)]
+            )
+           
+
 class DummyObjectMap(object):
     def __init__(self, result=()):
         self.result = result
+        self.connections = []
+        self.disconnections = []
 
     def targets(self, object, reftype):
         return self.result
+
+    def connect(self, source, target, reftype):
+        self.connections.append((source, target, reftype))
+
+    def disconnect(self, source, target, reftype):
+        self.disconnections.append((source, target, reftype))
+    
+class DummyEvent(object):
+    def __init__(self, **kw):
+        self.__dict__.update(kw)
+        
+class DummyRegistry(object):
+    def subscribers(self, *arg):
+        return
     

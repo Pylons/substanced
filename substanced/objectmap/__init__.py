@@ -873,18 +873,23 @@ def referential_integrity(event):
     if event.moving:
         return
     obj = event.object
+    obj_oid = oid_of(obj, None)
     objectmap = find_objectmap(obj)
     if objectmap is None:
         return
     for reftype in objectmap.get_reftypes():
         if getattr(reftype, 'source_integrity', False):
             targetids = objectmap.targetids(obj, reftype)
+            if obj_oid in targetids:
+                targetids.remove(obj_oid) # self-referential
             if targetids:
                 # object is a source
                 raise SourceIntegrityError(obj, reftype, targetids)
 
         if getattr(reftype, 'target_integrity', False):
             sourceids = objectmap.sourceids(obj, reftype)
+            if obj_oid in sourceids:
+                sourceids.remove(obj_oid) # self-referential
             if sourceids:
                 # object is a target
                 raise TargetIntegrityError(obj, reftype, sourceids)

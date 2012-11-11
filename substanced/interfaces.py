@@ -99,13 +99,20 @@ class IObjectWillBeAdded(IObjectEvent):
     parent = Attribute('The folder to which the object is being added')
     name = Attribute('The name which the object is being added to the folder '
                      'with')
-    duplicating = Attribute('Boolean indicating object is a duplicate')
+    moving = Attribute('Boolean indicating that this add is part of an '
+                       'object move')
+    duplicating = Attribute('Boolean indicating this add is part of an '
+                            'object duplication')
 
 class IObjectAdded(IObjectEvent):
     """ An event type sent when an object is added """
     object = Attribute('The object being added')
     parent = Attribute('The folder to which the object is being added')
     name = Attribute('The name of the object within the folder')
+    moving = Attribute('Boolean indicating that this add is part of an '
+                       'object move')
+    duplicating = Attribute('Boolean indicating this add is part of an '
+                            'object duplication')
 
 class IObjectWillBeRemoved(IObjectEvent):
     """ An event type sent before an object is removed """
@@ -130,6 +137,12 @@ class IObjectRemoved(IObjectEvent):
 class IObjectModified(IObjectEvent):
     """ May be sent when an object is modified """
     object = Attribute('The object being modified')
+
+class IACLModified(IObjectEvent):
+    """ May be sent when an object's ACL is modified """
+    object = Attribute('The object being modified')
+    old_acl = Attribute('The object ACL before the modification')
+    new_acl = Attribute('The object ACL after the modification')
 
 class IContentCreated(Interface):
     """ An event type sent when a Substance D content object is created 

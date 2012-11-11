@@ -13,27 +13,32 @@ from ..interfaces import (
     IObjectRemoved,
     IObjectWillBeRemoved,
     IObjectModified,
+    IACLModified,
     IContentCreated,
     )
     
 class _ObjectEvent(object):
-    def __init__(self, object, parent, name):
-        self.object = object
-        self.parent = parent
-        self.name = name
+    pass
 
 @implementer(IObjectAdded)
 class ObjectAdded(_ObjectEvent):
     """ An event sent just after an object has been added to a folder.  """
-
-@implementer(IObjectWillBeAdded)
-class ObjectWillBeAdded(_ObjectEvent):
-    """ An event sent just before an object has been added to a folder.  """
-    def __init__(self, object, parent, name, duplicating=False):
+    def __init__(self, object, parent, name, duplicating=False, moving=False):
         self.object = object
         self.parent = parent
         self.name = name
         self.duplicating = duplicating
+        self.moving = moving
+
+@implementer(IObjectWillBeAdded)
+class ObjectWillBeAdded(_ObjectEvent):
+    """ An event sent just before an object has been added to a folder.  """
+    def __init__(self, object, parent, name, duplicating=False, moving=False):
+        self.object = object
+        self.parent = parent
+        self.name = name
+        self.duplicating = duplicating
+        self.moving = moving
 
 @implementer(IObjectRemoved)
 class ObjectRemoved(object):
@@ -59,6 +64,13 @@ class ObjectModified(object): # pragma: no cover
     """ An event sent when an object has been modified."""
     def __init__(self, object):
         self.object = object
+
+@implementer(IACLModified)
+class ACLModified(object): # pragma: no cover
+    def __init__(self, object, old_acl, new_acl):
+        self.object = object
+        self.old_acl = old_acl
+        self.new_acl = new_acl
 
 @implementer(IContentCreated)
 class ContentCreated(object):
@@ -141,6 +153,11 @@ class subscribe_modified(_ContentEventSubscriber):
     """ Decorator for registering an object modified event subscriber
     (a subscriber for ObjectModified)."""
     event = IObjectModified
+
+class subscribe_acl_modified(_ContentEventSubscriber):
+    """ Decorator for registering an object modified event subscriber
+    (a subscriber for ObjectModified)."""
+    event = IACLModified
 
 class subscribe_created(_ContentEventSubscriber):
     """ Decorator for registering an object will-be-removed event subscriber

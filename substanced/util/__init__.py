@@ -4,7 +4,9 @@ import math
 import urlparse
 
 from pyramid.location import lineage
+from pyramid.threadlocal import get_current_registry
 
+from ..event import ACLModified
 from ..interfaces import IFolder
 
 _marker = object()
@@ -304,3 +306,35 @@ def renamer():
 
     return property(_get, _set)
 
+def change_acl(context, new_acl, registry=None):
+    """Change the ACL on context to ``new_acl``, which may be a valid ACL or
+    ``None``.  If ``new_acl`` is ``None``, any existing non-``None``
+    ``__acl__`` attribute of the context will be removed (via ``del
+    context.__acl__``).  Otherwise, if the context's ``__acl__`` and the
+    ``new_acl`` differ, set the context's ``__acl__`` to ``new_acl`` via
+    setattr.
+
+    If the new ACL and the object's original ACL differ, send a
+    :class:`substanced.event.ACLModified` event with the
+    new ACL and the original ACL (the ``__acl__`` attribute of the context, or
+    ``None`` if it doesn't have one) as arguments to the event.
+
+    This function will return ``True`` if a mutation to the context's __acl__
+    was performed, and ``False`` otherwise.
+
+    If ``registry`` is passed, it should be a Pyramid registry; if it is not
+    passed, this function will use the current threadlocal registry to send the
+    event.
+    """
+    old_acl = getattr(context, '__acl__', None)
+    if new_acl == old_acl:
+        return False
+    if new_acl is None:
+        del context.__acl__
+    else:
+        context.__acl__ = new_acl
+    event = ACLModified(context, old_acl, new_acl)
+    if registry is None:
+        registry = get_current_registry()
+    registry.subscribers((event, context), None)
+    return True

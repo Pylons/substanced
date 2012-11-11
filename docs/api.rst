@@ -204,6 +204,10 @@ Other Helpers
    :members:
    :inherited-members:
 
+.. autoclass:: ACLModified
+   :members:
+   :inherited-members:
+
 .. autoclass:: subscribe_added
    :members:
    :inherited-members:
@@ -221,6 +225,10 @@ Other Helpers
    :inherited-members:
 
 .. autoclass:: subscribe_modified
+   :members:
+   :inherited-members:
+
+.. autoclass:: subscribe_acl_modified
    :members:
    :inherited-members:
 
@@ -436,6 +444,8 @@ Other Helpers
 .. autofunction:: chunks
 
 .. autofunction:: renamer
+
+.. autofunction:: change_acl
 
 :mod:`substanced.widget` API
 ----------------------------

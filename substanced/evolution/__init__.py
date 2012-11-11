@@ -8,7 +8,7 @@ from repoze.evolution import (
     evolve_to_latest,
     )
 
-VERSION = 1
+VERSION = 2
 NAME = 'substanced'
 
 def add_evolution_package(config, package_name):

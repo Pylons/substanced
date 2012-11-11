@@ -268,7 +268,7 @@ class Folder(Persistent):
         return name
 
     def add(self, name, other, send_events=True, reserved_names=(),
-            duplicating=False, registry=None):
+            duplicating=False, moving=False, registry=None):
         """ Same as ``__setitem__``.
 
         If ``send_events`` is False, suppress the sending of folder events.
@@ -282,6 +282,7 @@ class Folder(Persistent):
         """
         if registry is None:
             registry = get_current_registry()
+
         name = self.check_name(name, reserved_names)
 
         if getattr(other, '__parent__', None):
@@ -307,7 +308,9 @@ class Folder(Persistent):
                 objectmap.add(node, path_tuple, replace_oid=duplicating)
 
         if send_events:
-            event = ObjectWillBeAdded(other, self, name, duplicating)
+            event = ObjectWillBeAdded(
+                other, self, name, duplicating=duplicating, moving=moving
+                )
             self._notify(event, registry)
 
         other.__parent__ = self
@@ -320,7 +323,9 @@ class Folder(Persistent):
             self._order += (name,)
 
         if send_events:
-            event = ObjectAdded(other, self, name)
+            event = ObjectAdded(
+                other, self, name, duplicating=duplicating, moving=moving
+                )
             self._notify(event, registry)
 
         return name
@@ -458,8 +463,8 @@ class Folder(Persistent):
         used.
 
         This operation is done in terms of a remove and an add.  The Removed
-        and WillBeRemoved events sent will indicate that the object is
-        moving.
+        and WillBeRemoved events as well as the Added and WillBeAdded events
+        sent will indicate that the object is moving.
         """
         is_service = False
         if newname is None:
@@ -469,7 +474,7 @@ class Folder(Persistent):
         if registry is None:
             registry = get_current_registry()
         ob = self.remove(name, moving=True, registry=registry)
-        other.add(newname, ob, registry=registry)
+        other.add(newname, ob, moving=True, registry=registry)
         if is_service:
             other.__services__ = other.__services__ + (name,)
         return ob
@@ -508,6 +513,7 @@ class _AutoNamingFolder(object):
         subobject,
         send_events=True,
         duplicating=False,
+        moving=False,
         registry=None
         ):
         """Add a subobject, naming it automatically, giving it the name
@@ -525,6 +531,7 @@ class _AutoNamingFolder(object):
             subobject,
             send_events=send_events,
             duplicating=duplicating,
+            moving=moving,
             registry=registry
             )
 
@@ -590,7 +597,7 @@ class SequentialAutoNamingFolder(Folder, _AutoNamingFolder):
         return str(int(name)).zfill(self._autoname_length)
 
     def add(self, name, other, send_events=True, reserved_names=(),
-            duplicating=False, registry=None):
+            duplicating=False, moving=False, registry=None):
         """ The ``add`` method of a SequentialAutoNamingFolder will raise a
         :exc:`ValueError` if the ``name`` it is passed is not intifiable, as
         its ``next_name`` method relies on controlling the types of names
@@ -615,6 +622,7 @@ class SequentialAutoNamingFolder(Folder, _AutoNamingFolder):
             send_events=send_events,
             reserved_names=reserved_names,
             duplicating=duplicating,
+            moving=moving,
             registry=registry,
             )
 

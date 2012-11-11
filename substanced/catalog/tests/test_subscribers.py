@@ -222,16 +222,43 @@ class Test_object_modified(unittest.TestCase):
             self.assertEqual(reindexed[0][0], 1)
             self.assertEqual(reindexed[0][1].content, model)
 
+class Test_acl_modified(unittest.TestCase):
+    def _callFUT(self, event):
+        from ..subscribers import acl_modified
+        return acl_modified(event)
+
+    def test_no_catalogs(self):
+        resource = testing.DummyResource()
+        event = DummyEvent(resource, None)
+        self._callFUT(event) # doesnt blow up
+
+    def test_gardenpath(self):
+        resource = testing.DummyResource()
+        resource.__factory_type__ = 'resource'
+        resource.__oid__ = 1
+        resource.__services__ = ('catalog',)
+        catalog = DummyCatalog()
+        resource['catalog'] = catalog
+        index = DummyIndex()
+        catalog['index'] = index
+        event = DummyEvent(resource, None)
+        content = DummyContent({'resource':True})
+        event.registry = DummyRegistry(content)
+        self._callFUT(event) # doesnt blow up
+        self.assertEqual(index.oid, 1)
+        self.assertEqual(index.data.__class__.__name__, 'CatalogViewWrapper')
+
 class DummyCatalog(dict):
     
     family = BTrees.family64
     
-    def __init__(self):
+    def __init__(self, result=None):
         self.queries = []
         self.indexed = []
         self.unindexed = []
         self.reindexed = []
         self.objectids = self.family.II.TreeSet()
+        self.result = result
 
     def index_doc(self, objectid, obj):
         self.indexed.append((objectid, obj))
@@ -246,9 +273,10 @@ class DummyObjectMap:
     family = BTrees.family64
     
 class DummyEvent(object):
-    def __init__(self, object, parent):
+    def __init__(self, object, parent, registry=None):
         self.object = object
         self.parent = parent
+        self.registry = registry
         
 class DummyContent(object):
     def __init__(self, metadata):
@@ -257,8 +285,17 @@ class DummyContent(object):
     def metadata(self, resource, name, default=None):
         return self._metadata.get(resource.__factory_type__, default)
 
+    def istype(self, obj, whatever):
+        return True
+
 class DummyRegistry(object):
     def __init__(self, content):
         self.content = content
         
-        
+class DummyIndex(object):
+    def __init__(self):
+        self.reindexed = []
+
+    def reindex_doc(self, oid, data):
+        self.oid = oid
+        self.data = data
