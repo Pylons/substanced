@@ -70,6 +70,7 @@ Narrative Documentation
    mgmtview.rst
    services.rst
    cataloging.rst
+   references.rst
    workflows.rst
    retail.rst
 
