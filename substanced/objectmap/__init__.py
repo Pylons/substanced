@@ -908,7 +908,7 @@ class ReferentialIntegrityError(Exception):
 
       oids: the oids that reference the to-be-removed object.
     """
-    __name__ = '' # fbo resource_path_tuple
+#    __name__ = '' # fbo resource_path_tuple
     def __init__(self, obj, reftype, oids):
         self.obj = obj
         self.reftype = reftype

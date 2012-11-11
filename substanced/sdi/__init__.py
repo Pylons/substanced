@@ -197,8 +197,11 @@ class mgmt_view(object):
         return wrapped
 
 def sdi_mgmt_views(context, request, names=None):
-    if isinstance(context, HTTPForbidden):
-        # shortcut if this is used in login page
+    if not hasattr(context, '__name__'):
+        # shortcut if the context doesn't have a name (usually happens if the
+        # context is an exception); we do this because mgmt_path uses Pyramid's
+        # resource_path_tuple, which wants every object in the lineage to have
+        # a __name__.
         return []
 
     registry = request.registry
