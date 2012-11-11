@@ -42,6 +42,9 @@ Guts-Only
     def __viewable__(self, context, request):
         return has_permission('sdi.view', context, request)
 
+- How to prevent objects from being moved or duplicated into a place where
+  they're not addable?
+
 - Fix ``Batch`` such that seqlen is a maximum.  Rationale: the sequence that
   the batch receives may be smaller than seqlen due to hidden objects in
   folder contents view.
