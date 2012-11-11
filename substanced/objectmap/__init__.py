@@ -908,6 +908,7 @@ class ReferentialIntegrityError(Exception):
 
       oids: the oids that reference the to-be-removed object.
     """
+    __name__ = '' # fbo resource_path_tuple
     def __init__(self, obj, reftype, oids):
         self.obj = obj
         self.reftype = reftype
@@ -920,6 +921,13 @@ class ReferentialIntegrityError(Exception):
         if objectmap is not None:
             for oid in self.oids:
                 yield objectmap.object_for(oid)
+
+    def get_paths(self):
+        objectmap = find_objectmap(self.obj)
+        if objectmap is not None:
+            for oid in self.oids:
+                yield '/'.join(objectmap.path_for(oid))
+        
 
 class SourceIntegrityError(ReferentialIntegrityError):
     pass

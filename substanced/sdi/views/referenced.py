@@ -1,6 +1,9 @@
 from pyramid.view import view_defaults
 
-from ...objectmap import find_objectmap
+from ...objectmap import (
+    find_objectmap,
+    ReferentialIntegrityError,
+    )
 from ...util import oid_of
 
 from .. import (
@@ -43,5 +46,9 @@ class ReferencedView(object):
             path_tuple = objectmap.path_for(id)
             path = '/'.join(path_tuple)
             yield path
-        
-                
+
+@mgmt_view(context=ReferentialIntegrityError,
+           renderer='templates/integrityerror.pt')
+def integrityerror(context, request): # pragma: no cover
+    return {}
+    

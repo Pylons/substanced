@@ -2012,6 +2012,13 @@ class TestReferentialIntegrityError(unittest.TestCase):
         inst = self._makeOne(obj, 'reftype', (1,))
         self.assertEqual(list(inst.get_objects()), ['one'])
 
+    def test_get_paths(self):
+        objectmap = DummyObjectMap(result='one')
+        obj = testing.DummyResource()
+        obj.__objectmap__ = objectmap
+        inst = self._makeOne(obj, 'reftype', (1,))
+        self.assertEqual(list(inst.get_paths()), ['o/n/e'])
+
 class DummyEvent(object):
     def __init__(self, object, moving=False):
         self.object = object
@@ -2049,6 +2056,9 @@ class DummyObjectMap(object):
         self.toraise = toraise
 
     def object_for(self, objectid):
+        return self.result
+
+    def path_for(self, objectid):
         return self.result
 
     def targetids(self, context, reftype):
