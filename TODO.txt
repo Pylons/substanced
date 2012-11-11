@@ -67,8 +67,6 @@ Nice-to-Have Features
 Docs
 ----
 
-- Explain creating references between content.
-
 - Document how to override a content registration.  Include an override
   example for the sole purpose of overriding the add view.
 
@@ -98,8 +96,6 @@ Docs
 - Explain ``renamer``.
 
 - Explain various view predicates.
-
-- Explain referential integrity.
 
 - Explain __init__.py include-then-scan done by includeme and how to avoid
   scanning.
