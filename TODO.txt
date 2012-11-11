@@ -1,9 +1,6 @@
 UI-Plus-Guts
 ------------
 
-- Create object map management UI (view relationships, view paths, view
-  objectids).
-
 - Import/export from folder contents view.
 
 - Add Undo tab to Site (or per folder?) which will allow admins to undo recent
@@ -134,4 +131,7 @@ Probably Bad Ideas
 
 - Emit an ObjectMoving event rather than removed event with a moving flag,
   then an add event?
+
+- Create object map management UI (view relationships, view paths, view
+  objectids).
 
