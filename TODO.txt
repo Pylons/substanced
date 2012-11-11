@@ -13,8 +13,6 @@ UI-Plus-Guts
 
 - Batching in large folders.
 
-- Create exception views for integrity errors.
-
 Guts-Only
 ---------
 
