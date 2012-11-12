@@ -6,9 +6,6 @@ from pyramid_zodbconn import get_connection
 
 from zope.interface.interfaces import IInterface
 
-from pyramid.config.views import viewdefaults # XXX not an API
-from pyramid.config.util import action_method # XXX not an API
-
 import venusian
 
 from pyramid.authentication import SessionAuthenticationPolicy
@@ -26,7 +23,10 @@ from pyramid.security import (
     )
 from pyramid.session import UnencryptedCookieSessionFactoryConfig
 from pyramid.traversal import resource_path_tuple
+
 from pyramid.util import (
+    action_method,
+    viewdefaults,
     TopologicalSorter,
     FIRST,
     LAST,
