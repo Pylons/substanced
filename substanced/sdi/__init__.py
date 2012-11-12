@@ -13,7 +13,6 @@ import venusian
 
 from pyramid.authentication import SessionAuthenticationPolicy
 from pyramid.authorization import ACLAuthorizationPolicy
-from pyramid.httpexceptions import HTTPForbidden
 from pyramid.exceptions import ConfigurationError
 from pyramid.registry import (
     predvalseq,
