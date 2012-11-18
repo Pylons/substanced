@@ -263,6 +263,7 @@ def chunks(stream, chunk_size=10000):
         yield chunk
 
 def acquire(context, name, default=None):
+    """ Look up the parents for an attribute """
     for node in lineage(context):
         result = getattr(node, name, _marker)
         if result is not _marker and result is not '':
