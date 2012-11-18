@@ -20,7 +20,10 @@ the :term:`object map`.
 
 .. code-block:: python
 
-   class ContextToRoot(object):
+   from substanced.interfaces import ReferenceType
+   from substanced.objectmap import find_objectmap
+
+   class ContextToRoot(ReferenceType):
        pass
 
    def connect_reference(context, request):
@@ -28,22 +31,26 @@ the :term:`object map`.
        root = request.root
        objectmap.connect(context, root, ContextToRoot)
 
-Although a reference can be of any hashable type, it's best if references are
-classes, because you can later add integrity constraints to references that are
-classes, while you can't if they're strings or other immutable objects.
+A reference type is a class (not an instance) that inherits from
+:class:`substanced.interfaces.ReferenceType`.  The reference's name should
+indicate its directionality.
 
 .. warning::
 
-   One caveat: when you use a reference type that is a class it is *pickled*,
-   so if you move the class, you'll have to leave behind a backwards
+   One caveat: reference types are *pickled*, so if you move a reference type
+   from one location to anoterh, you'll have to leave behind a backwards
    compatibility import in its original location "forever", so choose its name
-   and location wisely.
+   and location wisely.  We recommend that you place it in an ``interfaces.py``
+   file in your project.
 
 A reference can be removed using the object map too:
 
 .. code-block:: python
 
-   class ContextToRoot(object):
+   from substanced.interfaces import ReferenceType
+   from substanced.objectmap import find_objectmap
+
+   class ContextToRoot(ReferenceType):
        pass
 
    def disconnect_reference(context, request):
@@ -66,7 +73,10 @@ objects which take part in the reference.
 
 .. code-block:: python
 
-   class ContextToRoot(object):
+   from substanced.interfaces import ReferenceType
+   from substanced.objectmap import find_objectmap
+
+   class ContextToRoot(ReferenceType):
        pass
 
    def query_reference_sources(context, request):
@@ -89,7 +99,10 @@ objectids:
 
 .. code-block:: python
 
-   class ContextToRoot(object):
+   from substanced.interfaces import ReferenceType
+   from substanced.objectmap import find_objectmap
+
+   class ContextToRoot(ReferenceType):
        pass
 
    def query_reference_sources(context, request):
@@ -107,10 +120,12 @@ prevented.  Here's an example of a "source integral" reference type:
 
 .. code-block:: python
 
-   class UserToGroup(object):
+   from substanced.interfaces import ReferenceType
+
+   class UserToGroup(ReferenceType):
        source_integrity = True
 
-This referemce type will prevent any object on the "user" side of the
+This reference type will prevent any object on the "user" side of the
 UserToGroup reference (as opposed to the group side) from being deleted.  When
 a user attempts to delete a user that's related to a group using this reference
 type, a :class:`substanced.objectmap.SourceIntegrityError` will be raised and
@@ -121,7 +136,9 @@ The flip side of this is target integrity:
 
 .. code-block:: python
 
-   class UserToGroup(object):
+   from substanced.interfaces import ReferenceType
+
+   class UserToGroup(ReferenceType):
        target_integrity = True
 
 This is the inverse.  The reference will prevent any object on the "group" side
@@ -154,8 +171,9 @@ Here's use of a reference property:
 
    from persistent import Persistent
    from substanced.objectmap import reference_sourceid_property
+   from substanced.interfaces import ReferenceType
 
-   class LineItemToOrder(object):
+   class LineItemToOrder(ReferenceType):
        pass
 
    class LineItem(Persistent):
