@@ -40,6 +40,7 @@ from ..objectmap import (
     multireference_target_property,
     multireference_sourceid_property,
     multireference_source_property,
+    Reference,
     )
 from ..property import PropertySheet
 from ..schema import (
@@ -52,14 +53,14 @@ from ..util import (
     change_acl,
     )
 
-class UserToGroup(object): # cannot be moved, persisted
-    """ The reference type used to store users-to-groups references in the
-    object map"""
+USER_TO_GROUP = Reference(
+    'USER_TO_GROUP',
+    )
 
-class PrincipalToACLBearing(object): # cannot be moved, persisted
-    """ The reference type used to store principal-to-ACL-bearing-object
-    references in the object map"""
-    source_integrity = True
+PRINCIPAL_TO_ACL_BEARING = Reference(
+    'PRINCIPAL_TO_ACL_BEARING',
+    source_integrity=True
+    )
 
 def _gen_random_token():
     length = random.choice(range(10, 16))
@@ -154,7 +155,7 @@ class Principals(Folder):
         self['resets'][token] = reset
         change_acl(reset, [(Allow, Everyone, ('sdi.view',))], registry=registry)
         objectmap = find_objectmap(self)
-        objectmap.connect(user, reset, UserToPasswordReset)
+        objectmap.connect(user, reset, USER_TO_PASSWORD_RESET)
         return reset
 
 @content(
@@ -253,8 +254,8 @@ class Group(Folder):
         Folder.__init__(self)
         self.description = description
 
-    memberids = multireference_targetid_property(UserToGroup)
-    members = multireference_target_property(UserToGroup)
+    memberids = multireference_targetid_property(USER_TO_GROUP)
+    members = multireference_target_property(USER_TO_GROUP)
     name = renamer()
 
 @colander.deferred
@@ -331,8 +332,8 @@ class User(Folder):
 
     pwd_manager = BCRYPTPasswordManager()
 
-    groupids = multireference_sourceid_property(UserToGroup)
-    groups = multireference_source_property(UserToGroup)
+    groupids = multireference_sourceid_property(USER_TO_GROUP)
+    groups = multireference_source_property(USER_TO_GROUP)
     name = renamer()
 
     def __init__(self, password, email):
@@ -365,8 +366,9 @@ class User(Folder):
         mailer = get_mailer(request)
         mailer.send(message)
 
-class UserToPasswordReset(object):
-    pass
+USER_TO_PASSWORD_RESET = Reference(
+    'USER_TO_PASSWORD_RESET',
+    )
 
 @content(
     'Password Resets',
@@ -387,7 +389,7 @@ class PasswordReset(Persistent):
     """ Object representing the a single password reset request """
     def reset_password(self, password):
         objectmap = find_objectmap(self)
-        sources = list(objectmap.sources(self, UserToPasswordReset))
+        sources = list(objectmap.sources(self, USER_TO_PASSWORD_RESET))
         user = sources[0]
         user.set_password(password)
         self.commit_suicide()

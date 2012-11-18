@@ -2019,6 +2019,54 @@ class TestReferentialIntegrityError(unittest.TestCase):
         inst = self._makeOne(obj, 'reftype', (1,))
         self.assertEqual(list(inst.get_paths()), ['o/n/e'])
 
+
+class TestReference(unittest.TestCase):
+    def _makeOne(self, name, source_integrity=False, target_integrity=False):
+        from . import Reference
+        return Reference(
+            name,
+            source_integrity=source_integrity,
+            target_integrity=target_integrity,
+            )
+
+    def test___eq__True(self):
+        inst_a1 = self._makeOne('a', source_integrity=True)
+        inst_a2 = self._makeOne('a', source_integrity=True)
+        self.assertTrue(inst_a1 == inst_a2)
+            
+    def test___eq__False_integrity(self):
+        inst_a1 = self._makeOne('a', source_integrity=True)
+        inst_a2 = self._makeOne('a')
+        self.assertFalse(inst_a1 == inst_a2)
+
+    def test___eq__False_name(self):
+        inst_a = self._makeOne('a', source_integrity=True)
+        inst_b = self._makeOne('b', source_integrity=True)
+        self.assertFalse(inst_a == inst_b)
+
+    def test___eq__False_different_type(self):
+        inst_a = self._makeOne('a', source_integrity=True)
+        self.assertFalse(inst_a == 'b')
+
+    def test___lt__True(self):
+        inst_a = self._makeOne('a', source_integrity=True)
+        inst_b = self._makeOne('b', source_integrity=True)
+        self.assertTrue(inst_a < inst_b)
+            
+    def test___lt__False_integrity(self):
+        inst_a1 = self._makeOne('a', source_integrity=True)
+        inst_a2 = self._makeOne('a')
+        self.assertFalse(inst_a1 < inst_a2)
+
+    def test___lt__False_name(self):
+        inst_a = self._makeOne('b', source_integrity=True)
+        inst_b = self._makeOne('a', source_integrity=True)
+        self.assertFalse(inst_a < inst_b)
+
+    def test___lt__False_different_type(self):
+        inst_a = self._makeOne('a', source_integrity=True)
+        self.assertFalse(inst_a < 'b')
+
 class DummyEvent(object):
     def __init__(self, object, moving=False):
         self.object = object

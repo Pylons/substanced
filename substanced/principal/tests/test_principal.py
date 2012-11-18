@@ -60,7 +60,7 @@ class TestPrincipals(unittest.TestCase):
         self.assertEqual(group.__name__, 'groupname')
 
     def test_add_reset(self):
-        from .. import UserToPasswordReset
+        from .. import USER_TO_PASSWORD_RESET
         ob = testing.DummyResource()
         content = DummyContentRegistry(ob)
         self.config.registry.content = content
@@ -73,7 +73,7 @@ class TestPrincipals(unittest.TestCase):
         reset = inst.add_reset(user)
         self.assertEqual(
             objectmap.connections,
-            [(user, reset, UserToPasswordReset)])
+            [(user, reset, USER_TO_PASSWORD_RESET)])
         self.assertTrue(reset.__acl__)
         self.assertEqual(len(inst), 1)
 

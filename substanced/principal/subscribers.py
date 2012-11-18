@@ -20,8 +20,8 @@ from ..util import (
     )
 
 from . import (
-    UserToPasswordReset,
-    PrincipalToACLBearing,
+    USER_TO_PASSWORD_RESET,
+    PRINCIPAL_TO_ACL_BEARING,
     )
 
 @subscribe_added(IUser)
@@ -44,7 +44,7 @@ def user_will_be_removed(event):
         return
     objectmap = find_objectmap(user)
     if objectmap is not None:
-        resets = objectmap.targets(user, UserToPasswordReset)
+        resets = objectmap.targets(user, USER_TO_PASSWORD_RESET)
         for reset in resets:
             reset.commit_suicide()
 
@@ -97,7 +97,7 @@ def acl_maybe_added(event):
             if acl is not None:
                 for princid in _referenceable_principals(acl):
                     objectmap.connect(
-                        princid, resource, PrincipalToACLBearing
+                        princid, resource, PRINCIPAL_TO_ACL_BEARING
                         )
 
 @subscribe_acl_modified()
@@ -117,7 +117,15 @@ def acl_modified(event):
         principals_added = new_principals.difference(old_principals)
 
         for princid in principals_removed:
-            objectmap.disconnect(princid, event.object, PrincipalToACLBearing)
+            objectmap.disconnect(
+                princid,
+                event.object,
+                PRINCIPAL_TO_ACL_BEARING
+                )
 
         for princid in principals_added:
-            objectmap.connect(princid, event.object, PrincipalToACLBearing)
+            objectmap.connect(
+                princid,
+                event.object,
+                PRINCIPAL_TO_ACL_BEARING
+                )

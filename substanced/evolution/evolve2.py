@@ -1,5 +1,5 @@
 from substanced.util import postorder
-from substanced.principal import PrincipalToACLBearing
+from substanced.principal import PRINCIPAL_TO_ACL_BEARING
 from substanced.objectmap import find_objectmap
 import logging
 
@@ -17,7 +17,7 @@ def _referenceable_principals(acl):
 
 def evolve(root):
     logger.info(
-        'Running substanced evolve step 2: add PrincipalToACLBearing '
+        'Running substanced evolve step 2: add PRINCIPAL_TO_ACL_BEARING '
         'relationships'
         )
     objectmap = find_objectmap(root)
@@ -32,5 +32,5 @@ def evolve(root):
             continue
         for princid in _referenceable_principals(acl):
             objectmap.connect(
-                princid, obj, PrincipalToACLBearing
+                princid, obj, PRINCIPAL_TO_ACL_BEARING,
                 )
