@@ -150,7 +150,7 @@ class Test_preview_image_upload(unittest.TestCase):
         response = self._callFUT(request)
         self.assertEqual(response.content_type, 'image/gif')
         fn = pkg_resources.resource_filename(
-            'substanced.sdi', 'static/onepixel.gif')
+            'substanced.sdi', 'static/img/onepixel.gif')
         self.assertEqual(response.body, open(fn, 'rb').read())
 
     def test_with_fp(self):
