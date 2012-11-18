@@ -107,7 +107,7 @@ class AddFileView(FormView):
         return HTTPFound(self.request.mgmt_path(self.context))
 
 onepixel = pkg_resources.resource_filename(
-    'substanced.sdi', 'static/onepixel.gif')
+    'substanced.sdi', 'static/img/onepixel.gif')
 
 # this doesn't require a permission, because it's based on session data
 # which the user would have to put there anyway

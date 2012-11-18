@@ -75,7 +75,7 @@
 
     <div id="activity-graph" style="height: 300px; width: 600px"></div>
 
-    <script src="${request.static_url('substanced.sdi:static/flotr2.min.js')}" type="text/javascript"></script>
+    <script src="${request.static_url('substanced.sdi:static/js/flotr2.min.js')}" type="text/javascript"></script>
     <script type="text/javascript">
       $(function () {
         graph = Flotr.draw($('#activity-graph')[0], [
