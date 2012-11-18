@@ -265,7 +265,7 @@ def chunks(stream, chunk_size=10000):
 def acquire(context, name, default=None):
     for node in lineage(context):
         result = getattr(node, name, _marker)
-        if result is not _marker:
+        if result is not _marker and result is not '':
             return result
     return default
 
