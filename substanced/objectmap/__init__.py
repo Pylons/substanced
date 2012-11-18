@@ -5,6 +5,7 @@ from persistent import Persistent
 import BTrees
 
 from zope.interface import implementer
+from zope.interface.interfaces import IInterface
 
 from pyramid.compat import is_nonstr_iter
 from pyramid.traversal import (
@@ -17,7 +18,6 @@ from ..event import subscribe_will_be_removed
 from ..util import (
     oid_of,
     acquire,
-    RichComparisonMixin,
     )
 
 from ..interfaces import IObjectMap
@@ -367,9 +367,9 @@ class ObjectMap(Persistent):
     # because it's not atypical for callers to want to modify the
     # underlying bucket while iterating over the returned set.  For example:
     #
-    # groups = objectmap.targetids(self, USER_TO_GROUP)
+    # groups = objectmap.targetids(self, UserToGroup)
     # for group in groups:
-    #    objectmap.disconnect(self, group, USER_TO_GROUP)
+    #    objectmap.disconnect(self, group, UserToGroup)
     #
     # if we don't make a copy, this kind of code will result in e.g.
     #
@@ -879,7 +879,10 @@ def referential_integrity(event):
     if objectmap is None:
         return
     for reftype in objectmap.get_reftypes():
-        if getattr(reftype, 'source_integrity', False):
+
+        is_iface = IInterface.providedBy(reftype)
+
+        if is_iface and reftype.queryTaggedValue('source_integrity', False):
             targetids = objectmap.targetids(obj, reftype)
             if obj_oid in targetids:
                 targetids.remove(obj_oid) # self-referential
@@ -887,7 +890,7 @@ def referential_integrity(event):
                 # object is a source
                 raise SourceIntegrityError(obj, reftype, targetids)
 
-        if getattr(reftype, 'target_integrity', False):
+        if is_iface and reftype.queryTaggedValue('target_integrity', False):
             sourceids = objectmap.sourceids(obj, reftype)
             if obj_oid in sourceids:
                 sourceids.remove(obj_oid) # self-referential
@@ -936,33 +939,6 @@ class SourceIntegrityError(ReferentialIntegrityError):
 class TargetIntegrityError(ReferentialIntegrityError):
     pass
 
-class Reference(RichComparisonMixin):
-    # Beause they're used as keys in a BTree, a set of instances of this class
-    # must have a total ordering (see
-    # http://www.zodb.org/documentation/guide/modules.html#total-ordering-and-persistence
-    # thus the rich comparison mixin.  We could have just defined __cmp__ but
-    # using rich comparison without __cmp__ is fwd compatible with Py3.
-    def __init__(self, name, source_integrity=False, target_integrity=False):
-        self.name = name
-        self.source_integrity = bool(source_integrity)
-        self.target_integrity = bool(target_integrity)
-
-    def __eq__(self, oth):
-        if oth.__class__ is self.__class__:
-            return (
-                (self.name, self.source_integrity, self.target_integrity) ==
-                (oth.name, oth.source_integrity, oth.target_integrity)
-                )
-        return False
-
-    def __lt__(self, oth):
-        if oth.__class__ is self.__class__:
-            return (
-                (self.name, self.source_integrity, self.target_integrity) <
-                (oth.name, oth.source_integrity, oth.target_integrity)
-                )
-        return False
-    
 def includeme(config): # pragma: no cover
     config.add_view_predicate('referenced', _ReferencedPredicate)
 

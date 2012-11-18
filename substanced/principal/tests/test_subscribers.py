@@ -112,7 +112,7 @@ class Test_acl_maybe_added(unittest.TestCase):
         self.assertEqual(objectmap.connections, [])
 
     def test_with_acls(self):
-        from .. import PRINCIPAL_TO_ACL_BEARING
+        from ...interfaces import PrincipalToACLBearing
         from substanced.interfaces import IFolder
         resource1 = testing.DummyResource(__provides__=IFolder)
         resource2 = testing.DummyResource()
@@ -125,8 +125,8 @@ class Test_acl_maybe_added(unittest.TestCase):
         self._callFUT(event)
         self.assertEqual(
             objectmap.connections,
-            [(2, resource2, PRINCIPAL_TO_ACL_BEARING),
-             (1, resource1, PRINCIPAL_TO_ACL_BEARING)]
+            [(2, resource2, PrincipalToACLBearing),
+             (1, resource1, PrincipalToACLBearing)]
             )
 
 class Test_acl_modified(unittest.TestCase):
@@ -139,7 +139,7 @@ class Test_acl_modified(unittest.TestCase):
         self.assertEqual(self._callFUT(event), None)
 
     def test_gardenpath(self):
-        from .. import PRINCIPAL_TO_ACL_BEARING
+        from ...interfaces import PrincipalToACLBearing
         resource = testing.DummyResource()
         objectmap = DummyObjectMap()
         resource.__objectmap__ = objectmap
@@ -151,11 +151,11 @@ class Test_acl_modified(unittest.TestCase):
         self._callFUT(event) 
         self.assertEqual(
             objectmap.connections,
-            [(1, resource, PRINCIPAL_TO_ACL_BEARING)]
+            [(1, resource, PrincipalToACLBearing)]
             )
         self.assertEqual(
             objectmap.disconnections,
-            [(2, resource, PRINCIPAL_TO_ACL_BEARING)]
+            [(2, resource, PrincipalToACLBearing)]
             )
            
 
