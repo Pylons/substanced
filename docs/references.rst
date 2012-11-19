@@ -115,7 +115,7 @@ objectids:
 
 
 A reference type can claim that it is "integral", which just means that the
-deletion of either the source or the target of a referemce will be
+deletion of either the source or the target of a reference will be
 prevented.  Here's an example of a "source integral" reference type:
 
 .. code-block:: python
