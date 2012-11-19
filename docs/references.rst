@@ -150,8 +150,8 @@ deletion will be prevented.
 
 :class:`substanced.objectmap.SourceIntegrityError` and
 :class:`substanced.objectmap.TargetIntegrityError` both inherit from
-:class::class:`substanced.objectmap.ReferentialIntegrityError`, so you can
-:class:catch either in your code.
+:class:`substanced.objectmap.ReferentialIntegrityError`, so you can catch
+either in your code.
 
 There are convenience functions that you can add to your resource objects that
 give them special behavior:
