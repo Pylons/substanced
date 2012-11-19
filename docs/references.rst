@@ -38,7 +38,7 @@ indicate its directionality.
 .. warning::
 
    One caveat: reference types are *pickled*, so if you move a reference type
-   from one location to anoterh, you'll have to leave behind a backwards
+   from one location to another, you'll have to leave behind a backwards
    compatibility import in its original location "forever", so choose its name
    and location wisely.  We recommend that you place it in an ``interfaces.py``
    file in your project.
