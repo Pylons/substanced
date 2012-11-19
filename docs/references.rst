@@ -38,7 +38,7 @@ indicate its directionality.
 .. warning::
 
    One caveat: reference types are *pickled*, so if you move a reference type
-   from one location to anoterh, you'll have to leave behind a backwards
+   from one location to another, you'll have to leave behind a backwards
    compatibility import in its original location "forever", so choose its name
    and location wisely.  We recommend that you place it in an ``interfaces.py``
    file in your project.
@@ -115,7 +115,7 @@ objectids:
 
 
 A reference type can claim that it is "integral", which just means that the
-deletion of either the source or the target of a referemce will be
+deletion of either the source or the target of a reference will be
 prevented.  Here's an example of a "source integral" reference type:
 
 .. code-block:: python
@@ -150,8 +150,8 @@ deletion will be prevented.
 
 :class:`substanced.objectmap.SourceIntegrityError` and
 :class:`substanced.objectmap.TargetIntegrityError` both inherit from
-:class::class:`substanced.objectmap.ReferentialIntegrityError`, so you can
-:class:catch either in your code.
+:class:`substanced.objectmap.ReferentialIntegrityError`, so you can catch
+either in your code.
 
 There are convenience functions that you can add to your resource objects that
 give them special behavior:
