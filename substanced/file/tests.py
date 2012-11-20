@@ -40,7 +40,7 @@ class TestFileUploadPropertySheet(unittest.TestCase):
         context.get_size = lambda *arg: 80
         context.mimetype = 'application/octet-stream'
         request = testing.DummyRequest()
-        request.mgmt_path = lambda *arg: '/manage'
+        request.sdiapi = DummySDIAPI()
         inst = self._makeOne(context, request)
         file = {'fp':None, 'uid':'oid', 'filename':'', 'size':80}
         self.assertEqual(
@@ -54,9 +54,12 @@ class TestFileUploadPropertySheet(unittest.TestCase):
         context.get_size = lambda *arg: 80
         context.mimetype = 'image/foo'
         request = testing.DummyRequest()
-        request.mgmt_path = lambda *arg: '/manage'
+        request.sdiapi = DummySDIAPI()
         inst = self._makeOne(context, request)
-        file = {'fp':None, 'uid':'oid', 'filename':'','preview_url':'/manage',
+        file = {'fp':None,
+                'uid':'oid',
+                'filename':'',
+                'preview_url':'/mgmt_path',
                 'size':80}
         self.assertEqual(
             inst.get(),
@@ -258,3 +261,7 @@ class DummyRegistry(object):
 class DummyBlob(object):
     def committed(self):
         return os.path.abspath(__file__)
+
+class DummySDIAPI(object):
+    def mgmt_path(self, *arg, **kw):
+        return '/mgmt_path'

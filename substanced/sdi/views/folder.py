@@ -81,7 +81,7 @@ class AddFolderView(FormView):
         name = appstruct['name']
         folder = registry.content.create('Folder')
         self.context[name] = folder
-        return HTTPFound(location=self.request.mgmt_path(self.context))
+        return HTTPFound(location=self.request.sdiapi.mgmt_path(self.context))
 
 @view_defaults(
     context=IFolder,
@@ -197,7 +197,7 @@ class FolderContentsViews(object):
         else:
             msg = 'Deleted %s items' % deleted
             request.flash_with_undo(msg)
-        return HTTPFound(request.mgmt_path(context, '@@contents'))
+        return HTTPFound(request.sdiapi.mgmt_path(context, '@@contents'))
 
     @mgmt_view(
         request_method='POST',
@@ -222,7 +222,7 @@ class FolderContentsViews(object):
         else:
             msg = 'Duplicated %s items' % len(toduplicate)
             request.flash_with_undo(msg)
-        return HTTPFound(request.mgmt_path(context, '@@contents'))
+        return HTTPFound(request.sdiapi.mgmt_path(context, '@@contents'))
 
     @mgmt_view(
         request_method='POST',
@@ -238,7 +238,7 @@ class FolderContentsViews(object):
         torename = request.POST.getall('item-modify')
         if not torename:
             request.session.flash('No items renamed')
-            return HTTPFound(request.mgmt_path(context, '@@contents'))
+            return HTTPFound(request.sdiapi.mgmt_path(context, '@@contents'))
         return dict(torename=[context.get(name)
                               for name in torename
                               if name in context])
@@ -257,7 +257,7 @@ class FolderContentsViews(object):
 
         if self.request.POST.get('form.rename_finish') == "cancel":
             request.session.flash('No items renamed')
-            return HTTPFound(request.mgmt_path(context, '@@contents'))
+            return HTTPFound(request.sdiapi.mgmt_path(context, '@@contents'))
 
         torename = request.POST.getall('item-rename')
         try:
@@ -266,7 +266,7 @@ class FolderContentsViews(object):
                 context.rename(old_name, new_name)
         except FolderKeyError as e:
             self.request.session.flash(e.args[0], 'error')
-            raise HTTPFound(request.mgmt_path(context, '@@contents'))
+            raise HTTPFound(request.sdiapi.mgmt_path(context, '@@contents'))
 
         if len(torename) == 1:
             msg = 'Renamed 1 item'
@@ -274,7 +274,7 @@ class FolderContentsViews(object):
         else:
             msg = 'Renamed %s items' % len(torename)
             request.flash_with_undo(msg)
-        return HTTPFound(request.mgmt_path(context, '@@contents'))
+        return HTTPFound(request.sdiapi.mgmt_path(context, '@@contents'))
 
     @mgmt_view(
         request_method='POST',
@@ -299,7 +299,7 @@ class FolderContentsViews(object):
         else:
             request.session.flash('No items to copy')
 
-        return HTTPFound(request.mgmt_path(context, '@@contents'))
+        return HTTPFound(request.sdiapi.mgmt_path(context, '@@contents'))
 
     @mgmt_view(
         request_method='POST',
@@ -317,7 +317,7 @@ class FolderContentsViews(object):
 
         if self.request.POST.get('form.copy_finish') == "cancel":
             request.session.flash('No items copied')
-            return HTTPFound(request.mgmt_path(context, '@@contents'))
+            return HTTPFound(request.sdiapi.mgmt_path(context, '@@contents'))
 
         try:
             for oid in tocopy:
@@ -325,7 +325,7 @@ class FolderContentsViews(object):
                 obj.__parent__.copy(obj.__name__, context)
         except FolderKeyError as e:
             self.request.session.flash(e.args[0], 'error')
-            raise HTTPFound(request.mgmt_path(context, '@@contents'))
+            raise HTTPFound(request.sdiapi.mgmt_path(context, '@@contents'))
 
         if len(tocopy) == 1:
             msg = 'Copied 1 item'
@@ -334,7 +334,7 @@ class FolderContentsViews(object):
             msg = 'Copied %s items' % len(tocopy)
             request.flash_with_undo(msg)
 
-        return HTTPFound(request.mgmt_path(context, '@@contents'))
+        return HTTPFound(request.sdiapi.mgmt_path(context, '@@contents'))
 
     @mgmt_view(
         request_method='POST',
@@ -359,7 +359,7 @@ class FolderContentsViews(object):
         else:
             request.session.flash('No items to move')
 
-        return HTTPFound(request.mgmt_path(context, '@@contents'))
+        return HTTPFound(request.sdiapi.mgmt_path(context, '@@contents'))
 
     @mgmt_view(
         request_method='POST',
@@ -377,7 +377,7 @@ class FolderContentsViews(object):
 
         if self.request.POST.get('form.move_finish') == "cancel":
             request.session.flash('No items moved')
-            return HTTPFound(request.mgmt_path(context, '@@contents'))
+            return HTTPFound(request.sdiapi.mgmt_path(context, '@@contents'))
 
         try:
             for oid in tomove:
@@ -385,7 +385,7 @@ class FolderContentsViews(object):
                 obj.__parent__.move(obj.__name__, context)
         except FolderKeyError as e:
             self.request.session.flash(e.args[0], 'error')
-            raise HTTPFound(request.mgmt_path(context, '@@contents'))
+            raise HTTPFound(request.sdiapi.mgmt_path(context, '@@contents'))
 
         if len(tomove) == 1:
             msg = 'Moved 1 item'
@@ -394,5 +394,5 @@ class FolderContentsViews(object):
             msg = 'Moved %s items' % len(tomove)
             request.flash_with_undo(msg)
 
-        return HTTPFound(request.mgmt_path(context, '@@contents'))
+        return HTTPFound(request.sdiapi.mgmt_path(context, '@@contents'))
 

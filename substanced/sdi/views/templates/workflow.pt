@@ -1,7 +1,7 @@
-<div metal:use-macro="sdi_h.macros()['master']">
+<div metal:use-macro="request.sdiapi.main_template">
 
   <div metal:fill-slot="main"
-       tal:define="root_url request.mgmt_url(request.root)">
+       tal:define="root_url request.sdiapi.mgmt_url(request.root)">
 
     <h1>Workflows</h1>
 
@@ -10,7 +10,7 @@
       <h2>${workflow.workflow.name or workflow.workflow.type}</h2>
       <h3>Current state: ${workflow.current_state}</h3>
 
-      <form action="${request.mgmt_url(request.context, '@@workflows')}"
+      <form action="${request.sdiapi.mgmt_url(request.context, '@@workflows')}"
             method="POST">
 
         <input type="hidden" name="wfid" value="${workflow.id}"/>

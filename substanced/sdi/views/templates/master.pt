@@ -31,7 +31,7 @@
 
   </head>
 
-  <body tal:define="home_path request.mgmt_path(request.root)">
+  <body tal:define="home_path request.sdiapi.mgmt_path(request.root)">
 
     <div class="navbar navbar-fixed-top">
       <div class="navbar-inner">
@@ -50,11 +50,11 @@
             </ul>
            <div class="nav pull-right">
              <div class="btn-group" tal:condition="request.user">
-               <a class="btn btn-primary" href="${request.mgmt_path(request.user)}"><i class="icon-user icon-white"></i>${request.user.__name__}</a>
+               <a class="btn btn-primary" href="${request.sdiapi.mgmt_path(request.user)}"><i class="icon-user icon-white"></i>${request.user.__name__}</a>
                <a class="btn btn-primary dropdown-toggle" data-toggle="dropdown" href="#"><span class="caret"></span></a>
                <ul class="dropdown-menu">
-                 <li><a href="${request.mgmt_path(request.user, '')}"><i class="icon-pencil"></i> Account</a></li>
-                 <li><a href="${request.mgmt_path(request.root, '@@logout')}"><i class="icon-stop"></i> Log Out</a></li>
+                 <li><a href="${request.sdiapi.mgmt_path(request.user, '')}"><i class="icon-pencil"></i> Account</a></li>
+                 <li><a href="${request.sdiapi.mgmt_path(request.root, '@@logout')}"><i class="icon-stop"></i> Log Out</a></li>
                </ul>
              </div>
              <span class="navbar-text" tal:condition="not request.user">Not logged in</span>

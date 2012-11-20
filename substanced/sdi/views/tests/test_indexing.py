@@ -36,7 +36,7 @@ class TestIndexingView(unittest.TestCase):
         token = request.session.new_csrf_token()
         request.POST['csrf_token'] = token
         request.flash_with_undo = fwu
-        request.mgmt_url = lambda *arg: '/'
+        request.sdiapi = DummySDIAPI()
         context.__oid__ = 1
         context.__services__ = ('catalog',)
         catalog = DummyCatalog()
@@ -67,3 +67,7 @@ class DummyCatalog(object):
     def reindex_doc(self, oid, wrapper):
         self.oid = oid
         self.wrapper = wrapper
+
+class DummySDIAPI(object):
+    def mgmt_url(self, *arg, **kw):
+        return 'http://mgmt_url'

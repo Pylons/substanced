@@ -36,10 +36,10 @@ class TestManageDatabase(unittest.TestCase):
         conn = DummyConnection(am=None)
         inst.get_connection = lambda *arg: conn
         request.POST['days'] = '5'
-        request.mgmt_path = lambda *arg: '/'
+        request.sdiapi = DummySDIAPI()
         resp = inst.pack()
         self.assertEqual(conn._db.packed, 5)
-        self.assertEqual(resp.location, '/')
+        self.assertEqual(resp.location, '/mgmt_path')
 
     def test_pack_invalid_days(self):
         from pyramid.httpexceptions import HTTPFound
@@ -49,7 +49,7 @@ class TestManageDatabase(unittest.TestCase):
         conn = DummyConnection(am=None)
         inst.get_connection = lambda *arg: conn
         request.POST['days'] = 'p'
-        request.mgmt_path = lambda *arg: '/'
+        request.sdiapi = DummySDIAPI()
         self.assertRaises(HTTPFound, inst.pack)
 
     def test_flush_cache(self):
@@ -59,10 +59,10 @@ class TestManageDatabase(unittest.TestCase):
         conn = DummyConnection(am=None)
         inst.get_connection = lambda *arg: conn
         request.POST['days'] = '5'
-        request.mgmt_path = lambda *arg: '/'
+        request.sdiapi = DummySDIAPI()
         resp = inst.flush_cache()
         self.assertTrue(conn._db.minimized)
-        self.assertEqual(resp.location, '/')
+        self.assertEqual(resp.location, '/mgmt_path')
 
 class DummyDB(object):
     def __init__(self, am=None):
@@ -88,3 +88,6 @@ class DummyConnection(object):
     def db(self):
         return self._db
 
+class DummySDIAPI(object):
+    def mgmt_path(self, *arg, **kw):
+        return '/mgmt_path'

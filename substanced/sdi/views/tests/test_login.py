@@ -14,9 +14,9 @@ class Test_logout(unittest.TestCase):
 
     def test_it(self):
         request = testing.DummyRequest()
-        request.mgmt_path = lambda *arg: '/path'
+        request.sdiapi = DummySDIAPI()
         response = self._callFUT(request)
-        self.assertEqual(response.location, '/path')
+        self.assertEqual(response.location, '/mgmt_path')
 
 class Test_login(unittest.TestCase):
     def setUp(self):
@@ -31,10 +31,10 @@ class Test_login(unittest.TestCase):
 
     def test_form_not_submitted(self):
         request = testing.DummyRequest()
-        request.mgmt_path = lambda *arg: '/path'
+        request.sdiapi = DummySDIAPI()
         context = testing.DummyResource()
         result = self._callFUT(context, request)
-        self.assertEqual(result['url'], '/path')
+        self.assertEqual(result['url'], '/mgmt_path')
         self.assertEqual(result['came_from'], 'http://example.com')
         self.assertEqual(result['login'], '')
         self.assertEqual(result['password'], '')
@@ -42,10 +42,10 @@ class Test_login(unittest.TestCase):
     def test_form_submitted_csrf_error(self):
         request = testing.DummyRequest()
         request.params['form.submitted'] = True
-        request.mgmt_path = lambda *arg: '/path'
+        request.sdiapi = DummySDIAPI()
         context = testing.DummyResource()
         result = self._callFUT(context, request)
-        self.assertEqual(result['url'], '/path')
+        self.assertEqual(result['url'], '/mgmt_path')
         self.assertEqual(result['came_from'], 'http://example.com')
         self.assertEqual(result['login'], '')
         self.assertEqual(result['password'], '')
@@ -57,11 +57,11 @@ class Test_login(unittest.TestCase):
         request.params['form.submitted'] = True
         request.params['login'] = 'login'
         request.params['password'] = 'password'
-        request.mgmt_path = lambda *arg: '/path'
+        request.sdiapi = DummySDIAPI()
         request.params['csrf_token'] = request.session.get_csrf_token()
         context = make_site()
         result = self._callFUT(context, request)
-        self.assertEqual(result['url'], '/path')
+        self.assertEqual(result['url'], '/mgmt_path')
         self.assertEqual(result['came_from'], 'http://example.com')
         self.assertEqual(result['login'], 'login')
         self.assertEqual(result['password'], 'password')
@@ -73,13 +73,13 @@ class Test_login(unittest.TestCase):
         request.params['form.submitted'] = True
         request.params['login'] = 'login'
         request.params['password'] = 'password'
-        request.mgmt_path = lambda *arg: '/path'
+        request.sdiapi = DummySDIAPI()
         request.params['csrf_token'] = request.session.get_csrf_token()
         context = make_site()
         context['principals']['users']['login'] = DummyUser(0)
         context.__services__ = ('principals',)
         result = self._callFUT(context, request)
-        self.assertEqual(result['url'], '/path')
+        self.assertEqual(result['url'], '/mgmt_path')
         self.assertEqual(result['came_from'], 'http://example.com')
         self.assertEqual(result['login'], 'login')
         self.assertEqual(result['password'], 'password')
@@ -91,7 +91,7 @@ class Test_login(unittest.TestCase):
         request.params['form.submitted'] = True
         request.params['login'] = 'login'
         request.params['password'] = 'password'
-        request.mgmt_path = lambda *arg: '/path'
+        request.sdiapi = DummySDIAPI()
         request.params['csrf_token'] = request.session.get_csrf_token()
         context = make_site()
         user = DummyUser(1)
@@ -109,3 +109,6 @@ class DummyUser(object):
     def check_password(self, password):
         return self.result
 
+class DummySDIAPI(object):
+    def mgmt_path(self, *arg, **kw):
+        return '/mgmt_path'

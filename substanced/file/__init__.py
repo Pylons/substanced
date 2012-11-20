@@ -82,7 +82,8 @@ class FileUploadPropertySheet(PropertySheet):
             size = context.get_size(),
             )
         if context.mimetype.startswith('image/'):
-            filedata['preview_url'] = request.mgmt_path(context)
+            # XXX should this really point at an SDI URL?
+            filedata['preview_url'] = request.sdiapi.mgmt_path(context)
         return dict(file=filedata)
     
     def set(self, struct):

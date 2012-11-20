@@ -76,7 +76,7 @@ class TestAddFolderView(unittest.TestCase):
     def _makeRequest(self, **kw):
         request = testing.DummyRequest()
         request.registry.content = DummyContent(**kw)
-        request.mgmt_path = lambda *arg: 'http://example.com'
+        request.sdiapi = DummySDIAPI()
         return request
 
     def test_add_success(self):
@@ -86,7 +86,7 @@ class TestAddFolderView(unittest.TestCase):
         inst = self._makeOne(context, request)
         resp = inst.add_success({'name': 'name'})
         self.assertEqual(context['name'], resource)
-        self.assertEqual(resp.location, 'http://example.com')
+        self.assertEqual(resp.location, '/mgmt_path')
 
 class TestFolderContentsViews(unittest.TestCase):
     def setUp(self):
@@ -101,7 +101,7 @@ class TestFolderContentsViews(unittest.TestCase):
 
     def _makeRequest(self, **kw):
         request = testing.DummyRequest()
-        request.mgmt_path = lambda *arg: '/manage'
+        request.sdiapi = DummySDIAPI()
         request.registry.content = DummyContent(**kw)
         request.flash_with_undo = request.session.flash
         return request
@@ -213,7 +213,7 @@ class TestFolderContentsViews(unittest.TestCase):
         inst = self._makeOne(context, request)
         result = inst.delete()
         self.assertEqual(request.session['_f_'], ['No items deleted'])
-        self.assertEqual(result.location, '/manage')
+        self.assertEqual(result.location, '/mgmt_path')
 
     def test_delete_one_deleted(self):
         context = testing.DummyResource()
@@ -223,7 +223,7 @@ class TestFolderContentsViews(unittest.TestCase):
         inst = self._makeOne(context, request)
         result = inst.delete()
         self.assertEqual(request.session['_f_'], ['Deleted 1 item'])
-        self.assertEqual(result.location, '/manage')
+        self.assertEqual(result.location, '/mgmt_path')
         self.assertFalse('a' in context)
 
     def test_delete_multiple_deleted(self):
@@ -235,7 +235,7 @@ class TestFolderContentsViews(unittest.TestCase):
         inst = self._makeOne(context, request)
         result = inst.delete()
         self.assertEqual(request.session['_f_'], ['Deleted 2 items'])
-        self.assertEqual(result.location, '/manage')
+        self.assertEqual(result.location, '/mgmt_path')
         self.assertFalse('a' in context)
         self.assertFalse('b' in context)
 
@@ -247,7 +247,7 @@ class TestFolderContentsViews(unittest.TestCase):
         inst = self._makeOne(context, request)
         result = inst.delete()
         self.assertEqual(request.session['_f_'], ['Deleted 1 item'])
-        self.assertEqual(result.location, '/manage')
+        self.assertEqual(result.location, '/mgmt_path')
         self.assertFalse('a' in context)
 
     @mock.patch('substanced.sdi.views.folder.rename_duplicated_resource')
@@ -263,7 +263,7 @@ class TestFolderContentsViews(unittest.TestCase):
         mock_rename_duplicated_resource.assert_any_call(context, 'a')
         mock_rename_duplicated_resource.assert_any_call(context, 'b')
         request.flash_with_undo.assert_called_once_with('Duplicated 2 items')
-        request.mgmt_path.called_once_with(context, '@@contents')
+        request.sdiapi.mgmt_path.called_once_with(context, '@@contents')
         context.copy.assert_any_call('a', context, 'a-1')
         context.copy.assert_any_call('b', context, 'b-1')
 
@@ -276,7 +276,7 @@ class TestFolderContentsViews(unittest.TestCase):
 
         self.assertEqual(context.mock_calls, [])
         request.session.flash.assert_called_once_with('No items duplicated')
-        request.mgmt_path.called_once_with(context, '@@contents')
+        request.sdiapi.mgmt_path.called_once_with(context, '@@contents')
 
     @mock.patch('substanced.sdi.views.folder.rename_duplicated_resource')
     def test_duplicate_one(self, mock_rename_duplicated_resource):
@@ -290,7 +290,7 @@ class TestFolderContentsViews(unittest.TestCase):
         mock_rename_duplicated_resource.assert_any_call(context, 'a')
         context.copy.assert_any_call('a', context, 'a-1')
         request.flash_with_undo.assert_called_once_with('Duplicated 1 item')
-        request.mgmt_path.called_once_with(context, '@@contents')
+        request.sdiapi.mgmt_path.called_once_with(context, '@@contents')
 
     def test_rename_one(self):
         context = testing.DummyResource()
@@ -332,7 +332,7 @@ class TestFolderContentsViews(unittest.TestCase):
         inst = self._makeOne(context, request)
         result = inst.rename()
         self.assertEqual(request.session['_f_'], ['No items renamed'])
-        self.assertEqual(result.location, '/manage')
+        self.assertEqual(result.location, '/mgmt_path')
 
     def test_rename_finish(self):
         context = mock.Mock()
@@ -722,3 +722,6 @@ class DummyPost(dict):
     def getall(self, name):
         return self.result
 
+class DummySDIAPI(object):
+    def mgmt_path(self, *arg, **kw):
+        return '/mgmt_path'

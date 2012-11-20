@@ -356,9 +356,6 @@ Other Helpers
 
 .. automodule:: substanced.principal
 
-.. autoclass:: UserToGroup
-   :members:
-
 .. autoclass:: Principals
    :members:
 

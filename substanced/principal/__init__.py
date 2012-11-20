@@ -348,7 +348,8 @@ class User(Folder):
         sitename = getattr(root, 'title', None) or 'Substance D'
         principals = find_service(self, 'principals')
         reset = principals.add_reset(self)
-        reseturl = request.application_url + request.mgmt_path(reset)
+        # XXX should this really point at an SDI URL?
+        reseturl = request.application_url + request.sdiapi.mgmt_path(reset)
         message = Message(
             subject = 'Account information for %s' % sitename,
             recipients = [self.email],

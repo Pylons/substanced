@@ -15,7 +15,10 @@ from pyramid.registry import (
     predvalseq,
     Deferred,
     )
-from pyramid.renderers import render
+from pyramid.renderers import (
+    render,
+    get_renderer,
+    )
 from pyramid.request import Request
 from pyramid.security import (
     authenticated_userid,
@@ -151,16 +154,6 @@ def add_mgmt_view(
     intr.relate('views', view_discriminator)
     config.action(discriminator, introspectables=(intr,))
 
-def mgmt_path(request, obj, *arg, **kw):
-    traverse = resource_path_tuple(obj)
-    kw['traverse'] = traverse
-    return request.route_path(MANAGE_ROUTE_NAME, *arg, **kw)
-
-def mgmt_url(request, obj, *arg, **kw):
-    traverse = resource_path_tuple(obj)
-    kw['traverse'] = traverse
-    return request.route_url(MANAGE_ROUTE_NAME, *arg, **kw)
-    
 class mgmt_view(object):
     """ A class :term:`decorator` which, when applied to a class, will
     provide defaults for all view configurations that use the class.  This
@@ -228,7 +221,7 @@ def sdi_mgmt_views(context, request, names=None):
             # NB: in reality, the above loop will execute exactly once because
             # each "sdi view" is associated with exactly one pyramid view
             view_name = view_intr['name']
-            req.path_info = request.mgmt_path(context, view_name)
+            req.path_info = request.sdiapi.mgmt_path(context, view_name)
             if names is not None and not view_name in names:
                 continue
             # do a passable job at figuring out whether, if we visit the
@@ -263,7 +256,8 @@ def sdi_mgmt_views(context, request, names=None):
                  'tab_after':tab_after,
                  'title': tab_title or view_name.capitalize(),
                  'class': css_class,
-                 'url': request.mgmt_path(request.context, '@@%s' % view_name)
+                 'url': request.sdiapi.mgmt_path(
+                     request.context, '@@%s' % view_name)
                  }
                 )
 
@@ -456,7 +450,7 @@ def sdi_folder_contents(folder, request):
       def button1(context, request):
           # add button functionality here, then go back to contents
           request.session.flash('Just did what button1 does')
-          return HTTPFound(request.mgmt_path(context, '@@contents'))
+          return HTTPFound(request.sdiapi.mgmt_path(context, '@@contents'))
 
     Note that context has to be IFolder for this to work. If you need to
     restrict a button to some specific list of content types, the Pyramid
@@ -525,7 +519,7 @@ def sdi_folder_contents(folder, request):
                 deletable = deletable(v, request)
         if deletable is None:
             deletable = can_manage
-        url = request.mgmt_path(v, '@@manage_main')
+        url = request.sdiapi.mgmt_path(v, '@@manage_main')
         columns = default_sdi_columns(folder, v, request)
         if custom_columns is None:
             columns = []
@@ -545,7 +539,7 @@ def sdi_folder_contents(folder, request):
 def default_sdi_columns(folder, subobject, request):
     """ The default columns content-type hook """
     name = getattr(subobject, '__name__', '')
-    url = request.mgmt_path(subobject, '@@manage_main')
+    url = request.sdiapi.mgmt_path(subobject, '@@manage_main')
     link_tag = '<a href="%s">%s</a>' % (url, name)
     icon = request.registry.content.metadata(subobject, 'icon')
     if callable(icon):
@@ -682,7 +676,7 @@ def sdi_add_views(context, request):
 
     for view in views:
         view_name = view['view_name']
-        url = request.mgmt_path(context, '@@' + view_name)
+        url = request.sdiapi.mgmt_path(context, '@@' + view_name)
         data = candidates[view_name]
         data['url'] = url
         L.append(data)
@@ -691,22 +685,29 @@ def sdi_add_views(context, request):
 
     return L
 
-def get_user(request):
+def user(request):
     userid = authenticated_userid(request)
     if userid is None:
         return None
     objectmap = find_objectmap(request.context)
     return objectmap.object_for(userid)
 
-class FlashUndo(object):
-    
+def mgmt_path(request, obj, *arg, **kw):
+    return request.sdiapi.mgmt_path(obj, *arg, **kw)
+
+def mgmt_url(request, obj, *arg, **kw):
+    return request.sdiapi.mgmt_url(obj, *arg, **kw)
+
+class sdiapi(object):
     get_connection = staticmethod(get_connection) # testing
     transaction = transaction # testing
     
     def __init__(self, request):
         self.request = request
+        self.main_template = get_renderer(
+            'substanced.sdi.views:templates/master.pt').implementation()
 
-    def __call__(self, msg, queue='', allow_duplicate=True):
+    def flash_with_undo(self, msg, queue='', allow_duplicate=True):
         request = self.request
         conn = self.get_connection(request)
         db = conn.db()
@@ -718,12 +719,24 @@ class FlashUndo(object):
             t.note('hash:'+hsh)
             csrf_token = request.session.get_csrf_token()
             query = {'csrf_token':csrf_token, 'hash':hsh}
-            url = request.mgmt_path(request.context, '@@undo_one', _query=query)
+            url = self.mgmt_path(request.context, '@@undo_one', _query=query)
             vars = {'msg':msg, 'url':url}
             button= render(
                 'views/templates/undobutton.pt', vars, request=request)
             msg = button
         request.session.flash(msg, queue, allow_duplicate=allow_duplicate)
+
+    def mgmt_path(self, obj, *arg, **kw):
+        request = self.request
+        traverse = resource_path_tuple(obj)
+        kw['traverse'] = traverse
+        return request.route_path(MANAGE_ROUTE_NAME, *arg, **kw)
+
+    def mgmt_url(self, obj, *arg, **kw):
+        request = self.request
+        traverse = resource_path_tuple(obj)
+        kw['traverse'] = traverse
+        return request.route_url(MANAGE_ROUTE_NAME, *arg, **kw)
 
 def includeme(config): # pragma: no cover
     settings = config.registry.settings
@@ -738,10 +751,10 @@ def includeme(config): # pragma: no cover
     manage_prefix = settings.get('substanced.manage_prefix', '/manage')
     manage_pattern = manage_prefix + '*traverse'
     config.add_route(MANAGE_ROUTE_NAME, manage_pattern)
-    config.add_request_method(mgmt_path)
-    config.add_request_method(mgmt_url)
-    config.add_request_method(get_user, name='user', reify=True)
-    config.add_request_method(FlashUndo, name='flash_with_undo', reify=True)
+    config.add_request_method(mgmt_path) # XXX deprecate
+    config.add_request_method(mgmt_url) # XXX deprecate
+    config.add_request_method(user, reify=True)
+    config.add_request_method(sdiapi, reify=True)
     config.include('deform_bootstrap')
     secret = settings.get('substanced.secret')
     if secret is None:

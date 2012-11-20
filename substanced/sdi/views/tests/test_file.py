@@ -28,9 +28,9 @@ class Test_view_tab(unittest.TestCase):
     def test_it(self):
         context = testing.DummyResource()
         request = testing.DummyRequest()
-        request.mgmt_path = lambda *arg: '/mgmt'
+        request.sdiapi = DummySDIAPI()
         result = self._callFUT(context, request)
-        self.assertEqual(result.location, '/mgmt')
+        self.assertEqual(result.location, '/mgmt_path')
 
 class Test_name_or_file(unittest.TestCase):
     def setUp(self):
@@ -80,33 +80,33 @@ class TestAddFileView(unittest.TestCase):
         created = testing.DummyResource()
         context = testing.DummyResource()
         request = testing.DummyRequest()
-        request.mgmt_path = lambda *arg: '/mgmt'
+        request.sdiapi = DummySDIAPI()
         request.registry.content = DummyContent(created)
         appstruct = {'name':'abc', 'file':None, 'title':None}
         inst = self._makeOne(context, request)
         result = inst.add_success(appstruct)
-        self.assertEqual(result.location, '/mgmt')
+        self.assertEqual(result.location, '/mgmt_path')
         self.assertEqual(context['abc'], created)
 
     def test_add_success_with_filedata_no_name(self):
         created = testing.DummyResource()
         context = testing.DummyResource()
         request = testing.DummyRequest()
-        request.mgmt_path = lambda *arg: '/mgmt'
+        request.sdiapi = DummySDIAPI()
         request.registry.content = DummyContent(created)
         fp = StringIO.StringIO('abc')
         appstruct = {'name':None, 'title':None,
                      'file':{'fp':fp, 'filename':'filename'}}
         inst = self._makeOne(context, request)
         result = inst.add_success(appstruct)
-        self.assertEqual(result.location, '/mgmt')
+        self.assertEqual(result.location, '/mgmt_path')
         self.assertEqual(context['filename'], created)
 
     def test_add_success_with_filedata_and_name(self):
         created = testing.DummyResource()
         context = testing.DummyResource()
         request = testing.DummyRequest()
-        request.mgmt_path = lambda *arg: '/mgmt'
+        request.sdiapi = DummySDIAPI()
         request.registry.content = DummyContent(created)
         fp = StringIO.StringIO('abc')
         appstruct = {'name':'abc',
@@ -114,21 +114,21 @@ class TestAddFileView(unittest.TestCase):
                      'title':None}
         inst = self._makeOne(context, request)
         result = inst.add_success(appstruct)
-        self.assertEqual(result.location, '/mgmt')
+        self.assertEqual(result.location, '/mgmt_path')
         self.assertEqual(context['abc'], created)
 
     def test_add_success_with_filedata_but_no_fp(self):
         created = testing.DummyResource()
         context = testing.DummyResource()
         request = testing.DummyRequest()
-        request.mgmt_path = lambda *arg: '/mgmt'
+        request.sdiapi = DummySDIAPI()
         request.registry.content = DummyContent(created)
         appstruct = {'name':'abc',
                      'file':{'fp':None, 'filename':'filename'},
                      'title':None}
         inst = self._makeOne(context, request)
         result = inst.add_success(appstruct)
-        self.assertEqual(result.location, '/mgmt')
+        self.assertEqual(result.location, '/mgmt_path')
         self.assertEqual(context['abc'], created)
 
 class Test_preview_image_upload(unittest.TestCase):
@@ -174,3 +174,6 @@ class DummyContent(object):
     def create(self, *arg, **kw):
         return self.result
     
+class DummySDIAPI(object):
+    def mgmt_path(self, *arg, **kw):
+        return '/mgmt_path'

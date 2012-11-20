@@ -81,7 +81,7 @@ class PropertySheetsView(FormView):
                 "property sheet")
         self.active_sheet.set(appstruct)
         self.active_sheet.after_set()
-        return HTTPFound(self.request.mgmt_path(
+        return HTTPFound(self.request.sdiapi.mgmt_path(
             self.context, '@@properties', self.active_sheet_name))
 
     def show(self, form):

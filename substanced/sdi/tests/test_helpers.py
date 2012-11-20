@@ -39,13 +39,13 @@ class Test_breadcrumbs(unittest.TestCase):
         self.config.testing_securitypolicy(permissive=True)
         resource = testing.DummyResource()
         request = testing.DummyRequest()
-        request.mgmt_path = lambda *arg: '/path'
+        request.sdiapi = DummySDIAPI()
         request.context = resource
         request.registry.content = DummyContent()
         result = self._callFUT(request)
         self.assertEqual(
             result,
-             [{'url': '/path',
+             [{'url': '/mgmt_path',
                'active': 'active',
                'name': 'Home',
                'icon': None}]
@@ -86,3 +86,6 @@ class DummyContent(object):
     def metadata(self, context, name, default=None):
         return default
     
+class DummySDIAPI(object):
+    def mgmt_path(self, *arg, **kw):
+        return '/mgmt_path'

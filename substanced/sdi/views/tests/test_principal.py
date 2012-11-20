@@ -10,12 +10,12 @@ class Test_add_principals_service(unittest.TestCase):
     def test_it(self):
         context = testing.DummyResource()
         request = testing.DummyRequest()
-        request.mgmt_path = lambda *arg: '/'
+        request.sdiapi = DummySDIAPI()
         service = testing.DummyResource()
         request.registry.content = DummyContentRegistry(service)
         result = self._callFUT(context, request)
         self.assertEqual(context['principals'], service)
-        self.assertEqual(result.location, '/')
+        self.assertEqual(result.location, '/mgmt_path')
 
 class TestAddUserView(unittest.TestCase):
     def _makeOne(self, context, request):
@@ -26,7 +26,7 @@ class TestAddUserView(unittest.TestCase):
         request = testing.DummyRequest()
         request.registry = testing.DummyResource()
         request.registry.content = DummyContentRegistry(resource)
-        request.mgmt_path = lambda *arg: 'http://example.com'
+        request.sdiapi = DummySDIAPI()
         return request
 
     def test_add_success(self):
@@ -36,7 +36,7 @@ class TestAddUserView(unittest.TestCase):
         inst = self._makeOne(context, request)
         resp = inst.add_success({'name':'name', 'groupids':(1,)})
         self.assertEqual(context['name'], resource)
-        self.assertEqual(resp.location, 'http://example.com')
+        self.assertEqual(resp.location, '/mgmt_path')
         self.assertEqual(resource.groupids, (1,))
 
 class TestAddGroupView(unittest.TestCase):
@@ -48,7 +48,7 @@ class TestAddGroupView(unittest.TestCase):
         request = testing.DummyRequest()
         request.registry = testing.DummyResource()
         request.registry.content = DummyContentRegistry(resource)
-        request.mgmt_path = lambda *arg: 'http://example.com'
+        request.sdiapi = DummySDIAPI()
         return request
 
     def test_add_success(self):
@@ -58,7 +58,7 @@ class TestAddGroupView(unittest.TestCase):
         inst = self._makeOne(context, request)
         resp = inst.add_success({'name':'name', 'memberids':(1,)})
         self.assertEqual(context['name'], resource)
-        self.assertEqual(resp.location, 'http://example.com')
+        self.assertEqual(resp.location, '/mgmt_path')
         self.assertEqual(resource.memberids, (1,))
 
 class Test_password_validator(unittest.TestCase):
@@ -94,11 +94,11 @@ class TestChangePasswordView(unittest.TestCase):
     def test_add_success(self):
         context = DummyPrincipal()
         request = testing.DummyRequest()
-        request.mgmt_path = lambda *arg: 'http://example.com'
+        request.sdiapi = DummySDIAPI()
         inst = self._makeOne(context, request)
         resp = inst.change_success({'password':'password'})
         self.assertEqual(context.password, 'password')
-        self.assertEqual(resp.location, 'http://example.com')
+        self.assertEqual(resp.location, '/mgmt_path')
         self.assertTrue(request.session['_f_success'])
 
 class TestRequestResetView(unittest.TestCase):
@@ -108,7 +108,7 @@ class TestRequestResetView(unittest.TestCase):
 
     def _makeRequest(self):
         request = testing.DummyRequest()
-        request.mgmt_path = lambda *arg : 'http://example.com'
+        request.sdiapi = DummySDIAPI()
         return request
 
     def _makeSite(self):
@@ -122,7 +122,7 @@ class TestRequestResetView(unittest.TestCase):
         request = self._makeRequest()
         inst = self._makeOne(site, request)
         resp = inst.send_success({'login':'user'})
-        self.assertEqual(resp.location, 'http://example.com')
+        self.assertEqual(resp.location, '/mgmt_path')
         self.assertTrue(user.emailed_password_reset)
 
 class TestResetView(unittest.TestCase):
@@ -132,7 +132,7 @@ class TestResetView(unittest.TestCase):
 
     def _makeRequest(self):
         request = testing.DummyRequest()
-        request.mgmt_path = lambda *arg : 'http://example.com'
+        request.sdiapi = DummySDIAPI()
         return request
 
     def test_reset_success(self):
@@ -143,7 +143,7 @@ class TestResetView(unittest.TestCase):
         request = self._makeRequest()
         inst = self._makeOne(context, request)
         resp = inst.reset_success({'new_password':'thepassword'})
-        self.assertEqual(resp.location, 'http://example.com')
+        self.assertEqual(resp.location, '/mgmt_path')
     
 
 class Test_login_validator(unittest.TestCase):
@@ -189,4 +189,6 @@ class DummyContentRegistry(object):
     def create(self, iface, *arg, **kw):
         return self.resource
         
-        
+class DummySDIAPI(object):
+    def mgmt_path(self, *arg, **kw):
+        return '/mgmt_path'

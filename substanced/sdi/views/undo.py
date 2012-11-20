@@ -32,5 +32,7 @@ def undo_one(request):
         except ZODB.POSException.POSError:
             msg = 'Could not undo, sorry'
             request.session.flash(msg, 'error')
-    return HTTPFound(request.referrer or request.mgmt_path(request.context))
+    return HTTPFound(
+        request.referrer or request.sdiapi.mgmt_path(request.context)
+        )
             

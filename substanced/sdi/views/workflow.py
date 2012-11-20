@@ -69,7 +69,6 @@ class WorkflowViews(object):
                     'info',
                     )
                 break
-        return HTTPFound(self.request.mgmt_url(self.context, '@@workflows'))
-            
-        
-
+        return HTTPFound(
+            self.request.sdiapi.mgmt_url(self.context, '@@workflows')
+            )
