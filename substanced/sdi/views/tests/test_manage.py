@@ -13,7 +13,7 @@ class TestManagementViews(unittest.TestCase):
         def mgmt_path(ctx, value):
             self.assertEqual(value, '@@login')
             return '/path'
-        request.sdiapi = DummySDIAPI()
+        request.sdiapi = Dummy()
         request.sdiapi.mgmt_path = mgmt_path
         inst = self._makeOne(context, request)
         inst.sdi_mgmt_views = lambda *arg: []
@@ -26,7 +26,7 @@ class TestManagementViews(unittest.TestCase):
         def mgmt_path(ctx, value):
             self.assertEqual(value, '@@fred')
             return '/path'
-        request.sdiapi = DummySDIAPI()
+        request.sdiapi = Dummy()
         request.sdiapi.mgmt_path = mgmt_path
         inst = self._makeOne(context, request)
         inst.sdi_mgmt_views = lambda *arg: [{'view_name':'fred'}]
@@ -49,6 +49,5 @@ class TestManagementViews(unittest.TestCase):
         result = inst.add_content()
         self.assertEqual(result.location, 'http://foo')
 
-class DummySDIAPI(object):
-    def mgmt_path(self, *arg, **kw):
-        return '/mgmt_path'
+class Dummy(object):
+    pass
