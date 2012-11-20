@@ -107,10 +107,10 @@ class TestFileUploadPropertySheet(unittest.TestCase):
         context = testing.DummyResource()
         here = os.path.dirname(__file__)
         request = testing.DummyRequest()
+        request.sdiapi = DummySDIAPI()
         request.registry.settings = {}
         request.registry.settings['substanced.uploads_tempdir'] = here
         request.session['substanced.tempstore'] = {'1':{}}
-        request.flash_with_undo = lambda *arg: None
         inst = self._makeOne(context, request)
         inst.after_set()
         self.assertEqual(request.session.get('substanced.tempstore'), None)

@@ -102,8 +102,8 @@ class TestFolderContentsViews(unittest.TestCase):
     def _makeRequest(self, **kw):
         request = testing.DummyRequest()
         request.sdiapi = DummySDIAPI()
+        request.sdiapi.flash_with_undo = request.session.flash
         request.registry.content = DummyContent(**kw)
-        request.flash_with_undo = request.session.flash
         return request
 
     def test_show_no_columns(self):
@@ -262,7 +262,8 @@ class TestFolderContentsViews(unittest.TestCase):
 
         mock_rename_duplicated_resource.assert_any_call(context, 'a')
         mock_rename_duplicated_resource.assert_any_call(context, 'b')
-        request.flash_with_undo.assert_called_once_with('Duplicated 2 items')
+        request.sdiapi.flash_with_undo.assert_called_once_with(
+            'Duplicated 2 items')
         request.sdiapi.mgmt_path.called_once_with(context, '@@contents')
         context.copy.assert_any_call('a', context, 'a-1')
         context.copy.assert_any_call('b', context, 'b-1')
@@ -289,7 +290,8 @@ class TestFolderContentsViews(unittest.TestCase):
 
         mock_rename_duplicated_resource.assert_any_call(context, 'a')
         context.copy.assert_any_call('a', context, 'a-1')
-        request.flash_with_undo.assert_called_once_with('Duplicated 1 item')
+        request.sdiapi.flash_with_undo.assert_called_once_with(
+            'Duplicated 1 item')
         request.sdiapi.mgmt_path.called_once_with(context, '@@contents')
 
     def test_rename_one(self):
@@ -344,7 +346,8 @@ class TestFolderContentsViews(unittest.TestCase):
 
         inst = self._makeOne(context, request)
         inst.rename_finish()
-        request.flash_with_undo.assert_called_once_with('Renamed 1 item')
+        request.sdiapi.flash_with_undo.assert_called_once_with(
+            'Renamed 1 item')
         context.rename.assert_called_once_with('foobar', 'foobar2')
 
     def test_rename_finish_multiple(self):
@@ -359,7 +362,8 @@ class TestFolderContentsViews(unittest.TestCase):
         inst = self._makeOne(context, request)
         inst.rename_finish()
 
-        request.flash_with_undo.assert_called_once_with('Renamed 2 items')
+        request.sdiapi.flash_with_undo.assert_called_once_with(
+            'Renamed 2 items')
         context.rename.assert_any_call('foobar', 'foobar0')
         context.rename.assert_any_call('foobar1', 'foobar11')
 
@@ -486,7 +490,7 @@ class TestFolderContentsViews(unittest.TestCase):
 
         self.assertEqual(mock_folder.__parent__.copy.call_args,
                          mock.call(mock.sentinel.name, context))
-        request.flash_with_undo.assert_called_once_with('Copied 1 item')
+        request.sdiapi.flash_with_undo.assert_called_once_with('Copied 1 item')
         self.assertEqual(request.session.__delitem__.call_args,
                          mock.call('tocopy'))
 
@@ -510,7 +514,7 @@ class TestFolderContentsViews(unittest.TestCase):
                         mock_find_objectmap().object_for.mock_calls)
         self.assertEqual(mock_folder.__parent__.copy.call_args,
                          mock.call(mock.sentinel.name, context))
-        request.flash_with_undo.assert_called_once_with('Copied 2 items')
+        request.sdiapi.flash_with_undo.assert_called_once_with('Copied 2 items')
         self.assertEqual(request.session.__delitem__.call_args,
                          mock.call('tocopy'))
 
@@ -629,7 +633,7 @@ class TestFolderContentsViews(unittest.TestCase):
 
         self.assertEqual(mock_folder.__parent__.move.call_args,
                          mock.call(mock.sentinel.name, context))
-        request.flash_with_undo.assert_called_once_with('Moved 1 item')
+        request.sdiapi.flash_with_undo.assert_called_once_with('Moved 1 item')
         self.assertEqual(request.session.__delitem__.call_args,
                          mock.call('tomove'))
 
@@ -655,7 +659,7 @@ class TestFolderContentsViews(unittest.TestCase):
                          mock.call(mock.sentinel.name, context))
         self.assertEqual(request.session.__delitem__.call_args,
                          mock.call('tomove'))
-        request.flash_with_undo.assert_called_once_with('Moved 2 items')
+        request.sdiapi.flash_with_undo.assert_called_once_with('Moved 2 items')
 
     @mock.patch('substanced.sdi.views.folder.find_objectmap')
     def test_move_finish_already_exists(self, mock_find_objectmap):

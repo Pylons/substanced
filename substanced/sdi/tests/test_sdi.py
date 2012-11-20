@@ -1015,6 +1015,51 @@ class Test_sdiapi(unittest.TestCase):
         result = inst.mgmt_url(context, 'a', b=1)
         self.assertEqual(result, 'http://example.com/path')
 
+    def test_breadcrumbs_no_permissions(self):
+        self.config.testing_securitypolicy(permissive=False)
+        resource = testing.DummyResource()
+        request = testing.DummyRequest()
+        request.context = resource
+        inst = self._makeOne(request)
+        result = inst.breadcrumbs()
+        self.assertEqual(result, [])
+        
+    def test_breadcrumbs_with_permissions(self):
+        self.config.testing_securitypolicy(permissive=True)
+        resource = testing.DummyResource()
+        request = testing.DummyRequest()
+        request.sdiapi = DummySDIAPI()
+        request.context = resource
+        request.registry.content = DummyContent()
+        inst = self._makeOne(request)
+        result = inst.breadcrumbs()
+        self.assertEqual(
+            result,
+             [{'url': '/mgmt_path',
+               'active': 'active',
+               'name': 'Home',
+               'icon': None}]
+            )
+
+    def test_sdi_title_exists(self):
+        resource = testing.DummyResource()
+        resource.sdi_title = 'My Title'
+        request = testing.DummyRequest()
+        request.context = resource
+        inst = self._makeOne(request)
+        result = inst.sdi_title()
+        self.assertEqual(result, 'My Title')
+
+    def test_sdi_title_missing(self):
+        resource = testing.DummyResource()
+        request = testing.DummyRequest()
+        request.context = resource
+        inst = self._makeOne(request)
+        result = inst.sdi_title()
+        self.assertEqual(result, 'Substance D')
+
+
+
 class Test_mgmt_path(unittest.TestCase):
     def _callFUT(self, *arg, **kw):
         from .. import mgmt_path

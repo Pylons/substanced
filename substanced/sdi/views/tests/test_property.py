@@ -58,6 +58,8 @@ class TestPropertySheetsView(unittest.TestCase):
         self.assertEqual(response.location, '/mgmt_path')
         self.assertEqual(inst.active_sheet.struct, {'a': 1})
         self.assertTrue(inst.active_sheet.after)
+        self.assertEqual(request.sdiapi.flashed,
+                         ('Updated properties', 'success') )
 
     def test_save_success_no_change_permission(self):
         from pyramid.httpexceptions import HTTPForbidden
@@ -230,3 +232,6 @@ class Dummy(object):
 class DummySDIAPI(object):
     def mgmt_path(self, *arg, **kw):
         return '/mgmt_path'
+
+    def flash_with_undo(self, msg, category):
+        self.flashed = (msg, category)

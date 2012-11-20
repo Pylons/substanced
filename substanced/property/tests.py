@@ -56,11 +56,6 @@ class TestPropertySheet(unittest.TestCase):
         from substanced.event import ObjectModified
         request = testing.DummyRequest()
         request.registry = DummyRegistry()
-        def flash_with_undo(msg, category):
-            self.assertEqual(msg, 'Updated properties')
-            self.assertEqual(category, 'success')
-            context.flashed = True
-        request.flash_with_undo = flash_with_undo
         context = testing.DummyResource()
         inst = self._makeOne(context, request)
         inst.after_set()
@@ -68,7 +63,6 @@ class TestPropertySheet(unittest.TestCase):
         self.assertEqual(subscribed[1], None)
         self.assertEqual(subscribed[0][0].__class__, ObjectModified)
         self.assertEqual(subscribed[0][1], context)
-        self.assertTrue(context.flashed)
 
 class Test_is_propertied(unittest.TestCase):
     def setUp(self):

@@ -193,10 +193,10 @@ class FolderContentsViews(object):
             request.session.flash(msg)
         elif deleted == 1:
             msg = 'Deleted 1 item'
-            request.flash_with_undo(msg)
+            request.sdiapi.flash_with_undo(msg)
         else:
             msg = 'Deleted %s items' % deleted
-            request.flash_with_undo(msg)
+            request.sdiapi.flash_with_undo(msg)
         return HTTPFound(request.sdiapi.mgmt_path(context, '@@contents'))
 
     @mgmt_view(
@@ -218,10 +218,10 @@ class FolderContentsViews(object):
             request.session.flash(msg)
         elif len(toduplicate) == 1:
             msg = 'Duplicated 1 item'
-            request.flash_with_undo(msg)
+            request.sdiapi.flash_with_undo(msg)
         else:
             msg = 'Duplicated %s items' % len(toduplicate)
-            request.flash_with_undo(msg)
+            request.sdiapi.flash_with_undo(msg)
         return HTTPFound(request.sdiapi.mgmt_path(context, '@@contents'))
 
     @mgmt_view(
@@ -270,10 +270,10 @@ class FolderContentsViews(object):
 
         if len(torename) == 1:
             msg = 'Renamed 1 item'
-            request.flash_with_undo(msg)
+            request.sdiapi.flash_with_undo(msg)
         else:
             msg = 'Renamed %s items' % len(torename)
-            request.flash_with_undo(msg)
+            request.sdiapi.flash_with_undo(msg)
         return HTTPFound(request.sdiapi.mgmt_path(context, '@@contents'))
 
     @mgmt_view(
@@ -329,10 +329,10 @@ class FolderContentsViews(object):
 
         if len(tocopy) == 1:
             msg = 'Copied 1 item'
-            request.flash_with_undo(msg)
+            request.sdiapi.flash_with_undo(msg)
         else:
             msg = 'Copied %s items' % len(tocopy)
-            request.flash_with_undo(msg)
+            request.sdiapi.flash_with_undo(msg)
 
         return HTTPFound(request.sdiapi.mgmt_path(context, '@@contents'))
 
@@ -389,10 +389,10 @@ class FolderContentsViews(object):
 
         if len(tomove) == 1:
             msg = 'Moved 1 item'
-            request.flash_with_undo(msg)
+            request.sdiapi.flash_with_undo(msg)
         else:
             msg = 'Moved %s items' % len(tomove)
-            request.flash_with_undo(msg)
+            request.sdiapi.flash_with_undo(msg)
 
         return HTTPFound(request.sdiapi.mgmt_path(context, '@@contents'))
 

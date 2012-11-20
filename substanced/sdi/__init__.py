@@ -11,6 +11,7 @@ import venusian
 from pyramid.authentication import SessionAuthenticationPolicy
 from pyramid.authorization import ACLAuthorizationPolicy
 from pyramid.exceptions import ConfigurationError
+from pyramid.location import lineage
 from pyramid.registry import (
     predvalseq,
     Deferred,
@@ -39,6 +40,7 @@ from pyramid.util import (
 MIDDLE = Sentinel('MIDDLE')
 
 from ..objectmap import find_objectmap
+from ..util import acquire
 
 MANAGE_ROUTE_NAME = 'substanced_manage'
 
@@ -692,11 +694,14 @@ def user(request):
     objectmap = find_objectmap(request.context)
     return objectmap.object_for(userid)
 
-def mgmt_path(request, obj, *arg, **kw):
+def mgmt_path(request, obj, *arg, **kw): # XXX deprecate
     return request.sdiapi.mgmt_path(obj, *arg, **kw)
 
-def mgmt_url(request, obj, *arg, **kw):
+def mgmt_url(request, obj, *arg, **kw): # XXX deprecate
     return request.sdiapi.mgmt_url(obj, *arg, **kw)
+
+def flash_with_undo(request, *arg, **kw): # XXX deprecate
+    return request.sdiapi.flash_with_undo(*arg, **kw)
 
 class sdiapi(object):
     get_connection = staticmethod(get_connection) # testing
@@ -738,6 +743,26 @@ class sdiapi(object):
         kw['traverse'] = traverse
         return request.route_url(MANAGE_ROUTE_NAME, *arg, **kw)
 
+    def breadcrumbs(self):
+        request = self.request
+        breadcrumbs = []
+        for resource in reversed(list(lineage(request.context))):
+            if not has_permission('sdi.view', resource, request):
+                return []
+            url = request.sdiapi.mgmt_path(resource, '@@manage_main')
+            name = resource.__name__ or 'Home'
+            icon = request.registry.content.metadata(resource, 'icon')
+            active = resource is request.context and 'active' or None
+            breadcrumbs.append({'url':url, 'name':name, 'active':active,
+                                'icon':icon})
+        return breadcrumbs
+
+    def sdi_title(self):
+        return acquire(self.request.context, 'sdi_title', 'Substance D')
+
+    def mgmt_views(self, context):
+        return sdi_mgmt_views(context, self.request)
+
 def includeme(config): # pragma: no cover
     settings = config.registry.settings
     YEAR = 86400 * 365
@@ -753,6 +778,7 @@ def includeme(config): # pragma: no cover
     config.add_route(MANAGE_ROUTE_NAME, manage_pattern)
     config.add_request_method(mgmt_path) # XXX deprecate
     config.add_request_method(mgmt_url) # XXX deprecate
+    config.add_request_method(flash_with_undo) # XXX deprecate
     config.add_request_method(user, reify=True)
     config.add_request_method(sdiapi, reify=True)
     config.include('deform_bootstrap')

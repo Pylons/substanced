@@ -17,60 +17,27 @@ class Test_macros(unittest.TestCase):
         self.assertTrue('master' in val)
 
 class Test_breadcrumbs(unittest.TestCase):
-    def setUp(self):
-        self.config = testing.setUp()
-
-    def tearDown(self):
-        testing.tearDown()
-    
     def _callFUT(self, request):
         from ..helpers import breadcrumbs
         return breadcrumbs(request)
-    
-    def test_no_permissions(self):
-        self.config.testing_securitypolicy(permissive=False)
-        resource = testing.DummyResource()
-        request = testing.DummyRequest()
-        request.context = resource
-        result = self._callFUT(request)
-        self.assertEqual(result, [])
-        
-    def test_with_permissions(self):
-        self.config.testing_securitypolicy(permissive=True)
-        resource = testing.DummyResource()
+
+    def test_it(self):
         request = testing.DummyRequest()
         request.sdiapi = DummySDIAPI()
-        request.context = resource
-        request.registry.content = DummyContent()
         result = self._callFUT(request)
-        self.assertEqual(
-            result,
-             [{'url': '/mgmt_path',
-               'active': 'active',
-               'name': 'Home',
-               'icon': None}]
-            )
-
+        self.assertEqual(result, [])
+    
 class Test_get_sdi_title(unittest.TestCase):
     def _callFUT(self, request):
         from ..helpers import get_sdi_title
         return get_sdi_title(request)
+
+    def test_it(self):
+        request = testing.DummyRequest()
+        request.sdiapi = DummySDIAPI()
+        result = self._callFUT(request)
+        self.assertEqual(result, 'abc')
         
-    def test_it_exists(self):
-        resource = testing.DummyResource()
-        resource.sdi_title = 'My Title'
-        request = testing.DummyRequest()
-        request.context = resource
-        result = self._callFUT(request)
-        self.assertEqual(result, 'My Title')
-
-    def test_it_missing(self):
-        resource = testing.DummyResource()
-        request = testing.DummyRequest()
-        request.context = resource
-        result = self._callFUT(request)
-        self.assertEqual(result, 'Substance D')
-
 class Test_add_renderer_globals(unittest.TestCase):
     def _callFUT(self, event):
         from ..helpers import add_renderer_globals
@@ -89,3 +56,9 @@ class DummyContent(object):
 class DummySDIAPI(object):
     def mgmt_path(self, *arg, **kw):
         return '/mgmt_path'
+
+    def breadcrumbs(self):
+        return []
+
+    def sdi_title(self):
+        return 'abc'

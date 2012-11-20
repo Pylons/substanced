@@ -81,6 +81,7 @@ class PropertySheetsView(FormView):
                 "property sheet")
         self.active_sheet.set(appstruct)
         self.active_sheet.after_set()
+        self.request.sdiapi.flash_with_undo('Updated properties', 'success')
         return HTTPFound(self.request.sdiapi.mgmt_path(
             self.context, '@@properties', self.active_sheet_name))
 
