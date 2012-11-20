@@ -102,7 +102,7 @@ objectids:
 
 
 A reference type can claim that it is "integral", which just means that the
-deletion of either the source or the target of a referemce will be
+deletion of either the source or the target of a reference will be
 prevented.  Here's an example of a "source integral" reference type:
 
 .. code-block:: python
@@ -110,7 +110,7 @@ prevented.  Here's an example of a "source integral" reference type:
    class UserToGroup(object):
        source_integrity = True
 
-This referemce type will prevent any object on the "user" side of the
+This reference type will prevent any object on the "user" side of the
 UserToGroup reference (as opposed to the group side) from being deleted.  When
 a user attempts to delete a user that's related to a group using this reference
 type, a :class:`substanced.objectmap.SourceIntegrityError` will be raised and
