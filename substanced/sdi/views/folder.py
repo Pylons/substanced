@@ -12,7 +12,10 @@ from ...form import FormView
 from ...interfaces import IFolder
 from ...objectmap import find_objectmap
 from ...schema import Schema
-from ...util import oid_of
+from ...util import (
+    oid_of,
+    JsonDict,
+    )
 
 from .. import (
     mgmt_view,
@@ -134,6 +137,31 @@ class FolderContentsViews(object):
 
         return headers, non_sortable, non_filterable
 
+    def _column_headers_sg(self, context, request):
+        """Generate columns from SlickGrid."""
+        #
+        # XXX Just provide a static definition for now.
+        #
+        # TODO As the slickgrid's column desription format contains different fields
+        # from our internal column schema (both more feature rich, and
+        # uses different attributes), we will need to convert our schema to
+        # SlickGrid's here. As there is no "universal grid column description format" exists,
+        # this also means that here we have to limit the flexible configuration
+        # possibilities of the slickgrid to those use cases that we wish to support.
+
+        columns = [
+        #    { #"id": "author",
+        #        "name": "Author", "field": "author", "width": 120, "minWidth": 120,
+        #        "cssClass": "cell-author", "editorName": "text",
+        #        "validatorName": "required", "sortable": True},
+            { "id": "title",
+                "name": "Title", "field": "title", "width": 120, "minWidth": 120,
+                "cssClass": "cell-title", "sortable": True},
+            ]
+     
+        return columns
+
+
     @mgmt_view(
         request_method='GET',
         permission='sdi.view'
@@ -145,6 +173,11 @@ class FolderContentsViews(object):
         headers, non_sortable, non_filterable = self._column_headers(
             context, request
             )
+        # XXX the parallel equivalent of the above line, for slickgrid.
+        columns_sg = self._column_headers_sg(
+            context, request
+            )
+
         buttons = self._buttons(context, request)
 
         addables = self.sdi_add_views(context, request)
@@ -161,6 +194,25 @@ class FolderContentsViews(object):
         items, items_copy = itertools.tee(seq)
         num_items = sum(1 for _ in items_copy) 
 
+        # construct the slickgrid widget options.
+        slickgrid_options = dict(
+            # default options for Slick.Grid come here.
+            editable = False,
+            enableAddRow = False,
+            enableCellNavigation = True,
+            asyncEditorLoading = True,
+            forceFitColumns = True,
+            rowHeight = 37,
+            )
+        # We pass the wrapper options which contains all information
+        # needed to configure the several components of the grid config.
+        slickgrid_wrapper_options = JsonDict(
+            configName = 'sdi-content-grid', # << this refers to slickgrid-config.js
+            columns = columns_sg,
+            slickgridOptions = slickgrid_options,
+            items=list(items),
+            )
+
         return dict(
             items=items, # NB: do not use "seq" here, we teed it above
             num_items=num_items,
@@ -169,6 +221,8 @@ class FolderContentsViews(object):
             buttons=buttons,
             non_filterable=non_filterable,
             non_sortable=non_sortable,
+            # XXX for slickgrid
+            slickgrid_wrapper_options=slickgrid_wrapper_options,
             )
 
     @mgmt_view(

@@ -25,6 +25,19 @@
 
       <div tal:condition="items">
 
+<div>-------------------</div>
+
+    <div id="sdi-contents-table-sg" class="slickgrid-wrapper"
+        style="width:100%;height:400px"></div> <!-- << move these styles to css -->
+    <script type="text/javascript">
+        jQuery(function ($) {
+            $('#sdi-contents-table-sg').slickgrid(${slickgrid_wrapper_options});
+        });
+    </script>
+
+
+<div>XXX XXX XXX XXX XXX</div>
+
 	  <table id="sdi-contents-table" class="table table-striped">
             <thead>
               <th></th>

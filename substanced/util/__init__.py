@@ -2,6 +2,7 @@ import calendar
 import itertools
 import math
 import urlparse
+import json
 
 from pyramid.location import lineage
 from pyramid.threadlocal import get_current_registry
@@ -338,3 +339,8 @@ def change_acl(context, new_acl, registry=None):
         registry = get_current_registry()
     registry.subscribers((event, context), None)
     return True
+
+
+class JsonDict(dict):
+    def __str__(self):
+        return json.dumps(self)
