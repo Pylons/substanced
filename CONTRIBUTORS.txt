@@ -106,3 +106,6 @@ Contributors
 - Paul Everitt, 2012/09/19
 
 - Carlos de la Guardia, 2012/10/07
+
+- Balazs Ree, 2012/11/21
+
