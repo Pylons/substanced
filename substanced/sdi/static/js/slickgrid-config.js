@@ -72,6 +72,8 @@
             dataView.setItems(this.wrapperOptions.items);
             dataView.endUpdate();
 
+            grid.render();
+
         }
 
     });

@@ -155,7 +155,8 @@ class FolderContentsViews(object):
         #        "cssClass": "cell-author", "editorName": "text",
         #        "validatorName": "required", "sortable": True},
             { "id": "title",
-                "name": "Title", "field": "title", "width": 120, "minWidth": 120,
+                "name": "Title", "field": "name", # << field specified the record key to use for rendering
+                "width": 120, "minWidth": 120,
                 "cssClass": "cell-title", "sortable": True},
             ]
      

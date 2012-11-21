@@ -29,19 +29,17 @@
       <h2 tal:condition="not items">No items</h2>
 
       <div tal:condition="items">
-
-<div>-------------------</div>
-
-    <div id="sdi-contents-table-sg" class="slickgrid-wrapper"
-        style="width:100%;height:400px"></div> <!-- << move these styles to css -->
-    <script type="text/javascript">
-        jQuery(function ($) {
-            $('#sdi-contents-table-sg').slickgrid(${slickgrid_wrapper_options});
-        });
-    </script>
+      <div id="sdi-contents-table-sg" class="slickgrid-wrapper"
+          style="width:100%;height:400px"></div> <!-- << move these styles to css -->
+      <script type="text/javascript">
+          jQuery(function ($) {
+              $('#sdi-contents-table-sg').slickgrid(${slickgrid_wrapper_options});
+          });
+      </script>
 
 
-<div>XXX XXX XXX XXX XXX</div>
+      <hr><br><br>
+      <div>We repeat the static table below:</div>
 
 	  <table id="sdi-contents-table" class="table table-striped">
             <thead>
