@@ -204,13 +204,24 @@ class FolderContentsViews(object):
             forceFitColumns = True,
             rowHeight = 37,
             )
+        # The items for the slickgrid are really almost the same format as the
+        # items used for the static table. However, it would be great if it were
+        # JSON marshallable. Since it is not, we cannot really send it to
+        # the client. To be able to do so, we need a conversion step.
+        # And, we also must add a unique id to each row, which is required by slickgrid.
+        items_sg = []
+        for i, item in enumerate(items):
+            item_sg = dict(item)
+            item_sg['deletable'] = bool(item_sg['deletable'])
+            item_sg['id'] = i
+            items_sg.append(item_sg)
         # We pass the wrapper options which contains all information
         # needed to configure the several components of the grid config.
         slickgrid_wrapper_options = JsonDict(
-            configName = 'sdi-content-grid', # << this refers to slickgrid-config.js
-            columns = columns_sg,
-            slickgridOptions = slickgrid_options,
-            items=list(items),
+            configName='sdi-content-grid', # << this refers to slickgrid-config.js
+            columns=columns_sg,
+            slickgridOptions=slickgrid_options,
+            items=items_sg,
             )
 
         return dict(

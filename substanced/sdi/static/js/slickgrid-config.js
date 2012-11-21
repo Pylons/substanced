@@ -44,13 +44,13 @@
             //
             // Variables you can access from this handler:
             //
-            // this:              will equal to the SlickGrid object instance
-            // this.element:      the element to bind the grid to
-            // this.columns:      column definitions (pre-processed)
-            // this.options:      options passed to this object at creation
+            // this:                  will equal to the SlickGrid object instance
+            // this.element:          the element to bind the grid to
+            // this.columns:          column definitions (pre-processed)
+            // this.wrapperOptions:   options passed to this object at creation
             //
             var dataView = new Slick.Data.DataView({inlineFilters: true});
-            var grid = new Slick.Grid(this.element, this.dataView, this.columns, this.options.slickgridOptions);
+            var grid = new Slick.Grid(this.element, dataView, this.columns, this.wrapperOptions.slickgridOptions);
             var columns = this.columns;
 
             var sortcol = columns[0].field;
@@ -69,7 +69,7 @@
 
             // initialize the model after all the events have been hooked up
             dataView.beginUpdate();
-            dataView.setItems(this.options.items);
+            dataView.setItems(this.wrapperOptions.items);
             dataView.endUpdate();
 
         }
