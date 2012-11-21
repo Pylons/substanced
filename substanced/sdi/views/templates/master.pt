@@ -50,7 +50,7 @@
             </ul>
            <div class="nav pull-right">
              <div class="btn-group" tal:condition="request.user">
-               <a class="btn btn-primary" href="${request.sdiapi.mgmt_path(request.user)}"><i class="icon-user icon-white"></i>${request.user.__name__}</a>
+               <a class="btn btn-primary" href="${request.sdiapi.mgmt_path(request.user)}"><i class="icon-user icon-white"></i> ${request.user.__name__}</a>
                <a class="btn btn-primary dropdown-toggle" data-toggle="dropdown" href="#"><span class="caret"></span></a>
                <ul class="dropdown-menu">
                  <li><a href="${request.sdiapi.mgmt_path(request.user, '')}"><i class="icon-pencil"></i> Account</a></li>
