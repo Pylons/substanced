@@ -24,7 +24,6 @@
     <div class="container-fluid">
     <form action="@@contents" method="POST">
 
-      <fieldset>
 
       <h2 tal:condition="not items">No items</h2>
 
@@ -67,22 +66,23 @@
       <div class="clearfix">
       </div>
 
+      <fieldset>
       <input type="hidden" name="csrf_token" 
              value="${request.session.get_csrf_token()}"/>
 
       <div class="form-actions btn-toolbar">
 
-	<div tal:repeat="group buttons"
-	     class="${group['type']=='group' and 'btn-group' or 'btn-single'}">
-          <button tal:repeat="button group['buttons']"
-                  id="${button['id']}"
-                  name="${button['name']}"
-                  class="btn ${button['class']}"
-                  value="${button['value']}"
-                  type="submit"
-                  >
-		  ${button['text']}
-          </button>
+        <div tal:repeat="group buttons"
+           class="${group['type']=='group' and 'btn-group' or 'btn-single'}">
+            <button tal:repeat="button group['buttons']"
+                    id="${button['id']}"
+                    name="${button['name']}"
+                    class="btn ${button['class']}"
+                    value="${button['value']}"
+                    type="submit"
+                    >
+            ${button['text']}
+            </button>
         </div>
 
         <tal:block tal:condition="'tocopy' not in request.session and 'tomove' not in request.session">
