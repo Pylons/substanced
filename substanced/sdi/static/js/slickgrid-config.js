@@ -62,9 +62,14 @@
             // this.columns:          column definitions (pre-processed)
             // this.wrapperOptions:   options passed to this object at creation
             //
-            var dataView = new Slick.Data.DataView({inlineFilters: true});
-            var grid = new Slick.Grid(this.element, dataView, this.columns, this.wrapperOptions.slickgridOptions);
             var columns = this.columns;
+
+            // checkbox column: add it
+            var checkboxSelector = new Slick.CheckboxSelectColumn({});
+            columns.unshift(checkboxSelector.getColumnDefinition());
+
+            var dataView = new Slick.Data.DataView({inlineFilters: true});
+            var grid = new Slick.Grid(this.element, dataView, columns, this.wrapperOptions.slickgridOptions);
 
             var sortcol = 'title';
             var sortdir = 1;
@@ -84,6 +89,13 @@
                 grid.invalidateRows(args.rows);
                 grid.render();
             });
+
+            // checkbox column
+            grid.setSelectionModel(new Slick.RowSelectionModel({selectActiveRow: false}));
+            grid.registerPlugin(checkboxSelector);
+            //this.grid.onSelectedRowsChanged.subscribe(function (evt) { 
+                // ?
+            //});
 
             // initialize the model after all the events have been hooked up
             dataView.beginUpdate();
