@@ -14,7 +14,8 @@
     </script>
     <script src="${request.static_url('substanced.sdi:static/datatables/js/jquery.dataTables.js')}" type="text/javascript"></script>
     <!-- slickgrid -->
-    <script src="${request.static_url('substanced.sdi:static/js/slickgrid.min.js')}" type="text/javascript"></script>
+    <script src="${request.static_url('substanced.sdi:static/js/slickgrid.upstream.js')}" type="text/javascript"></script>
+    <script src="${request.static_url('substanced.sdi:static/js/slickgrid-config.js')}" type="text/javascript"></script>
     <link href="${request.static_url('substanced.sdi:static/css/slick.grid.upstream.css')}" rel="stylesheet" />
     <link href="${request.static_url('substanced.sdi:static/css/sdi_slickgrid.css')}" rel="stylesheet" />
 
