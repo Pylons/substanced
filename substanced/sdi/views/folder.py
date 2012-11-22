@@ -155,9 +155,11 @@ class FolderContentsViews(object):
         #        "cssClass": "cell-author", "editorName": "text",
         #        "validatorName": "required", "sortable": True},
             { "id": "title",
-                "name": "Title", "field": "name", # << field specified the record key to use for rendering
+                "name": "Title", "field": "title", # << field specified the record key to use for rendering
                 "width": 120, "minWidth": 120,
-                "cssClass": "cell-title", "sortable": True},
+                "cssClass": "cell-title", "sortable": True,
+                "formatterName": "icon_label_url",
+                },
             ]
      
         return columns
@@ -205,16 +207,29 @@ class FolderContentsViews(object):
             forceFitColumns = True,
             rowHeight = 37,
             )
-        # The items for the slickgrid are really almost the same format as the
-        # items used for the static table. However, it would be great if it were
-        # JSON marshallable. Since it is not, we cannot really send it to
-        # the client. To be able to do so, we need a conversion step.
-        # And, we also must add a unique id to each row, which is required by slickgrid.
+        # The items for the slickgrid are really in a format similar to the
+        # items used for the static table. However, it has some problems so we have
+        # to convert the records:
+        #
+        # - The records must be json-marshallable, so we convert 'deletable' to bool.
+        # - SlickGrid requires a unique id to each row
+        # - more reasonable keys, that match slickgrid's rendering (actually, we could leave
+        #   it intact here, and just handle this from the formatters in the js code,
+        #   but then it would be more difficult to understand the code.
+        # - remove the 'columns' attribute that contains the rendered parts. Slickgrid will
+        #   format the html on the client.
+        #
         items_sg = []
-        for i, item in enumerate(items):
-            item_sg = dict(item)
-            item_sg['deletable'] = bool(item_sg['deletable'])
-            item_sg['id'] = i
+        my_items, items = itertools.tee(items, 2)
+        for i, item in enumerate(my_items):
+            item_sg = dict(
+                id=i,
+                deletable=bool(item['deletable']),
+                title=item['name'],
+                title_icon=item['icon'],
+            )
+            if item['viewable']:
+                item_sg['title_url'] = item['url']
             items_sg.append(item_sg)
         # We pass the wrapper options which contains all information
         # needed to configure the several components of the grid config.
