@@ -66,7 +66,7 @@
             var grid = new Slick.Grid(this.element, dataView, this.columns, this.wrapperOptions.slickgridOptions);
             var columns = this.columns;
 
-            var sortcol = columns[0].field;
+            var sortcol = 'title';
             var sortdir = 1;
             function comparer(a, b) {
                 var x = a[sortcol], y = b[sortcol];
@@ -78,6 +78,11 @@
                 sortcol = args.sortCol.field;
 
                 dataView.sort(comparer, args.sortAsc);
+            });
+
+            dataView.onRowsChanged.subscribe(function (e, args) {
+                grid.invalidateRows(args.rows);
+                grid.render();
             });
 
             // initialize the model after all the events have been hooked up
