@@ -10,6 +10,7 @@ import venusian
 
 from pyramid.authentication import SessionAuthenticationPolicy
 from pyramid.authorization import ACLAuthorizationPolicy
+from pyramid.decorator import reify
 from pyramid.exceptions import ConfigurationError
 from pyramid.location import lineage
 from pyramid.registry import (
@@ -709,7 +710,10 @@ class sdiapi(object):
     
     def __init__(self, request):
         self.request = request
-        self.main_template = get_renderer(
+
+    @reify
+    def main_template(self):
+        return get_renderer(
             'substanced.sdi.views:templates/master.pt').implementation()
 
     def flash_with_undo(self, msg, queue='', allow_duplicate=True):
