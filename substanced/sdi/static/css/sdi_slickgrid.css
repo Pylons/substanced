@@ -68,8 +68,6 @@ body .slickgrid-wrapper .grid-canvas .slick-cell {
   height: 20px;
   line-height: 20px;
   margin: 0;
-  /* XXX ... needed to override from slickgrid ? */
-
   border-right: 1px solid #FFFFFF;
   border-left: 0px;
   border-top: 0px;

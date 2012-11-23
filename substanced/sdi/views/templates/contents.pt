@@ -1,24 +1,11 @@
 <div metal:use-macro="sdi_h.macros()['master']">
 
   <div tal:omit-tag="" metal:fill-slot="head-more">
-    <link href="${request.static_url('substanced.sdi:static/datatables/css/jquery.dataTables.css')}" rel="stylesheet" />
-    <link href="${request.static_url('substanced.sdi:static/css/dt_bootstrap.css')}" rel="stylesheet" />
-    <script type="text/javascript">
-      function toggleChecked(status) {
-          dt = $("#sdi-contents-table").dataTable().fnGetNodes()
-          $(dt).each( function() {
-             if (!$(this).find('input').eq(0).attr("disabled")) {
-               $(this).find('input').eq(0).attr("checked",status);
-             }
-         })};
-    </script>
-    <script src="${request.static_url('substanced.sdi:static/datatables/js/jquery.dataTables.js')}" type="text/javascript"></script>
     <!-- slickgrid -->
     <script src="${request.static_url('substanced.sdi:static/js/slickgrid.upstream.js')}" type="text/javascript"></script>
     <script src="${request.static_url('substanced.sdi:static/js/slickgrid-config.js')}" type="text/javascript"></script>
     <link href="${request.static_url('substanced.sdi:static/css/slick.grid.upstream.css')}" rel="stylesheet" />
     <link href="${request.static_url('substanced.sdi:static/css/sdi_slickgrid.css')}" rel="stylesheet" />
-
   </div>
 
   <div metal:fill-slot="main">
@@ -36,33 +23,6 @@
               $('#sdi-contents-table-sg').slickgrid(${slickgrid_wrapper_options});
           });
       </script>
-
-
-      <hr><br><br>
-      <div>We repeat the static table below:</div>
-
-	  <table id="sdi-contents-table" class="table table-striped">
-            <thead>
-              <th></th>
-              <th tal:repeat="header headers">${header}</th>
-            </thead>
-            <tbody>
-              <tal:loop tal:repeat="choice items">
-                <tr tal:condition="choice['viewable']">
-                  <td>
-                      <input tal:attributes="disabled not choice['deletable']"
-                             type="checkbox"
-                             name="item-modify"
-                             value="${choice['name']}"
-                             id="item-${repeat.choice.index}"/>
-                  </td>
-                  <td tal:repeat="column choice['columns']">${structure:column}</td>
-                </tr>
-              </tal:loop>
-            </tbody>
-          </table> 
-
-      </div>
 
       <div class="clearfix">
       </div>
@@ -106,12 +66,6 @@
     </form>
 
   </div>
-  </div>
-
-
-  <div tal:omit-tag="" metal:fill-slot="tail-more">
-  <script type="text/javascript" tal:define="enabled num_items>20 and 'true' or 'false';at_least_one num_items>0 and 'true' or 'false'" tal:content="string:var pagination_enabled = ${enabled};non_sortable_cols = ${non_sortable};non_filterable_cols = ${non_filterable};at_least_one = ${at_least_one}"></script>
-    <script src="${request.static_url('substanced.sdi:static/js/dt_bootstrap.js')}" type="text/javascript"></script>
   </div>
 
 </div>
