@@ -5804,6 +5804,9 @@ if (typeof Slick === "undefined") {
   $.fn.slickgrid.defaults = {
       slickgridOptions: {},
       columns: [],
+      //sortCol: null,       // the name of the initial sorting column
+      sortDir: true,         // sorting direction true = ascending, or false = descending
+                             // (it will not sort really, just show it in the header)
       //configName: null     // allows more default options, registered as DOM data with this key. (...)
       formatters: {},
       validators: {},

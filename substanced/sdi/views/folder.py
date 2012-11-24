@@ -257,6 +257,11 @@ class FolderContentsViews(object):
             columns=columns_sg,
             slickgridOptions=slickgrid_options,
             items=items_sg,
+            # initial sorting (The grid will really not sort the initial data,
+            # just display it in the order we provide it. It will use the information
+            # to just visually show in the headers the sorted column.)
+            sortCol = columns_sg[0]['field'], 
+            sortDir = True,   # True ascending, or False descending.
             )
 
         return dict(

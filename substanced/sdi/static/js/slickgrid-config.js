@@ -86,16 +86,23 @@
             // this.wrapperOptions:   options passed to this object at creation
             //
             var columns = this.columns;
+            var wrapperOptions = this.wrapperOptions;
 
             // checkbox column: add it
             var checkboxSelector = new Slick.CheckboxSelectColumn({});
             columns.unshift(checkboxSelector.getColumnDefinition());
 
             var dataView = new Slick.Data.DataView({inlineFilters: true});
-            var grid = this.grid = new Slick.Grid(this.element, dataView, columns, this.wrapperOptions.slickgridOptions);
+            var grid = this.grid = new Slick.Grid(this.element, dataView, columns, wrapperOptions.slickgridOptions);
 
-            var sortCol = 'name';
-            var sortDir = 1;
+            var sortCol = wrapperOptions.sortCol;
+            var sortDir = wrapperOptions.sortDir;
+
+            // set the initial sorting to be shown in the header
+            if (sortCol !== undefined) {
+                grid.setSortColumn(sortCol, sortDir);
+            }
+
             function comparer(a, b) {
                 var x = a[sortCol], y = b[sortCol];
                 return (x == y ? 0 : (x > y ? 1 : -1));
@@ -113,8 +120,6 @@
                 grid.render();
             });
 
-            // set the initial sorting to be shown
-            grid.setSortColumn(sortCol, sortDir);
 
             // checkbox column
             grid.setSelectionModel(new Slick.RowSelectionModel({selectActiveRow: false}));
@@ -137,7 +142,7 @@
 
             // initialize the model after all the events have been hooked up
             dataView.beginUpdate();
-            dataView.setItems(this.wrapperOptions.items);
+            dataView.setItems(wrapperOptions.items);
             dataView.endUpdate();
 
             // if you don't want the items that are not visible (due to being filtered out
