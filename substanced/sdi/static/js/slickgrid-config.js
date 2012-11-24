@@ -102,6 +102,10 @@
             dataView.setItems(this.wrapperOptions.items);
             dataView.endUpdate();
 
+            // if you don't want the items that are not visible (due to being filtered out
+            // or being on a different page) to stay selected, pass 'false' to the second arg
+            dataView.syncGridSelection(grid, true);
+
             grid.render();
 
         }
