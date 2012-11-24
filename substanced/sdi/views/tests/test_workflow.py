@@ -45,7 +45,7 @@ class TestIndexingView(unittest.TestCase):
     def test_reindex(self):
         context = testing.DummyResource()
         request = testing.DummyRequest()
-        request.mgmt_url = lambda *arg: '/'
+        request.sdiapi = DummySDIAPI()
         request.POST['wfid'] = 'workflow'
         request.POST['transition'] = 'doit'
         workflow = DummyWorkflow('result')
@@ -83,3 +83,7 @@ class DummyWorkflowRegistry(object):
 class DummyContent(object):
     def typeof(self, context):
         return 'abc'
+
+class DummySDIAPI(object):
+    def mgmt_url(self, *arg, **kw):
+        return 'http://mgmt_url'

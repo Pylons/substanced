@@ -310,7 +310,7 @@ class TestUser(unittest.TestCase):
             self.assertEqual(user, inst)
         principals.add_reset = add_reset
         request = testing.DummyRequest()
-        request.mgmt_path = lambda *arg: '/mgmt'
+        request.sdiapi = DummySDIAPI()
         request.root = site
         self.config.include('pyramid_mailer.testing')
         inst = self._makeOne('password')
@@ -408,4 +408,6 @@ class DummyContentRegistry(object):
     def create(self, name, *arg, **kw):
         return self.result
     
-    
+class DummySDIAPI(object):
+    def mgmt_path(self, *arg, **kw):
+        return '/mgmt_path'

@@ -1,5 +1,7 @@
 from collections import defaultdict
 
+from persistent.mapping import PersistentMapping
+
 from pyramid.config import ConfigurationError
 from pyramid.security import has_permission
 from zope.interface import implementer
@@ -39,6 +41,7 @@ class Workflow(object):
     """
     _state_factory = dict       # overridable by instances / subclasses
     _transition_factory = dict  # overridable by instances / subclasses
+    _state_attr_factory = PersistentMapping
 
     def __init__(self, initial_state, type, name='', description=''):
         self._transitions = {}
@@ -130,10 +133,6 @@ class Workflow(object):
     def _set_state(self, content, state, request, transition=None):
         if transition is None:
             transition = {}
-        states = getattr(content, STATE_ATTR, None)
-        if not states:
-            states = {}
-            setattr(content, STATE_ATTR, states)
         msg = None
         new_state = self._states[state]
         callback = getattr(new_state, '__call__', None)
@@ -145,6 +144,10 @@ class Workflow(object):
                            transition=transition,
                            workflow=self,
                           )
+        states = getattr(content, STATE_ATTR, None)
+        if states is None:
+            states = self._state_attr_factory()
+            setattr(content, STATE_ATTR, states)
         states[self.type] = state
         return state, msg
 

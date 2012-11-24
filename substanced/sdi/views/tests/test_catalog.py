@@ -9,12 +9,12 @@ class Test_add_catalog_service(unittest.TestCase):
     def test_it(self):
         context = testing.DummyResource()
         request = testing.DummyRequest()
-        request.mgmt_path = lambda *arg: '/'
+        request.sdiapi = DummySDIAPI()
         service = testing.DummyResource()
         request.registry.content = DummyContentRegistry(service)
         result = self._callFUT(context, request)
         self.assertEqual(context['catalog'], service)
-        self.assertEqual(result.location, '/')
+        self.assertEqual(result.location, '/mgmt_path')
 
 class TestManageCatalog(unittest.TestCase):
     def _makeOne(self, context, request):
@@ -24,7 +24,7 @@ class TestManageCatalog(unittest.TestCase):
     def test_view(self):
         context = DummyCatalog()
         request = testing.DummyRequest()
-        request.mgmt_path = lambda *arg: '/manage'
+        request.sdiapi = DummySDIAPI()
         inst = self._makeOne(context, request)
         result = inst.view()
         self.assertEqual(result['cataloglen'], 0)
@@ -32,10 +32,10 @@ class TestManageCatalog(unittest.TestCase):
     def test_reindex(self):
         context = DummyCatalog()
         request = testing.DummyRequest()
-        request.mgmt_path = lambda *arg: '/manage'
+        request.sdiapi = DummySDIAPI()
         inst = self._makeOne(context, request)
         result = inst.reindex()
-        self.assertEqual(result.location, '/manage')
+        self.assertEqual(result.location, '/mgmt_path')
         self.assertEqual(context.reindexed, None)
 
 class TestManageIndex(unittest.TestCase):
@@ -46,7 +46,7 @@ class TestManageIndex(unittest.TestCase):
     def test_view(self):
         context = DummyIndex()
         request = testing.DummyRequest()
-        request.mgmt_path = lambda *arg: '/manage'
+        request.sdiapi = DummySDIAPI()
         inst = self._makeOne(context, request)
         result = inst.view()
         self.assertEqual(result['indexed'], 1)
@@ -57,10 +57,10 @@ class TestManageIndex(unittest.TestCase):
     def test_reindex_parent_not_icatalog(self):
         context = DummyIndex(False)
         request = testing.DummyRequest()
-        request.mgmt_path = lambda *arg: '/manage'
+        request.sdiapi = DummySDIAPI()
         inst = self._makeOne(context, request)
         result = inst.reindex()
-        self.assertEqual(result.location, '/manage')
+        self.assertEqual(result.location, '/mgmt_path')
         self.assertEqual(
             request.session['_f_error'],
             ['Cannot reindex an index unless it is contained in a catalog'])
@@ -72,10 +72,10 @@ class TestManageIndex(unittest.TestCase):
         alsoProvides(catalog, ICatalog)
         context = DummyIndex(catalog)
         request = testing.DummyRequest()
-        request.mgmt_path = lambda *arg: '/manage'
+        request.sdiapi = DummySDIAPI()
         inst = self._makeOne(context, request)
         result = inst.reindex()
-        self.assertEqual(result.location, '/manage')
+        self.assertEqual(result.location, '/mgmt_path')
         self.assertEqual(catalog.indexes, ['name'])
         self.assertEqual(
             request.session['_f_success'], ['Index "name" reindexed'])
@@ -88,11 +88,11 @@ class TestSearchCatalogView(unittest.TestCase):
     def test_search_success(self):
         request = testing.DummyRequest()
         context = testing.DummyResource()
-        request.mgmt_path = lambda *arg, **kw: '/mg'
+        request.sdiapi = DummySDIAPI()
         inst = self._makeOne(context, request)
         resp = inst.search_success({'a':1})
         self.assertEqual(request.session['catalogsearch.appstruct'], {'a':1})
-        self.assertEqual(resp.location, '/mg')
+        self.assertEqual(resp.location, '/mgmt_path')
 
     def test_show_no_appstruct(self):
         request = testing.DummyRequest()
@@ -192,13 +192,13 @@ class Test_AddIndexView(unittest.TestCase):
     def test_add_success_no_reindex(self):
         context = testing.DummyResource()
         request = testing.DummyRequest()
-        request.mgmt_path = lambda *arg: '/'
+        request.sdiapi = DummySDIAPI()
         inst = self._makeOne(context, request)
         index = testing.DummyResource()
         inst.makeindex = lambda *arg: index
         appstruct = {'name':'name', 'category':'category', 'reindex':False}
         result = inst.add_success(appstruct)
-        self.assertEqual(result.location, '/')
+        self.assertEqual(result.location, '/mgmt_path')
         self.assertEqual(context['name'], index)
         self.assertEqual(index.sd_category, 'category')
         
@@ -209,7 +209,7 @@ class Test_AddIndexView(unittest.TestCase):
             registry.reindexed = True
         context.reindex = reindex
         request = testing.DummyRequest()
-        request.mgmt_path = lambda *arg: '/'
+        request.sdiapi = DummySDIAPI()
         inst = self._makeOne(context, request)
         index = testing.DummyResource()
         inst.makeindex = lambda *arg: index
@@ -318,11 +318,11 @@ class Test_reindex_indexes(unittest.TestCase):
     def test_with_indexes(self):
         context = DummyCatalog()
         request = testing.DummyRequest()
-        request.mgmt_path = lambda *arg: '/manage'
+        request.sdiapi = DummySDIAPI()
         request.POST = testing.DummyResource()
         request.POST.getall = {'item-modify':['a']}.get
         result = self._callFUT(context, request)
-        self.assertEqual(result.location, '/manage')
+        self.assertEqual(result.location, '/mgmt_path')
         self.assertEqual(
             request.session['_f_success'],
             ['Reindex of selected indexes succeeded'])
@@ -331,11 +331,11 @@ class Test_reindex_indexes(unittest.TestCase):
     def test_without_indexes(self):
         context = DummyCatalog()
         request = testing.DummyRequest()
-        request.mgmt_path = lambda *arg: '/manage'
+        request.sdiapi = DummySDIAPI()
         request.POST = testing.DummyResource()
         request.POST.getall = {}.get
         result = self._callFUT(context, request)
-        self.assertEqual(result.location, '/manage')
+        self.assertEqual(result.location, '/mgmt_path')
         self.assertEqual(
             request.session['_f_error'],
             ['No indexes selected to reindex'])
@@ -404,3 +404,7 @@ class DummyObjectmap(object):
     def object_for(self, oid):
         return oid
     
+class DummySDIAPI(object):
+    def mgmt_path(self, *arg, **kw):
+        return '/mgmt_path'
+

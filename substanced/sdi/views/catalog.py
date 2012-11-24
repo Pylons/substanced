@@ -36,7 +36,7 @@ from .. import mgmt_view
 def add_catalog_service(context, request):
     catalog = request.registry.content.create('Catalog')
     context['catalog'] = catalog
-    return HTTPFound(location=request.mgmt_path(context))
+    return HTTPFound(location=request.sdiapi.mgmt_path(context))
 
 def context_is_an_index(context, request):
     return request.registry.content.metadata(context, 'is_index', False)
@@ -60,7 +60,7 @@ class _AddIndexView(FormView):
         index.sd_category = appstruct['category']
         if appstruct['reindex']:
             self.context.reindex(indexes=(name,), registry=registry)
-        return HTTPFound(location=self.request.mgmt_path(self.context))
+        return HTTPFound(location=self.request.sdiapi.mgmt_path(self.context))
 
     def makeindex(self, appstruct, registry):
         name = appstruct['name']
@@ -174,7 +174,7 @@ class ManageCatalog(object):
 
     @property
     def redir_location(self):
-        return self.request.mgmt_path(self.context, '@@manage_catalog')
+        return self.request.sdiapi.mgmt_path(self.context, '@@manage_catalog')
         
     @mgmt_view(request_method='GET', tab_title='Manage')
     def view(self):
@@ -199,7 +199,7 @@ class ManageIndex(object):
 
     @property
     def redir_location(self):
-        return self.request.mgmt_path(self.context, '@@manage_index')
+        return self.request.sdiapi.mgmt_path(self.context, '@@manage_index')
 
     @mgmt_view(request_method='GET', tab_title='Manage')
     def view(self):
@@ -253,7 +253,7 @@ class SearchCatalogView(FormView):
         self.request.session['catalogsearch.appstruct'] = appstruct
         context = self.context
         return HTTPFound(
-            location=self.request.mgmt_path(context, '@@search_catalog')
+            location=self.request.sdiapi.mgmt_path(context, '@@search_catalog')
             )
 
     def show(self, form):
@@ -308,5 +308,5 @@ def reindex_indexes(context, request):
             'error'
             )
         
-    return HTTPFound(request.mgmt_path(context, '@@contents'))
+    return HTTPFound(request.sdiapi.mgmt_path(context, '@@contents'))
 

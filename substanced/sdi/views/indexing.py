@@ -55,5 +55,5 @@ class IndexingView(object):
             wrapper = CatalogViewWrapper(context, catalog_view_factory)
             for catalog in find_services(context, 'catalog'):
                 catalog.reindex_doc(oid, wrapper)
-        request.flash_with_undo('Object reindexed', 'success')
-        return HTTPFound(request.mgmt_url(self.context, '@@indexing'))
+        request.sdiapi.flash_with_undo('Object reindexed', 'success')
+        return HTTPFound(request.sdiapi.mgmt_url(self.context, '@@indexing'))

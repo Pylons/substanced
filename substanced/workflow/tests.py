@@ -578,6 +578,7 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(state, 'pending')
 
     def test_reset_content_has_no_state(self):
+        from persistent.mapping import PersistentMapping
         def callback(content, **kw):
             content.called_back = True
             return '123'
@@ -585,6 +586,7 @@ class WorkflowTests(unittest.TestCase):
         sm.add_state('pending', callback=callback)
         ob = DummyContent()
         state, msg = sm.reset(ob)
+        self.assertEqual(ob.__workflow_state__.__class__, PersistentMapping)
         self.assertEqual(ob.__workflow_state__['basic'], 'pending')
         self.assertEqual(ob.called_back, True)
         self.assertEqual(state, 'pending')

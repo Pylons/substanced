@@ -35,7 +35,7 @@ class AddUserSchema(UserSchema):
 def add_principals_service(context, request):
     service = request.registry.content.create('Principals')
     context['principals'] = service
-    return HTTPFound(location=request.mgmt_path(context))
+    return HTTPFound(location=request.sdiapi.mgmt_path(context))
 
 @mgmt_view(
     context=IUsers,
@@ -56,7 +56,9 @@ class AddUserView(FormView):
         user = registry.content.create('User', **appstruct)
         self.context[name] = user
         user.groupids = groupids
-        return HTTPFound(self.request.mgmt_path(self.context, '@@contents'))
+        return HTTPFound(
+            self.request.sdiapi.mgmt_path(self.context, '@@contents')
+            )
 
 @mgmt_view(
     context=IGroups,
@@ -77,7 +79,9 @@ class AddGroupView(FormView):
         group = registry.content.create('Group', **appstruct)
         self.context[name] = group
         group.memberids = memberids
-        return HTTPFound(self.request.mgmt_path(self.context, '@@contents'))
+        return HTTPFound(
+            self.request.sdiapi.mgmt_path(self.context, '@@contents')
+            )
 
 @colander.deferred
 def password_validator(node, kw):
@@ -121,7 +125,9 @@ class ChangePasswordView(FormView):
         password = appstruct['password']
         user.set_password(password)
         self.request.session.flash('Password changed', 'success')
-        return HTTPFound(self.request.mgmt_path(user, '@@change_password'))
+        return HTTPFound(
+            self.request.sdiapi.mgmt_path(user, '@@change_password')
+            )
 
 @colander.deferred
 def login_validator(node, kw):
@@ -159,7 +165,7 @@ class ResetRequestView(FormView):
         user = users[login]
         user.email_password_reset(request)
         request.session.flash('Emailed password reset instructions', 'success')
-        home = request.mgmt_path(request.root)
+        home = request.sdiapi.mgmt_path(request.root)
         return HTTPFound(location=home)
         
 class ResetSchema(Schema):
@@ -186,5 +192,5 @@ class ResetView(FormView):
         context = self.context
         context.reset_password(appstruct['new_password'])
         request.session.flash('Password reset, you may now log in', 'success')
-        home = request.mgmt_path(request.root)
+        home = request.sdiapi.mgmt_path(request.root)
         return HTTPFound(location=home)

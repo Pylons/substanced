@@ -1,4 +1,4 @@
-<div metal:use-macro="sdi_h.macros()['master']">
+<div metal:use-macro="request.sdiapi.main_template">
 
   <div tal:omit-tag="" metal:fill-slot="head-more">
     <!-- slickgrid -->
@@ -81,7 +81,7 @@
         <tal:block tal:condition="'tocopy' not in request.session and 'tomove' not in request.session">
         <div class="btn-group pull-right" tal:condition="addables">
           <a class="btn btn-primary" 
-             href="${request.mgmt_path(context, '@@add')}"><i 
+             href="${request.sdiapi.mgmt_path(context, '@@add')}"><i 
              class="icon-plus-sign icon-white"></i> Add</a>
           <a class="btn btn-primary dropdown-toggle" 
               data-toggle="dropdown" href="#"><span class="caret"></span></a>

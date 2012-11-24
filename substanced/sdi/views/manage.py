@@ -28,11 +28,11 @@ class ManagementViews(object):
         if not view_data:
             request.session['came_from'] = request.url
             raise HTTPForbidden(
-                location=request.mgmt_path(request.root, '@@login')
+                location=request.sdiapi.mgmt_path(request.root, '@@login')
                 )
-        view_name = view_data[0]['view_name']
+        view_name = '@@%s' % (view_data[0]['view_name'],)
         return HTTPFound(
-            location=request.mgmt_path(request.context, '@@%s' % view_name)
+            location=request.sdiapi.mgmt_path(request.context, view_name)
             )
 
     @mgmt_view(context=IFolder, name='add', tab_title='Add', 

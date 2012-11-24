@@ -10,17 +10,17 @@ class Test_undo_one(unittest.TestCase):
         conn = DummyConnection()
         request = testing.DummyRequest()
         request._primary_zodb_conn = conn # XXX not an API, will break
-        request.mgmt_path = lambda *arg: '/mgmt'
+        request.sdiapi = DummySDIAPI()
         request.referrer = None
         request.params['hash'] = 'hash'
         resp = self._callFUT(request)
-        self.assertEqual(resp.location, '/mgmt')
+        self.assertEqual(resp.location, '/mgmt_path')
         
     def test_with_referrer(self):
         conn = DummyConnection()
         request = testing.DummyRequest()
         request._primary_zodb_conn = conn # XXX not an API, will break
-        request.mgmt_path = lambda *arg: '/mgmt'
+        request.sdiapi = DummySDIAPI()
         request.referrer = 'loc'
         request.params['hash'] = 'hash'
         resp = self._callFUT(request)
@@ -30,7 +30,7 @@ class Test_undo_one(unittest.TestCase):
         conn = DummyConnection()
         request = testing.DummyRequest()
         request._primary_zodb_conn = conn # XXX not an API, will break
-        request.mgmt_path = lambda *arg: '/mgmt'
+        request.sdiapi = DummySDIAPI()
         request.referrer = 'loc'
         request.params['hash'] = 'hash'
         self._callFUT(request)
@@ -41,7 +41,7 @@ class Test_undo_one(unittest.TestCase):
         conn = DummyConnection(undo_info=[record])
         request = testing.DummyRequest()
         request._primary_zodb_conn = conn # XXX not an API, will break
-        request.mgmt_path = lambda *arg: '/mgmt'
+        request.sdiapi = DummySDIAPI()
         request.referrer = 'loc'
         request.params['hash'] = 'hash'
         self._callFUT(request)
@@ -52,7 +52,7 @@ class Test_undo_one(unittest.TestCase):
         conn = DummyConnection(undo_info=[record])
         request = testing.DummyRequest()
         request._primary_zodb_conn = conn # XXX not an API, will break
-        request.mgmt_path = lambda *arg: '/mgmt'
+        request.sdiapi = DummySDIAPI()
         request.referrer = 'loc'
         request.params['hash'] = 'abc'
         self._callFUT(request)
@@ -65,7 +65,7 @@ class Test_undo_one(unittest.TestCase):
         conn = DummyConnection(undo_info=[record], undo_exc=POSError)
         request = testing.DummyRequest()
         request._primary_zodb_conn = conn # XXX not an API, will break
-        request.mgmt_path = lambda *arg: '/mgmt'
+        request.sdiapi = DummySDIAPI()
         request.referrer = 'loc'
         request.params['hash'] = 'abc'
         self._callFUT(request)
@@ -94,3 +94,6 @@ class DummyConnection(object):
     def db(self):
         return self._db
 
+class DummySDIAPI(object):
+    def mgmt_path(self, *arg, **kw):
+        return '/mgmt_path'

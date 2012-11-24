@@ -30,13 +30,9 @@ class TestIndexingView(unittest.TestCase):
     def test_reindex(self):
         context = testing.DummyResource()
         request = testing.DummyRequest()
-        def fwu(message, status):
-            self.assertEqual(message, 'Object reindexed')
-            self.assertEqual(status, 'success')
         token = request.session.new_csrf_token()
         request.POST['csrf_token'] = token
-        request.flash_with_undo = fwu
-        request.mgmt_url = lambda *arg: '/'
+        request.sdiapi = DummySDIAPI()
         context.__oid__ = 1
         context.__services__ = ('catalog',)
         catalog = DummyCatalog()
@@ -52,6 +48,8 @@ class TestIndexingView(unittest.TestCase):
         self.assertEqual(catalog.oid, 1)
         self.assertEqual(catalog.wrapper.content, context)
         self.assertEqual(catalog.wrapper.view_factory, 'vf')
+        self.assertEqual(request.sdiapi.flashed,
+                         ('Object reindexed', 'success') )
 
 class DummyIndex(object):
     def document_repr(self, oid, default=None):
@@ -67,3 +65,11 @@ class DummyCatalog(object):
     def reindex_doc(self, oid, wrapper):
         self.oid = oid
         self.wrapper = wrapper
+
+class DummySDIAPI(object):
+    def mgmt_url(self, *arg, **kw):
+        return 'http://mgmt_url'
+
+    def flash_with_undo(self, message, status):
+        self.flashed = (message, status)
+        

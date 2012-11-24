@@ -20,11 +20,11 @@ from .. import mgmt_view
 @mgmt_view(renderer='templates/forbidden.pt', context=HTTPForbidden, 
            effective_principals=Authenticated, tab_condition=False)
 def login(context, request):
-    login_url = request.mgmt_path(request.context, 'login')
+    login_url = request.sdiapi.mgmt_path(request.context, 'login')
     referrer = request.url
     if login_url in referrer: # pragma: no cover
         # never use the login form itself as came_from
-        referrer = request.mgmt_path(request.root) 
+        referrer = request.sdiapi.mgmt_path(request.root) 
     came_from = request.session.setdefault('came_from', referrer)
     login = ''
     password = ''
@@ -45,7 +45,7 @@ def login(context, request):
             request.session.flash('Failed login', 'error')
 
     return dict(
-        url = request.mgmt_path(request.root, 'login'),
+        url = request.sdiapi.mgmt_path(request.root, 'login'),
         came_from = came_from,
         login = login,
         password = password,
@@ -54,5 +54,5 @@ def login(context, request):
 @mgmt_view(name='logout', tab_condition=False)
 def logout(request):
     headers = forget(request)
-    return HTTPFound(location = request.mgmt_path(request.context),
+    return HTTPFound(location = request.sdiapi.mgmt_path(request.context),
                      headers = headers)

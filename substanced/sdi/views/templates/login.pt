@@ -1,4 +1,4 @@
-<div metal:use-macro="sdi_h.macros()['master']">
+<div metal:use-macro="request.sdiapi.main_template">
 
   <div metal:fill-slot="main">
     <div class="container">
@@ -25,7 +25,7 @@
       </div>
     </div>
           
-    <a href="${request.mgmt_path(request.root, '@@resetpassword')}">
+    <a href="${request.sdiapi.mgmt_path(request.root, '@@resetpassword')}">
       Forgot your password?
     </a>
 
