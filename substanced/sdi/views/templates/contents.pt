@@ -53,7 +53,20 @@
                     var $gridWrapper = $('#sdi-contents-table-sg').data('slickgrid');
                     var grid = $gridWrapper.grid;
                     var data = grid.getData();
-                    var selectedIds = $.map(grid.getSelectedRows(), function (value, index) {
+                    var selectedIdx = grid.getSelectedRows();
+                    if (selectedIdx.length > 100) {
+                        // XXX XXX XXX This is a problem. We need to limit
+                        // the selection size, because of cookieval is limited
+                        // in 4096 bytes. An additional problem is we don't know
+                        // how to limit the selection size to assure that the submit
+                        // won't break, because the cookie size depends on the lengths
+                        // of the names, too, and not only on the size of the selection.
+                        // TODO this must be solved somehow!
+                        alert('We currently limit the selection size in maximum 100 items.\n' +
+                              'Please select less than 100 items!');
+                        return false;
+                    }
+                    var selectedIds = $.map(selectedIdx, function (value, index) {
                         var row = data.getItemByIdx(value);
                         return row.id;
                     })
