@@ -216,7 +216,7 @@ class FolderContentsViews(object):
             enableCellNavigation = True,
             asyncEditorLoading = True,
             forceFitColumns = True,
-            rowHeight = 37,
+            rowHeight = 35,
             )
         # The items for the slickgrid are really in a format similar to the
         # items used for the static table. However, it has some problems so we have

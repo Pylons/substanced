@@ -1,8 +1,15 @@
 /** Build from https://github.com/Pylons/sdidev to rebuild this LESS file **/
 /* Mixins for SlickGrid */
 .slickgrid-wrapper {
+  height: 380px;
   width: 100%;
   position: relative;
+}
+.slickgrid-wrapper input[type="checkbox"] {
+  margin: 0;
+}
+.slickgrid-wrapper .slick-viewport {
+  border-top: 1px solid #dddddd;
 }
 .slickgrid-wrapper .grid-canvas {
   /* XXX ... needed ? */
@@ -14,8 +21,8 @@
 }
 .slickgrid-wrapper .grid-canvas .slick-cell,
 .slickgrid-wrapper .grid-canvas .slick-headerrow-column {
-  border-top: 1px solid #dddddd;
-  border-bottom: 0;
+  border-top: 0;
+  border-bottom: 1px solid #dddddd;
   border-left: 0;
   border-right: 0;
 }
@@ -129,4 +136,7 @@ body .slickgrid-wrapper .slick-header-columns .slick-header-column.ui-state-defa
 }
 .slickgrid-wrapper .slick-header-columns .slick-header-column .slick-sort-indicator-desc {
   vertical-align: middle;
+}
+form[action="@@contents"] .form-actions {
+  margin-top: 0;
 }

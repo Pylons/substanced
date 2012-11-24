@@ -14,8 +14,7 @@
     <h2 tal:condition="not items">No items</h2>
 
     <div tal:condition="items">
-    <div id="sdi-contents-table-sg" class="slickgrid-wrapper"
-        style="width:100%;height:400px"></div> <!-- << move these styles to css -->
+    <div id="sdi-contents-table-sg" class="slickgrid-wrapper"></div>
     <script type="text/javascript">
         jQuery(function ($) {
             $('#sdi-contents-table-sg').slickgrid(${slickgrid_wrapper_options});

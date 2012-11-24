@@ -3,7 +3,15 @@
 @import "../../../../../bootstrap/less/variables.less";
 @import "../../../../../slickgrid/bootstrap/slickgrid.less";
 .slickgrid-wrapper {
+    height: 380px;  // for 10 rows x 35px
+    width: 100%;
     .slickGrid();
 }
-
+form[action="@@contents"] {
+    // .form-actions has a top margin. When used under the grid,
+    // it looks better without this margin.
+    .form-actions {
+        margin-top: 0;
+    }
+}
 
