@@ -92,7 +92,7 @@
             columns.unshift(checkboxSelector.getColumnDefinition());
 
             var dataView = new Slick.Data.DataView({inlineFilters: true});
-            var grid = new Slick.Grid(this.element, dataView, columns, this.wrapperOptions.slickgridOptions);
+            var grid = this.grid = new Slick.Grid(this.element, dataView, columns, this.wrapperOptions.slickgridOptions);
 
             var sortcol = 'title';
             var sortdir = 1;

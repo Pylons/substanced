@@ -233,10 +233,14 @@ class FolderContentsViews(object):
         items_sg = []
         my_items, items = itertools.tee(items, 2)
         for i, item in enumerate(my_items):
+            name = item['name']
             item_sg = dict(
-                id=i,
+                id=name,    # Use the unique name, as an id.
+                    # (A unique row id is needed for slickgrid.
+                    # In addition, we will pass back this same id from the client,
+                    # when a row is selected for an operation.)
                 deletable=bool(item['deletable']),
-                name=item['name'],
+                name=name,
                 name_icon=item['icon'],
                 name_url=item['url'],
             )
@@ -277,7 +281,7 @@ class FolderContentsViews(object):
     def delete(self):
         request = self.request
         context = self.context
-        todelete = request.POST.getall('item-modify')
+        todelete = request.POST.get('item-modify').split(',')
         deleted = 0
         for name in todelete:
             v = context.get(name)
@@ -305,7 +309,7 @@ class FolderContentsViews(object):
     def duplicate(self):
         request = self.request
         context = self.context
-        toduplicate = request.POST.getall('item-modify')
+        toduplicate = request.POST.get('item-modify').split(',')
         for name in toduplicate:
             newname = rename_duplicated_resource(context, name)
             context.copy(name, context, newname)
@@ -331,7 +335,7 @@ class FolderContentsViews(object):
     def rename(self):
         request = self.request
         context = self.context
-        torename = request.POST.getall('item-modify')
+        torename = request.POST.get('item-modify').split(',')
         if not torename:
             request.session.flash('No items renamed')
             return HTTPFound(request.mgmt_path(context, '@@contents'))
@@ -382,7 +386,9 @@ class FolderContentsViews(object):
     def copy(self):
         request = self.request
         context = self.context
-        tocopy = request.POST.getall('item-modify')
+        tocopy = request.POST.get('item-modify').split(',')
+        
+        print tocopy
 
         if tocopy:
             l = []
@@ -442,7 +448,7 @@ class FolderContentsViews(object):
     def move(self):
         request = self.request
         context = self.context
-        tomove = request.POST.getall('item-modify')
+        tomove = request.POST.get('item-modify').split(',')
 
         if tomove:
             l = []
