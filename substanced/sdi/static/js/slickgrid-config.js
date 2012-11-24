@@ -10,6 +10,13 @@
         }
     }
 
+    
+    var months = ['January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'];
+
+    var currentYear = new Date().getFullYear();
+
+
     //
     // Named configuration for the grid
     //
@@ -41,6 +48,22 @@
                     result += '<a href="' + labelUrl + '">' + value + '</a>';
                 } else {
                     result += value;
+                }
+                return result;
+            },
+            date: function(row, cell, value, columnDef, dataContext) {
+                // value is an isodate string.
+                var year = value.substring(0, 4);
+                var month = value.substring(5, 7);
+                var day = value.substring(8, 10);
+                monthText = months[Number(month) - 1];
+                if (day.charAt(0) == '0') {
+                    day = day.substring(1);
+                }
+                var result = monthText + ' ' + day;
+                if ('' + currentYear != year) {
+                    // year is only displayed if not the current year
+                    result += ', ' + year;
                 }
                 return result;
             }
