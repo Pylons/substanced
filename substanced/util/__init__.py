@@ -30,17 +30,20 @@ def postorder(startnode):
         yield node
     return visit(startnode)
 
-def oid_of(obj, default=_marker):
-    """ Return the object identifer of ``obj``.  If ``obj`` has no object
-    identifier, raise an AttributeError exception unless ``default`` was
+def oid_of(resource, default=_marker):
+    """ Return the object identifer of ``resource``.  If ``resource`` has no
+    object identifier, raise an AttributeError exception unless ``default`` was
     passed a value; if ``default`` was passed a value, return the default in
     that case."""
     try:
-        return obj.__oid__
+        return resource.__oid__
     except AttributeError:
         if default is _marker:
             raise
         return default
+
+def set_oid(resource, oid):
+    resource.__oid__ = oid
 
 def merge_url_qs(url, **kw):
     """ Merge the query string elements of a URL with the ones in ``kw``.
@@ -262,8 +265,8 @@ def chunks(stream, chunk_size=10000):
             break
         yield chunk
 
-def acquire(context, name, default=None):
-    for node in lineage(context):
+def acquire(resource, name, default=None):
+    for node in lineage(resource):
         result = getattr(node, name, _marker)
         if result is not _marker:
             return result
@@ -306,35 +309,39 @@ def renamer():
 
     return property(_get, _set)
 
-def change_acl(context, new_acl, registry=None):
-    """Change the ACL on context to ``new_acl``, which may be a valid ACL or
+def change_acl(resource, new_acl, registry=None):
+    """Change the ACL on resource to ``new_acl``, which may be a valid ACL or
     ``None``.  If ``new_acl`` is ``None``, any existing non-``None``
-    ``__acl__`` attribute of the context will be removed (via ``del
-    context.__acl__``).  Otherwise, if the context's ``__acl__`` and the
-    ``new_acl`` differ, set the context's ``__acl__`` to ``new_acl`` via
+    ``__acl__`` attribute of the resource will be removed (via ``del
+    resource.__acl__``).  Otherwise, if the resource's ``__acl__`` and the
+    ``new_acl`` differ, set the resource's ``__acl__`` to ``new_acl`` via
     setattr.
 
     If the new ACL and the object's original ACL differ, send a
     :class:`substanced.event.ACLModified` event with the
-    new ACL and the original ACL (the ``__acl__`` attribute of the context, or
+    new ACL and the original ACL (the ``__acl__`` attribute of the resource, or
     ``None`` if it doesn't have one) as arguments to the event.
 
-    This function will return ``True`` if a mutation to the context's __acl__
+    This function will return ``True`` if a mutation to the resource's __acl__
     was performed, and ``False`` otherwise.
 
     If ``registry`` is passed, it should be a Pyramid registry; if it is not
     passed, this function will use the current threadlocal registry to send the
     event.
     """
-    old_acl = getattr(context, '__acl__', None)
+    old_acl = getattr(resource, '__acl__', None)
     if new_acl == old_acl:
         return False
     if new_acl is None:
-        del context.__acl__
+        del resource.__acl__
     else:
-        context.__acl__ = new_acl
-    event = ACLModified(context, old_acl, new_acl)
+        resource.__acl__ = new_acl
+    event = ACLModified(resource, old_acl, new_acl)
     if registry is None:
         registry = get_current_registry()
-    registry.subscribers((event, context), None)
+    registry.subscribers((event, resource), None)
     return True
+
+def get_acl(resource, default=None):
+    """ Return the ACL of the object or the default if the object has no ACL."""
+    return getattr(resource, '__acl__', default)

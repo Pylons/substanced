@@ -36,6 +36,7 @@ install_requires = [
     'pyramid_mailer',
     'cryptacular',
     'python-magic',
+    'pyyaml',
     ]
 
 docs_extras = ['Sphinx', 'repoze.sphinx.autointerface']

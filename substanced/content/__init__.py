@@ -30,6 +30,22 @@ def find_content(resource, content_type, registry=None):
         registry = get_current_registry()
     return registry.content.find(resource, content_type)
 
+def get_created(resource):
+    """ Return a datetime object (in UTC, but represented as a naive datetime)
+    that represents the creation time of the resource.  If the resource has no
+    creation time, the return value will be ``None``."""
+    return getattr(resource, '__created__', None)
+
+def set_created(resource, created):
+    """ Set the creation date/time of the resource.  If the ``created`` value
+    is an integer, it should represent the ordinal time (e.g. the value of
+    ``somedatetime.toordinal()``).  Otherwise it must be a datetime object
+    (which should be without a timezeone (aka 'naive'), representing the UTC
+    date and time."""
+    if not isinstance(created, datetime.datetime):
+        created = datetime.datetime.fromordinal(created)
+    resource.__created__ = created
+
 def _find_services(context, name, one=False):
     L = []
     for obj in lineage(context):
@@ -103,7 +119,7 @@ class ContentRegistry(object):
         created object."""
         factory = self.content_types[content_type]
         inst = factory(*arg, **kw)
-        inst.__created__ = self._utcnow()
+        set_created(inst, self._utcnow())
         meta = self.meta[content_type].copy()
         aftercreate = meta.get('after_create')
         if aftercreate is not None:
