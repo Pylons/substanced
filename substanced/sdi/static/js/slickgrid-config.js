@@ -97,6 +97,18 @@
                 // ?
             //});
 
+            // autoresize columns
+            var responsivenessPlugin = new Slick.Plugins.Responsiveness({
+            });
+            responsivenessPlugin.onResize.subscribe(function (evt, args) {
+                var columns = args.grid.getColumns();
+                var isWide = (args.width > 768); // ipad orientation narrow / wide
+                /* ... hide or show columns from here ...
+                */
+                args.grid.setColumns(columns); // XXX why is this needed for the resize?
+            });
+            grid.registerPlugin(responsivenessPlugin);
+
             // initialize the model after all the events have been hooked up
             dataView.beginUpdate();
             dataView.setItems(this.wrapperOptions.items);
@@ -106,6 +118,7 @@
             // or being on a different page) to stay selected, pass 'false' to the second arg
             dataView.syncGridSelection(grid, true);
 
+            grid.setColumns(columns); // XXX why is this needed for the initial fit?
             grid.render();
 
         }
