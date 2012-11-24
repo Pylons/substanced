@@ -139,30 +139,41 @@ class FolderContentsViews(object):
 
     def _column_headers_sg(self, context, request):
         """Generate columns from SlickGrid."""
-        #
-        # XXX Just provide a static definition for now.
-        #
         # TODO As the slickgrid's column desription format contains different fields
         # from our internal column schema (both more feature rich, and
         # uses different attributes), we will need to convert our schema to
         # SlickGrid's here. As there is no "universal grid column description format" exists,
         # this also means that here we have to limit the flexible configuration
         # possibilities of the slickgrid to those use cases that we wish to support.
+        headers = []
 
-        columns = [
-        #    { #"id": "author",
-        #        "name": "Author", "field": "author", "width": 120, "minWidth": 120,
-        #        "cssClass": "cell-author", "editorName": "text",
-        #        "validatorName": "required", "sortable": True},
-            { "id": "title",
-                "name": "Title", "field": "title", # << field specified the record key to use for rendering
+        columns = default_sdi_columns(self, None, request)
+
+        custom_columns = request.registry.content.metadata(
+            context, 'columns', _marker)
+
+        if custom_columns is None:
+            return headers
+
+        if custom_columns is not _marker:
+            columns = custom_columns(context, None, request, columns)
+        
+        for order, column in enumerate(columns):
+            name = column['name']
+            field = column['field']
+            sortable = column.get('sortable', True)
+            formatter = column.get('formatter', '')
+            
+            headers.append(
+                { "id": field, 
+                "name": name, "field": field,
                 "width": 120, "minWidth": 120,
-                "cssClass": "cell-title", "sortable": True,
-                "formatterName": "icon_label_url",
+                "cssClass": "cell-%s" % field, "sortable": sortable,
+                "formatterName": formatter,
                 },
-            ]
-     
-        return columns
+                )
+
+        return headers
 
 
     @mgmt_view(
@@ -225,11 +236,15 @@ class FolderContentsViews(object):
             item_sg = dict(
                 id=i,
                 deletable=bool(item['deletable']),
-                title=item['name'],
-                title_icon=item['icon'],
+                name=item['name'],
+                name_icon=item['icon'],
+                name_url=item['url'],
             )
             if item['viewable']:
-                item_sg['title_url'] = item['url']
+                item_sg['name_url'] = item['url']
+            for index_sg, column_value in enumerate(item['columns']):
+                field_sg = columns_sg[index_sg]['field']
+                item_sg[field_sg] = column_value
             items_sg.append(item_sg)
         # We pass the wrapper options which contains all information
         # needed to configure the several components of the grid config.

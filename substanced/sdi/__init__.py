@@ -545,15 +545,11 @@ def sdi_folder_contents(folder, request):
 def default_sdi_columns(folder, subobject, request):
     """ The default columns content-type hook """
     name = getattr(subobject, '__name__', '')
-    url = request.mgmt_path(subobject, '@@manage_main')
-    link_tag = '<a href="%s">%s</a>' % (url, name)
-    icon = request.registry.content.metadata(subobject, 'icon')
-    if callable(icon):
-        icon = icon(subobject, request)
-    icon_tag = '<i class="%s"> </i>' % icon
     return [
         {'name': 'Name',
-         'value': '%s %s' % (icon_tag, link_tag),
+         'field': 'name',
+         'value': name,
+         'formatter': 'icon_label_url',
          'sortable': True}
         ]
 
