@@ -94,16 +94,16 @@
             var dataView = new Slick.Data.DataView({inlineFilters: true});
             var grid = this.grid = new Slick.Grid(this.element, dataView, columns, this.wrapperOptions.slickgridOptions);
 
-            var sortcol = 'title';
-            var sortdir = 1;
+            var sortCol = 'name';
+            var sortDir = 1;
             function comparer(a, b) {
-                var x = a[sortcol], y = b[sortcol];
+                var x = a[sortCol], y = b[sortCol];
                 return (x == y ? 0 : (x > y ? 1 : -1));
             }
 
             grid.onSort.subscribe(function (e, args) {
-                sortdir = args.sortAsc ? 1 : -1;
-                sortcol = args.sortCol.field;
+                sortDir = args.sortAsc ? 1 : -1;
+                sortCol = args.sortCol.field;
 
                 dataView.sort(comparer, args.sortAsc);
             });
@@ -112,6 +112,9 @@
                 grid.invalidateRows(args.rows);
                 grid.render();
             });
+
+            // set the initial sorting to be shown
+            grid.setSortColumn(sortCol, sortDir);
 
             // checkbox column
             grid.setSelectionModel(new Slick.RowSelectionModel({selectActiveRow: false}));
