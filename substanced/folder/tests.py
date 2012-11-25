@@ -210,9 +210,9 @@ class TestFolder(unittest.TestCase):
         folder = self._makeOne()
         folder.order = []
         folder.add('a', DummyModel())
-        self.assertEqual(folder.order, ['a'])
+        self.assertEqual(folder.order, ('a',))
         folder.add('b', DummyModel())
-        self.assertEqual(folder.order, ['a', 'b'])
+        self.assertEqual(folder.order, ('a', 'b'))
 
     def test_add_with_object_has_parent(self):
         folder = self._makeOne()
@@ -491,7 +491,7 @@ class TestFolder(unittest.TestCase):
         folder['b'] = DummyModel()
         folder.order = ['a', 'b']
         folder.remove('a')
-        self.assertEqual(folder.order, ['b'])
+        self.assertEqual(folder.order, ('b',))
 
     def test_replace_existing(self):
         folder = self._makeOne()

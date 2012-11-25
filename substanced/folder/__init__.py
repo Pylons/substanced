@@ -63,7 +63,7 @@ class Folder(Persistent):
 
     def _get_order(self):
         if self._order is not None:
-            return list(self._order)
+            return self._order
         return self.data.keys()
 
     def _set_order(self, value):
@@ -74,6 +74,10 @@ class Folder(Persistent):
         del self._order
 
     order = property(_get_order, _set_order, _del_order)
+
+    def is_ordered(self):
+        """ Return true if the folder is manually ordered, false otherwise. """
+        return self._order is not None
 
     def __init__(self, data=None, family=None):
         """ Constructor.  Data may be an initial dictionary mapping object
