@@ -57,13 +57,22 @@ def dump(
     if registry is None:
         registry = get_current_registry()
 
-    for resource, path in walk_resources(resource):
-        location = os.path.join(directory, os.path.normpath(path))
-        context = ResourceDumpContext(location, registry, verbose, dry_run)
-        context.dump(resource)
+    stack = [(os.path.abspath(os.path.normpath(directory)), resource)]
 
+    while stack: # breadth-first is easiest
+        directory, resource = stack.pop()
+        context = ResourceDumpContext(directory, registry, verbose, dry_run)
+        context.dump(resource)
         if not subobjects:
             break
+        if IFolder.providedBy(resource):
+            for subresource in resource.values():
+                subdirectory = os.path.join(
+                    directory,
+                    'subobjects',
+                    subresource.__name__
+                    )
+                stack.append((subdirectory, subresource))
 
 def load(
     directory,
@@ -82,12 +91,14 @@ def load(
 
     first = None
 
-    while stack:
+    while stack: # breadth-first is easiest
         directory, parent = stack.pop()
         context = ResourceLoadContext(directory, registry, verbose, dry_run)
         resource = context.load(parent)
         if first is None:
             first = resource
+        if not subobjects:
+            break
         subobjects_dir = os.path.join(directory, 'subobjects')
         if os.path.exists(subobjects_dir):
             for fn in os.listdir(subobjects_dir):
@@ -109,7 +120,8 @@ class _FileOperations(object):
             if not os.path.exists(prefix):
                 os.makedirs(prefix)
 
-        return os.path.join(prefix, filename)
+        fullpath = os.path.join(prefix, filename)
+        return fullpath
         
     def openfile_w(self, filename, mode='w', subdir=None, makedirs=True):
         path = self._get_fullpath(filename, subdir=subdir, makedirs=makedirs)
@@ -181,7 +193,9 @@ class ResourceLoadContext(ResourceContext, _YAMLOperations):
         resource = registry.content.create(data['content_type'])
         name = resource.__name__ = data['name']
         set_oid(resource, data['oid'])
-        set_created(resource, data['created'])
+        created = data['created']
+        if created is not None:
+            set_created(resource, created)
         return name, resource
 
     def load(self, parent):
@@ -190,7 +204,7 @@ class ResourceLoadContext(ResourceContext, _YAMLOperations):
             dumper = factory(self, factory_name)
             dumper.load(resource)
         if parent is not None:
-            parent[name] = resource
+            parent.replace(name, resource, registry=self.registry)
         return resource
 
 class ACLDumper(object):
