@@ -54,6 +54,15 @@ class TestFolder(unittest.TestCase):
         folder = self._makeOne({'a': 1, 'b': 2})
         self.assertEqual(list(folder.keys()), ['a', 'b'])
 
+    def test_is_ordered_true(self):
+        folder = self._makeOne({'a': 1, 'b': 2})
+        folder.order = ('a', 'b')
+        self.assertTrue(folder.is_ordered())
+
+    def test_is_ordered_false(self):
+        folder = self._makeOne({'a': 1, 'b': 2})
+        self.assertFalse(folder.is_ordered())
+
     def test_keys_with_order(self):
         folder = self._makeOne({'a': 1, 'b': 2})
         folder.order = ['b', 'a']

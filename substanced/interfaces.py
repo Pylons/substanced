@@ -162,9 +162,15 @@ class IFolder(Interface):
     name to either be Unicode or a byte string decodable using the
     default system encoding or the UTF-8 encoding."""
 
-    order = Attribute("""Order of items within the folder
-    (Optional) If not set on the instance, objects are iterated in an
-    arbitrary order based on the underlying data store.""")
+    order = Attribute("""Order of names of the item within the folder.  If an
+    order is unset, objects are iterated in an arbitrary order based on the
+    underlying data store, and in such a case, this attribute will return an
+    iterator of the names in that arbitrary order.  This attribute is gettable,
+    settable, and deletable.""")
+
+    def is_ordered():
+        """ Return ``True`` if the folder has a manual ordering (e.g. its
+        ``order`` attribute has been set), ``False`` otherwise."""
 
     def keys():
         """ Return an iterable sequence of object names present in the folder.
@@ -173,7 +179,9 @@ class IFolder(Interface):
         """
 
     def __iter__():
-        """ An alias for ``keys``
+        """ An alias for ``keys``.
+
+        Respect ``order``, if set.
         """
 
     def values():
