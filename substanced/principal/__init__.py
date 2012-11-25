@@ -206,6 +206,8 @@ def groupname_validator(node, kw):
 
 def members_choices(context, request):
     principals = find_service(context, 'principals')
+    if principals is None:
+        return () # fbo dump/load
     values = [(get_oid(group), name) for name, group in 
               principals['users'].items()]
     return values
@@ -282,6 +284,8 @@ def login_validator(node, kw):
 
 def groups_choices(context, request):
     principals = find_service(context, 'principals')
+    if principals is None:
+        return () # fbo dump/load
     values = [(get_oid(group), name) for name, group in 
               principals['groups'].items()]
     return values

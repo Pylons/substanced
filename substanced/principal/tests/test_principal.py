@@ -186,6 +186,12 @@ class Test_members_choices(unittest.TestCase):
         result = self._makeOne(site, request)
         self.assertEqual(result, [(1, 'user')])
 
+    def test_it_no_principals_service(self):
+        site = testing.DummyResource()
+        request = testing.DummyRequest()
+        result = self._makeOne(site, request)
+        self.assertEqual(result, ())
+
 class TestGroup(unittest.TestCase):
     def _makeOne(self, description=''):
         from .. import Group
@@ -278,6 +284,12 @@ class Test_groups_choices(unittest.TestCase):
         request = testing.DummyRequest()
         result = self._makeOne(site, request)
         self.assertEqual(result, [(1, 'group')])
+
+    def test_it_no_principals_service(self):
+        site = testing.DummyResource()
+        request = testing.DummyRequest()
+        result = self._makeOne(site, request)
+        self.assertEqual(result, ())
 
 class TestUser(unittest.TestCase):
     def setUp(self):
