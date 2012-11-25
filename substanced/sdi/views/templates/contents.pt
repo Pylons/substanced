@@ -14,6 +14,16 @@
     <h2 tal:condition="not items">No items</h2>
 
     <div tal:condition="items">
+
+      <div class="form-search pull-right">
+       <div class="input-append">
+          <input type="text" class="input-medium search-query"
+                placeholder="Type to filter…">
+          <button type="submit" class="btn"><i class="icon-search"> </i></button>
+        </div>
+      </div>
+      <div class="clearfix" />
+
     <div id="sdi-contents-table-sg" class="slickgrid-wrapper"></div>
     <script type="text/javascript">
         jQuery(function ($) {
