@@ -53,7 +53,7 @@ def get_dumpers(registry):
     ordered = registry.queryUtility(IDumperFactories, default=None)
     if ordered is None:
         tsorter = TopologicalSorter()
-        dumpers = getattr(registry, '_sd_dumpers', [])
+        dumpers = _setattrdefault(registry, '_sd_dumpers', [])
         del registry._sd_dumpers
         for n, f, b, a in dumpers:
             tsorter.add(n, f, before=b, after=a)
