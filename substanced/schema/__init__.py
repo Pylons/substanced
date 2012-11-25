@@ -36,7 +36,7 @@ class RemoveCSRFMapping(colander.Mapping):
             return result
         result.pop('_csrf_token_', None)
         return result
-                   
+
 class Schema(colander.Schema):
     """
     A ``colander.Schema`` subclass which generates and validates a CSRF token
@@ -172,13 +172,13 @@ class IdSet(object):
         
     def serialize(self, node, value):
         if value is colander.null:
-            value = ()
+            return value
         self._check_iterable(node, value)
         return value
 
     def deserialize(self, node, value):
         if value is colander.null:
-            value = ()
+            return value
         self._check_iterable(node, value)
         return map(int, value)
 
@@ -191,7 +191,7 @@ class MultireferenceIdSchemaNode(colander.SchemaNode):
     def _get_choices(self):
         context = self.bindings['context']
         request = self.bindings['request']
-        return self.choices_getter(context, request)
+        return self.choices_getter(context, request) # passed to SchemaNode ctor
 
     @property
     def widget(self):
