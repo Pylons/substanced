@@ -2,6 +2,8 @@ import random
 
 from persistent import Persistent
 
+import colander
+
 import BTrees
 
 from zope.interface import implementer
@@ -154,7 +156,7 @@ class ObjectMap(Persistent):
         if context is None:
             context = self.root
         return find_resource(context, path_tuple)
-            
+
     def add(self, obj, path_tuple, replace_oid=False):
         """ Add a new object to the object map at the location specified by
         ``path_tuple`` (must be the path of the object in the object graph as
@@ -519,7 +521,7 @@ class ReferenceSet(Persistent):
                     if not oidset:
                         del self.src2target[source]
         return removed
-    
+
 def _reference_property(reftype, resolve, orientation='source'):
     def _get(self, resolve=resolve):
         objectmap = find_objectmap(self)
@@ -537,6 +539,8 @@ def _reference_property(reftype, resolve, orientation='source'):
         return oid
 
     def _set(self, oid):
+        if oid == colander.null: # fbo dump/load
+            return
         _del(self)
         if oid is None:
             return
@@ -689,6 +693,8 @@ def _multireference_property(
             )
 
     def _set(self, oids):
+        if oids == colander.null: # fbo dump/load
+            return
         if not is_nonstr_iter(oids):
             raise ValueError('Must be a sequence')
         iterable = _del(self)
