@@ -1,7 +1,7 @@
 /** Build from https://github.com/Pylons/sdidev to rebuild this LESS file **/
 /* Mixins for SlickGrid */
 .slickgrid-wrapper {
-  height: 370px;
+  height: 380px;
   width: 100%;
   position: relative;
 }
