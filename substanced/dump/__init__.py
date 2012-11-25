@@ -10,6 +10,7 @@ from zope.interface import (
 from pyramid.threadlocal import get_current_registry
 from pyramid.security import AllPermissionsList, ALL_PERMISSIONS
 from pyramid.util import DottedNameResolver
+from pyramid.request import Request
 
 from substanced.interfaces import IFolder
 from substanced.workflow import STATE_ATTR
@@ -159,41 +160,41 @@ def load(
     return first
                     
 class _FileOperations(object):
-    def _get_fullpath(self, filename, subdir=None, makedirs=False):
-        if subdir is None:
-            prefix = self.directory
-        else:
-            prefix = os.path.join(self.directory, subdir)
+    def _get_fullpath(self, filename, makedirs=False):
+        subdirs, filename = os.path.split(os.path.normpath(filename))
+
+        prefix = os.path.join(self.directory, subdirs)
 
         if makedirs:
             if not os.path.exists(prefix):
                 os.makedirs(prefix)
 
         fullpath = os.path.join(prefix, filename)
+
         return fullpath
         
-    def openfile_w(self, filename, mode='w', subdir=None, makedirs=True):
-        path = self._get_fullpath(filename, subdir=subdir, makedirs=makedirs)
+    def openfile_w(self, filename, mode='w', makedirs=True):
+        path = self._get_fullpath(filename, makedirs=makedirs)
         fp = open(path, mode)
         return fp
 
-    def openfile_r(self, filename, mode='r', subdir=None):
-        path = self._get_fullpath(filename, subdir=subdir)
+    def openfile_r(self, filename, mode='r'):
+        path = self._get_fullpath(filename)
         fp = open(path, mode)
         return fp
 
-    def exists(self, filename, subdir=None):
-        path = self._get_fullpath(filename, subdir=subdir)
+    def exists(self, filename):
+        path = self._get_fullpath(filename)
         return os.path.exists(path)
 
 class _YAMLOperations(_FileOperations):
 
-    def load_yaml(self, filename, subdir=None):
-        with self.openfile_r(filename, subdir=subdir) as fp:
+    def load_yaml(self, filename):
+        with self.openfile_r(filename) as fp:
             return yaml.load(fp, Loader=self.registry.yaml_loader)
 
-    def dump_yaml(self, obj, filename, subdir=None):
-        with self.openfile_w(filename, subdir=subdir) as fp:
+    def dump_yaml(self, obj, filename):
+        with self.openfile_w(filename) as fp:
             return yaml.dump(obj, fp, Dumper=self.registry.yaml_dumper)
 
 class ResourceContext(_YAMLOperations):
@@ -418,10 +419,91 @@ class DirectlyProvidedInterfacesDumper(object):
                 iface = context.resolve_dotted_name(name)
                 alsoProvides(context.resource, iface)
 
+class FolderOrderDumper(object):
+    def __init__(self, name, registry):
+        self.name = name
+        self.registry = registry
+        self.fn = '%s.yaml' % self.name
+
+    def dump(self, context):
+        resource = context.resource
+        if IFolder.providedBy(resource) and resource.is_ordered():
+            context.dump_yaml(resource.order, self.fn)
+                
+    def load(self, context):
+        if context.exists(self.fn):
+            resource = context.resource
+            order = context.load_yaml(self.fn)
+            def add_order(root):
+                resource.order = order
+            # need to defer in order for children to be added
+            # XXX keep a reference to resource, ok?
+            # XXX _set_order doesn't preserve existing keys?
+            context.add_callback(add_order)
+
+class PropertySheetDumper(object):
+    def __init__(self, name, registry):
+        import colander
+        from substanced.objectmap import Multireference
+        self.name = name
+        self.registry = registry
+        def cn_constructor(loader, node):
+            return colander.null
+        def cn_representer(dumper, data):
+            return dumper.represent_scalar(u'!colander_null', '')
+        registry.yaml_loader.add_constructor(
+            u'!colander_null',
+            cn_constructor,
+            )
+        registry.yaml_dumper.add_representer(
+            colander.null.__class__,
+            cn_representer,
+            )
+        registry.yaml_dumper.add_representer(
+            Multireference,
+            cn_representer,
+            )
+
+    def _get_sheets(self, context):
+        registry = context.registry
+        resource = context.resource
+        sheets = registry.content.metadata(resource, 'propertysheets', ())
+        for sheetname, sheetfactory in sheets:
+            if not sheetname:
+                sheetname = '__unnamed__'
+            request = Request.blank('/')
+            request.registry = self.registry
+            request.context = context.resource
+            sheet = sheetfactory(context.resource, request)
+            sheet.schema.bind(request=request, context=context.resource)
+            yield sheetname, sheet
+
+    def dump(self, context):
+        sheets = self._get_sheets(context)
+        for sheetname, sheet in sheets:
+            appstruct = sheet.get()
+            cstruct = sheet.schema.serialize(appstruct)
+            context.dump_yaml(
+                cstruct,
+                'propsheets/%s/properties.yaml' % sheetname,
+                )
+    def load(self, context):
+        sheets = self._get_sheets(context)
+        for sheetname, sheet in sheets:
+            if not sheetname:
+                sheetname = '__unnamed__'
+            fn = 'propsheets/%s/properties.yaml'
+            if context.exists(fn):
+                cstruct = context.load_yaml(fn)
+                appstruct = sheet.schema.deserialize(cstruct)
+                sheet.set(appstruct)
+
 DUMPERS = [
     ('acl', ACLDumper),
     ('workflow', WorkflowDumper),
     ('references', ReferencesDumper),
     ('sdiproperties', SDIPropertiesDumper),
     ('interfaces', DirectlyProvidedInterfacesDumper),
+    ('order', FolderOrderDumper),
+    ('propsheets', PropertySheetDumper),
     ]
