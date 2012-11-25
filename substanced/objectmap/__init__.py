@@ -378,13 +378,13 @@ class ObjectMap(Persistent):
     
     def sourceids(self, obj, reftype):
         """ Return a set of object identifiers of the objects connected to
-        ``obj`` a a source using reference type ``reftype``"""
+        ``obj`` a source using reference type ``reftype``"""
         oid = self._refid_for(obj)
         return self.family.IF.Set(self.referencemap.sourceids(oid, reftype))
 
     def targetids(self, obj, reftype):
         """ Return a set of object identifiers of the objects connected to
-        ``obj`` a a target using reference type ``reftype``"""
+        ``obj`` a target using reference type ``reftype``"""
         oid = self._refid_for(obj)
         return self.family.IF.Set(self.referencemap.targetids(oid, reftype))
 

@@ -362,3 +362,9 @@ def set_created(resource, created):
     UTC date and time."""
     resource.__created__ = created
 
+def dotted_name(g):
+    """ Return the dotted name of a global object. """
+    name = g.__name__
+    module = g.__module__
+    return '.'.join((module, name))
+

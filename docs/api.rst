@@ -450,6 +450,8 @@ Other Helpers
 
 .. autofunction:: renamer
 
+.. autofunction:: dotted_name
+
 .. autoclass:: Batch
 
 :mod:`substanced.widget` API

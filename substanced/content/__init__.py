@@ -10,7 +10,11 @@ import venusian
 
 from ..event import ContentCreated
 
-from ..util import set_created
+from ..util import (
+    dotted_name,
+    set_created,
+    set_oid,
+    )
 from ..interfaces import IFolder
 
 _marker = object()
@@ -69,13 +73,8 @@ def _get_factory_type(resource):
     Otherwise return the full Python dotted name of the resource's class."""
     factory_type = getattr(resource, '__factory_type__', None)
     if factory_type is None:
-        factory_type = _dotted_name_of(resource.__class__)
+        factory_type = dotted_name(resource.__class__)
     return factory_type
-
-def _dotted_name_of(g):
-    name = g.__name__
-    module = g.__module__
-    return '.'.join((module, name))
 
 class ContentRegistry(object):
     """ An object accessible as ``registry.content`` (aka
@@ -109,7 +108,10 @@ class ContentRegistry(object):
         send a :class:`substanced.event.ContentCreatedEvent`.  Return the
         created object."""
         factory = self.content_types[content_type]
+        oid = kw.pop('__oid', None) # FBO dump system loader
         inst = factory(*arg, **kw)
+        if oid is not None:
+            set_oid(inst, oid)
         set_created(inst, self._utcnow())
         meta = self.meta[content_type].copy()
         aftercreate = meta.get('after_create')
@@ -371,10 +373,10 @@ def _wrap_factory(factory, factory_type):
     """
  
     if inspect.isclass(factory) and factory_type is None:
-        return _dotted_name_of(factory), factory
+        return dotted_name(factory), factory
 
     if factory_type is None:
-        factory_type = _dotted_name_of(factory)
+        factory_type = dotted_name(factory)
 
     def factory_wrapper(*arg, **kw):
         inst = factory(*arg, **kw)

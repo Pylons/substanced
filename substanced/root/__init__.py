@@ -52,17 +52,19 @@ class Root(Folder):
     a member of an ``admins`` group.  The ``admins`` group will be granted
     the ``ALL_PERMISSIONS`` special permission in the root.
 
-    If this class is created by hand, its ``after_create`` method
-    must be called manually to set up the services, user, and group.
+    If this class is created by hand, its ``after_create`` method must be
+    called manually to create its objectmap, the services, the user, and the
+    group.
     """
     sdi_title = ''
 
-    def __init__(self):
-        Folder.__init__(self)
+    def after_create(self, inst, registry):
+        # creation of objectmap deferred until after creation to allow for dump
+        # system loader to successfully load a root object; if this were done
+        # in __init__, the oid of the root object would not be resettable, and
+        # loaded references to the root object could not be resolved
         self.__objectmap__ = ObjectMap(self)
         self.__objectmap__.add(self, ('',))
-
-    def after_create(self, inst, registry):
         settings = registry.settings
         password = settings.get('substanced.initial_password')
         if password is None:
