@@ -15,14 +15,14 @@
 
     <div tal:condition="items">
 
-      <div class="form-search pull-right">
-       <div class="input-append">
-          <input type="text" class="input-medium search-query"
-                placeholder="Type to filter…">
-          <button type="submit" class="btn"><i class="icon-search"> </i></button>
-        </div>
+    <div class="form-search pull-right sdi-contents-filter">
+     <div class="input-append">
+        <input type="text" class="input-medium search-query"
+              placeholder="Type to filter…">
+        <button type="submit" class="btn"><i class="icon-search"> </i></button>
       </div>
-      <div class="clearfix" />
+    </div>
+    <div class="clearfix" />
 
     <div id="sdi-contents-table-sg" class="slickgrid-wrapper"></div>
     <script type="text/javascript">
@@ -34,7 +34,7 @@
     <div class="clearfix">
     </div>
 
-    <form action="@@contents" method="POST">
+    <form action="@@contents" method="POST" class="sdi-contents-actions">
       <fieldset>
       <input type="hidden" name="csrf_token" 
              value="${request.session.get_csrf_token()}"/>

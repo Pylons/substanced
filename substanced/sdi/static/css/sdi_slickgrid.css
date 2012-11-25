@@ -138,6 +138,9 @@ body .slickgrid-wrapper .slick-header-columns .slick-header-column.ui-state-defa
 .slickgrid-wrapper .slick-header-columns .slick-header-column .slick-sort-indicator-desc {
   vertical-align: middle;
 }
-form[action="@@contents"] .form-actions {
+.sdi-contents-filter {
+  margin-bottom: 1em;
+}
+form.sdi-contents-actions .form-actions {
   margin-top: 0;
 }

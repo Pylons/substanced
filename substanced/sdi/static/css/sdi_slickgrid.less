@@ -7,7 +7,17 @@
     width: 100%;
     .slickGrid();
 }
-form[action="@@contents"] {
+
+// 
+// Styling of other elements on the same page with slickgrid
+//
+
+.sdi-contents-filter {
+    // add some place between the filter and the grid
+    margin-bottom: 1em;
+}
+
+form.sdi-contents-actions {
     // .form-actions has a top margin. When used under the grid,
     // it looks better without this margin.
     .form-actions {
