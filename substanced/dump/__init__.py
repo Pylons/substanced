@@ -9,7 +9,11 @@ from zope.interface import (
 
 from pyramid.threadlocal import get_current_registry
 from pyramid.security import AllPermissionsList, ALL_PERMISSIONS
-from pyramid.util import DottedNameResolver
+from pyramid.util import (
+    DottedNameResolver,
+    TopologicalSorter,
+    )
+
 from pyramid.request import Request
 
 from substanced.interfaces import IFolder
@@ -29,7 +33,7 @@ from substanced.util import (
 RESOURCE_FILENAME = 'resource.yaml'
 RESOURCES_DIRNAME = 'resources'
 
-class IDumperFactory(Interface):
+class IDumperFactories(Interface):
     pass
 
 # grrr.. pyyaml has class-based global registries, so we need to subclass
@@ -44,6 +48,19 @@ class SLoader(yaml.Loader):
 def set_yaml(registry):
     registry.yaml_loader = SLoader
     registry.yaml_dumper = SDumper
+
+def get_dumpers(registry):
+    ordered = registry.queryUtility(IDumperFactories, default=None)
+    if ordered is None:
+        tsorter = TopologicalSorter()
+        dumpers = getattr(registry, '_sd_dumpers', [])
+        del registry._sd_dumpers
+        for n, f, b, a in dumpers:
+            tsorter.add(n, f, before=b, after=a)
+        ordered = tsorter.sorted()
+        registry.registerUtility(ordered, IDumperFactories)
+    dumpers = [f(n, registry) for n, f in ordered]
+    return dumpers
 
 def dump(
     resource,
@@ -62,8 +79,7 @@ def dump(
 
     set_yaml(registry)
 
-    # dumpers = [f(n, registry) for nm f in self.registry.getUtilitiesFor(IDumperFactory)]
-    dumpers = [ f(n, registry) for n, f in DUMPERS]
+    dumpers = get_dumpers(registry)
 
     stack = [(os.path.abspath(os.path.normpath(directory)), resource)]
     first = None
@@ -111,7 +127,7 @@ def load(
     registry=None
     ):
     """ Load a dump of a resource and return the resource."""
-
+ 
     if registry is None:
         registry = get_current_registry()
 
@@ -121,8 +137,7 @@ def load(
 
     first = None
 
-    # dumpers = [f(n, registry) for nm f in self.registry.getUtilitiesFor(IDumperFactory)]
-    dumpers = [ f(n, registry) for n, f in DUMPERS]
+    dumpers = get_dumpers(registry)
 
     while stack: # breadth-first is easiest
 
@@ -498,12 +513,35 @@ class PropertySheetDumper(object):
                 appstruct = sheet.schema.deserialize(cstruct)
                 sheet.set(appstruct)
 
-DUMPERS = [
-    ('acl', ACLDumper),
-    ('workflow', WorkflowDumper),
-    ('references', ReferencesDumper),
-    ('sdiproperties', SDIPropertiesDumper),
-    ('interfaces', DirectlyProvidedInterfacesDumper),
-    ('order', FolderOrderDumper),
-    ('propsheets', PropertySheetDumper),
-    ]
+_marker = object()
+
+def _setattrdefault(ob, name, default=_marker):
+    v = getattr(ob, name, _marker)
+    if v is _marker:
+        if default is _marker:
+            raise AttributeError(name)
+        v = default
+        setattr(ob, name, v)
+    return v
+
+def add_dumper(config, dumper_name, dumper_factory, before=None, after=None):
+    registry = config.registry
+    def register():
+        dumpers = _setattrdefault(registry, '_sd_dumpers', [])
+        dumpers.append([dumper_name, dumper_factory, before, after])
+    discriminator = ('sd_dumper', dumper_name)
+    config.action(discriminator, callable=register)
+
+def includeme(config):
+    DEFAULT_DUMPERS = [
+        ('acl', ACLDumper),
+        ('workflow', WorkflowDumper),
+        ('references', ReferencesDumper),
+        ('sdiproperties', SDIPropertiesDumper),
+        ('interfaces', DirectlyProvidedInterfacesDumper),
+        ('order', FolderOrderDumper),
+        ('propsheets', PropertySheetDumper),
+        ]
+    config.add_directive('add_dumper', add_dumper)
+    for dumper_name, dumper_factory in DEFAULT_DUMPERS:
+        config.add_dumper(dumper_name, dumper_factory)

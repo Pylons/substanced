@@ -36,6 +36,7 @@ def include(config): # pragma: no cover
     config.include('.evolution')
     config.include('.widget')
     config.include('.workflow')
+    config.include('.dump')
 
 def scan(config): # pragma: no cover
     """ Perform all ``config.scan`` tasks required for Substance D and the
