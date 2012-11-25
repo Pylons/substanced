@@ -139,7 +139,7 @@ body .slickgrid-wrapper .slick-header-columns .slick-header-column.ui-state-defa
   vertical-align: middle;
 }
 .sdi-contents-filter {
-  margin-bottom: 1em;
+  margin-top: -62px;
 }
 form.sdi-contents-actions .form-actions {
   margin-top: 0;
