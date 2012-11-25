@@ -10,7 +10,7 @@ def _makeSite(**kw):
     alsoProvides(site, IFolder)
     for k, v in kw.items():
         site[k] = v
-    site.__services__ = tuple(kw.keys())
+        v.__is_service__ = True
     return site
 
 class TestResolvingIndex(unittest.TestCase):
@@ -52,12 +52,12 @@ class TestPathIndex(unittest.TestCase):
         return acquire(inst, name)
 
     def test_document_repr(self):
-        from substanced.util import oid_of
+        from substanced.util import get_oid
         inst = self._makeOne()
         obj = testing.DummyResource()
         objectmap = self._acquire(inst, '__objectmap__')
         objectmap.add(obj, (u'',))
-        result = inst.document_repr(oid_of(obj))
+        result = inst.document_repr(get_oid(obj))
         self.assertEqual(result, (u'',))
 
     def test_document_repr_missing(self):

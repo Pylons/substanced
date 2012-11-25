@@ -19,7 +19,7 @@ def _makeSite(**kw):
         site.__objectmap__ = objectmap
     for k, v in kw.items():
         site[k] = v
-    site.__services__ = tuple(kw.keys())
+        v.__is_service__ = True
     return site
 
 class TestCatalog(unittest.TestCase):

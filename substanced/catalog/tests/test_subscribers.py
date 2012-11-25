@@ -14,7 +14,7 @@ def _makeSite(**kw):
         site.__objectmap__ = objectmap
     for k, v in kw.items():
         site[k] = v
-    site.__services__ = tuple(kw.keys())
+        v.__is_service__ = True
     return site
 
 class Test_object_added(unittest.TestCase):
@@ -233,10 +233,10 @@ class Test_acl_modified(unittest.TestCase):
         self._callFUT(event) # doesnt blow up
 
     def test_gardenpath(self):
-        resource = testing.DummyResource()
+        from substanced.interfaces import IFolder
+        resource = testing.DummyResource(__provides__=IFolder)
         resource.__factory_type__ = 'resource'
         resource.__oid__ = 1
-        resource.__services__ = ('catalog',)
         catalog = DummyCatalog()
         resource['catalog'] = catalog
         index = DummyIndex()
@@ -249,6 +249,8 @@ class Test_acl_modified(unittest.TestCase):
         self.assertEqual(index.data.__class__.__name__, 'CatalogViewWrapper')
 
 class DummyCatalog(dict):
+    __is_service__ = True
+    __factory_type__ = None
     
     family = BTrees.family64
     

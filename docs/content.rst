@@ -50,7 +50,7 @@ Here's an example which defines a content resource factory as a class:
 
    @content('Blog Entry')
    class BlogEntry(Persistent):
-       def __init__(self, title, body):
+       def __init__(self, title='', body=''):
            self.title = title
            self.body = body
 
@@ -70,16 +70,25 @@ instead:
            self.body = body
 
    @content('Blog Entry')
-   def make_blog_entry(title, body):
+   def make_blog_entry(title='', body=''):
        return BlogEntry(title, body)
 
-.. note::
+When a resource factory is not a class, Substance D will wrap the resource
+factory in something that changes the resource object returned from the
+factory.  In the above case, the BlogEntry instance returned from
+``make_blog_entry`` will be changed; its ``__factory_type__`` attribute will be
+mutated.
 
-   When a resource factory is not a class, Substance D will wrap the resource
-   factory in something that changes the resource object returned from the
-   factory.  In the above case, the BlogEntry instance returned from
-   ``make_blog_entry`` will be changed; its ``__factory_type__`` attribute
-   will be mutated.
+Notice that when we decorate a resource factory class with ``@content``, and
+the class' ``__init__`` function takes arguments, we provide those arguments
+with default values.  This is mandatory if you'd like your content objects to
+participate in a "dump".  Dumping a resource requires that the resource be
+creatable without any mandatory arguments.  It's a similar story if our factory
+is a function; the function decorated by the ``@content`` decorator should
+provide defaults to any argument.  In general, a resource factory can take
+arguments, but each parameter of the factory's callable should be given a
+default value.  This also means that all arguments to a resource factory
+should be keyword arguments, and not positional arguments.
 
 In order to activate a ``@content`` decorator, it must be *scanned* using the
 Pyramid ``config.scan()`` machinery:
@@ -181,7 +190,7 @@ or ``config.add_content_type``.
 
    @content('Blog Entry', name='Cool Blog Entry')
    class BlogEntry(Persistent):
-       def __init__(self, title, body):
+       def __init__(self, title='', body=''):
            self.title = title
            self.body = body
 
@@ -203,7 +212,7 @@ passing an ``icon`` keyword argument to ``@content`` or ``add_content_type``.
 
    @content('Blog Entry', icon='icon-file')
    class BlogEntry(Persistent):
-       def __init__(self, title, body):
+       def __init__(self, title='', body=''):
            self.title = title
            self.body = body
 
@@ -227,7 +236,7 @@ You can also pass a callback as an ``icon`` argument:
 
    @content('Blog Entry', icon=blogentry_icon)
    class BlogEntry(Persistent):
-       def __init__(self, title, body):
+       def __init__(self, title='', body=''):
            self.title = title
            self.body = body
 
@@ -255,7 +264,7 @@ added by passing the name of the add view as a keyword argument to
 
    @content('Blog Entry', add_view='add_blog_entry')
    class BlogEntry(Persistent):
-       def __init__(self, title, body):
+       def __init__(self, title='', body=''):
            self.title = title
            self.body = body
 
@@ -280,7 +289,7 @@ You can also pass a callback as an ``add_view`` argument:
 
    @content('Blog Entry', add_view=add_blog_entry)
    class BlogEntry(Persistent):
-       def __init__(self, title, body):
+       def __init__(self, title='', body=''):
            self.title = title
            self.body = body
 

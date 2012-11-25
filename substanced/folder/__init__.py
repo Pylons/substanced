@@ -33,7 +33,7 @@ from ..event import (
     )
 
 from ..util import (
-    oid_of,
+    get_oid,
     postorder,
     )
 
@@ -57,7 +57,6 @@ class Folder(Persistent):
 
     __name__ = None
     __parent__ = None
-    __services__ = ()
 
     # Default uses ordering of underlying BTree.
     _order = None
@@ -104,8 +103,7 @@ class Folder(Persistent):
             registry = get_current_registry()
         kw['registry'] = registry
         self.add(name, obj, **kw)
-        if not name in self.__services__:
-            self.__services__ = self.__services__ + (name,)
+        obj.__is_service__ = True
 
     def keys(self):
         """ Return an iterable sequence of object names present in the folder.
@@ -394,7 +392,7 @@ class Folder(Persistent):
         """
         name = unicode(name)
         other = self.data[name]
-        oid = oid_of(other, None)
+        oid = get_oid(other, None)
 
         if registry is None:
             registry = get_current_registry()
@@ -411,9 +409,6 @@ class Folder(Persistent):
 
         del self.data[name]
         self._num_objects.change(-1)
-
-        if name in self.__services__:
-            self.__services__ = filter(lambda x: x != name, self.__services__)
 
         if self._order is not None:
             self._order = tuple([x for x in self._order if x != name])
@@ -466,17 +461,12 @@ class Folder(Persistent):
         and WillBeRemoved events as well as the Added and WillBeAdded events
         sent will indicate that the object is moving.
         """
-        is_service = False
         if newname is None:
             newname = name
-        if name in self.__services__:
-            is_service = True
         if registry is None:
             registry = get_current_registry()
         ob = self.remove(name, moving=True, registry=registry)
         other.add(newname, ob, moving=True, registry=registry)
-        if is_service:
-            other.__services__ = other.__services__ + (name,)
         return ob
 
     def rename(self, oldname, newname, registry=None):

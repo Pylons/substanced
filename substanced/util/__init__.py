@@ -30,7 +30,7 @@ def postorder(startnode):
         yield node
     return visit(startnode)
 
-def oid_of(resource, default=_marker):
+def get_oid(resource, default=_marker):
     """ Return the object identifer of ``resource``.  If ``resource`` has no
     object identifier, raise an AttributeError exception unless ``default`` was
     passed a value; if ``default`` was passed a value, return the default in
@@ -41,6 +41,8 @@ def oid_of(resource, default=_marker):
         if default is _marker:
             raise
         return default
+
+oid_of = get_oid
 
 def set_oid(resource, oid):
     resource.__oid__ = oid
@@ -309,7 +311,7 @@ def renamer():
 
     return property(_get, _set)
 
-def change_acl(resource, new_acl, registry=None):
+def set_acl(resource, new_acl, registry=None):
     """Change the ACL on resource to ``new_acl``, which may be a valid ACL or
     ``None``.  If ``new_acl`` is ``None``, any existing non-``None``
     ``__acl__`` attribute of the resource will be removed (via ``del
@@ -342,6 +344,21 @@ def change_acl(resource, new_acl, registry=None):
     registry.subscribers((event, resource), None)
     return True
 
+change_acl = set_acl # bw compat
+
 def get_acl(resource, default=None):
     """ Return the ACL of the object or the default if the object has no ACL."""
     return getattr(resource, '__acl__', default)
+
+def get_created(resource):
+    """ Return a datetime object (in UTC, but represented as a naive datetime)
+    that represents the creation time of the resource.  If the resource has no
+    creation time, the return value will be ``None``."""
+    return getattr(resource, '__created__', None)
+
+def set_created(resource, created):
+    """ Set the creation date/time of the resource.  It must be a datetime
+    object (which should be without a timezeone (aka 'naive'), representing the
+    UTC date and time."""
+    resource.__created__ = created
+

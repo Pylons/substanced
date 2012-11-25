@@ -37,6 +37,8 @@
         <li>Allows the application of object-level (aka "row-level") security to content objects.</li>
         <li>Has built-in indexing and searching facilities</li>
         <li>Has machinery for forming relationships between content objects</li>
+        <li>Has machinery for dumping content to the filesystem and loading content from
+            such a dump</li>
       </ul>
       To see it in action, click the button below and log in as <b>admin</b> with
       the password <b>admin</b>.

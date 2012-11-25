@@ -47,14 +47,11 @@ Guts-Only
   the batch receives may be smaller than seqlen due to hidden objects in
   folder contents view.
 
-- Ditch the Zope event system (in particular, ditch "registry.registerHandler"
-  used by config.add_subscriber as well as registry.subscribers used by
-  registry.notify).  Come up with an alternate event subscription and
-  notification system which ensures that subscribers receive only the event
-  object, and senders need send only the event object, even if under the hood
-  other adaptations are done to find the right subscribers. A bonus: I will
-  never have to pdb-step my way through the insanity of
-  "components.subscribers" method again.
+- Think about moving ``get_content_type``, ``find_content``, ``find_services``,
+  et. al. to utils.
+
+- Once we depend on Pyramid 1.4b1+, normalize subscriber predicate argument
+  lists.
 
 Nice-to-Have Features
 ---------------------

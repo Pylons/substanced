@@ -396,8 +396,8 @@ class TestFolderContentsViews(unittest.TestCase):
         context.rename.assert_any_call('foobar', 'foobar0')
         request.session.flash.assert_called_once_with(u'foobar', 'error')
 
-    @mock.patch('substanced.sdi.views.folder.oid_of')
-    def test_copy_one(self, mock_oid_of):
+    @mock.patch('substanced.sdi.views.folder.get_oid')
+    def test_copy_one(self, mock_get_oid):
         context = mock.Mock()
         context.get.side_effect = lambda x: {
             'foobar': 'foobar',
@@ -410,11 +410,11 @@ class TestFolderContentsViews(unittest.TestCase):
 
         request.session.flash.assert_called_once_with(
             'Choose where to copy the items:', 'info')
-        self.assertEqual(mock_oid_of.mock_calls, [mock.call('foobar')])
+        self.assertEqual(mock_get_oid.mock_calls, [mock.call('foobar')])
         self.assertTrue(request.session.__setitem__.called)
 
-    @mock.patch('substanced.sdi.views.folder.oid_of')
-    def test_copy_multi(self, mock_oid_of):
+    @mock.patch('substanced.sdi.views.folder.get_oid')
+    def test_copy_multi(self, mock_get_oid):
         context = mock.Mock()
         context.get.side_effect = lambda x: {'foobar': 'foobar',
                                              'foobar1': 'foobar1',
@@ -427,12 +427,12 @@ class TestFolderContentsViews(unittest.TestCase):
 
         request.session.flash.assert_called_once_with(
             'Choose where to copy the items:', 'info')
-        self.assertEqual(mock_oid_of.mock_calls,
+        self.assertEqual(mock_get_oid.mock_calls,
                          [mock.call('foobar'), mock.call('foobar1')])
         self.assertTrue(request.session.__setitem__.called)
 
-    @mock.patch('substanced.sdi.views.folder.oid_of')
-    def test_copy_missing_child(self, mock_oid_of):
+    @mock.patch('substanced.sdi.views.folder.get_oid')
+    def test_copy_missing_child(self, mock_get_oid):
         context = mock.Mock()
         context.get.side_effect = lambda x: {
             'foobar': 'foobar',
@@ -444,11 +444,11 @@ class TestFolderContentsViews(unittest.TestCase):
         inst.copy()
         request.session.flash.assert_called_once_with(
             'Choose where to copy the items:', 'info')
-        self.assertEqual(mock_oid_of.mock_calls, [mock.call('foobar')])
+        self.assertEqual(mock_get_oid.mock_calls, [mock.call('foobar')])
         self.assertTrue(request.session.__setitem__.called)
 
-    @mock.patch('substanced.sdi.views.folder.oid_of')
-    def test_copy_none(self, mock_oid_of):
+    @mock.patch('substanced.sdi.views.folder.get_oid')
+    def test_copy_none(self, mock_get_oid):
         context = mock.Mock()
         context.__contains__ = mock.Mock(return_value=True)
         request = mock.MagicMock()
@@ -458,7 +458,7 @@ class TestFolderContentsViews(unittest.TestCase):
         inst.copy()
 
         request.session.flash.assert_called_once_with('No items to copy')
-        self.assertFalse(mock_oid_of.called)
+        self.assertFalse(mock_get_oid.called)
 
     def test_copy_finish_cancel(self):
         context = mock.Mock()
@@ -535,8 +535,8 @@ class TestFolderContentsViews(unittest.TestCase):
         self.assertRaises(HTTPFound, inst.copy_finish)
         request.session.flash.assert_called_once_with(u'foobar', 'error')
 
-    @mock.patch('substanced.sdi.views.folder.oid_of')
-    def test_move_one(self, mock_oid_of):
+    @mock.patch('substanced.sdi.views.folder.get_oid')
+    def test_move_one(self, mock_get_oid):
         context = mock.Mock()
         context.get.side_effect = lambda x: {
             'foobar': 'foobar',
@@ -549,12 +549,12 @@ class TestFolderContentsViews(unittest.TestCase):
 
         request.session.flash.assert_called_once_with(
             'Choose where to move the items:', 'info')
-        self.assertEqual(mock_oid_of.mock_calls, [mock.call('foobar')])
+        self.assertEqual(mock_get_oid.mock_calls, [mock.call('foobar')])
         self.assertTrue(request.session.__setitem__.call_args,
                         [mock.call('tomove')])
 
-    @mock.patch('substanced.sdi.views.folder.oid_of')
-    def test_move_multi(self, mock_oid_of):
+    @mock.patch('substanced.sdi.views.folder.get_oid')
+    def test_move_multi(self, mock_get_oid):
         context = mock.Mock()
         context.get.side_effect = lambda x: {'foobar': 'foobar',
                                              'foobar1': 'foobar1'}[x]
@@ -566,13 +566,13 @@ class TestFolderContentsViews(unittest.TestCase):
 
         request.session.flash.assert_called_once_with(
             'Choose where to move the items:', 'info')
-        self.assertEqual(mock_oid_of.mock_calls,
+        self.assertEqual(mock_get_oid.mock_calls,
                          [mock.call('foobar'), mock.call('foobar1')])
         self.assertTrue(request.session.__setitem__.call_args,
                         [mock.call('tomove')])
 
-    @mock.patch('substanced.sdi.views.folder.oid_of')
-    def test_move_missing_child(self, mock_oid_of):
+    @mock.patch('substanced.sdi.views.folder.get_oid')
+    def test_move_missing_child(self, mock_get_oid):
         context = mock.Mock()
         context.get.side_effect = lambda x: {'foobar': 'foobar',
                                              'foobar1': 'foobar1'}.get(x, None)
@@ -584,12 +584,12 @@ class TestFolderContentsViews(unittest.TestCase):
 
         request.session.flash.assert_called_once_with(
             'Choose where to move the items:', 'info')
-        self.assertEqual(mock_oid_of.mock_calls, [mock.call('foobar')])
+        self.assertEqual(mock_get_oid.mock_calls, [mock.call('foobar')])
         self.assertTrue(request.session.__setitem__.call_args,
                         [mock.call('tomove')])
 
-    @mock.patch('substanced.sdi.views.folder.oid_of')
-    def test_move_none(self, mock_oid_of):
+    @mock.patch('substanced.sdi.views.folder.get_oid')
+    def test_move_none(self, mock_get_oid):
         context = mock.Mock()
         context.get.side_effect = lambda x: {'foobar': 'foobar',
                                              'foobar1': 'foobar1'}.get(x, None)
@@ -600,7 +600,7 @@ class TestFolderContentsViews(unittest.TestCase):
         inst.move()
 
         request.session.flash.assert_called_once_with('No items to move')
-        self.assertFalse(mock_oid_of.called)
+        self.assertFalse(mock_get_oid.called)
         self.assertFalse(request.session.__setitem__.called)
 
     def test_move_finish_cancel(self):

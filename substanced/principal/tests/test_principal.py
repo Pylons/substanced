@@ -131,12 +131,12 @@ class Test_groupname_validator(unittest.TestCase):
         request = testing.DummyRequest()
         context = DummyFolder()
         principals = DummyFolder()
+        principals.__is_service__ = True
         groups = DummyFolder()
         users = DummyFolder()
         context['principals'] = principals
         context['principals']['groups'] = groups
         context['principals']['users'] = users
-        context.__services__ = ('principals',)
         request.context = context
         return dict(request=request, context=context)
 

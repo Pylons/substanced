@@ -14,9 +14,9 @@ from ..interfaces import (
 from ..content import find_service
 from ..objectmap import find_objectmap
 from ..util import (
-    oid_of,
+    get_oid,
     postorder,
-    change_acl,
+    set_acl,
     )
 
 from ..interfaces import (
@@ -29,9 +29,9 @@ def user_added(event):
     """ Give each user permission to change their own password."""
     user = event.object
     registry = event.registry
-    change_acl(
+    set_acl(
         user,
-        [(Allow, oid_of(user), ('sdi.view', 'sdi.change-password'))],
+        [(Allow, get_oid(user), ('sdi.view', 'sdi.change-password'))],
         registry=registry,
         )
 

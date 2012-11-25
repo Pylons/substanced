@@ -54,8 +54,8 @@ class TestRoot(unittest.TestCase):
         inst = self._makeOne()
         inst.after_create(inst, registry)
         self.assertTrue('__objectmap__' in inst.__dict__)
-        self.assertTrue('principals' in inst)
-        self.assertEqual(inst.__services__, ('principals',))
+        principals = inst['principals']
+        self.assertTrue(principals.__is_service__)
         self.assertTrue(registry.group.connected)
         self.assertTrue(inst.__acl__)
         self.assertFalse(registry.created.__sdi_deletable__)

@@ -16,8 +16,8 @@ from ..objectmap import ObjectMap
 from ..property import PropertySheet
 from ..schema import Schema
 from ..util import (
-    oid_of,
-    change_acl,
+    get_oid,
+    set_acl,
     )
 
 class RootSchema(Schema):
@@ -81,9 +81,9 @@ class Root(Folder):
         user = principals.add_user(login, password, email, registry=registry)
         admins = principals.add_group('admins', registry=registry)
         admins.memberids.connect([user])
-        change_acl(
+        set_acl(
             self,
-            [(Allow, oid_of(admins), ALL_PERMISSIONS)],
+            [(Allow, get_oid(admins), ALL_PERMISSIONS)],
             registry=registry,
             )
 

@@ -14,10 +14,10 @@ class TestIndexingView(unittest.TestCase):
         return IndexingView(context, request)
 
     def test_show(self):
-        context = testing.DummyResource()
+        from substanced.interfaces import IFolder
+        context = testing.DummyResource(__provides__=IFolder)
         request = testing.DummyRequest()
         context.__oid__ = 1
-        context.__services__ = ('catalog',)
         catalog = DummyCatalog()
         context['catalog'] = catalog
         inst = self._makeOne(context, request)
@@ -28,13 +28,13 @@ class TestIndexingView(unittest.TestCase):
             )
 
     def test_reindex(self):
-        context = testing.DummyResource()
+        from substanced.interfaces import IFolder
+        context = testing.DummyResource(__provides__=IFolder)
         request = testing.DummyRequest()
         token = request.session.new_csrf_token()
         request.POST['csrf_token'] = token
         request.sdiapi = DummySDIAPI()
         context.__oid__ = 1
-        context.__services__ = ('catalog',)
         catalog = DummyCatalog()
         context['catalog'] = catalog
         inst = self._makeOne(context, request)
@@ -56,6 +56,7 @@ class DummyIndex(object):
         return 'repr'
 
 class DummyCatalog(object):
+    __is_service__ = True
     def __init__(self):
         self.index = DummyIndex()
 

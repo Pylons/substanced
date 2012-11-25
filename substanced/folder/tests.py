@@ -446,13 +446,13 @@ class TestFolder(unittest.TestCase):
 
     def test_move_is_service(self):
         folder = self._makeOne()
-        folder.__services__ = ('a',)
         other = self._makeOne()
         model = DummyModel()
+        model.__is_service__ = True
         folder['a'] = model
         folder.move('a', other)
         self.assertEqual(other['a'], model)
-        self.assertEqual(other.__services__, ('a',))
+        self.assertTrue(other['a'].__is_service__)
 
     def test_copy_no_newname(self):
         folder = self._makeOne()
@@ -593,8 +593,8 @@ class TestFolder(unittest.TestCase):
     def test_find_service_found(self):
         inst = self._makeOne()
         inst2 = self._makeOne()
+        inst2.__is_service__ = True
         inst.add('inst2', inst2)
-        inst.__services__ = ('inst2,')
         self.assertEqual(inst.find_service('inst2'), inst2)
 
     def test_find_services_missing(self):
@@ -604,8 +604,8 @@ class TestFolder(unittest.TestCase):
     def test_find_services_found(self):
         inst = self._makeOne()
         inst2 = self._makeOne()
+        inst2.__is_service__ = True
         inst.add('inst2', inst2)
-        inst.__services__ = ('inst2,')
         self.assertEqual(inst.find_services('inst2'), [inst2])
 
     def test_add_service(self):
@@ -613,14 +613,14 @@ class TestFolder(unittest.TestCase):
         foo = testing.DummyResource()
         inst.add_service('foo', foo)
         self.assertEqual(inst['foo'], foo)
-        self.assertEqual(inst.__services__, ('foo',))
+        self.assertTrue(foo.__is_service__)
 
     def test_add_service_withregistry(self):
         inst = self._makeOne()
         foo = testing.DummyResource()
         inst.add_service('foo', foo, registry=self.config.registry)
         self.assertEqual(inst['foo'], foo)
-        self.assertEqual(inst.__services__, ('foo',))
+        self.assertTrue(foo.__is_service__)
 
     def test__notify_no_registry(self):
         def f(t, n):

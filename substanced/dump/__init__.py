@@ -9,18 +9,18 @@ from pyramid.security import AllPermissionsList, ALL_PERMISSIONS
 
 from substanced.interfaces import IFolder
 from substanced.workflow import STATE_ATTR
-from substanced.content import (
+from substanced.content import get_content_type
+
+from substanced.util import (
     get_created,
     set_created,
-    get_content_type,
-    )
-from substanced.util import (
-    oid_of,
+    get_oid,
     set_oid,
     get_acl,
     )
 
 RESOURCE_FILENAME = 'resource.yaml'
+RESOURCES_DIRNAME = 'resources'
 
 class IDumperFactory(Interface):
     pass
@@ -45,14 +45,14 @@ def walk_resources(resource, prefix=None):
 def dump(
     resource,
     directory,
-    subobjects=True,
+    subresources=True,
     verbose=False,
     dry_run=False,
     registry=None
     ):
     """ Dump a resource to ``directory``. The resource will be represented by
-    at least one properties file and other subdirectories.  Subobjects
-    will dumped as subdirectories if ``subobjects`` is True."""
+    at least one properties file and other subdirectories.  Sub-resources
+    will dumped as subdirectories if ``subresources`` is True."""
 
     if registry is None:
         registry = get_current_registry()
@@ -63,13 +63,13 @@ def dump(
         directory, resource = stack.pop()
         context = ResourceDumpContext(directory, registry, verbose, dry_run)
         context.dump(resource)
-        if not subobjects:
+        if not subresources:
             break
         if IFolder.providedBy(resource):
             for subresource in resource.values():
                 subdirectory = os.path.join(
                     directory,
-                    'subobjects',
+                    RESOURCES_DIRNAME,
                     subresource.__name__
                     )
                 stack.append((subdirectory, subresource))
@@ -77,7 +77,7 @@ def dump(
 def load(
     directory,
     parent=None,
-    subobjects=True,
+    subresources=True,
     verbose=False,
     dry_run=False,
     registry=None
@@ -97,9 +97,9 @@ def load(
         resource = context.load(parent)
         if first is None:
             first = resource
-        if not subobjects:
+        if not subresources:
             break
-        subobjects_dir = os.path.join(directory, 'subobjects')
+        subobjects_dir = os.path.join(directory, RESOURCES_DIRNAME)
         if os.path.exists(subobjects_dir):
             for fn in os.listdir(subobjects_dir):
                 fullpath = os.path.join(subobjects_dir, fn)
@@ -152,7 +152,11 @@ class _YAMLOperations(_FileOperations):
 
 class ResourceContext(object):
     def get_dumpers(self):
-        return [('acl', ACLDumper), ('workflow', WorkflowDumper)]
+        ACLDumper.at_registration()
+        return [
+            ('acl', ACLDumper),
+            ('workflow', WorkflowDumper)
+            ]
         #return self.registry.getUtilitiesFor(IDumperFactory)
 
 class ResourceDumpContext(ResourceContext, _YAMLOperations):
@@ -169,8 +173,9 @@ class ResourceDumpContext(ResourceContext, _YAMLOperations):
         data = {
             'content_type':ct,
             'name':resource.__name__,
-            'oid':oid_of(resource),
+            'oid':get_oid(resource),
             'created':created,
+            'is_service':bool(getattr(resource, '__is_service__', False)),
             }
         self.dump_yaml(data, RESOURCE_FILENAME)
 
@@ -194,8 +199,11 @@ class ResourceLoadContext(ResourceContext, _YAMLOperations):
         name = resource.__name__ = data['name']
         set_oid(resource, data['oid'])
         created = data['created']
+        is_service = data['is_service']
         if created is not None:
             set_created(resource, created)
+        if is_service:
+            resource.__is_service__ = True
         return name, resource
 
     def load(self, parent):
@@ -239,9 +247,10 @@ class WorkflowDumper(object):
 
     def dump(self, resource):
         if hasattr(resource, STATE_ATTR):
-            self.context.dump_yaml(self.fn, resource.STATE_ATTR)
+            self.context.dump_yaml(getattr(resource, STATE_ATTR), self.fn)
 
     def load(self, resource):
         if self.context.exists(self.fn):
             states = self.context.load_yaml(self.fn)
             setattr(resource, STATE_ATTR, states)
+

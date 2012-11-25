@@ -10,6 +10,9 @@ import venusian
 
 from ..event import ContentCreated
 
+from ..util import set_created
+from ..interfaces import IFolder
+
 _marker = object()
 
 def get_content_type(resource, registry=None):
@@ -30,48 +33,36 @@ def find_content(resource, content_type, registry=None):
         registry = get_current_registry()
     return registry.content.find(resource, content_type)
 
-def get_created(resource):
-    """ Return a datetime object (in UTC, but represented as a naive datetime)
-    that represents the creation time of the resource.  If the resource has no
-    creation time, the return value will be ``None``."""
-    return getattr(resource, '__created__', None)
-
-def set_created(resource, created):
-    """ Set the creation date/time of the resource.  If the ``created`` value
-    is an integer, it should represent the ordinal time (e.g. the value of
-    ``somedatetime.toordinal()``).  Otherwise it must be a datetime object
-    (which should be without a timezeone (aka 'naive'), representing the UTC
-    date and time."""
-    if not isinstance(created, datetime.datetime):
-        created = datetime.datetime.fromordinal(created)
-    resource.__created__ = created
-
-def _find_services(context, name, one=False):
+def _find_services(resource, name, one=False):
     L = []
-    for obj in lineage(context):
-        services = getattr(obj, '__services__', None)
-        if services is not None:
-            if name in services:
-                service = obj[name]
-                if one:
-                    return service
-                L.append(service)
+    for obj in lineage(resource):
+        if IFolder.providedBy(obj):
+            subobj = obj.get(name, None)
+            if subobj is not None:
+                if is_service(subobj):
+                    if one:
+                        return subobj
+                    L.append(subobj)
     if one:
         return None
     return L
 
-def find_service(context, name):
-    """ Find the first service named ``name`` in the lineage of ``context``
+def is_service(resource):
+    """ Returns ``True`` if the resource is a service, ``False`` if not. """
+    return bool(getattr(resource, '__is_service__', False))
+
+def find_service(resource, name):
+    """ Find the first service named ``name`` in the lineage of ``resource``
     or return ``None`` if no such-named service could be found. """
-    return _find_services(context, name, one=True)
+    return _find_services(resource, name, one=True)
                 
-def find_services(context, name):
-    """Finds all services named ``name`` in the lineage of ``context`` and
+def find_services(resource, name):
+    """Finds all services named ``name`` in the lineage of ``resource`` and
     returns a sequence containing those service objects. The sequence will
     begin with the most deepest nested service and will end with the least
     deeply nested service.  Returns an empty sequence if no such-named
     service could be found."""
-    return _find_services(context, name)
+    return _find_services(resource, name)
 
 def _get_factory_type(resource):
     """ If the resource has a __factory_type__ attribute, return it.
@@ -353,8 +344,9 @@ def add_service_type(config, content_type, factory, factory_type=None, **meta):
     :class:`substanced.service.add_service_type` decorator. The
     ``add_service_type`` function honors a ``service_name`` keyword argument
     in its ``**meta``.  If this argument is passed, and a service already
-    exists in the ``__services__`` folder by this name, the service will not
-    be shown as addable in the add-content dropdown in the SDI UI.
+    exists in a folder by this name, the service will not
+    be shown as addable in the add-content dropdown in the SDI UI of the
+    folder.
     """
     meta['is_service'] = True
     return add_content_type(

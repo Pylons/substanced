@@ -26,7 +26,7 @@ from .discriminators import (
 from ..content import service
 from ..folder import Folder
 from ..objectmap import find_objectmap
-from ..util import oid_of
+from ..util import get_oid
 
 logger = logging.getLogger(__name__) # API
 
@@ -486,7 +486,7 @@ def add_system_indexes(config):
 
       Represents the local name of the content object.
 
-    - oid (a FieldIndex), uses ``oid_of(content)`` exclusively.
+    - oid (a FieldIndex), uses ``get_oid(content)`` exclusively.
 
       Represents the object identifier (globally unique) of the content object.
 
@@ -515,7 +515,7 @@ def add_system_indexes(config):
         )
     config.add_catalog_index(
         'oid', 'field', 'system',
-        discriminator=oid_of,
+        discriminator=get_oid,
         )
     config.add_catalog_index(
         'interfaces', 'keyword', 'system',

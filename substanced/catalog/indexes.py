@@ -204,7 +204,10 @@ class PathIndex(ResolvingIndex, hypatia.util.BaseIndexMixin, Persistent):
         )
     )
 class FieldIndex(ResolvingIndex, hypatia.field.FieldIndex):
-    pass
+    def __init__(self, discriminator=None, family=None):
+        if discriminator is None:
+            discriminator = lambda obj, default: default
+        hypatia.field.FieldIndex.__init__(self, discriminator, family=family)
 
 @content(
     'Keyword Index',
@@ -216,7 +219,11 @@ class FieldIndex(ResolvingIndex, hypatia.field.FieldIndex):
         )
     )
 class KeywordIndex(ResolvingIndex, hypatia.keyword.KeywordIndex):
-    pass
+    def __init__(self, discriminator=None, family=None):
+        if discriminator is None:
+            discriminator = lambda obj, default: default
+        hypatia.keyword.KeywordIndex.__init__(
+            self, discriminator, family=family)
 
 @content(
     'Text Index',
@@ -271,7 +278,14 @@ class FacetIndexPropertySheet(PropertySheet):
         )
     )
 class FacetIndex(ResolvingIndex, hypatia.facet.FacetIndex):
-    pass
+    def __init__(self, discriminator=None, facets=None, family=None):
+        if discriminator is None:
+            discriminator = lambda obj, default: default
+        if facets is None:
+            facets = []
+        hypatia.facet.FacetIndex.__init__(
+            self, discriminator, facets=facets, family=family
+            )
 
 class AllowedIndexSchema(IndexSchema):
     permissions = PermissionsSchemaNode(
@@ -298,11 +312,12 @@ class AllowedIndexPropertySheet(PropertySheet):
     icon='icon-search',
     add_view='add_allowed_index',
     is_index=True,
+    default_args=('',),
     propertysheets = (
         ('', AllowedIndexPropertySheet),
         )
     )
-class AllowedIndex(ResolvingIndex, hypatia.keyword.KeywordIndex):
+class AllowedIndex(KeywordIndex):
     def _get_permissions(self):
         return set(self.discriminator.permissions or ())
 

@@ -9,7 +9,7 @@ from zope.interface import implementer
 
 from pyramid.response import FileResponse
 
-from ..util import oid_of
+from ..util import get_oid
 
 try:
     import magic
@@ -74,7 +74,7 @@ class FileUploadPropertySheet(PropertySheet):
     def get(self):
         context = self.context
         request = self.request
-        uid = str(oid_of(context))
+        uid = str(get_oid(context))
         filedata = dict(
             fp=None,
             uid=uid,

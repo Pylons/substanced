@@ -49,10 +49,10 @@ class Test__postorder(unittest.TestCase):
         result = list(self._callFUT(model))
         self.assertEqual(result, [four, three, two, one, model])
 
-class Test_oid_of(unittest.TestCase):
+class Test_get_oid(unittest.TestCase):
     def _callFUT(self, obj, default=_marker):
-        from . import oid_of
-        return oid_of(obj, default)
+        from . import get_oid
+        return get_oid(obj, default)
 
     def test_gardenpath(self):
         obj = testing.DummyResource()
@@ -378,7 +378,7 @@ class Test_renamer(unittest.TestCase):
         self.assertEqual(parent.renamed_from, 'fred')
         self.assertEqual(parent.renamed_to, 'bob')
 
-class Test_change_acl(unittest.TestCase):
+class Test_set_acl(unittest.TestCase):
     def setUp(self):
         self.config = testing.setUp()
 
@@ -386,8 +386,8 @@ class Test_change_acl(unittest.TestCase):
         testing.tearDown()
 
     def _callFUT(self, context, acl, registry=None):
-        from . import change_acl
-        return change_acl(context, acl, registry)
+        from . import set_acl
+        return set_acl(context, acl, registry)
 
     def test_no_change_context_has_no_acl(self):
         context = testing.DummyResource()
