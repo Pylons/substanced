@@ -121,6 +121,39 @@
             });
 
 
+            // filtering
+            var searchString = '';
+            function myFilter(item, args) {
+                // Search is case insensitive.
+                var q = args.searchString || '';
+                // Trim spaces.
+                q = $.trim(q);
+                // No filter.
+                if (q === '') {
+                }
+                // Insensitive containment search in title and name.
+                q = q.toLowerCase();
+                if ((item.title || '').toLowerCase().indexOf(q) !== -1) {
+                    return true;
+                }
+                if ((item.name || '').toLowerCase().indexOf(q) !== -1) {
+                    return true;
+                }
+                return false;
+            }
+            // method on the wrapper instance, callable externally:
+            this.setSearchString = function (txt) {
+                if (searchString != txt) {
+                    searchString = txt;
+                    dataView.setFilterArgs({
+                        searchString: searchString
+                    });
+                    dataView.refresh();
+                    grid.render();
+                }
+            };
+
+
             // checkbox column
             grid.setSelectionModel(new Slick.RowSelectionModel({selectActiveRow: false}));
             grid.registerPlugin(checkboxSelector);
@@ -143,6 +176,11 @@
             // initialize the model after all the events have been hooked up
             dataView.beginUpdate();
             dataView.setItems(wrapperOptions.items);
+            dataView.setFilterArgs({
+                searchString: searchString
+            });
+            dataView.setFilter(myFilter);
+
             dataView.endUpdate();
 
             // if you don't want the items that are not visible (due to being filtered out

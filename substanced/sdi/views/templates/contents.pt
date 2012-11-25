@@ -27,7 +27,16 @@
     <div id="sdi-contents-table-sg" class="slickgrid-wrapper"></div>
     <script type="text/javascript">
         jQuery(function ($) {
-            $('#sdi-contents-table-sg').slickgrid(${slickgrid_wrapper_options});
+            var $grid = $('#sdi-contents-table-sg');
+            var $filter = $('.sdi-contents-filter input');
+            // grid
+            $grid.slickgrid(${slickgrid_wrapper_options});
+            var gridWrapper = $grid.data('slickgrid');
+            // filter
+            gridWrapper.setSearchString($filter.val());
+            $filter.on('keyup', function (evt) {
+                gridWrapper.setSearchString($filter.val());
+            });
         });
     </script>
 
