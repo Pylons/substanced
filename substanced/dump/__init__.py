@@ -7,6 +7,7 @@ from zope.interface import (
     directlyProvidedBy,
     alsoProvides,
     )
+from zope.interface.interface import InterfaceClass
 
 from pyramid.request import Request
 from pyramid.security import AllPermissionsList, ALL_PERMISSIONS
@@ -36,6 +37,8 @@ logger = logging.getLogger(__name__)
 RESOURCE_FILENAME = 'resource.yaml'
 RESOURCES_DIRNAME = 'resources'
 
+dotted_name_resolver = DottedNameResolver()
+
 class IDumperFactories(Interface):
     pass
 
@@ -51,6 +54,12 @@ class SLoader(yaml.Loader):
 def set_yaml(registry):
     registry.yaml_loader = SLoader
     registry.yaml_dumper = SDumper
+    def iface_representer(dumper, data):
+        return dumper.represent_scalar(u'!interface', dotted_name(data))
+    def iface_constructor(loader, node):
+        return dotted_name_resolver.resolve(node.value)
+    SDumper.add_multi_representer(InterfaceClass, iface_representer)
+    SLoader.add_constructor(u'!interface', iface_constructor)
 
 def get_dumpers(registry):
     ordered = registry.queryUtility(IDumperFactories, default=None)
@@ -218,7 +227,7 @@ class _YAMLOperations(_FileOperations):
             return yaml.dump(obj, fp, Dumper=self.registry.yaml_dumper)
 
 class ResourceContext(_YAMLOperations):
-    dotted_name_resolver = DottedNameResolver()
+    dotted_name_resolver = dotted_name_resolver
     
     def resolve_dotted_name(self, dotted):
         return self.dotted_name_resolver.resolve(dotted)
@@ -316,7 +325,7 @@ class ACLDumper(object):
             )
 
     def dump(self, context):
-        acl = get_acl(context.resource)
+        acl = get_acl(context.resource, None)
         if acl is None:
             return
         context.dump_yaml(acl, self.fn)
@@ -355,14 +364,13 @@ class ReferencesDumper(object):
         if objectmap is not None:
             if objectmap.has_references(resource):
                 for reftype in objectmap.get_reftypes():
-                    dotted = context.dotted_name(reftype)
                     sourceids = list(objectmap.sourceids(resource, reftype))
                     targetids = list(objectmap.targetids(resource, reftype))
                     if sourceids:
-                        d = references.setdefault(dotted, {})
+                        d = references.setdefault(reftype, {})
                         d['sources'] = sourceids
                     if targetids:
-                        d = references.setdefault(dotted, {})
+                        d = references.setdefault(reftype, {})
                         d['targets'] = targetids
         if references:
             context.dump_yaml(references, self.fn)
@@ -373,8 +381,7 @@ class ReferencesDumper(object):
             resource = context.resource
             oid = get_oid(resource)
             def add_references(root):
-                for dotted, d in references.items():
-                    reftype = context.resolve_dotted_name(dotted)
+                for reftype, d in references.items():
                     targets = d.get('targets', ())
                     sources = d.get('sources', ())
                     objectmap = find_objectmap(root)
