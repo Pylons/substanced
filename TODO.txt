@@ -53,6 +53,8 @@ Guts-Only
 - Once we depend on Pyramid 1.4b1+, normalize subscriber predicate argument
   lists.
 
+- Change all mentions of ``context`` to ``resource``.
+
 Nice-to-Have Features
 ---------------------
 
