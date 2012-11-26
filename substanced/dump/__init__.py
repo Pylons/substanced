@@ -22,7 +22,7 @@ from substanced.interfaces import IFolder
 from substanced.workflow import STATE_ATTR
 from substanced.content import get_content_type
 from substanced.objectmap import find_objectmap
-
+from substanced.sdi import sdiapi
 from substanced.util import (
     get_created,
     set_created,
@@ -501,6 +501,7 @@ class PropertySheetDumper(object):
             request = Request.blank('/')
             request.registry = self.registry
             request.context = context.resource
+            request.sdiapi = sdiapi(request)
             sheet = sheetfactory(context.resource, request)
             sheet.schema.bind(request=request, context=context.resource)
             yield sheetname, sheet
