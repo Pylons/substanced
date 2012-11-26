@@ -1,3 +1,4 @@
+import logging
 import os
 import yaml
 
@@ -7,14 +8,14 @@ from zope.interface import (
     alsoProvides,
     )
 
-from pyramid.threadlocal import get_current_registry
+from pyramid.request import Request
 from pyramid.security import AllPermissionsList, ALL_PERMISSIONS
+from pyramid.threadlocal import get_current_registry
+from pyramid.traversal import resource_path
 from pyramid.util import (
     DottedNameResolver,
     TopologicalSorter,
     )
-
-from pyramid.request import Request
 
 from substanced.interfaces import IFolder
 from substanced.workflow import STATE_ATTR
@@ -29,6 +30,8 @@ from substanced.util import (
     get_acl,
     dotted_name,
     )
+
+logger = logging.getLogger(__name__)
 
 RESOURCE_FILENAME = 'resource.yaml'
 RESOURCES_DIRNAME = 'resources'
@@ -99,6 +102,7 @@ def dump(
             dry_run
             )
 
+        logger.info('Dumping %s' % resource_path(resource))
         context.dump(resource)
 
         if not subresources:
@@ -151,6 +155,7 @@ def load(
             dry_run
             )
 
+        logger.info('Loading %s' % directory)
         resource = context.load(parent)
 
         if first is None:
@@ -232,7 +237,7 @@ class ResourceDumpContext(ResourceContext):
     def dump_resource(self, resource):
         registry = self.registry
         ct = get_content_type(resource, registry)
-        created = get_created(resource)
+        created = get_created(resource, None)
         data = {
             'content_type':ct,
             'name':resource.__name__,
