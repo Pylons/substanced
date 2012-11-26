@@ -12,7 +12,7 @@ registrations that are imposed upon the :term:`resource tree` of your
 application.  The SDI allows you to add, delete, change and otherwise manage
 resources and services.
 
-.. image:: sdi.png
+.. image:: images/sdi.png
 
 Benefits and Features
 =====================
@@ -71,7 +71,8 @@ The SDI is *not* for:
 
 The SDI does have a short list of clearly-defined places for developers
 to plug in parts of their application. As a prime example, you can
-define a :doc:`mgmtview` that gets added as a new tab on a resource.
+define a :doc:`Management View <mgmtview>` that gets added as a new
+tab on a resource.
 
 The SDI is extensible and allows you to plug your own views into it, so you
 can present nontechnical users with a way to manage arbitrary kinds of
@@ -79,6 +80,47 @@ custom content.
 
 Once again, for clarity: the SDI is not a framework, it is an
 application. It is not your retail UI.
+
+Catalog
+=======
+
+With :doc:`cataloging <cataloging>` developers have a powerful facility
+that can be added to their application. Like other first-class parts of
+Substance D's machinery, this includes an SDI UI for interacting with
+the catalog:
+
+.. image:: images/catalog.png
+
+Catalogues are content, meaning they can be added to a folder. You can
+add/edit/delete indices to the catalog from the list of built-in index
+types. You can also visit an index in a catalog and see some statistics
+for that index. Finally, you can also use the SDI to reindex the
+contents of an index, if you suspect it has gotten out of sync with the
+content.
+
+The catalog also registers a management view on content resources which
+gain a ``Indexing`` tab:
+
+.. image:: images/indexing.png
+
+This shows some statistics and allows an SDI user to reindex an
+individual resource.
+
+Principals
+==========
+
+Managing users and groups, aka principals, is more interesting in a
+system like Substance D with rich hierarchies. You can add a folder of
+principals to any folder or other kind of container that allows adding
+principals:
+
+.. image:: images/principals.png
+
+A principals folder allows you to manage (e.g. add/edit/delete/rename)
+users and groups via the SDI, as well as password resets. Since users
+and groups are content, you gain some of the other SDI tabs for
+managing them (e.g. Security.)
+
 
 Implementation Notes
 ====================

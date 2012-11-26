@@ -68,10 +68,6 @@ Nice-to-Have Features
 SDI
 ---
 
-- Explain catalog web UI.
-
-- Explain "Indexing" view.
-
 - Explain "Workflows" tab.
 
 - Explain exception views for integrity errors.
