@@ -346,15 +346,28 @@ def set_acl(resource, new_acl, registry=None):
 
 change_acl = set_acl # bw compat
 
-def get_acl(resource, default=None):
-    """ Return the ACL of the object or the default if the object has no ACL."""
-    return getattr(resource, '__acl__', default)
+def get_acl(resource, default=_marker):
+    """ Return the ACL of the object or the default if the object has no ACL.
+    If no default is passed, an :exc:`AttributeError` will be raised if the
+    object doesn't have an ACL."""
+    try:
+        return resource.__acl__
+    except AttributeError:
+        if default is _marker:
+            raise
+        return default
 
-def get_created(resource):
-    """ Return a datetime object (in UTC, but represented as a naive datetime)
-    that represents the creation time of the resource.  If the resource has no
-    creation time, the return value will be ``None``."""
-    return getattr(resource, '__created__', None)
+def get_created(resource, default=_marker):
+    """ Return a datetime object (typically in UTC, but represented as a naive
+    datetime) that represents the creation time of the resource.  If the
+    resource has no creation time, if ``default`` is passed it will be
+    returned.  Otherwise an :exc:`AttributeError` will be thrown."""
+    try:
+        return resource.__created__
+    except AttributeError:
+        if default is _marker:
+            raise
+        return default
 
 def set_created(resource, created):
     """ Set the creation date/time of the resource.  It must be a datetime

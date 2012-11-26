@@ -67,6 +67,16 @@ class Test_get_oid(unittest.TestCase):
         obj = testing.DummyResource()
         self.assertEqual(self._callFUT(obj, 1), 1)
 
+class Test_set_oid(unittest.TestCase):
+    def _callFUT(self, obj, val):
+        from . import set_oid
+        return set_oid(obj, val)
+
+    def test_gardenpath(self):
+        obj = testing.DummyResource()
+        self._callFUT(obj, 1)
+        self.assertEqual(obj.__oid__, 1)
+
 class TestBatch(unittest.TestCase):
     def _makeOne(self, seq, request, url=None, default_size=15, seqlen=None):
         from . import Batch
@@ -378,6 +388,24 @@ class Test_renamer(unittest.TestCase):
         self.assertEqual(parent.renamed_from, 'fred')
         self.assertEqual(parent.renamed_to, 'bob')
 
+class Test_get_acl(unittest.TestCase):
+    def _callFUT(self, obj, default=_marker):
+        from . import get_acl
+        return get_acl(obj, default)
+
+    def test_gardenpath(self):
+        obj = testing.DummyResource()
+        obj.__acl__ = 1
+        self.assertEqual(self._callFUT(obj), 1)
+
+    def test_no_objectid_no_default(self):
+        obj = testing.DummyResource()
+        self.assertRaises(AttributeError, self._callFUT, obj)
+
+    def test_no_objectid_with_default(self):
+        obj = testing.DummyResource()
+        self.assertEqual(self._callFUT(obj, 1), 1)
+
 class Test_set_acl(unittest.TestCase):
     def setUp(self):
         self.config = testing.setUp()
@@ -421,6 +449,35 @@ class Test_set_acl(unittest.TestCase):
         self.assertTrue(result)
         self.assertEqual(context.__acl__, 1)
         self.assertEqual(L[0][1], None)
+
+class Test_get_created(unittest.TestCase):
+    def _callFUT(self, obj, default=_marker):
+        from . import get_created
+        return get_created(obj, default)
+
+    def test_gardenpath(self):
+        obj = testing.DummyResource()
+        obj.__created__ = 1
+        self.assertEqual(self._callFUT(obj), 1)
+
+    def test_no_objectid_no_default(self):
+        obj = testing.DummyResource()
+        self.assertRaises(AttributeError, self._callFUT, obj)
+
+    def test_no_objectid_with_default(self):
+        obj = testing.DummyResource()
+        self.assertEqual(self._callFUT(obj, 1), 1)
+
+class Test_set_created(unittest.TestCase):
+    def _callFUT(self, obj, val):
+        from . import set_created
+        return set_created(obj, val)
+
+    def test_gardenpath(self):
+        obj = testing.DummyResource()
+        self._callFUT(obj, 1)
+        self.assertEqual(obj.__created__, 1)
+    
 
 class DummyContent(object):
     renamed_from = None
