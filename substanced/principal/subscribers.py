@@ -57,6 +57,9 @@ def principal_added(event):
     principal = event.object
     principal_name = principal.__name__
     principals = find_service(principal, 'principals')
+
+    if principals is None:
+        return
     
     if IUser.providedBy(principal):
         # it's a user
