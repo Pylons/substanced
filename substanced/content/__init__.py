@@ -106,7 +106,11 @@ class ContentRegistry(object):
         a method of the created object, and if it's a sequence, each value
         should be a string or a callable, which will be called in turn); then
         send a :class:`substanced.event.ContentCreatedEvent`.  Return the
-        created object."""
+        created object.
+
+        If the key ``__oid`` is in the ``kw`` arguments, it will be used as
+        the created object's oid.
+        """
         factory = self.content_types[content_type]
         oid = kw.pop('__oid', None) # FBO dump system loader
         inst = factory(*arg, **kw)
