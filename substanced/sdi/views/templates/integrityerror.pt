@@ -1,13 +1,13 @@
-<div metal:use-macro="sdi_h.macros()['master']">
+<div metal:use-macro="request.sdiapi.main_template">
 
   <div metal:fill-slot="main"
-       tal:define="root_url request.mgmt_url(request.root)">
+       tal:define="root_url request.sdiapi.mgmt_url(request.root)">
 
     <h1>Integrity Error</h1>
 
     <p>
       Sorry, the object <a 
-      href="${request.mgmt_url(context.obj)}">${request.resource_path(context.obj)}</a>
+      href="${request.sdiapi.mgmt_url(context.obj)}">${request.resource_path(context.obj)}</a>
       you've attempted to remove could not 
       be removed due to an integrity error for the reference 
       type <i>${context.reftype}</i>.  Below is a list of objects that refer to

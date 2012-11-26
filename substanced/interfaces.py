@@ -7,6 +7,8 @@ from zope.interface import (
     Attribute,
     )
 
+from zope.interface.interface import InterfaceClass
+
 class IPropertySheet(Interface):
     """ Interface for objects with a set of properties defined by a Colander
     schema.  The class :class:`substanced.property.PropertySheet` (which is
@@ -515,4 +517,29 @@ class IContentCatalogView(Interface):
     content = Attribute('The content object')
 
 marker = object()
+
+class ReferenceClass(InterfaceClass):
+    def __init__(self, *arg, **kw):
+        try:
+            attrs = arg[2] or {}
+        except IndexError:
+            attrs = kw.get('attrs', {})
+        si = attrs.pop('source_integrity', False)
+        ti = attrs.pop('target_integrity', False)
+        InterfaceClass.__init__(self, *arg, **kw)
+        self.setTaggedValue('source_integrity', si)
+        self.setTaggedValue('target_integrity', ti)
+
+ReferenceType = ReferenceClass(
+    "ReferenceType", __module__ = 'substanced.interfaces')
+
+class UserToGroup(ReferenceType):
+    pass
+
+class PrincipalToACLBearing(ReferenceType):
+    source_integrity = True
+
+class UserToPasswordReset(ReferenceType):
+    pass
+
 

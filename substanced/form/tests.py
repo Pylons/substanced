@@ -117,9 +117,9 @@ class TestFileUploadTempStore(unittest.TestCase):
 
     def test_preview_url(self):
         request = self._makeRequest()
-        request.mgmt_path = lambda *arg: '/mgmt'
+        request.sdiapi = DummySDIAPI()
         inst = self._makeOne(request)
-        self.assertEqual(inst.preview_url(None), '/mgmt')
+        self.assertEqual(inst.preview_url(None), '/mgmt_path')
 
     def test_contains_true(self):
         request = self._makeRequest()
@@ -253,3 +253,6 @@ class DummyButton(object):
 class DummySession(dict):
     pass
 
+class DummySDIAPI(object):
+    def mgmt_path(self, *arg, **kw):
+        return '/mgmt_path'

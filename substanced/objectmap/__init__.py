@@ -5,6 +5,7 @@ from persistent import Persistent
 import BTrees
 
 from zope.interface import implementer
+from zope.interface.interfaces import IInterface
 
 from pyramid.compat import is_nonstr_iter
 from pyramid.traversal import (
@@ -878,7 +879,10 @@ def referential_integrity(event):
     if objectmap is None:
         return
     for reftype in objectmap.get_reftypes():
-        if getattr(reftype, 'source_integrity', False):
+
+        is_iface = IInterface.providedBy(reftype)
+
+        if is_iface and reftype.queryTaggedValue('source_integrity', False):
             targetids = objectmap.targetids(obj, reftype)
             if obj_oid in targetids:
                 targetids.remove(obj_oid) # self-referential
@@ -886,7 +890,7 @@ def referential_integrity(event):
                 # object is a source
                 raise SourceIntegrityError(obj, reftype, targetids)
 
-        if getattr(reftype, 'target_integrity', False):
+        if is_iface and reftype.queryTaggedValue('target_integrity', False):
             sourceids = objectmap.sourceids(obj, reftype)
             if obj_oid in sourceids:
                 sourceids.remove(obj_oid) # self-referential

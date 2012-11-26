@@ -19,7 +19,7 @@ from ..util import (
     change_acl,
     )
 
-from . import (
+from ..interfaces import (
     UserToPasswordReset,
     PrincipalToACLBearing,
     )
@@ -117,7 +117,15 @@ def acl_modified(event):
         principals_added = new_principals.difference(old_principals)
 
         for princid in principals_removed:
-            objectmap.disconnect(princid, event.object, PrincipalToACLBearing)
+            objectmap.disconnect(
+                princid,
+                event.object,
+                PrincipalToACLBearing
+                )
 
         for princid in principals_added:
-            objectmap.connect(princid, event.object, PrincipalToACLBearing)
+            objectmap.connect(
+                princid,
+                event.object,
+                PrincipalToACLBearing
+                )

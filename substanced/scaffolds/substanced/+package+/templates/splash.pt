@@ -1,96 +1,99 @@
-<div metal:use-macro="sdi_h.macros()['master']">
+<div metal:use-macro="request.sdiapi.main_template">
 
   <div metal:fill-slot="head-more">
 
-  <style type="text/css">
-    .blockquote {
-        color: #a5a4a4;
-        font-style: italic;
-        margin: 30px;
-        padding: 30px;
-    }
-    .blockquote:first-letter {
-        float: left;
-        margin: -9px 6px 0 0;
-        font-size: 35px;
-   }
-  </style>
+    <style type="text/css">
+      .blockquote {
+          color: #a5a4a4;
+          font-style: italic;
+          margin: 30px;
+          padding: 30px;
+      }
+      .blockquote:first-letter {
+          float: left;
+          margin: -9px 6px 0 0;
+          font-size: 35px;
+     }
+    </style>
 
   </div>
 
   <div metal:fill-slot="main">
     <h1>Substance D management interface demo</h1>
 
-    <p><a href="https://github.com/Pylons/substanced">Substance D</a> is an
-    application development environment built using the <a
-    href="http://pylonsproject.org">Pyramid</a> web framework.  It owes much
-    of its spirit to the <a href="http://www.zope.org">Zope 2</a> web
-    application server. It has the following features:
-    <ul>
-      <li>Uses <a href="http://zodb.org">ZODB</a> to store its content</li>
-      <li>Has built in users and groups management</li>
-      <li>Has a management interface that allows you to edit and add content
+    <div>
+      <a href="https://github.com/Pylons/substanced">Substance D</a> is an
+      application development environment built using the <a
+      href="http://pylonsproject.org">Pyramid</a> web framework.  It owes much
+      of its spirit to the <a href="http://www.zope.org">Zope 2</a> web
+      application server. It has the following features:
+      <ul>
+        <li>Uses <a href="http://zodb.org">ZODB</a> to store its content</li>
+        <li>Has built in users and groups management</li>
+        <li>Has a management interface that allows you to edit and add content
           (aka an "admin" interface)</li>
-      <li>Has features which allow you to define your own content types for
+        <li>Has features which allow you to define your own content types for
           management and arbitrary application development purposes</li>
-      <li>Allows the application of object-level (aka "row-level") security to content objects.</li>
-      <li>Has built-in indexing and searching facilities</li>
-      <li>Has machinery for forming relationships between content objects</li>
-    </ul>
-    To see it in action, click the button below and log in as <b>admin</b> with
-    the password <b>admin</b>.
-    <div style="margin-top: 1em;">
-       <a class="btn btn-primary" href="${request.application_url}${manage_prefix}">See the management interface</a>
+        <li>Allows the application of object-level (aka "row-level") security to content objects.</li>
+        <li>Has built-in indexing and searching facilities</li>
+        <li>Has machinery for forming relationships between content objects</li>
+      </ul>
+      To see it in action, click the button below and log in as <b>admin</b> with
+      the password <b>admin</b>.
+      <div style="margin-top: 1em;">
+        <a class="btn btn-primary" href="${request.application_url}${manage_prefix}">See the management interface</a>
+      </div>
+
+      <div class="blockquote" style="margin-top:1em;">
+
+        <p>
+          The two hemispheres of my brain are competing?" Fred said.
+        </p>
+
+        <p>
+          "Yes."
+        </p>
+
+        <p>
+        "Why?"
+        </p>
+
+        <p>
+        "Substance D. It often causes that, functionally. This is what we
+        expected; this is what the tests confirm. Damage having taken place in
+        the normally dominant left hemisphere, the right hemisphere is attempting
+        to compensate for the impairment. But the twin functions do not fuse,
+        because this is an abnormal condition the body isn't prepared for. It
+        should never happen. "Cross-cuing", we call it. Related to splitbrain
+        phenomena. We could perform a right hemispherectomy, but--"
+        </p>
+
+        <p>
+        "Will this go away," Fred interrupted, "when I get off Substance D?"
+        </p>
+
+        <p>
+        "Probably," the psychologist on the left said, nodding. "It's a
+        functional impairment."
+        </p>
+
+        <p>
+        The other man said, "It may be organic damage. It may be
+        permanent. Time'll tell, and only after you are off Substance D for a
+        long while. And off entirely."
+        </p>
+
+        <p>
+        "What?" Fred said. He did not understand the answer-- was it yes or no?
+        Was he damaged forever or not? Which had they said?
+        </p>
+
+        <p>
+        -- <b>Phillip K. Dick, A Scanner Darkly</b>
+        </p>
+
+      </div>
+
     </div>
-
-    <div class="blockquote" style="margin-top:1em;">
-
-    <p>
-	The two hemispheres of my brain are competing?" Fred said.
-    </p>
-
-    <p>
-	"Yes."
-    </p>
-
-    <p>
-	"Why?"
-    </p>
-
-    <p>
-	"Substance D. It often causes that, functionally. This is what we
-	expected; this is what the tests confirm. Damage having taken place in
-	the normally dominant left hemisphere, the right hemisphere is attempting
-	to compensate for the impairment. But the twin functions do not fuse,
-	because this is an abnormal condition the body isn't prepared for. It
-	should never happen. "Cross-cuing", we call it. Related to splitbrain
-	phenomena. We could perform a right hemispherectomy, but--"
-    </p>
-
-    <p>
-	"Will this go away," Fred interrupted, "when I get off Substance D?"
-    </p>
-
-    <p>
-	"Probably," the psychologist on the left said, nodding. "It's a
-	functional impairment."
-    </p>
-
-    <p>
-	The other man said, "It may be organic damage. It may be
-	permanent. Time'll tell, and only after you are off Substance D for a
-	long while. And off entirely."
-    </p>
-
-    <p>
-	"What?" Fred said. He did not understand the answer-- was it yes or no?
-	Was he damaged forever or not? Which had they said?
-    </p>
-
-    <p>
-    -- <b>Phillip K. Dick, A Scanner Darkly</b>
-    </p>
-
-    </p>
   </div>
 </div>

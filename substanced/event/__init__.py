@@ -155,12 +155,12 @@ class subscribe_modified(_ContentEventSubscriber):
     event = IObjectModified
 
 class subscribe_acl_modified(_ContentEventSubscriber):
-    """ Decorator for registering an object modified event subscriber
+    """ Decorator for registering an acl modified event subscriber
     (a subscriber for ObjectModified)."""
     event = IACLModified
 
 class subscribe_created(_ContentEventSubscriber):
-    """ Decorator for registering an object will-be-removed event subscriber
+    """ Decorator for registering an object created event subscriber
     (a subscriber for ContentCreated)."""
     event = IContentCreated
     
@@ -170,7 +170,7 @@ def add_content_subscriber(config, subscriber, iface=None, **predicates):
     ``registry`` attribute to the event being sent before the wrapped
     subscriber is called."""
     registry = config.registry
-    def wrapper(event, *arg): # *arg ignored
+    def wrapper(event, *arg): # *arg ignored, XXX it can go away pyr1.4b1+
         event.registry = registry
         return subscriber(event)
     if hasattr(subscriber, '__name__'):
@@ -191,6 +191,8 @@ class _ContentTypePredicate(object):
     def __call__(self, event, *arg):
         # NB: accept *arg so we can be used as either a folder event
         # predicate or as a content event predicate.  (yes, it's lame).
+        # XXX *arg can go away once a Pyramid 1.4 final is out (or if used
+        # against Pyramid 1.4b1+)
         return self.registry.content.istype(event.object, self.val)
     
 def includeme(config): # pragma: no cover

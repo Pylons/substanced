@@ -1941,61 +1941,67 @@ class Test_referential_integrity(unittest.TestCase):
         self.assertFalse(self._callFUT(event))
 
     def test_reftype_with_source_integrity_no_targetids(self):
+        from ..interfaces import ReferenceType
         obj = testing.DummyResource()
-        class Reference(object):
+        class Reference(ReferenceType):
             source_integrity = True
-        obj.__objectmap__ = DummyObjectMap(reftypes=(Reference(),))
+        obj.__objectmap__ = DummyObjectMap(reftypes=(Reference,))
         event = DummyEvent(obj)
         self.assertFalse(self._callFUT(event))
 
     def test_reftype_with_source_integrity_with_targetids(self):
+        from ..interfaces import ReferenceType
         from . import SourceIntegrityError
         obj = testing.DummyResource()
-        class Reference(object):
+        class Reference(ReferenceType):
             source_integrity = True
         obj.__objectmap__ = DummyObjectMap(
-            reftypes=(Reference(),), targetids=(1,)
+            reftypes=(Reference,), targetids=(1,)
             )
         event = DummyEvent(obj)
         self.assertRaises(SourceIntegrityError, self._callFUT, event)
 
     def test_reftype_with_source_integrity_with_only_self_targetid(self):
+        from ..interfaces import ReferenceType
         obj = testing.DummyResource()
         obj.__oid__ = 1
-        class Reference(object):
+        class Reference(ReferenceType):
             source_integrity = True
         obj.__objectmap__ = DummyObjectMap(
-            reftypes=(Reference(),), targetids=set([1])
+            reftypes=(Reference,), targetids=set([1])
             )
         event = DummyEvent(obj)
         self.assertEqual(None, self._callFUT(event)) # self-reference ignored
 
     def test_reftype_with_target_integrity_no_sourceids(self):
+        from ..interfaces import ReferenceType
         obj = testing.DummyResource()
-        class Reference(object):
+        class Reference(ReferenceType):
             target_integrity = True
-        obj.__objectmap__ = DummyObjectMap(reftypes=(Reference(),))
+        obj.__objectmap__ = DummyObjectMap(reftypes=(Reference,))
         event = DummyEvent(obj)
         self.assertFalse(self._callFUT(event))
 
     def test_reftype_with_target_integrity_with_sourceids(self):
+        from ..interfaces import ReferenceType
         from . import TargetIntegrityError
         obj = testing.DummyResource()
-        class Reference(object):
+        class Reference(ReferenceType):
             target_integrity = True
         obj.__objectmap__ = DummyObjectMap(
-            reftypes=(Reference(),), sourceids=(1,)
+            reftypes=(Reference,), sourceids=(1,)
             )
         event = DummyEvent(obj)
         self.assertRaises(TargetIntegrityError, self._callFUT, event)
 
     def test_reftype_with_target_integrity_with_only_self_sourceid(self):
+        from ..interfaces import ReferenceType
         obj = testing.DummyResource()
         obj.__oid__ = 1
-        class Reference(object):
+        class Reference(ReferenceType):
             target_integrity = True
         obj.__objectmap__ = DummyObjectMap(
-            reftypes=(Reference(),), sourceids=set([1])
+            reftypes=(Reference,), sourceids=set([1])
             )
         event = DummyEvent(obj)
         self.assertEqual(None, self._callFUT(event)) # self-reference ignored
@@ -2018,6 +2024,7 @@ class TestReferentialIntegrityError(unittest.TestCase):
         obj.__objectmap__ = objectmap
         inst = self._makeOne(obj, 'reftype', (1,))
         self.assertEqual(list(inst.get_paths()), ['o/n/e'])
+
 
 class DummyEvent(object):
     def __init__(self, object, moving=False):

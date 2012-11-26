@@ -1,8 +1,8 @@
-<div metal:use-macro="sdi_h.macros()['master']">
+<div metal:use-macro="request.sdiapi.main_template">
 
   <div tal:omit-tag="" metal:fill-slot="head-more">
     <link href="${request.static_url('substanced.sdi:static/datatables/css/jquery.dataTables.css')}" rel="stylesheet" />
-    <link href="${request.static_url('substanced.sdi:static/dt_bootstrap.css')}" rel="stylesheet" />
+    <link href="${request.static_url('substanced.sdi:static/css/dt_bootstrap.css')}" rel="stylesheet" />
     <script type="text/javascript">
       function toggleChecked(status) {
           dt = $("#sdi-contents-table").dataTable().fnGetNodes()
@@ -72,7 +72,7 @@
         <tal:block tal:condition="'tocopy' not in request.session and 'tomove' not in request.session">
         <div class="btn-group pull-right" tal:condition="addables">
           <a class="btn btn-primary" 
-             href="${request.mgmt_path(context, '@@add')}"><i 
+             href="${request.sdiapi.mgmt_path(context, '@@add')}"><i 
              class="icon-plus-sign icon-white"></i>Add</a>
           <a class="btn btn-primary dropdown-toggle" 
               data-toggle="dropdown" href="#"><span class="caret"></span></a>
@@ -94,7 +94,7 @@
 
   <div tal:omit-tag="" metal:fill-slot="tail-more">
   <script type="text/javascript" tal:define="enabled num_items>20 and 'true' or 'false';at_least_one num_items>0 and 'true' or 'false'" tal:content="string:var pagination_enabled = ${enabled};non_sortable_cols = ${non_sortable};non_filterable_cols = ${non_filterable};at_least_one = ${at_least_one}"></script>
-    <script src="${request.static_url('substanced.sdi:static/dt_bootstrap.js')}" type="text/javascript"></script>
+    <script src="${request.static_url('substanced.sdi:static/js/dt_bootstrap.js')}" type="text/javascript"></script>
   </div>
 
 </div>

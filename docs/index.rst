@@ -26,12 +26,6 @@ Install using setuptools, e.g. (within a virtualenv)::
    of Substance D as well as checkouts of the most recent versions of the
    libraries upon which Substance D depends.
 
-Dependencies
-------------
-
-Substance D depends on :term:`ZODB`, the ``hypatia``, ``repoze.evolution``,
-``deform`` and ``colander`` packages.
-
 .. _optional_dependencies:
 
 Optional Dependencies
@@ -81,14 +75,6 @@ API Documentation
    :maxdepth: 1
 
    api.rst
-
-Tutorial Documentation
-----------------------
-
-.. toctree::
-   :maxdepth: 1
-
-   tutorial/index.rst
 
 Reporting Bugs / Development Versions
 -------------------------------------

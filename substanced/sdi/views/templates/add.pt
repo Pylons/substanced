@@ -1,4 +1,4 @@
-<div metal:use-macro="sdi_h.macros()['master']">
+<div metal:use-macro="request.sdiapi.main_template">
 
   <div metal:fill-slot="main">
     <h1 tal:condition="views">Choose Content Type</h1>

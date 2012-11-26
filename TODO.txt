@@ -13,6 +13,9 @@ UI-Plus-Guts
 
 - Batching in large folders.
 
+- Change password tab on user object requires old password.  See
+  https://github.com/Pylons/substanced/issues/19
+
 Guts-Only
 ---------
 
@@ -116,6 +119,8 @@ Docs
 
 - Explain that source-integral PrincipalToACLBearing relationships are set up
   between an ACL-bearing object and the principals referred to within the ACL.
+
+- Document the SDI API
 
 Probably Bad Ideas
 ------------------

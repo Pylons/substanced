@@ -26,6 +26,8 @@ from ..interfaces import (
     IPrincipals,
     IPasswordResets,
     IPasswordReset,
+    UserToGroup,
+    UserToPasswordReset,
     )
 
 from ..content import (
@@ -51,15 +53,6 @@ from ..util import (
     renamer,
     change_acl,
     )
-
-class UserToGroup(object): # cannot be moved, persisted
-    """ The reference type used to store users-to-groups references in the
-    object map"""
-
-class PrincipalToACLBearing(object): # cannot be moved, persisted
-    """ The reference type used to store principal-to-ACL-bearing-object
-    references in the object map"""
-    source_integrity = True
 
 def _gen_random_token():
     length = random.choice(range(10, 16))
@@ -355,7 +348,8 @@ class User(Folder):
         sitename = getattr(root, 'title', None) or 'Substance D'
         principals = find_service(self, 'principals')
         reset = principals.add_reset(self)
-        reseturl = request.application_url + request.mgmt_path(reset)
+        # XXX should this really point at an SDI URL?
+        reseturl = request.application_url + request.sdiapi.mgmt_path(reset)
         message = Message(
             subject = 'Account information for %s' % sitename,
             recipients = [self.email],
@@ -364,9 +358,6 @@ class User(Folder):
             )
         mailer = get_mailer(request)
         mailer.send(message)
-
-class UserToPasswordReset(object):
-    pass
 
 @content(
     'Password Resets',

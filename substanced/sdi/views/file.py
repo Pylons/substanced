@@ -38,7 +38,7 @@ def view_file(context, request):
     permission='sdi.view'
     )
 def view_tab(context, request):
-    return HTTPFound(location=request.mgmt_path(context))
+    return HTTPFound(location=request.sdiapi.mgmt_path(context))
 
 class AddFileSchema(FilePropertiesSchema):
     file = colander.SchemaNode(
@@ -104,10 +104,10 @@ class AddFileView(FormView):
         name = name or filename
         fileob = self._makeob(stream, title)
         self.context[name] = fileob
-        return HTTPFound(self.request.mgmt_path(self.context))
+        return HTTPFound(self.request.sdiapi.mgmt_path(self.context))
 
 onepixel = pkg_resources.resource_filename(
-    'substanced.sdi', 'static/onepixel.gif')
+    'substanced.sdi', 'static/img/onepixel.gif')
 
 # this doesn't require a permission, because it's based on session data
 # which the user would have to put there anyway

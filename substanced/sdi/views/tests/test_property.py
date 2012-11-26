@@ -47,7 +47,7 @@ class TestPropertySheetsView(unittest.TestCase):
 
     def test_save_success(self):
         request = testing.DummyRequest()
-        request.mgmt_path = lambda *arg: '/mgmt'
+        request.sdiapi = DummySDIAPI()
         request.registry = testing.DummyResource()
         request.registry.content = DummyContent(
             [('name', DummyPropertySheet)])
@@ -55,14 +55,16 @@ class TestPropertySheetsView(unittest.TestCase):
         request.context = resource
         inst = self._makeOne(request)
         response = inst.save_success({'a':1})
-        self.assertEqual(response.location, '/mgmt')
+        self.assertEqual(response.location, '/mgmt_path')
         self.assertEqual(inst.active_sheet.struct, {'a': 1})
         self.assertTrue(inst.active_sheet.after)
+        self.assertEqual(request.sdiapi.flashed,
+                         ('Updated properties', 'success') )
 
     def test_save_success_no_change_permission(self):
         from pyramid.httpexceptions import HTTPForbidden
         request = testing.DummyRequest()
-        request.mgmt_path = lambda *arg: '/mgmt'
+        request.sdiapi = DummySDIAPI()
         sheet_factory = testing.DummyResource()
         sheet_factory.__call__ = lambda *arg: sheet_factory
         sheet_factory.permissions = [('change', 'sdi.change')]
@@ -226,3 +228,10 @@ class DummyContent(object):
     
 class Dummy(object):
     pass
+
+class DummySDIAPI(object):
+    def mgmt_path(self, *arg, **kw):
+        return '/mgmt_path'
+
+    def flash_with_undo(self, msg, category):
+        self.flashed = (msg, category)
