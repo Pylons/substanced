@@ -951,6 +951,12 @@ class Test_sdiapi(unittest.TestCase):
         from .. import sdiapi
         return sdiapi(request)
 
+    def test_main_template(self):
+        self.config.testing_securitypolicy(permissive=False)
+        request = testing.DummyRequest()
+        inst = self._makeOne(request)
+        self.assertTrue(inst.main_template)
+
     def test_flash_with_undo_no_permission(self):
         self.config.testing_securitypolicy(permissive=False)
         request = testing.DummyRequest()
@@ -1058,6 +1064,13 @@ class Test_sdiapi(unittest.TestCase):
         result = inst.sdi_title()
         self.assertEqual(result, 'Substance D')
 
+    def test_mgmt_views(self):
+        resource = testing.DummyResource()
+        request = testing.DummyRequest()
+        request.context = resource
+        inst = self._makeOne(request)
+        inst.sdi_mgmt_views = lambda *arg, **kw: True
+        self.assertEqual(inst.mgmt_views(resource), True)
 
 
 class Test_mgmt_path(unittest.TestCase):
@@ -1081,6 +1094,17 @@ class Test_mgmt_url(unittest.TestCase):
         request.sdiapi = DummySDIAPI()
         result = self._callFUT(request, None)
         self.assertEqual(result, 'http://mgmt_url')
+
+class Test_flash_with_undo(unittest.TestCase):
+    def _callFUT(self, *arg, **kw):
+        from .. import flash_with_undo
+        return flash_with_undo(*arg, **kw)
+
+    def test_it(self):
+        request = testing.DummyRequest()
+        request.sdiapi = DummySDIAPI()
+        self._callFUT(request, 'a')
+        self.assertEqual(request.sdiapi.flashed, 'a')
 
 class DummyContent(object):
     def __init__(self, **kw):
@@ -1199,4 +1223,7 @@ class DummySDIAPI(object):
 
     def mgmt_url(self, obj, *arg, **kw):
         return self.result or 'http://mgmt_url'
+
+    def flash_with_undo(self, val):
+        self.flashed = val
     

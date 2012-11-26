@@ -707,6 +707,7 @@ def flash_with_undo(request, *arg, **kw): # XXX deprecate
 class sdiapi(object):
     get_connection = staticmethod(get_connection) # testing
     transaction = transaction # testing
+    sdi_mgmt_views = staticmethod(sdi_mgmt_views) # testing
     
     def __init__(self, request):
         self.request = request
@@ -765,7 +766,7 @@ class sdiapi(object):
         return acquire(self.request.context, 'sdi_title', 'Substance D')
 
     def mgmt_views(self, context):
-        return sdi_mgmt_views(context, self.request)
+        return self.sdi_mgmt_views(context, self.request)
 
 def includeme(config): # pragma: no cover
     settings = config.registry.settings
