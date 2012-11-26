@@ -65,62 +65,81 @@ Nice-to-Have Features
 
 - Ability to add and edit principals in existing ACEs in ACL edit view.
 
-Docs
-----
-
-- Document how to override a content registration.  Include an override
-  example for the sole purpose of overriding the add view.
-
-- Explain ``after_create`` meta-argument to content.
-
-- Explain __created__ attribute.
-
-- Explain __sdi_deletable__, __sdi_addable__, __sdi_hidden__, __sdi_columns__,
-  __sdi_buttons__.
-
-- Explain event listener decorators and add_content_subscriber.
+SDI
+---
 
 - Explain catalog web UI.
 
-- Narrative docs for reference properties.
-
-- Docstrings for multireference property implementations.
-
-- Explain ``tab_before`` and ``tab_after`` arguments to mgmt_view (as well as
-  related ``FIRST``, ``LAST``, and ``MIDDLE`` sentinels).
-
 - Explain "Indexing" view.
-
-- Explain ``NameSchemaNode``, ``PermissionSchemaNode``, and
-  ``MultireferenceIdSchemaNode``.
-
-- Explain ``renamer``.
-
-- Explain various view predicates.
-
-- Explain __init__.py include-then-scan done by includeme and how to avoid
-  scanning.
-
-- Explain evolution.
-
-- Explain that evolution is baselined at first startup.
 
 - Explain "Workflows" tab.
 
 - Explain exception views for integrity errors.
 
-- Explain that allowed indexes are reindexed when an object's ACL is changed.
+- Breadcrumbs and tabs
+
+mgmt_views
+----------
+
+- Explain ``tab_before`` and ``tab_after`` arguments to mgmt_view (as well as
+  related ``FIRST``, ``LAST``, and ``MIDDLE`` sentinels).
+
+- Explain various view predicates.
+
+- Flash message and other "slots"
+
+- Document the SDI API
+
+Content Types
+-------------
+
+- Explain ``renamer``.
+
+- Explain ``NameSchemaNode``, ``PermissionSchemaNode``, and
+  ``MultireferenceIdSchemaNode``.
+
+- Explain ``after_create`` meta-argument to content.
+
+- Explain __created__ attribute.
+
+- Document how to override a content registration.  Include an override
+  example for the sole purpose of overriding the add view.
+
+- Explain __sdi_deletable__, __sdi_addable__, __sdi_hidden__, __sdi_columns__,
+  __sdi_buttons__.
+
+Evolution
+---------
+
+- Explain evolution.
+
+- Explain that evolution is baselined at first startup.
+
+Events
+------
+
+- Explain event listener decorators and add_content_subscriber.
 
 - Explain subscribe_acl_modified.
 
-- Explain change_acl.
-
 - Explain "moving" and "duplicating" flags on added and removed events.
+
+Security
+--------
+
+- Explain that allowed indexes are reindexed when an object's ACL is changed.
+
+- Explain change_acl.
 
 - Explain that source-integral PrincipalToACLBearing relationships are set up
   between an ACL-bearing object and the principals referred to within the ACL.
 
-- Document the SDI API
+
+Docs
+----
+
+- Explain __init__.py include-then-scan done by includeme and how to avoid
+  scanning.
 
 Probably Bad Ideas
 ------------------

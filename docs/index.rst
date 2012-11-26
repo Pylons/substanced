@@ -60,6 +60,7 @@ Narrative Documentation
    :maxdepth: 1
 
    intro.rst
+   sdi.rst
    content.rst
    mgmtview.rst
    services.rst
