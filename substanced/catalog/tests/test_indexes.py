@@ -243,6 +243,46 @@ class TestPathIndex(unittest.TestCase):
             {'path': '/abc', 'depth': 1}
             )
 
+class TestFieldIndex(unittest.TestCase):
+    def _makeOne(self, discriminator=None, family=None):
+        from ..indexes import FieldIndex
+        return FieldIndex(discriminator, family)
+    
+    def test_ctor_with_discriminator(self):
+        inst = self._makeOne('abc')
+        self.assertEqual(inst.discriminator, 'abc')
+
+    def test_ctor_without_discriminator(self):
+        inst = self._makeOne()
+        self.assertEqual(inst.discriminator.__class__, type(lambda x: True))
+
+class TestKeywordIndex(unittest.TestCase):
+    def _makeOne(self, discriminator=None, family=None):
+        from ..indexes import KeywordIndex
+        return KeywordIndex(discriminator, family)
+    
+    def test_ctor_with_discriminator(self):
+        inst = self._makeOne('abc')
+        self.assertEqual(inst.discriminator, 'abc')
+
+    def test_ctor_without_discriminator(self):
+        inst = self._makeOne()
+        self.assertEqual(inst.discriminator.__class__, type(lambda x: True))
+
+class TestFacetIndex(unittest.TestCase):
+    def _makeOne(self, discriminator=None, facets=None, family=None):
+        from ..indexes import FacetIndex
+        return FacetIndex(discriminator, facets, family)
+    
+    def test_ctor_with_discriminator(self):
+        inst = self._makeOne('abc')
+        self.assertEqual(inst.discriminator, 'abc')
+        self.assertEqual(list(inst.facets), [])
+
+    def test_ctor_without_discriminator(self):
+        inst = self._makeOne()
+        self.assertEqual(inst.discriminator.__class__, type(lambda x: True))
+
 class TestAllowedIndex(unittest.TestCase):
     def setUp(self):
         self.config = testing.setUp()
