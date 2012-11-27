@@ -119,7 +119,10 @@ principals:
 A principals folder allows you to manage (e.g. add/edit/delete/rename)
 users and groups via the SDI, as well as password resets. Since users
 and groups are content, you gain some of the other SDI tabs for
-managing them (e.g. Security.)
+managing them (e.g. Security, References):
+
+.. image:: images/user.png
+
 
 
 Implementation Notes
