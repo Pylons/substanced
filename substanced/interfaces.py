@@ -512,7 +512,7 @@ class IRoot(IFolder):
 
 class IContentCatalogView(Interface):
     """ A wrapper around a content object which provides indexing values for the
-     wrapped content object.  It also allows the software related to the 
+    wrapped content object.  It also allows the software related to the
     content object to suggest index types to the catalog subsystem. """
     content = Attribute('The content object')
 

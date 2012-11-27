@@ -71,18 +71,3 @@ Substance D is built upon on the following technologies:
 - `colander <http://docs.pylonsproject.org/projects/colander/en/latest/>`_
 
 - `deform <http://docs.pylonsproject.org/projects/deform/en/latest/>`_
-
-The Management Interface
-------------------------
-
-The Substance D management interface (aka :term:`SDI`) is a set of :term:`view`
-registrations that are imposed upon the :term:`resource tree` of your
-application.  The SDI allows you to add, delete, change and otherwise manage
-resources.
-
-The SDI is extensible and allows you to plug your own views into it, so you
-can present nontechnical users with a way to manage arbitrary kinds of
-custom content.
-
-.. image:: sdi.png
-

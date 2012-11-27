@@ -155,12 +155,12 @@ class subscribe_modified(_ContentEventSubscriber):
     event = IObjectModified
 
 class subscribe_acl_modified(_ContentEventSubscriber):
-    """ Decorator for registering an object modified event subscriber
+    """ Decorator for registering an acl modified event subscriber
     (a subscriber for ObjectModified)."""
     event = IACLModified
 
 class subscribe_created(_ContentEventSubscriber):
-    """ Decorator for registering an object will-be-removed event subscriber
+    """ Decorator for registering an object created event subscriber
     (a subscriber for ContentCreated)."""
     event = IContentCreated
     
