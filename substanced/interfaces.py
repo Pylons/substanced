@@ -259,7 +259,7 @@ class IFolder(Interface):
         """
 
     def add(name, other, send_events=True, reserved_names=(),
-            duplicating=False, registry=None):
+            duplicating=False, moving=False, loading=False, registry=None):
         """ Same as ``__setitem__``.
 
         If ``send_events`` is false, suppress the sending of folder events.
@@ -327,7 +327,7 @@ class IFolder(Interface):
         and ``__parent__`` value,
         """
 
-    def remove(name, send_events=True, moving=False):
+    def remove(name, send_events=True, moving=False, loading=False):
         """ Same thing as ``__delitem__``.
 
         If ``send_events`` is false, suppress the sending of folder events.
@@ -364,6 +364,13 @@ class IFolder(Interface):
         This operation is done in terms of a remove and an add.  The Removed
         and WillBeRemoved events will be sent for the old object, and the
         WillBeAdded and Add events will be sent for the new object.
+        """
+
+    def load(name, newobject):
+        """
+        Same as :meth:`substanced.interfaces.IFolder.replace` except it causes
+        the ``loading`` flag of added and removed events sent during the add
+        and remove events implied by the replacement to be ``True``.
         """
 
 class IAutoNamingFolder(IFolder):
