@@ -302,6 +302,11 @@ class TestUser(unittest.TestCase):
         from .. import User
         return User(password, email)
 
+    def test___dump__(self):
+        inst = self._makeOne('abc')
+        result = inst.__dump__()
+        self.assertTrue(inst.pwd_manager.check(result['password'], 'abc'))
+
     def test_check_password(self):
         inst = self._makeOne('abc')
         self.assertTrue(inst.check_password('abc'))

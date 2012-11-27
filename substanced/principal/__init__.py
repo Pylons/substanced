@@ -339,6 +339,9 @@ class User(Folder):
         self.password = password
         self.email = email
 
+    def __dump__(self):
+        return dict(password=self.password)
+
     def check_password(self, password):
         """ Checks if the plaintext password passed as ``password`` matches
         this user's stored, encrypted password.  Returns ``True`` or
