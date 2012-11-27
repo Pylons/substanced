@@ -532,6 +532,28 @@ class PropertySheetDumper(object):
                 appstruct = sheet.schema.deserialize(cstruct)
                 sheet.set(appstruct)
 
+class AdhocAttrDumper(object):
+    def __init__(self, name, registry):
+        self.name = name
+        self.registry = registry
+        self.fn = '%s.yaml' % self.name
+
+    def dump(self, context):
+        resource = context.resource
+        if hasattr(resource, '__dump__'):
+            values = resource.__dump__()
+            context.dump_yaml(values, self.fn)
+
+    def load(self, context):
+        if context.exists(self.fn):
+            values = context.load_yaml(self.fn)
+            resource = context.resource
+            if hasattr(resource, '__load__'):
+                resource.__load__(values)
+            else:
+                for k, v in values.items():
+                    setattr(resource, k, v)
+
 _marker = object()
 
 def _setattrdefault(ob, name, default=_marker):
@@ -560,6 +582,7 @@ def includeme(config):
         ('interfaces', DirectlyProvidedInterfacesDumper),
         ('order', FolderOrderDumper),
         ('propsheets', PropertySheetDumper),
+        ('adhoc', AdhocAttrDumper),
         ]
     config.add_directive('add_dumper', add_dumper)
     for dumper_name, dumper_factory in DEFAULT_DUMPERS:
