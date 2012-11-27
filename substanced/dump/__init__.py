@@ -282,7 +282,11 @@ class ResourceLoadContext(ResourceContext):
         oid = data['oid']
         created = data['created']
         is_service = data['is_service']
-        resource = registry.content.create(data['content_type'], __oid=oid)
+        try:
+            resource = registry.content.create(data['content_type'], __oid=oid)
+        except:
+            logger.warn('While trying to load resource with data %r' % (data,))
+            raise
         resource.__name__ = name
         set_oid(resource, oid)
         if created is not None:
@@ -298,7 +302,7 @@ class ResourceLoadContext(ResourceContext):
         for loader in self.loaders:
             loader.load(self)
         if parent is not None:
-            parent.replace(name, resource, registry=self.registry)
+            parent.load(name, resource, registry=self.registry)
         return resource
 
     def add_callback(self, callback):
@@ -503,7 +507,9 @@ class PropertySheetDumper(object):
             request.context = context.resource
             request.sdiapi = sdiapi(request)
             sheet = sheetfactory(context.resource, request)
-            sheet.schema.bind(request=request, context=context.resource)
+            sheet.schema.bind(
+                request=request, context=context.resource, loading=True
+                )
             yield sheetname, sheet
 
     def dump(self, context):

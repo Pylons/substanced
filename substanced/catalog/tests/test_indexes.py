@@ -283,6 +283,25 @@ class TestFacetIndex(unittest.TestCase):
         inst = self._makeOne()
         self.assertEqual(inst.discriminator.__class__, type(lambda x: True))
 
+class TestTextIndex(unittest.TestCase):
+    def _makeOne(
+        self,
+        discriminator=None,
+        lexicon=None,
+        index=None,
+        family=None
+        ):
+        from ..indexes import TextIndex
+        return TextIndex(discriminator, family)
+    
+    def test_ctor_with_discriminator(self):
+        inst = self._makeOne('abc')
+        self.assertEqual(inst.discriminator, 'abc')
+
+    def test_ctor_without_discriminator(self):
+        inst = self._makeOne()
+        self.assertEqual(inst.discriminator.__class__, type(lambda x: True))
+
 class TestAllowedIndex(unittest.TestCase):
     def setUp(self):
         self.config = testing.setUp()

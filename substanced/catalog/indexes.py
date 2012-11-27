@@ -32,7 +32,10 @@ from ..schema import (
     PermissionsSchemaNode,
     )
 
-from .discriminators import AllowedDiscriminator
+from .discriminators import (
+    AllowedDiscriminator,
+    dummy_discriminator,
+    )
 
 PATH_WITH_OPTIONS = re.compile(r'\[(.+?)\](.+?)$')
 
@@ -206,7 +209,7 @@ class PathIndex(ResolvingIndex, hypatia.util.BaseIndexMixin, Persistent):
 class FieldIndex(ResolvingIndex, hypatia.field.FieldIndex):
     def __init__(self, discriminator=None, family=None):
         if discriminator is None:
-            discriminator = lambda obj, default: default
+            discriminator = dummy_discriminator
         hypatia.field.FieldIndex.__init__(self, discriminator, family=family)
 
 @content(
@@ -221,7 +224,7 @@ class FieldIndex(ResolvingIndex, hypatia.field.FieldIndex):
 class KeywordIndex(ResolvingIndex, hypatia.keyword.KeywordIndex):
     def __init__(self, discriminator=None, family=None):
         if discriminator is None:
-            discriminator = lambda obj, default: default
+            discriminator = dummy_discriminator
         hypatia.keyword.KeywordIndex.__init__(
             self, discriminator, family=family)
 
@@ -235,7 +238,18 @@ class KeywordIndex(ResolvingIndex, hypatia.keyword.KeywordIndex):
         )
     )
 class TextIndex(ResolvingIndex, hypatia.text.TextIndex):
-    pass
+    def __init__(
+        self,
+        discriminator=None,
+        lexicon=None,
+        index=None,
+        family=None
+        ):
+        if discriminator is None:
+            discriminator = dummy_discriminator
+        hypatia.text.TextIndex.__init__(
+            self, discriminator, lexicon=lexicon, index=index, family=family,
+            )
 
 class Facets(colander.SequenceSchema):
     facet = colander.SchemaNode(
@@ -280,7 +294,7 @@ class FacetIndexPropertySheet(PropertySheet):
 class FacetIndex(ResolvingIndex, hypatia.facet.FacetIndex):
     def __init__(self, discriminator=None, facets=None, family=None):
         if discriminator is None:
-            discriminator = lambda obj, default: default
+            discriminator = dummy_discriminator
         if facets is None:
             facets = []
         hypatia.facet.FacetIndex.__init__(

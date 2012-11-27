@@ -13,6 +13,10 @@ class Test_file_upload_widget(unittest.TestCase):
     def _callFUT(self, node, kw):
         from . import file_upload_widget
         return file_upload_widget(node, kw)
+
+    def test_loading(self):
+        kw = {'loading':True}
+        self.assertEqual(self._callFUT(None, kw), None)
     
     def test_it(self):
         here = os.path.dirname(__file__)

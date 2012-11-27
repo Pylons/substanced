@@ -520,6 +520,40 @@ class TestFolder(unittest.TestCase):
         self.assertEqual(other.__name__, 'a')
         self.assertEqual(other.__parent__, folder)
 
+    def test_load_with_registry(self):
+        registry = self.config.registry
+        folder = self._makeOne()
+        one = testing.DummyResource()
+        two = testing.DummyResource()
+        folder['a'] = one
+        result = []
+        folder.remove = lambda *arg, **kw: result.append(('removed', kw))
+        folder.add = lambda *arg, **kw: result.append(('added', kw))
+        folder.load('a', two, registry=registry)
+        self.assertEqual(
+            result,
+            [
+                ('removed', {'loading':True}),
+                ('added', {'loading':True, 'registry':registry}),
+                ])
+
+    def test_load_no_registry(self):
+        registry = self.config.registry
+        folder = self._makeOne()
+        one = testing.DummyResource()
+        two = testing.DummyResource()
+        folder['a'] = one
+        result = []
+        folder.remove = lambda *arg, **kw: result.append(('removed', kw))
+        folder.add = lambda *arg, **kw: result.append(('added', kw))
+        folder.load('a', two)
+        self.assertEqual(
+            result,
+            [
+                ('removed', {'loading':True}),
+                ('added', {'loading':True, 'registry':registry}),
+                ])
+
     def test_pop_success(self):
         from ..interfaces import IObjectEvent
         from ..interfaces import IObjectRemoved

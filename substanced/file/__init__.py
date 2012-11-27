@@ -55,6 +55,8 @@ class FilePropertySheet(PropertySheet):
 
 @colander.deferred
 def file_upload_widget(node, kw):
+    if kw.get('loading'):
+        return None
     request = kw['request']
     tmpstore = FileUploadTempStore(request)
     widget = deform.widget.FileUploadWidget(tmpstore)
