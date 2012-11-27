@@ -542,7 +542,7 @@ def includeme(config):
         ('acl', ACLDumper),
         ('workflow', WorkflowDumper),
         ('references', ReferencesDumper),
-        ('sdiattributes', SDIPropertiesDumper),
+        ('sdiproperties', SDIPropertiesDumper),
         ('interfaces', DirectlyProvidedInterfacesDumper),
         ('order', FolderOrderDumper),
         ('propsheets', PropertySheetDumper),
