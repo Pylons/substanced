@@ -399,31 +399,23 @@ class SDIPropertiesDumper(object):
         self.fn = '%s.yaml' % self.name
 
     def dump(self, context):
-        # __sdi_deletable__
-        # __sdi_hidden__
-        # __sdi_addable__
         resource = context.resource
         resource._p_activate()
         d = resource.__dict__
-        properties = {}
-        deletable = d.get('__sdi_deletable__')
-        hidden = d.get('__sdi_hidden__')
-        addable = d.get('__sdi_addable__')
-        if deletable is not None:
-            properties['__sdi_deletable__'] = deletable
-        if hidden is not None:
-            properties['__sdi_hidden__'] = hidden
-        if addable is not None:
-            properties['__sdi_addable__'] = addable
-        if properties:
-            context.dump_yaml(properties, self.fn)
+        attributes = {}
+        for name in ('__sdi_hidden__', '__sdi_addable__', '__sdi_deletable__'):
+            val = d.get(name)
+            if d is not None:
+                attributes[name] = val
+        if attributes:
+            context.dump_yaml(attributes, self.fn)
 
     def load(self, context):
         resource = context.resource
         if context.exists(self.fn):
-            properties = context.load_yaml(self.fn)
+            attributes = context.load_yaml(self.fn)
             resource._p_activate()
-            resource.__dict__.update(properties)
+            resource.__dict__.update(attributes)
             resource._p_changed = True
             
 class DirectlyProvidedInterfacesDumper(object):
@@ -550,7 +542,7 @@ def includeme(config):
         ('acl', ACLDumper),
         ('workflow', WorkflowDumper),
         ('references', ReferencesDumper),
-        ('sdiproperties', SDIPropertiesDumper),
+        ('sdiattributes', SDIPropertiesDumper),
         ('interfaces', DirectlyProvidedInterfacesDumper),
         ('order', FolderOrderDumper),
         ('propsheets', PropertySheetDumper),
