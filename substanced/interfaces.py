@@ -103,6 +103,8 @@ class IObjectWillBeAdded(IObjectEvent):
                      'with')
     moving = Attribute('Boolean indicating that this add is part of an '
                        'object move')
+    loading = Attribute('Boolean indicating that this add is part of a load '
+                        '(during a dump load process)')
     duplicating = Attribute('Boolean indicating this add is part of an '
                             'object duplication')
 
@@ -113,6 +115,8 @@ class IObjectAdded(IObjectEvent):
     name = Attribute('The name of the object within the folder')
     moving = Attribute('Boolean indicating that this add is part of an '
                        'object move')
+    loading = Attribute('Boolean indicating that this add is part of a load '
+                        '(during a dump load process)')
     duplicating = Attribute('Boolean indicating this add is part of an '
                             'object duplication')
 
@@ -123,6 +127,8 @@ class IObjectWillBeRemoved(IObjectEvent):
     name = Attribute('The name of the object within the folder')
     moving = Attribute('Boolean indicating that this removal is part of an '
                        'object move')
+    loading = Attribute('Boolean indicating that this remove is part of a load '
+                        '(during a dump load process)')
 
 class IObjectRemoved(IObjectEvent):
     """ An event type sent when an object is removed """
@@ -131,6 +137,8 @@ class IObjectRemoved(IObjectEvent):
     name = Attribute('The name of the object within the folder')
     moving = Attribute('Boolean indicating that this removal is part of an '
                        'object move')
+    loading = Attribute('Boolean indicating that this remove is part of a load '
+                        '(during a dump load process)')
     removed_oids = Attribute('The set of oids removed as the result of '
                              'this object being removed (including the oid '
                              'of the object itself).  This may be any number '
@@ -251,7 +259,7 @@ class IFolder(Interface):
         """
 
     def add(name, other, send_events=True, reserved_names=(),
-            duplicating=False, registry=None):
+            duplicating=False, moving=False, loading=False, registry=None):
         """ Same as ``__setitem__``.
 
         If ``send_events`` is false, suppress the sending of folder events.
@@ -319,7 +327,7 @@ class IFolder(Interface):
         and ``__parent__`` value,
         """
 
-    def remove(name, send_events=True, moving=False):
+    def remove(name, send_events=True, moving=False, loading=False):
         """ Same thing as ``__delitem__``.
 
         If ``send_events`` is false, suppress the sending of folder events.
@@ -356,6 +364,13 @@ class IFolder(Interface):
         This operation is done in terms of a remove and an add.  The Removed
         and WillBeRemoved events will be sent for the old object, and the
         WillBeAdded and Add events will be sent for the new object.
+        """
+
+    def load(name, newobject):
+        """
+        Same as :meth:`substanced.interfaces.IFolder.replace` except it causes
+        the ``loading`` flag of added and removed events sent during the add
+        and remove events implied by the replacement to be ``True``.
         """
 
 class IAutoNamingFolder(IFolder):

@@ -155,6 +155,14 @@ class TestCatalogViewDiscriminator(unittest.TestCase):
         result = inst(wrapper, None)
         self.assertEqual(result, None)
 
+class Test_dummy_discriminator(unittest.TestCase):
+    def _callFUT(self, object, default):
+        from ..discriminators import dummy_discriminator
+        return dummy_discriminator(object, default)
+
+    def test_it(self):
+        result = self._callFUT(None, '123')
+        self.assertEqual(result, '123')
 
 class DummyViewFactory(object):
     def __init__(self, content):

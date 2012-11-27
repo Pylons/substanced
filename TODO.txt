@@ -55,6 +55,8 @@ Guts-Only
 
 - Change all mentions of ``context`` to ``resource``.
 
+- Add a ``substanced.load_dump`` key for use by root factory.
+
 Nice-to-Have Features
 ---------------------
 
@@ -120,6 +122,8 @@ Docs
   between an ACL-bearing object and the principals referred to within the ACL.
 
 - Document the SDI API
+
+- Explain ``__dump__`` and ``__load__`` methods of resources.
 
 Probably Bad Ideas
 ------------------
