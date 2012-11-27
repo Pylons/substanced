@@ -73,8 +73,6 @@ SDI
 
 - Explain exception views for integrity errors.
 
-- Breadcrumbs and tabs
-
 mgmt_views
 ----------
 
@@ -84,6 +82,8 @@ mgmt_views
 - Explain various view predicates.
 
 - Flash message and other "slots"
+
+- FormView
 
 - Document the SDI API
 

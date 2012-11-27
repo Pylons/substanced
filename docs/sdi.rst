@@ -81,6 +81,23 @@ custom content.
 Once again, for clarity: the SDI is not a framework, it is an
 application. It is not your retail UI.
 
+Layout
+======
+
+The SDI has a mostly-familiar layout:
+
+- A *header* that shows the username as a dropdown menu containing a
+  link to the principal screen as well as a logout link
+
+- *Breadcrumbs* with a path from the root
+
+- A series of *tabs* for the management views of the current resource
+
+- Optionally, a *flash message* showing results of the previous
+  operation, a warning, or some other notice
+
+- A *footer*
+
 Catalog
 =======
 

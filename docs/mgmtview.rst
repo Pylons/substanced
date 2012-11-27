@@ -1,5 +1,6 @@
+================
 Management Views
------------------
+================
 
 A :term:`management view` is a :term:`view configuration` that applies only
 when the URL is prepended with the :term:`manage prefix`. The manage prefix
@@ -68,3 +69,18 @@ than a plain Pyramid view registration:
 So if you want things to work right when developing management views, you'll
 use ``@mgmt_view`` instead of ``@view_config``, and ``config.add_mgmt_view``
 instead of ``config.add_view``.
+
+Tab Ordering
+============
+
+If you register a management view, a tab will be added at the end of
+the list of tabs. Substance D does, though, give you some options to
+control tab ordering in larger systems with different software
+registering management views:
+
+- Explain ``tab_before`` and ``tab_after`` arguments to mgmt_view (as well as
+  related ``FIRST``, ``LAST``, and ``MIDDLE`` sentinels).
+
+- ``tab_before``
+
+- ``tab_after``
