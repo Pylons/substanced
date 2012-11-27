@@ -11,7 +11,7 @@ from ..event import (
 
 from ..util import (
     postorder,
-    oid_of,
+    get_oid,
     )
 
 from . import (
@@ -36,7 +36,7 @@ def object_added(event):
     for node in postorder(obj):
         catalog_view_factory = catalog_view_factory_for(node, event.registry)
         if catalog_view_factory:
-            objectid = oid_of(node)
+            objectid = get_oid(node)
             for catalog in catalogs:
                 catalog.index_doc(
                     objectid,
@@ -67,7 +67,7 @@ def object_modified(event):
         wrapper = CatalogViewWrapper(obj, catalog_view_factory)
         catalogs = find_services(obj, 'catalog')
         for catalog in catalogs:
-            objectid = oid_of(obj)
+            objectid = get_oid(obj)
             catalog.reindex_doc(objectid, wrapper)
 
 @subscribe_acl_modified()
@@ -86,7 +86,7 @@ def acl_modified(event):
                     if cvf:
                         logger.info('Reindexing %s' % node)
                         index.reindex_doc(
-                            oid_of(node),
+                            get_oid(node),
                             CatalogViewWrapper(node, cvf)
                             )
 

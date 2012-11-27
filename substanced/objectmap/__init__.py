@@ -2,6 +2,8 @@ import random
 
 from persistent import Persistent
 
+import colander
+
 import BTrees
 
 from zope.interface import implementer
@@ -16,7 +18,7 @@ from pyramid.traversal import (
 from ..event import subscribe_will_be_removed
 
 from ..util import (
-    oid_of,
+    get_oid,
     acquire,
     )
 
@@ -154,7 +156,7 @@ class ObjectMap(Persistent):
         if context is None:
             context = self.root
         return find_resource(context, path_tuple)
-            
+
     def add(self, obj, path_tuple, replace_oid=False):
         """ Add a new object to the object map at the location specified by
         ``path_tuple`` (must be the path of the object in the object graph as
@@ -162,7 +164,7 @@ class ObjectMap(Persistent):
         if not isinstance(path_tuple, tuple):
             raise ValueError('path_tuple argument must be a tuple')
 
-        objectid = oid_of(obj, _marker)
+        objectid = get_oid(obj, _marker)
 
         if objectid is _marker or replace_oid:
             objectid = self.new_objectid()
@@ -338,7 +340,7 @@ class ObjectMap(Persistent):
         return result
 
     def _refids_for(self, source, target):
-        sourceid, targetid = oid_of(source, source), oid_of(target, target)
+        sourceid, targetid = get_oid(source, source), get_oid(target, target)
         if not sourceid in self.objectid_to_path:
             raise ValueError('source %s is not in objectmap' % (source,))
         if not targetid in self.objectid_to_path:
@@ -346,7 +348,7 @@ class ObjectMap(Persistent):
         return sourceid, targetid
 
     def _refid_for(self, obj):
-        oid = oid_of(obj, obj)
+        oid = get_oid(obj, obj)
         if not oid in self.objectid_to_path:
             raise ValueError('oid %s is not in objectmap' % (obj,))
         return oid
@@ -378,13 +380,13 @@ class ObjectMap(Persistent):
     
     def sourceids(self, obj, reftype):
         """ Return a set of object identifiers of the objects connected to
-        ``obj`` a a source using reference type ``reftype``"""
+        ``obj`` a source using reference type ``reftype``"""
         oid = self._refid_for(obj)
         return self.family.IF.Set(self.referencemap.sourceids(oid, reftype))
 
     def targetids(self, obj, reftype):
         """ Return a set of object identifiers of the objects connected to
-        ``obj`` a a target using reference type ``reftype``"""
+        ``obj`` a target using reference type ``reftype``"""
         oid = self._refid_for(obj)
         return self.family.IF.Set(self.referencemap.targetids(oid, reftype))
 
@@ -519,7 +521,7 @@ class ReferenceSet(Persistent):
                     if not oidset:
                         del self.src2target[source]
         return removed
-    
+
 def _reference_property(reftype, resolve, orientation='source'):
     def _get(self, resolve=resolve):
         objectmap = find_objectmap(self)
@@ -537,6 +539,8 @@ def _reference_property(reftype, resolve, orientation='source'):
         return oid
 
     def _set(self, oid):
+        if oid == colander.null: # fbo dump/load
+            return
         _del(self)
         if oid is None:
             return
@@ -598,7 +602,7 @@ def reference_sourceid_property(reftype):
 
        profile = registry.content.create('Profile')
        somefolder['profile'] = profile
-       profile.user_id = oid_of(request.user)
+       profile.user_id = get_oid(request.user)
        print profile.user_id # will print the oid of the user
 
        # if the user is later deleted by unrelated code...
@@ -689,6 +693,8 @@ def _multireference_property(
             )
 
     def _set(self, oids):
+        if oids == colander.null: # fbo dump/load
+            return
         if not is_nonstr_iter(oids):
             raise ValueError('Must be a sequence')
         iterable = _del(self)
@@ -809,7 +815,7 @@ class Multireference(object):
         should be a sequence of content objects or object identifiers."""
         if ignore_missing is None:
             ignore_missing = self.ignore_missing
-        ctx_oid = oid_of(self.context)
+        ctx_oid = get_oid(self.context)
         for obj in objects:
             try:
                 if self.orientation == 'source':
@@ -825,7 +831,7 @@ class Multireference(object):
         should be a sequence of content objects or object identifiers."""
         if ignore_missing is None:
             ignore_missing = self.ignore_missing
-        ctx_oid = oid_of(self.context)
+        ctx_oid = get_oid(self.context)
         for obj in objects:
             try:
                 if self.orientation == 'source':
@@ -849,7 +855,7 @@ def has_references(context):
     objectmap = find_objectmap(context)
     if objectmap is None:
         return False
-    oid = oid_of(context, None)
+    oid = get_oid(context, None)
     if oid is None:
         return False
     return objectmap.has_references(oid)
@@ -874,7 +880,7 @@ def referential_integrity(event):
     if event.moving:
         return
     obj = event.object
-    obj_oid = oid_of(obj, None)
+    obj_oid = get_oid(obj, None)
     objectmap = find_objectmap(obj)
     if objectmap is None:
         return

@@ -7,7 +7,7 @@ from ...catalog import (
     CatalogViewWrapper,
     )
 from ...content import find_services
-from ...util import oid_of
+from ...util import get_oid
 
 from .. import (
     mgmt_view,
@@ -33,7 +33,7 @@ class IndexingView(object):
         tab_after=MIDDLE, # try not to be the default tab, we're too obscure
         )
     def show(self):
-        oid = oid_of(self.context)
+        oid = get_oid(self.context)
         catalogs = []
         for catalog in find_services(self.context, 'catalog'):
             indexes = []
@@ -48,7 +48,7 @@ class IndexingView(object):
         context = self.context
         request = self.request
         check_csrf_token(request)
-        oid = oid_of(self.context)
+        oid = get_oid(self.context)
         catalog_view_factory = self.catalog_view_factory_for(
             context, request.registry)
         if catalog_view_factory:

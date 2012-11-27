@@ -4,7 +4,7 @@ from ...objectmap import (
     find_objectmap,
     ReferentialIntegrityError,
     )
-from ...util import oid_of
+from ...util import get_oid
 
 from .. import (
     mgmt_view,
@@ -28,7 +28,7 @@ class ReferencedView(object):
         tab_after=MIDDLE, # try not to be the default tab, we're too obscure
         )
     def show(self):
-        oid = oid_of(self.context)
+        oid = get_oid(self.context)
         objectmap = find_objectmap(self.context)
         targets = []
         sources = []

@@ -9,7 +9,7 @@ from zope.interface import implementer
 
 from pyramid.response import FileResponse
 
-from ..util import oid_of
+from ..util import get_oid
 
 try:
     import magic
@@ -55,6 +55,8 @@ class FilePropertySheet(PropertySheet):
 
 @colander.deferred
 def file_upload_widget(node, kw):
+    if kw.get('loading'):
+        return None
     request = kw['request']
     tmpstore = FileUploadTempStore(request)
     widget = deform.widget.FileUploadWidget(tmpstore)
@@ -74,7 +76,7 @@ class FileUploadPropertySheet(PropertySheet):
     def get(self):
         context = self.context
         request = self.request
-        uid = str(oid_of(context))
+        uid = str(get_oid(context))
         filedata = dict(
             fp=None,
             uid=uid,

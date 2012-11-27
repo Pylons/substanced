@@ -58,6 +58,9 @@ Substance D is an application server.  It provides the following features:
 
 - An "evolve" mechanism for evolving content over time as it changes.
 
+- A mechanism to dump your site's content to the filesystem in a mostly
+  human-readable format, and a mechanism to reload a dump into the system.
+
 Substance D is built upon on the following technologies:
 
 - `ZODB <http://zodb.org>`_

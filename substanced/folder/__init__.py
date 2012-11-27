@@ -33,7 +33,7 @@ from ..event import (
     )
 
 from ..util import (
-    oid_of,
+    get_oid,
     postorder,
     )
 
@@ -57,14 +57,13 @@ class Folder(Persistent):
 
     __name__ = None
     __parent__ = None
-    __services__ = ()
 
     # Default uses ordering of underlying BTree.
     _order = None
 
     def _get_order(self):
         if self._order is not None:
-            return list(self._order)
+            return self._order
         return self.data.keys()
 
     def _set_order(self, value):
@@ -75,6 +74,10 @@ class Folder(Persistent):
         del self._order
 
     order = property(_get_order, _set_order, _del_order)
+
+    def is_ordered(self):
+        """ Return true if the folder is manually ordered, false otherwise. """
+        return self._order is not None
 
     def __init__(self, data=None, family=None):
         """ Constructor.  Data may be an initial dictionary mapping object
@@ -104,8 +107,7 @@ class Folder(Persistent):
             registry = get_current_registry()
         kw['registry'] = registry
         self.add(name, obj, **kw)
-        if not name in self.__services__:
-            self.__services__ = self.__services__ + (name,)
+        obj.__is_service__ = True
 
     def keys(self):
         """ Return an iterable sequence of object names present in the folder.
@@ -268,13 +270,16 @@ class Folder(Persistent):
         return name
 
     def add(self, name, other, send_events=True, reserved_names=(),
-            duplicating=False, moving=False, registry=None):
+            duplicating=False, moving=False, loading=False, registry=None):
         """ Same as ``__setitem__``.
 
         If ``send_events`` is False, suppress the sending of folder events.
-        Don't allow names in the ``reserved_names`` sequence to be
-        added. If ``duplicating`` is True, oids will be replaced in
-        objectmap.
+        Don't allow names in the ``reserved_names`` sequence to be added.
+
+        If ``duplicating`` is ``True``, oids will be replaced in objectmap.  If
+        ``moving`` is ``True``, the ``moving`` attribute of events will be
+        ``True`` too.  If ``loading`` is ``True``, the ``loading`` attribute of
+        events sent as a result of calling this method will be ``True`` too.
 
         This method returns the name used to place the subobject in the
         folder (a derivation of ``name``, usually the result of
@@ -309,7 +314,8 @@ class Folder(Persistent):
 
         if send_events:
             event = ObjectWillBeAdded(
-                other, self, name, duplicating=duplicating, moving=moving
+                other, self, name, duplicating=duplicating, moving=moving,
+                loading=loading,
                 )
             self._notify(event, registry)
 
@@ -324,7 +330,8 @@ class Folder(Persistent):
 
         if send_events:
             event = ObjectAdded(
-                other, self, name, duplicating=duplicating, moving=moving
+                other, self, name, duplicating=duplicating, moving=moving,
+                loading=loading,
                 )
             self._notify(event, registry)
 
@@ -385,22 +392,28 @@ class Folder(Persistent):
         """
         return self.remove(name)
 
-    def remove(self, name, send_events=True, moving=False, registry=None):
+    def remove(self, name, send_events=True, moving=False, loading=False,
+               registry=None):
         """ Same thing as ``__delitem__``.
 
         If ``send_events`` is false, suppress the sending of folder events.
-        If ``moving`` is True, the events sent will indicate that a move is
-        in process.
+
+        If ``moving`` is ``True``, the ``moving`` attribute of events sent as a
+        result of calling this method will be ``True`` too.  If ``loading`` is
+        ``True``, the ``loading`` attribute of events sent as a result of
+        calling this method will be ``True`` too.
         """
         name = unicode(name)
         other = self.data[name]
-        oid = oid_of(other, None)
+        oid = get_oid(other, None)
 
         if registry is None:
             registry = get_current_registry()
 
         if send_events:
-            event = ObjectWillBeRemoved(other, self, name, moving=moving)
+            event = ObjectWillBeRemoved(
+                other, self, name, moving=moving, loading=loading
+                )
             self._notify(event, registry)
 
         if hasattr(other, '__parent__'):
@@ -411,9 +424,6 @@ class Folder(Persistent):
 
         del self.data[name]
         self._num_objects.change(-1)
-
-        if name in self.__services__:
-            self.__services__ = filter(lambda x: x != name, self.__services__)
 
         if self._order is not None:
             self._order = tuple([x for x in self._order if x != name])
@@ -427,7 +437,7 @@ class Folder(Persistent):
 
         if send_events:
             event = ObjectRemoved(other, self, name, removed_oids,
-                                  moving=moving)
+                                  moving=moving, loading=loading)
             self._notify(event, registry)
 
         return other
@@ -466,17 +476,12 @@ class Folder(Persistent):
         and WillBeRemoved events as well as the Added and WillBeAdded events
         sent will indicate that the object is moving.
         """
-        is_service = False
         if newname is None:
             newname = name
-        if name in self.__services__:
-            is_service = True
         if registry is None:
             registry = get_current_registry()
         ob = self.remove(name, moving=True, registry=registry)
         other.add(newname, ob, moving=True, registry=registry)
-        if is_service:
-            other.__services__ = other.__services__ + (name,)
         return ob
 
     def rename(self, oldname, newname, registry=None):
@@ -506,6 +511,15 @@ class Folder(Persistent):
         if name in self:
             self.remove(name)
         self.add(name, newobject, registry=registry)
+
+    def load(self, name, newobject, registry=None):
+        """ A replace method used by the code that loads an existing dump.
+        Events sent during this replace will have a true ``loading`` flag."""
+        if registry is None:
+            registry = get_current_registry()
+        if name in self:
+            self.remove(name, loading=True)
+        self.add(name, newobject, loading=True, registry=registry)
 
 class _AutoNamingFolder(object):
     def add_next(
@@ -597,7 +611,7 @@ class SequentialAutoNamingFolder(Folder, _AutoNamingFolder):
         return str(int(name)).zfill(self._autoname_length)
 
     def add(self, name, other, send_events=True, reserved_names=(),
-            duplicating=False, moving=False, registry=None):
+            duplicating=False, moving=False, loading=False, registry=None):
         """ The ``add`` method of a SequentialAutoNamingFolder will raise a
         :exc:`ValueError` if the ``name`` it is passed is not intifiable, as
         its ``next_name`` method relies on controlling the types of names
@@ -623,6 +637,7 @@ class SequentialAutoNamingFolder(Folder, _AutoNamingFolder):
             reserved_names=reserved_names,
             duplicating=duplicating,
             moving=moving,
+            loading=loading,
             registry=registry,
             )
 

@@ -23,37 +23,71 @@ class _ObjectEvent(object):
 @implementer(IObjectAdded)
 class ObjectAdded(_ObjectEvent):
     """ An event sent just after an object has been added to a folder.  """
-    def __init__(self, object, parent, name, duplicating=False, moving=False):
+    def __init__(
+        self,
+        object,
+        parent,
+        name,
+        duplicating=False,
+        moving=False,
+        loading=False,
+        ):
         self.object = object
         self.parent = parent
         self.name = name
         self.duplicating = duplicating
         self.moving = moving
+        self.loading = loading
 
 @implementer(IObjectWillBeAdded)
 class ObjectWillBeAdded(_ObjectEvent):
     """ An event sent just before an object has been added to a folder.  """
-    def __init__(self, object, parent, name, duplicating=False, moving=False):
+    def __init__(
+        self,
+        object,
+        parent,
+        name,
+        duplicating=False,
+        moving=False,
+        loading=False,
+        ):
         self.object = object
         self.parent = parent
         self.name = name
         self.duplicating = duplicating
         self.moving = moving
+        self.loading = loading
 
 @implementer(IObjectRemoved)
 class ObjectRemoved(object):
     """ An event sent just after an object has been removed from a folder."""
-    def __init__(self, object, parent, name, removed_oids, moving=False):
+    def __init__(
+        self,
+        object,
+        parent,
+        name,
+        removed_oids,
+        moving=False,
+        loading=False,
+        ):
         self.object = object
         self.parent = parent
         self.name = name
         self.removed_oids = removed_oids
         self.moving = moving
+        self.loading = loading
 
 @implementer(IObjectWillBeRemoved)
 class ObjectWillBeRemoved(object):
     """ An event sent just before an object has been removed from a folder."""
-    def __init__(self, object, parent, name, moving=False):
+    def __init__(
+        self,
+        object,
+        parent,
+        name,
+        moving=False,
+        loading=False,
+        ):
         self.object = object
         self.parent = parent
         self.name = name

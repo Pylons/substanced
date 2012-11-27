@@ -77,7 +77,6 @@ class Test_login(unittest.TestCase):
         request.params['csrf_token'] = request.session.get_csrf_token()
         context = make_site()
         context['principals']['users']['login'] = DummyUser(0)
-        context.__services__ = ('principals',)
         result = self._callFUT(context, request)
         self.assertEqual(result['url'], '/mgmt_path')
         self.assertEqual(result['came_from'], 'http://example.com')
@@ -97,7 +96,6 @@ class Test_login(unittest.TestCase):
         user = DummyUser(1)
         user.__oid__ = 1
         context['principals']['users']['login'] = user
-        context.__services__ = ('principals',)
         result = self._callFUT(context, request)
         self.assertEqual(result.location, 'http://example.com')
         self.assertTrue(result.headers)

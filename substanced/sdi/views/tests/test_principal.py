@@ -154,10 +154,9 @@ class Test_login_validator(unittest.TestCase):
     def _makeSite(self):
         from ....interfaces import IFolder
         site = testing.DummyResource(__provides__=IFolder)
-        principals = testing.DummyResource()
+        principals = testing.DummyResource(__is_service__=True)
         users = testing.DummyResource()
         site['principals'] = principals
-        site.__services__ = ('principals',)
         principals['users'] = users
         return site
 

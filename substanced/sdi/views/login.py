@@ -10,7 +10,7 @@ from pyramid.security import (
     )
 
 from ...content import find_service
-from ...util import oid_of
+from ...util import get_oid
 
 from .. import mgmt_view
 
@@ -40,7 +40,7 @@ def login(context, request):
             users = principals['users']
             user = users.get(login)
             if user is not None and user.check_password(password):
-                headers = remember(request, oid_of(user))
+                headers = remember(request, get_oid(user))
                 return HTTPFound(location = came_from, headers = headers)
             request.session.flash('Failed login', 'error')
 

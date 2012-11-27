@@ -833,7 +833,7 @@ class Test_reference_sourceid_property(unittest.TestCase):
         inst.__objectmap__ = objectmap
         self.assertEqual(inst.prop, 1)
 
-    def test_get_gt_one_targetid(self):
+    def test_get_get_one_targetid(self):
         inst = self._makeInst()
         objectmap = DummyObjectMap(targetids=(1,2))
         inst.__objectmap__ = objectmap
@@ -859,6 +859,15 @@ class Test_reference_sourceid_property(unittest.TestCase):
         inst.__objectmap__ = objectmap
         inst.prop = None
         self.assertEqual(objectmap.connected, [])
+
+    def test_set_colander_null(self):
+        from colander import null
+        inst = self._makeInst()
+        objectmap = DummyObjectMap(targetids=(1,))
+        inst.__objectmap__ = objectmap
+        inst.prop = null
+        self.assertEqual(inst.prop, 1)
+        self.assertEqual(objectmap.disconnected, [])
 
     def test_set_not_None(self):
         inst = self._makeInst()
@@ -918,6 +927,15 @@ class Test_reference_targetid_property(unittest.TestCase):
         inst.__objectmap__ = objectmap
         inst.prop = None
         self.assertEqual(objectmap.connected, [])
+
+    def test_set_colander_null(self):
+        from colander import null
+        inst = self._makeInst()
+        objectmap = DummyObjectMap(sourceids=(1,))
+        inst.__objectmap__ = objectmap
+        inst.prop = null
+        self.assertEqual(inst.prop, 1)
+        self.assertEqual(objectmap.disconnected, [])
 
     def test_set_not_None(self):
         inst = self._makeInst()
@@ -984,6 +1002,16 @@ class Test_reference_source_property(unittest.TestCase):
         inst.prop = None
         self.assertEqual(objectmap.connected, [])
 
+    def test_set_colander_null(self):
+        from colander import null
+        inst = self._makeInst()
+        ob = object()
+        objectmap = DummyObjectMap(targetids=(1,), result=ob)
+        inst.__objectmap__ = objectmap
+        inst.prop = null
+        self.assertEqual(inst.prop, ob)
+        self.assertEqual(objectmap.disconnected, [])
+
     def test_set_not_None(self):
         inst = self._makeInst()
         objectmap = DummyObjectMap(targetids=())
@@ -1048,6 +1076,16 @@ class Test_reference_target_property(unittest.TestCase):
         inst.__objectmap__ = objectmap
         inst.prop = None
         self.assertEqual(objectmap.connected, [])
+
+    def test_set_colander_null(self):
+        from colander import null
+        inst = self._makeInst()
+        ob = object()
+        objectmap = DummyObjectMap(sourceids=(1,), result=ob)
+        inst.__objectmap__ = objectmap
+        inst.prop = null
+        self.assertEqual(inst.prop, ob)
+        self.assertEqual(objectmap.disconnected, [])
 
     def test_set_not_None(self):
         inst = self._makeInst()
@@ -1121,6 +1159,14 @@ class Test_multireference_sourceid_property(unittest.TestCase):
         objectmap = DummyObjectMap(targetids=())
         inst.__objectmap__ = objectmap
         self.assertRaises(ValueError, inst.__setattr__, 'prop', None)
+
+    def test_set_colander_null(self):
+        from colander import null
+        inst = self._makeInst()
+        objectmap = DummyObjectMap(sourceids=(1,))
+        inst.__objectmap__ = objectmap
+        inst.prop = null
+        self.assertEqual(objectmap.disconnected, [])
 
     def test_set_zero(self):
         inst = self._makeInst()
@@ -1275,6 +1321,14 @@ class Test_multireference_source_property(unittest.TestCase):
         inst.__objectmap__ = objectmap
         self.assertRaises(ValueError, inst.__setattr__, 'prop', None)
 
+    def test_set_colander_null(self):
+        from colander import null
+        inst = self._makeInst()
+        objectmap = DummyObjectMap(targetids=(1,))
+        inst.__objectmap__ = objectmap
+        inst.prop = null
+        self.assertEqual(objectmap.disconnected, [])
+
     def test_set_zero(self):
         inst = self._makeInst()
         objectmap = DummyObjectMap(targetids=(1,))
@@ -1428,6 +1482,14 @@ class Test_multireference_targetid_property(unittest.TestCase):
         inst.__objectmap__ = objectmap
         self.assertRaises(ValueError, inst.__setattr__, 'prop', None)
 
+    def test_set_colander_null(self):
+        from colander import null
+        inst = self._makeInst()
+        objectmap = DummyObjectMap(sourceids=(1,))
+        inst.__objectmap__ = objectmap
+        inst.prop = null
+        self.assertEqual(objectmap.disconnected, [])
+
     def test_set_zero(self):
         inst = self._makeInst()
         objectmap = DummyObjectMap(sourceids=(1,))
@@ -1580,6 +1642,14 @@ class Test_multireference_target_property(unittest.TestCase):
         objectmap = DummyObjectMap(sourceids=())
         inst.__objectmap__ = objectmap
         self.assertRaises(ValueError, inst.__setattr__, 'prop', None)
+
+    def test_set_colander_null(self):
+        from colander import null
+        inst = self._makeInst()
+        objectmap = DummyObjectMap(sourceids=(1,))
+        inst.__objectmap__ = objectmap
+        inst.prop = null
+        self.assertEqual(objectmap.disconnected, [])
 
     def test_set_zero(self):
         inst = self._makeInst()

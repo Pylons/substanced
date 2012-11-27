@@ -10,7 +10,7 @@ def _makeSite(**kw):
     alsoProvides(site, IFolder)
     for k, v in kw.items():
         site[k] = v
-    site.__services__ = tuple(kw.keys())
+        v.__is_service__ = True
     return site
 
 class TestResolvingIndex(unittest.TestCase):
@@ -52,12 +52,12 @@ class TestPathIndex(unittest.TestCase):
         return acquire(inst, name)
 
     def test_document_repr(self):
-        from substanced.util import oid_of
+        from substanced.util import get_oid
         inst = self._makeOne()
         obj = testing.DummyResource()
         objectmap = self._acquire(inst, '__objectmap__')
         objectmap.add(obj, (u'',))
-        result = inst.document_repr(oid_of(obj))
+        result = inst.document_repr(get_oid(obj))
         self.assertEqual(result, (u'',))
 
     def test_document_repr_missing(self):
@@ -242,6 +242,65 @@ class TestPathIndex(unittest.TestCase):
             result._value,
             {'path': '/abc', 'depth': 1}
             )
+
+class TestFieldIndex(unittest.TestCase):
+    def _makeOne(self, discriminator=None, family=None):
+        from ..indexes import FieldIndex
+        return FieldIndex(discriminator, family)
+    
+    def test_ctor_with_discriminator(self):
+        inst = self._makeOne('abc')
+        self.assertEqual(inst.discriminator, 'abc')
+
+    def test_ctor_without_discriminator(self):
+        inst = self._makeOne()
+        self.assertEqual(inst.discriminator.__class__, type(lambda x: True))
+
+class TestKeywordIndex(unittest.TestCase):
+    def _makeOne(self, discriminator=None, family=None):
+        from ..indexes import KeywordIndex
+        return KeywordIndex(discriminator, family)
+    
+    def test_ctor_with_discriminator(self):
+        inst = self._makeOne('abc')
+        self.assertEqual(inst.discriminator, 'abc')
+
+    def test_ctor_without_discriminator(self):
+        inst = self._makeOne()
+        self.assertEqual(inst.discriminator.__class__, type(lambda x: True))
+
+class TestFacetIndex(unittest.TestCase):
+    def _makeOne(self, discriminator=None, facets=None, family=None):
+        from ..indexes import FacetIndex
+        return FacetIndex(discriminator, facets, family)
+    
+    def test_ctor_with_discriminator(self):
+        inst = self._makeOne('abc')
+        self.assertEqual(inst.discriminator, 'abc')
+        self.assertEqual(list(inst.facets), [])
+
+    def test_ctor_without_discriminator(self):
+        inst = self._makeOne()
+        self.assertEqual(inst.discriminator.__class__, type(lambda x: True))
+
+class TestTextIndex(unittest.TestCase):
+    def _makeOne(
+        self,
+        discriminator=None,
+        lexicon=None,
+        index=None,
+        family=None
+        ):
+        from ..indexes import TextIndex
+        return TextIndex(discriminator, family)
+    
+    def test_ctor_with_discriminator(self):
+        inst = self._makeOne('abc')
+        self.assertEqual(inst.discriminator, 'abc')
+
+    def test_ctor_without_discriminator(self):
+        inst = self._makeOne()
+        self.assertEqual(inst.discriminator.__class__, type(lambda x: True))
 
 class TestAllowedIndex(unittest.TestCase):
     def setUp(self):

@@ -10,6 +10,13 @@ import venusian
 
 from ..event import ContentCreated
 
+from ..util import (
+    dotted_name,
+    set_created,
+    set_oid,
+    )
+from ..interfaces import IFolder
+
 _marker = object()
 
 def get_content_type(resource, registry=None):
@@ -30,45 +37,44 @@ def find_content(resource, content_type, registry=None):
         registry = get_current_registry()
     return registry.content.find(resource, content_type)
 
-def _find_services(context, name, one=False):
+def _find_services(resource, name, one=False):
     L = []
-    for obj in lineage(context):
-        services = getattr(obj, '__services__', None)
-        if services is not None:
-            if name in services:
-                service = obj[name]
-                if one:
-                    return service
-                L.append(service)
+    for obj in lineage(resource):
+        if IFolder.providedBy(obj):
+            subobj = obj.get(name, None)
+            if subobj is not None:
+                if is_service(subobj):
+                    if one:
+                        return subobj
+                    L.append(subobj)
     if one:
         return None
     return L
 
-def find_service(context, name):
-    """ Find the first service named ``name`` in the lineage of ``context``
+def is_service(resource):
+    """ Returns ``True`` if the resource is a service, ``False`` if not. """
+    return bool(getattr(resource, '__is_service__', False))
+
+def find_service(resource, name):
+    """ Find the first service named ``name`` in the lineage of ``resource``
     or return ``None`` if no such-named service could be found. """
-    return _find_services(context, name, one=True)
+    return _find_services(resource, name, one=True)
                 
-def find_services(context, name):
-    """Finds all services named ``name`` in the lineage of ``context`` and
+def find_services(resource, name):
+    """Finds all services named ``name`` in the lineage of ``resource`` and
     returns a sequence containing those service objects. The sequence will
     begin with the most deepest nested service and will end with the least
     deeply nested service.  Returns an empty sequence if no such-named
     service could be found."""
-    return _find_services(context, name)
+    return _find_services(resource, name)
 
 def _get_factory_type(resource):
     """ If the resource has a __factory_type__ attribute, return it.
     Otherwise return the full Python dotted name of the resource's class."""
     factory_type = getattr(resource, '__factory_type__', None)
     if factory_type is None:
-        factory_type = _dotted_name_of(resource.__class__)
+        factory_type = dotted_name(resource.__class__)
     return factory_type
-
-def _dotted_name_of(g):
-    name = g.__name__
-    module = g.__module__
-    return '.'.join((module, name))
 
 class ContentRegistry(object):
     """ An object accessible as ``registry.content`` (aka
@@ -100,10 +106,17 @@ class ContentRegistry(object):
         a method of the created object, and if it's a sequence, each value
         should be a string or a callable, which will be called in turn); then
         send a :class:`substanced.event.ContentCreatedEvent`.  Return the
-        created object."""
+        created object.
+
+        If the key ``__oid`` is in the ``kw`` arguments, it will be used as
+        the created object's oid.
+        """
         factory = self.content_types[content_type]
+        oid = kw.pop('__oid', None) # FBO dump system loader
         inst = factory(*arg, **kw)
-        inst.__created__ = self._utcnow()
+        if oid is not None:
+            set_oid(inst, oid)
+        set_created(inst, self._utcnow())
         meta = self.meta[content_type].copy()
         aftercreate = meta.get('after_create')
         if aftercreate is not None:
@@ -337,8 +350,9 @@ def add_service_type(config, content_type, factory, factory_type=None, **meta):
     :class:`substanced.service.add_service_type` decorator. The
     ``add_service_type`` function honors a ``service_name`` keyword argument
     in its ``**meta``.  If this argument is passed, and a service already
-    exists in the ``__services__`` folder by this name, the service will not
-    be shown as addable in the add-content dropdown in the SDI UI.
+    exists in a folder by this name, the service will not
+    be shown as addable in the add-content dropdown in the SDI UI of the
+    folder.
     """
     meta['is_service'] = True
     return add_content_type(
@@ -363,10 +377,10 @@ def _wrap_factory(factory, factory_type):
     """
  
     if inspect.isclass(factory) and factory_type is None:
-        return _dotted_name_of(factory), factory
+        return dotted_name(factory), factory
 
     if factory_type is None:
-        factory_type = _dotted_name_of(factory)
+        factory_type = dotted_name(factory)
 
     def factory_wrapper(*arg, **kw):
         inst = factory(*arg, **kw)

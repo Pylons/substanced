@@ -428,13 +428,21 @@ Other Helpers
 
 .. automodule:: substanced.util
 
+.. autofunction:: get_oid
+
+.. autofunction:: set_oid
+
+.. autofunction:: get_acl
+
+.. autofunction:: set_acl
+
+.. autofunction:: get_created
+
+.. autofunction:: set_created
+
 .. autofunction:: coarse_datetime_repr
 
 .. autofunction:: postorder
-
-.. autofunction:: oid_of
-
-.. autoclass:: Batch
 
 .. autofunction:: merge_url_qs
 
@@ -442,7 +450,9 @@ Other Helpers
 
 .. autofunction:: renamer
 
-.. autofunction:: change_acl
+.. autofunction:: dotted_name
+
+.. autoclass:: Batch
 
 :mod:`substanced.widget` API
 ----------------------------

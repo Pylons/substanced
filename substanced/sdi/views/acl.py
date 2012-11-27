@@ -12,9 +12,9 @@ from pyramid.session import check_csrf_token
 from ...content import find_service
 from ...objectmap import find_objectmap
 from ...util import (
-    oid_of,
+    get_oid,
     get_all_permissions,
-    change_acl,
+    set_acl,
     )
 
 from .. import mgmt_view
@@ -110,7 +110,7 @@ def acl_edit_view(context, request):
     acl = acl + epilog
 
     if acl != original_acl:
-        change_acl(context, acl, registry=registry)
+        set_acl(context, acl, registry=registry)
 
     parent = context.__parent__
     parent_acl = []
@@ -173,9 +173,9 @@ def acl_edit_view(context, request):
     permissions.sort()
 
     users = principal_service['users'].values()
-    users = [ (oid_of(user), user.__name__) for user in users ]
+    users = [ (get_oid(user), user.__name__) for user in users ]
     groups = principal_service['groups'].values()
-    groups = [ (oid_of(group), group.__name__) for group in groups ]
+    groups = [ (get_oid(group), group.__name__) for group in groups ]
     groups = [ (Everyone, Everyone), (Authenticated, Authenticated) ] + groups
 
     return dict(

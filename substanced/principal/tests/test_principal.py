@@ -131,12 +131,12 @@ class Test_groupname_validator(unittest.TestCase):
         request = testing.DummyRequest()
         context = DummyFolder()
         principals = DummyFolder()
+        principals.__is_service__ = True
         groups = DummyFolder()
         users = DummyFolder()
         context['principals'] = principals
         context['principals']['groups'] = groups
         context['principals']['users'] = users
-        context.__services__ = ('principals',)
         request.context = context
         return dict(request=request, context=context)
 
@@ -185,6 +185,12 @@ class Test_members_choices(unittest.TestCase):
         request = testing.DummyRequest()
         result = self._makeOne(site, request)
         self.assertEqual(result, [(1, 'user')])
+
+    def test_it_no_principals_service(self):
+        site = testing.DummyResource()
+        request = testing.DummyRequest()
+        result = self._makeOne(site, request)
+        self.assertEqual(result, ())
 
 class TestGroup(unittest.TestCase):
     def _makeOne(self, description=''):
@@ -279,6 +285,12 @@ class Test_groups_choices(unittest.TestCase):
         result = self._makeOne(site, request)
         self.assertEqual(result, [(1, 'group')])
 
+    def test_it_no_principals_service(self):
+        site = testing.DummyResource()
+        request = testing.DummyRequest()
+        result = self._makeOne(site, request)
+        self.assertEqual(result, ())
+
 class TestUser(unittest.TestCase):
     def setUp(self):
         self.config = testing.setUp()
@@ -289,6 +301,11 @@ class TestUser(unittest.TestCase):
     def _makeOne(self, password, email=''):
         from .. import User
         return User(password, email)
+
+    def test___dump__(self):
+        inst = self._makeOne('abc')
+        result = inst.__dump__()
+        self.assertTrue(inst.pwd_manager.check(result['password'], 'abc'))
 
     def test_check_password(self):
         inst = self._makeOne('abc')

@@ -49,9 +49,9 @@ from ..schema import (
     Schema
     )
 from ..util import (
-    oid_of,
+    get_oid,
     renamer,
-    change_acl,
+    set_acl,
     )
 
 def _gen_random_token():
@@ -145,7 +145,7 @@ class Principals(Folder):
                 break
         reset = registry.content.create('Password Reset', *arg, **kw)
         self['resets'][token] = reset
-        change_acl(reset, [(Allow, Everyone, ('sdi.view',))], registry=registry)
+        set_acl(reset, [(Allow, Everyone, ('sdi.view',))], registry=registry)
         objectmap = find_objectmap(self)
         objectmap.connect(user, reset, UserToPasswordReset)
         return reset
@@ -206,7 +206,9 @@ def groupname_validator(node, kw):
 
 def members_choices(context, request):
     principals = find_service(context, 'principals')
-    values = [(oid_of(group), name) for name, group in 
+    if principals is None:
+        return () # fbo dump/load
+    values = [(get_oid(group), name) for name, group in 
               principals['users'].items()]
     return values
 
@@ -282,7 +284,9 @@ def login_validator(node, kw):
 
 def groups_choices(context, request):
     principals = find_service(context, 'principals')
-    values = [(oid_of(group), name) for name, group in 
+    if principals is None:
+        return () # fbo dump/load
+    values = [(get_oid(group), name) for name, group in 
               principals['groups'].items()]
     return values
 
@@ -328,10 +332,15 @@ class User(Folder):
     groups = multireference_source_property(UserToGroup)
     name = renamer()
 
-    def __init__(self, password, email):
+    def __init__(self, password=None, email=None):
         Folder.__init__(self)
-        self.password = self.pwd_manager.encode(password)
+        if password is not None:
+            password = self.pwd_manager.encode(password)
+        self.password = password
         self.email = email
+
+    def __dump__(self):
+        return dict(password=self.password)
 
     def check_password(self, password):
         """ Checks if the plaintext password passed as ``password`` matches

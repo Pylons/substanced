@@ -96,3 +96,6 @@ class CatalogViewDiscriminator(object):
         if meth is not _marker:
             return meth(default)
         return default
+
+def dummy_discriminator(object, default):
+    return default
