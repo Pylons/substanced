@@ -30,7 +30,7 @@ class IndexingView(object):
     @mgmt_view(
         renderer='templates/indexing.pt',
         tab_title='Indexing',
-        tab_before=RIGHT, # try not to be the default tab, we're too obscure
+        tab_near=RIGHT, # try not to be the default tab, we're too obscure
         )
     def show(self):
         oid = get_oid(self.context)

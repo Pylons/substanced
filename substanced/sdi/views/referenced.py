@@ -24,7 +24,7 @@ class ReferencedView(object):
     @mgmt_view(
         renderer='templates/referenced.pt',
         tab_title='References',
-        tab_before=RIGHT, # try not to be the default tab, we're too obscure
+        tab_near=RIGHT, # try not to be the default tab, we're too obscure
         )
     def show(self):
         oid = get_oid(self.context)

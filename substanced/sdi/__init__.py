@@ -37,8 +37,9 @@ from pyramid.util import (
     LAST,
     )
 
-LEFT = FIRST # API
-RIGHT = LAST # API
+LEFT = 'LEFT'
+RIGHT = 'RIGHT'
+MIDDLE = 'MIDDLE'
 
 from ..objectmap import find_objectmap
 from ..util import acquire
@@ -75,6 +76,7 @@ def add_mgmt_view(
     tab_condition=None,
     tab_before=None,
     tab_after=None,
+    tab_near=None,
     **predicates
     ):
     
@@ -148,12 +150,34 @@ def add_mgmt_view(
         **predicates
         )
     
+    if tab_near is not None:
+        if tab_before or tab_after:
+            raise ConfigurationError(
+                'You cannot use tab_near and tab_before/tab_after together'
+                )
+        if tab_near == LEFT:
+            tab_before = FIRST
+            tab_after = None
+        elif tab_near == MIDDLE:
+            tab_before = LAST
+            tab_after = FIRST
+        elif tab_near == RIGHT:
+            tab_before = None
+            tab_after = LAST
+        else:
+            raise ConfigurationError(
+                'tab_near value must be one of LEFT, MIDDLE, RIGHT or None'
+                )
+
     intr = config.introspectable(
         'sdi views', discriminator, view_desc, 'sdi view')
+
     intr['tab_title'] = tab_title
     intr['tab_condition'] = tab_condition
     intr['tab_before'] = tab_before
     intr['tab_after'] = tab_after
+    intr['tab_near'] = tab_near
+
     intr.relate('views', view_discriminator)
     config.action(discriminator, introspectables=(intr,))
 
@@ -277,12 +301,16 @@ def sdi_mgmt_views(context, request, names=None):
                     unordered.remove(view_data)
                     manually_ordered.append(view_data)
 
-    # first sort non-manually-ordered views lexically by title
-    lexically_ordered = sorted(unordered, key=operator.itemgetter('title'))
+    # First sort non-manually-ordered views lexically by title. Reverse due to
+    # the behavior of the toposorter; we'd like groups of things that share the
+    # same before/after to be alpha sorted ascending relative to each other,
+    # and reversing gets us that down the line.
+    lexically_ordered = sorted(unordered, key=operator.itemgetter('title'),
+                               reverse=True)
 
-    # then sort the lexically-presorted unordered views topologically based on
-    # any tab_before and tab_after values in the view data
-    tsorter = TopologicalSorter(default_before=None, default_after=None)
+    # Then sort the lexically-presorted unordered views topologically based on
+    # any tab_before and tab_after values in the view data.
+    tsorter = TopologicalSorter(default_after=FIRST, default_before=LAST)
 
     for view_data in lexically_ordered:
         before=view_data.get('tab_before', None)
