@@ -1,6 +1,7 @@
 from pyramid.view import view_defaults
 from pyramid.httpexceptions import HTTPFound
 from pyramid.session import check_csrf_token
+from pyramid.util import LAST
 
 from ...catalog import (
     catalog_view_factory_for, 
@@ -9,10 +10,7 @@ from ...catalog import (
 from ...content import find_services
 from ...util import get_oid
 
-from .. import (
-    mgmt_view,
-    MIDDLE
-    )
+from .. import mgmt_view
 
 @view_defaults(
     catalogable=True,
@@ -30,7 +28,7 @@ class IndexingView(object):
     @mgmt_view(
         renderer='templates/indexing.pt',
         tab_title='Indexing',
-        tab_after=MIDDLE, # try not to be the default tab, we're too obscure
+        tab_before=LAST, # try not to be the default tab, we're too obscure
         )
     def show(self):
         oid = get_oid(self.context)

@@ -33,12 +33,7 @@ from pyramid.util import (
     action_method,
     viewdefaults,
     TopologicalSorter,
-    FIRST,
-    LAST,
-    Sentinel,
     )
-
-MIDDLE = Sentinel('MIDDLE')
 
 from ..objectmap import find_objectmap
 from ..util import acquire
@@ -282,14 +277,7 @@ def sdi_mgmt_views(context, request, names=None):
 
     # then sort the lexically-presorted unordered views topologically based on
     # any tab_before and tab_after values in the view data
-    tsorter = TopologicalSorter(default_before=MIDDLE, default_after=None)
-
-    tsorter.add(
-        MIDDLE,
-        None,
-        before=LAST,
-        after=FIRST,
-        )
+    tsorter = TopologicalSorter(default_before=None, default_after=None)
 
     for view_data in lexically_ordered:
         before=view_data.get('tab_before', None)
@@ -301,7 +289,7 @@ def sdi_mgmt_views(context, request, names=None):
             after=after,
             )
 
-    topo_ordered = [ x[1] for x in tsorter.sorted() if x[0] is not MIDDLE ]
+    topo_ordered = [ x[1] for x in tsorter.sorted() ]
 
     return manually_ordered + topo_ordered
 

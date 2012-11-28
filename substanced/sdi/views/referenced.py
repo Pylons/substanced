@@ -1,4 +1,5 @@
 from pyramid.view import view_defaults
+from pyramid.util import LAST
 
 from ...objectmap import (
     find_objectmap,
@@ -6,10 +7,7 @@ from ...objectmap import (
     )
 from ...util import get_oid
 
-from .. import (
-    mgmt_view,
-    MIDDLE
-    )
+from .. import mgmt_view
 
 @view_defaults(
     referenced=True,
@@ -25,7 +23,7 @@ class ReferencedView(object):
     @mgmt_view(
         renderer='templates/referenced.pt',
         tab_title='References',
-        tab_after=MIDDLE, # try not to be the default tab, we're too obscure
+        tab_before=LAST, # try not to be the default tab, we're too obscure
         )
     def show(self):
         oid = get_oid(self.context)

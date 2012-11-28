@@ -2,12 +2,9 @@ import operator
 
 from pyramid.httpexceptions import HTTPFound
 from pyramid.view import view_defaults
+from pyramid.util import LAST
 
-from .. import (
-    mgmt_view,
-    MIDDLE,
-    )
-
+from .. import mgmt_view
 from ...content import get_content_type
 
 @view_defaults(
@@ -32,7 +29,7 @@ class WorkflowViews(object):
     @mgmt_view(
         renderer='templates/workflow.pt',
         tab_title='Workflows',
-        tab_after=MIDDLE, # try not to be the default tab, we're too obscure
+        tab_before=LAST, # try not to be the default tab, we're too obscure
         )
     def show(self):
         results = []
