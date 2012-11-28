@@ -1,4 +1,5 @@
 from pyramid.view import view_defaults
+from pyramid.security import NO_PERMISSION_REQUIRED
 
 from ...objectmap import (
     find_objectmap,
@@ -45,8 +46,11 @@ class ReferencedView(object):
             path = '/'.join(path_tuple)
             yield path
 
-@mgmt_view(context=ReferentialIntegrityError,
-           renderer='templates/integrityerror.pt')
+@mgmt_view(
+    context=ReferentialIntegrityError,
+    renderer='templates/integrityerror.pt',
+    permission=NO_PERMISSION_REQUIRED,
+    )
 def integrityerror(context, request): # pragma: no cover
     return {}
     

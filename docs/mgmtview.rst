@@ -38,7 +38,8 @@ visited:
    @view_config(
        renderer='string',
        route_name='substanced_manage', 
-       name='foobar'
+       name='foobar',
+       permission='sdi.view',
        )
    def foobar(request):
        return 'Foobar!'
@@ -65,6 +66,8 @@ than a plain Pyramid view registration:
 
 - It allows you to associate a tab title, a tab condition, and cross-site
   request forgery attributes with the view.
+
+- It uses the default permission ``sdi.view``.
 
 So if you want things to work right when developing management views, you'll
 use ``@mgmt_view`` instead of ``@view_config``, and ``config.add_mgmt_view``

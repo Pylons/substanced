@@ -1,3 +1,4 @@
+from pyramid.security import NO_PERMISSION_REQUIRED
 from pyramid.httpexceptions import (
     HTTPFound,
     HTTPForbidden,
@@ -20,8 +21,15 @@ class ManagementViews(object):
         self.context = context
         self.request = request
 
-    @mgmt_view(tab_condition=False)
-    @mgmt_view(name='manage_main', tab_condition=False)
+    @mgmt_view(
+        tab_condition=False,
+        permission=NO_PERMISSION_REQUIRED,
+        )
+    @mgmt_view(
+        name='manage_main',
+        tab_condition=False,
+        permission=NO_PERMISSION_REQUIRED,
+        )
     def manage_main(self):
         request = self.request
         view_data = self.sdi_mgmt_views(self.context, request)
@@ -35,9 +43,14 @@ class ManagementViews(object):
             location=request.sdiapi.mgmt_path(request.context, view_name)
             )
 
-    @mgmt_view(context=IFolder, name='add', tab_title='Add', 
-               permission='sdi.manage-contents', renderer='templates/add.pt',
-               tab_condition=False)
+    @mgmt_view(
+        context=IFolder,
+        name='add',
+        tab_title='Add', 
+        permission='sdi.manage-contents',
+        renderer='templates/add.pt',
+        tab_condition=False
+        )
     def add_content(self):
         views = self.sdi_add_views(self.context, self.request)
         if len(views) == 1:

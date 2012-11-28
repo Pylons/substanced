@@ -53,7 +53,7 @@ def add_mgmt_view(
     config,
     view=None,
     name="",
-    permission=None,
+    permission='sdi.view',
     request_type=None,
     request_method=None,
     request_param=None,

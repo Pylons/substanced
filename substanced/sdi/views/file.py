@@ -5,6 +5,7 @@ import deform.schema
 
 from pyramid.httpexceptions import HTTPFound
 from pyramid.response import Response
+from pyramid.security import NO_PERMISSION_REQUIRED
 
 from ...form import FormView
 
@@ -111,7 +112,11 @@ onepixel = pkg_resources.resource_filename(
 
 # this doesn't require a permission, because it's based on session data
 # which the user would have to put there anyway
-@mgmt_view(name='preview_image_upload', tab_condition=False)
+@mgmt_view(
+    name='preview_image_upload',
+    tab_condition=False,
+    permission=NO_PERMISSION_REQUIRED
+    )
 def preview_image_upload(request):
     uid = request.subpath[0]
     tempstore = FileUploadTempStore(request)

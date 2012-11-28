@@ -7,6 +7,7 @@ from pyramid.security import (
     remember,
     forget,
     Authenticated,
+    NO_PERMISSION_REQUIRED,
     )
 
 from ...content import find_service
@@ -14,11 +15,25 @@ from ...util import get_oid
 
 from .. import mgmt_view
 
-@mgmt_view(name='login', renderer='templates/login.pt', tab_condition=False)
-@mgmt_view(renderer='templates/login.pt', context=HTTPForbidden, 
-           tab_condition=False)
-@mgmt_view(renderer='templates/forbidden.pt', context=HTTPForbidden, 
-           effective_principals=Authenticated, tab_condition=False)
+@mgmt_view(
+    name='login',
+    renderer='templates/login.pt',
+    tab_condition=False,
+    permission=NO_PERMISSION_REQUIRED
+    )
+@mgmt_view(
+    renderer='templates/login.pt',
+    context=HTTPForbidden,
+    permission=NO_PERMISSION_REQUIRED,
+    tab_condition=False
+    )
+@mgmt_view(
+    renderer='templates/forbidden.pt',
+    context=HTTPForbidden,
+    permission=NO_PERMISSION_REQUIRED,
+    effective_principals=Authenticated,
+    tab_condition=False
+    )
 def login(context, request):
     login_url = request.sdiapi.mgmt_path(request.context, 'login')
     referrer = request.url

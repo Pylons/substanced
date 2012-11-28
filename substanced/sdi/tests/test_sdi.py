@@ -10,6 +10,11 @@ class Test_add_mgmt_view(unittest.TestCase):
         config = DummyConfigurator()
         return config
 
+    def test_default_permission_is_sdi_view(self):
+        config = self._makeConfig()
+        self._callFUT(config)
+        self.assertEqual(config._added['permission'], 'sdi.view')
+
     def test_with_request_method(self):
         config = self._makeConfig()
         self._callFUT(config, request_method=('HEAD', 'GET'))
