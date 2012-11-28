@@ -73,14 +73,81 @@ instead of ``config.add_view``.
 Tab Ordering
 ============
 
-If you register a management view, a tab will be added at the end of
-the list of tabs. Substance D does, though, give you some options to
-control tab ordering in larger systems with different software
-registering management views:
+If you register a management view, a tab will be added in the list of
+tabs. By default, the tab order will use a default sorting: alphabetical
+order by the ``tab_title`` parameter of each tab (or the view name if no
+``tab_title`` is provided.) The first tab in this tab listing acts as
+the "default" that is open when you visit a resource. Substance D does,
+though, give you some options to control tab ordering in larger systems
+with different software registering management views.
 
-- Explain ``tab_before`` and ``tab_after`` arguments to mgmt_view (as well as
-  related ``FIRST``, ``LAST``, and ``MIDDLE`` sentinels).
+Perhaps, though, a developer wants to ensure that one of her tabs
+appears first in the list and another appears last,
+no matter what other management views have been registered by Substance
+D or any add-on packages. ``@mgmt_view`` (or the imperative call) allow
+a keyword of ``tab_before`` or ``tab_after``. Each take a value of
+either:
 
-- ``tab_before``
+- The string tab ``name`` of the management view to place before or
+  after.
 
-- ``tab_after``
+- A ``FIRST``, ``LAST``, or ``MIDDLE`` "sentinel" imported from
+  ``pyramid.util``
+
+As in many cases, an illustration is helpful:
+
+.. code-block:: python
+
+    from substanced.sdi import FIRST, MIDDLE
+
+    @mgmt_view(name='tab_1', tab_title='Tab 1',
+               renderer='templates/tab_1.pt'
+    )
+    def tab_1(context, request):
+        return {}
+
+
+    @mgmt_view(name='tab_2', tab_title='Tab 2',
+               renderer='templates/tab_1.pt',
+               tab_before='tab_1')
+    def tab_2(context, request):
+        return {}
+
+
+    @mgmt_view(name='tab_3', tab_title='Tab 3',
+               renderer='templates/tab_1.pt', tab_after=FIRST)
+    def tab_3(context, request):
+        return {}
+
+
+    @mgmt_view(name='tab_4', tab_title='Tab 4',
+               renderer='templates/tab_1.pt', tab_after=MIDDLE)
+    def tab_4(context, request):
+        return {}
+
+
+    @mgmt_view(name='tab_5', tab_title='Tab 5',
+               renderer='templates/tab_1.pt')
+    def tab_5(context, request):
+        return {}
+
+This set of management views (combined with the built-in Substance D
+management views for ``Contents`` and ``Security``) results in::
+
+  Tab 3 | Contents | Security | Tab 2 | Tab 1 | Tab 5 | Tab 4
+
+These management view arguments apply to any content type that the view
+is registered for. What if you want to allow a content type to
+influence the tab ordering? As mentioned in the
+:doc:`content type docs <content>`, the ``tab_order`` parameter
+overrides the mgmt_view tab settings, for a content type, with a
+sequence of view names that should be ordered (and everything
+not in the sequence, after.)
+
+Filling Slots
+=============
+
+Each management view that you write plugs into various parts of the SDI
+UI.
+
+- title, content, flash messages, head, tail

@@ -315,3 +315,10 @@ Obtaining Metadata About a Content Object's Type
 
   Will return the icon for the blogentry's content type or ``icon-file`` if
   it does not exist.
+
+Affecting the Tab Order for Management Views
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The ``tab_order`` parameter overrides the mgmt_view tab settings,
+for a content type, with a sequence of view names that should be
+ordered (and everything not in the sequence, after.)

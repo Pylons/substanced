@@ -140,7 +140,54 @@ managing them (e.g. Security, References):
 
 .. image:: images/user.png
 
+Workflows
+=========
 
+The :doc:`workflows service <workflows>` provides a powerful system for
+managing states and transitions. This service shows up in the SDI as a
+tab on content types that have workflows registered for them:
+
+.. image:: images/workflows.png
+
+This provides a way, via the SDI, to transition a resource.
+
+References
+==========
+
+With the built-in support for :doc:`references <references>`,
+Substanced D helps manage the connections between resources. The SDI
+provides a UI into the reference service.
+
+If the resource you are viewing has any references, a ``References``
+tab will appear:
+
+.. image:: images/references.png
+
+In this example, ``mydoc1`` is a target of an ACL reference from the
+``admin1`` user.
+
+An integrity error can occur if you try to delete a source or target of
+a reference that claims to be "integral". The SDI will then show this
+with an explanation:
+
+.. image:: images/integrityerror.png
+
+Manage Database
+===============
+
+The object database inside Substance D has some management knobs that
+can be adjusted via the SDI:
+
+.. image:: images/managedb.png
+
+This tab appears on the root object of the site and lets you:
+
+- Pack the old revisions of objects in the database.
+
+- Flush the object cache.
+
+- See details and statistics about the database, the connection, and
+  activity
 
 Implementation Notes
 ====================

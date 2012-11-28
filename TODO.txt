@@ -66,18 +66,8 @@ Nice-to-Have Features
 
 - Ability to add and edit principals in existing ACEs in ACL edit view.
 
-SDI
----
-
-- Explain "Workflows" tab.
-
-- Explain exception views for integrity errors.
-
 mgmt_views
 ----------
-
-- Explain ``tab_before`` and ``tab_after`` arguments to mgmt_view (as well as
-  related ``FIRST``, ``LAST``, and ``MIDDLE`` sentinels).
 
 - Explain various view predicates.
 
