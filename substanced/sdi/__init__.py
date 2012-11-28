@@ -33,7 +33,12 @@ from pyramid.util import (
     action_method,
     viewdefaults,
     TopologicalSorter,
+    FIRST,
+    LAST,
     )
+
+LEFT = FIRST # API
+RIGHT = LAST # API
 
 from ..objectmap import find_objectmap
 from ..util import acquire

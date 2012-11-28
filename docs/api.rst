@@ -407,11 +407,9 @@ Other Helpers
 
 .. autoclass:: mgmt_view
 
-.. attribute:: FIRST
+.. attribute:: LEFT
 
-.. attribute:: MIDDLE
-
-.. attribute:: LAST
+.. attribute:: RIGHT
 
 .. autofunction:: includeme
 
