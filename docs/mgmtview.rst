@@ -151,6 +151,63 @@ Filling Slots
 =============
 
 Each management view that you write plugs into various parts of the SDI
-UI.
+UI. This is done using normal ZPT ``fill-slot`` semantics:
+
+- ``page-title`` is the ``<title>`` in the ``<head>``
+
+- ``head-more`` is a place to inject CSS and JS in the ``<head>``
+  *after* all the SDI elements
+
+- ``tail-more`` does the same, just before the ``</body>``
+
+- ``main`` is the main content area
+
+SDI API
+=======
+
+All templates in the SDI share a common "layout". This layout needs
+information from the environment to render markup that is common to
+every screen, as well as the template used as the "main template."
+
+This "template API" is known as the ``SDI API``. It is an instance of
+the ``sdiapi`` class in ``substanced.sdi.__init__.py`` and is made
+available as ``request.sdiapi``.
+
+The template for your management view should start with a call to
+``requests.sdiapi``:
+
+.. code-block:: xml
+
+  <div metal:use-macro="request.sdiapi.main_template">
+
+The ``request.sdiapi`` object has other convenience features as well.
+See the Substance D interfaces documentation for more information.
+
+Flash Messages
+==============
+
+Often you perform an action on one view that needs a message displayed
+by another view on the next request. For example, if you delete a
+resource, the next request might confirm to the user "Deleted 1
+resource." Pyramid supports this with "flash messages."
+
+In Substance D, your applications can make a call to the ``sdiapi``
+such as::
+
+  request.sdiapi.flash('ACE moved up')
+
+...and the next request will process this flash message:
+
+- The message will be removed from the stack of messages
+
+- It will then be displayed in the appropriate styling based on the
+  "queue"
+
+The ``sdiapi`` provides another helper:
+
+  request.sdiapi.flash_with_undo('ACE moved up')
+
+This displays a flash message as before, but also provides an ``Undo``
+button to remove the previous transaction.
 
 - title, content, flash messages, head, tail

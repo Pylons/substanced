@@ -565,4 +565,42 @@ class PrincipalToACLBearing(ReferenceType):
 class UserToPasswordReset(ReferenceType):
     pass
 
+class ISDIAPI(Interface):
+    """  Easy access to common templating operations on all views.
+    This object is available as ``request.sdiapi``.
+    """
 
+    main_template = Attribute("""The loaded ``master.pt`` which can
+    be used in view templates with
+    ``metal:use-macro="request.sdiapi.main_template"``.""")
+
+    def flash_with_undo(msg, queue='', allow_duplicate=True):
+        """Display a Pyramid ``flash message`` to the appropriate
+        queue with a button to allow an undo of the commit."""
+
+    def mgmt_path(obj, *arg, **kw):
+        """ Return the route_path inside the SDI for an object """
+
+    def mgmt_url(obj, *arg, **kw):
+        """ Return the route_url inside the SDI for an object """
+
+    def breadcrumbs():
+        """Return a sequence of dicts for the breadcrumb information.
+        Each dict contains:
+
+        - ``url``: The ``request.mgmt_path`` to that resource
+
+        - ``name``: The resource's ``__name__`` or 'Home' for the root
+
+        - ``active``: Boolean representing whether the resource is
+          in the breadcrumb is the current context
+
+        - ``icon``: The full path to the icon for that resource type
+        """
+
+    def sdi_title():
+        """ The ``sdi_title`` of the root or "Substance D" if
+         not defined """
+
+    def mgmt_views(context):
+        """ The list of management views on a resource """

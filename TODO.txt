@@ -71,11 +71,7 @@ mgmt_views
 
 - Explain various view predicates.
 
-- Flash message and other "slots"
-
 - FormView
-
-- Document the SDI API
 
 Content Types
 -------------
