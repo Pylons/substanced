@@ -69,11 +69,6 @@ Nice-to-Have Features
 Content Types
 -------------
 
-- Explain ``renamer``.
-
-- Explain ``NameSchemaNode``, ``PermissionSchemaNode``, and
-  ``MultireferenceIdSchemaNode``.
-
 - Explain ``after_create`` meta-argument to content.
 
 - Explain __created__ attribute.
@@ -83,6 +78,11 @@ Content Types
 
 - Explain __sdi_deletable__, __sdi_addable__, __sdi_hidden__, __sdi_columns__,
   __sdi_buttons__.
+
+Dump and Load
+-------------
+
+- Explain ``__dump__`` and ``__load__`` methods of resources.
 
 Evolution
 ---------
@@ -116,8 +116,6 @@ Docs
 
 - Explain __init__.py include-then-scan done by includeme and how to avoid
   scanning.
-
-- Explain ``__dump__`` and ``__load__`` methods of resources.
 
 Probably Bad Ideas
 ------------------

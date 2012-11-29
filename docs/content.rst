@@ -1,3 +1,4 @@
+================
 Defining Content
 ================
 
@@ -16,7 +17,7 @@ content.  To define a resource as content, you need to associate a resource
 with a :term:`content type`.
 
 Registering Content
--------------------
+===================
 
 In order to add new content to the system, you need to associate a
 :term:`resource factory` with a :term:`content type`.  A resource factory that
@@ -166,7 +167,7 @@ types can be enumerated:
 and scanned.
 
 Metadata
---------
+========
 
 A content's type can be associated with metadata about that type, including the
 content type's name, its icon in the SDI management interface, an add view
@@ -174,7 +175,7 @@ name, and other things.  Pass arbitrary keyword arguments to the ``@content``
 decorator or ``config.add_content_type`` to specify metadata.
 
 Names
-~~~~~
+-----
 
 You can associate a content type registration with a name that shows up when
 someone attempts to add such a piece of content using the SDI management
@@ -198,7 +199,7 @@ Once you've done this, the "Add" tab in the SDI management interface will
 show your content as addable using this name instead of the type name.
 
 Icons
-~~~~~
+-----
 
 You can associate a content type registration with a management view icon by
 passing an ``icon`` keyword argument to ``@content`` or ``add_content_type``.
@@ -249,7 +250,7 @@ representing a file if the blogentry has a body, otherwise show an icon
 representing gift.
 
 Add Views
-~~~~~~~~~
+---------
 
 You can associate a content type with a view that will allow the type to be
 added by passing the name of the add view as a keyword argument to
@@ -304,7 +305,7 @@ type Blog; it returns None otherwise, signifying that the content is not
 addable in this circumstance.
 
 Obtaining Metadata About a Content Object's Type
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------------------------------
 
 ``request.registry.content.metadata(blogentry, 'icon')``
 
@@ -316,8 +317,106 @@ Obtaining Metadata About a Content Object's Type
   Will return the icon for the blogentry's content type or ``icon-file`` if
   it does not exist.
 
+Names and Renaming
+==================
+
+A resource's "name" (``__name__``) is important to the system in
+Substance D. For example, traversal uses the value in URLs and paths to
+walk through hierarchy. Containers need to know when a resource's
+``__name__`` changes.
+
+To help support this, Substance D provides
+:py:func:`substanced.util.renamer`. You use it as a class attribute
+wrapper on resources that want "managed" names. These resources then
+gain a ``name`` attribute with a getter/setter from ``renamer``.
+Getting the ``name`` returns the ``__name__``. Setting ``name`` grabs
+the container and calls the ``rename`` method on the folder.
+
+For example:
+
+.. code-block:: python
+
+    class Document(Persistent):
+        name = renamer()
+
+Special Colander Support
+========================
+
+Forms and schemas for resources become pretty easy in Substance D. To
+make it easier for forms to interact with the Substance D machinery,
+it includes some special Colander schema nodes you can use on your forms.
+
+``NameSchemaNode``
+------------------
+
+If you want your form to affect the ``__name__`` of a resource,
+certain constraints become applicable. These constraints might be
+different, so you might want to know if you are on an add form versus
+an edit form. :py:class:`substanced.schema.NameSchemaNode` provides a
+schema node and default widget that bundles up the common rules for this.
+For example:
+
+.. code-block:: python
+
+    class BlogEntrySchema(Schema):
+        name = NameSchemaNode()
+
+...provides the basics of support for editing a name property,
+especially when combined with the ``renamer()`` utility mentioned above.
+
+By default the name is limited to 100 characters. ``NameSchemaNode``
+accepts an argument that can set a different limit:
+
+.. code-block:: python
+
+    class BlogEntrySchema(Schema):
+        name = NameSchemaNode(max_len=20)
+
+You can also provide an ``editing`` argument, either as a boolean or a
+callable which returns a boolean, which determines whether the form is
+rendered in "editing" mode. For example:
+
+.. code-block:: python
+
+    class BlogEntrySchema(Schema):
+        name = NameSchemaNode(
+            editing=lambda c, r: r.registry.content.istype(c, 'BlogEntry')
+            )
+
+``PermissionSchemaNode``
+------------------------
+
+A form might want to allow selection of zero or more permissions from
+the site's defined list of permissions.
+:py:class:`PermissionSchemaNode` collects the possible
+state from the system, the currently-assigned values, and presents a
+widget that manages the values.
+
+``MultireferenceIdSchemaNode``
+------------------------------
+
+References are a very powerful facility in Substance D. Naturally
+you'll want your application's forms to assign references.
+:py:class:`MultireferenceIdSchemaNode` gives a schema node and widget
+that allows multiple selections of possible values in the system for
+references, including the current assignments.
+
+As an example, the built-in :py:class:`substanced.principal.UserSchema`
+uses this schema node:
+
+.. code-block:: python
+
+    class UserSchema(Schema):
+        """ The property schema for :class:`substanced.principal.User`
+        objects."""
+        groupids = MultireferenceIdSchemaNode(
+            choices_getter=groups_choices,
+            title='Groups',
+            )
+
+
 Affecting the Tab Order for Management Views
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+============================================
 
 The ``tab_order`` parameter overrides the mgmt_view tab settings,
 for a content type, with a sequence of view names that should be
