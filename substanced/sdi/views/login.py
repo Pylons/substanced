@@ -10,8 +10,10 @@ from pyramid.security import (
     NO_PERMISSION_REQUIRED,
     )
 
-from ...content import find_service
-from ...util import get_oid
+from ...util import (
+    get_oid,
+    find_service,
+    )
 
 from .. import mgmt_view
 

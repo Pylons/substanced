@@ -7,7 +7,7 @@ from .. import (
     mgmt_view,
     RIGHT,
     )
-from ...content import get_content_type
+from ...util import get_content_type
 
 @view_defaults(
     permission='sdi.manage-workflow',

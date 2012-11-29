@@ -11,12 +11,12 @@ from ..interfaces import (
     IPrincipal,
 )
 
-from ..content import find_service
 from ..objectmap import find_objectmap
 from ..util import (
     get_oid,
     postorder,
     set_acl,
+    find_service,
     )
 
 from ..interfaces import (

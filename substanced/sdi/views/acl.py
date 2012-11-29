@@ -9,12 +9,12 @@ from pyramid.security import (
     )
 from pyramid.session import check_csrf_token
 
-from ...content import find_service
 from ...objectmap import find_objectmap
 from ...util import (
     get_oid,
     get_all_permissions,
     set_acl,
+    find_service,
     )
 
 from .. import mgmt_view

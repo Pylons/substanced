@@ -33,7 +33,6 @@ from ..interfaces import (
 from ..content import (
     content,
     service,
-    find_service,
     )
 from ..folder import Folder
 from ..objectmap import (
@@ -52,6 +51,7 @@ from ..util import (
     get_oid,
     renamer,
     set_acl,
+    find_service,
     )
 
 def _gen_random_token():

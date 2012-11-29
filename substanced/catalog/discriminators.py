@@ -1,22 +1,14 @@
-from zope.interface import providedBy
-from zope.interface.declarations import Declaration
-
 from pyramid.location import lineage
 from pyramid.security import principals_allowed_by_permission
 from pyramid.compat import is_nonstr_iter
 from pyramid.threadlocal import get_current_registry
 
-from ..util import get_all_permissions
+from ..util import (
+    get_all_permissions,
+    get_interfaces as _get_interfaces,
+    )
 
 _marker = object()
-
-def _get_interfaces(content):
-    # we unwind all derived and immediate interfaces using spec.flattened()
-    # (providedBy would just give us the immediate interfaces)
-    provided_by = list(providedBy(content))
-    spec = Declaration(provided_by)
-    ifaces = list(spec.flattened()) + [content.__class__]
-    return set(ifaces)
 
 def get_interfaces(wrapper, default):
     """ Useful as KeywordIndex discriminator.  Return a set of all interfaces

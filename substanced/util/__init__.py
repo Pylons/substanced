@@ -3,6 +3,9 @@ import itertools
 import math
 import urlparse
 
+from zope.interface import providedBy
+from zope.interface.declarations import Declaration
+
 from pyramid.location import lineage
 from pyramid.threadlocal import get_current_registry
 
@@ -375,9 +378,68 @@ def set_created(resource, created):
     UTC date and time."""
     resource.__created__ = created
 
-def dotted_name(g):
+def get_dotted_name(g):
     """ Return the dotted name of a global object. """
     name = g.__name__
     module = g.__module__
     return '.'.join((module, name))
 
+def get_interfaces(obj):
+    """ Return the set of interfaces provided by ``obj``, including its
+    __class__."""
+    # we unwind all derived and immediate interfaces using spec.flattened()
+    # (providedBy would just give us the immediate interfaces)
+    provided_by = list(providedBy(obj))
+    spec = Declaration(provided_by)
+    ifaces = list(spec.flattened()) + [obj.__class__]
+    return set(ifaces)
+
+def get_content_type(resource, registry=None):
+    """ Return the content type of a resource or ``None`` if the object has
+    no content type.  If ``registry`` is not supplied, the current Pyramid
+    registry will be looked up as a thread local in order to find the
+    Substance D content registry."""
+    if registry is None:
+        registry = get_current_registry()
+
+    return registry.content.typeof(resource)
+
+def find_content(resource, content_type, registry=None):
+    """ Return the first object in the :term:`lineage` of the resource that
+    supplies the ``content_type``.  If ``registry`` is not supplied, the
+    current Pyramid registry will be looked up as a thread local in order to
+    find the Substance D content registry."""
+    if registry is None:
+        registry = get_current_registry()
+    return registry.content.find(resource, content_type)
+
+def _find_services(resource, name, one=False):
+    L = []
+    for obj in lineage(resource):
+        if IFolder.providedBy(obj):
+            subobj = obj.get(name, None)
+            if subobj is not None:
+                if is_service(subobj):
+                    if one:
+                        return subobj
+                    L.append(subobj)
+    if one:
+        return None
+    return L
+
+def is_service(resource):
+    """ Returns ``True`` if the resource is a service, ``False`` if not. """
+    return bool(getattr(resource, '__is_service__', False))
+
+def find_service(resource, name):
+    """ Find the first service named ``name`` in the lineage of ``resource``
+    or return ``None`` if no such-named service could be found. """
+    return _find_services(resource, name, one=True)
+                
+def find_services(resource, name):
+    """Finds all services named ``name`` in the lineage of ``resource`` and
+    returns a sequence containing those service objects. The sequence will
+    begin with the most deepest nested service and will end with the least
+    deeply nested service.  Returns an empty sequence if no such-named
+    service could be found."""
+    return _find_services(resource, name)
