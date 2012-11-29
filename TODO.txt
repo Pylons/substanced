@@ -47,9 +47,6 @@ Guts-Only
   the batch receives may be smaller than seqlen due to hidden objects in
   folder contents view.
 
-- Think about moving ``get_content_type``, ``find_content``, ``find_services``,
-  et. al. to utils.
-
 - Once we depend on Pyramid 1.4b1+, normalize subscriber predicate argument
   lists.
 

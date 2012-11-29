@@ -20,7 +20,6 @@ from pyramid.util import (
 
 from substanced.interfaces import IFolder
 from substanced.workflow import STATE_ATTR
-from substanced.content import get_content_type
 from substanced.objectmap import find_objectmap
 from substanced.sdi import sdiapi
 from substanced.util import (
@@ -29,7 +28,8 @@ from substanced.util import (
     get_oid,
     set_oid,
     get_acl,
-    dotted_name,
+    get_dotted_name,
+    get_content_type,
     )
 
 logger = logging.getLogger(__name__)
@@ -55,7 +55,7 @@ def set_yaml(registry):
     registry.yaml_loader = SLoader
     registry.yaml_dumper = SDumper
     def iface_representer(dumper, data):
-        return dumper.represent_scalar(u'!interface', dotted_name(data))
+        return dumper.represent_scalar(u'!interface', get_dotted_name(data))
     def iface_constructor(loader, node):
         return dotted_name_resolver.resolve(node.value)
     SDumper.add_multi_representer(InterfaceClass, iface_representer)
@@ -232,8 +232,8 @@ class ResourceContext(_YAMLOperations):
     def resolve_dotted_name(self, dotted):
         return self.dotted_name_resolver.resolve(dotted)
 
-    def dotted_name(self, object):
-        return dotted_name(object)
+    def get_dotted_name(self, object):
+        return get_dotted_name(object)
 
 class ResourceDumpContext(ResourceContext):
     def __init__(self, directory, registry, dumpers, verbose, dry_run):
@@ -432,7 +432,7 @@ class DirectlyProvidedInterfacesDumper(object):
         resource = context.resource
         ifaces = list(directlyProvidedBy(resource).interfaces())
         if ifaces:
-            dotted_names = [ context.dotted_name(i) for i in ifaces ]
+            dotted_names = [ context.get_dotted_name(i) for i in ifaces ]
             context.dump_yaml(dotted_names, self.fn)
 
     def load(self, context):

@@ -1,7 +1,5 @@
 import logging
 
-from ..content import find_services
-
 from ..event import (
     subscribe_added,
     subscribe_removed,
@@ -12,6 +10,7 @@ from ..event import (
 from ..util import (
     postorder,
     get_oid,
+    find_services,
     )
 
 from . import (

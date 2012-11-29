@@ -156,14 +156,6 @@ Other Helpers
 
 .. automodule:: substanced.content
 
-.. autofunction:: get_content_type
-
-.. autofunction:: find_content
-
-.. autofunction:: find_service
-
-.. autofunction:: find_services
-
 .. autoclass:: content
    :members:
 
@@ -438,6 +430,16 @@ Other Helpers
 
 .. autofunction:: set_created
 
+.. autofunction:: get_interfaces
+
+.. autofunction:: get_content_type
+
+.. autofunction:: find_content
+
+.. autofunction:: find_service
+
+.. autofunction:: find_services
+
 .. autofunction:: coarse_datetime_repr
 
 .. autofunction:: postorder
@@ -448,7 +450,7 @@ Other Helpers
 
 .. autofunction:: renamer
 
-.. autofunction:: dotted_name
+.. autofunction:: get_dotted_name
 
 .. autoclass:: Batch
 
