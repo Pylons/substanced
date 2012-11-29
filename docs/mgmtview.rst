@@ -97,15 +97,14 @@ The following are new view predicates introduced for ``mgmt_view``:
   passed ``context`` and ``request``. The boolean determines whether the
   tab is listed in a certain situation.
 
-- ``tab_before`` takes the string name or sentinel of a ``mgmt_view``
-  that this ``mgmt_view`` should appear after (covered in detail in the
-  next section.)
+- ``tab_before`` takes the view name of a ``mgmt_view`` that this ``mgmt_view``
+  should appear after (covered in detail in the next section.)
 
-- ``tab_after`` takes the string name or "sentinel" of a ``mgmt_view``
-  that this``mgmt_view`` should appear after. Also covered below.
+- ``tab_after`` takes the view name of a ``mgmt_view``
+  that this ``mgmt_view`` should appear after. Also covered below.
 
-- ``tab_near`` takes a "sentinel" from ``substanced.sdi`` (or ``None``)
-  that makes a best effort at placement independent of a particular
+- ``tab_near`` takes a "sentinel" from ``substanced.sdi`` (or ``None``) that
+  makes a best effort at placement independent of another particular
   ``mgmt_view``. Also covered below. The possible sentinel values are::
 
     substanced.sdi.LEFT
@@ -116,26 +115,25 @@ The following are new view predicates introduced for ``mgmt_view``:
 Tab Ordering
 ============
 
-If you register a management view, a tab will be added in the list of
-tabs. By default, the tab order will use a default sorting: alphabetical
-order by the ``tab_title`` parameter of each tab (or the view name if no
-``tab_title`` is provided.) The first tab in this tab listing acts as
-the "default" that is open when you visit a resource. Substance D does,
-though, give you some options to control tab ordering in larger systems
+If you register a management view, a tab will be added in the list of tabs. If
+no mgmt view specifies otherwise via its tab data, the tab order will use a
+default sorting: alphabetical order by the ``tab_title`` parameter of each tab
+(or the view name if no ``tab_title`` is provided.) The first tab in this tab
+listing acts as the "default" that is open when you visit a resource. Substance
+D does, though, give you some options to control tab ordering in larger systems
 with different software registering management views.
 
-Perhaps, though, a developer wants to ensure that one of her tabs
-appears first in the list and another appears last,
-no matter what other management views have been registered by Substance
-D or any add-on packages. ``@mgmt_view`` (or the imperative call) allow
-a keyword of ``tab_before`` or ``tab_after``. Each take a value of
-either:
-
-- The string tab ``name`` of the management view to place before or
-  after.
-
-- A ``LEFT``, ``MIDDLE``, or ``RIGHT`` "sentinel" imported from
-  ``pyramid.util``
+Perhaps a developer wants to ensure that one of her tabs appears first in the
+list and another appears last, no matter what other management views have been
+registered by Substance D or any add-on packages. ``@mgmt_view`` (or the
+imperative call) allow a keyword of ``tab_before`` or ``tab_after``. Each take
+the string tab ``name`` of the management view to place before or after.  If
+you don't care (or don't know) which view name to use as a ``tab_before`` or
+``tab_after`` value, use ``tab_near``, which can be any of the sentinel values
+:attr:`~substanced.sdi.MIDDLE`, :attr:`~substanced.sdi.LEFT`, or
+:attr:`~substanced.sdi.RIGHT`, each of which specifies a target "zone" in the
+tab order.  Substance D will make a best effort to do something sane with ``
+tab_near``.
 
 As in many cases, an illustration is helpful:
 
