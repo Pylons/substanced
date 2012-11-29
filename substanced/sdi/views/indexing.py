@@ -6,8 +6,10 @@ from ...catalog import (
     catalog_view_factory_for, 
     CatalogViewWrapper,
     )
-from ...content import find_services
-from ...util import get_oid
+from ...util import (
+    get_oid,
+    find_services,
+    )
 
 from .. import (
     mgmt_view,

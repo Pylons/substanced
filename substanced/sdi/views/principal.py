@@ -6,7 +6,6 @@ from pyramid.security import NO_PERMISSION_REQUIRED
 
 from ...form import FormView
 from ...schema import Schema
-from ...content import find_service
 
 from ...interfaces import (
     IUsers,
@@ -21,6 +20,8 @@ from ...principal import (
     UserSchema,
     GroupSchema,
     )
+
+from ...util import find_service
 
 class AddUserSchema(UserSchema):
     password = colander.SchemaNode(

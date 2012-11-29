@@ -19,11 +19,7 @@ from ..interfaces import (
     marker,
     )
 
-from ..content import (
-    content,
-    find_service,
-    find_services,
-    )
+from ..content import content
 
 from ..event import (
     ObjectAdded,
@@ -35,6 +31,8 @@ from ..event import (
 from ..util import (
     get_oid,
     postorder,
+    find_service,
+    find_services,
     )
 
 from ..objectmap import find_objectmap
