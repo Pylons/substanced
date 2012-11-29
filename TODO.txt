@@ -69,8 +69,6 @@ Nice-to-Have Features
 mgmt_views
 ----------
 
-- Explain various view predicates.
-
 - FormView
 
 Content Types

@@ -73,6 +73,46 @@ So if you want things to work right when developing management views, you'll
 use ``@mgmt_view`` instead of ``@view_config``, and ``config.add_mgmt_view``
 instead of ``config.add_view``.
 
+``mgmt_view`` View Predicates
+=============================
+
+Since ``mgmt_view`` is an extension of Pyramid's ``view_config``,
+it re-uses the same concept of view predicates as well as some of the
+same actual predicates:
+
+- ``request_type``, ``request_method``, ``request_param``,
+  ``containment``, ``attr``, ``renderer``, ``wrapper``, ``xhr``,
+  ``accept``, ``header``, ``path_info``, ``context``, ``name``,
+  ``custom_predicates``, ``decorator``, ``mapper``, and ``http_cache``
+  are supported and behave the same.
+
+- ``permission`` is the same but defaults to ``sdi.view``.
+
+The following are new view predicates introduced for ``mgmt_view``:
+
+- ``tab_title`` takes a string for the label placed on the tab.
+
+- ``tab_condition`` takes a callable that returns ``True`` or ``False``,
+  or ``True`` or ``False``. If you state a callable, this callable is
+  passed ``context`` and ``request``. The boolean determines whether the
+  tab is listed in a certain situation.
+
+- ``tab_before`` takes the string name or sentinel of a ``mgmt_view``
+  that this ``mgmt_view`` should appear after (covered in detail in the
+  next section.)
+
+- ``tab_after`` takes the string name or "sentinel" of a ``mgmt_view``
+  that this``mgmt_view`` should appear after. Also covered below.
+
+- ``tab_near`` takes a "sentinel" from ``substanced.sdi`` (or ``None``)
+  that makes a best effort at placement independent of a particular
+  ``mgmt_view``. Also covered below. The possible sentinel values are::
+
+    substanced.sdi.LEFT
+    substanced.sdi.MIDDLE
+    substanced.sdi.RIGHT
+
+
 Tab Ordering
 ============
 
@@ -94,50 +134,67 @@ either:
 - The string tab ``name`` of the management view to place before or
   after.
 
-- A ``FIRST``, ``LAST``, or ``MIDDLE`` "sentinel" imported from
+- A ``LEFT``, ``MIDDLE``, or ``RIGHT`` "sentinel" imported from
   ``pyramid.util``
 
 As in many cases, an illustration is helpful:
 
 .. code-block:: python
 
-    from substanced.sdi import FIRST, MIDDLE
+    from substanced.sdi import LEFT, RIGHT
 
-    @mgmt_view(name='tab_1', tab_title='Tab 1',
-               renderer='templates/tab_1.pt'
-    )
+    @mgmt_view(
+        name='tab_1',
+        tab_title='Tab 1',
+        renderer='templates/tab.pt'
+        )
     def tab_1(context, request):
         return {}
 
 
-    @mgmt_view(name='tab_2', tab_title='Tab 2',
-               renderer='templates/tab_1.pt',
-               tab_before='tab_1')
+    @mgmt_view(
+        name='tab_2',
+        tab_title='Tab 2',
+        renderer='templates/tab.pt',
+        tab_before='tab_1'
+        )
     def tab_2(context, request):
         return {}
 
 
-    @mgmt_view(name='tab_3', tab_title='Tab 3',
-               renderer='templates/tab_1.pt', tab_after=FIRST)
+    @mgmt_view(
+        name='tab_3',
+        tab_title='Tab 3',
+        renderer='templates/tab.pt',
+        tab_near=RIGHT
+        )
     def tab_3(context, request):
         return {}
 
 
-    @mgmt_view(name='tab_4', tab_title='Tab 4',
-               renderer='templates/tab_1.pt', tab_after=MIDDLE)
+    @mgmt_view(
+        name='tab_4',
+        tab_title='Tab 4',
+        renderer='templates/tab.pt',
+        tab_near=LEFT
+        )
     def tab_4(context, request):
         return {}
 
 
-    @mgmt_view(name='tab_5', tab_title='Tab 5',
-               renderer='templates/tab_1.pt')
+    @mgmt_view(
+        name='tab_5',
+        tab_title='Tab 5',
+        renderer='templates/tab.pt',
+        tab_near=LEFT
+        )
     def tab_5(context, request):
         return {}
 
 This set of management views (combined with the built-in Substance D
 management views for ``Contents`` and ``Security``) results in::
 
-  Tab 3 | Contents | Security | Tab 2 | Tab 1 | Tab 5 | Tab 4
+  Tab 4 | Tab 5 | Contents | Security | Tab 2 | Tab 1 | Tab 3
 
 These management view arguments apply to any content type that the view
 is registered for. What if you want to allow a content type to
