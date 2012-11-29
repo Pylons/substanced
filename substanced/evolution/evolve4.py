@@ -17,5 +17,6 @@ def evolve(root):
         objectmap.extentmap = ExtentMap()
     for oid in objectmap.objectid_to_path:
         obj = objectmap.object_for(oid, root)
+        logger.info('Adding oid %s to extentmap' % oid)
         if obj is not None:
             objectmap.extentmap.add(obj, oid)
