@@ -496,6 +496,70 @@ uses this schema node:
             title='Groups',
             )
 
+Overriding Existing Content Types
+=================================
+
+Perhaps you would like to slightly adjust an existing content type,
+such as ``Folder``, without re-implementing it. For exampler,
+perhaps you would like to override just the ``add_view`` and provide
+your own view, such as:
+
+.. code-block:: python
+
+    @mgmt_view(
+        context=IFolder,
+        name='my_add_folder',
+        tab_condition=False,
+        permission='sdi.add-content',
+        renderer='substanced.sdi:templates/form.pt'
+    )
+    class MyAddFolderView(AddFolderView):
+
+        def before(self, form):
+            # Perform some custom work before validation
+            pass
+
+With this you can override any of the view predicates (such as
+``permission``) and override any part of the form handling (such as
+adding a ``before`` that performs some custom processing.)
+
+To make this happen, you can re-register, so to speak,
+the content type during startup:
+
+.. code-block:: python
+
+    from substanced.folder import Folder
+    from .views import MyAddFolderView
+    config.add_content_type('Folder', Folder,
+                            add_view='my_add_folder',
+                            icon='icon-folder-close')
+
+This, however, keeps the same content type class. You can also go
+further by overriding the content type definition itself:
+
+.. code-block:: python
+
+    @content(
+        'Folder',
+        icon='icon-folder-close',
+        add_view='my_add_folder',
+    )
+    @implementer(IFolder)
+    class MyFolder(Folder):
+
+        def send_email(self):
+            pass
+
+The class for the 'Folder' content type has now been replaced. Instead
+of ``substanced.folder.Folder`` it is ``MyFolder``.
+
+.. note::
+
+    Overriding a content type is a pain-free way to make a custom
+    ``Root`` object. You could supply your own ``root_factory`` to
+    the ``Configurator`` but that means replicating all its rather
+    complicated goings-on. Instead, provide your own content type
+    factory, as above, for ``Root``.
 
 Affecting the Tab Order for Management Views
 ============================================
