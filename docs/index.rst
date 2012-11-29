@@ -59,15 +59,16 @@ Narrative Documentation
 .. toctree::
    :maxdepth: 1
 
-   intro.rst
-   sdi.rst
-   content.rst
-   mgmtview.rst
-   services.rst
-   cataloging.rst
-   references.rst
-   workflows.rst
-   retail.rst
+   intro
+   sdi
+   content
+   mgmtview
+   forms
+   services
+   cataloging
+   references
+   workflows
+   retail
 
 API Documentation
 -----------------
@@ -75,7 +76,7 @@ API Documentation
 .. toctree::
    :maxdepth: 1
 
-   api.rst
+   api
 
 Reporting Bugs / Development Versions
 -------------------------------------
