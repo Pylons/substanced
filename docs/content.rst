@@ -317,6 +317,88 @@ Obtaining Metadata About a Content Object's Type
   Will return the icon for the blogentry's content type or ``icon-file`` if
   it does not exist.
 
+Affecting Content Creation
+==========================
+
+By default, any content that is created via the resource factory gets
+assigned a ``__created__`` attribute with a value of
+``datetime.datetime.utcnow()``.
+:py:func:`substanced.util.get_created` and
+:py:func:`substanced.util.set_created` manage the getting and setting.
+
+In some cases you might want your resource to perform some actions that
+can only take place after it has been seated in its container and but
+before the creation events have fired. The ``@content`` decorator and
+``add_content_type`` method both support an ``after_create`` argument,
+pointed at a callable.
+
+For example:
+
+.. code-block:: python
+
+    @content(
+        'Document',
+        icon='icon-align-left',
+        add_view='add_document',
+        propertysheets = (
+            ('Basic', DocumentPropertySheet),
+            ),
+        after_create='after_creation'
+        )
+    class Document(Persistent):
+
+        name = renamer()
+
+        def __init__(self, title, body):
+            self.title = title
+            self.body = body
+
+        def after_creation(self, inst, registry):
+            pass
+
+If the value provided for ``after_create`` is a string, it's assumed to
+be a method of the created object. If it's a sequence, each value
+should be a string or a callable, which will be called in turn. The
+callable(s) are passed the instance being created and the registry.
+Afterwards, :class:`substanced.event.ContentCreatedEvent` is emitted.
+
+Construction of the root folder in Substance D is a special case. Most
+Substance D applications will start with:
+
+.. code-block:: python
+
+    from substanced import root_factory
+    def main(global_config, **settings):
+        """ This function returns a Pyramid WSGI application.
+        """
+        config = Configurator(settings=settings, root_factory=root_factory)
+
+The :py:func:`substanced.root_factory` callable contains the following
+line:
+
+.. code-block:: python
+
+    app_root = registry.content.create('Root')
+
+In many cases you want to perform some extra work on the ``Root``. For
+example, you might want to create a catalog with indexes. Substance D
+emits an event when the root is created, so you can subscribe to that
+event and perform some actions:
+
+.. code-block:: python
+
+    from substanced.root import Root
+    from substanced.event import subscribe_created
+    from substanced.catalog import Catalog
+
+    @subscribe_created(Root)
+    def root_created(event):
+        catalog = Catalog()
+        event.object.add_service('catalog', catalog)
+        catalog.update_indexes('system', reindex=True)
+        catalog.update_indexes('sdidemo', reindex=True)
+
+
 Names and Renaming
 ==================
 
