@@ -308,7 +308,9 @@ class Folder(Persistent):
                 # the below gives node an objectid; if the will-be-added event
                 # is the result of a duplication, replace the oid of the node
                 # with a new one
-                objectmap.add(node, path_tuple, replace_oid=duplicating)
+                objectmap.add(
+                    node, path_tuple, duplicating=duplicating, moving=moving
+                    )
 
         if send_events:
             event = ObjectWillBeAdded(
@@ -431,7 +433,7 @@ class Folder(Persistent):
         removed_oids = set([oid])
 
         if objectmap is not None and oid is not None:
-            removed_oids = objectmap.remove(oid, references=not moving)
+            removed_oids = objectmap.remove(oid, moving=moving)
 
         if send_events:
             event = ObjectRemoved(other, self, name, removed_oids,

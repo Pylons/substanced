@@ -137,6 +137,11 @@ class TestObjectMap(unittest.TestCase):
         inst = self._makeOne()
         ctx = testing.DummyResource()
         self.assertEqual(inst._find_resource(ctx, ('', 'a')), 1)
+
+    def test_add_moving_and_duplicating(self):
+        inst = self._makeOne()
+        obj = testing.DummyResource()
+        self.assertRaises(ValueError, inst.add, obj, (u'',), True, True)
         
     def test_add_already_in_path_to_objectid(self):
         inst = self._makeOne()
@@ -331,6 +336,18 @@ class TestObjectMap(unittest.TestCase):
             inst.add(thing, thing.path_tuple)
         result = inst.navgen(a, 0)
         self.assertEqual(result, [])
+
+    def test_get_extent(self):
+        inst = self._makeOne()
+        root = resource('/')
+        a = resource('/a')
+        ab = resource('/a/b')
+        abc = resource('/a/b/c')
+        z = resource('/z')
+        for thing in root, a, ab, abc, z:
+            inst.add(thing, thing.path_tuple)
+        result = inst.get_extent('pyramid.testing.DummyResource')
+        self.assertEqual(len(sorted(list(result))), 5)
         
     def test_functional(self):
 
@@ -803,6 +820,74 @@ class TestReferenceMap(unittest.TestCase):
         map = {'reftype':None}
         refs = self._makeOne(map)
         self.assertEqual(refs.get_reftypes(), ['reftype'])
+
+class TestExtentMap(unittest.TestCase):
+    def _makeOne(self):
+        from . import ExtentMap
+        return ExtentMap()
+
+    def test_ctor(self):
+        inst = self._makeOne()
+        self.assertEqual(list(inst.extent_to_oids.items()), [])
+        self.assertEqual(list(inst.oid_to_extents.items()), [])
+
+    def test_add_and_remove(self):
+        inst = self._makeOne()
+        obj = Dummy()
+        inst.add(obj, 1)
+        inst.add(obj, 2)
+        dummy_dotted = 'substanced.objectmap.tests.Dummy'
+        self.assertEqual(
+            list(inst.extent_to_oids.keys()),
+            [dummy_dotted]
+            )
+        self.assertEqual(
+            sorted(list(inst.extent_to_oids[dummy_dotted])),
+            [1, 2]
+            )
+        self.assertEqual(
+            sorted(list(inst.oid_to_extents.keys())),
+            [1, 2]
+            )
+        self.assertEqual(
+            list(inst.oid_to_extents[1]),
+            [dummy_dotted]
+            )
+        inst.remove([2])
+        self.assertEqual(
+            list(inst.extent_to_oids.keys()),
+            [dummy_dotted]
+            )
+        self.assertEqual(
+            sorted(list(inst.extent_to_oids[dummy_dotted])),
+            [1]
+            )
+        self.assertEqual(
+            sorted(list(inst.oid_to_extents.keys())),
+            [1]
+            )
+        self.assertEqual(
+            list(inst.oid_to_extents[1]),
+            [dummy_dotted]
+            )
+        inst.remove([1])
+        self.assertEqual(
+            list(inst.extent_to_oids.keys()),
+            []
+            )
+        self.assertFalse(dummy_dotted in inst.extent_to_oids)
+
+    def test_get(self):
+        inst = self._makeOne()
+        dummy_dotted = 'substanced.objectmap.tests.Dummy'
+        obj = Dummy()
+        inst.add(obj, 1)
+        self.assertEqual(
+            sorted(list(inst.get(dummy_dotted))),
+            [1]
+            )
+        self.assertEqual(inst.get('foo', 'bar'), 'bar')
+        self.assertEqual(inst.get('foo'), None)
 
 class Test_reference_sourceid_property(unittest.TestCase):
     def setUp(self):

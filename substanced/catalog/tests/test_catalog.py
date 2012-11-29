@@ -800,7 +800,7 @@ class DummyObjectMap(object):
             return
         return data[0]
 
-    def add(self, node, path_tuple, replace_oid=False):
+    def add(self, node, path_tuple, duplicating=False, moving=False):
         pass
 
 class DummyCatalog(dict):

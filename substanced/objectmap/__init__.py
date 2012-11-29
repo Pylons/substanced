@@ -19,7 +19,9 @@ from ..event import subscribe_will_be_removed
 
 from ..util import (
     get_oid,
+    get_factory_type,
     acquire,
+    set_oid,
     )
 
 from ..interfaces import IObjectMap
@@ -100,6 +102,7 @@ class ObjectMap(Persistent):
         self.path_to_objectid = self.family.OI.BTree()
         self.pathindex = self.family.OO.BTree()
         self.referencemap = ReferenceMap()
+        self.extentmap = ExtentMap()
         self.root = root
 
     def new_objectid(self):
@@ -157,23 +160,39 @@ class ObjectMap(Persistent):
             context = self.root
         return find_resource(context, path_tuple)
 
-    def add(self, obj, path_tuple, replace_oid=False):
+    def add(self, obj, path_tuple, duplicating=False, moving=False):
         """ Add a new object to the object map at the location specified by
         ``path_tuple`` (must be the path of the object in the object graph as
-        a tuple, as returned by Pyramid's ``resource_path_tuple`` function)."""
+        a tuple, as returned by Pyramid's ``resource_path_tuple`` function).
+
+        If ``duplicating`` is ``True``, replace the oid of the added object
+        even if it already has one and adjust extents involving the new oid.
+
+        If ``moving`` is ``True``, don't add any extents.
+
+        It is an error to pass a true value for both ``duplicating`` and
+        ``moving``.
+        """
         if not isinstance(path_tuple, tuple):
             raise ValueError('path_tuple argument must be a tuple')
 
+        if moving and duplicating:
+            raise ValueError('Cannot be both moving and duplicating')
+
         objectid = get_oid(obj, _marker)
 
-        if objectid is _marker or replace_oid:
+        if objectid is _marker or duplicating:
             objectid = self.new_objectid()
-            obj.__oid__ = objectid
+            set_oid(obj, objectid)
+
         elif objectid in self.objectid_to_path:
             raise ValueError('objectid %s already exists' % (objectid,))
 
         if path_tuple in self.path_to_objectid:
             raise ValueError('path %s already exists' % (path_tuple,))
+
+        if (not moving) or duplicating:
+            self.extentmap.add(obj, objectid)
 
         self.path_to_objectid[path_tuple] = objectid
         self.objectid_to_path[objectid] = path_tuple
@@ -189,11 +208,11 @@ class ObjectMap(Persistent):
 
         return objectid
 
-    def remove(self, obj_objectid_or_path_tuple, references=True):
+    def remove(self, obj_objectid_or_path_tuple, moving=False):
         """ Remove an object from the object map give an object, an object id
-        or a path tuple.  If ``references`` is True, also remove any
-        references added via ``connect``, otherwise leave them there
-        (e.g. when moving an object).
+        or a path tuple.  If ``moving`` is ``False``, also remove any
+        references added via ``connect`` and any extents related to the removed
+        objects.
 
         Return a set of removed oids (including the oid related to the object
         passed).
@@ -262,8 +281,9 @@ class ObjectMap(Persistent):
                 if not oidset2:
                     del omap2[i]
 
-        if references:
+        if not moving:
             self.referencemap.remove(removed)
+            self.extentmap.remove(removed)
 
         return removed
 
@@ -411,6 +431,50 @@ class ObjectMap(Persistent):
     def get_reftypes(self):
         """ Return a sequence of reference types known by this objectmap. """
         return self.referencemap.get_reftypes()
+
+    def get_extent(self, name, default=None):
+        """ Return the extent for ``name`` (typically a factory name, e.g. the
+        dotted name of the content class).  It will be a TreeSet composed
+        entirely of oids.  If no extent exist by this name, this will return
+        the value of ``default``."""
+        return self.extentmap.get(name, default)
+
+class ExtentMap(Persistent):
+
+    family = BTrees.family64
+
+    def __init__(self, family=None):
+        self.extent_to_oids = self.family.OO.BTree()
+        self.oid_to_extents = self.family.OO.BTree()
+
+    def add(self, obj, oid):
+        # NB: we currently treat only the factory type as an extent
+        factory_type = get_factory_type(obj)
+        extent = self.extent_to_oids.setdefault(
+            factory_type,
+            self.family.II.TreeSet()
+            )
+        extent.add(oid)
+        rextent = self.oid_to_extents.setdefault(
+            oid,
+            self.family.OO.TreeSet()
+            )
+        rextent.add(factory_type)
+
+    def remove(self, oids):
+        for oid in oids:
+            extent_names = self.oid_to_extents.get(oid)
+            if extent_names is not None:
+                del self.oid_to_extents[oid]
+                for extent_name in extent_names:
+                    eoids = self.extent_to_oids.get(extent_name, ())
+                    if oid in eoids:
+                        eoids.remove(oid)
+                        if not eoids:
+                            del self.extent_to_oids[extent_name]
+
+    def get(self, name, default=None):
+        return self.extent_to_oids.get(name, default)
 
 class ReferenceMap(Persistent):
     

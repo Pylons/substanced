@@ -48,6 +48,7 @@ def get_oid(resource, default=_marker):
 oid_of = get_oid
 
 def set_oid(resource, oid):
+    """ Set the object id of the resource to oid."""
     resource.__oid__ = oid
 
 def merge_url_qs(url, **kw):
@@ -443,3 +444,12 @@ def find_services(resource, name):
     deeply nested service.  Returns an empty sequence if no such-named
     service could be found."""
     return _find_services(resource, name)
+
+def get_factory_type(resource):
+    """ If the resource has a __factory_type__ attribute, return it.
+    Otherwise return the full Python dotted name of the resource's class."""
+    factory_type = getattr(resource, '__factory_type__', None)
+    if factory_type is None:
+        factory_type = get_dotted_name(resource.__class__)
+    return factory_type
+
