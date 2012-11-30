@@ -15,40 +15,17 @@
 
     <div tal:condition="items">
 
-    <div class="form-search pull-right sdi-contents-filter">
-     <div class="input-append">
-        <input type="text" class="input-medium search-query"
-              placeholder="Type to filter…">
-        <button type="submit" class="btn"><i class="icon-search"> </i></button>
-      </div>
-    </div>
-    <div class="clearfix" />
 
-    <div id="sdi-contents-table-sg" class="slickgrid-wrapper"></div>
-    <script type="text/javascript">
-        jQuery(function ($) {
-            var $grid = $('#sdi-contents-table-sg');
-            var $filter = $('.sdi-contents-filter input');
-            // grid
-            $grid.slickgrid(${slickgrid_wrapper_options});
-            var gridWrapper = $grid.data('slickgrid');
-            // filter
-            gridWrapper.setSearchString($filter.val());
-            $filter.on('keyup', function (evt) {
-                gridWrapper.setSearchString($filter.val());
-            });
-        });
-    </script>
-
-    <div class="clearfix">
-    </div>
+    <div class="navbar fb-toolbar">
+      <div class="navbar-inner">
+        <div class="span5 fb-toolbar-box">
 
     <form action="@@contents" method="POST" class="sdi-contents-actions">
       <fieldset>
       <input type="hidden" name="csrf_token" 
              value="${request.session.get_csrf_token()}"/>
 
-      <div class="form-actions btn-toolbar">
+      <div>
 
         <div tal:repeat="group buttons"
            class="${group['type']=='group' and 'btn-group' or 'btn-single'}">
@@ -114,6 +91,38 @@
 
       </fieldset>
     </form>
+        </div>
+        <div class="form-search pull-right sdi-contents-filter">
+          <div class="input-append">
+       	    <input type="text" class="input-medium search-query"
+	           placeholder="Type to filter…">
+       	    <button type="submit" class="btn"><i class="icon-search"> </i></button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div id="sdi-contents-table-sg" class="slickgrid-wrapper"></div>
+
+    <script type="text/javascript">
+        jQuery(function ($) {
+            var $grid = $('#sdi-contents-table-sg');
+            var $filter = $('.sdi-contents-filter input');
+            // grid
+            $grid.slickgrid(${slickgrid_wrapper_options});
+            var gridWrapper = $grid.data('slickgrid');
+            // filter
+            gridWrapper.setSearchString($filter.val());
+            $filter.on('keyup', function (evt) {
+                gridWrapper.setSearchString($filter.val());
+            });
+        });
+    </script>
+
+    <div class="clearfix">
+    </div>
+
 
   </div>
   </div>
