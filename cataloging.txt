@@ -171,3 +171,57 @@ Requirements:
       
       
 
+Sketch
+------
+
+from persistent import Persistent
+
+from substanced.indexing import (
+    indexes,
+    get_interfaces,
+    FieldIndex,
+    apply_indexes,
+    )
+
+from substanced.content import content
+
+@indexes('system')
+class SystemIndexes(object):
+    name = FieldIndex(
+        discriminator=lambda view: view.name
+        )
+    interfaces = FieldIndex(
+        discriminator=get_interfaces,
+        )
+
+@indexes('myapp')
+class MyAppIndexes(object):
+    order_num = FieldIndex(
+        discriminator=lambda view: view.order_num()
+        )
+
+class DocumentCatalogView(object):
+    def __init__(self, resource):
+        self.resource = resource
+
+    def name(self, default):
+        return self.resource.__name__
+
+    def interfaces(self, default):
+        pass
+
+    def order_num(self, default):
+        return self.resource.order_num
+
+@content(
+    'Document',
+    catalog = (
+        ('system', DocumentCatalogView), ('myapp', DocumentCatalogView)
+        ),
+    )
+class Document(Persistent):
+    pass
+
+def add_sdi_catalog(root):
+    apply_indexes(root, 'sdi')
+    
