@@ -155,21 +155,18 @@ to look like:
 
 Requirements:
 
-- A capabilitiy for "extents" in order to allow us to find existing catalogs
-  for index addition/removal/reindexing once the definition of indexes stored
-  in code related to an application changes.  This is mostly a nicety to allow
-  for automated reindexing of all indexes related to a particular application
-  without any database layout knowledge; e.g. during development you could have
-  self-managing index addition and removal at startup.
-
 - Figure out how application code defines a "catalog view" for indexing.
   Currently there's only one catalog view per content type (because there's
   only one catalog type), but there may need to be multiple if an object needs
   to be indexed in multiple catalogs belonging to multiple different
   applications (e.g. both the "sdi" catalog and the "app1" catalog).
 
-      
-      
+- A capabilitiy for "extents" in order to allow us to find existing catalogs
+  for index addition/removal/reindexing once the definition of indexes stored
+  in code related to an application changes.  This is mostly a nicety to allow
+  for automated reindexing of all indexes related to a particular application
+  without any database layout knowledge; e.g. during development you could have
+  self-managing index addition and removal at startup.
 
 Sketch
 ------
@@ -200,23 +197,17 @@ class MyAppIndexes(object):
         discriminator=lambda view: view.order_num()
         )
 
-class DocumentCatalogView(object):
+class MyAppCatalogView(object):
     def __init__(self, resource):
         self.resource = resource
-
-    def name(self, default):
-        return self.resource.__name__
-
-    def interfaces(self, default):
-        pass
 
     def order_num(self, default):
         return self.resource.order_num
 
 @content(
     'Document',
-    catalog = (
-        ('system', DocumentCatalogView), ('myapp', DocumentCatalogView)
+    catalogs = (
+        ('myapp', MyAppCatalogView)
         ),
     )
 class Document(Persistent):
@@ -224,4 +215,34 @@ class Document(Persistent):
 
 def add_sdi_catalog(root):
     apply_indexes(root, 'sdi')
+
+# end sketch
     
+When a document is added to the system something like the following pseudocode
+will run in an objectadded subscriber::
+
+  interested_in =  dict(system=True)
+  extra_interested_in = registry.content.metadata(thedocument, 'catalogs', ())
+  extra_interested_in = dict(extra_interested_in)
+
+  interested_in.update(extra_interested_in)
+
+  for catalog_name, catalog_view_factory in interested_in.items():
+      catalogs = find_services(thedocument, 'catalogs', catalog_name)
+      if catalog_view_factory is True:
+          catalog_view = DefaultCatalogViewFactory(resource)
+      elif catalog_view_factory:
+          catalog_view = catalog_view_factory(resource)
+      else:
+          continue # allow content to explicitly opt out of indexing
+      for catalog in catalogs:
+          catalog.index_doc(catalog_view, oid_of(resource))
+
+In other words, there will be a default catalog type named "system" and a
+default catalog view factory suitable for presenting an object to the system
+catalog.  An application's content can signify that it'd like to be indexed by
+a particular catalog by specifying it in the ``catalogs`` list of its
+metadata (along with a suitable catalog view, or True if the default catalog
+view should be used).  All catalogs in the lineage named via metadata will be
+indexed into as well as the system catalog, which will presumably be at the
+root.
