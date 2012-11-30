@@ -26,7 +26,7 @@ def coarse_datetime_repr(date):
 def postorder(startnode):
     """ Walks over nodes in a folder recursively. Yields deepest nodes first."""
     def visit(node):
-        if IFolder.providedBy(node):
+        if is_folder(node):
             for child in node.values():
                 for result in visit(child):
                     yield result
@@ -417,7 +417,7 @@ def find_content(resource, content_type, registry=None):
 def _find_services(resource, name, one=False):
     L = []
     for obj in lineage(resource):
-        if IFolder.providedBy(obj):
+        if is_folder(obj):
             subobj = obj.get(name, None)
             if subobj is not None:
                 if is_service(subobj):
@@ -427,10 +427,6 @@ def _find_services(resource, name, one=False):
     if one:
         return None
     return L
-
-def is_service(resource):
-    """ Returns ``True`` if the resource is a service, ``False`` if not. """
-    return bool(getattr(resource, '__is_service__', False))
 
 def find_service(resource, name):
     """ Find the first service named ``name`` in the lineage of ``resource``
@@ -452,4 +448,12 @@ def get_factory_type(resource):
     if factory_type is None:
         factory_type = get_dotted_name(resource.__class__)
     return factory_type
+
+def is_folder(resource):
+    """ Return ``True`` if the object is a folder, ``False`` if not. """
+    return IFolder.providedBy(resource)
+
+def is_service(resource):
+    """ Returns ``True`` if the resource is a service, ``False`` if not. """
+    return bool(getattr(resource, '__is_service__', False))
 

@@ -442,6 +442,10 @@ Other Helpers
 
 .. autofunction:: find_services
 
+.. autofunction:: is_folder
+
+.. autofunction:: is_service
+
 .. autofunction:: get_factory_type
 
 .. autofunction:: coarse_datetime_repr
