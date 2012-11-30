@@ -143,6 +143,12 @@ to look like:
 - You can still compose queries across different index sets because they're
   named and accessible by name.
 
+- Aspecty applications can avoid changing any existing catalog owned by a
+  different application. Instead they can add a new catalog without breaking
+  existing applications or requiring a root object owned by that application in
+  which to place the new catalog.  Example: the SDI itself, which badly wants a
+  "search box".
+
 - The canonical definition of the indexes related to a particular application
   are kept in code.  Instances of such catalogs can be added anywhere in the
   tree (e.g. via ``catalogs.add_catalog('sdi')`` as above).
