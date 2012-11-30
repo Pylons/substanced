@@ -144,3 +144,6 @@ body .slickgrid-wrapper .slick-header-columns .slick-header-column.ui-state-defa
 .sdi-contents-actions {
   margin: 0;
 }
+.sdi-add-button {
+  margin-right: 10px;
+}

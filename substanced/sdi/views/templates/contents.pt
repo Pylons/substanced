@@ -18,7 +18,7 @@
 
     <div class="navbar fb-toolbar">
       <div class="navbar-inner">
-        <div class="span5 fb-toolbar-box">
+        <div class="span8 fb-toolbar-box">
 
     <form action="@@contents" method="POST" class="sdi-contents-actions">
       <fieldset>
@@ -75,7 +75,7 @@
 
 
         <tal:block tal:condition="'tocopy' not in request.session and 'tomove' not in request.session">
-        <div class="btn-group pull-right" tal:condition="addables">
+        <div class="btn-group pull-left sdi-add-button" tal:condition="addables">
           <a class="btn btn-primary" 
              href="${request.sdiapi.mgmt_path(context, '@@add')}"><i 
              class="icon-plus-sign icon-white"></i> Add</a>
