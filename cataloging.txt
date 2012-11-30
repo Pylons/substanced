@@ -1,0 +1,161 @@
+The current way we do indexing and searching of catalog data bugs me.  Here is
+the status quo:
+
+- A catalog is treated as a collection of indexes.
+
+- A catalog is treated as a service that can be looked up via lineage.
+
+- Any number of catalogs can be placed in a particular lineage, but an
+  application always searches for "the catalog", and finds the first one.
+
+- Every index is treated as a query generator.
+
+- A catalog has a web UI that allows people to add and remove indexes.
+
+As an upshot of some of the above traits, right now you can do:
+
+   catalog = find_service(someresource, 'catalog')
+   someindex = catalog['someindex']
+   someotherindex = catalog['someotherindex']
+   q = someindex.eq('foo') & someotherindex.eq('bar')
+   resultset = q.execute()
+
+You can also add an index to the catalog either through code or through the
+web, and you can reindex a particular index or all the indexes in a catalog via
+the same web UI.
+
+These traits are fine and this mode of operation seems ok, except the concept
+of a catalog as a singleton service that is a singleton collection of indexes
+makes it tricky to compose applications together within the same system.
+
+If an application wants to add/use a set of indexes, it must do one of the
+following:
+
+- create its own catalog
+
+- add indexes to an existing catalog.
+
+Neither is optimal.
+
+If the application must create its own catalog, it means the application can't
+be "aspecty": it needs to have a root of some kind where its catalog lives.
+When an application has its own catalog, it also becomes more difficult to use
+the indexes from another application (or the "system index") in queries related
+to that application.
+
+If the application must add indexes to an existing catalog, it means that
+different applications will compete over the composition and naming of indexes
+in that catalog.
+
+Because every catalog can have indexes added to it and removed from it
+manually, mucking around with it can break an application which depends on one
+of its indexes.  A code change that requires an additional index requires the
+developer to write adhoc code to add such an index to "the catalog"; that index
+name may already be taken by another application (using a different index
+type), so when the adhoc code is run it may break.  Likewise, removing an index
+using the web interface
+
+In the meantime, there's somewhat of an ideal situation now in the Substance D
+workflow tool, where a workflow is described entirely in code; although the
+state of each workflow in the system is stored on a resource that participates
+in each of those workflows, the workflow state and transitions definitions are
+never stored in the database.  This means when a workflow is changed, it's
+often only the related code that needs changing, and the database needn't be
+touched.  
+
+My proposal to change some of this is this:
+
+- Recognize that every catalog is related to an application inasmuch as that
+  application requires a collection of named indexes, each of which must be a
+  specific type.  Code in the application depends on a particular arrangement
+  of indices.
+
+- Recognize that the index definitions related to a particular application can
+  be spelled declaratively in configuration.  We should make the definition of
+  an index set as declarative as possible, applying changes to database
+  catalogs based on changes to the declarative stuff as necessary.
+
+- Recognize that catalogs and catalog indices are not really content and
+  probably shouldn't be addable or removable like other content except via
+  scripting.  They will need to be *viewable* via the SDI, but they don't need
+  to be addable and removeable, and even via scripting, the adding and removing
+  of them shouldn't be very imperative (it should be done by "applying" a new
+  delcarative configuration of indices to a particular catalog index in the
+  database).
+
+This is superior to the status quo because idiomatic catalog usage could begin
+to look like:
+
+  # in app1 configuration startup code
+
+  def includeme(config):
+      orders = FieldIndexFactory
+      lineitems = FieldIndexFactory
+      config.add_catalog_factory(
+          'app1', 
+          {'orders:orders, 'lineitems':lineitems}
+          )
+
+  @subscriber(ApplicationCreated)
+  def add_app1_catalog(event):
+      if not 'catalogs' in event.app.root:
+          catalogs = event.app.root.add_service('catalogs')
+          if not 'app1' in catalogs:
+              catalog = catalogs.add_catalog('app1')
+              catalog.sync() # reindexes
+
+  # in substanced.sdi configuration startup code
+
+  def includeme(config):
+      name = FieldIndexFactory
+      interfaces = FieldIndexFactory
+      config.add_catalog_factory(
+          'sdi', 
+          {'name':name, 'interfaces':interfaces}
+          )
+   
+  @subscriber(ApplicationCreated)
+  def add_sdi_catalog(event):
+      if not 'catalogs' in event.app.root:
+          catalogs = event.app.root.add_service('catalogs')
+          if not 'sdi' in catalogs:
+              catalog = catalogs.add_catalog('sdi')
+              catalog.sync() # reindexes
+   
+  # in view code
+
+  from substanced.util import find_catalog
+
+  def aview(context, request):
+      app1_catalog = find_catalog(context, 'app1')
+      sdi_catalog = find_catalog(context, 'sdi')
+      q = ( app1_catalog['orders'].eq(request.GET['orderid']) &
+            sdi_catalog['interfaces'].eq(IOrder) )
+      resultset = q.execute()
+      ...
+
+- Applications no longer compete over index names, because they don't share the
+  same catalog.
+
+- You can still compose queries across different index sets because they're
+  named and accessible by name.
+
+- The canonical definition of the indexes related to a particular application
+  are kept in code.  Instances of such catalogs can be added anywhere in the
+  tree (e.g. via ``catalogs.add_catalog('sdi')`` as above).
+
+Requirements:
+
+- A capabilitiy for "extents" in order to allow us to find existing catalogs
+  for index addition/removal/reindexing once the definition of indexes stored
+  in code related to an applicationm changes.
+
+- Figure out how application code defines a "catalog view" for indexing.
+  Currently there's only one catalog view per content type (because there's
+  only one catalog type), but there may need to be multiple if an object needs
+  to be indexed in multiple catalogs belonging to multiple different
+  applications (e.g. both the "sdi" catalog and the "app1" catalog).
+
+      
+      
+
