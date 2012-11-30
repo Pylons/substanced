@@ -53,22 +53,23 @@ of its indexes.  A code change that requires an additional index requires the
 developer to write adhoc code to add such an index to "the catalog"; that index
 name may already be taken by another application (using a different index
 type), so when the adhoc code is run it may break.  Likewise, removing an index
-using the web interface
+using the web interface may break an application.
 
 In the meantime, there's somewhat of an ideal situation now in the Substance D
-workflow tool, where a workflow is described entirely in code; although the
+workflow tool, where a workflow is described entirely in code.  Although the
 state of each workflow in the system is stored on a resource that participates
 in each of those workflows, the workflow state and transitions definitions are
 never stored in the database.  This means when a workflow is changed, it's
 often only the related code that needs changing, and the database needn't be
-touched.  
+touched unless an evolve needs to be done because a workflow was renamed or
+removed.
 
 My proposal to change some of this is this:
 
 - Recognize that every catalog is related to an application inasmuch as that
   application requires a collection of named indexes, each of which must be a
   specific type.  Code in the application depends on a particular arrangement
-  of indices.
+  of indices and will break if it does not exist.
 
 - Recognize that the index definitions related to a particular application can
   be spelled declaratively in configuration.  We should make the definition of
@@ -77,11 +78,13 @@ My proposal to change some of this is this:
 
 - Recognize that catalogs and catalog indices are not really content and
   probably shouldn't be addable or removable like other content except via
-  scripting.  They will need to be *viewable* via the SDI, but they don't need
-  to be addable and removeable, and even via scripting, the adding and removing
-  of them shouldn't be very imperative (it should be done by "applying" a new
-  delcarative configuration of indices to a particular catalog index in the
-  database).
+  scripting.  They will need to be *viewable* via the SDI (at least to allow
+  reindexing and perusal of contained data), but they don't need to be addable
+  and removeable via the web.  Even via scripting, the adding and removing of
+  them shouldn't be encouraged to be very imperative; it should be done by
+  "applying" a new delcarative configuration of indices to a particular catalog
+  index in the database, rather than writing purely imperative code to add and
+  remove indexes.
 
 This is superior to the status quo because idiomatic catalog usage could begin
 to look like:
@@ -148,7 +151,10 @@ Requirements:
 
 - A capabilitiy for "extents" in order to allow us to find existing catalogs
   for index addition/removal/reindexing once the definition of indexes stored
-  in code related to an applicationm changes.
+  in code related to an application changes.  This is mostly a nicety to allow
+  for automated reindexing of all indexes related to a particular application
+  without any database layout knowledge; e.g. during development you could have
+  self-managing index addition and removal at startup.
 
 - Figure out how application code defines a "catalog view" for indexing.
   Currently there's only one catalog view per content type (because there's
