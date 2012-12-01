@@ -238,7 +238,24 @@ will run in an objectadded subscriber::
       for catalog in catalogs:
           catalog.index_doc(catalog_view, oid_of(resource))
 
-In other words, there will be a default catalog type named "system" and a
+Alternately:
+
+  for catalogs in find_services(resource, 'catalogs'):
+      for catalog_name in catalogs.keys():
+          view_factory = registry.queryAdapter(
+                            resource,
+                            ICatalogViewFactory,
+                            catalog_name,
+                            default=None,
+                            )
+          if catalog_view is not None:
+              catalog = catalogs[catalog_name]
+              catalog.index_doc(catalog_view, oid_of(resource))
+
+In the latter case, we derive adapter registrations from the ``catalogs`` list
+in content metadata, or folks can add them independently.
+
+In either case, there will be a default catalog type named "system" and a
 default catalog view factory suitable for presenting an object to the system
 catalog.  An application's content can signify that it'd like to be indexed by
 a particular catalog by specifying it in the ``catalogs`` list of its
