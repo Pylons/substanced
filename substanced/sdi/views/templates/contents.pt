@@ -30,10 +30,10 @@
         <div tal:repeat="group buttons"
            class="${group['type']=='group' and 'btn-group' or 'btn-single'}">
             <button tal:repeat="button group['buttons']"
-		    tal:attributes="disabled not ('tocopy' in request.session or 'tomove' in request.session) and 'true' or False"
+		    tal:attributes="disabled 'btn-sdi-act' not in button['class'] and 'true' or False"
                     id="${button['id']}"
                     name="${button['name']}"
-                    class="btn ${button['class']}"
+                    class="btn btn-sdi ${button['class']}"
                     value="${button['value']}"
                     type="submit"
                     >

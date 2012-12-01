@@ -567,12 +567,12 @@ def default_sdi_buttons(folder, request):
             [
             {'id': 'copy_finish',
               'name': 'form.copy_finish',
-              'class': 'btn-primary',
+              'class': 'btn-primary btn-sdi-act',
               'value': 'copy_finish',
               'text': 'Copy here'},
             {'id': 'cancel',
              'name': 'form.copy_finish',
-             'class': 'btn-danger',
+             'class': 'btn-danger btn-sdi-act',
              'value': 'cancel',
              'text': 'Cancel'},
             ])
@@ -581,12 +581,12 @@ def default_sdi_buttons(folder, request):
         finish_buttons.extend(
             [{'id': 'move_finish',
               'name': 'form.move_finish',
-              'class': 'btn-primary',
+              'class': 'btn-primary btn-sdi-act',
               'value': 'move_finish',
               'text': 'Move here'},
              {'id': 'cancel',
               'name': 'form.move_finish',
-              'class': 'btn-danger',
+              'class': 'btn-danger btn-sdi-act',
               'value': 'cancel',
               'text': 'Cancel'}])
 
@@ -600,22 +600,22 @@ def default_sdi_buttons(folder, request):
         main_buttons = [
              {'id': 'rename',
               'name': 'form.rename',
-              'class': '',
+              'class': 'btn-sdi-del',
               'value': 'rename',
               'text': 'Rename'},
               {'id': 'copy',
               'name': 'form.copy',
-              'class': '',
+              'class': 'btn-sdi-sel',
               'value': 'copy',
               'text': 'Copy'},
               {'id': 'move',
               'name': 'form.move',
-              'class': '',
+              'class': 'btn-sdi-del',
               'value': 'move',
               'text': 'Move'},
               {'id': 'duplicate',
               'name': 'form.duplicate',
-              'class': '',
+              'class': 'btn-sdi-sel',
               'value': 'duplicate',
               'text': 'Duplicate'}
               ]
@@ -625,7 +625,7 @@ def default_sdi_buttons(folder, request):
         delete_buttons = [
               {'id': 'delete',
                'name': 'form.delete',
-               'class': 'btn-danger',
+               'class': 'btn-danger btn-sdi-del',
                'value': 'delete',
                'text': 'Delete'}
                ]

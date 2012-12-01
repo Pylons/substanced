@@ -165,19 +165,14 @@
                         var item = dataView.getItem(selRows[i]);
                         if (!item.deletable) {
                             disable_delete = true;
+			    break;
                         }
                     }
-                    $('#delete').attr('disabled', disable_delete);
-                    $('#rename').attr('disabled', disable_delete);
-                    $('#copy').attr('disabled', false);
-                    $('#move').attr('disabled', disable_delete);
-                    $('#duplicate').attr('disabled', false);
+                    $('.btn-sdi-del').attr('disabled', disable_delete);
+                    $('.btn-sdi-sel').attr('disabled', false);
                 } else {
-                    $('#delete').attr('disabled', true);
-                    $('#rename').attr('disabled', true);
-                    $('#copy').attr('disabled', true);
-                    $('#move').attr('disabled', true);
-                    $('#duplicate').attr('disabled', true);
+                    $('.btn-sdi-del').attr('disabled', true);
+                    $('.btn-sdi-sel').attr('disabled', true);
                 }
             });
 
