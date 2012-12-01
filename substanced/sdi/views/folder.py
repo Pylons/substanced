@@ -175,10 +175,54 @@ class FolderContentsViews(object):
 
         return headers
 
+    
+    @staticmethod
+    def getGridRows(columns, items, total, _from, to):
+        # The items for the slickgrid are really in a format similar to the
+        # items used for the static table. However, it has some problems so we have
+        # to convert the records:
+        #
+        # - The records must be json-marshallable, so we convert 'deletable' to bool.
+        # - SlickGrid requires a unique id to each row
+        # - more reasonable keys, that match slickgrid's rendering (actually, we could leave
+        #   it intact here, and just handle this from the formatters in the js code,
+        #   but then it would be more difficult to understand the code.)
+        # - remove the 'columns' attribute that contains the rendered parts. Slickgrid will
+        #   format the html on the client.
+        #
+        records = []
+        print ';;;', _from, to
+        for i, item in enumerate(itertools.islice(items, _from, to)):
+            name = item['name']
+            record = dict(
+                id=name,    # Use the unique name, as an id.
+                    # (A unique row id is needed for slickgrid.
+                    # In addition, we will pass back this same id from the client,
+                    # when a row is selected for an operation.)
+                deletable=bool(item['deletable']),
+                name=name,
+                name_icon=item['icon'],
+                name_url=item['url'],
+            )
+            if item['viewable']:
+                record['name_url'] = item['url']
+            for index, column_value in enumerate(item['columns']):
+                field = columns[index]['field']
+                record[field] = column_value
+            records.append(record)
+
+        return {
+            'from':    _from,
+            'to':      to,
+            'records': records,
+            'total':   total,
+            }
+
 
     @mgmt_view(
         request_method='GET',
-        permission='sdi.view'
+        permission='sdi.view',
+        xhr=False,
         )
     def show(self):
         request = self.request
@@ -218,38 +262,11 @@ class FolderContentsViews(object):
             forceFitColumns = True,
             rowHeight = 35,
             )
-        # The items for the slickgrid are really in a format similar to the
-        # items used for the static table. However, it has some problems so we have
-        # to convert the records:
-        #
-        # - The records must be json-marshallable, so we convert 'deletable' to bool.
-        # - SlickGrid requires a unique id to each row
-        # - more reasonable keys, that match slickgrid's rendering (actually, we could leave
-        #   it intact here, and just handle this from the formatters in the js code,
-        #   but then it would be more difficult to understand the code.
-        # - remove the 'columns' attribute that contains the rendered parts. Slickgrid will
-        #   format the html on the client.
-        #
-        items_sg = []
+
         my_items, items = itertools.tee(items, 2)
-        for i, item in enumerate(my_items):
-            name = item['name']
-            item_sg = dict(
-                id=name,    # Use the unique name, as an id.
-                    # (A unique row id is needed for slickgrid.
-                    # In addition, we will pass back this same id from the client,
-                    # when a row is selected for an operation.)
-                deletable=bool(item['deletable']),
-                name=name,
-                name_icon=item['icon'],
-                name_url=item['url'],
-            )
-            if item['viewable']:
-                item_sg['name_url'] = item['url']
-            for index_sg, column_value in enumerate(item['columns']):
-                field_sg = columns_sg[index_sg]['field']
-                item_sg[field_sg] = column_value
-            items_sg.append(item_sg)
+        minimum_load = 20      # load at least this many records.
+        items_sg = self.getGridRows(columns_sg, my_items, total=num_items, _from=0, to=minimum_load)
+
         # We pass the wrapper options which contains all information
         # needed to configure the several components of the grid config.
         slickgrid_wrapper_options = JsonDict(
@@ -276,6 +293,44 @@ class FolderContentsViews(object):
             slickgrid_wrapper_options=slickgrid_wrapper_options,
             )
 
+
+    @mgmt_view(
+        request_method='GET',
+        permission='sdi.view',
+        xhr=True,
+        renderer='json',
+        )
+    def show_ajax(self):
+        request = self.request
+        context = self.context
+
+        _from = int(request.params.get('from'))
+        to = int(request.params.get('to'))
+        sort_col = request.params.get('sortCol')
+        sort_dir = request.params.get('sortDir')
+        
+
+        seq = self.sdi_folder_contents(context, request) # generator
+        # XXX TODO. This must take sort_col and sort_dir into consideration!
+
+
+        # We need an accurate length but len(self.context) will not take into
+        # account hidden items. To gen an accurate length we tee the generator
+        # and exaust one copy to produce a sum, we use the other copy as the
+        # items we pass to the template.  This is probably unsat for huge
+        # folders, but at least has a slight advantage over doing
+        # len(list(seq)) because we don't unnecessarily create a large data
+        # structure in memory.
+        items, items_copy = itertools.tee(seq)
+        total = sum(1 for _ in items_copy) 
+
+        columns = self._column_headers_sg(
+            context, request
+            )
+        items = self.getGridRows(columns, items, total=total, _from=_from, to=to)
+        return items
+
+ 
     @mgmt_view(
         request_method='POST',
         request_param="form.delete",

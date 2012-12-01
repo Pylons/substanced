@@ -80,7 +80,7 @@
             //
             // Variables you can access from this handler:
             //
-            // this:                  will equal to the SlickGrid object instance
+            // this:                  will equal to the SlickGrid wrapper object instance
             // this.element:          the element to bind the grid to
             // this.columns:          column definitions (pre-processed)
             // this.wrapperOptions:   options passed to this object at creation
@@ -92,8 +92,9 @@
             var checkboxSelector = new Slick.CheckboxSelectColumn({});
             columns.unshift(checkboxSelector.getColumnDefinition());
 
-            var dataView = new Slick.Data.DataView({inlineFilters: true});
-            var grid = this.grid = new Slick.Grid(this.element, dataView, columns, wrapperOptions.slickgridOptions);
+            ////var dataView = new Slick.Data.DataView({inlineFilters: true});
+
+            var grid = this.grid = new Slick.Grid(this.element, [], columns, wrapperOptions.slickgridOptions);
 
             var sortCol = wrapperOptions.sortCol;
             var sortDir = wrapperOptions.sortDir;
@@ -108,17 +109,17 @@
                 return (x == y ? 0 : (x > y ? 1 : -1));
             }
 
-            grid.onSort.subscribe(function (e, args) {
-                sortDir = args.sortAsc ? 1 : -1;
-                sortCol = args.sortCol.field;
+            //grid.onSort.subscribe(function (e, args) {
+            //    sortDir = args.sortAsc ? 1 : -1;
+            //    sortCol = args.sortCol.field;
 
-                dataView.sort(comparer, args.sortAsc);
-            });
+            //    dataView.sort(comparer, args.sortAsc);
+            //});
 
-            dataView.onRowsChanged.subscribe(function (e, args) {
-                grid.invalidateRows(args.rows);
-                grid.render();
-            });
+            //dataView.onRowsChanged.subscribe(function (e, args) {
+            //    grid.invalidateRows(args.rows);
+            //    grid.render();
+            //});
 
 
             // filtering
@@ -173,22 +174,47 @@
             });
             grid.registerPlugin(responsivenessPlugin);
 
-            // initialize the model after all the events have been hooked up
-            dataView.beginUpdate();
-            dataView.setItems(wrapperOptions.items);
-            dataView.setFilterArgs({
-                searchString: searchString
-            });
-            dataView.setFilter(myFilter);
-
-            dataView.endUpdate();
-
-            // if you don't want the items that are not visible (due to being filtered out
-            // or being on a different page) to stay selected, pass 'false' to the second arg
-            dataView.syncGridSelection(grid, true);
-
             grid.setColumns(columns); // XXX why is this needed for the initial fit?
-            grid.render();
+
+            var sdiRemoteModelPlugin = new Slick.Data.SdiRemoteModel({
+                url: wrapperOptions.url,
+                manageQueue: true, //this.options.manageQueue,
+                sortCol: wrapperOptions.sortCol,
+                sortDir: wrapperOptions.sortDir,
+                extraQuery: {}, //this.options.extraQuery,
+                minimumLoad: 40 //this.options.minimumLoad,
+            });
+            grid.registerPlugin(sdiRemoteModelPlugin);
+
+            sdiRemoteModelPlugin.onDataLoaded.subscribe(function (evt, args) {
+                if (args.from !== undefined) {
+                    // restore selections
+                    ////self._restoreSelection();
+                }
+                //if (self.loadingIndicator) {
+                //    ////self.loadingIndicator.hide();
+                //}
+            });
+
+            if (wrapperOptions.items) {
+                // load the items
+                sdiRemoteModelPlugin.loadData(wrapperOptions.items);
+            }
+
+            // scrolling
+            var scrollPosition = -1;  // force movement forward
+            grid.onViewportChanged.subscribe(function (evt, args) {
+                var vp = grid.getViewport();
+                var top = vp.top;
+                var bottom = vp.bottom;
+                var direction = top >= self.scrollPosition ? +1 : -1;
+                sdiRemoteModelPlugin.ensureData(top, bottom, direction);
+                scrollPosition = top;
+            });
+            // provoke first run (will fetch items, if we are not at the
+            // top of the grid, initially.)
+            grid.onViewportChanged.notify();
+
 
         }
 
