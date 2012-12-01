@@ -72,7 +72,6 @@
         </script>
 
 
-
         <tal:block tal:condition="'tocopy' not in request.session and 'tomove' not in request.session">
         <div class="btn-group pull-left sdi-add-button" tal:condition="addables">
           <a class="btn btn-primary" 
