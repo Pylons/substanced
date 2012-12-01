@@ -157,9 +157,29 @@
             // checkbox column
             grid.setSelectionModel(new Slick.RowSelectionModel({selectActiveRow: false}));
             grid.registerPlugin(checkboxSelector);
-            //this.grid.onSelectedRowsChanged.subscribe(function (evt) { 
-                // ?
-            //});
+            this.grid.onSelectedRowsChanged.subscribe(function (evt) { 
+                var selRows = grid.getSelectedRows();
+                if (selRows.length) {
+                    var disable_delete = false;
+                    for (var i = 0, l = selRows.length; i < l; i++) {
+                        var item = dataView.getItem(selRows[i]);
+                        if (!item.deletable) {
+                            disable_delete = true;
+                        }
+                    }
+                    $('#delete').attr('disabled', disable_delete);
+                    $('#rename').attr('disabled', disable_delete);
+                    $('#copy').attr('disabled', false);
+                    $('#move').attr('disabled', disable_delete);
+                    $('#duplicate').attr('disabled', false);
+                } else {
+                    $('#delete').attr('disabled', true);
+                    $('#rename').attr('disabled', true);
+                    $('#copy').attr('disabled', true);
+                    $('#move').attr('disabled', true);
+                    $('#duplicate').attr('disabled', true);
+                }
+            });
 
             // autoresize columns
             var responsivenessPlugin = new Slick.Plugins.Responsiveness({
