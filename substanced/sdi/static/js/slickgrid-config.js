@@ -201,20 +201,6 @@
                 sdiRemoteModelPlugin.loadData(wrapperOptions.items);
             }
 
-            // scrolling
-            var scrollPosition = -1;  // force movement forward
-            grid.onViewportChanged.subscribe(function (evt, args) {
-                var vp = grid.getViewport();
-                var top = vp.top;
-                var bottom = vp.bottom;
-                var direction = top >= self.scrollPosition ? +1 : -1;
-                sdiRemoteModelPlugin.ensureData(top, bottom, direction);
-                scrollPosition = top;
-            });
-            // provoke first run (will fetch items, if we are not at the
-            // top of the grid, initially.)
-            grid.onViewportChanged.notify();
-
 
         }
 
