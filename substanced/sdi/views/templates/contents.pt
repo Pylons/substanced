@@ -25,8 +25,6 @@
       <input type="hidden" name="csrf_token" 
              value="${request.session.get_csrf_token()}"/>
 
-      <div>
-
         <div tal:repeat="group buttons"
            class="${group['type']=='group' and 'btn-group' or 'btn-single'}">
             <button tal:repeat="button group['buttons']"
