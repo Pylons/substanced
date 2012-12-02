@@ -181,14 +181,23 @@
             });
             grid.registerPlugin(sdiRemoteModelPlugin);
 
+
+            $viewport = this.element.find('.slick-viewport');
+            sdiRemoteModelPlugin.onDataLoading.subscribe(function (evt, args) {
+                // indicate loading
+                $viewport.stop(true, true).animate({
+                    opacity: 0.3
+                });
+            });
+
             sdiRemoteModelPlugin.onDataLoaded.subscribe(function (evt, args) {
                 if (args.from !== undefined) {
-                    // restore selections
-                    ////self._restoreSelection();
+                    // XXX TODO restore selections
                 }
-                //if (self.loadingIndicator) {
-                //    ////self.loadingIndicator.hide();
-                //}
+                // indicate loading finished
+                $viewport.stop(true, true).animate({
+                    opacity: 1
+                });
             });
 
             // sorting
