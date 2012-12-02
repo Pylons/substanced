@@ -4,7 +4,7 @@
 
     <h2>Manage Catalog</h2>
 
-           # of items in catalog: ${cataloglen}
+    <div># of items in catalog: ${cataloglen}</div>
 
      <form action="./manage_catalog" method="POST">
        <input type="hidden" value="${request.session.get_csrf_token()}"
@@ -12,6 +12,8 @@
        <div class="form-actions">
            <input type="submit" class="btn btn-primary" 
                   value="Reindex all objects in all indexes" name="reindex"/>
+           <input type="submit" class="btn btn-primary" 
+                  value="Update all index definitions" name="update"/>
        </div>
      </form>
 

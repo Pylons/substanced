@@ -23,6 +23,15 @@ class TestManageCatalog(unittest.TestCase):
         self.assertEqual(result.location, '/mgmt_path')
         self.assertEqual(context.reindexed, None)
 
+    def test_update(self):
+        context = DummyCatalog()
+        request = testing.DummyRequest()
+        request.sdiapi = DummySDIAPI()
+        inst = self._makeOne(context, request)
+        result = inst.update()
+        self.assertEqual(result.location, '/mgmt_path')
+        self.assertEqual(context.updated, True)
+
 class TestManageIndex(unittest.TestCase):
     def _makeOne(self, context, request):
         from ..catalog import ManageIndex
@@ -223,6 +232,9 @@ class DummyCatalog(object):
     def reindex(self, indexes=None, registry=None):
         self.indexes = indexes
         self.reindexed = indexes
+
+    def update_indexes(self):
+        self.updated = True
 
 class DummyIndex(object):
     def __init__(self, parent=None):

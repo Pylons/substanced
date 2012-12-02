@@ -46,6 +46,12 @@ class ManageCatalog(object):
         self.request.session.flash('Catalog reindexed')
         return HTTPFound(location=self.redir_location)
 
+    @mgmt_view(request_method='POST', request_param='update', check_csrf=True)
+    def update(self):
+        self.context.update_indexes()
+        self.request.session.flash('Catalog index definitions updated')
+        return HTTPFound(location=self.redir_location)
+
 @view_defaults(
     name='manage_index',
     context=IIndex,
