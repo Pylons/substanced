@@ -17,16 +17,6 @@ from ...schema import Schema
     
 from .. import mgmt_view
 
-@mgmt_view(
-    name='add_catalog_service',
-    tab_condition=False,
-    permission='sdi.add-services',
-    )
-def add_catalog_service(context, request):
-    catalog = request.registry.content.create('Catalog')
-    context['catalog'] = catalog
-    return HTTPFound(location=request.sdiapi.mgmt_path(context))
-
 def context_is_an_index(context, request):
     return request.registry.content.metadata(context, 'is_index', False)
 

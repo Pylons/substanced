@@ -59,11 +59,26 @@ def catalog_buttons(context, request, default_buttons):
         ] + default_buttons
     return buttons
 
+@service(
+    'Catalogs',
+    service_name='catalogs',
+    icon='icon-search',
+    )
+class CatalogsService(Folder):
+    pass # XXX not really just a folder
+
+def make_catalog(folder, name):
+    if not 'catalogs' in folder:
+        folder.add_service('catalogs', CatalogsService())
+    catalogs = folder['catalogs']
+    catalogs[name] = Catalog()
+    catalog = catalogs[name]
+    return catalog
+
 @content(
     'Catalog',
     icon='icon-search',
     service_name='catalog',
-    add_view='add_catalog_service',
     buttons=catalog_buttons,
     )
 @implementer(ICatalog)
@@ -351,22 +366,6 @@ class catalog_factory(object):
         extra['_info'] = info.codeinfo # fbo "action_method"
 
         return factory
-
-@service(
-    'Catalogs',
-    service_name='catalogs',
-    icon='icon-search',
-    )
-class CatalogsService(Folder):
-    pass # XXX not really just a folder
-
-def make_catalog(folder, name):
-    if not 'catalogs' in folder:
-        folder.add_service('catalogs', CatalogsService())
-    catalogs = folder['catalogs']
-    catalogs[name] = Catalog()
-    catalog = catalogs[name]
-    return catalog
 
 def is_catalogable(resource, registry=None):
     if registry is None:
