@@ -128,7 +128,7 @@ class CatalogFactory(object):
     def replace(self, catalog, reindex=False, output=None, **reindex_kw):
         catalog_path = resource_path(catalog)
 
-        to_reindex = []
+        to_reindex = set()
 
         changed = False
 
@@ -142,12 +142,12 @@ class CatalogFactory(object):
                     )
 
             catalog.replace(index_name, index_factory(self.name, index_name))
-            to_reindex.append(index_name)
+            to_reindex.add(index_name)
             changed = True
 
-        removed_stale = self._remove_stale(catalog)
+        removed_stale = self._remove_stale(catalog, output=output)
 
-        if reindex:
+        if changed and reindex:
             catalog.reindex(indexes=to_reindex, output=output, **reindex_kw)
 
         return removed_stale or changed
@@ -155,7 +155,7 @@ class CatalogFactory(object):
     def sync(self, catalog, reindex=False, output=None, **reindex_kw):
         catalog_path = resource_path(catalog)
 
-        to_reindex = []
+        to_reindex = set()
         changed = False
 
         for index_name, index_factory in self.index_factories.items():
@@ -167,10 +167,11 @@ class CatalogFactory(object):
                     self.name, index_name
                     )
                 changed = True
+                to_reindex.add(index_name)
 
             index = catalog[index_name]
 
-            if index.__factory_hash__ != hash(index_factory):
+            if getattr(index, '__factory_hash__', None) != hash(index_factory):
                 output and output(
                     '%s: replacing stale index named %r' % (
                         catalog_path,
@@ -183,13 +184,13 @@ class CatalogFactory(object):
                         self.name, index_name
                         )
                     )
-                to_reindex.append(index_name)
+                to_reindex.add(index_name)
                 changed = True
 
-        removed_stale = self._remove_stale(catalog)
+        removed_stale = self._remove_stale(catalog, output=output)
 
-        if reindex:
+        if changed and reindex:
             catalog.reindex(indexes=to_reindex, output=output, **reindex_kw)
 
-        return removed_stale or changed
+        return changed or removed_stale
 

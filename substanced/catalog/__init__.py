@@ -170,8 +170,12 @@ class Catalog(Folder):
                 output and output('*** committing ***')
                 self.transaction.commit()
 
+        name = self.__name__
+
         if indexes is not None:
-            output and output('reindexing only indexes %s' % str(indexes))
+            output and output('%s reindexing only indexes %s' % (
+                name, str(indexes)
+                ))
 
         i = 1
         objectmap = find_objectmap(self)
@@ -190,7 +194,7 @@ class Catalog(Folder):
             path = resource_path(resource)
             if path_re is not None and path_re.match(path) is None:
                 continue
-            output and output('reindexing %s' % path)
+            output and output('%s reindexing %s' % (name, path))
 
             if indexes is None:
                 self.reindex_doc(objectid, resource)
@@ -254,7 +258,10 @@ class Catalog(Folder):
         if registry is None: # pragma: no cover
             registry = get_current_registry()
 
-        factory = registry.getUtility(ICatalogFactory, name=self.__name__)
+        factory = registry.getUtility(
+            ICatalogFactory,
+            name=self.__name__,
+            )
 
         reindex_kw['registry'] = registry
         reindex_kw['dry_run'] = dry_run
@@ -279,7 +286,10 @@ class Catalog(Folder):
         if changed:
             commit_or_abort()
         else:
-            output and output('update_indexes: no indexes added or removed')
+            name = self.__name__
+            output and output(
+                '%s update_indexes: no indexes added or removed' % name
+                )
 
 class IndexViewMapper(object):
     def __init__(self, attr=None):

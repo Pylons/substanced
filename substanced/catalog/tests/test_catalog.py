@@ -157,7 +157,7 @@ class TestCatalog(unittest.TestCase):
         self.assertEqual(L[0][0], 1)
         self.assertEqual(L[0][1], a)
         self.assertEqual(out,
-                          ["reindexing /a",
+                          ["catalog reindexing /a",
                           '*** committing ***'])
         self.assertEqual(transaction.committed, 1)
 
@@ -179,7 +179,7 @@ class TestCatalog(unittest.TestCase):
         self.assertEqual(L[0][0], 1)
         self.assertEqual(L[0][1], a)
         self.assertEqual(out,
-                          ["reindexing /a",
+                          ["catalog reindexing /a",
                           "error: object at path /b not found",
                           '*** committing ***'])
         self.assertEqual(transaction.committed, 1)
@@ -224,7 +224,7 @@ class TestCatalog(unittest.TestCase):
         self.assertEqual(L[0][0], 1)
         self.assertEqual(L[0][1], a)
         self.assertEqual(out,
-                          ['reindexing /a',
+                          ['catalog reindexing /a',
                           '*** committing ***'])
         self.assertEqual(transaction.committed, 1)
 
@@ -250,8 +250,8 @@ class TestCatalog(unittest.TestCase):
         self.assertEqual(L[1][0], 2)
         self.assertEqual(L[1][1], b)
         self.assertEqual(out,
-                         ['reindexing /a',
-                          'reindexing /b',
+                         ['catalog reindexing /a',
+                          'catalog reindexing /b',
                           '*** aborting ***'])
         self.assertEqual(transaction.aborted, 1)
         self.assertEqual(transaction.committed, 0)
@@ -273,8 +273,8 @@ class TestCatalog(unittest.TestCase):
         out = []
         inst.reindex(indexes=('index',),  output=out.append)
         self.assertEqual(out,
-                          ["reindexing only indexes ('index',)",
-                          'reindexing /a',
+                          ["catalog reindexing only indexes ('index',)",
+                          'catalog reindexing /a',
                           '*** committing ***'])
         self.assertEqual(transaction.committed, 1)
         self.assertEqual(len(L), 1)
@@ -298,7 +298,7 @@ class TestCatalog(unittest.TestCase):
         inst.update_indexes(registry=registry,  output=out.append)
         self.assertEqual(
             out,  
-            ['update_indexes: no indexes added or removed'],
+            ['catalog update_indexes: no indexes added or removed'],
             )
         self.assertEqual(transaction.committed, 0)
         self.assertEqual(transaction.aborted, 0)
