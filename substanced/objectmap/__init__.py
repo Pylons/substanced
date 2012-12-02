@@ -912,8 +912,8 @@ class Multireference(object):
 
 def find_objectmap(context):
     """ Returns the object map for the root object in the lineage of the
-    ``context``"""
-    return acquire(context, '__objectmap__')
+    ``context`` or ``None`` if no objectmap can be found."""
+    return acquire(context, '__objectmap__', None)
 
 def has_references(context):
     objectmap = find_objectmap(context)
