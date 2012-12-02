@@ -420,6 +420,8 @@ Other Helpers
 
 .. automodule:: substanced.util
 
+.. autofunction:: acquire
+
 .. autofunction:: get_oid
 
 .. autofunction:: set_oid
