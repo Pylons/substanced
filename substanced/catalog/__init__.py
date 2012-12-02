@@ -21,7 +21,10 @@ from ..interfaces import (
     IIndexView,
     )
 
-from ..content import service
+from ..content import (
+    content,
+    service,
+    )
 from ..folder import Folder
 from ..objectmap import find_objectmap
 
@@ -56,7 +59,7 @@ def catalog_buttons(context, request, default_buttons):
         ] + default_buttons
     return buttons
 
-@service(
+@content(
     'Catalog',
     icon='icon-search',
     service_name='catalog',
@@ -339,6 +342,11 @@ class catalog_factory(object):
 
         return factory
 
+@service(
+    'Catalogs',
+    service_name='catalogs',
+    icon='icon-search',
+    )
 class CatalogsService(Folder):
     pass # XXX not really just a folder
 
