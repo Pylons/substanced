@@ -5,8 +5,6 @@ from persistent import Persistent
 
 from zope.interface import implementer
 
-import colander
-
 import hypatia.query
 import hypatia.interfaces
 import hypatia.field
@@ -26,16 +24,8 @@ from pyramid.interfaces import IRequest
 
 from ..content import content
 from ..objectmap import find_objectmap
-from ..property import PropertySheet
-from ..schema import (
-    Schema,
-    PermissionsSchemaNode,
-    )
 
-from .discriminators import (
-    dummy_discriminator,
-    AllowedIndexDiscriminator,
-    )
+from .discriminators import dummy_discriminator
 
 PATH_WITH_OPTIONS = re.compile(r'\[(.+?)\](.+?)$')
 
@@ -53,7 +43,6 @@ class ResolvingIndex(object):
 @content(
     'Path Index',
     icon='icon-search',
-    add_view='add_path_index',
     is_index=True,
     )
 @implementer(hypatia.interfaces.IIndex)
@@ -189,7 +178,6 @@ class PathIndex(ResolvingIndex, hypatia.util.BaseIndexMixin, Persistent):
 @content(
     'Field Index',
     icon='icon-search',
-    add_view='add_field_index',
     is_index=True,
     )
 class FieldIndex(ResolvingIndex, hypatia.field.FieldIndex):
@@ -201,7 +189,6 @@ class FieldIndex(ResolvingIndex, hypatia.field.FieldIndex):
 @content(
     'Keyword Index',
     icon='icon-search',
-    add_view='add_keyword_index',
     is_index=True,
     )
 class KeywordIndex(ResolvingIndex, hypatia.keyword.KeywordIndex):
@@ -215,7 +202,6 @@ class KeywordIndex(ResolvingIndex, hypatia.keyword.KeywordIndex):
 @content(
     'Text Index',
     icon='icon-search',
-    add_view='add_text_index',
     is_index=True,
     )
 class TextIndex(ResolvingIndex, hypatia.text.TextIndex):
@@ -232,45 +218,10 @@ class TextIndex(ResolvingIndex, hypatia.text.TextIndex):
             self, discriminator, lexicon=lexicon, index=index, family=family,
             )
 
-class Facets(colander.SequenceSchema):
-    facet = colander.SchemaNode(
-        colander.String(),
-        )
-
-class FacetIndexSchema(Schema):
-    facets = Facets(
-        missing=(),
-        title = 'Facets (any change will cause a reindex)',
-        )
-
-class FacetIndexPropertySheet(PropertySheet):
-    schema = FacetIndexSchema()
-    
-    def get(self):
-        context = self.context
-        props = {}
-        props['category'] = context.sd_category
-        props['facets'] = context.facets
-        return props
-
-    def set(self, struct):
-        context = self.context
-        context.sd_category = struct['category']
-        facets = tuple(struct['facets'])
-        if facets != context.facets:
-            context.facets = facets
-            name = self.context.__name__
-            registry = self.request.registry
-            self.context.__parent__.reindex(indexes=(name,), registry=registry)
-
 @content(
     'Facet Index',
     icon='icon-search',
-    add_view='add_facet_index',
     is_index=True,
-    propertysheets = (
-        ('', FacetIndexPropertySheet),
-        )
     )
 class FacetIndex(ResolvingIndex, hypatia.facet.FacetIndex):
     def __init__(self, discriminator=None, facets=None, family=None):
@@ -282,54 +233,17 @@ class FacetIndex(ResolvingIndex, hypatia.facet.FacetIndex):
             self, discriminator, facets=facets, family=family
             )
 
-class AllowedIndexSchema(Schema):
-    permissions = PermissionsSchemaNode(
-        missing=(),
-        title=('Permissions (any change will cause a reindex, '
-               'no permissions means index all permissions)'),
-        )
-
-class AllowedIndexPropertySheet(PropertySheet):
-    schema = AllowedIndexSchema()
-    
-    def set(self, struct):
-        context = self.context
-        old_permissions = context.permissions
-        PropertySheet.set(self, struct)
-        permissions = set(struct['permissions'])
-        if permissions != old_permissions:
-            name = self.context.__name__
-            registry = self.request.registry
-            self.context.__parent__.reindex(indexes=(name,), registry=registry)
-
 @content(
     'Allowed Index',
     icon='icon-search',
-    add_view='add_allowed_index',
     is_index=True,
-    default_args=('',),
-    propertysheets = (
-        ('', AllowedIndexPropertySheet),
-        )
     )
 class AllowedIndex(KeywordIndex):
     def __init__(self, discriminator=None, family=None):
         if discriminator is None:
             discriminator = dummy_discriminator
-        KeywordIndex.__init__(
-            self, discriminator, family=family
-            )
+        KeywordIndex.__init__(self, discriminator, family=family)
 
-    def _get_permissions(self):
-        return set(getattr(self.discriminator, 'permissions', ()))
-
-    def _set_permissions(self, permissions):
-        permissions = set(permissions)
-        if permissions != self._get_permissions():
-            self.discriminator = AllowedIndexDiscriminator(permissions)
-
-    permissions = property(_get_permissions, _set_permissions)
-        
     def allows(self, principals, permission='view'):
         """ ``principals`` may either be 1) a sequence of principal
         indentifiers, 2) a single principal identifier, or 3) a Pyramid

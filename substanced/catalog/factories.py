@@ -87,7 +87,7 @@ class Allowed(IndexFactory):
     discriminator_factory = AllowedIndexDiscriminator
 
     def __call__(self, catalog_name, index_name):
-        kw = self.kw.copy()
+        kw = self.kw.copy() # hashvalues below needs permissions
         permissions = kw.pop('permissions', None)
         discriminator = AllowedIndexDiscriminator(permissions)
         index = self.index_type(discriminator=discriminator, **kw)

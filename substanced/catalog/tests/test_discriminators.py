@@ -70,6 +70,22 @@ class TestIndexViewDiscriminator(unittest.TestCase):
         result = inst(None, True)
         self.assertEqual(result, True)
 
+    def test_call_with_index_view(self):
+        from zope.interface import Interface
+        from substanced.interfaces import IIndexView
+        registry = self.config.registry
+        resource = testing.DummyResource()
+        def view(_resource, default):
+            self.assertEqual(default, True)
+            self.assertEqual(_resource, resource)
+            return True
+        registry.registerAdapter(view, (Interface,), IIndexView, 'system|attr')
+        inst = self._makeOne('system', 'attr')
+        result = inst(resource, True)
+        self.assertEqual(result, True)
+        
+            
+
 class Test_dummy_discriminator(unittest.TestCase):
     def _callFUT(self, object, default):
         from ..discriminators import dummy_discriminator
