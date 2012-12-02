@@ -671,6 +671,34 @@ class Test_get_factory_type(unittest.TestCase):
         self.assertEqual(self._callFUT(resource),
                          'substanced.util.tests.Dummy')
 
+class Test_get_interfaces(unittest.TestCase):
+    def _callFUT(self, resource, classes=True):
+        from . import get_interfaces
+        return get_interfaces(resource, classes=classes)
+
+    def test_with_classes(self):
+        from zope.interface import Interface, implementer
+        class IFoo(Interface):
+            pass
+        @implementer(IFoo)
+        class Foo(object):
+            pass
+        foo = Foo()
+        result = self._callFUT(foo)
+        self.assertEqual(result, set([IFoo, Interface, Foo]))
+        
+    def test_without_classes(self):
+        from zope.interface import Interface, implementer
+        class IFoo(Interface):
+            pass
+        @implementer(IFoo)
+        class Foo(object):
+            pass
+        foo = Foo()
+        result = self._callFUT(foo, classes=False)
+        self.assertEqual(result, set([IFoo, Interface]))
+        
+
 
 class DummyContent(object):
     renamed_from = None

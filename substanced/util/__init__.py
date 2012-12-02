@@ -385,14 +385,16 @@ def get_dotted_name(g):
     module = g.__module__
     return '.'.join((module, name))
 
-def get_interfaces(obj):
-    """ Return the set of interfaces provided by ``obj``, including its
-    __class__."""
+def get_interfaces(obj, classes=True):
+    """ Return the set of interfaces provided by ``obj``.  Include its
+    __class__ if classes is True."""
     # we unwind all derived and immediate interfaces using spec.flattened()
     # (providedBy would just give us the immediate interfaces)
     provided_by = list(providedBy(obj))
     spec = Declaration(provided_by)
-    ifaces = list(spec.flattened()) + [obj.__class__]
+    ifaces = list(spec.flattened())
+    if classes:
+        ifaces = ifaces + [obj.__class__]
     return set(ifaces)
 
 def get_content_type(resource, registry=None):
