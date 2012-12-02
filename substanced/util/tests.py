@@ -698,7 +698,111 @@ class Test_get_interfaces(unittest.TestCase):
         result = self._callFUT(foo, classes=False)
         self.assertEqual(result, set([IFoo, Interface]))
         
+class Test_find_catalogs(unittest.TestCase):
+    def _callFUT(self, resource, name=None):
+        from . import find_catalogs
+        return find_catalogs(resource, name=name)
 
+    def _makeTree(self):
+        from substanced.interfaces import IFolder
+        root = testing.DummyResource(__provides__=IFolder)
+        catalogs1 = root['catalogs'] = testing.DummyResource(
+            __is_service__=True)
+        catalog1 = testing.DummyResource()
+        catalogs1['catalog1'] = catalog1
+        sub = testing.DummyResource(__provides__=IFolder)
+        root['sub'] = sub
+        catalogs2 = sub['catalogs'] = testing.DummyResource(__is_service__=True)
+        catalog2 = testing.DummyResource()
+        catalog1_2 = testing.DummyResource()
+        sub['catalogs'] = catalogs2
+        catalogs2['catalog2'] = catalog2
+        catalogs2['catalog1'] = catalog1_2
+        return root
+
+    def test_no_catalogs(self):
+        resource = testing.DummyResource()
+        self.assertEqual(self._callFUT(resource), [])
+
+    def test_with_multiple_catalogs_no_name(self):
+        root = self._makeTree()
+        sub = root['sub']
+        catalog2 = sub['catalogs']['catalog2']
+        catalog1_2 = sub['catalogs']['catalog1']
+        catalog1 = root['catalogs']['catalog1']
+        result = list(enumerate(self._callFUT(sub)))
+        self.assertEqual(
+            result,
+            [ (0, catalog2), (1, catalog1_2), (2, catalog1) ],
+            )
+
+    def test_with_multiple_catalogs_and_name(self):
+        root = self._makeTree()
+        sub = root['sub']
+        catalog1_2 = sub['catalogs']['catalog1']
+        catalog1 = root['catalogs']['catalog1']
+        result = list(enumerate(self._callFUT(sub, 'catalog1')))
+        self.assertEqual(
+            result,
+            [ (0, catalog1_2), (1, catalog1) ],
+            )
+
+    def test_nosuch_catalog(self):
+        root = self._makeTree()
+        sub = root['sub']
+        result = list(enumerate(self._callFUT(sub, 'catalog3')))
+        self.assertEqual(
+            result,
+            [],
+            )
+
+class Test_find_catalog(unittest.TestCase):
+    def _callFUT(self, resource, name):
+        from . import find_catalog
+        return find_catalog(resource, name)
+
+    def _makeTree(self):
+        from substanced.interfaces import IFolder
+        root = testing.DummyResource(__provides__=IFolder)
+        catalogs1 = root['catalogs'] = testing.DummyResource(
+            __is_service__=True)
+        catalog1 = testing.DummyResource()
+        catalogs1['catalog1'] = catalog1
+        sub = testing.DummyResource(__provides__=IFolder)
+        root['sub'] = sub
+        catalogs2 = sub['catalogs'] = testing.DummyResource(__is_service__=True)
+        catalog2 = testing.DummyResource()
+        catalog1_2 = testing.DummyResource()
+        sub['catalogs'] = catalogs2
+        catalogs2['catalog2'] = catalog2
+        catalogs2['catalog1'] = catalog1_2
+        return root
+
+    def test_no_catalogs(self):
+        resource = testing.DummyResource()
+        self.assertEqual(self._callFUT(resource, 'catalog1'), None)
+
+    def test_with_multiple_catalogs(self):
+        root = self._makeTree()
+        sub = root['sub']
+        catalog2 = sub['catalogs']['catalog2']
+        catalog1_2 = sub['catalogs']['catalog1']
+        catalog1 = root['catalogs']['catalog1']
+        result = self._callFUT(sub, 'catalog2')
+        self.assertEqual(result, catalog2)
+        result = self._callFUT(sub, 'catalog1')
+        self.assertEqual(result, catalog1_2)
+        result = self._callFUT(root, 'catalog1')
+        self.assertEqual(result, catalog1)
+
+    def test_nosuch_catalog(self):
+        root = self._makeTree()
+        sub = root['sub']
+        result = self._callFUT(sub, 'catalog3')
+        self.assertEqual(
+            result,
+            None,
+            )
 
 class DummyContent(object):
     renamed_from = None

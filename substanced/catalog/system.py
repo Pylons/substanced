@@ -49,10 +49,6 @@ class SystemCatalogFactory(object):
 
       Represents the local name of the content object.
 
-    - oid (a FieldIndex)
-
-      Represents the object identifier (an integer) of the content object.
-
     - interfaces (a KeywordIndex)
 
       Represents the set of interfaces possessed by the content object.

@@ -506,3 +506,13 @@ def find_catalogs(resource, name=None):
             if name is None or name == cname:
                 catalogs.append(catalog)
     return catalogs
+
+def find_catalog(resource, name):
+    """ Return the first catalog named ``name`` in the lineage of the resource
+    """
+    catalog_containers = find_services(resource, 'catalogs')
+    for catalog_container in catalog_containers:
+        for cname, catalog in catalog_container.items():
+            if name == cname:
+                return catalog
+    
