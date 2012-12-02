@@ -109,13 +109,6 @@
                 return (x == y ? 0 : (x > y ? 1 : -1));
             }
 
-            //grid.onSort.subscribe(function (e, args) {
-            //    sortDir = args.sortAsc ? 1 : -1;
-            //    sortCol = args.sortCol.field;
-
-            //    dataView.sort(comparer, args.sortAsc);
-            //});
-
             //dataView.onRowsChanged.subscribe(function (e, args) {
             //    grid.invalidateRows(args.rows);
             //    grid.render();
@@ -196,11 +189,24 @@
                 //}
             });
 
+            // sorting
+            grid.onSort.subscribe(function (e, args) {
+                sortDir = args.sortAsc;
+                sortCol = args.sortCol.field;
+
+                sdiRemoteModelPlugin.setSorting(sortCol, sortDir); 
+                ////dataView.sort(comparer, args.sortAsc);
+            });
+
+
+
             if (wrapperOptions.items) {
                 // load the items
                 sdiRemoteModelPlugin.loadData(wrapperOptions.items);
             }
-
+            // provoke first run (will fetch items, if we are not at the
+            // top of the grid, initially.)
+            grid.onViewportChanged.notify();
 
         }
 

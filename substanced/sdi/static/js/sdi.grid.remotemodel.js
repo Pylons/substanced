@@ -18,7 +18,7 @@
 
 
     /* 
-     * Slickgrid's remote data manager, customized for SDI.
+     * SlickGrid's remote data manager, customized for SDI.
      * OO coding model follows SlickGrid's plugin convention.
      *
      * Usage::
@@ -116,9 +116,6 @@
             // scrolling
             scrollPosition = -1;  // force movement forward
             grid.onViewportChanged.subscribe(handleGridViewportChanged);
-            // provoke first run (will fetch items, if we are not at the
-            // top of the grid, initially.)
-            grid.onViewportChanged.notify();
         }
 
         function _abortRequest(force) {
@@ -149,11 +146,17 @@
         }
 
         function clearData() {
+            // XXX Need to  save the selections from here. TODO
+            //
+            // Delete the data
             $.each(data, function (key, value) {
                 delete data[key];
             });
             // We force to abort all requests, even if reallyAbort=false
             _abortRequest(true);
+            // let the viewport load records currently visible
+            grid.invalidateAllRows();
+            grid.onViewportChanged.notify();
         }
 
         function loadData(_data) {
@@ -191,7 +194,7 @@
             }
         }
 
-        function ensureData(from, to, direction) {
+        ensureData = function (from, to, direction) {
             //log('Records in viewport:', from, to, direction);
             // abort the previous request
             _abortRequest();
@@ -247,7 +250,7 @@
 
             // Load at least minimumLoad records
             if (options.minimumLoad && (to - from) < options.minimumLoad) {
-                end = start + direction * options.minimumLoad;
+                end = start + direction * options.minimumLoad - 1;
             }
 
             // Sort start and end now, and we can start loading.
@@ -299,6 +302,19 @@
             } else {
                 _active_request = $.ajax(ajaxOptions);
             }
+        };
+
+        function setSorting(sortCol, sortDir) {
+            if (options.sortCol != sortCol || options.sortDir != sortDir) {
+                // re-sort
+                //
+                // give sorted column a different color
+                //this._updateSortColumn(sortCol);
+                options.sortCol = sortCol;
+                options.sortDir = sortDir;
+                // notify the grid
+                clearData();
+            }
         }
 
         // Things we offer as public.
@@ -315,6 +331,7 @@
             clearData: clearData,
             loadData: loadData,
             ensureData: ensureData,
+            setSorting: setSorting,
 
             // events
             onDataLoading: onDataLoading,

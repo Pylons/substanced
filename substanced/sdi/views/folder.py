@@ -177,7 +177,7 @@ class FolderContentsViews(object):
 
     
     @staticmethod
-    def getGridRows(columns, items, total, _from, to):
+    def processGridRows(columns, items, total, _from, to):
         # The items for the slickgrid are really in a format similar to the
         # items used for the static table. However, it has some problems so we have
         # to convert the records:
@@ -191,7 +191,6 @@ class FolderContentsViews(object):
         #   format the html on the client.
         #
         records = []
-        print ';;;', _from, to
         for i, item in enumerate(itertools.islice(items, _from, to)):
             name = item['name']
             record = dict(
@@ -264,8 +263,8 @@ class FolderContentsViews(object):
             )
 
         my_items, items = itertools.tee(items, 2)
-        minimum_load = 20      # load at least this many records.
-        items_sg = self.getGridRows(columns_sg, my_items, total=num_items, _from=0, to=minimum_load)
+        minimum_load = 40      # load at least this many records.
+        items_sg = self.processGridRows(columns_sg, my_items, total=num_items, _from=0, to=minimum_load)
 
         # We pass the wrapper options which contains all information
         # needed to configure the several components of the grid config.
@@ -300,20 +299,17 @@ class FolderContentsViews(object):
         xhr=True,
         renderer='json',
         )
-    def show_ajax(self):
+    def show_json(self):
         request = self.request
         context = self.context
 
         _from = int(request.params.get('from'))
         to = int(request.params.get('to'))
         sort_col = request.params.get('sortCol')
-        sort_dir = request.params.get('sortDir')
-        
+        sort_dir = (request.params.get('sortDir') in ('true', 'True'))
 
         seq = self.sdi_folder_contents(context, request) # generator
-        # XXX TODO. This must take sort_col and sort_dir into consideration!
-
-
+        
         # We need an accurate length but len(self.context) will not take into
         # account hidden items. To gen an accurate length we tee the generator
         # and exaust one copy to produce a sum, we use the other copy as the
@@ -321,13 +317,29 @@ class FolderContentsViews(object):
         # folders, but at least has a slight advantage over doing
         # len(list(seq)) because we don't unnecessarily create a large data
         # structure in memory.
-        items, items_copy = itertools.tee(seq)
-        total = sum(1 for _ in items_copy) 
+        ##items, items_copy = itertools.tee(seq)
+        ##total = sum(1 for _ in items_copy) 
 
         columns = self._column_headers_sg(
             context, request
             )
-        items = self.getGridRows(columns, items, total=total, _from=_from, to=to)
+
+        # XXX TODO. This must take sort_col and sort_dir into consideration!
+        # This is a terribly inefficient way of doing it, and is only meant
+        # to support the client part.
+        # XXX sdi_folder_contents should support the sorting oob.
+        items = list(seq)
+        total = len(items)
+        # find the column index, as that's what we need for lookup.
+        for index, col in enumerate(columns):
+            if col['field'] == sort_col:
+                break
+        else:
+            assert False, 'We should not ever get here.' 
+        items.sort(key=lambda s: s['columns'][index], reverse=not sort_dir)
+
+        # Convert the items to the format what the grid wants.
+        items = self.processGridRows(columns, items, total=total, _from=_from, to=to)
         return items
 
  
