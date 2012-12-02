@@ -158,6 +158,7 @@ class CatalogFactory(object):
         return removed_stale or changed
 
     def sync(self, catalog, reindex=False, output=None, **reindex_kw):
+
         catalog_path = resource_path(catalog)
 
         to_reindex = set()
@@ -185,9 +186,7 @@ class CatalogFactory(object):
                     )
                 catalog.replace(
                     index_name,
-                    index_factory(
-                        self.name, index_name
-                        )
+                    index_factory(self.name, index_name)
                     )
                 to_reindex.add(index_name)
                 changed = True

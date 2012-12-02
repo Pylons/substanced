@@ -47,6 +47,18 @@ class TestIndexFactory(unittest.TestCase):
         inst = self._makeOne(a=1, family=True)
         self.assertRaises(ValueError, inst.hashvalues)
 
+    def test_is_stale(self):
+        inst = self._makeOne(a=1)
+        index = testing.DummyResource()
+        index.__factory_hash__ = None
+        self.assertTrue(inst.is_stale(index))
+
+    def test_is_not_stale(self):
+        inst = self._makeOne(a=1)
+        index = testing.DummyResource()
+        index.__factory_hash__ = hash(inst)
+        self.assertFalse(inst.is_stale(index))
+
 class TestText(unittest.TestCase):
     def _makeOne(self, **kw):
         from ..factories import Text
@@ -266,6 +278,68 @@ class TestCatalogFactory(unittest.TestCase):
         result = inst.replace(catalog, output=output)
         self.assertTrue(result)
         self.assertFalse('index' in catalog)
+        self.assertTrue(L)
+
+    def test_sync_replace_stale(self):
+        L = []
+        output = L.append
+        factory = DummyIndexFactory(True)
+        index_factories = {'a':factory}
+        inst = self._makeOne('name', index_factories)
+        catalog = DummyCatalog()
+        index = testing.DummyResource()
+        catalog['a'] = index
+        result = inst.sync(catalog, output=output)
+        self.assertTrue(result)
+        self.assertEqual(factory.catalog_name, 'name')
+        self.assertFalse(catalog.reindexed)
+        self.assertEqual(catalog['a'], factory)
+        self.assertTrue(L)
+
+    def test_sync_keep_notstale(self):
+        L = []
+        output = L.append
+        factory = DummyIndexFactory(False)
+        index_factories = {'a':factory}
+        inst = self._makeOne('name', index_factories)
+        catalog = DummyCatalog()
+        index = testing.DummyResource()
+        catalog['a'] = index
+        result = inst.sync(catalog, output=output)
+        self.assertFalse(result)
+        self.assertFalse(catalog.reindexed)
+        self.assertEqual(catalog['a'], index)
+        self.assertFalse(L)
+
+    def test_sync_add_and_remove_stale(self):
+        L = []
+        output = L.append
+        factory = DummyIndexFactory(False)
+        index_factories = {'b':factory}
+        inst = self._makeOne('name', index_factories)
+        catalog = DummyCatalog()
+        index = testing.DummyResource()
+        catalog['a'] = index
+        result = inst.sync(catalog, output=output)
+        self.assertTrue(result)
+        self.assertEqual(factory.catalog_name, 'name')
+        self.assertFalse(catalog.reindexed)
+        self.assertEqual(catalog['b'], factory)
+        self.assertFalse('a' in catalog)
+        self.assertTrue(L)
+
+    def test_sync_reindex_true(self):
+        L = []
+        output = L.append
+        factory = DummyIndexFactory()
+        index_factories = {'a':factory}
+        inst = self._makeOne('name', index_factories)
+        catalog = DummyCatalog()
+        result = inst.sync(catalog, output=output, reindex=True)
+        self.assertTrue(result)
+        self.assertEqual(factory.catalog_name, 'name')
+        self.assertEqual(catalog.reindexed['indexes'], set(['a']))
+        self.assertEqual(catalog['a'], factory)
         self.assertTrue(L)
 
 class DummyIndexFactory(object):
