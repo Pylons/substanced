@@ -310,7 +310,10 @@ class Test_merge_url_qs(unittest.TestCase):
 class Test_acquire(unittest.TestCase):
     def _callFUT(self, node, name, default=None):
         from . import acquire
-        return acquire(node, name, default=default)
+        if default is None:
+            return acquire(node, name)
+        else:
+            return acquire(node, name, default)
 
     def test_missing_with_default(self):
         inst = DummyContent(None)
