@@ -464,6 +464,52 @@ class Test_catalog_buttons(unittest.TestCase):
                               'type': 'single'},
                              1])
 
+class TestIndexViewMapper(unittest.TestCase):
+    def _makeOne(self, attr=None):
+        from .. import IndexViewMapper
+        return IndexViewMapper(attr=attr)
+
+    def test_call_class(self):
+        class Foo(object):
+            def __init__(self, resource):
+                self.resource = resource
+
+            def __call__(self, default):
+                return self.resource
+        inst = self._makeOne()
+        view = inst(Foo)
+        result = view('123', None)
+        self.assertEqual(result, '123')
+
+    def test_call_class_with_attr(self):
+        class Foo(object):
+            def __init__(self, resource):
+                self.resource = resource
+
+            def meth(self, default):
+                return self.resource
+        inst = self._makeOne(attr='meth')
+        view = inst(Foo)
+        result = view('123', None)
+        self.assertEqual(result, '123')
+
+    def test_call_function(self):
+        def foo(resource, default):
+            return resource
+        inst = self._makeOne()
+        view = inst(foo)
+        result = view('123', None)
+        self.assertEqual(result, '123')
+
+    def test_call_function_with_attr(self):
+        def foo(): pass
+        def bar(resource, default):
+            return resource
+        foo.bar = bar
+        inst = self._makeOne(attr='bar')
+        view = inst(foo)
+        result = view('123', None)
+        self.assertEqual(result, '123')
 
 class DummyIntrospectable(dict):
     pass

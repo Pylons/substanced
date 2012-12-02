@@ -321,7 +321,7 @@ class IndexViewMapper(object):
             if attr is None:
                 result = view(resource, default)
             else:
-                result = getattr(view, attr)(result, default)
+                result = getattr(view, attr)(resource, default)
             return result
         return _function_view
 
