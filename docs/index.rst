@@ -69,6 +69,7 @@ Narrative Documentation
    cataloging
    references
    workflows
+   evolution
    retail
 
 API Documentation

@@ -81,28 +81,6 @@ Dump and Load
 
 - Explain ``__dump__`` and ``__load__`` methods of resources.
 
-Evolution
----------
-
-- Explain evolution. Substanced D has: a command-line utility to set
-  version numbers (sdevolve.) Will show you all the things that
-  participate in evolution and let you do things. A number of scripts
-  inside of each package that can take stuff to an evolve number. The
-  database has a version number for that particular package as do the
-  software packages. No downgrading. Evolve to a particular version. If
-  you don't want to evolve, but only set a version for a particular
-  package, you can manually do so (letting you skip a step you might
-  have done manually.)
-
-  - sdevolve latest is the most common
-
-- Explain that evolution is baselined at first startup. One of the
-  problems with generic evolution is that, you might get a package and it
-  will be at version 7. But there's no initial version in the database.
-  In Substance D, in the root factory, it says: "I know all the
-  packages participating in evolution, so when I first create the root
-  object, I will set everything to the current package number."
-
 Events
 ------
 
