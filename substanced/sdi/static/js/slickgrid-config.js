@@ -169,13 +169,15 @@
 
             grid.setColumns(columns); // XXX why is this needed for the initial fit?
 
+            var extraQuery = {};  // XXX TODO filtering
+
             var sdiRemoteModelPlugin = new Slick.Data.SdiRemoteModel({
                 url: wrapperOptions.url,
-                manageQueue: true, //this.options.manageQueue,
+                manageQueue: wrapperOptions.manageQueue,
                 sortCol: wrapperOptions.sortCol,
                 sortDir: wrapperOptions.sortDir,
-                extraQuery: {}, //this.options.extraQuery,
-                minimumLoad: 40 //this.options.minimumLoad,
+                extraQuery: {},
+                minimumLoad: wrapperOptions.minimumLoad
             });
             grid.registerPlugin(sdiRemoteModelPlugin);
 

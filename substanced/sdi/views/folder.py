@@ -278,6 +278,11 @@ class FolderContentsViews(object):
             # to just visually show in the headers the sorted column.)
             sortCol = columns_sg[0]['field'], 
             sortDir = True,   # True ascending, or False descending.
+            #
+            # Parameters for the remote data model
+            url = '',   # use same url for ajax
+            manageQueue = True,
+            minimumLoad = 40,
             )
 
         return dict(
