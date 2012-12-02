@@ -525,9 +525,9 @@ class Test_find_content(unittest.TestCase):
         self.assertEqual(self._callFUT(resource, 1, registry), resource)
 
 class Test_find_service(unittest.TestCase):
-    def _callFUT(self, context, name):
+    def _callFUT(self, context, name, *subnames):
         from . import find_service
-        return find_service(context, name)
+        return find_service(context, name, *subnames)
     
     def test_unfound(self):
         from ..interfaces import IFolder
@@ -541,10 +541,51 @@ class Test_find_service(unittest.TestCase):
         site['catalog'] = catalog
         self.assertEqual(self._callFUT(site, 'catalog'), catalog)
 
+    def test_unfound_with_subnames(self):
+        from ..interfaces import IFolder
+        site = testing.DummyResource(__provides__=IFolder)
+        catalog = testing.DummyResource(__is_service__=True)
+        site['catalog'] = catalog
+        result = self._callFUT(site, 'catalog', 'a', 'b')
+        self.assertEqual(result, None)
+
+    def test_unfound_with_subnames_inner_not_folder(self):
+        from ..interfaces import IFolder
+        site = testing.DummyResource(__provides__=IFolder)
+        catalog = testing.DummyResource(__is_service__=True,
+                                        __provides__=IFolder)
+        site['catalog'] = catalog
+        catalog['a'] = testing.DummyResource()
+        result = self._callFUT(site, 'catalog', 'a', 'b')
+        self.assertEqual(result, None)
+
+    def test_found_with_subnames_missing(self):
+        from ..interfaces import IFolder
+        site = testing.DummyResource(__provides__=IFolder)
+        catalog = testing.DummyResource(__is_service__=True,
+                                        __provides__=IFolder)
+        site['catalog'] = catalog
+        catalog['a'] = testing.DummyResource(__provides__=IFolder)
+        catalog['a']['b'] = testing.DummyResource()
+        result = self._callFUT(site, 'catalog', 'a', 'c')
+        self.assertEqual(result, None)
+
+    def test_found_with_subnames(self):
+        from ..interfaces import IFolder
+        site = testing.DummyResource(__provides__=IFolder)
+        catalog = testing.DummyResource(__is_service__=True,
+                                        __provides__=IFolder)
+        site['catalog'] = catalog
+        catalog['a'] = testing.DummyResource(__provides__=IFolder)
+        catalog['a']['b'] = testing.DummyResource()
+        result = self._callFUT(site, 'catalog', 'a', 'b')
+        self.assertEqual(result, catalog['a']['b'])
+
+
 class Test_find_services(unittest.TestCase):
-    def _callFUT(self, context, name):
+    def _callFUT(self, context, name, *subnames):
         from . import find_services
-        return find_services(context, name)
+        return find_services(context, name, *subnames)
     
     def test_one_found(self):
         from ..interfaces import IFolder
@@ -573,6 +614,47 @@ class Test_find_services(unittest.TestCase):
         from ..interfaces import IFolder
         site = testing.DummyResource(__provides__=IFolder)
         self.assertEqual(self._callFUT(site, 'catalog'), [])
+
+    def test_unfound_with_subnames(self):
+        from ..interfaces import IFolder
+        site = testing.DummyResource(__provides__=IFolder)
+        catalog = testing.DummyResource(__is_service__=True)
+        site['catalog'] = catalog
+        result = self._callFUT(site, 'catalog', 'a', 'b')
+        self.assertEqual(result, [])
+
+    def test_unfound_with_subnames_inner_not_folder(self):
+        from ..interfaces import IFolder
+        site = testing.DummyResource(__provides__=IFolder)
+        catalog = testing.DummyResource(__is_service__=True,
+                                        __provides__=IFolder)
+        site['catalog'] = catalog
+        catalog['a'] = testing.DummyResource()
+        result = self._callFUT(site, 'catalog', 'a', 'b')
+        self.assertEqual(result, [])
+
+    def test_found_with_subnames_missing(self):
+        from ..interfaces import IFolder
+        site = testing.DummyResource(__provides__=IFolder)
+        catalog = testing.DummyResource(__is_service__=True,
+                                        __provides__=IFolder)
+        site['catalog'] = catalog
+        catalog['a'] = testing.DummyResource(__provides__=IFolder)
+        catalog['a']['b'] = testing.DummyResource()
+        result = self._callFUT(site, 'catalog', 'a', 'c')
+        self.assertEqual(result, [])
+
+    def test_found_with_subnames(self):
+        from ..interfaces import IFolder
+        site = testing.DummyResource(__provides__=IFolder)
+        catalog = testing.DummyResource(__is_service__=True,
+                                        __provides__=IFolder)
+        site['catalog'] = catalog
+        catalog['a'] = testing.DummyResource(__provides__=IFolder)
+        catalog['a']['b'] = testing.DummyResource()
+        result = self._callFUT(site, 'catalog', 'a', 'b')
+        self.assertEqual(result, [catalog['a']['b']])
+
 
 class Test_get_factory_type(unittest.TestCase):
     def _callFUT(self, resource):
