@@ -86,6 +86,48 @@ class AddFolderView(FormView):
         self.context[name] = folder
         return HTTPFound(location=self.request.sdiapi.mgmt_path(self.context))
 
+
+def process_grid_rows(columns, items, total, _from, to):
+    # The items for the slickgrid are really in a format similar to the
+    # items used for the static table. However, it has some problems so we have
+    # to convert the records:
+    #
+    # - The records must be json-marshallable, so we convert 'deletable' to bool.
+    # - SlickGrid requires a unique id to each row
+    # - more reasonable keys, that match slickgrid's rendering (actually, we could leave
+    #   it intact here, and just handle this from the formatters in the js code,
+    #   but then it would be more difficult to understand the code.)
+    # - remove the 'columns' attribute that contains the rendered parts. Slickgrid will
+    #   format the html on the client.
+    #
+    records = []
+    for i, item in enumerate(itertools.islice(items, _from, to)):
+        name = item['name']
+        record = dict(
+            id=name,    # Use the unique name, as an id.
+                # (A unique row id is needed for slickgrid.
+                # In addition, we will pass back this same id from the client,
+                # when a row is selected for an operation.)
+            deletable=bool(item['deletable']),
+            name=name,
+            name_icon=item['icon'],
+            name_url=item['url'],
+        )
+        if item['viewable']:
+            record['name_url'] = item['url']
+        for index, column_value in enumerate(item['columns']):
+            field = columns[index]['field']
+            record[field] = column_value
+        records.append(record)
+
+    return {
+        'from':    _from,
+        'to':      to,
+        'records': records,
+        'total':   total,
+        }
+
+
 @view_defaults(
     context=IFolder,
     name='contents',
@@ -175,49 +217,7 @@ class FolderContentsViews(object):
 
         return headers
 
-    
-    @staticmethod
-    def processGridRows(columns, items, total, _from, to):
-        # The items for the slickgrid are really in a format similar to the
-        # items used for the static table. However, it has some problems so we have
-        # to convert the records:
-        #
-        # - The records must be json-marshallable, so we convert 'deletable' to bool.
-        # - SlickGrid requires a unique id to each row
-        # - more reasonable keys, that match slickgrid's rendering (actually, we could leave
-        #   it intact here, and just handle this from the formatters in the js code,
-        #   but then it would be more difficult to understand the code.)
-        # - remove the 'columns' attribute that contains the rendered parts. Slickgrid will
-        #   format the html on the client.
-        #
-        records = []
-        for i, item in enumerate(itertools.islice(items, _from, to)):
-            name = item['name']
-            record = dict(
-                id=name,    # Use the unique name, as an id.
-                    # (A unique row id is needed for slickgrid.
-                    # In addition, we will pass back this same id from the client,
-                    # when a row is selected for an operation.)
-                deletable=bool(item['deletable']),
-                name=name,
-                name_icon=item['icon'],
-                name_url=item['url'],
-            )
-            if item['viewable']:
-                record['name_url'] = item['url']
-            for index, column_value in enumerate(item['columns']):
-                field = columns[index]['field']
-                record[field] = column_value
-            records.append(record)
-
-        return {
-            'from':    _from,
-            'to':      to,
-            'records': records,
-            'total':   total,
-            }
-
-
+   
     @mgmt_view(
         request_method='GET',
         permission='sdi.view',
@@ -264,7 +264,7 @@ class FolderContentsViews(object):
 
         my_items, items = itertools.tee(items, 2)
         minimum_load = 40      # load at least this many records.
-        items_sg = self.processGridRows(columns_sg, my_items, total=num_items, _from=0, to=minimum_load)
+        items_sg = process_grid_rows(columns_sg, my_items, total=num_items, _from=0, to=minimum_load)
 
         # We pass the wrapper options which contains all information
         # needed to configure the several components of the grid config.
@@ -339,7 +339,7 @@ class FolderContentsViews(object):
         items.sort(key=lambda s: s['columns'][index], reverse=not sort_dir)
 
         # Convert the items to the format what the grid wants.
-        items = self.processGridRows(columns, items, total=total, _from=_from, to=to)
+        items = process_grid_rows(columns, items, total=total, _from=_from, to=to)
         return items
 
  
