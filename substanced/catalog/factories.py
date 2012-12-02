@@ -80,11 +80,10 @@ class Facet(IndexFactory):
         values = IndexFactory.hashvalues(self)
         facets = values.get('facets', ())
         values['facets'] = tuple(sorted([(x,y) for x, y in facets]))
-        return values.items()
+        return values
 
 class Allowed(IndexFactory):
     index_type = AllowedIndex
-    discriminator_factory = AllowedIndexDiscriminator
 
     def __call__(self, catalog_name, index_name):
         kw = self.kw.copy() # hashvalues below needs permissions

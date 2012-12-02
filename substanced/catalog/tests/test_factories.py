@@ -1,98 +1,116 @@
-# import unittest
+import unittest
 
-# class Test_text_index_factory(unittest.TestCase):
-#     def _callFUT(self, name, category, **kw):
-#         from .. import text_index_factory
-#         return text_index_factory(name, category, **kw)
+class TestText(unittest.TestCase):
+    def _makeOne(self, **kw):
+        from ..factories import Text
+        return Text(**kw)
 
-#     def test_it(self):
-#         result = self._callFUT('name', 'category')
-#         self.assertEqual(result.__class__.__name__, 'TextIndex')
-#         self.assertEqual(result.sd_category, 'category')
-#         self.assertEqual(result.discriminator.method_name, 'name')
+    def test_call(self):
+        inst = self._makeOne()
+        result = inst('catalog', 'index')
+        self.assertEqual(result.__class__.__name__, 'TextIndex')
+        self.assertEqual(
+            result.discriminator.__class__.__name__,
+            'IndexViewDiscriminator'
+            )
+        self.assertTrue(hasattr(result, '__factory_hash__'))
 
-#     def test_it_with_discrim(self):
-#         result = self._callFUT('name', 'category', discriminator='abc')
-#         self.assertEqual(result.__class__.__name__, 'TextIndex')
-#         self.assertEqual(result.sd_category, 'category')
-#         self.assertEqual(result.discriminator, 'abc')
+    def test_hashvalues(self):
+        inst = self._makeOne(lexicon=None, index=None)
+        result = inst.hashvalues()
+        self.assertEqual(
+            result,
+            {'index': None,
+             'lexicon': None,
+             'class': 'substanced.catalog.factories.Text'}
+            )
+        
+class TestField(unittest.TestCase):
+    def _makeOne(self, **kw):
+        from ..factories import Field
+        return Field(**kw)
 
-# class Test_field_index_factory(unittest.TestCase):
-#     def _callFUT(self, name, category, **kw):
-#         from .. import field_index_factory
-#         return field_index_factory(name, category, **kw)
+    def test_call(self):
+        inst = self._makeOne()
+        result = inst('catalog', 'index')
+        self.assertEqual(result.__class__.__name__, 'FieldIndex')
+        self.assertEqual(
+            result.discriminator.__class__.__name__,
+            'IndexViewDiscriminator'
+            )
+        self.assertTrue(hasattr(result, '__factory_hash__'))
 
-#     def test_it(self):
-#         result = self._callFUT('name', 'category')
-#         self.assertEqual(result.__class__.__name__, 'FieldIndex')
-#         self.assertEqual(result.sd_category, 'category')
-#         self.assertEqual(result.discriminator.method_name, 'name')
+    def test_hashvalues(self):
+        inst = self._makeOne()
+        result = inst.hashvalues()
+        self.assertEqual(
+            result,
+            {'class': 'substanced.catalog.factories.Field'}
+            )
 
-#     def test_it_with_discrim(self):
-#         result = self._callFUT('name', 'category', discriminator='abc')
-#         self.assertEqual(result.__class__.__name__, 'FieldIndex')
-#         self.assertEqual(result.sd_category, 'category')
-#         self.assertEqual(result.discriminator, 'abc')
+class TestKeyword(unittest.TestCase):
+    def _makeOne(self, **kw):
+        from ..factories import Keyword
+        return Keyword(**kw)
 
-# class Test_keyword_index_factory(unittest.TestCase):
-#     def _callFUT(self, name, category, **kw):
-#         from .. import keyword_index_factory
-#         return keyword_index_factory(name, category, **kw)
+    def test_call(self):
+        inst = self._makeOne()
+        result = inst('catalog', 'index')
+        self.assertEqual(result.__class__.__name__, 'KeywordIndex')
+        self.assertEqual(
+            result.discriminator.__class__.__name__,
+            'IndexViewDiscriminator'
+            )
+        self.assertTrue(hasattr(result, '__factory_hash__'))
 
-#     def test_it(self):
-#         result = self._callFUT('name', 'category')
-#         self.assertEqual(result.__class__.__name__, 'KeywordIndex')
-#         self.assertEqual(result.sd_category, 'category')
-#         self.assertEqual(result.discriminator.method_name, 'name')
+    def test_hashvalues(self):
+        inst = self._makeOne()
+        result = inst.hashvalues()
+        self.assertEqual(
+            result,
+            {'class': 'substanced.catalog.factories.Keyword'}
+            )
 
-#     def test_it_with_discrim(self):
-#         result = self._callFUT('name', 'category', discriminator='abc')
-#         self.assertEqual(result.__class__.__name__, 'KeywordIndex')
-#         self.assertEqual(result.sd_category, 'category')
-#         self.assertEqual(result.discriminator, 'abc')
+class TestFacet(unittest.TestCase):
+    def _makeOne(self, **kw):
+        from ..factories import Facet
+        return Facet(**kw)
 
-# class Test_facet_index_factory(unittest.TestCase):
-#     def _callFUT(self, name, category, **kw):
-#         from .. import facet_index_factory
-#         return facet_index_factory(name, category, **kw)
+    def test_call(self):
+        inst = self._makeOne(facets=[(1,2)])
+        result = inst('catalog', 'index')
+        self.assertEqual(result.__class__.__name__, 'FacetIndex')
+        self.assertEqual(
+            result.discriminator.__class__.__name__,
+            'IndexViewDiscriminator'
+            )
+        self.assertTrue(hasattr(result, '__factory_hash__'))
 
-#     def test_it(self):
-#         result = self._callFUT('name', 'category', facets=['abc'])
-#         self.assertEqual(result.__class__.__name__, 'FacetIndex')
-#         self.assertEqual(result.sd_category, 'category')
-#         self.assertEqual(result.discriminator.method_name, 'name')
+    def test_hashvalues(self):
+        inst = self._makeOne(facets=[(1,2)])
+        result = inst.hashvalues()
+        self.assertEqual(
+            result,
+            {'class': 'substanced.catalog.factories.Facet',
+             'facets':((1,2),)}
+            )
 
-#     def test_it_with_discrim(self):
-#         result = self._callFUT('name', 'category', discriminator='abc',
-#             facets=['abc'])
-#         self.assertEqual(result.__class__.__name__, 'FacetIndex')
-#         self.assertEqual(result.sd_category, 'category')
-#         self.assertEqual(result.discriminator, 'abc')
+class TestPath(unittest.TestCase):
+    def _makeOne(self, **kw):
+        from ..factories import Path
+        return Path(**kw)
 
-# class Test_allowed_index_factory(unittest.TestCase):
-#     def _callFUT(self, name, category, **kw):
-#         from .. import allowed_index_factory
-#         return allowed_index_factory(name, category, **kw)
+    def test_call(self):
+        inst = self._makeOne()
+        result = inst('catalog', 'index')
+        self.assertEqual(result.__class__.__name__, 'PathIndex')
+        self.assertTrue(hasattr(result, '__factory_hash__'))
 
-#     def test_it(self):
-#         result = self._callFUT('name', 'category')
-#         self.assertEqual(result.__class__.__name__, 'AllowedIndex')
-#         self.assertEqual(result.sd_category, 'category')
-#         self.assertEqual(result.discriminator.method_name, 'name')
-
-#     def test_it_with_discrim(self):
-#         result = self._callFUT('name', 'category', discriminator='abc')
-#         self.assertEqual(result.__class__.__name__, 'AllowedIndex')
-#         self.assertEqual(result.sd_category, 'category')
-#         self.assertEqual(result.discriminator, 'abc')
-
-# class Test_path_index_factory(unittest.TestCase):
-#     def _callFUT(self, name, category, **kw):
-#         from .. import path_index_factory
-#         return path_index_factory(name, category, **kw)
-
-#     def test_it(self):
-#         result = self._callFUT('name', 'category')
-#         self.assertEqual(result.__class__.__name__, 'PathIndex')
-#         self.assertEqual(result.sd_category, 'category')
+    def test_hashvalues(self):
+        inst = self._makeOne()
+        result = inst.hashvalues()
+        self.assertEqual(
+            result,
+            {'class': 'substanced.catalog.factories.Path'}
+            )
 
