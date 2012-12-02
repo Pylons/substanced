@@ -26,7 +26,7 @@ def coarse_datetime_repr(date):
 def postorder(startnode):
     """ Walks over nodes in a folder recursively. Yields deepest nodes first."""
     def visit(node):
-        if IFolder.providedBy(node):
+        if is_folder(node):
             for child in node.values():
                 for result in visit(child):
                     yield result
@@ -48,6 +48,7 @@ def get_oid(resource, default=_marker):
 oid_of = get_oid
 
 def set_oid(resource, oid):
+    """ Set the object id of the resource to oid."""
     resource.__oid__ = oid
 
 def merge_url_qs(url, **kw):
@@ -416,7 +417,7 @@ def find_content(resource, content_type, registry=None):
 def _find_services(resource, name, one=False):
     L = []
     for obj in lineage(resource):
-        if IFolder.providedBy(obj):
+        if is_folder(obj):
             subobj = obj.get(name, None)
             if subobj is not None:
                 if is_service(subobj):
@@ -426,10 +427,6 @@ def _find_services(resource, name, one=False):
     if one:
         return None
     return L
-
-def is_service(resource):
-    """ Returns ``True`` if the resource is a service, ``False`` if not. """
-    return bool(getattr(resource, '__is_service__', False))
 
 def find_service(resource, name):
     """ Find the first service named ``name`` in the lineage of ``resource``
@@ -443,3 +440,20 @@ def find_services(resource, name):
     deeply nested service.  Returns an empty sequence if no such-named
     service could be found."""
     return _find_services(resource, name)
+
+def get_factory_type(resource):
+    """ If the resource has a __factory_type__ attribute, return it.
+    Otherwise return the full Python dotted name of the resource's class."""
+    factory_type = getattr(resource, '__factory_type__', None)
+    if factory_type is None:
+        factory_type = get_dotted_name(resource.__class__)
+    return factory_type
+
+def is_folder(resource):
+    """ Return ``True`` if the object is a folder, ``False`` if not. """
+    return IFolder.providedBy(resource)
+
+def is_service(resource):
+    """ Returns ``True`` if the resource is a service, ``False`` if not. """
+    return bool(getattr(resource, '__is_service__', False))
+

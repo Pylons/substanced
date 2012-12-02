@@ -12,17 +12,10 @@ from ..util import (
     get_dotted_name,
     set_created,
     set_oid,
+    get_factory_type,
     )
 
 _marker = object()
-
-def _get_factory_type(resource):
-    """ If the resource has a __factory_type__ attribute, return it.
-    Otherwise return the full Python dotted name of the resource's class."""
-    factory_type = getattr(resource, '__factory_type__', None)
-    if factory_type is None:
-        factory_type = get_dotted_name(resource.__class__)
-    return factory_type
 
 class ContentRegistry(object):
     """ An object accessible as ``registry.content`` (aka
@@ -96,7 +89,7 @@ class ContentRegistry(object):
 
     def typeof(self, resource):
         """ Return the content type of ``resource`` """
-        factory_type = _get_factory_type(resource)
+        factory_type = get_factory_type(resource)
         content_type = self.factory_types.get(factory_type)
         return content_type
 

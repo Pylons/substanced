@@ -416,7 +416,7 @@ class TestFolder(unittest.TestCase):
         folder.__objectmap__ = objectmap
         folder.remove("a")
         self.assertEqual(objectmap.removed, [1])
-        self.assertTrue(objectmap.references_removed, True)
+        self.assertFalse(objectmap.moving)
 
     def test_remove_with_objectmap_moving(self):
         dummy = DummyModel()
@@ -428,7 +428,7 @@ class TestFolder(unittest.TestCase):
         folder.__objectmap__ = objectmap
         folder.remove("a", moving=True)
         self.assertEqual(objectmap.removed, [1])
-        self.assertFalse(objectmap.references_removed)
+        self.assertTrue(objectmap.moving)
 
     def test_move_no_newname(self):
         folder = self._makeOne()
@@ -781,9 +781,9 @@ class DummyObjectMap(object):
     def __init__(self):
         self.added = []
         self.removed = []
-        self.references_removed = False
+        self.moving = False
 
-    def add(self, obj, path, replace_oid=False):
+    def add(self, obj, path, duplicating=False, moving=False):
         self.added.append((obj, path))
         objectid = getattr(obj, '__oid__', None)
         if objectid is None:
@@ -791,8 +791,8 @@ class DummyObjectMap(object):
             obj.__oid__ = objectid
         return objectid
 
-    def remove(self, objectid, references=True):
-        self.references_removed = references
+    def remove(self, objectid, moving=False):
+        self.moving = moving
         self.removed.append(objectid)
         return [objectid]
 

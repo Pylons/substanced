@@ -18,7 +18,6 @@ from pyramid.util import (
     TopologicalSorter,
     )
 
-from substanced.interfaces import IFolder
 from substanced.workflow import STATE_ATTR
 from substanced.objectmap import find_objectmap
 from substanced.sdi import sdiapi
@@ -30,6 +29,7 @@ from substanced.util import (
     get_acl,
     get_dotted_name,
     get_content_type,
+    is_folder,
     )
 
 logger = logging.getLogger(__name__)
@@ -117,7 +117,7 @@ def dump(
         if not subresources:
             break
 
-        if IFolder.providedBy(resource):
+        if is_folder(resource):
             for subresource in resource.values():
                 subdirectory = os.path.join(
                     directory,
@@ -450,7 +450,7 @@ class FolderOrderDumper(object):
 
     def dump(self, context):
         resource = context.resource
-        if IFolder.providedBy(resource) and resource.is_ordered():
+        if is_folder(resource) and resource.is_ordered():
             context.dump_yaml(resource.order, self.fn)
                 
     def load(self, context):

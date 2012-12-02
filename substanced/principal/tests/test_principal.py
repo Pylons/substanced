@@ -412,7 +412,7 @@ class DummyObjectMap(object):
     def connect(self, source, target, reftype):
         self.connections.append((source, target, reftype))
 
-    def add(self, node, path_tuple, replace_oid=False):
+    def add(self, node, path_tuple, duplicating=False, moving=False):
         pass
 
 class DummyContentRegistry(object):

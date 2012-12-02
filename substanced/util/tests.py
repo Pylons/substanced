@@ -574,6 +574,21 @@ class Test_find_services(unittest.TestCase):
         site = testing.DummyResource(__provides__=IFolder)
         self.assertEqual(self._callFUT(site, 'catalog'), [])
 
+class Test_get_factory_type(unittest.TestCase):
+    def _callFUT(self, resource):
+        from . import get_factory_type
+        return get_factory_type(resource)
+
+    def test_has_ft_attr(self):
+        resource = Dummy()
+        resource.__factory_type__ = 'abc'
+        self.assertEqual(self._callFUT(resource), 'abc')
+
+    def test_without_ft_attr(self):
+        resource = Dummy()
+        self.assertEqual(self._callFUT(resource),
+                         'substanced.util.tests.Dummy')
+
 
 class DummyContent(object):
     renamed_from = None

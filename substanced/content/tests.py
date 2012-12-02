@@ -367,21 +367,6 @@ class Test_ContentTypePredicate(unittest.TestCase):
         inst = self._makeOne('abc', config)
         self.assertEqual(inst.phash(), 'content_type = abc')
 
-class Test__get_factory_type(unittest.TestCase):
-    def _callFUT(self, resource):
-        from . import _get_factory_type
-        return _get_factory_type(resource)
-
-    def test_has_ft_attr(self):
-        resource = Dummy()
-        resource.__factory_type__ = 'abc'
-        self.assertEqual(self._callFUT(resource), 'abc')
-
-    def test_without_ft_attr(self):
-        resource = Dummy()
-        self.assertEqual(self._callFUT(resource),
-                         'substanced.content.tests.Dummy')
-
 class DummyContentRegistry(object):
     def __init__(self):
         self.added = []

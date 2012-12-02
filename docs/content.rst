@@ -443,7 +443,7 @@ For example:
     class BlogEntrySchema(Schema):
         name = NameSchemaNode()
 
-...provides the basics of support for editing a name property,
+The above provides the basics of support for editing a name property,
 especially when combined with the ``renamer()`` utility mentioned above.
 
 By default the name is limited to 100 characters. ``NameSchemaNode``
