@@ -271,11 +271,13 @@ def chunks(stream, chunk_size=10000):
             break
         yield chunk
 
-def acquire(resource, name, default=None):
+def acquire(resource, name, default=_marker):
     for node in lineage(resource):
         result = getattr(node, name, _marker)
         if result is not _marker:
             return result
+    if default is _marker:
+        raise AttributeError(name)
     return default
 
 def get_all_permissions(registry):

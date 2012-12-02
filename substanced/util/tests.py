@@ -319,7 +319,7 @@ class Test_acquire(unittest.TestCase):
 
     def test_missing_no_default(self):
         inst = DummyContent(None)
-        self.assertEqual(self._callFUT(inst, 'abc'), None)
+        self.assertRaises(AttributeError, self._callFUT, inst, 'abc')
 
     def test_hit(self):
         inst = DummyContent(None)
