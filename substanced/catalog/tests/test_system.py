@@ -19,11 +19,10 @@ class TestSystemIndexViews(unittest.TestCase):
         alsoProvides(resource, Dummy2)
         inst = self._makeOne(resource)
         result = inst.interfaces(None)
-        self.assertEqual(len(result), 4)
+        self.assertEqual(len(result), 3)
         self.assertTrue(Dummy1 in result)
         self.assertTrue(Dummy2 in result)
         self.assertTrue(Interface in result)
-        self.assertTrue(testing.DummyResource in result)
 
     def test_containment(self):
         class Dummy1(Interface):
@@ -37,11 +36,10 @@ class TestSystemIndexViews(unittest.TestCase):
         root['foo'] = resource
         inst = self._makeOne(resource)
         result = inst.containment(None)
-        self.assertEqual(len(result), 4)
+        self.assertEqual(len(result), 3)
         self.assertTrue(Dummy1 in result)
         self.assertTrue(Dummy2 in result)
         self.assertTrue(Interface in result)
-        self.assertTrue(testing.DummyModel in result) 
 
     def test_name_has_no_name(self):
         resource = object()

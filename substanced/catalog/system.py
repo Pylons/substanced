@@ -19,17 +19,17 @@ class SystemIndexViews(object):
 
     def interfaces(self, default):
         """ Return a set of all interfaces implemented by the object, including
-        inherited interfaces and its class.
+        inherited interfaces (but no classes).
         """
-        return get_interfaces(self.resource)
+        return get_interfaces(self.resource, classes=False)
 
     def containment(self, default):
         """ Return a set of all interfaces implemented by the object *and its
-        containment ancestors*, including inherited interfaces, and their
-        classes."""
+        containment ancestors*, including inherited interfaces.  This does
+        not index classes."""
         ifaces = set()
         for ancestor in lineage(self.resource):
-            ifaces.update(get_interfaces(ancestor))
+            ifaces.update(get_interfaces(ancestor, classes=False))
         return ifaces
 
     def name(self, default):
