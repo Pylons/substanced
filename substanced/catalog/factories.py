@@ -55,6 +55,10 @@ class IndexFactory(object):
         values = tuple(sorted(self.hashvalues().items()))
         return hash(values)
 
+    def is_stale(self, index):
+        index_hash = getattr(index, '__factory_hash__', None)
+        return index_hash != hash(self)
+
 class Text(IndexFactory):
     index_type = TextIndex
 
@@ -137,9 +141,10 @@ class CatalogFactory(object):
                 verb = 'replacing'
             else:
                 verb = 'adding'
-                output and output(
-                    '%s: %s index named %r' % (catalog_path, verb, index_name),
-                    )
+
+            output and output(
+                '%s: %s index named %r' % (catalog_path, verb, index_name),
+                )
 
             catalog.replace(index_name, index_factory(self.name, index_name))
             to_reindex.add(index_name)
@@ -171,7 +176,7 @@ class CatalogFactory(object):
 
             index = catalog[index_name]
 
-            if getattr(index, '__factory_hash__', None) != hash(index_factory):
+            if index_factory.is_stale(index):
                 output and output(
                     '%s: replacing stale index named %r' % (
                         catalog_path,

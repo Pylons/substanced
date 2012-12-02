@@ -201,3 +201,93 @@ class TestAllowed(unittest.TestCase):
              'permissions': ('a','b')}
             )
         
+class TestCatalogFactory(unittest.TestCase):
+    def _makeOne(self, name, index_factories):
+        from ..factories import CatalogFactory
+        return CatalogFactory(name, index_factories)
+
+    def test_ctor(self):
+        inst = self._makeOne('name', 'factories')
+        self.assertEqual(inst.name, 'name')
+        self.assertEqual(inst.index_factories, 'factories')
+
+    def test_replace(self):
+        L = []
+        output = L.append
+        factory = DummyIndexFactory()
+        index_factories = {'a':factory}
+        inst = self._makeOne('name', index_factories)
+        catalog = DummyCatalog()
+        index = testing.DummyResource()
+        catalog['a'] = index
+        result = inst.replace(catalog, output=output)
+        self.assertTrue(result)
+        self.assertEqual(factory.catalog_name, 'name')
+        self.assertFalse(catalog.reindexed)
+        self.assertEqual(catalog['a'], factory)
+        self.assertTrue(L)
+
+    def test_replace_add(self):
+        L = []
+        output = L.append
+        factory = DummyIndexFactory()
+        index_factories = {'a':factory}
+        inst = self._makeOne('name', index_factories)
+        catalog = DummyCatalog()
+        result = inst.replace(catalog, output=output)
+        self.assertTrue(result)
+        self.assertEqual(factory.catalog_name, 'name')
+        self.assertFalse(catalog.reindexed)
+        self.assertEqual(catalog['a'], factory)
+        self.assertTrue(L)
+
+    def test_replace_reindex_true(self):
+        L = []
+        output = L.append
+        factory = DummyIndexFactory()
+        index_factories = {'a':factory}
+        inst = self._makeOne('name', index_factories)
+        catalog = DummyCatalog()
+        result = inst.replace(catalog, output=output, reindex=True)
+        self.assertTrue(result)
+        self.assertEqual(factory.catalog_name, 'name')
+        self.assertEqual(catalog.reindexed['indexes'], set(['a']))
+        self.assertEqual(catalog['a'], factory)
+        self.assertTrue(L)
+
+    def test_replace_remove_stale(self):
+        L = []
+        output = L.append
+        index_factories = {}
+        inst = self._makeOne('name', index_factories)
+        index = testing.DummyResource()
+        catalog = DummyCatalog()
+        catalog['index'] = index
+        result = inst.replace(catalog, output=output)
+        self.assertTrue(result)
+        self.assertFalse('index' in catalog)
+        self.assertTrue(L)
+
+class DummyIndexFactory(object):
+    def __init__(self, result=None):
+        self.result = result
+
+    def __call__(self, catalog_name, index_name):
+        self.catalog_name = catalog_name
+        self.index_name = index_name
+        return self
+
+    def is_stale(self, index):
+        return self.result
+        
+
+class DummyCatalog(testing.DummyResource):
+    reindexed = False
+    __name__ = 'catalog'
+    __parent__ = None
+    def replace(self, name, value):
+        self[name] = value
+
+    def reindex(self, **kw):
+        self.reindexed = kw
+        
