@@ -33,11 +33,13 @@ from ..schema import (
     )
 
 from .discriminators import (
-    AllowedDiscriminator,
     dummy_discriminator,
+    AllowedIndexDiscriminator,
     )
 
 PATH_WITH_OPTIONS = re.compile(r'\[(.+?)\](.+?)$')
+
+_marker = object()
 
 class ResolvingIndex(object):
     def resultset_from_query(self, query, names=None, resolver=None):
@@ -48,24 +50,11 @@ class ResolvingIndex(object):
         numdocs = len(docids)
         return hypatia.util.ResultSet(docids, numdocs, resolver)
 
-class IndexSchema(Schema):
-    sd_category = colander.SchemaNode(
-        colander.String(),
-        missing='',
-        title='Category',
-        )
-
-class IndexPropertySheet(PropertySheet):
-    schema = IndexSchema()
-    
 @content(
     'Path Index',
     icon='icon-search',
     add_view='add_path_index',
     is_index=True,
-    propertysheets = (
-        ('', IndexPropertySheet),
-        )
     )
 @implementer(hypatia.interfaces.IIndex)
 class PathIndex(ResolvingIndex, hypatia.util.BaseIndexMixin, Persistent):
@@ -75,7 +64,7 @@ class PathIndex(ResolvingIndex, hypatia.util.BaseIndexMixin, Persistent):
     include_origin = True
     depth = None
 
-    def __init__(self, family=None):
+    def __init__(self, discriminator=None, family=None):
         if family is not None:
             self.family = family
         self.reset()
@@ -202,9 +191,6 @@ class PathIndex(ResolvingIndex, hypatia.util.BaseIndexMixin, Persistent):
     icon='icon-search',
     add_view='add_field_index',
     is_index=True,
-    propertysheets = (
-        ('', IndexPropertySheet),
-        )
     )
 class FieldIndex(ResolvingIndex, hypatia.field.FieldIndex):
     def __init__(self, discriminator=None, family=None):
@@ -217,25 +203,20 @@ class FieldIndex(ResolvingIndex, hypatia.field.FieldIndex):
     icon='icon-search',
     add_view='add_keyword_index',
     is_index=True,
-    propertysheets = (
-        ('', IndexPropertySheet),
-        )
     )
 class KeywordIndex(ResolvingIndex, hypatia.keyword.KeywordIndex):
     def __init__(self, discriminator=None, family=None):
         if discriminator is None:
             discriminator = dummy_discriminator
         hypatia.keyword.KeywordIndex.__init__(
-            self, discriminator, family=family)
+            self, discriminator, family=family
+            )
 
 @content(
     'Text Index',
     icon='icon-search',
     add_view='add_text_index',
     is_index=True,
-    propertysheets = (
-        ('', IndexPropertySheet),
-        )
     )
 class TextIndex(ResolvingIndex, hypatia.text.TextIndex):
     def __init__(
@@ -256,7 +237,7 @@ class Facets(colander.SequenceSchema):
         colander.String(),
         )
 
-class FacetIndexSchema(IndexSchema):
+class FacetIndexSchema(Schema):
     facets = Facets(
         missing=(),
         title = 'Facets (any change will cause a reindex)',
@@ -301,7 +282,7 @@ class FacetIndex(ResolvingIndex, hypatia.facet.FacetIndex):
             self, discriminator, facets=facets, family=family
             )
 
-class AllowedIndexSchema(IndexSchema):
+class AllowedIndexSchema(Schema):
     permissions = PermissionsSchemaNode(
         missing=(),
         title=('Permissions (any change will cause a reindex, '
@@ -332,13 +313,20 @@ class AllowedIndexPropertySheet(PropertySheet):
         )
     )
 class AllowedIndex(KeywordIndex):
+    def __init__(self, discriminator=None, family=None):
+        if discriminator is None:
+            discriminator = dummy_discriminator
+        KeywordIndex.__init__(
+            self, discriminator, family=family
+            )
+
     def _get_permissions(self):
-        return set(self.discriminator.permissions or ())
+        return set(getattr(self.discriminator, 'permissions', ()))
 
     def _set_permissions(self, permissions):
         permissions = set(permissions)
-        if permissions != set(self.discriminator.permissions):
-            self.discriminator = AllowedDiscriminator(permissions)
+        if permissions != self._get_permissions():
+            self.discriminator = AllowedIndexDiscriminator(permissions)
 
     permissions = property(_get_permissions, _set_permissions)
         
@@ -353,4 +341,3 @@ class AllowedIndex(KeywordIndex):
             principals = (principals,)
         values = [(principal, permission) for principal in principals]
         return hypatia.query.Any(self, values)
-

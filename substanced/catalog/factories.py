@@ -1,10 +1,13 @@
 import BTrees
-from zope.interface import Interface
-from pyramid.threadlocal import get_current_registry
-from pyramid.compat import is_nonstr_iter
-import venusian
+from zope.interface import implementer
 
-from ..folder import Folder
+from pyramid.compat import is_nonstr_iter
+from pyramid.traversal import resource_path
+
+from ..interfaces import (
+    ICatalogFactory,
+    IIndexFactory,
+    )
 from ..util import get_dotted_name
 
 from .indexes import (
@@ -16,42 +19,20 @@ from .indexes import (
     PathIndex,
     )
 
-from . import Catalog
+from .discriminators import (
+    IndexViewDiscriminator,
+    AllowedIndexDiscriminator,
+    )
 
-_marker = object()
-
-class ICatalogViewFactory(Interface):
-    pass
-    
-class IndexDiscriminator(object):
-    get_current_registry = staticmethod(get_current_registry) # for testing
-    
-    def __init__(self, catalog_name, index_name):
-        self.catalog_name = catalog_name
-        self.index_name = index_name
-
-    def __call__(self, resource, default):
-        registry = self.get_current_registry() # XXX lame
-        catalog_view = registry.queryAdapter(
-            resource,
-            ICatalogViewFactory,
-            name=self.catalog_name,
-            default=None,
-            )
-        if catalog_view is not None:
-            meth = getattr(catalog_view, self.index_name, _marker)
-            if meth is not _marker:
-                return meth(default)
-            return default
-
+@implementer(IIndexFactory)
 class IndexFactory(object):
+
     def __init__(self, **kw):
         self.kw = kw
 
     def __call__(self, catalog_name, index_name):
-        kw = self.kw
-        kw['discriminator'] = IndexDiscriminator(catalog_name, index_name)
-        index = self.index_type(**self.kw)
+        discriminator = IndexViewDiscriminator(catalog_name, index_name)
+        index = self.index_type(discriminator=discriminator, **self.kw)
         index.__factory_hash__ = hash(self)
         return index
 
@@ -78,7 +59,7 @@ class Text(IndexFactory):
     index_type = TextIndex
 
     def hashvalues(self):
-        values = IndexFactory.hashitems(self)
+        values = IndexFactory.hashvalues(self)
         for name in ('lexicon', 'index'):
             attr = values.get(name, None)
             if attr is not None:
@@ -96,16 +77,25 @@ class Facet(IndexFactory):
     index_type = FacetIndex
 
     def hashvalues(self):
-        values = IndexFactory.hashitems(self)
+        values = IndexFactory.hashvalues(self)
         facets = values.get('facets', ())
         values['facets'] = tuple(sorted([(x,y) for x, y in facets]))
         return values.items()
 
 class Allowed(IndexFactory):
     index_type = AllowedIndex
+    discriminator_factory = AllowedIndexDiscriminator
+
+    def __call__(self, catalog_name, index_name):
+        kw = self.kw.copy()
+        permissions = kw.pop('permissions', None)
+        discriminator = AllowedIndexDiscriminator(permissions)
+        index = self.index_type(discriminator=discriminator, **kw)
+        index.__factory_hash__ = hash(self)
+        return index
 
     def hashvalues(self):
-        values = IndexFactory.hashitems(self)
+        values = IndexFactory.hashvalues(self)
         permissions = values.get('permissions', None)
         if not is_nonstr_iter(permissions):
             permissions = (permissions,)
@@ -115,56 +105,79 @@ class Allowed(IndexFactory):
 class Path(IndexFactory):
     index_type = PathIndex
 
-class CatalogsService(Folder):
-    pass # XXX not really just a folder
-
+@implementer(ICatalogFactory)
 class CatalogFactory(object):
-    def __init__(self, name, **index_factories):
+    def __init__(self, name, index_factories):
         self.name = name
         self.index_factories = index_factories
 
-    def _get_catalog(self, folder):
-        if not 'catalogs' in folder:
-            folder['catalogs'] = CatalogsService()
-
-        catalogs = folder['catalogs']
-
-        if not self.name in catalogs:
-            catalogs[self.name] = Catalog()
-
-        catalog = catalogs[self.name]
-        return catalog
-
-    def _remove_stale(self, catalog):
+    def _remove_stale(self, catalog, output=None):
+        catalog_path = resource_path(catalog)
+        result = False
         for index_name, index in catalog.items():
             if not index_name in self.index_factories:
+                output and output(
+                    '%s: removing stale index named %r' % (
+                        catalog_path,
+                        index_name,
+                        )
+                    )
                 del catalog[index_name]
+                result = True
+        return result
 
-    def replace(self, folder, reindex=False):
-        catalog = self._get_catalog(folder)
-
-        for index_name, index_factory in self.index_factories.items():
-            catalog[index_name] = index_factory(self.name, index_name)
-
-        self._remove_stale(catalog)
-
-        if reindex:
-            catalog.reindex()
-
-    def sync(self, folder, reindex=False):
-        catalog = self._get_catalog(folder)
+    def replace(self, catalog, reindex=False, output=None, **reindex_kw):
+        catalog_path = resource_path(catalog)
 
         to_reindex = []
 
+        changed = False
+
+        for index_name, index_factory in self.index_factories.items():
+            if index_name in catalog:
+                verb = 'replacing'
+            else:
+                verb = 'adding'
+                output and output(
+                    '%s: %s index named %r' % (catalog_path, verb, index_name),
+                    )
+
+            catalog.replace(index_name, index_factory(self.name, index_name))
+            to_reindex.append(index_name)
+            changed = True
+
+        removed_stale = self._remove_stale(catalog)
+
+        if reindex:
+            catalog.reindex(indexes=to_reindex, output=output, **reindex_kw)
+
+        return removed_stale or changed
+
+    def sync(self, catalog, reindex=False, output=None, **reindex_kw):
+        catalog_path = resource_path(catalog)
+
+        to_reindex = []
+        changed = False
+
         for index_name, index_factory in self.index_factories.items():
             if not index_name in catalog:
+                output and output(
+                    '%s: adding index named %r' % (catalog_path, index_name),
+                    )
                 index = catalog[index_name] = index_factory(
                     self.name, index_name
                     )
+                changed = True
 
             index = catalog[index_name]
 
             if index.__factory_hash__ != hash(index_factory):
+                output and output(
+                    '%s: replacing stale index named %r' % (
+                        catalog_path,
+                        index_name,
+                        )
+                    )
                 catalog.replace(
                     index_name,
                     index_factory(
@@ -172,77 +185,12 @@ class CatalogFactory(object):
                         )
                     )
                 to_reindex.append(index_name)
+                changed = True
 
-        self._remove_stale(catalog)
+        removed_stale = self._remove_stale(catalog)
 
         if reindex:
-            catalog.reindex(indexes=to_reindex)
+            catalog.reindex(indexes=to_reindex, output=output, **reindex_kw)
 
-class catalog_factory(object):
-    depth = 1
-    venusian = venusian # for testing injection
+        return removed_stale or changed
 
-    def __init__(self, name):
-        self.name = name
-
-    def __call__(self, cls):
-        index_factories = {}
-        for name in dir(cls):
-            value = getattr(cls, name, None)
-            if isinstance(value, IndexFactory):
-                index_factories[name] = value
-                
-        factory = CatalogFactory(self.name, index_factories)
-
-        extra = {}
-
-        def callback(context, name, ob):
-            config = context.config.with_package(info.module)
-            config.add_catalog_factory(self.name, factory, **extra)
-
-        info = self.venusian.attach(factory, callback, category='substanced')
-
-        extra['_info'] = info.codeinfo # fbo "action_method"
-        extra['_depth'] = self.depth
-
-        return factory
-
-class ICatalogFactory(Interface):
-    pass
-
-def add_catalog_factory(config, name, factory):
-    def add_catalog_factory():
-        config.registry.registerUtility(factory, ICatalogFactory, name)
-
-    discriminator = ('sd-catalog-factory', name)
-    intr = config.introspectable(
-        'sd catalog factories',
-        discriminator,
-        name,
-        'sd catalog factory'
-        )
-    intr['name'] = name
-    intr['factory'] = factory
-    config.action(
-        discriminator, 
-        callable=add_catalog_factory,
-        introspectables=(intr,)
-        )
-    
-
-@catalog_factory('kuiu')
-class KUIUCatalog(object):
-    texts = Text()
-    title = Field()
-    order_date = Field()
-    warehoused = Field()
-    billing_text = Text()
-    shipping_text = Text()
-    processing_status = Field()
-    billing_status = Field()
-    amount = Field()
-    ship_date = Field()
-    skus = Keyword()
-    email = Field()
-    customer_type = Field()
-    

@@ -1,32 +1,34 @@
+import inspect
 import logging
-
 import transaction
+import venusian
 
 import BTrees
 
-from zope.interface import implementer
+from zope.interface import (
+    implementer,
+    Interface,
+    providedBy,
+    )
 
-from pyramid.exceptions import ConfigurationError
 from pyramid.traversal import resource_path
 from pyramid.threadlocal import get_current_registry
-from pyramid.interfaces import PHASE1_CONFIG
+from pyramid.util import object_description
 
-from ..interfaces import ICatalog
-
-from . import indexes as indexes_module
-
-from .discriminators import (
-    CatalogViewDiscriminator,
-    AllowedDiscriminator,
-    get_name,
-    get_interfaces,
-    get_containment,
+from ..interfaces import (
+    ICatalog,
+    ICatalogFactory,
+    IIndexView,
     )
 
 from ..content import service
 from ..folder import Folder
 from ..objectmap import find_objectmap
-from ..util import get_oid
+
+from .factories import (
+    IndexFactory,
+    CatalogFactory,
+    )
 
 logger = logging.getLogger(__name__) # API
 
@@ -187,41 +189,34 @@ class Catalog(Folder):
                 continue
             output and output('reindexing %s' % path)
 
-            view_factory = catalog_view_factory_for(resource, registry)
-            wrapper = CatalogViewWrapper(resource, view_factory)
-
             if indexes is None:
-                self.reindex_doc(objectid, wrapper)
+                self.reindex_doc(objectid, resource)
             else:
                 for index in indexes:
-                    self[index].reindex_doc(objectid, wrapper)
+                    self[index].reindex_doc(objectid, resource)
+
             if i % commit_interval == 0: # pragma: no cover
                 commit_or_abort()
             i+=1
+
         if i:
             commit_or_abort()
 
     def update_indexes(
         self,
-        category,
         registry=None,
         dry_run=False,
         output=None,
         replace=False,
         reindex=False,
-        **kw
+        **reindex_kw
         ):
         """
-        Use the candidate indexes registered via ``config.add_index`` to
-        populate this catalog.  Any indexes which are present in the
-        candidate indexes, but not present in the catalog will be created.
-        Any indexes which are present in the catalog but not present in
-        the candidate indexes will be deleted.
-
-        ``category`` is the name of a category of indexes.
-        It should match a category name passed to ``add_index``. Pass ``None``
-        as ``category`` to populate the catalog with the default "system" 
-        indexes.
+        Use the candidate indexes registered via ``config.add_catalog_factory``
+        to populate this catalog.  Any indexes which are present in the
+        candidate indexes, but not present in the catalog will be created.  Any
+        indexes which are present in the catalog but not present in the
+        candidate indexes will be deleted.
 
         ``registry``, if passed, should be a Pyramid registry.  If one is not
         passed, the ``get_current_registry()`` function will be used to
@@ -256,62 +251,19 @@ class Catalog(Folder):
         if registry is None: # pragma: no cover
             registry = get_current_registry()
 
-        categories = get_candidate_indexes(registry)
-        factories = get_index_factories(registry)
+        factory = registry.getUtility(ICatalogFactory, name=self.__name__)
 
-        added = []
-        removed = []
+        reindex_kw['registry'] = registry
+        reindex_kw['dry_run'] = dry_run
 
-        output and output('update_indexes: starting category %r' % category)
-
-        indexes = categories.get(category, {})
-
-        def get_index_category(name):
-            return getattr(self[name], 'sd_category', None)
-
-        def add_or_replace(name, vals):
-            factory_name = vals['factory_name']
-            factory_args = vals['factory_args']
-            output and output(
-                'update_indexes: adding %s index named %r' % (
-                    factory_name, name)
+        if replace:
+            changed = factory.replace(
+                self, reindex=reindex, output=output, **reindex_kw
                 )
-            factory = factories[factory_name]
-
-            if name in self:
-                del self[name]
-            self[name] = factory(name, category, **factory_args)
-            added.append(name)
-
-        # add indexes
-        for name, vals in indexes.items():
-            if name in self:
-                idx_category = get_index_category(name)
-                if idx_category != category:
-                    if replace:
-                        output and output(
-                            'update_indexes: replacing existing index '
-                            'in category %r named %r' % (idx_category, name)
-                            )
-                        add_or_replace(name, vals)
-                    else:
-                        output and output(
-                            'update_indexes: not replacing existing index '
-                            'in category %r named %r' % (idx_category, name)
-                            )
-            else:
-                add_or_replace(name, vals)
-
-        # remove indexes
-        for name, vals in self.items():
-            if not name in indexes:
-                idx_category = get_index_category(name)
-                if idx_category == category:
-                    output and output(
-                        'update_indexes: removing index named %r' % name
-                        )
-                    del self[name]
-                    removed.append(name)
+        else:
+            changed = factory.sync(
+                self, reindex=reindex, output=output, **reindex_kw
+                )
 
         def commit_or_abort():
             if dry_run:
@@ -321,215 +273,88 @@ class Catalog(Folder):
                 output and output('*** committing ***')
                 self.transaction.commit()
 
-        if added or removed:
+        if changed:
             commit_or_abort()
         else:
             output and output('update_indexes: no indexes added or removed')
 
-        if added and reindex:
-            output and output('update_indexes: reindexing added indexes')
-            self.reindex(
-                indexes=added,
-                registry=registry,
-                output=output, 
-                dry_run=dry_run,
-                **kw
-                )
+class IndexViewMapper(object):
+    def __init__(self, attr=None):
+        self.attr = attr
 
-        elif added:
-            output and output('update_indexes: not reindexing added indexes')
+    def __call__(self, view):
+        if inspect.isclass(view):
+            view = self.map_method(view)
+        else:
+            view = self.map_function(view)
+        return view
 
-        output and output(
-            'update_indexes: finished with category %r' %  category
-            )
+    def map_method(self, view):
+        # it's an unbound class method
+        attr = self.attr
+        def _method_view(resource, default):
+            inst = view(resource)
+            if attr is None:
+                result = inst(default)
+            else:
+                result = getattr(inst, attr)(default)
+            return result
+        return _method_view
 
-class CatalogViewWrapper(object):
-    def __init__(self, content, view_factory):
-        self.content = content
-        self.view_factory = view_factory
+    def map_function(self, view):
+        # its a function or an instance method
+        attr = self.attr
+        def _function_view(resource, default):
+            if attr is None:
+                result = view(resource, default)
+            else:
+                result = getattr(view, attr)(result, default)
+            return result
+        return _function_view
 
-def catalog_view_factory_for(resource, registry=None):
-    if registry is None:
-        registry = get_current_registry()
-    value = registry.content.metadata(resource, 'catalog', False)
-    return value
+class catalog_factory(object):
+    venusian = venusian # for testing injection
+
+    def __init__(self, name):
+        self.name = name
+
+    def __call__(self, cls):
+        index_factories = {}
+        for name in dir(cls):
+            value = getattr(cls, name, None)
+            if isinstance(value, IndexFactory):
+                index_factories[name] = value
+                
+        factory = CatalogFactory(self.name, index_factories)
+
+        extra = {}
+
+        def callback(context, name, ob):
+            config = context.config.with_package(info.module)
+            config.add_catalog_factory(self.name, factory, **extra)
+
+        info = self.venusian.attach(factory, callback, category='substanced')
+
+        extra['_info'] = info.codeinfo # fbo "action_method"
+
+        return factory
+
+class CatalogsService(Folder):
+    pass # XXX not really just a folder
+
+def make_catalog(folder, name):
+    if not 'catalogs' in folder:
+        folder.add_service('catalogs', CatalogsService())
+    catalogs = folder['catalogs']
+    catalogs[name] = Catalog()
+    catalog = catalogs[name]
+    return catalog
 
 def is_catalogable(resource, registry=None):
-    return bool(catalog_view_factory_for(resource, registry))
-
-def get_index_factories(registry):
-    factories = getattr(registry, 'sd_index_factories', None)
-    if factories is None:
-        factories = {}
-        registry.sd_index_factories = factories
-    return factories
-
-def get_candidate_indexes(registry):
-    indexes = getattr(registry, 'sd_candidate_indexes', None)
-    if indexes is None:
-        indexes = {}
-        registry.sd_candidate_indexes = indexes
-    return indexes
-
-def add_catalog_index_factory(config, name, factory):
-    def add_index_factory():
-        index_factories = get_index_factories(config.registry)
-        index_factories[name] = factory
-
-    discriminator = ('sd-catalog-index-factory', name)
-    intr = config.introspectable(
-        'sd catalog index factories',
-        discriminator,
-        name,
-        'sd catalog index factory'
-        )
-    intr['name'] = name
-    intr['factory'] = factory
-    config.action(
-        discriminator, 
-        callable=add_index_factory,
-        order=PHASE1_CONFIG, # must come before add_catalog_index
-        introspectables=(intr,)
-        )
-
-def add_catalog_index(config, name, factory_name, category, **factory_args):
-    """
-
-    A Configurator directive which adds a candidate catalog index to the 
-    Subtance D configuration state.
-
-    ``name`` is an index name.  ``factory_name`` is the name of an index
-    factory: it must be one of the default index factory names ``path``,
-    ``field``, ``text``, ``facet`` or ``keyword`` or another factory name
-    in the set of names of factories added via 
-    :func:`substanced.catalog.add_index_factory`.  ``factory_args`` is a set of
-    args to pass to the index factory when it's used to construct an index.
-
-    ``category`` represents an index category for use
-    by :meth:`substanced.catalog.Catalog.update_indexes`.  It's usually just a
-    string.  An application will typically choose to categorize all its
-    indexes in the same category so those indexes can be added as a set 
-    by ``update_indexes``.  Substance D adds a default set of indexes
-    in the ``system`` category.
-
-    This directive obeys normal Pyramid configurator conflict detection /
-    resolution rules: it uses the ``name`` and the ``category`` in the
-    discriminator, so application indexes can be overridden at startup
-    if you need to override an index that has been registered with a given name 
-    and category using a different factory or set of factory arguments.
-    """
-    def add_index():
-        factories = get_index_factories(config.registry)
-        indexes = get_candidate_indexes(config.registry)
-
-        if not factory_name in factories:
-            raise ConfigurationError(
-                'No index factory named %r' % factory_name
-                )
-
-        catvals = {
-            'factory_name':factory_name, 
-            'factory_args':factory_args,
-            }
-        indexes.setdefault(category, {})[name] = catvals
-
-    intr = config.introspectable(
-        'sd catalog indexes', name, name, 'sd catalog index'
-        )
-    intr['name'] = name
-    intr['factory_name'] = factory_name
-    intr['factory_args'] = factory_args
-    intr['category'] = category
-    intr.relate(
-        'sd catalog index factories', 
-        ('sd-catalog-index-factory', factory_name)
-        )
-
-    discriminator = ('sd-catalog-index', name, category)
-    config.action(discriminator, callable=add_index, introspectables=(intr,))
-
-def _index_factory(ctor, name, category, **kw):
-    if not 'discriminator' in kw:
-        kw['discriminator'] = CatalogViewDiscriminator(name)
-    index = ctor(**kw)
-    index.sd_category = category
-    return index
-
-def text_index_factory(name, category, **kw):
-    return _index_factory(indexes_module.TextIndex, name, category, **kw)
-
-def field_index_factory(name, category, **kw):
-    return _index_factory(indexes_module.FieldIndex, name, category, **kw)
-
-def keyword_index_factory(name, category, **kw):
-    return _index_factory(indexes_module.KeywordIndex, name, category, **kw)
-
-def facet_index_factory(name, category, **kw):
-    return _index_factory(indexes_module.FacetIndex, name, category, **kw)
-
-def allowed_index_factory(name, category, **kw):
-    return _index_factory(indexes_module.AllowedIndex, name, category, **kw)
-
-def path_index_factory(name, category, **kw):
-    index =  indexes_module.PathIndex(**kw)
-    index.sd_category = category
-    return index
-
-def add_system_indexes(config):
-    """ Add the default set of Substance D indexes in the ``system`` category:
-
-    - path (a PathIndex)
-
-      Represents the path of the content object.
-
-    - name (a FieldIndex), uses ``content.__name__`` exclusively
-
-      Represents the local name of the content object.
-
-    - oid (a FieldIndex), uses ``get_oid(content)`` exclusively.
-
-      Represents the object identifier (globally unique) of the content object.
-
-    - interfaces (a KeywordIndex), uses a custom discriminator exclusively.
-
-      Represents the set of interfaces possessed by the content object.
-
-    - containment (a KeywordIndex), uses a custom discriminator exclusively.
-
-      Represents the set of interfaces and classes which are possessed by
-      parents of the content object (inclusive of itself)
-
-    - allowed (an AllowedIndex), uses custom discriminator exclusively.
-
-      Represents the set of principals allowed to take some permission against
-      a content object.
-
-    """
-
-    config.add_catalog_index(
-        'path', 'path', 'system'
-        )
-    config.add_catalog_index(
-        'name', 'field', 'system',
-        discriminator=get_name,
-        )
-    config.add_catalog_index(
-        'oid', 'field', 'system',
-        discriminator=get_oid,
-        )
-    config.add_catalog_index(
-        'interfaces', 'keyword', 'system',
-        discriminator=get_interfaces,
-        )
-    config.add_catalog_index(
-        'containment', 'keyword', 'system',
-        discriminator=get_containment,
-        )
-    config.add_catalog_index(
-        'allowed', 'allowed', 'system',
-        discriminator=AllowedDiscriminator(),
-        )
-    config.add_permission('view') # for allowed index .allows() default value
+    if registry is None:
+        registry = get_current_registry()
+    iface = providedBy(resource)
+    return bool(registry.adapters.lookupAll((iface,), IIndexView))
 
 class _CatalogablePredicate(object):
     is_catalogable = staticmethod(is_catalogable) # for testing
@@ -546,15 +371,79 @@ class _CatalogablePredicate(object):
     def __call__(self, context, request):
         return self.is_catalogable(context, self.registry) == self.val
 
+def add_catalog_factory(config, name, factory):
+
+    def register():
+        config.registry.registerUtility(factory, ICatalogFactory, name=name)
+
+    discriminator = ('sd-catalog-factory', name)
+    intr = config.introspectable(
+        'sd catalog factories',
+        discriminator,
+        name,
+        'sd catalog factory'
+        )
+    intr['name'] = name
+    intr['factory'] = factory
+    config.action(
+        discriminator, 
+        callable=register,
+        introspectables=(intr,)
+        )
+
+def add_indexview(
+    config,
+    view,
+    catalog_name,
+    index_name,
+    context=None,
+    attr=None
+    ):
+
+    if context is None:
+        context = Interface
+
+    composite_name = '%s|%s' % (catalog_name, index_name)
+
+    def register():
+        mapper = IndexViewMapper(attr=attr)
+        mapped_view = mapper(view)
+        intr['derived_callable'] = mapped_view
+        config.registry.registerAdapter(
+            mapped_view,
+            (context,),
+            IIndexView,
+            name=composite_name,
+            )
+
+    if inspect.isclass(view) and attr:
+        view_desc = 'method %r of %s' % (attr, object_description(view))
+    else:
+        view_desc = object_description(view)
+
+    discriminator = ('sd-index-view', catalog_name, index_name, context)
+    intr = config.introspectable(
+        'sd index views',
+        discriminator,
+        view_desc,
+        'sd index view'
+        )
+    intr['catalog_name'] = catalog_name
+    intr['index_name'] = index_name
+    intr['name'] = composite_name
+    intr['callable'] = view
+    intr['attr'] = attr
+    
+    config.action(
+        discriminator, 
+        callable=register,
+        introspectables=(intr,)
+        )
+    
+
 def includeme(config): # pragma: no cover
     config.add_view_predicate('catalogable', _CatalogablePredicate)
-    config.add_directive('add_catalog_index_factory', add_catalog_index_factory)
-    config.add_directive('add_catalog_index', add_catalog_index)
-    config.add_catalog_index_factory('text', text_index_factory)
-    config.add_catalog_index_factory('field', field_index_factory)
-    config.add_catalog_index_factory('facet', facet_index_factory)
-    config.add_catalog_index_factory('keyword', keyword_index_factory)
-    config.add_catalog_index_factory('path', path_index_factory)
-    config.add_catalog_index_factory('allowed', allowed_index_factory)
-    add_system_indexes(config)
-
+    config.add_directive('add_catalog_factory', add_catalog_factory)
+    config.add_directive('add_indexview', add_indexview)
+    config.include('.system')
+    config.add_permission('view') # for allowed index .allows() default value

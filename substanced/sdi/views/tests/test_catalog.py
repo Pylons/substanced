@@ -179,130 +179,130 @@ class Test_content_is_an_index(unittest.TestCase):
         context = testing.DummyResource()
         self.assertEqual(self._callFUT(context, request), False)
 
-class Test_AddIndexView(unittest.TestCase):
-    def setUp(self):
-        testing.setUp()
-    def tearDown(self):
-        testing.tearDown()
+# class Test_AddIndexView(unittest.TestCase):
+#     def setUp(self):
+#         testing.setUp()
+#     def tearDown(self):
+#         testing.tearDown()
 
-    def _makeOne(self, context, request):
-        from ..catalog import _AddIndexView
-        return _AddIndexView(context, request)
+#     def _makeOne(self, context, request):
+#         from ..catalog import _AddIndexView
+#         return _AddIndexView(context, request)
 
-    def test_add_success_no_reindex(self):
-        context = testing.DummyResource()
-        request = testing.DummyRequest()
-        request.sdiapi = DummySDIAPI()
-        inst = self._makeOne(context, request)
-        index = testing.DummyResource()
-        inst.makeindex = lambda *arg: index
-        appstruct = {'name':'name', 'category':'category', 'reindex':False}
-        result = inst.add_success(appstruct)
-        self.assertEqual(result.location, '/mgmt_path')
-        self.assertEqual(context['name'], index)
-        self.assertEqual(index.sd_category, 'category')
+#     def test_add_success_no_reindex(self):
+#         context = testing.DummyResource()
+#         request = testing.DummyRequest()
+#         request.sdiapi = DummySDIAPI()
+#         inst = self._makeOne(context, request)
+#         index = testing.DummyResource()
+#         inst.makeindex = lambda *arg: index
+#         appstruct = {'name':'name', 'category':'category', 'reindex':False}
+#         result = inst.add_success(appstruct)
+#         self.assertEqual(result.location, '/mgmt_path')
+#         self.assertEqual(context['name'], index)
+#         self.assertEqual(index.sd_category, 'category')
         
-    def test_add_success_with_reindex(self):
-        context = testing.DummyResource()
-        def reindex(indexes, registry):
-            self.assertEqual(indexes, ('name',))
-            registry.reindexed = True
-        context.reindex = reindex
-        request = testing.DummyRequest()
-        request.sdiapi = DummySDIAPI()
-        inst = self._makeOne(context, request)
-        index = testing.DummyResource()
-        inst.makeindex = lambda *arg: index
-        appstruct = {'name':'name', 'category':'category', 'reindex':True}
-        inst.add_success(appstruct)
-        self.assertEqual(request.registry.reindexed, True)
+#     def test_add_success_with_reindex(self):
+#         context = testing.DummyResource()
+#         def reindex(indexes, registry):
+#             self.assertEqual(indexes, ('name',))
+#             registry.reindexed = True
+#         context.reindex = reindex
+#         request = testing.DummyRequest()
+#         request.sdiapi = DummySDIAPI()
+#         inst = self._makeOne(context, request)
+#         index = testing.DummyResource()
+#         inst.makeindex = lambda *arg: index
+#         appstruct = {'name':'name', 'category':'category', 'reindex':True}
+#         inst.add_success(appstruct)
+#         self.assertEqual(request.registry.reindexed, True)
 
-    def test_makeindex(self):
-        context = testing.DummyResource()
-        request = testing.DummyRequest()
-        inst = self._makeOne(context, request)
-        inst.index_type_name = 'Foo Index'
-        appstruct = {'name':'name'}
-        index = testing.DummyResource()
-        content = DummyContent(index)
-        request.registry.content = content
-        result = inst.makeindex(appstruct, request.registry)
-        self.assertEqual(result, index)
-        self.assertEqual(content.type_name, 'Foo Index')
-        self.assertEqual(content.arg[0].method_name, 'name')
+#     def test_makeindex(self):
+#         context = testing.DummyResource()
+#         request = testing.DummyRequest()
+#         inst = self._makeOne(context, request)
+#         inst.index_type_name = 'Foo Index'
+#         appstruct = {'name':'name'}
+#         index = testing.DummyResource()
+#         content = DummyContent(index)
+#         request.registry.content = content
+#         result = inst.makeindex(appstruct, request.registry)
+#         self.assertEqual(result, index)
+#         self.assertEqual(content.type_name, 'Foo Index')
+#         self.assertEqual(content.arg[0].method_name, 'name')
 
-    def test_title(self):
-        context = testing.DummyResource()
-        request = testing.DummyRequest()
-        inst = self._makeOne(context, request)
-        inst.index_type_name = 'Foo Index'
-        self.assertEqual(inst.title, 'Add Foo Index')
+#     def test_title(self):
+#         context = testing.DummyResource()
+#         request = testing.DummyRequest()
+#         inst = self._makeOne(context, request)
+#         inst.index_type_name = 'Foo Index'
+#         self.assertEqual(inst.title, 'Add Foo Index')
 
-class TestAddPathIndexView(unittest.TestCase):
-    def setUp(self):
-        testing.setUp()
+# class TestAddPathIndexView(unittest.TestCase):
+#     def setUp(self):
+#         testing.setUp()
 
-    def tearDown(self):
-        testing.tearDown()
+#     def tearDown(self):
+#         testing.tearDown()
 
-    def _makeOne(self, context, request):
-        from ..catalog import AddPathIndexView
-        return AddPathIndexView(context, request)
+#     def _makeOne(self, context, request):
+#         from ..catalog import AddPathIndexView
+#         return AddPathIndexView(context, request)
 
-    def test_makeindex(self):
-        context = testing.DummyResource()
-        request = testing.DummyRequest()
-        registry = request.registry
-        index = 'abc'
-        registry.content = DummyContent(index)
-        inst = self._makeOne(context, request)
-        result = inst.makeindex({}, request.registry)
-        self.assertEqual(registry.content.type_name, 'Path Index')
-        self.assertEqual(result, index)
+#     def test_makeindex(self):
+#         context = testing.DummyResource()
+#         request = testing.DummyRequest()
+#         registry = request.registry
+#         index = 'abc'
+#         registry.content = DummyContent(index)
+#         inst = self._makeOne(context, request)
+#         result = inst.makeindex({}, request.registry)
+#         self.assertEqual(registry.content.type_name, 'Path Index')
+#         self.assertEqual(result, index)
 
-class TestAddAllowedIndexView(unittest.TestCase):
-    def setUp(self):
-        testing.setUp()
+# class TestAddAllowedIndexView(unittest.TestCase):
+#     def setUp(self):
+#         testing.setUp()
 
-    def tearDown(self):
-        testing.tearDown()
+#     def tearDown(self):
+#         testing.tearDown()
 
-    def _makeOne(self, context, request):
-        from ..catalog import AddAllowedIndexView
-        return AddAllowedIndexView(context, request)
+#     def _makeOne(self, context, request):
+#         from ..catalog import AddAllowedIndexView
+#         return AddAllowedIndexView(context, request)
 
-    def test_makeindex(self):
-        context = testing.DummyResource()
-        request = testing.DummyRequest()
-        registry = request.registry
-        index = 'abc'
-        registry.content = DummyContent(index)
-        inst = self._makeOne(context, request)
-        result = inst.makeindex({'permissions':()}, request.registry)
-        self.assertEqual(registry.content.type_name, 'Allowed Index')
-        self.assertEqual(result, index)
+#     def test_makeindex(self):
+#         context = testing.DummyResource()
+#         request = testing.DummyRequest()
+#         registry = request.registry
+#         index = 'abc'
+#         registry.content = DummyContent(index)
+#         inst = self._makeOne(context, request)
+#         result = inst.makeindex({'permissions':()}, request.registry)
+#         self.assertEqual(registry.content.type_name, 'Allowed Index')
+#         self.assertEqual(result, index)
 
-class TestAddFacetIndexView(unittest.TestCase):
-    def setUp(self):
-        testing.setUp()
+# class TestAddFacetIndexView(unittest.TestCase):
+#     def setUp(self):
+#         testing.setUp()
 
-    def tearDown(self):
-        testing.tearDown()
+#     def tearDown(self):
+#         testing.tearDown()
 
-    def _makeOne(self, context, request):
-        from ..catalog import AddFacetIndexView
-        return AddFacetIndexView(context, request)
+#     def _makeOne(self, context, request):
+#         from ..catalog import AddFacetIndexView
+#         return AddFacetIndexView(context, request)
 
-    def test_makeindex(self):
-        context = testing.DummyResource()
-        request = testing.DummyRequest()
-        registry = request.registry
-        index = 'abc'
-        registry.content = DummyContent(index)
-        inst = self._makeOne(context, request)
-        result = inst.makeindex({'facets':(), 'name':'name'}, request.registry)
-        self.assertEqual(registry.content.type_name, 'Facet Index')
-        self.assertEqual(result, index)
+#     def test_makeindex(self):
+#         context = testing.DummyResource()
+#         request = testing.DummyRequest()
+#         registry = request.registry
+#         index = 'abc'
+#         registry.content = DummyContent(index)
+#         inst = self._makeOne(context, request)
+#         result = inst.makeindex({'facets':(), 'name':'name'}, request.registry)
+#         self.assertEqual(registry.content.type_name, 'Facet Index')
+#         self.assertEqual(result, index)
 
 class Test_reindex_indexes(unittest.TestCase):
     def setUp(self):
@@ -343,12 +343,8 @@ class Test_reindex_indexes(unittest.TestCase):
 class DummyContent(object):
     def __init__(self, result):
         self.result = result
+
     def metadata(self, context, name, default=None):
-        return self.result
-    def create(self, type_name, *arg, **kw):
-        self.type_name = type_name
-        self.arg = arg
-        self.kw = kw
         return self.result
     
 

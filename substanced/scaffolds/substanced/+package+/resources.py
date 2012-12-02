@@ -36,7 +36,6 @@ class DocumentPropertySheet(PropertySheet):
     propertysheets = (
         ('Basic', DocumentPropertySheet),
         ),
-    catalog=True,
     )
 class Document(Persistent):
 

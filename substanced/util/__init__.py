@@ -414,13 +414,26 @@ def find_content(resource, content_type, registry=None):
         registry = get_current_registry()
     return registry.content.find(resource, content_type)
 
-def _find_services(resource, name, one=False):
+def _traverse_to(obj, names):
+    for name in names:
+        if not is_folder(obj):
+            return None
+        obj = obj.get(name, None)
+        if obj is None:
+            return None
+    return obj
+
+def _find_services(resource, name, subnames=(), one=False):
     L = []
     for obj in lineage(resource):
         if is_folder(obj):
             subobj = obj.get(name, None)
             if subobj is not None:
                 if is_service(subobj):
+                    if subnames:
+                        subobj = _traverse_to(subobj, subnames)
+                        if subobj is None:
+                            continue
                     if one:
                         return subobj
                     L.append(subobj)
@@ -428,18 +441,41 @@ def _find_services(resource, name, one=False):
         return None
     return L
 
-def find_service(resource, name):
+def find_service(resource, name, *subnames):
     """ Find the first service named ``name`` in the lineage of ``resource``
-    or return ``None`` if no such-named service could be found. """
-    return _find_services(resource, name, one=True)
+    or return ``None`` if no such-named service could be found.
+
+    If ``subnames`` is supplied, when a service named ``name`` is found in the
+    lineage, it will attempt to traverse the service as a folder, finding a
+    content object inside the service, and it will return it instead of the
+    service object itself.  For example, ``find_service(resource, 'principals',
+    'users')`` would find and return the ``users`` subobject in the
+    ``principals`` service.  ``find_service(resource, 'principals', 'users',
+    'fred')`` would find and return the fred subobject of the users subobject
+    of the principals service, and so forth.  If ``subnames`` are supplied, and
+    the named object cannot be found, the lineage search continues.
+    """
+    return _find_services(resource, name, subnames, one=True)
                 
-def find_services(resource, name):
+def find_services(resource, name, *subnames):
     """Finds all services named ``name`` in the lineage of ``resource`` and
     returns a sequence containing those service objects. The sequence will
     begin with the most deepest nested service and will end with the least
     deeply nested service.  Returns an empty sequence if no such-named
-    service could be found."""
-    return _find_services(resource, name)
+    service could be found.
+
+    If ``subnames`` is supplied, when a service named ``name`` is found in the
+    lineage, it will attempt to traverse the service as a folder, finding a
+    content object inside the service, and this API will append this object
+    rather than the service itself to the list of things returned.  For
+    example, ``find_services(resource, 'principals', 'users')`` would find the
+    ``users`` subobject in the ``principals`` service.
+    ``find_services(resource, 'principals', 'users', 'fred')`` would find the
+    fred subobject of the users subobject of the principals service, and so
+    forth.  If ``subnames`` are supplied, whether or not the named object can
+    be found, the lineage search continues.
+    """
+    return _find_services(resource, name, subnames)
 
 def get_factory_type(resource):
     """ If the resource has a __factory_type__ attribute, return it.
@@ -457,3 +493,14 @@ def is_service(resource):
     """ Returns ``True`` if the resource is a service, ``False`` if not. """
     return bool(getattr(resource, '__is_service__', False))
 
+def find_catalogs(resource, name=None):
+    """ Return all catalogs in the lineage.  If ``name`` is supplied, return
+    only catalogs that have this name in the lineage, otherwise return all
+    catalogs in the lineage."""
+    catalogs = []
+    catalog_containers = find_services(resource, 'catalogs')
+    for catalog_container in catalog_containers:
+        for cname, catalog in catalog_container.items():
+            if name is None or name == cname:
+                catalogs.append(catalog)
+    return catalogs

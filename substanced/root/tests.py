@@ -10,7 +10,16 @@ class TestRoot(unittest.TestCase):
         
     def _makeOne(self):
         from . import Root
-        return Root()
+        inst = Root()
+        class DummyCatalog(object):
+            def update_indexes(self, *arg, **kw):
+                self.indexes_updated = True
+        catalog = DummyCatalog()
+        inst._catalog = catalog
+        def dummy_make_catalog(*arg, **kw):
+            return catalog
+        inst.make_catalog = dummy_make_catalog
+        return inst
 
     def test_ctor(self):
         inst = self._makeOne()
@@ -59,6 +68,7 @@ class TestRoot(unittest.TestCase):
         self.assertTrue(registry.group.connected)
         self.assertTrue(inst.__acl__)
         self.assertFalse(registry.created.__sdi_deletable__)
+        self.assertTrue(inst._catalog.indexes_updated)
 
     def test_after_create_without_password(self):
         from pyramid.exceptions import ConfigurationError

@@ -533,11 +533,22 @@ class IDefaultWorkflow(Interface):
 class IRoot(IFolder):
     pass
 
-class IContentCatalogView(Interface):
-    """ A wrapper around a content object which provides indexing values for the
-    wrapped content object.  It also allows the software related to the
-    content object to suggest index types to the catalog subsystem. """
-    content = Attribute('The content object')
+class ICatalogFactory(Interface):
+    def replace(folder, reindex=False):
+        """ Replace all the indexes in ``folder`` with the ones implied by this
+        factory.  Reindex any added indexes if ``reindex`` is true."""
+
+    def sync(folder, reindex=False):
+        """ Synchronize all the indexes in ``folder`` with the ones implied by
+        this factory.  Reindex any added indexes if ``reindex`` is true. """
+
+class IIndexFactory(Interface):
+    """ A factory for an index """
+
+class IIndexView(Interface):
+    def __call__(resource, default):
+        """ Return a result for the index value related to the resource or the
+        default."""
 
 marker = object()
 

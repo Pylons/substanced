@@ -412,7 +412,6 @@ class TestAllowedIndexPropertySheet(unittest.TestCase):
         context.permissions = ('b', 'a')
         inst = self._makeOne(context, None)
         values = inst.get()
-        self.assertEqual(values['sd_category'], 'foo')
         self.assertEqual(values['permissions'], ('b', 'a'))
 
     def test_set_same_permissions(self):
@@ -421,8 +420,7 @@ class TestAllowedIndexPropertySheet(unittest.TestCase):
         context.permissions = set(['a', 'b'])
         request = testing.DummyRequest()
         inst = self._makeOne(context, request)
-        inst.set({'sd_category':'bar', 'permissions':('b', 'a')})
-        self.assertEqual(context.sd_category, 'bar')
+        inst.set({'permissions':('b', 'a')})
 
     def test_set_different_permissions(self):
         context = testing.DummyResource()
@@ -433,8 +431,7 @@ class TestAllowedIndexPropertySheet(unittest.TestCase):
         context.__parent__ = catalog
         request = testing.DummyRequest()
         inst = self._makeOne(context, request)
-        inst.set({'sd_category':'bar', 'permissions':('c', 'd')})
-        self.assertEqual(context.sd_category, 'bar')
+        inst.set({'permissions':('c', 'd')})
         self.assertEqual(context.permissions, ('c', 'd'))
         self.assertEqual(catalog.reindexed, ('name',))
 

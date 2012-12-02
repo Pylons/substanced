@@ -1,5 +1,7 @@
 import logging
 
+from pyramid.traversal import resource_path
+
 from ..event import (
     subscribe_added,
     subscribe_removed,
@@ -10,12 +12,7 @@ from ..event import (
 from ..util import (
     postorder,
     get_oid,
-    find_services,
-    )
-
-from . import (
-    catalog_view_factory_for, 
-    CatalogViewWrapper,
+    find_catalogs,
     )
 
 logger = logging.getLogger(__name__)
@@ -29,18 +26,14 @@ def object_added(event):
     fired before this gets fired.
     """
     obj = event.object
-    catalogs = find_services(obj, 'catalog')
+    catalogs = find_catalogs(obj)
     if not catalogs:
         return
     for node in postorder(obj):
-        catalog_view_factory = catalog_view_factory_for(node, event.registry)
-        if catalog_view_factory:
-            objectid = get_oid(node)
+        oid = get_oid(node, None)
+        if oid is not None:
             for catalog in catalogs:
-                catalog.index_doc(
-                    objectid,
-                    CatalogViewWrapper(node, catalog_view_factory)
-                    )
+                catalog.index_doc(oid, node)
 
 @subscribe_removed()
 def object_removed(event):
@@ -48,11 +41,10 @@ def object_removed(event):
     lineage; an :class:`substanced.event.ObjectRemoved` event
     subscriber"""
     parent = event.parent
-    catalogs = find_services(parent, 'catalog')
+    catalogs = find_catalogs(parent)
+    removed = event.removed_oids
     for catalog in catalogs:
-        for oid in catalog.family.IF.intersection(
-            event.removed_oids, catalog.objectids
-            ):
+        for oid in catalog.family.IF.intersection(removed, catalog.objectids):
             catalog.unindex_doc(oid)
 
 @subscribe_modified()
@@ -61,31 +53,26 @@ def object_modified(event):
     the object's lineage; an :class:`substanced.event.ObjectModifed` event
     subscriber"""
     obj = event.object
-    catalog_view_factory = catalog_view_factory_for(obj, event.registry)
-    if catalog_view_factory:
-        wrapper = CatalogViewWrapper(obj, catalog_view_factory)
-        catalogs = find_services(obj, 'catalog')
-        for catalog in catalogs:
-            objectid = get_oid(obj)
-            catalog.reindex_doc(objectid, wrapper)
+    catalogs = find_catalogs(obj)
+    for catalog in catalogs:
+        oid = get_oid(obj, None)
+        if oid is not None:
+            catalog.reindex_doc(oid, obj)
 
 @subscribe_acl_modified()
 def acl_modified(event):
-    context = event.object
+    resource = event.object
     registry = event.registry
-    catalogs = find_services(context, 'catalog')
+    catalogs = find_catalogs(resource)
 
     for catalog in catalogs:
         # hellishly expensive
         indexes = catalog.values()
         for index in indexes:
+            index_path = resource_path(index)
             if registry.content.istype(index, 'Allowed Index'):
-                for node in postorder(context):
-                    cvf = catalog_view_factory_for(node, registry)
-                    if cvf:
-                        logger.info('Reindexing %s' % node)
-                        index.reindex_doc(
-                            get_oid(node),
-                            CatalogViewWrapper(node, cvf)
-                            )
-
+                for node in postorder(resource):
+                    logger.info('%s: reindexing %s' % (index_path, node))
+                    oid = get_oid(node, None)
+                    if oid is not None:
+                        index.reindex_doc(oid, node)

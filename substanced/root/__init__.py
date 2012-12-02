@@ -1,12 +1,11 @@
+import colander
+from zope.interface import implementer
+
 from pyramid.exceptions import ConfigurationError
 from pyramid.security import (
     Allow,
     ALL_PERMISSIONS,
     )
-
-import colander
-
-from zope.interface import implementer
 
 from ..interfaces import IRoot
 
@@ -15,6 +14,7 @@ from ..folder import Folder
 from ..objectmap import ObjectMap
 from ..property import PropertySheet
 from ..schema import Schema
+from ..catalog import make_catalog
 from ..util import (
     get_oid,
     set_acl,
@@ -57,14 +57,17 @@ class Root(Folder):
     group.
     """
     sdi_title = ''
+    make_catalog = staticmethod(make_catalog) # for testing
 
     def after_create(self, inst, registry):
-        # creation of objectmap deferred until after creation to allow for dump
-        # system loader to successfully load a root object; if this were done
-        # in __init__, the oid of the root object would not be resettable, and
-        # loaded references to the root object could not be resolved
+        # NB: creation of objectmap deferred until after creation to allow for
+        # dump system loader to successfully load a root object; if this were
+        # done in __init__, the oid of the root object would not be resettable,
+        # and loaded references to the root object could not be resolved
         self.__objectmap__ = ObjectMap(self)
         self.__objectmap__.add(self, ('',))
+        catalog = self.make_catalog(self, 'system')
+        catalog.update_indexes(replace=True, reindex=True, registry=registry)
         settings = registry.settings
         password = settings.get('substanced.initial_password')
         if password is None:
@@ -88,4 +91,5 @@ class Root(Folder):
             [(Allow, get_oid(admins), ALL_PERMISSIONS)],
             registry=registry,
             )
-
+        
+    
