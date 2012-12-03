@@ -376,7 +376,6 @@
                     // restore selections
                     inHandler = true;
                     var selectedRows = mapIdsToRows(selectedRowIds, args.from, args.to);
-                    log(2, selectedRows);
                     if (! preserveHidden) {
                         selectedRowIds = mapRowsToIds(selectedRows);
                     }

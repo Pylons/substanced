@@ -117,8 +117,11 @@
                 var selRows = grid.getSelectedRows();
                 if (selRows.length) {
                     var disable_delete = false;
-                    for (var i = 0, l = selRows.length; i < l; i++) {
-                        var item = dataView.getItem(selRows[i]);
+                    var i;
+                    var data = grid.getData();
+                    for (i = 0, l = selRows.length; i < l; i++) {
+                        var item = data[selRows[i]];
+                        // XXX bug: global selection will select all items that are not present.
                         if (!item.deletable) {
                             disable_delete = true;
 			    break;
