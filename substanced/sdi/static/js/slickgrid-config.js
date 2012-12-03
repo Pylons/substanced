@@ -145,6 +145,8 @@
             });
             grid.registerPlugin(sdiRemoteModelPlugin);
 
+            sdiRemoteModelPlugin.syncGridSelection(true); // true means: keep hidden selections
+
 
             $viewport = this.element.find('.slick-viewport');
             sdiRemoteModelPlugin.onDataLoading.subscribe(function (evt, args) {

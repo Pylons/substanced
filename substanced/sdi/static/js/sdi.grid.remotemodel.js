@@ -148,8 +148,6 @@
         }
 
         function clearData() {
-            // XXX Need to  save the selections from here. TODO
-            //
             // Delete the data
             $.each(data, function (key, value) {
                 delete data[key];
@@ -308,10 +306,6 @@
 
         function setSorting(sortCol, sortDir) {
             if (options.sortCol != sortCol || options.sortDir != sortDir) {
-                // re-sort
-                //
-                // give sorted column a different color
-                //this._updateSortColumn(sortCol);
                 options.sortCol = sortCol;
                 options.sortDir = sortDir;
                 // notify the grid
@@ -333,6 +327,63 @@
             }
         }
 
+        // --
+        // synchronize selections, needed if sorting changed.
+        // -- 
+        
+        function mapRowsToIds(rowArray) {
+            var ids = {};
+            $.each(rowArray, function (index, rowIndex) {
+                var row = data[rowIndex];
+                ids[row.id] = true;
+            });
+            return ids;
+        }
+   
+        function mapIdsToRows(ids, from, to) {
+            var rows = [];
+            var i;
+            //log('mapIdsToRows', from, to, data[from]);
+            for (i = from; i < to; i++) {
+                if (data[i] !== undefined) {
+                    if (ids[data[i].id]) {
+                        rows.push(i);
+                    }
+                }
+            }
+            return rows;
+        }
+
+        function syncGridSelection(preserveHidden) {
+            var self = this;
+            var selectedRowIds = mapRowsToIds(grid.getSelectedRows());
+            var inHandler;
+
+            grid.onSelectedRowsChanged.subscribe(function (e, args) {
+                if (inHandler) {
+                    return;
+                }
+                // save selections
+                selectedRowIds = mapRowsToIds(grid.getSelectedRows());
+                //log('saved', selectedRowIds);
+            });
+
+            onDataLoaded.subscribe(function (evt, args) {
+                if (args.from !== undefined) {
+                    // restore selections
+                    inHandler = true;
+                    var selectedRows = mapIdsToRows(selectedRowIds, args.from, args.to);
+                    log(2, selectedRows);
+                    if (! preserveHidden) {
+                        selectedRowIds = mapRowsToIds(selectedRows);
+                    }
+                    grid.setSelectedRows(selectedRows);
+                    inHandler = false;
+                }
+            });
+        }
+
+
         // Things we offer as public.
         return {
             // properties
@@ -349,6 +400,7 @@
             ensureData: ensureData,
             setSorting: setSorting,
             setFilterArgs: setFilterArgs,
+            syncGridSelection: syncGridSelection,
 
             // events
             onDataLoading: onDataLoading,
