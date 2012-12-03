@@ -203,6 +203,16 @@
             // top of the grid, initially.)
             grid.onViewportChanged.notify();
 
+            // Disable the global selection checkbox, as it does not work well yet.
+            this.element.find('.slick-column-name input[type="checkbox"]')
+                .remove();
+            grid.onHeaderCellRendered.subscribe(function (e, args) {
+                if (args.column.field == 'sel') {
+                    $(args.node).find('.slick-column-name input[type="checkbox"]')
+                        .remove();
+                }
+            });
+
         }
 
     });
