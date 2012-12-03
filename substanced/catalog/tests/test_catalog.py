@@ -618,6 +618,14 @@ class TestCatalogsService(unittest.TestCase):
         inst.add_catalog('foo')
         self.assertTrue('foo' in inst)
 
+    def test_add_catalog_with_update_indexes(self):
+        inst = self._makeOne()
+        inst.klass = DummyCatalog
+        catalog = inst.add_catalog('foo', update_indexes=True)
+        self.assertTrue('foo' in inst)
+        self.assertTrue(catalog.updated)
+        
+
 class DummyIntrospectable(dict):
     pass
 
@@ -666,7 +674,8 @@ class DummyObjectMap(object):
         pass
 
 class DummyCatalog(dict):
-    pass
+    def update_indexes(self, *arg, **kw):
+        self.updated = True
 
 class DummyTransaction(object):
     def __init__(self):

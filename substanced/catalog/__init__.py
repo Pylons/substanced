@@ -72,32 +72,6 @@ def catalog_buttons(context, request, default_buttons):
         ] + default_buttons
     return buttons
 
-@service(
-    'Catalogs',
-    service_name='catalogs',
-    icon='icon-search',
-    )
-class CatalogsService(Folder):
-    def add_catalog(self, name):
-        """ Create and add a catalog named ``name`` to this catalogs service.
-        Return the newly created catalog object.  If a catalog named ``name``
-        already exists in this catalogs service, an exception will be raised.
-
-        Example usage in a root created subscriber::
-
-          @subscribe_created(content_type='Root')
-          def created(event):
-              root = event.object
-              service = root['catalogs']
-              catalog = service.add_catalog('app1')
-              catalog.update_indexes(
-                  replace=True, reindex=True, registry=event.registry
-                  )
-
-        """
-        catalog = self[name] = Catalog()
-        return catalog
-
 @content(
     'Catalog',
     icon='icon-search',
@@ -328,6 +302,39 @@ class Catalog(Folder):
             output and output(
                 '%s update_indexes: no indexes added or removed' % name
                 )
+
+@service(
+    'Catalogs',
+    service_name='catalogs',
+    icon='icon-search',
+    )
+class CatalogsService(Folder):
+
+    klass = Catalog # for tests
+
+    def add_catalog(self, name, update_indexes=False):
+        """ Create and add a catalog named ``name`` to this catalogs service.
+        Return the newly created catalog object.  If a catalog named ``name``
+        already exists in this catalogs service, an exception will be raised.
+
+        Example usage in a root created subscriber::
+
+          @subscribe_created(content_type='Root')
+          def created(event):
+              root = event.object
+              service = root['catalogs']
+              catalog = service.add_catalog('app1')
+              catalog.update_indexes(
+                  replace=True, reindex=True, registry=event.registry
+                  )
+
+        If ``update_indexes`` is True, indexes in the named catalog factory
+        will be added to the newly created catalog.
+        """
+        catalog = self[name] = self.klass()
+        if update_indexes:
+            catalog.update_indexes(replace=True, reindex=True)
+        return catalog
 
 class _IndexViewMapper(object):
     def __init__(self, attr=None):
