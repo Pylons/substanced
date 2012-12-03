@@ -335,7 +335,10 @@
             var ids = {};
             $.each(rowArray, function (index, rowIndex) {
                 var row = data[rowIndex];
-                ids[row.id] = true;
+                // XXX XXX Apparent problems with the global-selection checkbox. TODO
+                if (row !== undefined) {
+                    ids[row.id] = true;
+                }
             });
             return ids;
         }
