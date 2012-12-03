@@ -146,7 +146,9 @@ class CatalogFactory(object):
                 '%s: %s index named %r' % (catalog_path, verb, index_name),
                 )
 
-            catalog.replace(index_name, index_factory(self.name, index_name))
+            index = index_factory(self.name, index_name)
+            index.__sdi_deletable__ = False
+            catalog.replace(index_name, index)
             to_reindex.add(index_name)
             changed = True
 
@@ -184,9 +186,10 @@ class CatalogFactory(object):
                         index_name,
                         )
                     )
+                index = index_factory(self.name, index_name)
+                index.__sdi_deletable__ = False
                 catalog.replace(
                     index_name,
-                    index_factory(self.name, index_name)
                     )
                 to_reindex.add(index_name)
                 changed = True

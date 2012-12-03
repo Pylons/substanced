@@ -65,6 +65,7 @@ class Root(Folder):
         self.__objectmap__ = ObjectMap(self)
         self.__objectmap__.add(self, ('',))
         catalogs = registry.content.create('Catalogs')
+        catalogs.__sdi_deletable__ = False
         self.add_service('catalogs', catalogs)
         catalog = catalogs.add_catalog('system')
         catalog.update_indexes(replace=True, reindex=True, registry=registry)
