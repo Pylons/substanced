@@ -310,7 +310,7 @@ class Catalog(Folder):
     )
 class CatalogsService(Folder):
 
-    klass = Catalog # for tests
+    Catalog = Catalog # for tests
 
     def add_catalog(self, name, update_indexes=False):
         """ Create and add a catalog named ``name`` to this catalogs service.
@@ -331,7 +331,8 @@ class CatalogsService(Folder):
         If ``update_indexes`` is True, indexes in the named catalog factory
         will be added to the newly created catalog.
         """
-        catalog = self[name] = self.klass()
+        catalog = self[name] = self.Catalog()
+        catalog.__sdi_deletable__ = False
         if update_indexes:
             catalog.update_indexes(replace=True, reindex=True)
         return catalog
