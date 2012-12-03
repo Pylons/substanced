@@ -66,10 +66,10 @@ def object_modified(event):
     the object's lineage; an :class:`substanced.event.ObjectModifed` event
     subscriber"""
     obj = event.object
-    catalogs = find_catalogs(obj)
-    for catalog in catalogs:
-        oid = get_oid(obj, None)
-        if oid is not None:
+    oid = get_oid(obj, None)
+    if oid is not None:
+        catalogs = find_catalogs(obj)
+        for catalog in catalogs:
             catalog.reindex_doc(oid, obj)
 
 @subscribe_acl_modified()

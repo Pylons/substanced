@@ -16,6 +16,9 @@ UI-Plus-Guts
 - Change password tab on user object requires old password.  See
   https://github.com/Pylons/substanced/issues/19
 
+- Show a derivative of output status in flash message when update indexes is
+  done to a catalog.
+
 Guts-Only
 ---------
 

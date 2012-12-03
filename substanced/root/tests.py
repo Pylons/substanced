@@ -35,17 +35,25 @@ class TestRoot(unittest.TestCase):
         group.memberids = memberids
         group.__oid__ = 1
         user = testing.DummyResource()
+        catalog = testing.DummyResource()
+        catalog.update_indexes = lambda *arg, **kw: True
         def add_user(*arg, **kw):
             return user
         def add_group(*arg, **kw):
             return group
+        def add_catalog(name):
+            return catalog
+        created_stack = []
         created.add_user = add_user
         created.add_group = add_group
+        created2 = testing.DummyResource()
+        created2.add_catalog = add_catalog
+        created_stack = [created2, created]
         registry = testing.DummyResource()
         registry.settings = settings
         registry.content = testing.DummyResource()
         def create(type, *arg, **kw):
-            return created
+            return created_stack.pop(0)
         registry.content.create = create
         registry.group = group
         registry.user = user
@@ -68,7 +76,6 @@ class TestRoot(unittest.TestCase):
         self.assertTrue(registry.group.connected)
         self.assertTrue(inst.__acl__)
         self.assertFalse(registry.created.__sdi_deletable__)
-        self.assertTrue(inst._catalog.indexes_updated)
 
     def test_after_create_without_password(self):
         from pyramid.exceptions import ConfigurationError

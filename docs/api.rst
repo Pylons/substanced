@@ -44,6 +44,9 @@
 
    Retrieve an index or return failobj.
 
+.. autoclass:: CatalogsService
+   :members:
+
 .. autofunction:: is_catalogable
 
 .. autofunction:: catalog_factory

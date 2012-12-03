@@ -39,8 +39,6 @@ from .factories import (
     Path,
     )
 
-from ..util import is_service
-
 Text = Text # API
 Field = Field # API
 Keyword = Keyword # API
@@ -80,21 +78,25 @@ def catalog_buttons(context, request, default_buttons):
     icon='icon-search',
     )
 class CatalogsService(Folder):
-    pass # XXX not really just a folder
+    def add_catalog(self, name):
+        """ Create and add a catalog named ``name`` to this catalogs service.
+        Return the newly created catalog object.  If a catalog named ``name``
+        already exists in this catalogs service, an exception will be raised.
 
-def make_catalog(folder, name):
-    """ Create a ``catalogs`` service in ``folder``, then add a catalog named
-    ``name`` to it.  If a catalogs service already exists in ``folder``, then
-    skip creating it and just add a catalog named ``name`` within it.  Returns
-    the newly created catalog object."""
-    if not 'catalogs' in folder:
-        folder.add_service('catalogs', CatalogsService())
-    catalogs = folder['catalogs']
-    if not is_service(catalogs):
-        raise ValueError('existing catalogs object is not a service')
-    catalogs[name] = Catalog()
-    catalog = catalogs[name]
-    return catalog
+        Example usage in a root created subscriber::
+
+          @subscribe_created(content_type='Root')
+          def created(event):
+              root = event.object
+              service = root['catalogs']
+              catalog = service.add_catalog('app1')
+              catalog.update_indexes(
+                  replace=True, reindex=True, registry=event.registry
+                  )
+
+        """
+        catalog = self[name] = Catalog()
+        return catalog
 
 @content(
     'Catalog',

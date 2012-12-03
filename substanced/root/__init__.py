@@ -14,7 +14,6 @@ from ..folder import Folder
 from ..objectmap import ObjectMap
 from ..property import PropertySheet
 from ..schema import Schema
-from ..catalog import make_catalog
 from ..util import (
     get_oid,
     set_acl,
@@ -57,7 +56,6 @@ class Root(Folder):
     group.
     """
     sdi_title = ''
-    make_catalog = staticmethod(make_catalog) # for testing
 
     def after_create(self, inst, registry):
         # NB: creation of objectmap deferred until after creation to allow for
@@ -66,7 +64,9 @@ class Root(Folder):
         # and loaded references to the root object could not be resolved
         self.__objectmap__ = ObjectMap(self)
         self.__objectmap__.add(self, ('',))
-        catalog = self.make_catalog(self, 'system')
+        catalogs = registry.content.create('Catalogs')
+        self.add_service('catalogs', catalogs)
+        catalog = catalogs.add_catalog('system')
         catalog.update_indexes(replace=True, reindex=True, registry=registry)
         settings = registry.settings
         password = settings.get('substanced.initial_password')
