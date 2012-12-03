@@ -154,32 +154,32 @@ class FolderContentsViews(object):
             buttons = custom_buttons(context, request, buttons)
         return buttons
 
-    def _column_headers(self, context, request):
-        headers = []
-        non_sortable = [0]
-        non_filterable = [0]
-
-        columns = default_sdi_columns(self, None, request)
-
-        custom_columns = request.registry.content.metadata(
-            context, 'columns', _marker)
-
-        if custom_columns is None:
-            return headers, non_sortable, non_filterable
-
-        if custom_columns is not _marker:
-            columns = custom_columns(context, None, request, columns)
-        
-        for order, column in enumerate(columns):
-            headers.append(column['name'])
-            sortable = column.get('sortable', True)
-            if not sortable:
-                non_sortable.append(order + 1)
-            filterable = column.get('filterable', True)
-            if not filterable:
-                non_filterable.append(order + 1)
-
-        return headers, non_sortable, non_filterable
+    #def _column_headers(self, context, request):
+    #    headers = []
+    #    non_sortable = [0]
+    #    non_filterable = [0]
+    #
+    #    columns = default_sdi_columns(self, None, request)
+    #
+    #    custom_columns = request.registry.content.metadata(
+    #        context, 'columns', _marker)
+    #
+    #    if custom_columns is None:
+    #        return headers, non_sortable, non_filterable
+    #
+    #    if custom_columns is not _marker:
+    #        columns = custom_columns(context, None, request, columns)
+    #    
+    #    for order, column in enumerate(columns):
+    #        headers.append(column['name'])
+    #        sortable = column.get('sortable', True)
+    #        if not sortable:
+    #            non_sortable.append(order + 1)
+    #        filterable = column.get('filterable', True)
+    #        if not filterable:
+    #            non_filterable.append(order + 1)
+    #
+    #    return headers, non_sortable, non_filterable
 
     def _column_headers_sg(self, context, request):
         """Generate columns from SlickGrid."""
