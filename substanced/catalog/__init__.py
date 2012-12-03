@@ -31,7 +31,22 @@ from ..objectmap import find_objectmap
 from .factories import (
     IndexFactory,
     CatalogFactory,
+    Text,
+    Field,
+    Keyword,
+    Facet,
+    Allowed,
+    Path,
     )
+
+from ..util import is_service
+
+Text = Text # API
+Field = Field # API
+Keyword = Keyword # API
+Facet = Facet # API
+Allowed = Allowed # API
+Path = Path # API
 
 logger = logging.getLogger(__name__) # API
 
@@ -68,9 +83,15 @@ class CatalogsService(Folder):
     pass # XXX not really just a folder
 
 def make_catalog(folder, name):
+    """ Create a ``catalogs`` service in ``folder``, then add a catalog named
+    ``name`` to it.  If a catalogs service already exists in ``folder``, then
+    skip creating it and just add a catalog named ``name`` within it.  Returns
+    the newly created catalog object."""
     if not 'catalogs' in folder:
         folder.add_service('catalogs', CatalogsService())
     catalogs = folder['catalogs']
+    if not is_service(catalogs):
+        raise ValueError('existing catalogs object is not a service')
     catalogs[name] = Catalog()
     catalog = catalogs[name]
     return catalog
@@ -306,7 +327,7 @@ class Catalog(Folder):
                 '%s update_indexes: no indexes added or removed' % name
                 )
 
-class IndexViewMapper(object):
+class _IndexViewMapper(object):
     def __init__(self, attr=None):
         self.attr = attr
 
@@ -341,6 +362,20 @@ class IndexViewMapper(object):
         return _function_view
 
 class catalog_factory(object):
+    """ Decorator for a class which acts as a template for index
+    creation.::
+
+      from substanced.catalog import Text
+
+      @catalog_factory('myapp')
+      class MyAppIndexes(object):
+          text = Text()
+          title = Field()
+
+    When scanned, this catalog factory will be added to the registry as
+    if :func:`substanced.catalog.add_catalog_factory` were called.
+
+    """
     venusian = venusian # for testing injection
 
     def __init__(self, name):
@@ -389,6 +424,11 @@ class _CatalogablePredicate(object):
         return self.is_catalogable(context, self.registry) == self.val
 
 def add_catalog_factory(config, name, factory):
+    """ Directive which adds a named catalog factory to the configuration
+    state.  The ``factory`` argument should be a class that was decorated with
+    the :class:`substanced.catalog.catalog_factory` decorator, and which
+    names index factories as its attributes.  The ``name`` argument should be a
+    string."""
 
     def register():
         config.registry.registerUtility(factory, ICatalogFactory, name=name)
@@ -416,6 +456,69 @@ def add_indexview(
     context=None,
     attr=None
     ):
+    """ Directive which adds an index view to the configuration state state.
+    The ``view`` argument should be function that is an indeview function, or
+    or a class with a ``__call__`` method that acts as an indexview method.
+    For example::
+
+        def title(resource, default):
+            return getattr(resource, 'title', default)
+
+        config.add_indexview(title, catalog_name='myapp', index_name='title')
+
+    Or, a class::
+
+        def IndexViews(object):
+            def __init__(self, resource):
+                self.resource = resource
+
+            def __call__(self, default):
+                return getattr(self.resource, 'title', default)
+
+        config.add_indexview(
+            IndexViews, catalog_name='myapp', index_name='title'
+            )
+
+    If an ``attr`` arg is supplied to ``add_indexview``, you can use a
+    different attribute of the class instad of ``__call__``::
+
+        def IndexViews(object):
+            def __init__(self, resource):
+                self.resource = resource
+
+            def title(self, default):
+                return getattr(self.resource, 'title', default)
+
+            def name(self, default):
+                return getattr(self.resource, 'name', default)
+
+        config.add_indexview(
+            IndexViews, catalog_name='myapp', index_name='title', attr='title'
+            )
+        config.add_indexview(
+            IndexViews, catalog_name='myapp', index_name='name', attr='name'
+            )
+
+    In this way you can use the same class to represent a bunch of different
+    index views.  Eventually there will be a decorator that you'll be able to
+    place on such a class that will allow you to scan the class
+    without making these imperative ``add_indexview`` calls, but right now
+    there is not.
+
+    An index view will be looked up by the cataloging machinery when it wants
+    to insert value into a particular catalog type's index.  The
+    ``catalog_name`` you use specify which catalog name this indeview is good
+    for; it should match the string passed to ``add_catalog_factory`` as a
+    ``name``.  The ``index_name`` argument should match an index name used
+    within such a catalog.
+
+    Index view lookups work a bit like Pyramid view lookups: you can use the
+    ``context`` argument to pass an interface or class which should be used to
+    register the index view; such an index view will only be used when the
+    resource being indexed has that class or interface.  Eventually we'll
+    provide a way to add predicates other than ``context`` too.
+
+    """
 
     if context is None:
         context = Interface
@@ -423,7 +526,7 @@ def add_indexview(
     composite_name = '%s|%s' % (catalog_name, index_name)
 
     def register():
-        mapper = IndexViewMapper(attr=attr)
+        mapper = _IndexViewMapper(attr=attr)
         mapped_view = mapper(view)
         intr['derived_callable'] = mapped_view
         config.registry.registerAdapter(

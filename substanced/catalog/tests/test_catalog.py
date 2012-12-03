@@ -464,10 +464,10 @@ class Test_catalog_buttons(unittest.TestCase):
                               'type': 'single'},
                              1])
 
-class TestIndexViewMapper(unittest.TestCase):
+class Test_IndexViewMapper(unittest.TestCase):
     def _makeOne(self, attr=None):
-        from .. import IndexViewMapper
-        return IndexViewMapper(attr=attr)
+        from .. import _IndexViewMapper
+        return _IndexViewMapper(attr=attr)
 
     def test_call_class(self):
         class Foo(object):

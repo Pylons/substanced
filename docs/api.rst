@@ -18,6 +18,18 @@
 
 .. automodule:: substanced.catalog
 
+.. autoclass:: Text
+
+.. autoclass:: Field
+
+.. autoclass:: Keyword
+
+.. autoclass:: Facet
+
+.. autoclass:: Allowed
+
+.. autoclass:: Path
+
 .. autoclass:: Catalog
    :members:
    :inherited-members:
@@ -34,26 +46,37 @@
 
 .. autofunction:: is_catalogable
 
-.. autofunction:: catalog_view_factory_for
+.. autofunction:: catalog_factory
 
 .. autofunction:: includeme
 
-.. autofunction:: add_catalog_index
+.. autofunction:: add_catalog_factory
 
-.. autofunction:: add_catalog_index_factory
+.. autofunction:: add_indexview
 
-:mod:`substanced.catalog.discriminators` API
---------------------------------------------
+:mod:`substanced.catalog.indexes` API
+-------------------------------------
 
-.. automodule:: substanced.catalog.discriminators
+.. automodule:: substanced.catalog.indexes
 
-.. autofunction:: get_name
+.. autoclass:: FieldIndex
+   :members:
 
-.. autofunction:: get_interfaces
+.. autoclass:: KeywordIndex
+   :members:
 
-.. autofunction:: get_containment
+.. autoclass:: TextIndex
+   :members:
 
-.. autoclass:: AllowedDiscriminator
+.. autoclass:: FacetIndex
+   :members:
+
+.. autoclass:: PathIndex
+   :members:
+
+.. autoclass:: AllowedIndex
+   :members:
+
 
 :mod:`hypatia.query` API
 -------------------------------
@@ -116,40 +139,6 @@ Other Helpers
 
 .. autoclass:: ResultSet
    :members:
-
-:mod:`substanced.catalog.indexes` API
--------------------------------------
-
-.. automodule:: substanced.catalog.indexes
-
-.. autoclass:: FieldIndex
-   :members:
-
-.. autoclass:: KeywordIndex
-   :members:
-
-.. autoclass:: TextIndex
-   :members:
-
-.. autoclass:: FacetIndex
-   :members:
-
-.. autoclass:: PathIndex
-   :members:
-
-.. autoclass:: AllowedIndex
-   :members:
-
-:mod:`substanced.catalog.subscribers` API
------------------------------------------
-
-.. automodule:: substanced.catalog.subscribers
-
-.. autofunction:: object_added
-
-.. autofunction:: object_removed
-
-.. autofunction:: object_modified
 
 :mod:`substanced.content` API
 -----------------------------
