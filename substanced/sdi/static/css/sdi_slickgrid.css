@@ -4,6 +4,7 @@
   height: 380px;
   width: 100%;
   position: relative;
+  border-bottom: 1px solid #dddddd;
 }
 .slickgrid-wrapper input[type="checkbox"] {
   vertical-align: baseline;
