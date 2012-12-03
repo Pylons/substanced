@@ -21,6 +21,7 @@ from .. import (
     mgmt_view,
     sdi_add_views,
     sdi_folder_contents,
+    sdi_folder_contents_sorted,
     default_sdi_buttons,
     default_sdi_columns,
     )
@@ -137,6 +138,7 @@ class FolderContentsViews(object):
 
     sdi_add_views = staticmethod(sdi_add_views) # for testing
     sdi_folder_contents = staticmethod(sdi_folder_contents) # for testing
+    sdi_folder_contents_sorted = staticmethod(sdi_folder_contents_sorted) # for testing
 
     def __init__(self, context, request):
         self.context = context
@@ -227,9 +229,9 @@ class FolderContentsViews(object):
         request = self.request
         context = self.context
 
-        headers, non_sortable, non_filterable = self._column_headers(
-            context, request
-            )
+        #headers, non_sortable, non_filterable = self._column_headers(
+        #    context, request
+        #    )
         # XXX the parallel equivalent of the above line, for slickgrid.
         columns_sg = self._column_headers_sg(
             context, request
@@ -262,9 +264,8 @@ class FolderContentsViews(object):
             rowHeight = 35,
             )
 
-        my_items, items = itertools.tee(items, 2)
         minimum_load = 40      # load at least this many records.
-        items_sg = process_grid_rows(columns_sg, my_items, total=num_items, _from=0, to=minimum_load)
+        items_sg = process_grid_rows(columns_sg, items, total=num_items, _from=0, to=minimum_load)
 
         # We pass the wrapper options which contains all information
         # needed to configure the several components of the grid config.
@@ -286,17 +287,10 @@ class FolderContentsViews(object):
             )
 
         return dict(
-            items=items, # NB: do not use "seq" here, we teed it above
-            num_items=num_items,
             addables=addables,
-            headers=headers,
             buttons=buttons,
-            non_filterable=non_filterable,
-            non_sortable=non_sortable,
-            # XXX for slickgrid
             slickgrid_wrapper_options=slickgrid_wrapper_options,
             )
-
 
     @mgmt_view(
         request_method='GET',
@@ -313,40 +307,19 @@ class FolderContentsViews(object):
         sort_col = request.params.get('sortCol')
         sort_dir = (request.params.get('sortDir') in ('true', 'True'))
 
-        seq = self.sdi_folder_contents(context, request) # generator
-        
-        # We need an accurate length but len(self.context) will not take into
-        # account hidden items. To gen an accurate length we tee the generator
-        # and exaust one copy to produce a sum, we use the other copy as the
-        # items we pass to the template.  This is probably unsat for huge
-        # folders, but at least has a slight advantage over doing
-        # len(list(seq)) because we don't unnecessarily create a large data
-        # structure in memory.
-        ##items, items_copy = itertools.tee(seq)
-        ##total = sum(1 for _ in items_copy) 
-
-        columns = self._column_headers_sg(
+        columns_sg = self._column_headers_sg(
             context, request
             )
-
-        # XXX TODO. This must take sort_col and sort_dir into consideration!
-        # This is a terribly inefficient way of doing it, and is only meant
-        # to support the client part.
-        # XXX sdi_folder_contents should support the sorting oob.
-        items = list(seq)
+        items= self.sdi_folder_contents_sorted(context, request,
+            columns_sg=columns_sg,
+            sort_col=sort_col,
+            sort_dir=sort_dir,
+            )
         total = len(items)
-        # find the column index, as that's what we need for lookup.
-        for index, col in enumerate(columns):
-            if col['field'] == sort_col:
-                break
-        else:
-            assert False, 'We should not ever get here.' 
-        items.sort(key=lambda s: s['columns'][index], reverse=not sort_dir)
-
+        
         # Convert the items to the format what the grid wants.
-        items = process_grid_rows(columns, items, total=total, _from=_from, to=to)
+        items = process_grid_rows(columns_sg, items, total=total, _from=_from, to=to)
         return items
-
  
     @mgmt_view(
         request_method='POST',

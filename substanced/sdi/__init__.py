@@ -539,6 +539,25 @@ def sdi_folder_contents(folder, request):
             )
         yield data
 
+def sdi_folder_contents_sorted(folder, request, columns_sg, sort_col, sort_dir):
+    """A sorted version of folder_contents, needed for the table grid remote data view.
+    Currently, this reuses folder_contents and does the sorting in an ineffective
+    way (in memory). At one point this could be changed to the other way.
+    """
+    items = sdi_folder_contents(folder, request)
+    # Listify the results that were an iterator, d'oh
+    items = list(items)
+    # Need to sort, unless we want sorted by the default column
+    if not (sort_col == 'name' and sort_dir == True):
+        # find the column index, as that's what we need for lookup.
+        for index, col in enumerate(columns_sg):
+            if col['field'] == sort_col:
+                break
+        else:
+            assert False, 'We should not ever get here.' 
+        items.sort(key=lambda s: s['columns'][index], reverse=not sort_dir)
+    return items
+
 def default_sdi_columns(folder, subobject, request):
     """ The default columns content-type hook """
     name = getattr(subobject, '__name__', '')

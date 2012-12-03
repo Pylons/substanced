@@ -11,11 +11,12 @@
   </div>
 
   <div metal:fill-slot="main">
-    <div class="container-fluid">
+    <div class="container-fluid" 
+      tal:define="total slickgrid_wrapper_options['items']['total']">
 
-    <h2 tal:condition="not items">No items</h2>
+    <h2 tal:condition="total == 0">No items</h2>
 
-    <div tal:condition="items">
+    <div tal:condition="total != 0">
 
     <div class="form-search pull-right sdi-contents-filter">
      <div class="input-append">
