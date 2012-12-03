@@ -66,9 +66,11 @@
             manageQueue: true,   // if to use the ajax queue manager
             //sortCol: null,
             sortDir: true,       // true = ascending, false = descending.
-            reallyAbort: false   // Really abort all the outgoing requests. Leaving it on false
-                                 // seems to be the best way. Note that independently of this
+            reallyAbort: false   // Really abort all the outgoing requests. Set this to false,
+                                 // if a real abort is undesirable. Note that independently of this
                                  // setting, the data clearings (resort, or refilter) always do an abort.
+                                 // XXX we keep this false, as it seems the abort
+                                 // actually causes more requests
             //extraQuery: {}     // Additional parameters that will be passed to the server.
         };
 

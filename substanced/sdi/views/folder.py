@@ -262,6 +262,7 @@ class FolderContentsViews(object):
             asyncEditorLoading = True,
             forceFitColumns = True,
             rowHeight = 35,
+            # 
             )
 
         minimum_load = 40      # load at least this many records.
@@ -282,7 +283,8 @@ class FolderContentsViews(object):
             #
             # Parameters for the remote data model
             url = '',   # use same url for ajax
-            manageQueue = True,
+            manageQueue = True,     
+            reallyAbort = False,    # A real abort makes things worse, it seems.
             minimumLoad = 40,
             )
 

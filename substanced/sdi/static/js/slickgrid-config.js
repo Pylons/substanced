@@ -135,6 +135,7 @@
             var sdiRemoteModelPlugin = new Slick.Data.SdiRemoteModel({
                 url: wrapperOptions.url,
                 manageQueue: wrapperOptions.manageQueue,
+                reallyAbort: wrapperOptions.reallyAbort,
                 sortCol: wrapperOptions.sortCol,
                 sortDir: wrapperOptions.sortDir,
                 extraQuery: {
