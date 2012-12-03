@@ -410,6 +410,80 @@ class Test_add_catalog_factory(unittest.TestCase):
             config.intr['factory']
             )
 
+class Test_add_indexview(unittest.TestCase):
+    def setUp(self):
+        self.config = testing.setUp()
+
+    def tearDown(self):
+        testing.tearDown()
+        
+    def _callFUT(
+        self,
+        config,
+        view,
+        catalog_name,
+        index_name,
+        context=None,
+        attr=None,
+        ):
+        from .. import add_indexview
+        return add_indexview(
+            config, view, catalog_name, index_name, context=context, attr=attr
+            )
+
+    def test_it_func(self):
+        from zope.interface import Interface
+        from substanced.interfaces import IIndexView
+        config = DummyConfigurator(registry=self.config.registry)
+        def view(resource, default): return True
+        self._callFUT(config, view, 'catalog', 'index')
+        self.assertEqual(len(config.actions), 1)
+        action = config.actions[0]
+        self.assertEqual(
+            action['discriminator'],
+            ('sd-index-view', 'catalog', 'index', Interface)
+            )
+        self.assertEqual(
+            action['introspectables'], (config.intr,)
+            )
+        self.assertEqual(config.intr['catalog_name'], 'catalog')
+        self.assertEqual(config.intr['index_name'], 'index')
+        self.assertEqual(config.intr['name'], 'catalog|index')
+        self.assertEqual(config.intr['callable'], view)
+        self.assertEqual(config.intr['attr'], None)
+        callable = action['callable']
+        callable()
+        wrapper = self.config.registry.adapters.lookup(
+            (Interface,), IIndexView, name='catalog|index')
+        self.assertEqual(config.intr['derived_callable'], wrapper)
+
+    def test_it_cls_with_attr(self):
+        from zope.interface import Interface
+        from substanced.interfaces import IIndexView
+        config = DummyConfigurator(registry=self.config.registry)
+        class View(object):
+            def amethod(self, default): pass
+        self._callFUT(config, View, 'catalog', 'index', attr='amethod')
+        self.assertEqual(len(config.actions), 1)
+        action = config.actions[0]
+        self.assertEqual(
+            action['discriminator'],
+            ('sd-index-view', 'catalog', 'index', Interface)
+            )
+        self.assertEqual(
+            action['introspectables'], (config.intr,)
+            )
+        self.assertEqual(config.intr['catalog_name'], 'catalog')
+        self.assertEqual(config.intr['index_name'], 'index')
+        self.assertEqual(config.intr['name'], 'catalog|index')
+        self.assertEqual(config.intr['callable'], View)
+        self.assertEqual(config.intr['attr'], 'amethod')
+        callable = action['callable']
+        callable()
+        wrapper = self.config.registry.adapters.lookup(
+            (Interface,), IIndexView, name='catalog|index')
+        self.assertEqual(config.intr['derived_callable'], wrapper)
+
 class Test_catalog_factory(unittest.TestCase):
     def setUp(self):
         self.config = testing.setUp()
@@ -433,11 +507,6 @@ class Test_catalog_factory(unittest.TestCase):
         self.assertEqual(result, Foo)
         venusian.callback(context, None, 'abc')
         self.assertEqual(context.config.catalog_factory, ('catalog', Foo))
-
-class Test_add_indexview(unittest.TestCase):
-    def _callFUT(self, config, view, catalog_name, index_name, **kw):
-        from .. import add_indexview
-        return add_indexview(config, view, catalog_name, index_name, **kw)
 
 class Test_CatalogablePredicate(unittest.TestCase):
     def _makeOne(self, val, config):
