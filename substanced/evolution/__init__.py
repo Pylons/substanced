@@ -13,7 +13,7 @@ NAME = 'substanced'
 
 def add_evolution_package(config, package_name):
     """ Add a package to the evolution manager.  The package should contain
-    eveolveN.py scripts which evolve the database (see the ``repoze.evolution``
+    evolveN.py scripts which evolve the database (see the ``repoze.evolution``
     package).  Call via ``config.add_evolution_package``."""
     config.registry.registerUtility(
         ZODBEvolutionManager,
