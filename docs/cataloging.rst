@@ -105,7 +105,7 @@ factory is a collection of index descriptions.  Creating a catalog factory or
 doesn't actually add a catalog to your databas3, but it makes it possible to
 add one later.
 
-Here's an example catalog factory::
+Here's an example catalog factory:
 
 .. code-block:: python
 
@@ -149,7 +149,7 @@ application indexes, you will need to create a *indexview* for your content,
 and register it using :func:`substanced.catalog.add_indexview` (a configurator
 directive).
 
-Right now this is a bit painful.  For example::
+Right now this is a bit painful.  For example:
 
 .. code-block:: python
 
