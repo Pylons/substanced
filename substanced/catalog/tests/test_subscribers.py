@@ -231,17 +231,99 @@ class Test_acl_modified(unittest.TestCase):
         self.assertEqual(index.oid, 1)
         self.assertEqual(index.data, resource)
 
+class Test_on_startup(unittest.TestCase):
+    def setUp(self):
+        self.config = testing.setUp()
+
+    def tearDown(self):
+        testing.tearDown()
+
+    def _callFUT(self, event):
+        from ..subscribers import on_startup
+        return on_startup(event)
+
+    def test_autosync_false(self):
+        registry = self.config.registry
+        registry.settings['substanced.autosync_catalogs'] = 'false'
+        app = testing.DummyResource()
+        app.registry = registry
+        event = DummyEvent(app, None)
+        result = self._callFUT(event)
+        self.assertEqual(result, None)
+
+    def test_autosync_missing(self):
+        registry = self.config.registry
+        app = testing.DummyResource()
+        app.registry = registry
+        event = DummyEvent(app, None)
+        result = self._callFUT(event)
+        self.assertEqual(result, None)
+
+    def test_autosync_true_no_objectmap(self):
+        registry = self.config.registry
+        registry.settings['substanced.autosync_catalogs'] = 'true'
+        app = testing.DummyResource()
+        app.registry = registry
+        root = testing.DummyResource()
+        app.root_factory = lambda *arg: root
+        event = DummyEvent(app, None)
+        result = self._callFUT(event)
+        self.assertEqual(result, None)
+
+    def test_autosync_true_no_oids(self):
+        registry = self.config.registry
+        registry.settings['substanced.autosync_catalogs'] = 'true'
+        app = testing.DummyResource()
+        app.registry = registry
+        root = testing.DummyResource()
+        root.__objectmap__ = DummyObjectMap([])
+        app.root_factory = lambda *arg: root
+        event = DummyEvent(app, None)
+        result = self._callFUT(event)
+        self.assertEqual(result, None)
+
+    def test_autosync_true_with_oids(self):
+        registry = self.config.registry
+        registry.settings['substanced.autosync_catalogs'] = 'true'
+        app = testing.DummyResource()
+        app.registry = registry
+        root = testing.DummyResource()
+        catalog = DummyCatalog()
+        root.__objectmap__ = DummyObjectMap([1], catalog)
+        app.root_factory = lambda *arg: root
+        event = DummyEvent(app, None)
+        result = self._callFUT(event)
+        self.assertEqual(result, None)
+        self.assertTrue(catalog.updated)
+
+    def test_autosync_true_with_oids_raises(self):
+        from zope.interface.interfaces import ComponentLookupError
+        registry = self.config.registry
+        registry.settings['substanced.autosync_catalogs'] = 'true'
+        app = testing.DummyResource()
+        app.registry = registry
+        root = testing.DummyResource()
+        catalog = DummyCatalog(raises=ComponentLookupError)
+        root.__objectmap__ = DummyObjectMap([1], catalog)
+        app.root_factory = lambda *arg: root
+        event = DummyEvent(app, None)
+        result = self._callFUT(event)
+        self.assertEqual(result, None)
+        self.assertFalse(catalog.updated)
+
 class DummyCatalog(dict):
     
     family = BTrees.family64
+    updated = False
     
-    def __init__(self, result=None):
+    def __init__(self, result=None, raises=None):
         self.queries = []
         self.indexed = []
         self.unindexed = []
         self.reindexed = []
         self.objectids = self.family.II.TreeSet()
         self.result = result
+        self.raises = raises
 
     def index_doc(self, objectid, obj):
         self.indexed.append((objectid, obj))
@@ -252,8 +334,24 @@ class DummyCatalog(dict):
     def reindex_doc(self, objectid, obj):
         self.reindexed.append((objectid, obj))
 
+    def update_indexes(self, *arg, **kw):
+        if self.raises:
+            raise self.raises
+        self.updated = True
+        return self.result
+
 class DummyObjectMap:
     family = BTrees.family64
+
+    def __init__(self, result=None, object_result=None):
+        self.result = result
+        self.object_result = object_result
+
+    def get_extent(self, name):
+        return self.result
+
+    def object_for(self, oid):
+        return self.object_result
     
 class DummyEvent(object):
     removed_oids = None

@@ -92,7 +92,7 @@ def acl_modified(event):
 
 @subscriber(ApplicationCreated)
 def on_startup(event):
-    app = event.app
+    app = event.object
     registry = app.registry
     settings = getattr(registry, 'settings', {})
     autosync = asbool(settings.get('substanced.autosync_catalogs', False))
