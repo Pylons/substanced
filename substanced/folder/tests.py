@@ -54,6 +54,15 @@ class TestFolder(unittest.TestCase):
         folder = self._makeOne({'a': 1, 'b': 2})
         self.assertEqual(list(folder.keys()), ['a', 'b'])
 
+    def test_is_ordered_true(self):
+        folder = self._makeOne({'a': 1, 'b': 2})
+        folder.order = ('a', 'b')
+        self.assertTrue(folder.is_ordered())
+
+    def test_is_ordered_false(self):
+        folder = self._makeOne({'a': 1, 'b': 2})
+        self.assertFalse(folder.is_ordered())
+
     def test_keys_with_order(self):
         folder = self._makeOne({'a': 1, 'b': 2})
         folder.order = ['b', 'a']
@@ -210,9 +219,9 @@ class TestFolder(unittest.TestCase):
         folder = self._makeOne()
         folder.order = []
         folder.add('a', DummyModel())
-        self.assertEqual(folder.order, ['a'])
+        self.assertEqual(folder.order, ('a',))
         folder.add('b', DummyModel())
-        self.assertEqual(folder.order, ['a', 'b'])
+        self.assertEqual(folder.order, ('a', 'b'))
 
     def test_add_with_object_has_parent(self):
         folder = self._makeOne()
@@ -407,7 +416,7 @@ class TestFolder(unittest.TestCase):
         folder.__objectmap__ = objectmap
         folder.remove("a")
         self.assertEqual(objectmap.removed, [1])
-        self.assertTrue(objectmap.references_removed, True)
+        self.assertFalse(objectmap.moving)
 
     def test_remove_with_objectmap_moving(self):
         dummy = DummyModel()
@@ -419,7 +428,7 @@ class TestFolder(unittest.TestCase):
         folder.__objectmap__ = objectmap
         folder.remove("a", moving=True)
         self.assertEqual(objectmap.removed, [1])
-        self.assertFalse(objectmap.references_removed)
+        self.assertTrue(objectmap.moving)
 
     def test_move_no_newname(self):
         folder = self._makeOne()
@@ -446,13 +455,13 @@ class TestFolder(unittest.TestCase):
 
     def test_move_is_service(self):
         folder = self._makeOne()
-        folder.__services__ = ('a',)
         other = self._makeOne()
         model = DummyModel()
+        model.__is_service__ = True
         folder['a'] = model
         folder.move('a', other)
         self.assertEqual(other['a'], model)
-        self.assertEqual(other.__services__, ('a',))
+        self.assertTrue(other['a'].__is_service__)
 
     def test_copy_no_newname(self):
         folder = self._makeOne()
@@ -491,7 +500,7 @@ class TestFolder(unittest.TestCase):
         folder['b'] = DummyModel()
         folder.order = ['a', 'b']
         folder.remove('a')
-        self.assertEqual(folder.order, ['b'])
+        self.assertEqual(folder.order, ('b',))
 
     def test_replace_existing(self):
         folder = self._makeOne()
@@ -510,6 +519,40 @@ class TestFolder(unittest.TestCase):
         self.assertEqual(folder['a'], other)
         self.assertEqual(other.__name__, 'a')
         self.assertEqual(other.__parent__, folder)
+
+    def test_load_with_registry(self):
+        registry = self.config.registry
+        folder = self._makeOne()
+        one = testing.DummyResource()
+        two = testing.DummyResource()
+        folder['a'] = one
+        result = []
+        folder.remove = lambda *arg, **kw: result.append(('removed', kw))
+        folder.add = lambda *arg, **kw: result.append(('added', kw))
+        folder.load('a', two, registry=registry)
+        self.assertEqual(
+            result,
+            [
+                ('removed', {'loading':True}),
+                ('added', {'loading':True, 'registry':registry}),
+                ])
+
+    def test_load_no_registry(self):
+        registry = self.config.registry
+        folder = self._makeOne()
+        one = testing.DummyResource()
+        two = testing.DummyResource()
+        folder['a'] = one
+        result = []
+        folder.remove = lambda *arg, **kw: result.append(('removed', kw))
+        folder.add = lambda *arg, **kw: result.append(('added', kw))
+        folder.load('a', two)
+        self.assertEqual(
+            result,
+            [
+                ('removed', {'loading':True}),
+                ('added', {'loading':True, 'registry':registry}),
+                ])
 
     def test_pop_success(self):
         from ..interfaces import IObjectEvent
@@ -593,8 +636,8 @@ class TestFolder(unittest.TestCase):
     def test_find_service_found(self):
         inst = self._makeOne()
         inst2 = self._makeOne()
+        inst2.__is_service__ = True
         inst.add('inst2', inst2)
-        inst.__services__ = ('inst2,')
         self.assertEqual(inst.find_service('inst2'), inst2)
 
     def test_find_services_missing(self):
@@ -604,8 +647,8 @@ class TestFolder(unittest.TestCase):
     def test_find_services_found(self):
         inst = self._makeOne()
         inst2 = self._makeOne()
+        inst2.__is_service__ = True
         inst.add('inst2', inst2)
-        inst.__services__ = ('inst2,')
         self.assertEqual(inst.find_services('inst2'), [inst2])
 
     def test_add_service(self):
@@ -613,14 +656,14 @@ class TestFolder(unittest.TestCase):
         foo = testing.DummyResource()
         inst.add_service('foo', foo)
         self.assertEqual(inst['foo'], foo)
-        self.assertEqual(inst.__services__, ('foo',))
+        self.assertTrue(foo.__is_service__)
 
     def test_add_service_withregistry(self):
         inst = self._makeOne()
         foo = testing.DummyResource()
         inst.add_service('foo', foo, registry=self.config.registry)
         self.assertEqual(inst['foo'], foo)
-        self.assertEqual(inst.__services__, ('foo',))
+        self.assertTrue(foo.__is_service__)
 
     def test__notify_no_registry(self):
         def f(t, n):
@@ -738,9 +781,9 @@ class DummyObjectMap(object):
     def __init__(self):
         self.added = []
         self.removed = []
-        self.references_removed = False
+        self.moving = False
 
-    def add(self, obj, path, replace_oid=False):
+    def add(self, obj, path, duplicating=False, moving=False):
         self.added.append((obj, path))
         objectid = getattr(obj, '__oid__', None)
         if objectid is None:
@@ -748,8 +791,8 @@ class DummyObjectMap(object):
             obj.__oid__ = objectid
         return objectid
 
-    def remove(self, objectid, references=True):
-        self.references_removed = references
+    def remove(self, objectid, moving=False):
+        self.moving = moving
         self.removed.append(objectid)
         return [objectid]
 

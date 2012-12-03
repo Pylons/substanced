@@ -13,8 +13,8 @@ from ...interfaces import IFolder
 from ...objectmap import find_objectmap
 from ...schema import Schema
 from ...util import (
-    oid_of,
     JsonDict,
+    get_oid,
     )
 
 from .. import (
@@ -449,7 +449,7 @@ class FolderContentsViews(object):
             for name in tocopy:
                 obj = context.get(name)
                 if obj is not None:
-                    l.append(oid_of(obj))
+                    l.append(get_oid(obj))
             request.session['tocopy'] = l
             request.session.flash('Choose where to copy the items:', 'info')
         else:
@@ -509,7 +509,7 @@ class FolderContentsViews(object):
             for name in tomove:
                 obj = context.get(name)
                 if obj is not None:
-                    l.append(oid_of(obj))
+                    l.append(get_oid(obj))
             request.session['tomove'] = l
             request.session.flash('Choose where to move the items:', 'info')
         else:

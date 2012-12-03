@@ -23,6 +23,8 @@ def root_factory(request, t=transaction, g=get_connection,
     return zodb_root['app_root']
 
 def include(config): # pragma: no cover
+    """ Perform all ``config.include`` tasks required for Substance D and the
+    default aspects of the SDI to work."""
     config.include('pyramid_zodbconn')
     config.include('pyramid_mailer')
     config.include('.event')
@@ -34,8 +36,11 @@ def include(config): # pragma: no cover
     config.include('.evolution')
     config.include('.widget')
     config.include('.workflow')
+    config.include('.dump')
 
 def scan(config): # pragma: no cover
+    """ Perform all ``config.scan`` tasks required for Substance D and the
+    default aspects of the SDI to work."""
     config.scan('.catalog')
     config.scan('.file')
     config.scan('.folder')
@@ -46,6 +51,8 @@ def scan(config): # pragma: no cover
     config.scan('.workflow')
     
 def includeme(config): # pragma: no cover
+    """ Do the work of :func:`substanced.include`, then
+    :func:`substanced.scan`.  Makes ``config.include(substanced)`` work."""
     # NB: includes of packages which register directives must be done before
     # scans of packages which use venusian decorators that use those directives
     # e.g. (@subscribe_*, @mgmt_view, @content).  This is why we do all

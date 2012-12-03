@@ -103,6 +103,8 @@ class IObjectWillBeAdded(IObjectEvent):
                      'with')
     moving = Attribute('Boolean indicating that this add is part of an '
                        'object move')
+    loading = Attribute('Boolean indicating that this add is part of a load '
+                        '(during a dump load process)')
     duplicating = Attribute('Boolean indicating this add is part of an '
                             'object duplication')
 
@@ -113,6 +115,8 @@ class IObjectAdded(IObjectEvent):
     name = Attribute('The name of the object within the folder')
     moving = Attribute('Boolean indicating that this add is part of an '
                        'object move')
+    loading = Attribute('Boolean indicating that this add is part of a load '
+                        '(during a dump load process)')
     duplicating = Attribute('Boolean indicating this add is part of an '
                             'object duplication')
 
@@ -123,6 +127,8 @@ class IObjectWillBeRemoved(IObjectEvent):
     name = Attribute('The name of the object within the folder')
     moving = Attribute('Boolean indicating that this removal is part of an '
                        'object move')
+    loading = Attribute('Boolean indicating that this remove is part of a load '
+                        '(during a dump load process)')
 
 class IObjectRemoved(IObjectEvent):
     """ An event type sent when an object is removed """
@@ -131,6 +137,8 @@ class IObjectRemoved(IObjectEvent):
     name = Attribute('The name of the object within the folder')
     moving = Attribute('Boolean indicating that this removal is part of an '
                        'object move')
+    loading = Attribute('Boolean indicating that this remove is part of a load '
+                        '(during a dump load process)')
     removed_oids = Attribute('The set of oids removed as the result of '
                              'this object being removed (including the oid '
                              'of the object itself).  This may be any number '
@@ -162,9 +170,15 @@ class IFolder(Interface):
     name to either be Unicode or a byte string decodable using the
     default system encoding or the UTF-8 encoding."""
 
-    order = Attribute("""Order of items within the folder
-    (Optional) If not set on the instance, objects are iterated in an
-    arbitrary order based on the underlying data store.""")
+    order = Attribute("""Order of names of the item within the folder.  If an
+    order is unset, objects are iterated in an arbitrary order based on the
+    underlying data store, and in such a case, this attribute will return an
+    iterator of the names in that arbitrary order.  This attribute is gettable,
+    settable, and deletable.""")
+
+    def is_ordered():
+        """ Return ``True`` if the folder has a manual ordering (e.g. its
+        ``order`` attribute has been set), ``False`` otherwise."""
 
     def keys():
         """ Return an iterable sequence of object names present in the folder.
@@ -173,7 +187,9 @@ class IFolder(Interface):
         """
 
     def __iter__():
-        """ An alias for ``keys``
+        """ An alias for ``keys``.
+
+        Respect ``order``, if set.
         """
 
     def values():
@@ -243,7 +259,7 @@ class IFolder(Interface):
         """
 
     def add(name, other, send_events=True, reserved_names=(),
-            duplicating=False, registry=None):
+            duplicating=False, moving=False, loading=False, registry=None):
         """ Same as ``__setitem__``.
 
         If ``send_events`` is false, suppress the sending of folder events.
@@ -311,7 +327,7 @@ class IFolder(Interface):
         and ``__parent__`` value,
         """
 
-    def remove(name, send_events=True, moving=False):
+    def remove(name, send_events=True, moving=False, loading=False):
         """ Same thing as ``__delitem__``.
 
         If ``send_events`` is false, suppress the sending of folder events.
@@ -348,6 +364,13 @@ class IFolder(Interface):
         This operation is done in terms of a remove and an add.  The Removed
         and WillBeRemoved events will be sent for the old object, and the
         WillBeAdded and Add events will be sent for the new object.
+        """
+
+    def load(name, newobject):
+        """
+        Same as :meth:`substanced.interfaces.IFolder.replace` except it causes
+        the ``loading`` flag of added and removed events sent during the add
+        and remove events implied by the replacement to be ``True``.
         """
 
 class IAutoNamingFolder(IFolder):
@@ -510,11 +533,22 @@ class IDefaultWorkflow(Interface):
 class IRoot(IFolder):
     pass
 
-class IContentCatalogView(Interface):
-    """ A wrapper around a content object which provides indexing values for the
-     wrapped content object.  It also allows the software related to the 
-    content object to suggest index types to the catalog subsystem. """
-    content = Attribute('The content object')
+class ICatalogFactory(Interface):
+    def replace(folder, reindex=False):
+        """ Replace all the indexes in ``folder`` with the ones implied by this
+        factory.  Reindex any added indexes if ``reindex`` is true."""
+
+    def sync(folder, reindex=False):
+        """ Synchronize all the indexes in ``folder`` with the ones implied by
+        this factory.  Reindex any added indexes if ``reindex`` is true. """
+
+class IIndexFactory(Interface):
+    """ A factory for an index """
+
+class IIndexView(Interface):
+    def __call__(resource, default):
+        """ Return a result for the index value related to the resource or the
+        default."""
 
 marker = object()
 
@@ -542,4 +576,42 @@ class PrincipalToACLBearing(ReferenceType):
 class UserToPasswordReset(ReferenceType):
     pass
 
+class ISDIAPI(Interface):
+    """  Easy access to common templating operations on all views.
+    This object is available as ``request.sdiapi``.
+    """
 
+    main_template = Attribute("""The loaded ``master.pt`` which can
+    be used in view templates with
+    ``metal:use-macro="request.sdiapi.main_template"``.""")
+
+    def flash_with_undo(msg, queue='', allow_duplicate=True):
+        """Display a Pyramid ``flash message`` to the appropriate
+        queue with a button to allow an undo of the commit."""
+
+    def mgmt_path(obj, *arg, **kw):
+        """ Return the route_path inside the SDI for an object """
+
+    def mgmt_url(obj, *arg, **kw):
+        """ Return the route_url inside the SDI for an object """
+
+    def breadcrumbs():
+        """Return a sequence of dicts for the breadcrumb information.
+        Each dict contains:
+
+        - ``url``: The ``request.mgmt_path`` to that resource
+
+        - ``name``: The resource's ``__name__`` or 'Home' for the root
+
+        - ``active``: Boolean representing whether the resource is
+          in the breadcrumb is the current context
+
+        - ``icon``: The full path to the icon for that resource type
+        """
+
+    def sdi_title():
+        """ The ``sdi_title`` of the root or "Substance D" if
+         not defined """
+
+    def mgmt_views(context):
+        """ The list of management views on a resource """

@@ -1,3 +1,4 @@
+================
 Defining Content
 ================
 
@@ -16,7 +17,7 @@ content.  To define a resource as content, you need to associate a resource
 with a :term:`content type`.
 
 Registering Content
--------------------
+===================
 
 In order to add new content to the system, you need to associate a
 :term:`resource factory` with a :term:`content type`.  A resource factory that
@@ -50,7 +51,7 @@ Here's an example which defines a content resource factory as a class:
 
    @content('Blog Entry')
    class BlogEntry(Persistent):
-       def __init__(self, title, body):
+       def __init__(self, title='', body=''):
            self.title = title
            self.body = body
 
@@ -70,16 +71,25 @@ instead:
            self.body = body
 
    @content('Blog Entry')
-   def make_blog_entry(title, body):
+   def make_blog_entry(title='', body=''):
        return BlogEntry(title, body)
 
-.. note::
+When a resource factory is not a class, Substance D will wrap the resource
+factory in something that changes the resource object returned from the
+factory.  In the above case, the BlogEntry instance returned from
+``make_blog_entry`` will be changed; its ``__factory_type__`` attribute will be
+mutated.
 
-   When a resource factory is not a class, Substance D will wrap the resource
-   factory in something that changes the resource object returned from the
-   factory.  In the above case, the BlogEntry instance returned from
-   ``make_blog_entry`` will be changed; its ``__factory_type__`` attribute
-   will be mutated.
+Notice that when we decorate a resource factory class with ``@content``, and
+the class' ``__init__`` function takes arguments, we provide those arguments
+with default values.  This is mandatory if you'd like your content objects to
+participate in a "dump".  Dumping a resource requires that the resource be
+creatable without any mandatory arguments.  It's a similar story if our factory
+is a function; the function decorated by the ``@content`` decorator should
+provide defaults to any argument.  In general, a resource factory can take
+arguments, but each parameter of the factory's callable should be given a
+default value.  This also means that all arguments to a resource factory
+should be keyword arguments, and not positional arguments.
 
 In order to activate a ``@content`` decorator, it must be *scanned* using the
 Pyramid ``config.scan()`` machinery:
@@ -157,7 +167,7 @@ types can be enumerated:
 and scanned.
 
 Metadata
---------
+========
 
 A content's type can be associated with metadata about that type, including the
 content type's name, its icon in the SDI management interface, an add view
@@ -165,7 +175,7 @@ name, and other things.  Pass arbitrary keyword arguments to the ``@content``
 decorator or ``config.add_content_type`` to specify metadata.
 
 Names
-~~~~~
+-----
 
 You can associate a content type registration with a name that shows up when
 someone attempts to add such a piece of content using the SDI management
@@ -181,7 +191,7 @@ or ``config.add_content_type``.
 
    @content('Blog Entry', name='Cool Blog Entry')
    class BlogEntry(Persistent):
-       def __init__(self, title, body):
+       def __init__(self, title='', body=''):
            self.title = title
            self.body = body
 
@@ -189,7 +199,7 @@ Once you've done this, the "Add" tab in the SDI management interface will
 show your content as addable using this name instead of the type name.
 
 Icons
-~~~~~
+-----
 
 You can associate a content type registration with a management view icon by
 passing an ``icon`` keyword argument to ``@content`` or ``add_content_type``.
@@ -203,7 +213,7 @@ passing an ``icon`` keyword argument to ``@content`` or ``add_content_type``.
 
    @content('Blog Entry', icon='icon-file')
    class BlogEntry(Persistent):
-       def __init__(self, title, body):
+       def __init__(self, title='', body=''):
            self.title = title
            self.body = body
 
@@ -227,7 +237,7 @@ You can also pass a callback as an ``icon`` argument:
 
    @content('Blog Entry', icon=blogentry_icon)
    class BlogEntry(Persistent):
-       def __init__(self, title, body):
+       def __init__(self, title='', body=''):
            self.title = title
            self.body = body
 
@@ -240,7 +250,7 @@ representing a file if the blogentry has a body, otherwise show an icon
 representing gift.
 
 Add Views
-~~~~~~~~~
+---------
 
 You can associate a content type with a view that will allow the type to be
 added by passing the name of the add view as a keyword argument to
@@ -255,7 +265,7 @@ added by passing the name of the add view as a keyword argument to
 
    @content('Blog Entry', add_view='add_blog_entry')
    class BlogEntry(Persistent):
-       def __init__(self, title, body):
+       def __init__(self, title='', body=''):
            self.title = title
            self.body = body
 
@@ -280,7 +290,7 @@ You can also pass a callback as an ``add_view`` argument:
 
    @content('Blog Entry', add_view=add_blog_entry)
    class BlogEntry(Persistent):
-       def __init__(self, title, body):
+       def __init__(self, title='', body=''):
            self.title = title
            self.body = body
 
@@ -295,7 +305,7 @@ type Blog; it returns None otherwise, signifying that the content is not
 addable in this circumstance.
 
 Obtaining Metadata About a Content Object's Type
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------------------------------
 
 ``request.registry.content.metadata(blogentry, 'icon')``
 
@@ -306,3 +316,254 @@ Obtaining Metadata About a Content Object's Type
 
   Will return the icon for the blogentry's content type or ``icon-file`` if
   it does not exist.
+
+Affecting Content Creation
+==========================
+
+By default, any content that is created via the resource factory gets
+assigned a ``__created__`` attribute with a value of
+``datetime.datetime.utcnow()``.
+:py:func:`substanced.util.get_created` and
+:py:func:`substanced.util.set_created` manage the getting and setting.
+
+In some cases you might want your resource to perform some actions that
+can only take place after it has been seated in its container and but
+before the creation events have fired. The ``@content`` decorator and
+``add_content_type`` method both support an ``after_create`` argument,
+pointed at a callable.
+
+For example:
+
+.. code-block:: python
+
+    @content(
+        'Document',
+        icon='icon-align-left',
+        add_view='add_document',
+        propertysheets = (
+            ('Basic', DocumentPropertySheet),
+            ),
+        after_create='after_creation'
+        )
+    class Document(Persistent):
+
+        name = renamer()
+
+        def __init__(self, title, body):
+            self.title = title
+            self.body = body
+
+        def after_creation(self, inst, registry):
+            pass
+
+If the value provided for ``after_create`` is a string, it's assumed to
+be a method of the created object. If it's a sequence, each value
+should be a string or a callable, which will be called in turn. The
+callable(s) are passed the instance being created and the registry.
+Afterwards, :class:`substanced.event.ContentCreatedEvent` is emitted.
+
+Construction of the root folder in Substance D is a special case. Most
+Substance D applications will start with:
+
+.. code-block:: python
+
+    from substanced import root_factory
+    def main(global_config, **settings):
+        """ This function returns a Pyramid WSGI application.
+        """
+        config = Configurator(settings=settings, root_factory=root_factory)
+
+The :py:func:`substanced.root_factory` callable contains the following
+line:
+
+.. code-block:: python
+
+    app_root = registry.content.create('Root')
+
+In many cases you want to perform some extra work on the ``Root``. For
+example, you might want to create a catalog with indexes. Substance D
+emits an event when the root is created, so you can subscribe to that
+event and perform some actions:
+
+.. code-block:: python
+
+    from substanced.root import Root
+    from substanced.event import subscribe_created
+    from substanced.catalog import Catalog
+
+    @subscribe_created(Root)
+    def root_created(event):
+        catalog = Catalog()
+        event.object.add_service('catalog', catalog)
+        catalog.update_indexes('system', reindex=True)
+        catalog.update_indexes('sdidemo', reindex=True)
+
+
+Names and Renaming
+==================
+
+A resource's "name" (``__name__``) is important to the system in
+Substance D. For example, traversal uses the value in URLs and paths to
+walk through hierarchy. Containers need to know when a resource's
+``__name__`` changes.
+
+To help support this, Substance D provides
+:py:func:`substanced.util.renamer`. You use it as a class attribute
+wrapper on resources that want "managed" names. These resources then
+gain a ``name`` attribute with a getter/setter from ``renamer``.
+Getting the ``name`` returns the ``__name__``. Setting ``name`` grabs
+the container and calls the ``rename`` method on the folder.
+
+For example:
+
+.. code-block:: python
+
+    class Document(Persistent):
+        name = renamer()
+
+Special Colander Support
+========================
+
+Forms and schemas for resources become pretty easy in Substance D. To
+make it easier for forms to interact with the Substance D machinery,
+it includes some special Colander schema nodes you can use on your forms.
+
+``NameSchemaNode``
+------------------
+
+If you want your form to affect the ``__name__`` of a resource,
+certain constraints become applicable. These constraints might be
+different, so you might want to know if you are on an add form versus
+an edit form. :py:class:`substanced.schema.NameSchemaNode` provides a
+schema node and default widget that bundles up the common rules for this.
+For example:
+
+.. code-block:: python
+
+    class BlogEntrySchema(Schema):
+        name = NameSchemaNode()
+
+The above provides the basics of support for editing a name property,
+especially when combined with the ``renamer()`` utility mentioned above.
+
+By default the name is limited to 100 characters. ``NameSchemaNode``
+accepts an argument that can set a different limit:
+
+.. code-block:: python
+
+    class BlogEntrySchema(Schema):
+        name = NameSchemaNode(max_len=20)
+
+You can also provide an ``editing`` argument, either as a boolean or a
+callable which returns a boolean, which determines whether the form is
+rendered in "editing" mode. For example:
+
+.. code-block:: python
+
+    class BlogEntrySchema(Schema):
+        name = NameSchemaNode(
+            editing=lambda c, r: r.registry.content.istype(c, 'BlogEntry')
+            )
+
+``PermissionSchemaNode``
+------------------------
+
+A form might want to allow selection of zero or more permissions from
+the site's defined list of permissions.
+:py:class:`PermissionSchemaNode` collects the possible
+state from the system, the currently-assigned values, and presents a
+widget that manages the values.
+
+``MultireferenceIdSchemaNode``
+------------------------------
+
+References are a very powerful facility in Substance D. Naturally
+you'll want your application's forms to assign references.
+:py:class:`MultireferenceIdSchemaNode` gives a schema node and widget
+that allows multiple selections of possible values in the system for
+references, including the current assignments.
+
+As an example, the built-in :py:class:`substanced.principal.UserSchema`
+uses this schema node:
+
+.. code-block:: python
+
+    class UserSchema(Schema):
+        """ The property schema for :class:`substanced.principal.User`
+        objects."""
+        groupids = MultireferenceIdSchemaNode(
+            choices_getter=groups_choices,
+            title='Groups',
+            )
+
+Overriding Existing Content Types
+=================================
+
+Perhaps you would like to slightly adjust an existing content type,
+such as ``Folder``, without re-implementing it. For exampler,
+perhaps you would like to override just the ``add_view`` and provide
+your own view, such as:
+
+.. code-block:: python
+
+    @mgmt_view(
+        context=IFolder,
+        name='my_add_folder',
+        tab_condition=False,
+        permission='sdi.add-content',
+        renderer='substanced.sdi:templates/form.pt'
+    )
+    class MyAddFolderView(AddFolderView):
+
+        def before(self, form):
+            # Perform some custom work before validation
+            pass
+
+With this you can override any of the view predicates (such as
+``permission``) and override any part of the form handling (such as
+adding a ``before`` that performs some custom processing.)
+
+To make this happen, you can re-register, so to speak,
+the content type during startup:
+
+.. code-block:: python
+
+    from substanced.folder import Folder
+    from .views import MyAddFolderView
+    config.add_content_type('Folder', Folder,
+                            add_view='my_add_folder',
+                            icon='icon-folder-close')
+
+This, however, keeps the same content type class. You can also go
+further by overriding the content type definition itself:
+
+.. code-block:: python
+
+    @content(
+        'Folder',
+        icon='icon-folder-close',
+        add_view='my_add_folder',
+    )
+    @implementer(IFolder)
+    class MyFolder(Folder):
+
+        def send_email(self):
+            pass
+
+The class for the 'Folder' content type has now been replaced. Instead
+of ``substanced.folder.Folder`` it is ``MyFolder``.
+
+.. note::
+
+    Overriding a content type is a pain-free way to make a custom
+    ``Root`` object. You could supply your own ``root_factory`` to
+    the ``Configurator`` but that means replicating all its rather
+    complicated goings-on. Instead, provide your own content type
+    factory, as above, for ``Root``.
+
+Affecting the Tab Order for Management Views
+============================================
+
+The ``tab_order`` parameter overrides the mgmt_view tab settings,
+for a content type, with a sequence of view names that should be
+ordered (and everything not in the sequence, after.)

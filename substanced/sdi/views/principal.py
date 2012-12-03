@@ -2,10 +2,10 @@ import colander
 import deform.widget
 
 from pyramid.httpexceptions import HTTPFound
+from pyramid.security import NO_PERMISSION_REQUIRED
 
 from ...form import FormView
 from ...schema import Schema
-from ...content import find_service
 
 from ...interfaces import (
     IUsers,
@@ -20,6 +20,8 @@ from ...principal import (
     UserSchema,
     GroupSchema,
     )
+
+from ...util import find_service
 
 class AddUserSchema(UserSchema):
     password = colander.SchemaNode(
@@ -113,7 +115,7 @@ class UserPasswordSchema(Schema):
     name='change_password',
     tab_title='Change Password',
     permission='sdi.change-password',
-    renderer='templates/form.pt'
+    renderer='templates/form.pt',
     )
 class ChangePasswordView(FormView):
     title = 'Change Password'
@@ -149,7 +151,8 @@ class ResetRequestSchema(Schema):
 @mgmt_view(
     name='resetpassword',
     tab_condition=False,
-    renderer='templates/form.pt'
+    renderer='templates/form.pt',
+    permission=NO_PERMISSION_REQUIRED,
     )
 class ResetRequestView(FormView):
     title = 'Request Password Reset'
@@ -180,7 +183,8 @@ class ResetSchema(Schema):
     context=IPasswordReset,
     name='',
     tab_condition=False,
-    renderer='templates/form.pt'
+    renderer='templates/form.pt',
+    permission=NO_PERMISSION_REQUIRED,
     )
 class ResetView(FormView):
     title = 'Reset Password'

@@ -36,13 +36,12 @@ class DocumentPropertySheet(PropertySheet):
     propertysheets = (
         ('Basic', DocumentPropertySheet),
         ),
-    catalog=True,
     )
 class Document(Persistent):
 
     name = renamer()
     
-    def __init__(self, title, body):
+    def __init__(self, title='', body=''):
         self.title = title
         self.body = body
 

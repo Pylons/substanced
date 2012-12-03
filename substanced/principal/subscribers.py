@@ -11,12 +11,12 @@ from ..interfaces import (
     IPrincipal,
 )
 
-from ..content import find_service
 from ..objectmap import find_objectmap
 from ..util import (
-    oid_of,
+    get_oid,
     postorder,
-    change_acl,
+    set_acl,
+    find_service,
     )
 
 from ..interfaces import (
@@ -27,11 +27,13 @@ from ..interfaces import (
 @subscribe_added(IUser)
 def user_added(event):
     """ Give each user permission to change their own password."""
+    if event.loading: # fbo dump/load
+        return
     user = event.object
     registry = event.registry
-    change_acl(
+    set_acl(
         user,
-        [(Allow, oid_of(user), ('sdi.view', 'sdi.change-password'))],
+        [(Allow, get_oid(user), ('sdi.view', 'sdi.change-password'))],
         registry=registry,
         )
 
@@ -39,9 +41,11 @@ def user_added(event):
 def user_will_be_removed(event):
     """ Remove all password reset objects associated with a user when the user
     is removed """
-    user = event.object
     if event.moving: # it's not really being removed
         return
+    if event.loading: # fbo dump/load
+        return
+    user = event.object
     objectmap = find_objectmap(user)
     if objectmap is not None:
         resets = objectmap.targets(user, UserToPasswordReset)
@@ -52,12 +56,15 @@ def user_will_be_removed(event):
 def principal_added(event):
     """ Prevent same-named users and groups from being added to the system.
     An :class:`substanced.event.IObjectAdded` event subscriber."""
+    if event.loading: # fbo dump/load
+        return
+
     # disallow same-named groups and users for human sanity (not because
     # same-named users and groups are disallowed by the system)
     principal = event.object
     principal_name = principal.__name__
     principals = find_service(principal, 'principals')
-    
+
     if IUser.providedBy(principal):
         # it's a user
         groups = principals['groups']
@@ -85,7 +92,7 @@ def _referenceable_principals(acl):
 
 @subscribe_added()
 def acl_maybe_added(event):
-    if event.moving:
+    if event.moving or event.loading:
         return False # meaningful only to tests
 
     obj = event.object

@@ -1,15 +1,14 @@
 from pyramid.view import view_defaults
+from pyramid.security import NO_PERMISSION_REQUIRED
 
 from ...objectmap import (
     find_objectmap,
     ReferentialIntegrityError,
     )
-from ...util import oid_of
+from ...util import get_oid
 
-from .. import (
-    mgmt_view,
-    MIDDLE
-    )
+from .. import mgmt_view
+from .. import RIGHT
 
 @view_defaults(
     referenced=True,
@@ -25,10 +24,10 @@ class ReferencedView(object):
     @mgmt_view(
         renderer='templates/referenced.pt',
         tab_title='References',
-        tab_after=MIDDLE, # try not to be the default tab, we're too obscure
+        tab_near=RIGHT, # try not to be the default tab, we're too obscure
         )
     def show(self):
-        oid = oid_of(self.context)
+        oid = get_oid(self.context)
         objectmap = find_objectmap(self.context)
         targets = []
         sources = []
@@ -47,8 +46,11 @@ class ReferencedView(object):
             path = '/'.join(path_tuple)
             yield path
 
-@mgmt_view(context=ReferentialIntegrityError,
-           renderer='templates/integrityerror.pt')
+@mgmt_view(
+    context=ReferentialIntegrityError,
+    renderer='templates/integrityerror.pt',
+    permission=NO_PERMISSION_REQUIRED,
+    )
 def integrityerror(context, request): # pragma: no cover
     return {}
     

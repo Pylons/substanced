@@ -6,13 +6,18 @@ class Test_principal_added(unittest.TestCase):
         from ..subscribers import principal_added
         return principal_added(event)
 
+    def test_loading(self):
+        event = testing.DummyResource(loading=True)
+        result = self._callFUT(event)
+        self.assertEqual(result, None)
+        
     def test_user_not_in_groups(self):
         from ...testing import make_site
         from ...interfaces import IUser
         site = make_site()
         user = testing.DummyResource(__provides__=IUser)
         site['user'] = user
-        event = testing.DummyResource(object=user)
+        event = testing.DummyResource(object=user, loading=False)
         self._callFUT(event) # doesnt blow up
 
     def test_user_in_groups(self):
@@ -23,7 +28,7 @@ class Test_principal_added(unittest.TestCase):
         groups['user'] = testing.DummyResource()
         user = testing.DummyResource(__provides__=IUser)
         site['user'] = user
-        event = testing.DummyResource(object=user)
+        event = testing.DummyResource(object=user, loading=False)
         self.assertRaises(ValueError, self._callFUT, event)
 
     def test_group_not_in_users(self):
@@ -31,7 +36,7 @@ class Test_principal_added(unittest.TestCase):
         site = make_site()
         group = testing.DummyResource()
         site['groups'] = group
-        event = testing.DummyResource(object=group)
+        event = testing.DummyResource(object=group, loading=False)
         self._callFUT(event) # doesnt blow up
 
     def test_group_in_users(self):
@@ -41,7 +46,7 @@ class Test_principal_added(unittest.TestCase):
         users['group'] = testing.DummyResource()
         group = testing.DummyResource()
         site['group'] = group
-        event = testing.DummyResource(object=group)
+        event = testing.DummyResource(object=group, loading=False)
         self.assertRaises(ValueError, self._callFUT, event)
 
 class Test_user_will_be_removed(unittest.TestCase):
@@ -49,6 +54,16 @@ class Test_user_will_be_removed(unittest.TestCase):
         from ..subscribers import user_will_be_removed
         return user_will_be_removed(event)
 
+    def test_loading(self):
+        event = testing.DummyResource(loading=True, moving=False)
+        result = self._callFUT(event)
+        self.assertEqual(result, None)
+
+    def test_moving(self):
+        event = testing.DummyResource(loading=False, moving=True)
+        result = self._callFUT(event)
+        self.assertEqual(result, None)
+        
     def test_it(self):
         from ...interfaces import IFolder
         parent = testing.DummyResource(__provides__=IFolder)
@@ -60,13 +75,12 @@ class Test_user_will_be_removed(unittest.TestCase):
         objectmap = DummyObjectMap((reset,))
         parent.__objectmap__ = objectmap
         parent['user'] = user
-        event = testing.DummyResource(object=user)
-        event.moving = False
+        event = testing.DummyResource(object=user, loading=False, moving=False)
         self._callFUT(event)
         self.assertTrue(reset.committed)
 
     def test_it_moving(self):
-        event = testing.DummyResource(object=None)
+        event = testing.DummyResource(object=None, loading=False)
         event.moving = True
         self.assertEqual(self._callFUT(event), None)
 
@@ -75,11 +89,16 @@ class Test_user_added(unittest.TestCase):
         from ..subscribers import user_added
         return user_added(event)
 
+    def test_loading(self):
+        event = testing.DummyResource(loading=True)
+        result = self._callFUT(event)
+        self.assertEqual(result, None)
+
     def test_it(self):
         from pyramid.security import Allow
         user = testing.DummyResource()
         user.__oid__ = 1
-        event = testing.DummyResource(object=user)
+        event = testing.DummyResource(object=user, loading=False)
         event.registry = DummyRegistry()
         self._callFUT(event)
         self.assertEqual(
@@ -93,11 +112,15 @@ class Test_acl_maybe_added(unittest.TestCase):
         return acl_maybe_added(event)
 
     def test_moving(self):
-        event = DummyEvent(moving=True)
+        event = DummyEvent(moving=True, loading=False)
+        self.assertEqual(self._callFUT(event), False)
+
+    def test_loading(self):
+        event = DummyEvent(moving=False, loading=True)
         self.assertEqual(self._callFUT(event), False)
 
     def test_objectmap_is_None(self):
-        event = DummyEvent(moving=False, object=None)
+        event = DummyEvent(moving=False, object=None, loading=False)
         self.assertEqual(self._callFUT(event), None)
 
     def test_no_acls(self):
@@ -107,7 +130,7 @@ class Test_acl_maybe_added(unittest.TestCase):
         resource1['resource2'] = resource2
         objectmap = DummyObjectMap()
         resource1.__objectmap__ = objectmap
-        event = DummyEvent(moving=False, object=resource1)
+        event = DummyEvent(moving=False, object=resource1, loading=False)
         self._callFUT(event)
         self.assertEqual(objectmap.connections, [])
 
@@ -121,7 +144,7 @@ class Test_acl_maybe_added(unittest.TestCase):
         resource2.__acl__ = [(None, 'bob', None), (None, 2, None)]
         objectmap = DummyObjectMap()
         resource1.__objectmap__ = objectmap
-        event = DummyEvent(moving=False, object=resource1)
+        event = DummyEvent(moving=False, object=resource1, loading=False)
         self._callFUT(event)
         self.assertEqual(
             objectmap.connections,

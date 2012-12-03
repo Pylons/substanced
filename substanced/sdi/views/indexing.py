@@ -2,16 +2,14 @@ from pyramid.view import view_defaults
 from pyramid.httpexceptions import HTTPFound
 from pyramid.session import check_csrf_token
 
-from ...catalog import (
-    catalog_view_factory_for, 
-    CatalogViewWrapper,
+from ...util import (
+    get_oid,
+    find_catalogs,
     )
-from ...content import find_services
-from ...util import oid_of
 
 from .. import (
     mgmt_view,
-    MIDDLE
+    RIGHT,
     )
 
 @view_defaults(
@@ -21,8 +19,6 @@ from .. import (
     )
 class IndexingView(object):
 
-    catalog_view_factory_for = staticmethod(catalog_view_factory_for) # testing
-
     def __init__(self, context, request):
         self.context = context
         self.request = request
@@ -30,12 +26,12 @@ class IndexingView(object):
     @mgmt_view(
         renderer='templates/indexing.pt',
         tab_title='Indexing',
-        tab_after=MIDDLE, # try not to be the default tab, we're too obscure
+        tab_near=RIGHT, # try not to be the default tab, we're too obscure
         )
     def show(self):
-        oid = oid_of(self.context)
+        oid = get_oid(self.context)
         catalogs = []
-        for catalog in find_services(self.context, 'catalog'):
+        for catalog in find_catalogs(self.context):
             indexes = []
             catalogs.append((catalog, indexes))
             for index in catalog.values():
@@ -48,12 +44,8 @@ class IndexingView(object):
         context = self.context
         request = self.request
         check_csrf_token(request)
-        oid = oid_of(self.context)
-        catalog_view_factory = self.catalog_view_factory_for(
-            context, request.registry)
-        if catalog_view_factory:
-            wrapper = CatalogViewWrapper(context, catalog_view_factory)
-            for catalog in find_services(context, 'catalog'):
-                catalog.reindex_doc(oid, wrapper)
+        oid = get_oid(context)
+        for catalog in find_catalogs(context):
+            catalog.reindex_doc(oid, context)
         request.sdiapi.flash_with_undo('Object reindexed', 'success')
-        return HTTPFound(request.sdiapi.mgmt_url(self.context, '@@indexing'))
+        return HTTPFound(request.sdiapi.mgmt_url(context, '@@indexing'))

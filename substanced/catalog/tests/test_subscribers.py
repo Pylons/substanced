@@ -13,8 +13,13 @@ def _makeSite(**kw):
     if objectmap is not None:
         site.__objectmap__ = objectmap
     for k, v in kw.items():
-        site[k] = v
-    site.__services__ = tuple(kw.keys())
+        if k == 'catalog':
+            catalogs = testing.DummyResource(
+                __provides__=IFolder,
+                __is_service__=True
+                )
+            site['catalogs'] = catalogs
+            catalogs['system'] = v
     return site
 
 class Test_object_added(unittest.TestCase):
@@ -34,26 +39,18 @@ class Test_object_added(unittest.TestCase):
         site = _makeSite(objectmap=objectmap, catalog=catalog)
         model1 = testing.DummyResource(__provides__=(IFolder,))
         model1.__oid__ = 1
-        model1.__factory_type__ = 'factory1'
         model2 = testing.DummyResource()
         model2.__oid__ = 2
-        model2.__factory_type__ = 'factory2'
         model1['model2'] = model2
         site['model1'] = model1
         event = DummyEvent(model1, None)
-        content = DummyContent(
-            metadata={'factory1':{'catalog':True},
-                      'factory2':{'catalog':True},
-                      })
-        registry = DummyRegistry(content=content)
-        event.registry = registry
         self._callFUT(event)
         indexed = catalog.indexed
         self.assertEqual(len(indexed), 2)
         self.assertEqual(indexed[0][0], 2)
-        self.assertEqual(indexed[0][1].content, model2)
+        self.assertEqual(indexed[0][1], model2)
         self.assertEqual(indexed[1][0], 1)
-        self.assertEqual(indexed[1][1].content, model1)
+        self.assertEqual(indexed[1][1], model1)
         
     def test_catalogable_objects_disjoint(self):
         from ...interfaces import IFolder
@@ -61,22 +58,16 @@ class Test_object_added(unittest.TestCase):
         objectmap = DummyObjectMap()
         site = _makeSite(objectmap=objectmap, catalog=catalog)
         model1 = testing.DummyResource(__provides__=IFolder)
-        model1.__factory_type__ = 'factory1'
         model2 = testing.DummyResource()
         model2.__oid__ = 1
-        model2.__factory_type__ = 'factory2'
         model1['model2'] = model2
         site['model1'] = model1
         event = DummyEvent(model1, None)
-        content = DummyContent(
-            metadata={'factory2':{'catalog':True}})
-        registry = DummyRegistry(content=content)
-        event.registry = registry
         self._callFUT(event)
         indexed = catalog.indexed
         self.assertEqual(len(indexed), 1)
         self.assertEqual(indexed[0][0], 1)
-        self.assertEqual(indexed[0][1].content, model2)
+        self.assertEqual(indexed[0][1], model2)
 
     def test_multiple_catalogs(self):
         from ...interfaces import IFolder
@@ -89,26 +80,19 @@ class Test_object_added(unittest.TestCase):
         outer_site['inner'] = inner_site
         model1 = testing.DummyResource(__provides__=(IFolder,))
         model1.__oid__ = 1
-        model1.__factory_type__ = 'factory1'
         model2 = testing.DummyResource()
         model2.__oid__ = 2
-        model2.__factory_type__ = 'factory2'
         model1['model2'] = model2
         inner_site['model1'] = model1
         event = DummyEvent(model1, None)
-        content = DummyContent(
-            metadata={'factory1':{'catalog':True},
-                      'factory2':{'catalog':True}})
-        registry = DummyRegistry(content=content)
-        event.registry = registry
         self._callFUT(event)
         for catalog in (catalog1, catalog2):
             indexed = catalog.indexed
             self.assertEqual(len(indexed), 2)
             self.assertEqual(indexed[0][0], 2)
-            self.assertEqual(indexed[0][1].content, model2)
+            self.assertEqual(indexed[0][1], model2)
             self.assertEqual(indexed[1][0], 1)
-            self.assertEqual(indexed[1][1].content, model1)
+            self.assertEqual(indexed[1][1], model1)
 
 class Test_object_removed(unittest.TestCase):
     def _callFUT(self, event):
@@ -119,6 +103,7 @@ class Test_object_removed(unittest.TestCase):
         model = testing.DummyResource()
         parent = testing.DummyResource()
         event = testing.DummyResource(object=model, parent=parent)
+        event.removed_oids = None
         self._callFUT(event) # doesnt blow up
 
     def test_no_catalog(self):
@@ -169,11 +154,9 @@ class Test_object_modified(unittest.TestCase):
         site = _makeSite(objectmap=objectmap)
         model = testing.DummyResource()
         model.__oid__ = 1
-        model.__factory_type__ = 'factory1'
         site['model'] = model
         event = DummyEvent(model, site)
-        content = DummyContent(
-            metadata={'factory1':{'catalog':True}})
+        content = DummyContent()
         registry = DummyRegistry(content=content)
         event.registry = registry
         self._callFUT(event) # doesnt blow up
@@ -184,18 +167,16 @@ class Test_object_modified(unittest.TestCase):
         site = _makeSite(objectmap=objectmap, catalog=catalog)
         model = testing.DummyResource()
         model.__oid__ = 1
-        model.__factory_type__ = 'factory1'
         site['model'] = model
         event = DummyEvent(model, site)
-        content = DummyContent(
-            metadata={'factory1':{'catalog':True}})
+        content = DummyContent()
         registry = DummyRegistry(content=content)
         event.registry = registry
         self._callFUT(event)
         reindexed = catalog.reindexed
         self.assertEqual(len(reindexed), 1)
         self.assertEqual(reindexed[0][0], 1)
-        self.assertEqual(reindexed[0][1].content, model)
+        self.assertEqual(reindexed[0][1], model)
 
     def test_multiple_catalogs(self):
         objectmap = DummyObjectMap()
@@ -207,12 +188,10 @@ class Test_object_modified(unittest.TestCase):
         outer['inner'] = inner
         model = testing.DummyResource()
         model.__oid__ = 1
-        model.__factory_type__ = 'factory1'
         inner['model'] = model
         outer['inner'] = inner
         event = DummyEvent(model, None)
-        content = DummyContent(
-            metadata={'factory1':{'catalog':True}})
+        content = DummyContent()
         registry = DummyRegistry(content=content)
         event.registry = registry
         self._callFUT(event)
@@ -220,7 +199,7 @@ class Test_object_modified(unittest.TestCase):
             reindexed = catalog.reindexed
             self.assertEqual(len(reindexed), 1)
             self.assertEqual(reindexed[0][0], 1)
-            self.assertEqual(reindexed[0][1].content, model)
+            self.assertEqual(reindexed[0][1], model)
 
 class Test_acl_modified(unittest.TestCase):
     def _callFUT(self, event):
@@ -233,32 +212,118 @@ class Test_acl_modified(unittest.TestCase):
         self._callFUT(event) # doesnt blow up
 
     def test_gardenpath(self):
-        resource = testing.DummyResource()
-        resource.__factory_type__ = 'resource'
+        from substanced.interfaces import IFolder
+        resource = testing.DummyResource(__provides__=IFolder)
         resource.__oid__ = 1
-        resource.__services__ = ('catalog',)
         catalog = DummyCatalog()
-        resource['catalog'] = catalog
+        catalog.__name__ = 'catalog'
+        catalogs = resource['catalogs'] = testing.DummyResource(
+            __provides__=IFolder, __is_service__=True, __name__='catalogs')
+        catalogs['catalog'] = catalog
         index = DummyIndex()
+        index.__name__ = 'index'
         catalog['index'] = index
         event = DummyEvent(resource, None)
-        content = DummyContent({'resource':True})
-        event.registry = DummyRegistry(content)
-        self._callFUT(event) # doesnt blow up
+        content = DummyContent()
+        registry = DummyRegistry(content=content)
+        event.registry = registry
+        self._callFUT(event)
         self.assertEqual(index.oid, 1)
-        self.assertEqual(index.data.__class__.__name__, 'CatalogViewWrapper')
+        self.assertEqual(index.data, resource)
+
+class Test_on_startup(unittest.TestCase):
+    def setUp(self):
+        self.config = testing.setUp()
+
+    def tearDown(self):
+        testing.tearDown()
+
+    def _callFUT(self, event):
+        from ..subscribers import on_startup
+        return on_startup(event)
+
+    def test_autosync_false(self):
+        registry = self.config.registry
+        registry.settings['substanced.autosync_catalogs'] = 'false'
+        app = testing.DummyResource()
+        app.registry = registry
+        event = DummyEvent(app, None)
+        result = self._callFUT(event)
+        self.assertEqual(result, None)
+
+    def test_autosync_missing(self):
+        registry = self.config.registry
+        app = testing.DummyResource()
+        app.registry = registry
+        event = DummyEvent(app, None)
+        result = self._callFUT(event)
+        self.assertEqual(result, None)
+
+    def test_autosync_true_no_objectmap(self):
+        registry = self.config.registry
+        registry.settings['substanced.autosync_catalogs'] = 'true'
+        app = testing.DummyResource()
+        app.registry = registry
+        root = testing.DummyResource()
+        app.root_factory = lambda *arg: root
+        event = DummyEvent(app, None)
+        result = self._callFUT(event)
+        self.assertEqual(result, None)
+
+    def test_autosync_true_no_oids(self):
+        registry = self.config.registry
+        registry.settings['substanced.autosync_catalogs'] = 'true'
+        app = testing.DummyResource()
+        app.registry = registry
+        root = testing.DummyResource()
+        root.__objectmap__ = DummyObjectMap([])
+        app.root_factory = lambda *arg: root
+        event = DummyEvent(app, None)
+        result = self._callFUT(event)
+        self.assertEqual(result, None)
+
+    def test_autosync_true_with_oids(self):
+        registry = self.config.registry
+        registry.settings['substanced.autosync_catalogs'] = 'true'
+        app = testing.DummyResource()
+        app.registry = registry
+        root = testing.DummyResource()
+        catalog = DummyCatalog()
+        root.__objectmap__ = DummyObjectMap([1], catalog)
+        app.root_factory = lambda *arg: root
+        event = DummyEvent(app, None)
+        result = self._callFUT(event)
+        self.assertEqual(result, None)
+        self.assertTrue(catalog.updated)
+
+    def test_autosync_true_with_oids_raises(self):
+        from zope.interface.interfaces import ComponentLookupError
+        registry = self.config.registry
+        registry.settings['substanced.autosync_catalogs'] = 'true'
+        app = testing.DummyResource()
+        app.registry = registry
+        root = testing.DummyResource()
+        catalog = DummyCatalog(raises=ComponentLookupError)
+        root.__objectmap__ = DummyObjectMap([1], catalog)
+        app.root_factory = lambda *arg: root
+        event = DummyEvent(app, None)
+        result = self._callFUT(event)
+        self.assertEqual(result, None)
+        self.assertFalse(catalog.updated)
 
 class DummyCatalog(dict):
     
     family = BTrees.family64
+    updated = False
     
-    def __init__(self, result=None):
+    def __init__(self, result=None, raises=None):
         self.queries = []
         self.indexed = []
         self.unindexed = []
         self.reindexed = []
         self.objectids = self.family.II.TreeSet()
         self.result = result
+        self.raises = raises
 
     def index_doc(self, objectid, obj):
         self.indexed.append((objectid, obj))
@@ -269,22 +334,33 @@ class DummyCatalog(dict):
     def reindex_doc(self, objectid, obj):
         self.reindexed.append((objectid, obj))
 
+    def update_indexes(self, *arg, **kw):
+        if self.raises:
+            raise self.raises
+        self.updated = True
+        return self.result
+
 class DummyObjectMap:
     family = BTrees.family64
+
+    def __init__(self, result=None, object_result=None):
+        self.result = result
+        self.object_result = object_result
+
+    def get_extent(self, name):
+        return self.result
+
+    def object_for(self, oid):
+        return self.object_result
     
 class DummyEvent(object):
+    removed_oids = None
     def __init__(self, object, parent, registry=None):
         self.object = object
         self.parent = parent
         self.registry = registry
         
 class DummyContent(object):
-    def __init__(self, metadata):
-        self._metadata = metadata
-
-    def metadata(self, resource, name, default=None):
-        return self._metadata.get(resource.__factory_type__, default)
-
     def istype(self, obj, whatever):
         return True
 

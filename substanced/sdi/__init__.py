@@ -38,7 +38,12 @@ from pyramid.util import (
     Sentinel,
     )
 
-MIDDLE = Sentinel('MIDDLE')
+LEFT = 'LEFT'
+RIGHT = 'RIGHT'
+MIDDLE = 'MIDDLE'
+
+CENTER1 = Sentinel('CENTER1')
+CENTER2 = Sentinel('CENTER2')
 
 from ..objectmap import find_objectmap
 from ..util import acquire
@@ -53,7 +58,7 @@ def add_mgmt_view(
     config,
     view=None,
     name="",
-    permission=None,
+    permission='sdi.view',
     request_type=None,
     request_method=None,
     request_param=None,
@@ -75,6 +80,7 @@ def add_mgmt_view(
     tab_condition=None,
     tab_before=None,
     tab_after=None,
+    tab_near=None,
     **predicates
     ):
     
@@ -149,11 +155,34 @@ def add_mgmt_view(
         )
     
     intr = config.introspectable(
-        'sdi views', discriminator, view_desc, 'sdi view')
+        'sdi views', discriminator, view_desc, 'sdi view'
+        )
+
+    if tab_near is not None:
+        if tab_before or tab_after:
+            raise ConfigurationError(
+                'You cannot use tab_near and tab_before/tab_after together'
+                )
+        if tab_near == LEFT:
+            tab_after = FIRST
+            tab_before = CENTER1
+        elif tab_near == MIDDLE:
+            tab_after = CENTER1
+            tab_before = CENTER2
+        elif tab_near == RIGHT:
+            tab_after = CENTER2
+            tab_before = LAST
+        else:
+            raise ConfigurationError(
+                'tab_near value must be one of LEFT, MIDDLE, RIGHT, or None'
+                )
+
     intr['tab_title'] = tab_title
     intr['tab_condition'] = tab_condition
     intr['tab_before'] = tab_before
     intr['tab_after'] = tab_after
+    intr['tab_near'] = tab_near
+
     intr.relate('views', view_discriminator)
     config.action(discriminator, introspectables=(intr,))
 
@@ -277,23 +306,38 @@ def sdi_mgmt_views(context, request, names=None):
                     unordered.remove(view_data)
                     manually_ordered.append(view_data)
 
-    # first sort non-manually-ordered views lexically by title
-    lexically_ordered = sorted(unordered, key=operator.itemgetter('title'))
+    # First sort non-manually-ordered views lexically by title. Reverse due to
+    # the behavior of the toposorter; we'd like groups of things that share the
+    # same before/after to be alpha sorted ascending relative to each other,
+    # and reversing lexical ordering here gets us that behavior down the line.
+    lexically_ordered = sorted(
+        unordered,
+        key=operator.itemgetter('title'),
+        reverse=True,
+        )
 
-    # then sort the lexically-presorted unordered views topologically based on
-    # any tab_before and tab_after values in the view data
-    tsorter = TopologicalSorter(default_before=MIDDLE, default_after=None)
+    # Then sort the lexically-presorted unordered views topologically based on
+    # any tab_before and tab_after values in the view data.
+    tsorter = TopologicalSorter(default_after=CENTER1, default_before=CENTER2)
 
     tsorter.add(
-        MIDDLE,
+        CENTER1,
         None,
-        before=LAST,
         after=FIRST,
+        before=CENTER2,
+        )
+
+    tsorter.add(
+        CENTER2,
+        None,
+        after=CENTER1,
+        before=LAST,
         )
 
     for view_data in lexically_ordered:
         before=view_data.get('tab_before', None)
         after=view_data.get('tab_after', None)
+
         tsorter.add(
             view_data['view_name'],
             view_data,
@@ -301,7 +345,9 @@ def sdi_mgmt_views(context, request, names=None):
             after=after,
             )
 
-    topo_ordered = [ x[1] for x in tsorter.sorted() if x[0] is not MIDDLE ]
+    topo_ordered = [
+        x[1] for x in tsorter.sorted() if x[0] not in (CENTER1, CENTER2)
+        ]
 
     return manually_ordered + topo_ordered
 
@@ -748,6 +794,7 @@ def flash_with_undo(request, *arg, **kw): # XXX deprecate
 class sdiapi(object):
     get_connection = staticmethod(get_connection) # testing
     transaction = transaction # testing
+    sdi_mgmt_views = staticmethod(sdi_mgmt_views) # testing
     
     def __init__(self, request):
         self.request = request
@@ -806,7 +853,7 @@ class sdiapi(object):
         return acquire(self.request.context, 'sdi_title', 'Substance D')
 
     def mgmt_views(self, context):
-        return sdi_mgmt_views(context, self.request)
+        return self.sdi_mgmt_views(context, self.request)
 
 def includeme(config): # pragma: no cover
     settings = config.registry.settings

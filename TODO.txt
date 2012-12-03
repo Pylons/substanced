@@ -16,8 +16,17 @@ UI-Plus-Guts
 - Change password tab on user object requires old password.  See
   https://github.com/Pylons/substanced/issues/19
 
+- Show a derivative of output status in flash message when update indexes is
+  done to a catalog.
+
 Guts-Only
 ---------
+
+- Use hasattr(__is_folder__) instead of IFolder.providedBy is is_folder.
+
+- Use is_folder view predicate instead of context=IFolder in folder views
+  (holdup is testing out folder button action overrides in the face of views
+  being registered against IFolder).
 
 - Decide whether to split "manage contents" permissions out for folders into
   add, delete, rename.
@@ -47,14 +56,12 @@ Guts-Only
   the batch receives may be smaller than seqlen due to hidden objects in
   folder contents view.
 
-- Ditch the Zope event system (in particular, ditch "registry.registerHandler"
-  used by config.add_subscriber as well as registry.subscribers used by
-  registry.notify).  Come up with an alternate event subscription and
-  notification system which ensures that subscribers receive only the event
-  object, and senders need send only the event object, even if under the hood
-  other adaptations are done to find the right subscribers. A bonus: I will
-  never have to pdb-step my way through the insanity of
-  "components.subscribers" method again.
+- Once we depend on Pyramid 1.4b1+, normalize subscriber predicate argument
+  lists.
+
+- Change all mentions of ``context`` to ``resource``.
+
+- Add a ``substanced.load_dump`` key for use by root factory.
 
 Nice-to-Have Features
 ---------------------
@@ -65,62 +72,43 @@ Nice-to-Have Features
 
 - Ability to add and edit principals in existing ACEs in ACL edit view.
 
-Docs
+Grid
 ----
-
-- Document how to override a content registration.  Include an override
-  example for the sole purpose of overriding the add view.
-
-- Explain ``after_create`` meta-argument to content.
-
-- Explain __created__ attribute.
 
 - Explain __sdi_deletable__, __sdi_addable__, __sdi_hidden__, __sdi_columns__,
   __sdi_buttons__.
 
+
+Dump and Load
+-------------
+
+- Explain ``__dump__`` and ``__load__`` methods of resources.
+
+Events
+------
+
 - Explain event listener decorators and add_content_subscriber.
-
-- Explain catalog web UI.
-
-- Narrative docs for reference properties.
-
-- Docstrings for multireference property implementations.
-
-- Explain ``tab_before`` and ``tab_after`` arguments to mgmt_view (as well as
-  related ``FIRST``, ``LAST``, and ``MIDDLE`` sentinels).
-
-- Explain "Indexing" view.
-
-- Explain ``NameSchemaNode``, ``PermissionSchemaNode``, and
-  ``MultireferenceIdSchemaNode``.
-
-- Explain ``renamer``.
-
-- Explain various view predicates.
-
-- Explain __init__.py include-then-scan done by includeme and how to avoid
-  scanning.
-
-- Explain evolution.
-
-- Explain that evolution is baselined at first startup.
-
-- Explain "Workflows" tab.
-
-- Explain exception views for integrity errors.
-
-- Explain that allowed indexes are reindexed when an object's ACL is changed.
 
 - Explain subscribe_acl_modified.
 
-- Explain change_acl.
-
 - Explain "moving" and "duplicating" flags on added and removed events.
+
+Security
+--------
+
+- Explain that allowed indexes are reindexed when an object's ACL is changed.
+
+- Explain change_acl.
 
 - Explain that source-integral PrincipalToACLBearing relationships are set up
   between an ACL-bearing object and the principals referred to within the ACL.
 
-- Document the SDI API
+
+Docs
+----
+
+- Explain __init__.py include-then-scan done by includeme and how to avoid
+  scanning.
 
 Probably Bad Ideas
 ------------------

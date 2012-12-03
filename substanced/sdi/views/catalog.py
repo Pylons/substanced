@@ -12,155 +12,14 @@ from ...objectmap import find_objectmap
 from ...interfaces import ICatalog, IFolder
 
 from ...catalog import logger
-from ...catalog.discriminators import (
-    AllowedDiscriminator,
-    CatalogViewDiscriminator,
-    )
-from ...catalog.indexes import (
-    IndexSchema,
-    PermissionsSchemaNode,
-    )
 from ...form import FormView
-from ...schema import (
-    Schema,
-    NameSchemaNode,
-    )
+from ...schema import Schema
     
 from .. import mgmt_view
-
-@mgmt_view(
-    name='add_catalog_service',
-    tab_condition=False,
-    permission='sdi.add-services',
-    )
-def add_catalog_service(context, request):
-    catalog = request.registry.content.create('Catalog')
-    context['catalog'] = catalog
-    return HTTPFound(location=request.sdiapi.mgmt_path(context))
 
 def context_is_an_index(context, request):
     return request.registry.content.metadata(context, 'is_index', False)
 
-class AddIndexSchema(IndexSchema):
-    name = NameSchemaNode(editing=context_is_an_index,
-                          insert_before='sd_category')
-    reindex = colander.SchemaNode(
-        colander.Bool(),
-        default=True,
-        )
-
-class _AddIndexView(FormView):
-    schema = AddIndexSchema()
-    buttons = ('add',)
-    def add_success(self, appstruct):
-        registry = self.request.registry
-        name = appstruct['name']
-        index = self.makeindex(appstruct, registry)
-        self.context[name] = index
-        index.sd_category = appstruct['category']
-        if appstruct['reindex']:
-            self.context.reindex(indexes=(name,), registry=registry)
-        return HTTPFound(location=self.request.sdiapi.mgmt_path(self.context))
-
-    def makeindex(self, appstruct, registry):
-        name = appstruct['name']
-        discriminator = CatalogViewDiscriminator(name)
-        index = registry.content.create(self.index_type_name, discriminator)
-        return index
-
-    @property
-    def title(self):
-        return 'Add %s' % self.index_type_name
-
-@mgmt_view(
-    context=ICatalog,
-    name='add_path_index',
-    tab_condition=False,
-    permission='sdi.add-content',
-    renderer='substanced.sdi:templates/form.pt'
-    )
-class AddPathIndexView(_AddIndexView):
-    title = 'Add Path Index'
-    def makeindex(self, appstruct, registry):
-        index = registry.content.create('Path Index')
-        return index
-        
-@mgmt_view(
-    context=ICatalog,
-    name='add_field_index',
-    tab_condition=False,
-    permission='sdi.add-content',
-    renderer='substanced.sdi:templates/form.pt'
-    )
-class AddFieldIndexView(_AddIndexView):
-    index_type_name = 'Field Index'
-
-@mgmt_view(
-    context=ICatalog,
-    name='add_keyword_index',
-    tab_condition=False,
-    permission='sdi.add-content',
-    renderer='substanced.sdi:templates/form.pt'
-    )
-class AddKeywordIndexView(_AddIndexView):
-    index_type_name = 'Keyword Index'
-
-@mgmt_view(
-    context=ICatalog,
-    name='add_text_index',
-    tab_condition=False,
-    permission='sdi.add-content',
-    renderer='substanced.sdi:templates/form.pt'
-    )
-class AddTextIndexView(_AddIndexView):
-    index_type_name = 'Text Index'
-
-class AddAllowedIndexSchema(AddIndexSchema):
-    permissions = PermissionsSchemaNode(missing=())
-
-@mgmt_view(
-    context=ICatalog,
-    name='add_allowed_index',
-    tab_condition=False,
-    permission='sdi.add-content',
-    renderer='substanced.sdi:templates/form.pt'
-    )
-class AddAllowedIndexView(_AddIndexView):
-    schema = AddAllowedIndexSchema()
-    title = 'Add Allowed Index'
-
-    def makeindex(self, appstruct, registry):
-        permissions = tuple(sorted(appstruct['permissions']))
-        discriminator = AllowedDiscriminator(permissions)
-        index = registry.content.create('Allowed Index', discriminator)
-        return index
-        
-class Facets(colander.SequenceSchema):
-    facet = colander.SchemaNode(
-        colander.String(),
-        )
-
-class AddFacetIndexSchema(AddIndexSchema):
-    facets = Facets(missing=())
-
-@mgmt_view(
-    context=ICatalog,
-    name='add_facet_index',
-    tab_condition=False,
-    permission='sdi.add-content',
-    renderer='substanced.sdi:templates/form.pt'
-    )
-class AddFacetIndexView(_AddIndexView):
-    schema = AddFacetIndexSchema()
-    title = 'Add Facet Index'
-
-    def makeindex(self, appstruct, registry):
-        name = appstruct['name']
-        discriminator = CatalogViewDiscriminator(name)
-        facets = tuple(appstruct['facets'])
-        index = registry.content.create('Facet Index', discriminator, facets)
-        return index
-        
 @view_defaults(
     name='manage_catalog',
     context=ICatalog,
@@ -185,6 +44,12 @@ class ManageCatalog(object):
     def reindex(self):
         self.context.reindex()
         self.request.session.flash('Catalog reindexed')
+        return HTTPFound(location=self.redir_location)
+
+    @mgmt_view(request_method='POST', request_param='update', check_csrf=True)
+    def update(self):
+        self.context.update_indexes()
+        self.request.session.flash('Catalog index definitions updated')
         return HTTPFound(location=self.redir_location)
 
 @view_defaults(
@@ -309,4 +174,3 @@ def reindex_indexes(context, request):
             )
         
     return HTTPFound(request.sdiapi.mgmt_path(context, '@@contents'))
-

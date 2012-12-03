@@ -10,9 +10,11 @@ from ..interfaces import (
     IWorkflow,
     IDefaultWorkflow,
     )
-from ..content import get_content_type
 from ..event import subscribe_added
-from ..util import postorder
+from ..util import (
+    postorder,
+    get_content_type,
+    )
 
 STATE_ATTR = '__workflow_state__'
 

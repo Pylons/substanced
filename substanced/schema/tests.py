@@ -183,7 +183,7 @@ class TestIdSet(unittest.TestCase):
     def test_serialize_null(self):
         inst = self._makeOne()
         result = inst.serialize(None, colander.null)
-        self.assertEqual(result, ())
+        self.assertEqual(result, colander.null)
 
     def test_serialize_noniterable(self):
         inst = self._makeOne()
@@ -197,7 +197,7 @@ class TestIdSet(unittest.TestCase):
     def test_deserialize_null(self):
         inst = self._makeOne()
         result = inst.deserialize(None, colander.null)
-        self.assertEqual(result, [])
+        self.assertEqual(result, colander.null)
 
     def test_deserialize_noniterable(self):
         inst = self._makeOne()

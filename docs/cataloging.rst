@@ -1,63 +1,18 @@
 Cataloging
 ==========
 
-Substance D provides application content indexing and querying via a
-*catalog*.  A catalog is an object named ``catalog`` which lives in a folder
-within your application's resource tree.  A catalog has a number of indexes,
-each of which keeps a certain kind of information about your content.
+Substance D provides application content indexing and querying via a *catalog*.
+A catalog is an object named ``catalog`` which lives in a folder named
+``catalogs`` within your application's resource tree.  A catalog has a number
+of indexes, each of which keeps a certain kind of information about your
+content.
 
-Adding a Catalog
-----------------
+The Default Catalog
+-------------------
 
-You can add a catalog to your site by visiting a folder and choosing
-``Catalog`` from the ``Add`` dropdown.
+A default catalog is installed when you start Pyramid named ``system``.
 
-Or to add a catalog to your site via code:
-
-.. code-block:: python
-
-   catalog = request.registry.content.create('Catalog')
-   somefolder.add_service('catalog', catalog)
-
-More than one catalog can be added to a site, but typically there's only one,
-in the root folder.
-
-Once you've added a catalog, you can begin to add indexes to it.  You can add
-an index via the SDI by visiting the catalog and choosing an index type from
-the dropdown.  But another way to do this is to use a combination of the
-:func:`~substanced.catalog.add_catalog_index` method of the Configurator and
-the :meth:`~substanced.catalog.Catalog.update_indexes` method of a catalog
-object.
-
-:func:`substance.catalog.add_catalog_index` adds candidate indexes of a
-particular name, type, and category.  It doesn't actually add an index to a
-catalog, but it makes it available to be added to one later. An example:
-
-.. code-block:: python
-
-    config = Configurator()
-    config.include('substanced')
-    config.add_catalog_index('myindex', 'field', 'myapp')
-
-The first argument to ``add_catalog_index`` is the index name.  It should be
-a simple name without any punctuation in it, as it will be used during
-queries. It should be reasonably unique. The second argument is the factory
-name, which, by default, can be one of ``field``, ``text``, ``keyword``,
-``facet``, ``path`` or ``allowed``.  The third is a *category*.  A category
-is just a string which can be used to group indexes belonging to the same
-application together.
-
-The :meth:`~substanced.catalog.Catalog.update_indexes` method of a catalog
-object causes all the indexes in a given category added via
-``add_catalog_index`` to be inserted into the catalog.
-
-.. code-block:: python
-
-   catalog = root['catalog']
-   catalog.update_indexes('system', registry=registry, reindex=True)
-   catalog.update_indexes('myapp', registry=registry, reindex=True)
-
-A default set of indexes is available in the ``system`` category:
+A default set of indexes is available in the ``system`` catalog:
 
 - path (a ``path`` index)
 
@@ -66,10 +21,6 @@ A default set of indexes is available in the ``system`` category:
 - name (a ``field`` index), uses ``content.__name__`` exclusively
 
   Represents the local name of the content object.
-
-- oid (a ``field`` index), uses ``oid_of(content)`` exclusively.
-
-  Represents the object identifier (globally unique) of the content object.
 
 - interfaces (a ``keyword`` index)
 
@@ -84,92 +35,6 @@ A default set of indexes is available in the ``system`` category:
 
   Represents the set of users granted a permission to each content object.
 
-It is recommended that you use ``update_indexes('system')`` to install these
-into your main catalog.
-
-Object Indexing
----------------
-
-Once a catalog has been set up with indexes, each time a new *catalogable*
-object is added to the site, its attributes will be indexed.  A catalogable
-object is a content object which has indicated that it should be cataloged
-via its content type information, e.g.
-
-.. code-block:: python
-
-    @content(
-        'Order',
-        catalog=True,
-        )
-    class Order(Persistent):
-       freaky = True
-
-The ``catalog=True`` line is where the magic happens.
-
-If the value of the ``catalog`` argument is ``True``, the object will only be
-indexed in "system" indexes.  To index the object in custom application indexes,
-you will need to create a *catalog view* for your content, and pass it in as
-``catalog`` to the content type decorator.
-
-.. code-block:: python
-
-   class OrderCatalogView(object):
-       def __init__(self, content):
-           self.content = content
-
-        def freaky(self, default):
-            return getattr(self.content, 'freaky', default)
-
-    @content(
-        'Order',
-        catalog=OrderCatalogView,
-        )
-    class Order(Persistent):
-       pass
-
-The catalog view must be a class that accepts a single argument, ``content``, in
-its constructor, and which has one or more methods named after potential index
-names.  When it comes time for the system to index your content, it will create
-an instance of your catalog view class, and it will then call one or more of its
-methods; it will call methods on the catalog view object matching the index
-names present in the catalog it's being indexed in.  The ``default`` value
-passed in should be returned if the method is unable to compute a value for the
-content object.
-
-When you provide a catalog view for your content, it will be indexed in both
-the system indexes and any custom indexes you have.  The name of the method
-will be used to match an index name.  So during configuration:
-
-.. code-block:: python
-
-    config = Configurator()
-    config.include('substanced')
-    config.add_catalog_index('freaky', 'field', 'myapp')
-
-Then during catalog setup:
-
-.. code-block:: python
-
-   catalog = root['catalog']
-   catalog.update_indexes('system', registry=registry, reindex=True)
-   catalog.update_indexes('myapp', registry=registry, reindex=True)
-
-Once this is done, whenever an Order object is added to the system, a value
-(the result of the ``freaky()`` method of the catalog view) will be indexed in
-the ``freaky`` field index; system values will also be indexed, but they don't
-require any help from your catalog view.
-
-Adding Catalog Index Factories
--------------------------------
-
-If you've created a new kind of index, you can add an index factory for that
-index type by using :func:`substance.catalog.add_catalog_index_factory`.  Once
-this is done, the factory name will be available as a ``factory_name`` argument
-to ``add_catalog_index``.
-
-See the ``substanced.catalog`` module for examples of existing catalog
-index factories.
-
 Querying the Catalog
 --------------------
 
@@ -177,7 +42,9 @@ You execute a catalog query using APIs of the catalog's indexes.
 
 .. code-block:: python
 
-   catalog = find_service(somecontext, 'catalog')
+   from substanced.util import find_catalog
+
+   catalog = find_catalog(somecontext, 'system')
    name = catalog['name']
    path = catalog['path']
    # find me all the objects that exist under /somepath with the name 'somename'
@@ -207,7 +74,7 @@ index) and returns another (sorted) ResultSet.
 
 .. code-block:: python
 
-   catalog = find_service(somecontext, 'catalog')
+   catalog = find_catalog(somecontext, 'system')
    name = catalog['name']
    path = catalog['path']
    # find me all the objects that exist under /somepath with the name 'somename'
@@ -218,4 +85,100 @@ index) and returns another (sorted) ResultSet.
 If you don't call ``sort`` on the resultset you get back, the results will
 not be sorted in any particular order.
 
+Adding a Catalog
+----------------
 
+The system index won't have enough information to form all the queries you
+need.  You'll have to add a catalog via code related to your application.
+
+.. code-block:: python
+
+   catalogs = root['catalogs']
+   catalog = catalogs.add_catalog('mycatalog', update_indexes=True)
+
+This will add a catalog named ``mycatalog`` to your database and it will add
+the indexes related to that catalog type.
+
+However, before you'll be able to do this successfully, the ``mycatalog``
+catalog type must be described by a *catalog factory* in code.  A catalog
+factory is a collection of index descriptions.  Creating a catalog factory or
+doesn't actually add a catalog to your databas3, but it makes it possible to
+add one later.
+
+Here's an example catalog factory:
+
+.. code-block:: python
+
+   from substanced.catalog import (
+       catalog_factory,
+       Field,
+       Text,
+       )
+
+   @catalog_factory('mycatalog')
+   class MyCatalogFactory(object):
+       freaky = Text()
+
+You'll need to *scan* code that contains a ``catalog_factory`` in order to use
+:meth:`substanced.catalog.CatalogsService.add_catalog` using that factory's
+name.
+
+Once you've done this, you can then add the catalog to the database in any bit
+of code that has access to the database.  For example, in an event handler when
+the system starts up:
+
+.. code-block:: python
+
+    from pyramid.events import ApplicationCreated, subscriber
+
+    @subscriber(ApplicationCreated)
+    def created(event):
+        root = event.object
+        service = root['catalogs']
+        service.add_catalog('app1', update_indexes=True)
+
+Object Indexing
+---------------
+
+Once a new catalog has been added to the database, each time a new
+*catalogable* object is added to the site, its attributes will be indexed by
+each catalog in its lineage that "cares about" the object.  The object will
+always be indexed in the "system" catalog.  To make sure it's cataloged in
+custom catalogs, you'll need to do some work.  To index the object in custom
+application indexes, you will need to create a *indexview* for your content,
+and register it using :func:`substanced.catalog.add_indexview` (a configurator
+directive).
+
+Right now this is a bit painful.  For example:
+
+.. code-block:: python
+
+   class MyCatalogViews(object):
+       def __init__(self, content):
+           self.content = content
+
+        def freaky(self, default):
+            return getattr(self.content, 'freaky', default)
+
+   def includeme(config): # pragma: no cover
+       for name in ('freaky',):
+           config.add_indexview(
+               MyCatalogViews,
+               catalog_name='mycatalog',
+               index_name=name,
+               attr=name
+               )
+
+The index view should be a class that accepts a single argument,
+(conventionally named ``resource``), in its constructor, and which has one or
+more methods named after potential index names.  When it comes time for the
+system to index your content, it will create an instance of your indexview
+class, and it will then call one or more of its methods; it will call methods
+on the indexview object matching the ``attr`` passed in to ``add_indexview``.
+The ``default`` value passed in should be returned if the method is unable to
+compute a value for the content object.
+
+Hopefully soon we'll make this registration bit a bit less verbose.  But in any
+case, once this is done, whenever an object is added to the system, a value
+(the result of the ``freaky()`` method of the catalog view) will be indexed in
+the ``freaky`` field index.

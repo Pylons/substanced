@@ -31,7 +31,8 @@ Install using setuptools, e.g. (within a virtualenv)::
 Optional Dependencies
 ---------------------
 
-Use of the :attr:`substanced.file.USE_MAGIC` constant for guessing file types
+Use of the :py:attr:`substanced.file.USE_MAGIC`
+constant for guessing file types
 from stream content requires the ``python-magic`` library, which works without
 extra help on Linux systems, but requires special dependency installations on
 Mac OS and Windows systems.  You'll need to follow these steps on those
@@ -59,14 +60,17 @@ Narrative Documentation
 .. toctree::
    :maxdepth: 1
 
-   intro.rst
-   content.rst
-   mgmtview.rst
-   services.rst
-   cataloging.rst
-   references.rst
-   workflows.rst
-   retail.rst
+   intro
+   sdi
+   content
+   mgmtview
+   forms
+   services
+   cataloging
+   references
+   workflows
+   evolution
+   retail
 
 API Documentation
 -----------------
@@ -74,7 +78,7 @@ API Documentation
 .. toctree::
    :maxdepth: 1
 
-   api.rst
+   api
 
 Reporting Bugs / Development Versions
 -------------------------------------

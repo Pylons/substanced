@@ -4,71 +4,18 @@ import inspect
 from pyramid.compat import is_nonstr_iter
 from pyramid.location import lineage
 
-from pyramid.threadlocal import get_current_registry
-
 import venusian
 
 from ..event import ContentCreated
 
+from ..util import (
+    get_dotted_name,
+    set_created,
+    set_oid,
+    get_factory_type,
+    )
+
 _marker = object()
-
-def get_content_type(resource, registry=None):
-    """ Return the content type of a resource or ``None`` if the object has
-    no content type.  If ``registry`` is not supplied, the current Pyramid
-    registry will be looked up as a thread local in order to find the
-    Substance D content registry."""
-    if registry is None:
-        registry = get_current_registry()
-    return registry.content.typeof(resource)
-
-def find_content(resource, content_type, registry=None):
-    """ Return the first object in the :term:`lineage` of the resource that
-    supplies the ``content_type``.  If ``registry`` is not supplied, the
-    current Pyramid registry will be looked up as a thread local in order to
-    find the Substance D content registry."""
-    if registry is None:
-        registry = get_current_registry()
-    return registry.content.find(resource, content_type)
-
-def _find_services(context, name, one=False):
-    L = []
-    for obj in lineage(context):
-        services = getattr(obj, '__services__', None)
-        if services is not None:
-            if name in services:
-                service = obj[name]
-                if one:
-                    return service
-                L.append(service)
-    if one:
-        return None
-    return L
-
-def find_service(context, name):
-    """ Find the first service named ``name`` in the lineage of ``context``
-    or return ``None`` if no such-named service could be found. """
-    return _find_services(context, name, one=True)
-                
-def find_services(context, name):
-    """Finds all services named ``name`` in the lineage of ``context`` and
-    returns a sequence containing those service objects. The sequence will
-    begin with the most deepest nested service and will end with the least
-    deeply nested service.  Returns an empty sequence if no such-named
-    service could be found."""
-    return _find_services(context, name)
-
-def _get_factory_type(resource):
-    """ If the resource has a __factory_type__ attribute, return it.
-    Otherwise return the full Python dotted name of the resource's class."""
-    factory_type = getattr(resource, '__factory_type__', None)
-    if factory_type is None:
-        factory_type = _dotted_name_of(resource.__class__)
-    return factory_type
-
-def _dotted_name_of(g):
-    name = g.__name__
-    module = g.__module__
-    return '.'.join((module, name))
 
 class ContentRegistry(object):
     """ An object accessible as ``registry.content`` (aka
@@ -100,10 +47,17 @@ class ContentRegistry(object):
         a method of the created object, and if it's a sequence, each value
         should be a string or a callable, which will be called in turn); then
         send a :class:`substanced.event.ContentCreatedEvent`.  Return the
-        created object."""
+        created object.
+
+        If the key ``__oid`` is in the ``kw`` arguments, it will be used as
+        the created object's oid.
+        """
         factory = self.content_types[content_type]
+        oid = kw.pop('__oid', None) # FBO dump system loader
         inst = factory(*arg, **kw)
-        inst.__created__ = self._utcnow()
+        if oid is not None:
+            set_oid(inst, oid)
+        set_created(inst, self._utcnow())
         meta = self.meta[content_type].copy()
         aftercreate = meta.get('after_create')
         if aftercreate is not None:
@@ -135,7 +89,7 @@ class ContentRegistry(object):
 
     def typeof(self, resource):
         """ Return the content type of ``resource`` """
-        factory_type = _get_factory_type(resource)
+        factory_type = get_factory_type(resource)
         content_type = self.factory_types.get(factory_type)
         return content_type
 
@@ -251,7 +205,7 @@ def add_content_type(config, content_type, factory, factory_type=None, **meta):
 
     ``factory_type`` is an optional argument that can be used if the same
     factory must be used for two different content types; it is used during
-    content type lookup (e.g. :func:`substanced.content.get_content_type`) to
+    content type lookup (e.g. :func:`substanced.util.get_content_type`) to
     figure out which content type a constructed object is an instance of; it
     only needs to be used when the same factory is used for two different
     content types.  Note that two content types cannot have the same factory
@@ -337,8 +291,9 @@ def add_service_type(config, content_type, factory, factory_type=None, **meta):
     :class:`substanced.service.add_service_type` decorator. The
     ``add_service_type`` function honors a ``service_name`` keyword argument
     in its ``**meta``.  If this argument is passed, and a service already
-    exists in the ``__services__`` folder by this name, the service will not
-    be shown as addable in the add-content dropdown in the SDI UI.
+    exists in a folder by this name, the service will not
+    be shown as addable in the add-content dropdown in the SDI UI of the
+    folder.
     """
     meta['is_service'] = True
     return add_content_type(
@@ -363,10 +318,10 @@ def _wrap_factory(factory, factory_type):
     """
  
     if inspect.isclass(factory) and factory_type is None:
-        return _dotted_name_of(factory), factory
+        return get_dotted_name(factory), factory
 
     if factory_type is None:
-        factory_type = _dotted_name_of(factory)
+        factory_type = get_dotted_name(factory)
 
     def factory_wrapper(*arg, **kw):
         inst = factory(*arg, **kw)

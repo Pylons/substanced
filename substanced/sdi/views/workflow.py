@@ -5,10 +5,9 @@ from pyramid.view import view_defaults
 
 from .. import (
     mgmt_view,
-    MIDDLE,
+    RIGHT,
     )
-
-from ...content import get_content_type
+from ...util import get_content_type
 
 @view_defaults(
     permission='sdi.manage-workflow',
@@ -32,7 +31,7 @@ class WorkflowViews(object):
     @mgmt_view(
         renderer='templates/workflow.pt',
         tab_title='Workflows',
-        tab_after=MIDDLE, # try not to be the default tab, we're too obscure
+        tab_near=RIGHT, # try not to be the default tab, we're too obscure
         )
     def show(self):
         results = []

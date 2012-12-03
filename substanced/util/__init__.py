@@ -4,6 +4,9 @@ import math
 import urlparse
 import json
 
+from zope.interface import providedBy
+from zope.interface.declarations import Declaration
+
 from pyramid.location import lineage
 from pyramid.threadlocal import get_current_registry
 
@@ -11,6 +14,10 @@ from ..event import ACLModified
 from ..interfaces import IFolder
 
 _marker = object()
+
+class JsonDict(dict):
+    def __str__(self):
+        return json.dumps(self)
 
 def coarse_datetime_repr(date):
     """Convert a datetime to an integer with 100 second granularity.
@@ -24,24 +31,30 @@ def coarse_datetime_repr(date):
 def postorder(startnode):
     """ Walks over nodes in a folder recursively. Yields deepest nodes first."""
     def visit(node):
-        if IFolder.providedBy(node):
+        if is_folder(node):
             for child in node.values():
                 for result in visit(child):
                     yield result
         yield node
     return visit(startnode)
 
-def oid_of(obj, default=_marker):
-    """ Return the object identifer of ``obj``.  If ``obj`` has no object
-    identifier, raise an AttributeError exception unless ``default`` was
+def get_oid(resource, default=_marker):
+    """ Return the object identifer of ``resource``.  If ``resource`` has no
+    object identifier, raise an AttributeError exception unless ``default`` was
     passed a value; if ``default`` was passed a value, return the default in
     that case."""
     try:
-        return obj.__oid__
+        return resource.__oid__
     except AttributeError:
         if default is _marker:
             raise
         return default
+
+oid_of = get_oid
+
+def set_oid(resource, oid):
+    """ Set the object id of the resource to oid."""
+    resource.__oid__ = oid
 
 def merge_url_qs(url, **kw):
     """ Merge the query string elements of a URL with the ones in ``kw``.
@@ -263,11 +276,13 @@ def chunks(stream, chunk_size=10000):
             break
         yield chunk
 
-def acquire(context, name, default=None):
-    for node in lineage(context):
+def acquire(resource, name, default=_marker):
+    for node in lineage(resource):
         result = getattr(node, name, _marker)
         if result is not _marker:
             return result
+    if default is _marker:
+        raise AttributeError(name)
     return default
 
 def get_all_permissions(registry):
@@ -307,40 +322,204 @@ def renamer():
 
     return property(_get, _set)
 
-def change_acl(context, new_acl, registry=None):
-    """Change the ACL on context to ``new_acl``, which may be a valid ACL or
+def set_acl(resource, new_acl, registry=None):
+    """Change the ACL on resource to ``new_acl``, which may be a valid ACL or
     ``None``.  If ``new_acl`` is ``None``, any existing non-``None``
-    ``__acl__`` attribute of the context will be removed (via ``del
-    context.__acl__``).  Otherwise, if the context's ``__acl__`` and the
-    ``new_acl`` differ, set the context's ``__acl__`` to ``new_acl`` via
+    ``__acl__`` attribute of the resource will be removed (via ``del
+    resource.__acl__``).  Otherwise, if the resource's ``__acl__`` and the
+    ``new_acl`` differ, set the resource's ``__acl__`` to ``new_acl`` via
     setattr.
 
     If the new ACL and the object's original ACL differ, send a
     :class:`substanced.event.ACLModified` event with the
-    new ACL and the original ACL (the ``__acl__`` attribute of the context, or
+    new ACL and the original ACL (the ``__acl__`` attribute of the resource, or
     ``None`` if it doesn't have one) as arguments to the event.
 
-    This function will return ``True`` if a mutation to the context's __acl__
+    This function will return ``True`` if a mutation to the resource's __acl__
     was performed, and ``False`` otherwise.
 
     If ``registry`` is passed, it should be a Pyramid registry; if it is not
     passed, this function will use the current threadlocal registry to send the
     event.
     """
-    old_acl = getattr(context, '__acl__', None)
+    old_acl = getattr(resource, '__acl__', None)
     if new_acl == old_acl:
         return False
     if new_acl is None:
-        del context.__acl__
+        del resource.__acl__
     else:
-        context.__acl__ = new_acl
-    event = ACLModified(context, old_acl, new_acl)
+        resource.__acl__ = new_acl
+    event = ACLModified(resource, old_acl, new_acl)
     if registry is None:
         registry = get_current_registry()
-    registry.subscribers((event, context), None)
+    registry.subscribers((event, resource), None)
     return True
 
+change_acl = set_acl # bw compat
 
-class JsonDict(dict):
-    def __str__(self):
-        return json.dumps(self)
+def get_acl(resource, default=_marker):
+    """ Return the ACL of the object or the default if the object has no ACL.
+    If no default is passed, an :exc:`AttributeError` will be raised if the
+    object doesn't have an ACL."""
+    try:
+        return resource.__acl__
+    except AttributeError:
+        if default is _marker:
+            raise
+        return default
+
+def get_created(resource, default=_marker):
+    """ Return a datetime object (typically in UTC, but represented as a naive
+    datetime) that represents the creation time of the resource.  If the
+    resource has no creation time, if ``default`` is passed it will be
+    returned.  Otherwise an :exc:`AttributeError` will be thrown."""
+    try:
+        return resource.__created__
+    except AttributeError:
+        if default is _marker:
+            raise
+        return default
+
+def set_created(resource, created):
+    """ Set the creation date/time of the resource.  It must be a datetime
+    object (which should be without a timezeone (aka 'naive'), representing the
+    UTC date and time."""
+    resource.__created__ = created
+
+def get_dotted_name(g):
+    """ Return the dotted name of a global object. """
+    name = g.__name__
+    module = g.__module__
+    return '.'.join((module, name))
+
+def get_interfaces(obj, classes=True):
+    """ Return the set of interfaces provided by ``obj``.  Include its
+    __class__ if classes is True."""
+    # we unwind all derived and immediate interfaces using spec.flattened()
+    # (providedBy would just give us the immediate interfaces)
+    provided_by = list(providedBy(obj))
+    spec = Declaration(provided_by)
+    ifaces = list(spec.flattened())
+    if classes:
+        ifaces = ifaces + [obj.__class__]
+    return set(ifaces)
+
+def get_content_type(resource, registry=None):
+    """ Return the content type of a resource or ``None`` if the object has
+    no content type.  If ``registry`` is not supplied, the current Pyramid
+    registry will be looked up as a thread local in order to find the
+    Substance D content registry."""
+    if registry is None:
+        registry = get_current_registry()
+
+    return registry.content.typeof(resource)
+
+def find_content(resource, content_type, registry=None):
+    """ Return the first object in the :term:`lineage` of the resource that
+    supplies the ``content_type``.  If ``registry`` is not supplied, the
+    current Pyramid registry will be looked up as a thread local in order to
+    find the Substance D content registry."""
+    if registry is None:
+        registry = get_current_registry()
+    return registry.content.find(resource, content_type)
+
+def _traverse_to(obj, names):
+    for name in names:
+        if not is_folder(obj):
+            return None
+        obj = obj.get(name, None)
+        if obj is None:
+            return None
+    return obj
+
+def _find_services(resource, name, subnames=(), one=False):
+    L = []
+    for obj in lineage(resource):
+        if is_folder(obj):
+            subobj = obj.get(name, None)
+            if subobj is not None:
+                if is_service(subobj):
+                    if subnames:
+                        subobj = _traverse_to(subobj, subnames)
+                        if subobj is None:
+                            continue
+                    if one:
+                        return subobj
+                    L.append(subobj)
+    if one:
+        return None
+    return L
+
+def find_service(resource, name, *subnames):
+    """ Find the first service named ``name`` in the lineage of ``resource``
+    or return ``None`` if no such-named service could be found.
+
+    If ``subnames`` is supplied, when a service named ``name`` is found in the
+    lineage, it will attempt to traverse the service as a folder, finding a
+    content object inside the service, and it will return it instead of the
+    service object itself.  For example, ``find_service(resource, 'principals',
+    'users')`` would find and return the ``users`` subobject in the
+    ``principals`` service.  ``find_service(resource, 'principals', 'users',
+    'fred')`` would find and return the fred subobject of the users subobject
+    of the principals service, and so forth.  If ``subnames`` are supplied, and
+    the named object cannot be found, the lineage search continues.
+    """
+    return _find_services(resource, name, subnames, one=True)
+                
+def find_services(resource, name, *subnames):
+    """Finds all services named ``name`` in the lineage of ``resource`` and
+    returns a sequence containing those service objects. The sequence will
+    begin with the most deepest nested service and will end with the least
+    deeply nested service.  Returns an empty sequence if no such-named
+    service could be found.
+
+    If ``subnames`` is supplied, when a service named ``name`` is found in the
+    lineage, it will attempt to traverse the service as a folder, finding a
+    content object inside the service, and this API will append this object
+    rather than the service itself to the list of things returned.  For
+    example, ``find_services(resource, 'principals', 'users')`` would find the
+    ``users`` subobject in the ``principals`` service.
+    ``find_services(resource, 'principals', 'users', 'fred')`` would find the
+    fred subobject of the users subobject of the principals service, and so
+    forth.  If ``subnames`` are supplied, whether or not the named object can
+    be found, the lineage search continues.
+    """
+    return _find_services(resource, name, subnames)
+
+def get_factory_type(resource):
+    """ If the resource has a __factory_type__ attribute, return it.
+    Otherwise return the full Python dotted name of the resource's class."""
+    factory_type = getattr(resource, '__factory_type__', None)
+    if factory_type is None:
+        factory_type = get_dotted_name(resource.__class__)
+    return factory_type
+
+def is_folder(resource):
+    """ Return ``True`` if the object is a folder, ``False`` if not. """
+    return IFolder.providedBy(resource)
+
+def is_service(resource):
+    """ Returns ``True`` if the resource is a service, ``False`` if not. """
+    return bool(getattr(resource, '__is_service__', False))
+
+def find_catalogs(resource, name=None):
+    """ Return all catalogs in the lineage.  If ``name`` is supplied, return
+    only catalogs that have this name in the lineage, otherwise return all
+    catalogs in the lineage."""
+    catalogs = []
+    catalog_containers = find_services(resource, 'catalogs')
+    for catalog_container in catalog_containers:
+        for cname, catalog in catalog_container.items():
+            if name is None or name == cname:
+                catalogs.append(catalog)
+    return catalogs
+
+def find_catalog(resource, name):
+    """ Return the first catalog named ``name`` in the lineage of the resource
+    """
+    catalog_containers = find_services(resource, 'catalogs')
+    for catalog_container in catalog_containers:
+        for cname, catalog in catalog_container.items():
+            if name == cname:
+                return catalog
+

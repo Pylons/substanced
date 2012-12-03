@@ -19,7 +19,7 @@ def _makeSite(**kw):
         site.__objectmap__ = objectmap
     for k, v in kw.items():
         site[k] = v
-    site.__services__ = tuple(kw.keys())
+        v.__is_service__ = True
     return site
 
 class TestCatalog(unittest.TestCase):
@@ -27,7 +27,6 @@ class TestCatalog(unittest.TestCase):
     
     def setUp(self):
         self.config = testing.setUp()
-        self.config.registry.content = DummyContentRegistry()
 
     def tearDown(self):
         testing.tearDown()
@@ -38,7 +37,9 @@ class TestCatalog(unittest.TestCase):
         
     def _makeOne(self, *arg, **kw):
         cls = self._getTargetClass()
-        return cls(*arg, **kw)
+        inst = cls(*arg, **kw)
+        inst.__name__ = 'catalog'
+        return inst
 
     def test___sdi_addable__True(self):
         inst = self._makeOne()
@@ -154,9 +155,9 @@ class TestCatalog(unittest.TestCase):
         inst.reindex(output=out.append)
         self.assertEqual(len(L), 1)
         self.assertEqual(L[0][0], 1)
-        self.assertEqual(L[0][1].content, a)
+        self.assertEqual(L[0][1], a)
         self.assertEqual(out,
-                          ["reindexing /a",
+                          ["catalog reindexing /a",
                           '*** committing ***'])
         self.assertEqual(transaction.committed, 1)
 
@@ -176,9 +177,9 @@ class TestCatalog(unittest.TestCase):
         out = []
         inst.reindex(output=out.append)
         self.assertEqual(L[0][0], 1)
-        self.assertEqual(L[0][1].content, a)
+        self.assertEqual(L[0][1], a)
         self.assertEqual(out,
-                          ["reindexing /a",
+                          ["catalog reindexing /a",
                           "error: object at path /b not found",
                           '*** committing ***'])
         self.assertEqual(transaction.committed, 1)
@@ -221,9 +222,9 @@ class TestCatalog(unittest.TestCase):
             output=out.append
             )
         self.assertEqual(L[0][0], 1)
-        self.assertEqual(L[0][1].content, a)
+        self.assertEqual(L[0][1], a)
         self.assertEqual(out,
-                          ['reindexing /a',
+                          ['catalog reindexing /a',
                           '*** committing ***'])
         self.assertEqual(transaction.committed, 1)
 
@@ -245,12 +246,12 @@ class TestCatalog(unittest.TestCase):
         self.assertEqual(len(L), 2)
         L.sort()
         self.assertEqual(L[0][0], 1)
-        self.assertEqual(L[0][1].content, a)
+        self.assertEqual(L[0][1], a)
         self.assertEqual(L[1][0], 2)
-        self.assertEqual(L[1][1].content, b)
+        self.assertEqual(L[1][1], b)
         self.assertEqual(out,
-                         ['reindexing /a',
-                          'reindexing /b',
+                         ['catalog reindexing /a',
+                          'catalog reindexing /b',
                           '*** aborting ***'])
         self.assertEqual(transaction.aborted, 1)
         self.assertEqual(transaction.committed, 0)
@@ -272,166 +273,73 @@ class TestCatalog(unittest.TestCase):
         out = []
         inst.reindex(indexes=('index',),  output=out.append)
         self.assertEqual(out,
-                          ["reindexing only indexes ('index',)",
-                          'reindexing /a',
+                          ["catalog reindexing only indexes ('index',)",
+                          'catalog reindexing /a',
                           '*** committing ***'])
         self.assertEqual(transaction.committed, 1)
         self.assertEqual(len(L), 1)
         self.assertEqual(L[0][0], 1)
-        self.assertEqual(L[0][1].content, a)
+        self.assertEqual(L[0][1], a)
+
+    def _setup_factory(self, factory=None):
+        from substanced.interfaces import ICatalogFactory
+        registry = self.config.registry
+        if factory is None:
+            factory = DummyFactory(True)
+        registry.registerUtility(factory, ICatalogFactory, name='catalog')
 
     def test_update_indexes_nothing_to_do(self):
+        self._setup_factory(DummyFactory(False))
         registry = self.config.registry
         out = []
         inst = self._makeOne()
         transaction = DummyTransaction()
         inst.transaction = transaction
-        inst.update_indexes('system', registry=registry,  output=out.append)
-        self.assertEqual(out,  
-            ["update_indexes: starting category 'system'", 
-             'update_indexes: no indexes added or removed', 
-             "update_indexes: finished with category 'system'"])
-        self.assertEqual(transaction.committed, 0)
-        self.assertEqual(transaction.aborted, 0)
-
-    def _setup_index(self):
-        registry = self.config.registry
-        from .. import get_candidate_indexes, get_index_factories
-        categories = get_candidate_indexes(registry)
-        idx = {'factory_name':'field', 'factory_args':{}}
-        categories['system'] = {'name':idx}
-        factories = get_index_factories(registry)
-        dummyidx = testing.DummyModel()
-        factories['field'] = lambda *arg, **kw: dummyidx
-
-    def test_update_indexes_add_single(self):
-        self._setup_index()
-        registry = self.config.registry
-        out = []
-        inst = self._makeOne()
-        transaction = DummyTransaction()
-        inst.transaction = transaction
-        inst.update_indexes('system', registry=registry,  output=out.append)
-        self.assertEqual(out,  
-            ["update_indexes: starting category 'system'", 
-            "update_indexes: adding field index named 'name'",
-            '*** committing ***',
-            'update_indexes: not reindexing added indexes',
-             "update_indexes: finished with category 'system'"])
-        self.assertEqual(transaction.committed, 1)
-        self.assertEqual(transaction.aborted, 0)
-        self.assertTrue('name' in inst)
-
-    def test_update_indexes_add_single_dryrun_with_reindex(self):
-        registry = self.config.registry
-        self._setup_index()
-        out = []
-        inst = self._makeOne()
-        transaction = DummyTransaction()
-        inst.transaction = transaction
-        inst.update_indexes('system', registry=registry,  output=out.append,
-            dry_run=True, reindex=True)
-        self.assertEqual(out,  
-            ["update_indexes: starting category 'system'", 
-            "update_indexes: adding field index named 'name'",
-            '*** aborting ***',
-            'update_indexes: reindexing added indexes',
-            "reindexing only indexes ['name']",
-            '*** aborting ***',
-             "update_indexes: finished with category 'system'"])
-        self.assertEqual(transaction.committed, 0)
-        self.assertEqual(transaction.aborted, 2)
-        self.assertTrue('name' in inst)
-
-
-    def test_update_indexes_add_single_already_exists(self):
-        self._setup_index()
-        registry = self.config.registry
-        out = []
-        inst = self._makeOne()
-        existing = testing.DummyResource()
-        existing.sd_category = 'notsystem'
-        inst['name'] = existing
-        transaction = DummyTransaction()
-        inst.transaction = transaction
-        inst.update_indexes('system', registry=registry,  output=out.append)
-        self.assertEqual(out,  
-            ["update_indexes: starting category 'system'", 
-            "update_indexes: not replacing existing index in category "
-            "'notsystem' named 'name'",
-             'update_indexes: no indexes added or removed', 
-             "update_indexes: finished with category 'system'"])
-        self.assertEqual(transaction.committed, 0)
-        self.assertEqual(transaction.aborted, 0)
-        self.assertEqual(inst['name'], existing)
-
-    def test_update_indexes_add_single_already_exists_replace(self):
-        self._setup_index()
-        registry = self.config.registry
-        out = []
-        inst = self._makeOne()
-        existing = testing.DummyResource()
-        existing.sd_category = 'notsystem'
-        inst['name'] = existing
-        transaction = DummyTransaction()
-        inst.transaction = transaction
-        inst.update_indexes('system', registry=registry,  output=out.append,
-            replace=True)
-        self.assertEqual(out,  
-            ["update_indexes: starting category 'system'", 
-            "update_indexes: replacing existing index in category "
-            "'notsystem' named 'name'",
-            "update_indexes: adding field index named 'name'",
-            '*** committing ***',
-            'update_indexes: not reindexing added indexes',
-            "update_indexes: finished with category 'system'"]
+        inst.update_indexes(registry=registry,  output=out.append)
+        self.assertEqual(
+            out,  
+            ['catalog update_indexes: no indexes added or removed'],
             )
-        self.assertEqual(transaction.committed, 1)
+        self.assertEqual(transaction.committed, 0)
         self.assertEqual(transaction.aborted, 0)
-        self.assertNotEqual(inst['name'], existing)
 
-    def test_update_indexes_remove_single(self):
-        self._setup_index()
+    def test_update_indexes_replace(self):
+        self._setup_factory()
         registry = self.config.registry
         out = []
         inst = self._makeOne()
         transaction = DummyTransaction()
         inst.transaction = transaction
-        existing = testing.DummyModel()
-        existing.sd_category = 'system'
-        inst['other'] = existing
-        inst.update_indexes('system', registry=registry,  output=out.append)
-        self.assertEqual(out,  
-            ["update_indexes: starting category 'system'", 
-            "update_indexes: adding field index named 'name'",
-            "update_indexes: removing index named u'other'",
-            '*** committing ***',
-            'update_indexes: not reindexing added indexes',
-            "update_indexes: finished with category 'system'"])
+        inst.update_indexes(registry=registry, output=out.append, replace=True)
+        self.assertEqual(out, ['*** committing ***'])
         self.assertEqual(transaction.committed, 1)
         self.assertEqual(transaction.aborted, 0)
-        self.assertTrue('name' in inst)
+        self.assertTrue(inst.replaced)
 
-    def test_update_indexes_remove_diffcat(self):
-        self._setup_index()
+    def test_update_indexes_noreplace(self):
+        self._setup_factory()
         registry = self.config.registry
         out = []
         inst = self._makeOne()
         transaction = DummyTransaction()
         inst.transaction = transaction
-        existing = testing.DummyModel()
-        existing.sd_category = 'notsystem'
-        inst['other'] = existing
-        inst.update_indexes('system', registry=registry,  output=out.append)
-        self.assertEqual(out,  
-            ["update_indexes: starting category 'system'", 
-            "update_indexes: adding field index named 'name'",
-            '*** committing ***',
-            'update_indexes: not reindexing added indexes',
-             "update_indexes: finished with category 'system'"])
+        inst.update_indexes(registry=registry, output=out.append)
+        self.assertEqual(out, ['*** committing ***'])
         self.assertEqual(transaction.committed, 1)
         self.assertEqual(transaction.aborted, 0)
-        self.assertTrue('name' in inst)
+        self.assertTrue(inst.synced)
+
+    def test_update_indexes_dryrun(self):
+        self._setup_factory()
+        registry = self.config.registry
+        out = []
+        inst = self._makeOne()
+        transaction = DummyTransaction()
+        inst.transaction = transaction
+        inst.update_indexes(registry=registry, output=out.append, dry_run=True)
+        self.assertEqual(out, ['*** aborting ***'])
+        self.assertEqual(transaction.committed, 0)
+        self.assertEqual(transaction.aborted, 1)
 
 class Test_is_catalogable(unittest.TestCase):
     def setUp(self):
@@ -444,257 +352,161 @@ class Test_is_catalogable(unittest.TestCase):
         from .. import is_catalogable
         return is_catalogable(resource, registry)
 
+    def _registerIndexView(self):
+        from zope.interface import Interface
+        from substanced.interfaces import IIndexView
+        self.config.registry.registerAdapter(True, (Interface,), IIndexView)
+
     def test_no_registry_passed(self):
         resource = Dummy()
-        resource.result = True
-        self.config.registry.content = DummyContent()
+        self._registerIndexView()
         self.assertTrue(self._callFUT(resource))
 
     def test_true(self):
         resource = Dummy()
-        resource.result = True
-        registry = Dummy()
-        registry.content = DummyContent()
+        self._registerIndexView()
+        registry = self.config.registry
         self.assertTrue(self._callFUT(resource, registry))
 
     def test_false(self):
         resource = Dummy()
-        resource.result = False
-        registry = Dummy()
-        registry.content = DummyContent()
+        registry = self.config.registry
         self.assertFalse(self._callFUT(resource, registry))
 
-class Test_catalog_view_factory_for(unittest.TestCase):
+class Test_add_catalog_factory(unittest.TestCase):
     def setUp(self):
         self.config = testing.setUp()
 
     def tearDown(self):
         testing.tearDown()
-
-    def _callFUT(self, resource, registry=None):
-        from .. import catalog_view_factory_for
-        return catalog_view_factory_for(resource, registry)
-
-    def test_no_registry_passed(self):
-        resource = Dummy()
-        resource.result = True
-        self.config.registry.content = DummyContent()
-        self.assertTrue(self._callFUT(resource))
-
-    def test_true(self):
-        resource = Dummy()
-        resource.result = True
-        registry = Dummy()
-        registry.content = DummyContent()
-        self.assertEqual(self._callFUT(resource, registry), True)
-
-    def test_supplied(self):
-        resource = Dummy()
-        dummyviewfactory = object()
-        resource.result = dummyviewfactory
-        registry = Dummy()
-        registry.content = DummyContent()
-        self.assertEqual(self._callFUT(resource, registry), dummyviewfactory)
-
-class TestCatalogViewWrapper(unittest.TestCase):
-    def _makeOne(self, content, view_factory):
-        from .. import CatalogViewWrapper
-        return CatalogViewWrapper(content, view_factory)
-
-    def test_it(self):
-        content = testing.DummyResource()
-        view_factory = None
-        inst = self._makeOne(content, view_factory)
-        self.assertEqual(inst.content, content)
-        self.assertEqual(inst.view_factory, view_factory)
-
-class Test_add_catalog_index_factory(unittest.TestCase):
+        
     def _callFUT(self, config, name, factory):
-        from .. import add_catalog_index_factory
-        return add_catalog_index_factory(config, name, factory)
+        from .. import add_catalog_factory
+        return add_catalog_factory(config, name, factory)
 
     def test_it(self):
-        from pyramid.interfaces import PHASE1_CONFIG
-        from .. import get_index_factories
-        config = DummyConfigurator()
-        self._callFUT(config, 'name', 'factory')
+        from substanced.interfaces import ICatalogFactory
+        from substanced.catalog import Field
+        config = DummyConfigurator(registry=self.config.registry)
+        class Factory(object):
+            index = Field()
+        self._callFUT(config, 'name', Factory)
         self.assertEqual(len(config.actions), 1)
         action = config.actions[0]
         self.assertEqual(
             action['discriminator'],
-            ('sd-catalog-index-factory', 'name')
-            )
-        self.assertEqual(
-            action['order'], PHASE1_CONFIG
+            ('sd-catalog-factory', 'name')
             )
         self.assertEqual(
             action['introspectables'], (config.intr,)
             )
         self.assertEqual(config.intr['name'], 'name')
-        self.assertEqual(config.intr['factory'], 'factory')
+        self.assertEqual(config.intr['factory'].__class__.__name__,
+                         'CatalogFactory')
         callable = action['callable']
         callable()
         self.assertEqual(
-            get_index_factories(config.registry), {'name':'factory'}
+            self.config.registry.getUtility(ICatalogFactory, 'name'),
+            config.intr['factory']
             )
 
-class Test_add_catalog_index(unittest.TestCase):
-    def _callFUT(self, config, name, factory_name, category, **factory_args):
-        from .. import add_catalog_index
-        return add_catalog_index(
-            config, name, factory_name, category, **factory_args
+class Test_add_indexview(unittest.TestCase):
+    def setUp(self):
+        self.config = testing.setUp()
+
+    def tearDown(self):
+        testing.tearDown()
+        
+    def _callFUT(
+        self,
+        config,
+        view,
+        catalog_name,
+        index_name,
+        context=None,
+        attr=None,
+        ):
+        from .. import add_indexview
+        return add_indexview(
+            config, view, catalog_name, index_name, context=context, attr=attr
             )
 
-    def test_it(self):
-        from .. import get_index_factories, get_candidate_indexes
-        config = DummyConfigurator()
-        self._callFUT(config, 'name', 'factory_name', 'category', a=1)
+    def test_it_func(self):
+        from zope.interface import Interface
+        from substanced.interfaces import IIndexView
+        config = DummyConfigurator(registry=self.config.registry)
+        def view(resource, default): return True
+        self._callFUT(config, view, 'catalog', 'index')
         self.assertEqual(len(config.actions), 1)
         action = config.actions[0]
         self.assertEqual(
             action['discriminator'],
-            ('sd-catalog-index', 'name', 'category')
+            ('sd-index-view', 'catalog', 'index', Interface)
             )
         self.assertEqual(
             action['introspectables'], (config.intr,)
             )
-        self.assertEqual(config.intr['name'], 'name')
-        self.assertEqual(config.intr['factory_name'], 'factory_name')
-        self.assertEqual(config.intr['factory_args'], {'a':1})
-        self.assertEqual(config.intr['category'], 'category')
-        self.assertEqual(
-            config.intr.relations,
-            [{'name': 'sd catalog index factories', 
-              'discrim': ('sd-catalog-index-factory', 'factory_name')}]
-              )
-        factories = get_index_factories(config.registry)
-        factories['factory_name'] = 'yo'
+        self.assertEqual(config.intr['catalog_name'], 'catalog')
+        self.assertEqual(config.intr['index_name'], 'index')
+        self.assertEqual(config.intr['name'], 'catalog|index')
+        self.assertEqual(config.intr['callable'], view)
+        self.assertEqual(config.intr['attr'], None)
         callable = action['callable']
         callable()
-        self.assertEqual(
-            get_candidate_indexes(config.registry), 
-            {'category':{
-                'name':{'factory_name':'factory_name', 'factory_args':{'a':1}}
-                }
-            }
-            )
+        wrapper = self.config.registry.adapters.lookup(
+            (Interface,), IIndexView, name='catalog|index')
+        self.assertEqual(config.intr['derived_callable'], wrapper)
 
-    def test_no_factory(self):
-        from pyramid.exceptions import ConfigurationError
-        config = DummyConfigurator()
-        self._callFUT(config, 'name', 'factory_name', 'category', a=1)
+    def test_it_cls_with_attr(self):
+        from zope.interface import Interface
+        from substanced.interfaces import IIndexView
+        config = DummyConfigurator(registry=self.config.registry)
+        class View(object):
+            def amethod(self, default): pass
+        self._callFUT(config, View, 'catalog', 'index', attr='amethod')
+        self.assertEqual(len(config.actions), 1)
         action = config.actions[0]
-        callable = action['callable']
-        self.assertRaises(ConfigurationError, callable)
-
-class Test_text_index_factory(unittest.TestCase):
-    def _callFUT(self, name, category, **kw):
-        from .. import text_index_factory
-        return text_index_factory(name, category, **kw)
-
-    def test_it(self):
-        result = self._callFUT('name', 'category')
-        self.assertEqual(result.__class__.__name__, 'TextIndex')
-        self.assertEqual(result.sd_category, 'category')
-        self.assertEqual(result.discriminator.method_name, 'name')
-
-    def test_it_with_discrim(self):
-        result = self._callFUT('name', 'category', discriminator='abc')
-        self.assertEqual(result.__class__.__name__, 'TextIndex')
-        self.assertEqual(result.sd_category, 'category')
-        self.assertEqual(result.discriminator, 'abc')
-
-class Test_field_index_factory(unittest.TestCase):
-    def _callFUT(self, name, category, **kw):
-        from .. import field_index_factory
-        return field_index_factory(name, category, **kw)
-
-    def test_it(self):
-        result = self._callFUT('name', 'category')
-        self.assertEqual(result.__class__.__name__, 'FieldIndex')
-        self.assertEqual(result.sd_category, 'category')
-        self.assertEqual(result.discriminator.method_name, 'name')
-
-    def test_it_with_discrim(self):
-        result = self._callFUT('name', 'category', discriminator='abc')
-        self.assertEqual(result.__class__.__name__, 'FieldIndex')
-        self.assertEqual(result.sd_category, 'category')
-        self.assertEqual(result.discriminator, 'abc')
-
-class Test_keyword_index_factory(unittest.TestCase):
-    def _callFUT(self, name, category, **kw):
-        from .. import keyword_index_factory
-        return keyword_index_factory(name, category, **kw)
-
-    def test_it(self):
-        result = self._callFUT('name', 'category')
-        self.assertEqual(result.__class__.__name__, 'KeywordIndex')
-        self.assertEqual(result.sd_category, 'category')
-        self.assertEqual(result.discriminator.method_name, 'name')
-
-    def test_it_with_discrim(self):
-        result = self._callFUT('name', 'category', discriminator='abc')
-        self.assertEqual(result.__class__.__name__, 'KeywordIndex')
-        self.assertEqual(result.sd_category, 'category')
-        self.assertEqual(result.discriminator, 'abc')
-
-class Test_facet_index_factory(unittest.TestCase):
-    def _callFUT(self, name, category, **kw):
-        from .. import facet_index_factory
-        return facet_index_factory(name, category, **kw)
-
-    def test_it(self):
-        result = self._callFUT('name', 'category', facets=['abc'])
-        self.assertEqual(result.__class__.__name__, 'FacetIndex')
-        self.assertEqual(result.sd_category, 'category')
-        self.assertEqual(result.discriminator.method_name, 'name')
-
-    def test_it_with_discrim(self):
-        result = self._callFUT('name', 'category', discriminator='abc',
-            facets=['abc'])
-        self.assertEqual(result.__class__.__name__, 'FacetIndex')
-        self.assertEqual(result.sd_category, 'category')
-        self.assertEqual(result.discriminator, 'abc')
-
-class Test_allowed_index_factory(unittest.TestCase):
-    def _callFUT(self, name, category, **kw):
-        from .. import allowed_index_factory
-        return allowed_index_factory(name, category, **kw)
-
-    def test_it(self):
-        result = self._callFUT('name', 'category')
-        self.assertEqual(result.__class__.__name__, 'AllowedIndex')
-        self.assertEqual(result.sd_category, 'category')
-        self.assertEqual(result.discriminator.method_name, 'name')
-
-    def test_it_with_discrim(self):
-        result = self._callFUT('name', 'category', discriminator='abc')
-        self.assertEqual(result.__class__.__name__, 'AllowedIndex')
-        self.assertEqual(result.sd_category, 'category')
-        self.assertEqual(result.discriminator, 'abc')
-
-class Test_path_index_factory(unittest.TestCase):
-    def _callFUT(self, name, category, **kw):
-        from .. import path_index_factory
-        return path_index_factory(name, category, **kw)
-
-    def test_it(self):
-        result = self._callFUT('name', 'category')
-        self.assertEqual(result.__class__.__name__, 'PathIndex')
-        self.assertEqual(result.sd_category, 'category')
-
-class Test_add_system_indexes(unittest.TestCase):
-    def _callFUT(self, config):
-        from .. import add_system_indexes
-        return add_system_indexes(config)
-
-    def test_it(self):
-        config = DummyConfigurator()
-        self._callFUT(config)
         self.assertEqual(
-            config.indexes,
-            ['path', 'name', 'oid', 'interfaces', 'containment', 'allowed']
+            action['discriminator'],
+            ('sd-index-view', 'catalog', 'index', Interface)
             )
+        self.assertEqual(
+            action['introspectables'], (config.intr,)
+            )
+        self.assertEqual(config.intr['catalog_name'], 'catalog')
+        self.assertEqual(config.intr['index_name'], 'index')
+        self.assertEqual(config.intr['name'], 'catalog|index')
+        self.assertEqual(config.intr['callable'], View)
+        self.assertEqual(config.intr['attr'], 'amethod')
+        callable = action['callable']
+        callable()
+        wrapper = self.config.registry.adapters.lookup(
+            (Interface,), IIndexView, name='catalog|index')
+        self.assertEqual(config.intr['derived_callable'], wrapper)
+
+class Test_catalog_factory(unittest.TestCase):
+    def setUp(self):
+        self.config = testing.setUp()
+
+    def tearDown(self):
+        testing.tearDown()
+        
+    def _makeOne(self, name):
+        from .. import catalog_factory
+        return catalog_factory(name)
+
+    def test_it(self):
+        class Foo(object):
+            pass
+        inst = self._makeOne('catalog')
+        venusian = DummyVenusian()
+        inst.venusian = venusian
+        context = testing.DummyResource()
+        context.config = DummyConfigurator(None)
+        result = inst(Foo)
+        self.assertEqual(result, Foo)
+        venusian.callback(context, None, 'abc')
+        self.assertEqual(context.config.catalog_factory, ('catalog', Foo))
 
 class Test_CatalogablePredicate(unittest.TestCase):
     def _makeOne(self, val, config):
@@ -748,19 +560,80 @@ class Test_catalog_buttons(unittest.TestCase):
                               'type': 'single'},
                              1])
 
+class Test_IndexViewMapper(unittest.TestCase):
+    def _makeOne(self, attr=None):
+        from .. import _IndexViewMapper
+        return _IndexViewMapper(attr=attr)
+
+    def test_call_class(self):
+        class Foo(object):
+            def __init__(self, resource):
+                self.resource = resource
+
+            def __call__(self, default):
+                return self.resource
+        inst = self._makeOne()
+        view = inst(Foo)
+        result = view('123', None)
+        self.assertEqual(result, '123')
+
+    def test_call_class_with_attr(self):
+        class Foo(object):
+            def __init__(self, resource):
+                self.resource = resource
+
+            def meth(self, default):
+                return self.resource
+        inst = self._makeOne(attr='meth')
+        view = inst(Foo)
+        result = view('123', None)
+        self.assertEqual(result, '123')
+
+    def test_call_function(self):
+        def foo(resource, default):
+            return resource
+        inst = self._makeOne()
+        view = inst(foo)
+        result = view('123', None)
+        self.assertEqual(result, '123')
+
+    def test_call_function_with_attr(self):
+        def foo(): pass
+        def bar(resource, default):
+            return resource
+        foo.bar = bar
+        inst = self._makeOne(attr='bar')
+        view = inst(foo)
+        result = view('123', None)
+        self.assertEqual(result, '123')
+
+class TestCatalogsService(unittest.TestCase):
+    def _makeOne(self, *arg, **kw):
+        from .. import CatalogsService
+        inst = CatalogsService(*arg, **kw)
+        return inst
+
+    def test_add_catalog(self):
+        inst = self._makeOne()
+        inst.add_catalog('foo')
+        catalog = inst['foo']
+        self.assertFalse(catalog.__sdi_deletable__)
+
+    def test_add_catalog_with_update_indexes(self):
+        inst = self._makeOne()
+        inst.Catalog = DummyCatalog
+        catalog = inst.add_catalog('foo', update_indexes=True)
+        self.assertTrue('foo' in inst)
+        self.assertTrue(catalog.updated)
 
 class DummyIntrospectable(dict):
-    def __init__(self, *arg, **kw):
-        dict.__init__(self, *arg, **kw)
-        self.relations = []
-    def relate(self, name, discrim):
-        self.relations.append({'name':name, 'discrim':discrim})
+    pass
 
 class DummyConfigurator(object):
-    def __init__(self):
+    def __init__(self, registry):
         self.actions = []
         self.intr = DummyIntrospectable()
-        self.registry = testing.DummyResource()
+        self.registry = registry
         self.indexes = []
 
     def action(self, discriminator, callable, order=None, introspectables=()):
@@ -772,17 +645,14 @@ class DummyConfigurator(object):
             'introspectables':introspectables,
             })
 
+    def with_package(self, package):
+        return self
+
     def introspectable(self, category, discriminator, name, single):
         return self.intr
 
-    def add_catalog_index(self, name, factory_name, category, **kw):
-        self.indexes.append(name)
-
-    def add_permission(self, permission):
-        self.permission = permission
-
-class DummyQuery(object):
-    pass    
+    def add_catalog_factory(self, name, cls, **extra):
+        self.catalog_factory = (name, cls)
 
 class DummyObjectMap(object):
     def __init__(self, objectid_to=None): 
@@ -800,11 +670,12 @@ class DummyObjectMap(object):
             return
         return data[0]
 
-    def add(self, node, path_tuple, replace_oid=False):
+    def add(self, node, path_tuple, duplicating=False, moving=False):
         pass
 
 class DummyCatalog(dict):
-    pass
+    def update_indexes(self, *arg, **kw):
+        self.updated = True
 
 class DummyTransaction(object):
     def __init__(self):
@@ -854,15 +725,36 @@ class DummyIndex(object):
                 L.append(docid)
         return L
 
-class DummyContent(object):
-    def metadata(self, resource, name, default=None):
-        return getattr(resource, 'result', default)
-        
-
 class Dummy(object):
     pass
 
-class DummyContentRegistry(object):
-    def metadata(self, resource, name, default=None):
-        return True
+class DummyFactory(object):
+    def __init__(self, result):
+        self.result = result
+        
+    def replace(self, catalog, **kw):
+        catalog.replaced = True
+        return self.result
 
+    def sync(self, catalog, **kw):
+        catalog.synced = True
+        return self.result
+
+class DummyVenusianInfo(object):
+    scope = None
+    codeinfo = None
+    module = None
+    def __init__(self, **kw):
+        self.__dict__.update(kw)
+    
+class DummyVenusian(object):
+    def __init__(self, info=None):
+        if info is None:
+            info = DummyVenusianInfo()
+        self.info = info
+        
+    def attach(self, wrapped, callback, category):
+        self.wrapped = wrapped
+        self.callback = callback
+        self.category = category
+        return self.info

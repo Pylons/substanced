@@ -10,7 +10,8 @@ class TestRoot(unittest.TestCase):
         
     def _makeOne(self):
         from . import Root
-        return Root()
+        inst = Root()
+        return inst
 
     def test_ctor(self):
         inst = self._makeOne()
@@ -26,17 +27,25 @@ class TestRoot(unittest.TestCase):
         group.memberids = memberids
         group.__oid__ = 1
         user = testing.DummyResource()
+        catalog = testing.DummyResource()
+        catalog.update_indexes = lambda *arg, **kw: True
         def add_user(*arg, **kw):
             return user
         def add_group(*arg, **kw):
             return group
+        def add_catalog(name):
+            return catalog
+        created_stack = []
         created.add_user = add_user
         created.add_group = add_group
+        created2 = testing.DummyResource()
+        created2.add_catalog = add_catalog
+        created_stack = [created2, created]
         registry = testing.DummyResource()
         registry.settings = settings
         registry.content = testing.DummyResource()
         def create(type, *arg, **kw):
-            return created
+            return created_stack.pop(0)
         registry.content.create = create
         registry.group = group
         registry.user = user
@@ -54,8 +63,8 @@ class TestRoot(unittest.TestCase):
         inst = self._makeOne()
         inst.after_create(inst, registry)
         self.assertTrue('__objectmap__' in inst.__dict__)
-        self.assertTrue('principals' in inst)
-        self.assertEqual(inst.__services__, ('principals',))
+        principals = inst['principals']
+        self.assertTrue(principals.__is_service__)
         self.assertTrue(registry.group.connected)
         self.assertTrue(inst.__acl__)
         self.assertFalse(registry.created.__sdi_deletable__)
