@@ -92,8 +92,6 @@
             var checkboxSelector = new Slick.CheckboxSelectColumn({});
             columns.unshift(checkboxSelector.getColumnDefinition());
 
-            ////var dataView = new Slick.Data.DataView({inlineFilters: true});
-
             var grid = this.grid = new Slick.Grid(this.element, [], columns, wrapperOptions.slickgridOptions);
 
             var sortCol = wrapperOptions.sortCol;
@@ -104,49 +102,13 @@
                 grid.setSortColumn(sortCol, sortDir);
             }
 
-            function comparer(a, b) {
-                var x = a[sortCol], y = b[sortCol];
-                return (x == y ? 0 : (x > y ? 1 : -1));
-            }
-
-            //dataView.onRowsChanged.subscribe(function (e, args) {
-            //    grid.invalidateRows(args.rows);
-            //    grid.render();
-            //});
-
-
             // filtering
-            var searchString = '';
-            function myFilter(item, args) {
-                // Search is case insensitive.
-                var q = args.searchString || '';
-                // Trim spaces.
-                q = $.trim(q);
-                // No filter.
-                if (q === '') {
-                }
-                // Insensitive containment search in title and name.
-                q = q.toLowerCase();
-                if ((item.title || '').toLowerCase().indexOf(q) !== -1) {
-                    return true;
-                }
-                if ((item.name || '').toLowerCase().indexOf(q) !== -1) {
-                    return true;
-                }
-                return false;
-            }
-            // method on the wrapper instance, callable externally:
+            // we define a method on the wrapper instance, callable externally:
             this.setSearchString = function (txt) {
-                if (searchString != txt) {
-                    searchString = txt;
-                    dataView.setFilterArgs({
-                        searchString: searchString
-                    });
-                    dataView.refresh();
-                    grid.render();
-                }
+                sdiRemoteModelPlugin.setFilterArgs({
+                    filter: txt
+                });
             };
-
 
             // checkbox column
             grid.setSelectionModel(new Slick.RowSelectionModel({selectActiveRow: false}));
@@ -169,16 +131,15 @@
 
             grid.setColumns(columns); // XXX why is this needed for the initial fit?
 
-            var extraQuery = {
-                filter: ''    
-            };
 
             var sdiRemoteModelPlugin = new Slick.Data.SdiRemoteModel({
                 url: wrapperOptions.url,
                 manageQueue: wrapperOptions.manageQueue,
                 sortCol: wrapperOptions.sortCol,
                 sortDir: wrapperOptions.sortDir,
-                extraQuery: extraQuery,
+                extraQuery: {
+                    filter: ''    
+                },
                 minimumLoad: wrapperOptions.minimumLoad
             });
             grid.registerPlugin(sdiRemoteModelPlugin);

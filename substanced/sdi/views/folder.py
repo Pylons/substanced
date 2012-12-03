@@ -306,6 +306,7 @@ class FolderContentsViews(object):
         to = int(request.params.get('to'))
         sort_col = request.params.get('sortCol')
         sort_dir = (request.params.get('sortDir') in ('true', 'True'))
+        filter_text = request.params.get('filter')
 
         columns_sg = self._column_headers_sg(
             context, request
@@ -314,6 +315,7 @@ class FolderContentsViews(object):
             columns_sg=columns_sg,
             sort_col=sort_col,
             sort_dir=sort_dir,
+            filter_text = filter_text,
             )
         total = len(items)
         

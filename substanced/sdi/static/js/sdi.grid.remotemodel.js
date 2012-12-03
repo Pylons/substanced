@@ -317,6 +317,20 @@
             }
         }
 
+        function setFilterArgs(o) {
+            var changed;
+            $.each(o, function (key, value) {
+                if (options.extraQuery[key] !== o[key]) {
+                    options.extraQuery[key] = o[key];
+                    changed = true;
+                }
+            });
+            // notify the grid if any of the filters changed
+            if (changed) {
+                clearData();
+            }
+        }
+
         // Things we offer as public.
         return {
             // properties
@@ -332,6 +346,7 @@
             loadData: loadData,
             ensureData: ensureData,
             setSorting: setSorting,
+            setFilterArgs: setFilterArgs,
 
             // events
             onDataLoading: onDataLoading,
