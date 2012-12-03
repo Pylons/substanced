@@ -18,47 +18,23 @@
 
     <div tal:condition="total != 0">
 
-    <div class="form-search pull-right sdi-contents-filter">
-     <div class="input-append">
-        <input type="text" class="input-medium search-query"
-              placeholder="Type to filter…">
-        <button type="submit" class="btn"><i class="icon-search"> </i></button>
-      </div>
-    </div>
-    <div class="clearfix" />
 
-    <div id="sdi-contents-table-sg" class="slickgrid-wrapper"></div>
-    <script type="text/javascript">
-        jQuery(function ($) {
-            var $grid = $('#sdi-contents-table-sg');
-            var $filter = $('.sdi-contents-filter input');
-            // grid
-            $grid.slickgrid(${slickgrid_wrapper_options});
-            var gridWrapper = $grid.data('slickgrid');
-            // filter
-            gridWrapper.setSearchString($filter.val());
-            $filter.on('keyup', function (evt) {
-                gridWrapper.setSearchString($filter.val());
-            });
-        });
-    </script>
-
-    <div class="clearfix">
-    </div>
+    <div class="navbar fb-toolbar">
+      <div class="navbar-inner">
+        <div class="span8 fb-toolbar-box">
 
     <form action="@@contents" method="POST" class="sdi-contents-actions">
       <fieldset>
       <input type="hidden" name="csrf_token" 
              value="${request.session.get_csrf_token()}"/>
 
-      <div class="form-actions btn-toolbar">
-
         <div tal:repeat="group buttons"
            class="${group['type']=='group' and 'btn-group' or 'btn-single'}">
             <button tal:repeat="button group['buttons']"
+		    tal:attributes="disabled 'btn-sdi-act' not in button['class'] and 'true' or False"
                     id="${button['id']}"
                     name="${button['name']}"
-                    class="btn ${button['class']}"
+                    class="btn btn-sdi ${button['class']}"
                     value="${button['value']}"
                     type="submit"
                     >
@@ -99,9 +75,8 @@
         </script>
 
 
-
         <tal:block tal:condition="'tocopy' not in request.session and 'tomove' not in request.session">
-        <div class="btn-group pull-right" tal:condition="addables">
+        <div class="btn-group pull-left sdi-add-button" tal:condition="addables">
           <a class="btn btn-primary" 
              href="${request.sdiapi.mgmt_path(context, '@@add')}"><i 
              class="icon-plus-sign icon-white"></i> Add</a>
@@ -117,6 +92,38 @@
 
       </fieldset>
     </form>
+        </div>
+        <div class="form-search pull-right sdi-contents-filter">
+          <div class="input-append">
+       	    <input type="text" class="input-medium search-query"
+	           placeholder="Type to filter…">
+       	    <button type="submit" class="btn"><i class="icon-search"> </i></button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div id="sdi-contents-table-sg" class="slickgrid-wrapper"></div>
+
+    <script type="text/javascript">
+        jQuery(function ($) {
+            var $grid = $('#sdi-contents-table-sg');
+            var $filter = $('.sdi-contents-filter input');
+            // grid
+            $grid.slickgrid(${slickgrid_wrapper_options});
+            var gridWrapper = $grid.data('slickgrid');
+            // filter
+            gridWrapper.setSearchString($filter.val());
+            $filter.on('keyup', function (evt) {
+                gridWrapper.setSearchString($filter.val());
+            });
+        });
+    </script>
+
+    <div class="clearfix">
+    </div>
+
 
   </div>
   </div>
