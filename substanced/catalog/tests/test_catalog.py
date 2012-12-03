@@ -511,6 +511,17 @@ class Test_IndexViewMapper(unittest.TestCase):
         result = view('123', None)
         self.assertEqual(result, '123')
 
+class TestCatalogsService(unittest.TestCase):
+    def _makeOne(self, *arg, **kw):
+        from .. import CatalogsService
+        inst = CatalogsService(*arg, **kw)
+        return inst
+
+    def test_add_catalog(self):
+        inst = self._makeOne()
+        inst.add_catalog('foo')
+        self.assertTrue('foo' in inst)
+
 class DummyIntrospectable(dict):
     pass
 
