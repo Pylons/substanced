@@ -386,8 +386,11 @@ class Test_add_catalog_factory(unittest.TestCase):
 
     def test_it(self):
         from substanced.interfaces import ICatalogFactory
+        from substanced.catalog import Field
         config = DummyConfigurator(registry=self.config.registry)
-        self._callFUT(config, 'name', 'factory')
+        class Factory(object):
+            index = Field()
+        self._callFUT(config, 'name', Factory)
         self.assertEqual(len(config.actions), 1)
         action = config.actions[0]
         self.assertEqual(
@@ -398,19 +401,43 @@ class Test_add_catalog_factory(unittest.TestCase):
             action['introspectables'], (config.intr,)
             )
         self.assertEqual(config.intr['name'], 'name')
-        self.assertEqual(config.intr['factory'], 'factory')
+        self.assertEqual(config.intr['factory'].__class__.__name__,
+                         'CatalogFactory')
         callable = action['callable']
         callable()
         self.assertEqual(
             self.config.registry.getUtility(ICatalogFactory, 'name'),
-            'factory'
+            config.intr['factory']
             )
+
+class Test_catalog_factory(unittest.TestCase):
+    def setUp(self):
+        self.config = testing.setUp()
+
+    def tearDown(self):
+        testing.tearDown()
+        
+    def _makeOne(self, name):
+        from .. import catalog_factory
+        return catalog_factory(name)
+
+    def test_it(self):
+        class Foo(object):
+            pass
+        inst = self._makeOne('catalog')
+        venusian = DummyVenusian()
+        inst.venusian = venusian
+        context = testing.DummyResource()
+        context.config = DummyConfigurator(None)
+        result = inst(Foo)
+        self.assertEqual(result, Foo)
+        venusian.callback(context, None, 'abc')
+        self.assertEqual(context.config.catalog_factory, ('catalog', Foo))
 
 class Test_add_indexview(unittest.TestCase):
     def _callFUT(self, config, view, catalog_name, index_name, **kw):
         from .. import add_indexview
         return add_indexview(config, view, catalog_name, index_name, **kw)
-
 
 class Test_CatalogablePredicate(unittest.TestCase):
     def _makeOne(self, val, config):
@@ -541,8 +568,14 @@ class DummyConfigurator(object):
             'introspectables':introspectables,
             })
 
+    def with_package(self, package):
+        return self
+
     def introspectable(self, category, discriminator, name, single):
         return self.intr
+
+    def add_catalog_factory(self, name, cls, **extra):
+        self.catalog_factory = (name, cls)
 
 class DummyObjectMap(object):
     def __init__(self, objectid_to=None): 
@@ -628,3 +661,22 @@ class DummyFactory(object):
     def sync(self, catalog, **kw):
         catalog.synced = True
         return self.result
+
+class DummyVenusianInfo(object):
+    scope = None
+    codeinfo = None
+    module = None
+    def __init__(self, **kw):
+        self.__dict__.update(kw)
+    
+class DummyVenusian(object):
+    def __init__(self, info=None):
+        if info is None:
+            info = DummyVenusianInfo()
+        self.info = info
+        
+    def attach(self, wrapped, callback, category):
+        self.wrapped = wrapped
+        self.callback = callback
+        self.category = category
+        return self.info

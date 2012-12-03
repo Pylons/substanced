@@ -375,7 +375,9 @@ class catalog_factory(object):
           title = Field()
 
     When scanned, this catalog factory will be added to the registry as
-    if :func:`substanced.catalog.add_catalog_factory` were called.
+    if :func:`substanced.catalog.add_catalog_factory` were called like::
+
+        config.add_catalog_factory('myapp', MyAppIndexes)
 
     """
     venusian = venusian # for testing injection
@@ -384,25 +386,16 @@ class catalog_factory(object):
         self.name = name
 
     def __call__(self, cls):
-        index_factories = {}
-        for name in dir(cls):
-            value = getattr(cls, name, None)
-            if isinstance(value, IndexFactory):
-                index_factories[name] = value
-                
-        factory = CatalogFactory(self.name, index_factories)
-
         extra = {}
 
         def callback(context, name, ob):
             config = context.config.with_package(info.module)
-            config.add_catalog_factory(self.name, factory, **extra)
+            config.add_catalog_factory(self.name, cls, **extra)
 
-        info = self.venusian.attach(factory, callback, category='substanced')
-
+        info = self.venusian.attach(cls, callback, category='substanced')
         extra['_info'] = info.codeinfo # fbo "action_method"
 
-        return factory
+        return cls
 
 def is_catalogable(resource, registry=None):
     if registry is None:
@@ -425,12 +418,21 @@ class _CatalogablePredicate(object):
     def __call__(self, context, request):
         return self.is_catalogable(context, self.registry) == self.val
 
-def add_catalog_factory(config, name, factory):
-    """ Directive which adds a named catalog factory to the configuration
-    state.  The ``factory`` argument should be a class that was decorated with
-    the :class:`substanced.catalog.catalog_factory` decorator, and which
-    names index factories as its attributes.  The ``name`` argument should be a
-    string."""
+def add_catalog_factory(config, name, cls):
+    """
+    Directive which adds a named catalog factory to the configuration state.
+    The ``cls`` argument should be a class that has named index factory
+    instances as attributes.  The ``name`` argument should be a string.
+    """
+
+    index_factories = {}
+
+    for cname in dir(cls):
+        value = getattr(cls, cname, None)
+        if isinstance(value, IndexFactory):
+            index_factories[cname] = value
+
+    factory = CatalogFactory(name, index_factories)
 
     def register():
         config.registry.registerUtility(factory, ICatalogFactory, name=name)
@@ -444,11 +446,9 @@ def add_catalog_factory(config, name, factory):
         )
     intr['name'] = name
     intr['factory'] = factory
-    config.action(
-        discriminator, 
-        callable=register,
-        introspectables=(intr,)
-        )
+    intr['cls'] = cls
+
+    config.action(discriminator, callable=register, introspectables=(intr,))
 
 def add_indexview(
     config,
@@ -556,11 +556,7 @@ def add_indexview(
     intr['callable'] = view
     intr['attr'] = attr
     
-    config.action(
-        discriminator, 
-        callable=register,
-        introspectables=(intr,)
-        )
+    config.action(discriminator, callable=register, introspectables=(intr,))
     
 
 def includeme(config): # pragma: no cover
