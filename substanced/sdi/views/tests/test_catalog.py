@@ -249,13 +249,6 @@ class DummyIndex(object):
     def not_indexed_count(self):
         return 1
     
-class DummyContentRegistry(object):
-    def __init__(self, result):
-        self.result = result
-        
-    def create(self, *arg, **kw):
-        return self.result
-
 class DummyResultSet(object):
     def __init__(self, results):
         self.results = results
