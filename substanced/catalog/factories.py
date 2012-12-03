@@ -188,9 +188,7 @@ class CatalogFactory(object):
                     )
                 index = index_factory(self.name, index_name)
                 index.__sdi_deletable__ = False
-                catalog.replace(
-                    index_name,
-                    )
+                catalog.replace(index_name, index)
                 to_reindex.add(index_name)
                 changed = True
 
