@@ -15,8 +15,8 @@ A service is added to a folder via the
 :meth:`substanced.folder.Folder.add_service` API.
 
 An existing service can be looked up in one of two ways: using the
-:func:`pryamid.content.find_service` API or the
-:meth:`pyramid.folder.Folder.find_service` API.  They are functionally
+:func:`substanced.util.find_service` API or the
+:meth:`substanced.folder.Folder.find_service` API.  They are functionally
 equivalent.  The latter exists only as a convenience so you don't need to
 import a function if you know you're dealing with a :term:`folder`.
 
@@ -30,7 +30,7 @@ you're looking for via ``find_service``, but if that object was not added via
 ``add_service`` (instead it's just a "normal" content object), it won't be
 found by ``find_service``.
 
-Here's how to use :func:`pyramid.content.find_service`:
+Here's how to use :func:`substanced.util.find_service`:
 
 .. code-block:: python
 
@@ -41,7 +41,7 @@ Here's how to use :func:`pyramid.content.find_service`:
 For example, ``somecontext`` could be a "document" object you've added to a
 folder.
 
-Here's how to use :meth:`pyramid.folder.Folder.find_service`:
+Here's how to use :meth:`substanced.folder.Folder.find_service`:
 
 .. code-block:: python
 
@@ -51,7 +51,7 @@ Here's how to use :meth:`pyramid.folder.Folder.find_service`:
 object which inherits from that class) present in the :term:`resource tree`.
 
 There is also the find-multiple-services variants
-:func:`pyramid.content.find_services` and
-:meth:`pyramid.folder.Folder.find_services`.
+:func:`substanced.util.find_services` and
+:meth:`substanced.folder.Folder.find_services`.
 
 
