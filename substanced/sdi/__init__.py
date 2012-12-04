@@ -600,7 +600,7 @@ def sdi_folder_contents_sorted(
     columns,
     sort_col,
     sort_dir,
-    filter_text
+    filter_text,
     ):
     """
     A sorted, filtered version of folder_contents, needed for the table grid
@@ -619,7 +619,6 @@ def sdi_folder_contents_sorted(
         index_name = _find_column_index(columns, 'name')
         index_title = _find_column_index(columns, 'title')
         new_items = []
-        # Listify the results that were a generator, d'oh
         for item in items:
             row_as_tuple = item['columns']
             name_text = row_as_tuple[index_name].lower()
@@ -629,6 +628,8 @@ def sdi_folder_contents_sorted(
         items = new_items
     else:
         items = list(items)
+
+    # Listified the results that were a generator, d'oh
 
     # Need to sort, unless we want sorted by the default column
     if not (sort_col == 'name' and sort_dir == True):
