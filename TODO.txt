@@ -72,13 +72,6 @@ Nice-to-Have Features
 
 - Ability to add and edit principals in existing ACEs in ACL edit view.
 
-Grid
-----
-
-- Explain __sdi_deletable__, __sdi_addable__, __sdi_hidden__, __sdi_columns__,
-  __sdi_buttons__.
-
-
 Dump and Load
 -------------
 
