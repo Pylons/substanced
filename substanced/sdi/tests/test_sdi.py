@@ -818,8 +818,10 @@ class Test_default_sdi_columns(unittest.TestCase):
         self.assertEqual(
            result,
            [{'sortable': True, 
-             'name': 'Name', 
-             'value': '<i class="icon"> </i> <a href="/mgmt_path">fred</a>'}] 
+             'name': 'Name',
+             'field':'name',
+             'formatter':'icon_label_url',
+             'value': 'fred'}] 
            )
 
     def test_it_with_callable_icon(self):
@@ -830,8 +832,10 @@ class Test_default_sdi_columns(unittest.TestCase):
         self.assertEqual(
            result, 
            [{'sortable': True, 
-             'name': 'Name', 
-             'value': '<i class="icon"> </i> <a href="/mgmt_path">fred</a>'}] 
+             'name': 'Name',
+             'field':'name',
+             'formatter':'icon_label_url',
+             'value': 'fred'}] 
            )
 
 class Test_default_sdi_buttons(unittest.TestCase):
@@ -849,21 +853,22 @@ class Test_default_sdi_buttons(unittest.TestCase):
               'type': 'group', 
               'buttons': 
                   [{'text': 'Rename', 
-                    'class': '', 
+                    'class': 'btn-sdi-del', 
                     'id': 'rename', 
                     'value': 'rename', 
                     'name': 'form.rename'}, 
-                   {'text': 'Copy', 'class': '', 
+                   {'text': 'Copy',
+                    'class': 'btn-sdi-sel', 
                     'id': 'copy', 
                     'value': 'copy', 
                     'name': 'form.copy'}, 
                    {'text': 'Move', 
-                    'class': '', 
+                    'class': 'btn-sdi-del', 
                     'id': 'move', 
                     'value': 'move', 
                     'name': 'form.move'}, 
                    {'text': 'Duplicate', 
-                    'class': '', 
+                    'class': 'btn-sdi-sel', 
                     'id': 'duplicate', 
                     'value': 'duplicate', 
                     'name': 'form.duplicate'}]
@@ -872,7 +877,7 @@ class Test_default_sdi_buttons(unittest.TestCase):
               'type':'group',
               'buttons': 
                   [{'text': 'Delete', 
-                    'class': 'btn-danger', 
+                    'class': 'btn-danger btn-sdi-del', 
                     'id': 'delete', 
                     'value': 'delete', 
                     'name': 'form.delete'}]
@@ -890,12 +895,12 @@ class Test_default_sdi_buttons(unittest.TestCase):
             [
               {'buttons': 
                 [{'text': 'Copy here', 
-                  'class': 'btn-primary', 
+                  'class': 'btn-primary btn-sdi-act', 
                   'id': 'copy_finish', 
                   'value': 'copy_finish', 
                   'name': 'form.copy_finish'}, 
                  {'text': 'Cancel', 
-                  'class': 'btn-danger', 
+                  'class': 'btn-danger btn-sdi-act', 
                   'id': 'cancel', 
                   'value': 'cancel', 
                   'name': 'form.copy_finish'}],
@@ -912,12 +917,12 @@ class Test_default_sdi_buttons(unittest.TestCase):
             result, [
             {'buttons': [
                 {'text': 'Move here',
-                 'class': 'btn-primary',
+                 'class': 'btn-primary btn-sdi-act',
                  'id': 'move_finish',
                  'value': 'move_finish',
                  'name': 'form.move_finish'},
                 {'text': 'Cancel',
-                 'class': 'btn-danger',
+                 'class': 'btn-danger btn-sdi-act',
                  'id': 'cancel',
                  'value': 'cancel',
                  'name':'form.move_finish'}],

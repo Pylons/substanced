@@ -89,17 +89,19 @@ class AddFolderView(FormView):
 
 
 def process_grid_rows(columns, items, total, _from, to):
-    # The items for the slickgrid are really in a format similar to the
-    # items used for the static table. However, it has some problems so we have
-    # to convert the records:
+    # The items for the slickgrid are really in a format similar to the items
+    # used for the static table. However, it has some problems so we have to
+    # convert the records:
     #
-    # - The records must be json-marshallable, so we convert 'deletable' to bool.
+    # - The records must be json-marshallable, so we convert 'deletable' to
+    #   bool.
     # - SlickGrid requires a unique id to each row
-    # - more reasonable keys, that match slickgrid's rendering (actually, we could leave
-    #   it intact here, and just handle this from the formatters in the js code,
-    #   but then it would be more difficult to understand the code.)
-    # - remove the 'columns' attribute that contains the rendered parts. Slickgrid will
-    #   format the html on the client.
+    # - more reasonable keys, that match slickgrid's rendering (actually, we
+    #   could leave it intact here, and just handle this from the formatters in
+    #   the js code, but then it would be more difficult to understand the
+    #   code.)
+    # - remove the 'columns' attribute that contains the rendered
+    #   parts. Slickgrid will format the html on the client.
     #
     records = []
     for i, item in enumerate(itertools.islice(items, _from, to)):
@@ -138,7 +140,7 @@ class FolderContentsViews(object):
 
     sdi_add_views = staticmethod(sdi_add_views) # for testing
     sdi_folder_contents = staticmethod(sdi_folder_contents) # for testing
-    sdi_folder_contents_sorted = staticmethod(sdi_folder_contents_sorted) # for testing
+    sdi_folder_contents_sorted = staticmethod(sdi_folder_contents_sorted) # test
 
     def __init__(self, context, request):
         self.context = context
@@ -153,6 +155,11 @@ class FolderContentsViews(object):
         if custom_buttons is not _marker:
             buttons = custom_buttons(context, request, buttons)
         return buttons
+
+    def _modified_items(self):
+        items = self.request.POST.get('item-modify', '').split(',')
+        modified = filter(None, items) # remove empty
+        return modified
 
     #def _column_headers(self, context, request):
     #    headers = []
@@ -183,12 +190,13 @@ class FolderContentsViews(object):
 
     def _column_headers_sg(self, context, request):
         """Generate columns from SlickGrid."""
-        # TODO As the slickgrid's column desription format contains different fields
-        # from our internal column schema (both more feature rich, and
+        # TODO As the slickgrid's column desription format contains different
+        # fields from our internal column schema (both more feature rich, and
         # uses different attributes), we will need to convert our schema to
-        # SlickGrid's here. As there is no "universal grid column description format" exists,
-        # this also means that here we have to limit the flexible configuration
-        # possibilities of the slickgrid to those use cases that we wish to support.
+        # SlickGrid's here. As there is no "universal grid column description
+        # format" exists, this also means that here we have to limit the
+        # flexible configuration possibilities of the slickgrid to those use
+        # cases that we wish to support.
         headers = []
 
         columns = default_sdi_columns(self, None, request)
@@ -271,13 +279,17 @@ class FolderContentsViews(object):
         # We pass the wrapper options which contains all information
         # needed to configure the several components of the grid config.
         slickgrid_wrapper_options = JsonDict(
-            configName='sdi-content-grid', # << this refers to slickgrid-config.js
+            # VV this refers to slickgrid-config.js
+            configName='sdi-content-grid', 
             columns=columns_sg,
             slickgridOptions=slickgrid_options,
             items=items_sg,
+
             # initial sorting (The grid will really not sort the initial data,
-            # just display it in the order we provide it. It will use the information
-            # to just visually show in the headers the sorted column.)
+            # just display it in the order we provide it. It will use the
+            # information to just visually show in the headers the sorted
+            # column.)
+
             sortCol = columns_sg[0]['field'], 
             sortDir = True,   # True ascending, or False descending.
             #
@@ -310,10 +322,11 @@ class FolderContentsViews(object):
         sort_dir = (request.params.get('sortDir') in ('true', 'True'))
         filter_text = request.params.get('filter')
 
-        columns_sg = self._column_headers_sg(
-            context, request
-            )
-        items= self.sdi_folder_contents_sorted(context, request,
+        columns_sg = self._column_headers_sg(context, request)
+        
+        items= self.sdi_folder_contents_sorted(
+            context,
+            request,
             columns_sg=columns_sg,
             sort_col=sort_col,
             sort_dir=sort_dir,
@@ -322,7 +335,9 @@ class FolderContentsViews(object):
         total = len(items)
         
         # Convert the items to the format what the grid wants.
-        items = process_grid_rows(columns_sg, items, total=total, _from=_from, to=to)
+        items = process_grid_rows(
+            columns_sg, items, total=total, _from=_from, to=to
+            )
         return items
  
     @mgmt_view(
@@ -335,7 +350,7 @@ class FolderContentsViews(object):
     def delete(self):
         request = self.request
         context = self.context
-        todelete = request.POST.get('item-modify').split(',')
+        todelete = self._modified_items()
         deleted = 0
         for name in todelete:
             v = context.get(name)
@@ -363,7 +378,7 @@ class FolderContentsViews(object):
     def duplicate(self):
         request = self.request
         context = self.context
-        toduplicate = request.POST.get('item-modify').split(',')
+        toduplicate = self._modified_items()
         for name in toduplicate:
             newname = rename_duplicated_resource(context, name)
             context.copy(name, context, newname)
@@ -389,7 +404,7 @@ class FolderContentsViews(object):
     def rename(self):
         request = self.request
         context = self.context
-        torename = request.POST.get('item-modify').split(',')
+        torename = self._modified_items()
         if not torename:
             request.session.flash('No items renamed')
             return HTTPFound(request.sdiapi.mgmt_path(context, '@@contents'))
@@ -440,10 +455,8 @@ class FolderContentsViews(object):
     def copy(self):
         request = self.request
         context = self.context
-        tocopy = request.POST.get('item-modify').split(',')
+        tocopy = self._modified_items()
         
-        print tocopy
-
         if tocopy:
             l = []
             for name in tocopy:
@@ -502,7 +515,7 @@ class FolderContentsViews(object):
     def move(self):
         request = self.request
         context = self.context
-        tomove = request.POST.get('item-modify').split(',')
+        tomove = self._modified_items()
 
         if tomove:
             l = []

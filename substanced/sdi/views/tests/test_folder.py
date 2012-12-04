@@ -219,7 +219,7 @@ class TestFolderContentsViews(unittest.TestCase):
         context = testing.DummyResource()
         context['a'] = testing.DummyResource()
         request = self._makeRequest()
-        request.POST = DummyPost(('a',))
+        request.POST = DummyPost(None, 'a')
         inst = self._makeOne(context, request)
         result = inst.delete()
         self.assertEqual(request.session['_f_'], ['Deleted 1 item'])
@@ -231,7 +231,7 @@ class TestFolderContentsViews(unittest.TestCase):
         context['a'] = testing.DummyResource()
         context['b'] = testing.DummyResource()
         request = self._makeRequest()
-        request.POST = DummyPost(('a', 'b'))
+        request.POST = DummyPost(None, 'a,b')
         inst = self._makeOne(context, request)
         result = inst.delete()
         self.assertEqual(request.session['_f_'], ['Deleted 2 items'])
@@ -243,7 +243,7 @@ class TestFolderContentsViews(unittest.TestCase):
         context = testing.DummyResource()
         context['a'] = testing.DummyResource()
         request = self._makeRequest()
-        request.POST = DummyPost(('a', 'b'))
+        request.POST = DummyPost(None, 'a,b')
         inst = self._makeOne(context, request)
         result = inst.delete()
         self.assertEqual(request.session['_f_'], ['Deleted 1 item'])
@@ -254,7 +254,7 @@ class TestFolderContentsViews(unittest.TestCase):
     def test_duplicate_multiple(self, mock_rename_duplicated_resource):
         context = mock.Mock()
         request = mock.Mock()
-        request.POST.getall.return_value = ('a', 'b')
+        request.POST.get.return_value = 'a,b'
         mock_rename_duplicated_resource.side_effect = ['a-1', 'b-1']
 
         inst = self._makeOne(context, request)
@@ -271,7 +271,7 @@ class TestFolderContentsViews(unittest.TestCase):
     def test_duplicate_none(self):
         context = mock.Mock()
         request = mock.Mock()
-        request.POST.getall.return_value = tuple()
+        request.POST.get.return_value = ''
         inst = self._makeOne(context, request)
         inst.duplicate()
 
@@ -284,7 +284,7 @@ class TestFolderContentsViews(unittest.TestCase):
         mock_rename_duplicated_resource.side_effect = ['a-1']
         context = mock.Mock()
         request = mock.Mock()
-        request.POST.getall.return_value = ('a',)
+        request.POST.get.return_value = 'a'
         inst = self._makeOne(context, request)
         inst.duplicate()
 
@@ -298,7 +298,7 @@ class TestFolderContentsViews(unittest.TestCase):
         context = testing.DummyResource()
         context['foobar'] = testing.DummyResource()
         request = self._makeRequest()
-        request.POST = DummyPost(('foobar',))
+        request.POST = DummyPost(None, 'foobar')
         inst = self._makeOne(context, request)
         result = inst.rename()
         self.assertEqual(result, {'torename': [context['foobar']]})
@@ -307,7 +307,7 @@ class TestFolderContentsViews(unittest.TestCase):
         context = testing.DummyResource()
         context['foobar'] = testing.DummyResource()
         request = self._makeRequest()
-        request.POST = DummyPost(('foobar', 'foobar1'))
+        request.POST = DummyPost(None, 'foobar,foobar1')
         inst = self._makeOne(context, request)
         result = inst.rename()
         self.assertEqual(result, {'torename': [context['foobar']]})
@@ -318,7 +318,7 @@ class TestFolderContentsViews(unittest.TestCase):
         context['foobar2'] = testing.DummyResource()
         context['foobar3'] = testing.DummyResource()
         request = self._makeRequest()
-        request.POST = DummyPost(('foobar', 'foobar3'))
+        request.POST = DummyPost(None, 'foobar,foobar3')
         inst = self._makeOne(context, request)
         result = inst.rename()
         self.assertEqual(result, {'torename': [context['foobar'],
@@ -330,7 +330,7 @@ class TestFolderContentsViews(unittest.TestCase):
         context['foobar2'] = testing.DummyResource()
         context['foobar3'] = testing.DummyResource()
         request = self._makeRequest()
-        request.POST = DummyPost()
+        request.POST = DummyPost(None, '')
         inst = self._makeOne(context, request)
         result = inst.rename()
         self.assertEqual(request.session['_f_'], ['No items renamed'])
@@ -403,7 +403,7 @@ class TestFolderContentsViews(unittest.TestCase):
             'foobar': 'foobar',
             'foobar1': 'foobar1'}[x]
         request = mock.MagicMock()
-        request.POST.getall.return_value = ('foobar',)
+        request.POST.get.return_value = 'foobar'
 
         inst = self._makeOne(context, request)
         inst.copy()
@@ -420,7 +420,7 @@ class TestFolderContentsViews(unittest.TestCase):
                                              'foobar1': 'foobar1',
                                              'foobar2': 'foobar2'}[x]
         request = mock.MagicMock()
-        request.POST.getall.return_value = ('foobar', 'foobar1')
+        request.POST.get.return_value = 'foobar,foobar1'
 
         inst = self._makeOne(context, request)
         inst.copy()
@@ -438,7 +438,7 @@ class TestFolderContentsViews(unittest.TestCase):
             'foobar': 'foobar',
             'foobar2': 'foobar2'}.get(x, None)
         request = mock.MagicMock()
-        request.POST.getall.return_value = ('foobar', 'foobar1')
+        request.POST.get.return_value = 'foobar,foobar1'
 
         inst = self._makeOne(context, request)
         inst.copy()
@@ -452,7 +452,7 @@ class TestFolderContentsViews(unittest.TestCase):
         context = mock.Mock()
         context.__contains__ = mock.Mock(return_value=True)
         request = mock.MagicMock()
-        request.POST.getall.return_value = tuple()
+        request.POST.get.return_value = ''
 
         inst = self._makeOne(context, request)
         inst.copy()
@@ -463,7 +463,7 @@ class TestFolderContentsViews(unittest.TestCase):
     def test_copy_finish_cancel(self):
         context = mock.Mock()
         request = mock.MagicMock()
-        request.POST.getall.return_value = ('foobar',)
+        request.POST.get.return_value = ('foobar',)
         request.POST.get.side_effect = lambda x: {
             'foobar': 'foobar0',
             'form.copy_finish': 'cancel'}[x]
@@ -542,7 +542,7 @@ class TestFolderContentsViews(unittest.TestCase):
             'foobar': 'foobar',
             'foobar1': 'foobar1'}[x]
         request = mock.MagicMock()
-        request.POST.getall.return_value = ('foobar',)
+        request.POST.get.return_value = 'foobar'
 
         inst = self._makeOne(context, request)
         inst.move()
@@ -559,7 +559,7 @@ class TestFolderContentsViews(unittest.TestCase):
         context.get.side_effect = lambda x: {'foobar': 'foobar',
                                              'foobar1': 'foobar1'}[x]
         request = mock.MagicMock()
-        request.POST.getall.return_value = ('foobar', 'foobar1')
+        request.POST.get.return_value = 'foobar,foobar1'
 
         inst = self._makeOne(context, request)
         inst.move()
@@ -577,7 +577,7 @@ class TestFolderContentsViews(unittest.TestCase):
         context.get.side_effect = lambda x: {'foobar': 'foobar',
                                              'foobar1': 'foobar1'}.get(x, None)
         request = mock.MagicMock()
-        request.POST.getall.return_value = ('foobar', 'foobar2')
+        request.POST.get.return_value = 'foobar,foobar2'
 
         inst = self._makeOne(context, request)
         inst.move()
@@ -594,7 +594,7 @@ class TestFolderContentsViews(unittest.TestCase):
         context.get.side_effect = lambda x: {'foobar': 'foobar',
                                              'foobar1': 'foobar1'}.get(x, None)
         request = mock.MagicMock()
-        request.POST.getall.return_value = tuple()
+        request.POST.get.return_value = ''
 
         inst = self._makeOne(context, request)
         inst.move()
@@ -606,7 +606,7 @@ class TestFolderContentsViews(unittest.TestCase):
     def test_move_finish_cancel(self):
         context = mock.Mock()
         request = mock.MagicMock()
-        request.POST.getall.return_value = ('foobar',)
+        request.POST.get.return_value = 'foobar'
         request.POST.get.side_effect = lambda x: {
             'foobar': 'foobar0',
             'form.move_finish': 'cancel'}[x]
@@ -719,12 +719,17 @@ class DummyContent(object):
 
 
 class DummyPost(dict):
-    def __init__(self, result=(), result2=None):
-        self.result = result
-        self.result2 = result2 or {}
+    def __init__(self, getall_result=(), get_result=None):
+        self.getall_result = getall_result
+        self.get_result = get_result
 
     def getall(self, name):
-        return self.result
+        return self.getall_result
+
+    def get(self, name, default=None):
+        if self.get_result is None:
+            return default
+        return self.get_result
 
 class DummySDIAPI(object):
     def mgmt_path(self, *arg, **kw):
