@@ -591,7 +591,7 @@ def _find_column_index(columns, sort_col):
         if col['field'] == sort_col:
             break
     else:
-        assert False, 'We should not ever get here.' 
+        raise ValueError(sort_col)
     return index
 
 def sdi_folder_contents_sorted(
@@ -600,48 +600,46 @@ def sdi_folder_contents_sorted(
     columns,
     sort_col,
     sort_dir,
-    filter_text):
-
-    """A sorted, filtered version of folder_contents, needed for the table grid
+    filter_text
+    ):
+    """
+    A sorted, filtered version of folder_contents, needed for the table grid
     remote data view.  Currently, this reuses folder_contents and does the and
     filtering sorting in an ineffective way (in memory). At one point this
     could be changed to the other way.
     """
-
     items = sdi_folder_contents(folder, request)
-    # Listify the results that were an iterator, d'oh
+
     # Filtering as needed
     filter_text = filter_text.strip()
+
     if filter_text:
         filter_text = filter_text.lower()
         # fulltext search in name and title
         index_name = _find_column_index(columns, 'name')
         index_title = _find_column_index(columns, 'title')
         new_items = []
+        # Listify the results that were a generator, d'oh
         for item in items:
             row_as_tuple = item['columns']
-            if filter_text in row_as_tuple[index_name].lower() \
-                    or filter_text in row_as_tuple[index_title].lower():
+            name_text = row_as_tuple[index_name].lower()
+            title_text = row_as_tuple[index_title].lower()
+            if (filter_text in name_text) or (filter_text in title_text):
                 new_items.append(item)
         items = new_items
     else:
         items = list(items)
+
     # Need to sort, unless we want sorted by the default column
     if not (sort_col == 'name' and sort_dir == True):
         index = _find_column_index(columns, sort_col)
         items.sort(key=lambda s: s['columns'][index], reverse=not sort_dir)
+
     return items
 
 def default_sdi_columns(folder, subobject, request):
     """ The default columns content-type hook """
     name = getattr(subobject, '__name__', '')
-    # XXX This is newer from master, but I think we won't need them:
-    #url = request.sdiapi.mgmt_path(subobject, '@@manage_main')
-    #link_tag = '<a href="%s">%s</a>' % (url, name)
-    #icon = request.registry.content.metadata(subobject, 'icon')
-    #if callable(icon):
-    #    icon = icon(subobject, request)
-    #icon_tag = '<i class="%s"> </i>' % icon
     return [
         {'name': 'Name',
          'field': 'name',
