@@ -70,6 +70,7 @@ Narrative Documentation
    references
    workflows
    evolution
+   folder_contents
    retail
 
 API Documentation

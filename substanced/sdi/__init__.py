@@ -509,8 +509,8 @@ def sdi_folder_contents(folder, request):
     using a table with any given subobject attributes, a callable named
     ``columns`` can be passed to a content type as metadata.  When the folder
     contents SDI view is invoked against an object of the type, the ``columns``
-    callable will be passed the folder, a subobject the ``request``, and a set
-    of default column specifications.  It will be called once for every object
+    callable s.will be passed the folder, a subobject the ``request``, and a set
+    of default column specification  It will be called once for every object
     in the folder to obtain column representations for each of its subobjects.
     It must return a list of dictionaries with at least a ``name`` key for the
     column header and a ``value`` key with the correct column value given the

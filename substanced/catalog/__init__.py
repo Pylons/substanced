@@ -64,7 +64,7 @@ def catalog_buttons(context, request, default_buttons):
          [
              {'id':'reindex',
               'name':'form.reindex',
-              'class':'btn-primary btn-sdi-act',
+              'class':'btn-primary btn-sdi-sel',
               'value':'reindex',
               'text':'Reindex'}
              ]
