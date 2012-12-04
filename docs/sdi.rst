@@ -138,6 +138,9 @@ managing them (e.g. Security, References):
 
 .. image:: images/user.png
 
+Users and groups can also grow extra attributes and behavior because they're
+just content, so you can customize your user model out of the box.
+
 Workflows
 =========
 
@@ -147,14 +150,15 @@ tab on content types that have workflows registered for them:
 
 .. image:: images/workflows.png
 
-This provides a way, via the SDI, to transition a resource.
+This provides a way, via the SDI, to transition the workflow state of a
+resource.
 
 References
 ==========
 
-With the built-in support for :doc:`references <references>`,
-Substanced D helps manage the connections between resources. The SDI
-provides a UI into the reference service.
+With the built-in support for :doc:`references <references>`, Substanced D
+helps manage relationships between resources. The SDI provides a UI into the
+reference service.
 
 If the resource you are viewing has any references, a ``References``
 tab will appear:
