@@ -98,6 +98,40 @@ The SDI has a mostly-familiar layout:
 
 - A *footer*
 
+.. _sdi-folder-contents:
+
+Folder Contents
+===============
+
+Folders show a listing of items they contain using a powerful data grid
+based on SlickGrid:
+
+.. image:: images/contents.png
+
+This dynamic grid features:
+
+- Only loading the items needed for display, to speed up operations on
+  large folders
+
+- "Infinite scrolling" via the scrollbar to go directly to a batch at
+  any point in the folder
+
+- Column resizing and re-ordering
+
+- Sorting on sort-supported columns
+
+- Filtering based on search string
+
+- Selection of one or more items and performing an operation by
+  clicking on a button
+
+- Styling integrated with Twitter Bootstrap
+
+- Detection and re-layout on responsive design operations
+
+The :doc:`folder_contents` chapter covers how Substance D developers
+can plug their custom content types into folder contents.
+
 Catalog
 =======
 
