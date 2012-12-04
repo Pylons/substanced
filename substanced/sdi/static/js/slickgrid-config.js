@@ -113,10 +113,13 @@
             // checkbox column
             grid.setSelectionModel(new Slick.RowSelectionModel({selectActiveRow: false}));
             grid.registerPlugin(checkboxSelector);
+
+/*
             this.grid.onSelectedRowsChanged.subscribe(function (evt) { 
                 var selRows = grid.getSelectedRows();
-                var form =  $('form[action="@@contents"]');
-                var hiddenInput =  form.find('input[name="item-modify"]');
+                var $form =  $('form[action="@@contents"]');
+                var $hiddenInput =  $form.find('input[name="item-modify"]');
+
                 if (selRows.length > 100) {
                     // XXX XXX XXX This is a problem. We need to limit the
                     // selection size, because of cookieval is limited in 4096
@@ -136,7 +139,7 @@
                 });
                 // I think it is better to submit the list as a concatenated
                 // value, instead of adding several inputs to the dom.
-                hiddenInput.attr('value', selectedIds.join(','));
+                $hiddenInput.attr('value', selectedIds.join(','));
 
                 if (selRows.length) {
                     var disable_delete = false;
@@ -157,6 +160,7 @@
                     $('.btn-sdi-sel').attr('disabled', true);
                 }
             });
+*/
 
             // autoresize columns
             var responsivenessPlugin = new Slick.Plugins.Responsiveness({
