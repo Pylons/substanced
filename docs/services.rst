@@ -5,9 +5,9 @@ A :term:`service` is a name for a content object that provides a service to
 application code.  It looks just like any other content object, but services
 that are added to a site can be found by name using various Substance D APIs.
 
-Services expose APIs that exist for the benefit of application developers.
-For instance, the ``catalog`` service provides an API that allows a developer
-to index and query for content objects using a structured query API.  The
+Services expose APIs that exist for the benefit of application developers.  For
+instance, the ``catalogs`` service provides an API that allows a developer to
+index and query for content objects using a structured query API.  The
 ``principals`` service allows a developer to add and enumerate users and
 groups.
 
