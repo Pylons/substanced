@@ -108,12 +108,10 @@ the catalog:
 
 .. image:: images/catalog.png
 
-Catalogues are content, meaning they can be added to a folder. You can
-add/edit/delete indices to the catalog from the list of built-in index
-types. You can also visit an index in a catalog and see some statistics
-for that index. Finally, you can also use the SDI to reindex the
-contents of an index, if you suspect it has gotten out of sync with the
-content.
+Catalogues are content, meaning they show up as folder items in the SDI. You
+can visit a a catalog and update its indexes, or see some statistics for those
+index. Finally, you can also use the SDI to reindex the contents of an index,
+if you suspect it has gotten out of sync with the content.
 
 The catalog also registers a management view on content resources which
 gain a ``Indexing`` tab:
