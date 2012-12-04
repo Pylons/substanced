@@ -276,6 +276,13 @@ class FolderContentsViews(object):
         minimum_load = 40      # load at least this many records.
         items_sg = process_grid_rows(columns_sg, items, total=num_items, _from=0, to=minimum_load)
 
+        if columns_sg:
+            sortCol = columns_sg[0]['field'] 
+        else:
+            # no columns, not sure if this is a real use case.
+            sortCol = None
+        sortDir = True    # True ascending, or False descending.
+
         # We pass the wrapper options which contains all information
         # needed to configure the several components of the grid config.
         slickgrid_wrapper_options = JsonDict(
@@ -289,9 +296,8 @@ class FolderContentsViews(object):
             # just display it in the order we provide it. It will use the
             # information to just visually show in the headers the sorted
             # column.)
-
-            sortCol = columns_sg[0]['field'], 
-            sortDir = True,   # True ascending, or False descending.
+            sortCol = sortCol,
+            sortDir = sortDir,
             #
             # Parameters for the remote data model
             url = '',   # use same url for ajax
