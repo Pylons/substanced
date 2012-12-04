@@ -585,20 +585,29 @@ def sdi_folder_contents(folder, request):
             )
         yield data
 
-def _find_column_index(columns_sg, sort_col):    
+def _find_column_index(columns, sort_col):    
     # find the column index, as that's what we need for lookup.
-    for index, col in enumerate(columns_sg):
+    for index, col in enumerate(columns):
         if col['field'] == sort_col:
             break
     else:
         assert False, 'We should not ever get here.' 
     return index
 
-def sdi_folder_contents_sorted(folder, request, columns_sg, sort_col, sort_dir, filter_text):
-    """A sorted, filtered version of folder_contents, needed for the table grid remote data view.
-    Currently, this reuses folder_contents and does the and filtering sorting in an ineffective
-    way (in memory). At one point this could be changed to the other way.
+def sdi_folder_contents_sorted(
+    folder,
+    request,
+    columns,
+    sort_col,
+    sort_dir,
+    filter_text):
+
+    """A sorted, filtered version of folder_contents, needed for the table grid
+    remote data view.  Currently, this reuses folder_contents and does the and
+    filtering sorting in an ineffective way (in memory). At one point this
+    could be changed to the other way.
     """
+
     items = sdi_folder_contents(folder, request)
     # Listify the results that were an iterator, d'oh
     # Filtering as needed
@@ -606,8 +615,8 @@ def sdi_folder_contents_sorted(folder, request, columns_sg, sort_col, sort_dir, 
     if filter_text:
         filter_text = filter_text.lower()
         # fulltext search in name and title
-        index_name = _find_column_index(columns_sg, 'name')
-        index_title = _find_column_index(columns_sg, 'title')
+        index_name = _find_column_index(columns, 'name')
+        index_title = _find_column_index(columns, 'title')
         new_items = []
         for item in items:
             row_as_tuple = item['columns']
@@ -619,7 +628,7 @@ def sdi_folder_contents_sorted(folder, request, columns_sg, sort_col, sort_dir, 
         items = list(items)
     # Need to sort, unless we want sorted by the default column
     if not (sort_col == 'name' and sort_dir == True):
-        index = _find_column_index(columns_sg, sort_col)
+        index = _find_column_index(columns, sort_col)
         items.sort(key=lambda s: s['columns'][index], reverse=not sort_dir)
     return items
 

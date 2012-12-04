@@ -110,15 +110,21 @@ class TestFolderContentsViews(unittest.TestCase):
         context = testing.DummyResource()
         request = self._makeRequest(columns=None)
         inst = self._makeOne(context, request)
-        inst.sdi_folder_contents = mock.Mock(return_value=dummy_folder_contents_0)
-        inst._column_headers_sg = mock.Mock(return_value=dummy_column_headers_sg_0)
+        inst.sdi_folder_contents = mock.Mock(
+            return_value=dummy_folder_contents_0
+            )
+        inst._column_headers = mock.Mock(return_value=dummy_column_headers_0)
         inst.sdi_add_views = mock.Mock(return_value=('b',))
         result = inst.show()
         self.assert_('slickgrid_wrapper_options' in result)
         slickgrid_wrapper_options = result['slickgrid_wrapper_options']
         self.assert_('slickgridOptions' in slickgrid_wrapper_options)
-        self.assertEqual(slickgrid_wrapper_options['configName'], 'sdi-content-grid')
-        self.assertEqual(slickgrid_wrapper_options['sortCol'], None)   # None because it cannot be sorted.  
+        self.assertEqual(
+            slickgrid_wrapper_options['configName'],
+            'sdi-content-grid'
+            )
+        # None because it cannot be sorted.  
+        self.assertEqual(slickgrid_wrapper_options['sortCol'], None)   
         self.assertEqual(slickgrid_wrapper_options['sortDir'], True)
         self.assertEqual(slickgrid_wrapper_options['url'], '')
         self.assert_('items' in slickgrid_wrapper_options)
@@ -148,14 +154,18 @@ class TestFolderContentsViews(unittest.TestCase):
         context = testing.DummyResource()
         request = self._makeRequest(columns=sd_columns)
         inst = self._makeOne(context, request)
-        inst.sdi_folder_contents = mock.Mock(return_value=dummy_folder_contents_2)
-        inst._column_headers_sg = mock.Mock(return_value=dummy_column_headers_sg_2)
+        inst.sdi_folder_contents = mock.Mock(
+            return_value=dummy_folder_contents_2
+            )
+        inst._column_headers = mock.Mock(return_value=dummy_column_headers_2)
         inst.sdi_add_views = mock.Mock(return_value=('b',))
         result = inst.show()
         self.assert_('slickgrid_wrapper_options' in result)
         slickgrid_wrapper_options = result['slickgrid_wrapper_options']
         self.assert_('slickgridOptions' in slickgrid_wrapper_options)
-        self.assertEqual(slickgrid_wrapper_options['configName'], 'sdi-content-grid')
+        self.assertEqual(
+            slickgrid_wrapper_options['configName'], 'sdi-content-grid'
+            )
         self.assertEqual(slickgrid_wrapper_options['sortCol'], 'col1')  
         self.assertEqual(slickgrid_wrapper_options['sortDir'], True)
         self.assertEqual(slickgrid_wrapper_options['url'], '')
@@ -184,23 +194,31 @@ class TestFolderContentsViews(unittest.TestCase):
     def test_show_non_sortable_columns(self):
         def sd_columns(folder, subobject, request, default_columns):
             self.assertEqual(len(default_columns), 1)
-            return [{'name': 'Col 1', 'field': 'col1', 'value': 'col1', 'sortable': False},
-                    {'name': 'Col 2', 'field': 'col2', 'value': 'col2'}]
+            return [
+                {'name': 'Col 1', 'field': 'col1', 'value': 'col1',
+                 'sortable': False},
+                {'name': 'Col 2', 'field': 'col2', 'value': 'col2'}
+                ]
         context = testing.DummyResource()
         request = self._makeRequest(columns=sd_columns)
         inst = self._makeOne(context, request)
-        inst.sdi_folder_contents = mock.Mock(return_value=dummy_folder_contents_2)
-        inst._column_headers_sg = mock.Mock(return_value=dummy_column_headers_sg_2)
+        inst.sdi_folder_contents = mock.Mock(
+            return_value=dummy_folder_contents_2
+            )
+        inst._column_headers = mock.Mock(return_value=dummy_column_headers_2)
         inst.sdi_add_views = mock.Mock(return_value=('b',))
         result = inst.show()
         self.assert_('slickgrid_wrapper_options' in result)
         slickgrid_wrapper_options = result['slickgrid_wrapper_options']
         self.assert_('slickgridOptions' in slickgrid_wrapper_options)
-        self.assertEqual(slickgrid_wrapper_options['configName'], 'sdi-content-grid')
+        self.assertEqual(
+            slickgrid_wrapper_options['configName'],
+            'sdi-content-grid'
+            )
 
         
-        # XXX This should actually be 'col2'! TODO make the grid choose the first column
-        # that is actually sortable.
+        # XXX This should actually be 'col2'! TODO make the grid choose the
+        # first column that is actually sortable.
         #####self.assertEqual(slickgrid_wrapper_options['sortCol'], 'col2')  
 
         
@@ -234,12 +252,15 @@ class TestFolderContentsViews(unittest.TestCase):
     def test_metadata_for_non_sortable_columns(self):
         def sd_columns(folder, subobject, request, default_columns):
             self.assertEqual(len(default_columns), 1)
-            return [{'name': 'Col 1', 'field': 'col1', 'value': 'col1', 'sortable': False},
-                    {'name': 'Col 2', 'field': 'col2', 'value': 'col2'}]
+            return [
+                {'name': 'Col 1', 'field': 'col1', 'value':
+                 'col1', 'sortable': False},
+                {'name': 'Col 2', 'field': 'col2', 'value': 'col2'}
+                ]
         context = testing.DummyResource()
         request = self._makeRequest(columns=sd_columns)
         inst = self._makeOne(context, request)
-        result = inst._column_headers_sg(context, request)
+        result = inst._column_headers(context, request)
         self.assertEqual(len(result), 2)
 
         col = result[0]
@@ -266,19 +287,25 @@ class TestFolderContentsViews(unittest.TestCase):
     def test_show_non_filterable_columns(self):
         def sd_columns(folder, subobject, request, default_columns):
             self.assertEqual(len(default_columns), 1)
-            return [{'name': 'Col 1', 'field': 'col1', 'value': 'col1'},
-                    {'name': 'Col 2', 'field': 'col2', 'value': 'col2', 'filterable': False}]
+            return [
+                {'name': 'Col 1', 'field': 'col1', 'value': 'col1'},
+                {'name': 'Col 2', 'field': 'col2', 'value': 'col2',
+                 'filterable': False}
+                ]
         context = testing.DummyResource()
         request = self._makeRequest(columns=sd_columns)
         inst = self._makeOne(context, request)
-        inst.sdi_folder_contents = mock.Mock(return_value=dummy_folder_contents_2)
-        inst._column_headers_sg = mock.Mock(return_value=dummy_column_headers_sg_2)
+        inst.sdi_folder_contents = mock.Mock(
+            return_value=dummy_folder_contents_2
+            )
+        inst._column_headers = mock.Mock(return_value=dummy_column_headers_2)
         inst.sdi_add_views = mock.Mock(return_value=('b',))
         result = inst.show()
         self.assert_('slickgrid_wrapper_options' in result)
         slickgrid_wrapper_options = result['slickgrid_wrapper_options']
         self.assert_('slickgridOptions' in slickgrid_wrapper_options)
-        self.assertEqual(slickgrid_wrapper_options['configName'], 'sdi-content-grid')
+        self.assertEqual(slickgrid_wrapper_options['configName'],
+                         'sdi-content-grid')
         self.assertEqual(slickgrid_wrapper_options['sortDir'], True)
         self.assertEqual(slickgrid_wrapper_options['url'], '')
         self.assert_('items' in slickgrid_wrapper_options)
@@ -847,7 +874,7 @@ dummy_folder_contents_0 = [{
     'columns': [],
     }]
 
-dummy_column_headers_sg_0 = []
+dummy_column_headers_0 = []
 
 
 dummy_folder_contents_2 = [{
@@ -859,7 +886,7 @@ dummy_folder_contents_2 = [{
     'columns': ['value4col1', 'value4col2'],
     }]
 
-dummy_column_headers_sg_2 = [{
+dummy_column_headers_2 = [{
     'field': 'col1',
     }, {
     'field': 'col2',

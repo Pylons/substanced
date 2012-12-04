@@ -161,48 +161,14 @@ class FolderContentsViews(object):
         modified = filter(None, items) # remove empty
         return modified
 
-    #def _column_headers(self, context, request):
-    #    headers = []
-    #    non_sortable = [0]
-    #    non_filterable = [0]
-    #
-    #    columns = default_sdi_columns(self, None, request)
-    #
-    #    custom_columns = request.registry.content.metadata(
-    #        context, 'columns', _marker)
-    #
-    #    if custom_columns is None:
-    #        return headers, non_sortable, non_filterable
-    #
-    #    if custom_columns is not _marker:
-    #        columns = custom_columns(context, None, request, columns)
-    #    
-    #    for order, column in enumerate(columns):
-    #        headers.append(column['name'])
-    #        sortable = column.get('sortable', True)
-    #        if not sortable:
-    #            non_sortable.append(order + 1)
-    #        filterable = column.get('filterable', True)
-    #        if not filterable:
-    #            non_filterable.append(order + 1)
-    #
-    #    return headers, non_sortable, non_filterable
-
-    def _column_headers_sg(self, context, request):
-        """Generate columns from SlickGrid."""
-        # TODO As the slickgrid's column desription format contains different
-        # fields from our internal column schema (both more feature rich, and
-        # uses different attributes), we will need to convert our schema to
-        # SlickGrid's here. As there is no "universal grid column description
-        # format" exists, this also means that here we have to limit the
-        # flexible configuration possibilities of the slickgrid to those use
-        # cases that we wish to support.
+    def _column_headers(self, context, request):
         headers = []
+
+        content_registry  = request.registry.content
 
         columns = default_sdi_columns(self, None, request)
 
-        custom_columns = request.registry.content.metadata(
-            context, 'columns', _marker)
+        custom_columns = content_registry.metadata(context, 'columns', _marker)
 
         if custom_columns is None:
             return headers
@@ -216,17 +182,18 @@ class FolderContentsViews(object):
             sortable = column.get('sortable', True)
             formatter = column.get('formatter', '')
             
-            headers.append(
-                { "id": field, 
-                "name": name, "field": field,
-                "width": 120, "minWidth": 120,
-                "cssClass": "cell-%s" % field, "sortable": sortable,
+            headers.append({
+                "id": field, 
+                "name": name,
+                "field": field,
+                "width": 120,
+                "minWidth": 120,
+                "cssClass": "cell-%s" % field,
+                "sortable": sortable,
                 "formatterName": formatter,
-                },
-                )
+                })
 
         return headers
-
    
     @mgmt_view(
         request_method='GET',
@@ -237,13 +204,7 @@ class FolderContentsViews(object):
         request = self.request
         context = self.context
 
-        #headers, non_sortable, non_filterable = self._column_headers(
-        #    context, request
-        #    )
-        # XXX the parallel equivalent of the above line, for slickgrid.
-        columns_sg = self._column_headers_sg(
-            context, request
-            )
+        columns = self._column_headers(context, request)
 
         buttons = self._buttons(context, request)
 
@@ -261,26 +222,32 @@ class FolderContentsViews(object):
         items, items_copy = itertools.tee(seq)
         num_items = sum(1 for _ in items_copy) 
 
-        # construct the slickgrid widget options.
+        # construct the default slickgrid widget options
         slickgrid_options = dict(
-            # default options for Slick.Grid come here.
             editable = False,
             enableAddRow = False,
             enableCellNavigation = True,
             asyncEditorLoading = True,
             forceFitColumns = True,
             rowHeight = 35,
-            # 
             )
 
-        minimum_load = 40      # load at least this many records.
-        items_sg = process_grid_rows(columns_sg, items, total=num_items, _from=0, to=minimum_load)
+        minimum_load = 40 # load at least this many records.
 
-        if columns_sg:
-            sortCol = columns_sg[0]['field'] 
+        if columns:
+            sortCol = columns[0]['field'] 
         else:
-            # no columns, not sure if this is a real use case.
+            # no columns
             sortCol = None
+
+        items = process_grid_rows(
+            columns,
+            items,
+            total=num_items,
+            _from=0,
+            to=minimum_load,
+            )
+
         sortDir = True    # True ascending, or False descending.
 
         # We pass the wrapper options which contains all information
@@ -288,9 +255,9 @@ class FolderContentsViews(object):
         slickgrid_wrapper_options = JsonDict(
             # VV this refers to slickgrid-config.js
             configName='sdi-content-grid', 
-            columns=columns_sg,
+            columns=columns,
             slickgridOptions=slickgrid_options,
-            items=items_sg,
+            items=items,
 
             # initial sorting (The grid will really not sort the initial data,
             # just display it in the order we provide it. It will use the
@@ -302,7 +269,7 @@ class FolderContentsViews(object):
             # Parameters for the remote data model
             url = '',   # use same url for ajax
             manageQueue = True,     
-            reallyAbort = False,    # A real abort makes things worse, it seems.
+            reallyAbort = False, # A real abort makes things worse, it seems.
             minimumLoad = 40,
             )
 
@@ -328,12 +295,12 @@ class FolderContentsViews(object):
         sort_dir = (request.params.get('sortDir') in ('true', 'True'))
         filter_text = request.params.get('filter')
 
-        columns_sg = self._column_headers_sg(context, request)
+        columns = self._column_headers(context, request)
         
         items= self.sdi_folder_contents_sorted(
             context,
             request,
-            columns_sg=columns_sg,
+            columns=columns,
             sort_col=sort_col,
             sort_dir=sort_dir,
             filter_text = filter_text,
@@ -342,7 +309,7 @@ class FolderContentsViews(object):
         
         # Convert the items to the format what the grid wants.
         items = process_grid_rows(
-            columns_sg, items, total=total, _from=_from, to=to
+            columns, items, total=total, _from=_from, to=to
             )
         return items
  
