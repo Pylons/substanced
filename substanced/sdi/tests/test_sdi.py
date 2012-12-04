@@ -1259,6 +1259,21 @@ class Test_flash_with_undo(unittest.TestCase):
         self._callFUT(request, 'a')
         self.assertEqual(request.sdiapi.flashed, 'a')
 
+class Test__find_column_index(unittest.TestCase):
+    def _callFUT(self, columns, sort_col):
+        from .. import _find_column_index
+        return _find_column_index(columns, sort_col)
+
+    def test_it_found(self):
+        columns = [{'field':'a'}]
+        sort_col = 'a'
+        self.assertEqual(self._callFUT(columns, sort_col), 0)
+
+    def test_it_notfound(self):
+        columns = [{'field':'a'}]
+        sort_col = 'b'
+        self.assertRaises(ValueError, self._callFUT, columns, sort_col)
+
 class DummyContent(object):
     def __init__(self, **kw):
         self.__dict__.update(kw)
