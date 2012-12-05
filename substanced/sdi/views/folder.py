@@ -276,11 +276,18 @@ class FolderContentsViews(object):
         minimum_load = 40      # load at least this many records.
         items_sg = process_grid_rows(columns_sg, items, total=num_items, _from=0, to=minimum_load)
 
-        if columns_sg:
-            sortCol = columns_sg[0]['field'] 
+        # The sorted column is always the first sortable column in the row.
+        # This gives the visual cue to the user who can see the sorted column and its direction.
+        # It does _not_ affect the actual sorting, which is done on the server and not on the grid.
+        for col in columns_sg:
+            if col.get('sortable', True):
+                # We found the first sortable column.
+                sortCol = col['field'] 
+                break
         else:
-            # no columns, not sure if this is a real use case.
+            # Nothing is sortable.
             sortCol = None
+
         sortDir = True    # True ascending, or False descending.
 
         # We pass the wrapper options which contains all information

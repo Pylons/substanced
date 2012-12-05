@@ -107,11 +107,12 @@ class TestFolderContentsViews(unittest.TestCase):
         return request
 
     def test_show_no_columns(self):
+        dummy_column_headers_sg = []
         context = testing.DummyResource()
         request = self._makeRequest(columns=None)
         inst = self._makeOne(context, request)
         inst.sdi_folder_contents = mock.Mock(return_value=dummy_folder_contents_0)
-        inst._column_headers_sg = mock.Mock(return_value=dummy_column_headers_sg_0)
+        inst._column_headers_sg = mock.Mock(return_value=dummy_column_headers_sg)
         inst.sdi_add_views = mock.Mock(return_value=('b',))
         result = inst.show()
         self.assert_('slickgrid_wrapper_options' in result)
@@ -145,11 +146,18 @@ class TestFolderContentsViews(unittest.TestCase):
             self.assertEqual(len(default_columns), 1)
             return [{'name': 'Col 1', 'field': 'col1', 'value': 'col1'},
                     {'name': 'Col 2', 'field': 'col2', 'value': 'col2'}]
+        dummy_column_headers_sg = [{
+            'field': 'col1',
+            'sortable': True,
+            }, {
+            'field': 'col2',
+            'sortable': True,
+            }]
         context = testing.DummyResource()
         request = self._makeRequest(columns=sd_columns)
         inst = self._makeOne(context, request)
         inst.sdi_folder_contents = mock.Mock(return_value=dummy_folder_contents_2)
-        inst._column_headers_sg = mock.Mock(return_value=dummy_column_headers_sg_2)
+        inst._column_headers_sg = mock.Mock(return_value=dummy_column_headers_sg)
         inst.sdi_add_views = mock.Mock(return_value=('b',))
         result = inst.show()
         self.assert_('slickgrid_wrapper_options' in result)
@@ -186,11 +194,18 @@ class TestFolderContentsViews(unittest.TestCase):
             self.assertEqual(len(default_columns), 1)
             return [{'name': 'Col 1', 'field': 'col1', 'value': 'col1', 'sortable': False},
                     {'name': 'Col 2', 'field': 'col2', 'value': 'col2'}]
+        dummy_column_headers_sg = [{
+            'field': 'col1',
+            'sortable': False,
+            }, {
+            'field': 'col2',
+            'sortable': True,
+            }]
         context = testing.DummyResource()
         request = self._makeRequest(columns=sd_columns)
         inst = self._makeOne(context, request)
         inst.sdi_folder_contents = mock.Mock(return_value=dummy_folder_contents_2)
-        inst._column_headers_sg = mock.Mock(return_value=dummy_column_headers_sg_2)
+        inst._column_headers_sg = mock.Mock(return_value=dummy_column_headers_sg)
         inst.sdi_add_views = mock.Mock(return_value=('b',))
         result = inst.show()
         self.assert_('slickgrid_wrapper_options' in result)
@@ -198,11 +213,8 @@ class TestFolderContentsViews(unittest.TestCase):
         self.assert_('slickgridOptions' in slickgrid_wrapper_options)
         self.assertEqual(slickgrid_wrapper_options['configName'], 'sdi-content-grid')
 
-        
-        # XXX This should actually be 'col2'! TODO make the grid choose the first column
-        # that is actually sortable.
-        #####self.assertEqual(slickgrid_wrapper_options['sortCol'], 'col2')  
-
+        # col2 here, as col1 was not sortable.
+        self.assertEqual(slickgrid_wrapper_options['sortCol'], 'col2')  
         
         self.assertEqual(slickgrid_wrapper_options['sortDir'], True)
         self.assertEqual(slickgrid_wrapper_options['url'], '')
@@ -268,11 +280,18 @@ class TestFolderContentsViews(unittest.TestCase):
             self.assertEqual(len(default_columns), 1)
             return [{'name': 'Col 1', 'field': 'col1', 'value': 'col1'},
                     {'name': 'Col 2', 'field': 'col2', 'value': 'col2', 'filterable': False}]
+        dummy_column_headers_sg = [{
+            'field': 'col1',
+            'sortable': True,
+            }, {
+            'field': 'col2',
+            'sortable': True,
+            }]
         context = testing.DummyResource()
         request = self._makeRequest(columns=sd_columns)
         inst = self._makeOne(context, request)
         inst.sdi_folder_contents = mock.Mock(return_value=dummy_folder_contents_2)
-        inst._column_headers_sg = mock.Mock(return_value=dummy_column_headers_sg_2)
+        inst._column_headers_sg = mock.Mock(return_value=dummy_column_headers_sg)
         inst.sdi_add_views = mock.Mock(return_value=('b',))
         result = inst.show()
         self.assert_('slickgrid_wrapper_options' in result)
@@ -303,9 +322,11 @@ class TestFolderContentsViews(unittest.TestCase):
         self.assertEqual(len(buttons), 2)
 
         # We don't actually see the sortability in the records, because
-        # this information is in the columns metadata. So, we test this
-        # in another test case, but right now this data is not
-        # actually handled by the grid yet.
+        # the client need not know about it. It's in
+        # the server's discretion to apply the fulltext filtering in
+        # the designated fields.
+        # XXX Perhaps one egde case requires some extra attention:
+        # when a grid has no filterable columns at all.
 
 
     def test_delete_none_deleted(self):
@@ -847,8 +868,6 @@ dummy_folder_contents_0 = [{
     'columns': [],
     }]
 
-dummy_column_headers_sg_0 = []
-
 
 dummy_folder_contents_2 = [{
     'name': 'the_name',
@@ -857,11 +876,5 @@ dummy_folder_contents_2 = [{
     'viewable':  True,
     'deletable':  True,
     'columns': ['value4col1', 'value4col2'],
-    }]
-
-dummy_column_headers_sg_2 = [{
-    'field': 'col1',
-    }, {
-    'field': 'col2',
     }]
 
