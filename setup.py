@@ -37,6 +37,7 @@ install_requires = [
     'cryptacular',
     'python-magic',
     'pyyaml',
+    'zope.copy',
     ]
 
 docs_extras = ['Sphinx', 'repoze.sphinx.autointerface']

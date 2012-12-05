@@ -1,15 +1,26 @@
 import random
 import string
-import tempfile
 
-from zope.interface import implementer
+from zope.interface import (
+    implementer,
+    Interface,
+    )
+from zope.copy.interfaces import (
+    ICopyHook,
+    ResumeCopy
+    )
+
+from zope.copy import copy
 
 from persistent import Persistent
 
 import BTrees
 from BTrees.Length import Length
 
-from pyramid.location import lineage
+from pyramid.location import (
+    lineage,
+    inside,
+    )
 from pyramid.threadlocal import get_current_registry
 from pyramid.traversal import resource_path_tuple
 
@@ -455,15 +466,8 @@ class Folder(Persistent):
         if registry is None:
             registry = get_current_registry()
 
-        with tempfile.TemporaryFile() as f:
-            obj = self.get(name)
-            obj._p_jar.exportFile(obj._p_oid, f)
-            f.seek(0)
-            new_obj = obj._p_jar.importFile(f)
-            del new_obj.__parent__
-            obj = other.add(newname, new_obj, duplicating=True,
-                            registry=registry)
-            return obj
+        newobj = copy(self[name])
+        return other.add(newname, newobj, duplicating=True, registry=registry)
 
     def move(self, name, other, newname=None, registry=None):
         """
@@ -692,3 +696,20 @@ def node_path_tuple(resource):
     return tuple(reversed([getattr(loc, '__name__', '') for 
                            loc in lineage(resource)]))
 
+class CopyHook(object):
+    """Copy hook to avoid dumping referenced objects that are not located
+    inside an object during a copy.
+    """
+    def __init__(self, context):
+        self.context = context
+    
+    def __call__(self, toplevel, register):
+        if hasattr(self.context, '__parent__'):
+            if not inside(self.context, toplevel):
+                raise ResumeCopy
+        return self.context
+
+def includeme(config):
+    config.registry.registerAdapter(CopyHook, (Interface,), ICopyHook)
+    config.hook_zca()
+    
