@@ -27,6 +27,7 @@ from ..content import (
     )
 from ..folder import Folder
 from ..objectmap import find_objectmap
+from ..util import get_oid
 
 from .factories import (
     IndexFactory,
@@ -64,7 +65,7 @@ def catalog_buttons(context, request, default_buttons):
          [
              {'id':'reindex',
               'name':'form.reindex',
-              'class':'btn-primary btn-sdi-act',
+              'class':'btn-primary btn-sdi-sel',
               'value':'reindex',
               'text':'Reindex'}
              ]
@@ -312,7 +313,7 @@ class CatalogsService(Folder):
 
     Catalog = Catalog # for tests
 
-    def add_catalog(self, name, update_indexes=False):
+    def add_catalog(self, name, update_indexes=True):
         """ Create and add a catalog named ``name`` to this catalogs service.
         Return the newly created catalog object.  If a catalog named ``name``
         already exists in this catalogs service, an exception will be raised.
@@ -323,10 +324,7 @@ class CatalogsService(Folder):
           def created(event):
               root = event.object
               service = root['catalogs']
-              catalog = service.add_catalog('app1')
-              catalog.update_indexes(
-                  replace=True, reindex=True, registry=event.registry
-                  )
+              catalog = service.add_catalog('app1', update_indexes=True)
 
         If ``update_indexes`` is True, indexes in the named catalog factory
         will be added to the newly created catalog.
@@ -335,6 +333,8 @@ class CatalogsService(Folder):
         catalog.__sdi_deletable__ = False
         if update_indexes:
             catalog.update_indexes(replace=True, reindex=True)
+        # self-index so catalog shows up in folder contents
+        catalog.index_doc(get_oid(catalog), catalog)
         return catalog
 
 class _IndexViewMapper(object):

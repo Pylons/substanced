@@ -68,7 +68,9 @@ class Root(Folder):
         catalogs.__sdi_deletable__ = False
         self.add_service('catalogs', catalogs)
         catalog = catalogs.add_catalog('system')
-        catalog.update_indexes(replace=True, reindex=True, registry=registry)
+        # self-index so catalogs service shows up in folder contents
+        oid = get_oid(catalogs)
+        catalog.index_doc(oid, catalogs)
         settings = registry.settings
         password = settings.get('substanced.initial_password')
         if password is None:

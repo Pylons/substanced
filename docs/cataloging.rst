@@ -137,6 +137,25 @@ the system starts up:
         service = root['catalogs']
         service.add_catalog('app1', update_indexes=True)
 
+Querying Across Catalogs
+------------------------
+
+In many cases, you might only have one custom attribute that you need
+indexed, while the ``system`` catalog has everything else you need. You
+thus need an efficient way to combine results from two catalogs,
+before executing the query:
+
+.. code-block:: python
+
+    system_catalog = find_catalog(somecontext, 'system')
+    my_catalog = find_catalog(somecontext, 'my')
+    path = system_catalog['path']
+    funky = my_catalog['funky']
+    # find me all funky objects that exist under /somepath
+    q = funky.eq(True) & path.eq('/somepath')
+    resultset = q.execute()
+    newresultset = resultset.sort(system_catalog['name'])
+
 Object Indexing
 ---------------
 

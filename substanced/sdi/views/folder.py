@@ -6,6 +6,7 @@ import colander
 
 from pyramid.httpexceptions import HTTPFound
 from pyramid.view import view_defaults
+from pyramid.security import has_permission
 
 from ...folder import FolderKeyError
 from ...form import FormView
@@ -15,13 +16,12 @@ from ...schema import Schema
 from ...util import (
     JsonDict,
     get_oid,
+    find_catalog,
     )
 
 from .. import (
     mgmt_view,
     sdi_add_views,
-    sdi_folder_contents,
-    sdi_folder_contents_sorted,
     default_sdi_buttons,
     default_sdi_columns,
     )
@@ -87,50 +87,6 @@ class AddFolderView(FormView):
         self.context[name] = folder
         return HTTPFound(location=self.request.sdiapi.mgmt_path(self.context))
 
-
-def process_grid_rows(columns, items, total, _from, to):
-    # The items for the slickgrid are really in a format similar to the items
-    # used for the static table. However, it has some problems so we have to
-    # convert the records:
-    #
-    # - The records must be json-marshallable, so we convert 'deletable' to
-    #   bool.
-    # - SlickGrid requires a unique id to each row
-    # - more reasonable keys, that match slickgrid's rendering (actually, we
-    #   could leave it intact here, and just handle this from the formatters in
-    #   the js code, but then it would be more difficult to understand the
-    #   code.)
-    # - remove the 'columns' attribute that contains the rendered
-    #   parts. Slickgrid will format the html on the client.
-    #
-    records = []
-    for i, item in enumerate(itertools.islice(items, _from, to)):
-        name = item['name']
-        record = dict(
-            id=name,    # Use the unique name, as an id.
-                # (A unique row id is needed for slickgrid.
-                # In addition, we will pass back this same id from the client,
-                # when a row is selected for an operation.)
-            deletable=bool(item['deletable']),
-            name=name,
-            name_icon=item['icon'],
-            name_url=item['url'],
-        )
-        if item['viewable']:
-            record['name_url'] = item['url']
-        for index, column_value in enumerate(item['columns']):
-            field = columns[index]['field']
-            record[field] = column_value
-        records.append(record)
-
-    return {
-        'from':    _from,
-        'to':      to,
-        'records': records,
-        'total':   total,
-        }
-
-
 @view_defaults(
     context=IFolder,
     name='contents',
@@ -139,8 +95,6 @@ def process_grid_rows(columns, items, total, _from, to):
 class FolderContentsViews(object):
 
     sdi_add_views = staticmethod(sdi_add_views) # for testing
-    sdi_folder_contents = staticmethod(sdi_folder_contents) # for testing
-    sdi_folder_contents_sorted = staticmethod(sdi_folder_contents_sorted) # test
 
     def __init__(self, context, request):
         self.context = context
@@ -161,48 +115,14 @@ class FolderContentsViews(object):
         modified = filter(None, items) # remove empty
         return modified
 
-    #def _column_headers(self, context, request):
-    #    headers = []
-    #    non_sortable = [0]
-    #    non_filterable = [0]
-    #
-    #    columns = default_sdi_columns(self, None, request)
-    #
-    #    custom_columns = request.registry.content.metadata(
-    #        context, 'columns', _marker)
-    #
-    #    if custom_columns is None:
-    #        return headers, non_sortable, non_filterable
-    #
-    #    if custom_columns is not _marker:
-    #        columns = custom_columns(context, None, request, columns)
-    #    
-    #    for order, column in enumerate(columns):
-    #        headers.append(column['name'])
-    #        sortable = column.get('sortable', True)
-    #        if not sortable:
-    #            non_sortable.append(order + 1)
-    #        filterable = column.get('filterable', True)
-    #        if not filterable:
-    #            non_filterable.append(order + 1)
-    #
-    #    return headers, non_sortable, non_filterable
-
-    def _column_headers_sg(self, context, request):
-        """Generate columns from SlickGrid."""
-        # TODO As the slickgrid's column desription format contains different
-        # fields from our internal column schema (both more feature rich, and
-        # uses different attributes), we will need to convert our schema to
-        # SlickGrid's here. As there is no "universal grid column description
-        # format" exists, this also means that here we have to limit the
-        # flexible configuration possibilities of the slickgrid to those use
-        # cases that we wish to support.
+    def _column_headers(self, context, request):
         headers = []
+
+        content_registry  = request.registry.content
 
         columns = default_sdi_columns(self, None, request)
 
-        custom_columns = request.registry.content.metadata(
-            context, 'columns', _marker)
+        custom_columns = content_registry.metadata(context, 'columns', _marker)
 
         if custom_columns is None:
             return headers
@@ -216,18 +136,277 @@ class FolderContentsViews(object):
             sortable = column.get('sortable', True)
             formatter = column.get('formatter', '')
             
-            headers.append(
-                { "id": field, 
-                "name": name, "field": field,
-                "width": 120, "minWidth": 120,
-                "cssClass": "cell-%s" % field, "sortable": sortable,
+            headers.append({
+                "id": field, 
+                "name": name,
+                "field": field,
+                "width": 120,
+                "minWidth": 120,
+                "cssClass": "cell-%s" % field,
+                "sortable": sortable,
                 "formatterName": formatter,
-                },
-                )
+                })
 
         return headers
-
    
+    def _folder_contents(
+        self,
+        start=None,
+        end=None,
+        reverse=False,
+        sort_index=None,
+        filter_text=None,
+        ):
+
+        """
+        Returns a sequence of dictionaries that can be used by a 'folder
+        contents' view.  The sequence is implemented as a generator.  The
+        ``folder`` object passed must implement the methods of the
+        :class:`substanced.interfaces.IFolder` interface, and the ``request``
+        object passed must be a Pyramid request.
+
+        Each dictionary in the sequence reflects information about a single
+        subobject in the folder.  Each dictionary in the sequence returned will
+        have the following keys:
+
+        ``name``
+
+          The name of the subobject.
+
+        ``deletable``
+
+          A boolean indicating whether or not this subobject is deletable.
+
+        ``url``
+
+          The URL to the subobject.  This will be
+          ``/path/to/subob/@@manage_main``.
+
+        ``columns``
+
+          The column values obtained from this subobject's attributes, as
+          defined by the ``columns`` content-type hook (or the default columns,
+          if no hook was supplied).
+
+        This function considers a subobject:
+
+        - 'deletable' if the user has the ``sdi.manage-contents`` permission on
+          ``folder`` or if the subobject has a ``__sdi_deletable__`` attribute
+          which resolves to a boolean ``True`` value.
+
+        This function honors one subobject hook:: ``__sdi_deletable__``.  If a
+        subobject has an attribute named ``__sdi_deletable__``, it is expected
+        to be either a boolean or a callable.  If ``__sdi_deletable__`` is a
+        boolean, the value is used verbatim.  If ``__sdi_deletable__`` is a
+        callable, the callable is called with two positional arguments: the
+        subobject and the request; the result is expected to be a boolean.  If
+        a subobject has an ``__sdi_deletable__`` attribute, and its resolved
+        value is not ``None``, the value will used as the ``deletable`` value
+        returned in the dictionary for the subobject.  If ``__sdi_deletable__``
+        does not exist on a subobject or resolves to ``None``, the
+        ``deletable`` value will be the default: a boolean indicating whether
+        the current user has the ``sdi.manage-contents`` permission on the
+        ``folder``.
+
+        This function honors three content type hooks: ``icon``, ``buttons``,
+        and ``columns``.
+
+        The first content type hook is named ``icon``.  If the ``icon``
+        supplied to the content type configuration of a subobject is a
+        callable, the callable will be passed the subobject and the
+        ``request``; it is expected to return an icon name or ``None``.
+        ``icon`` may alternately be either ``None`` or a string representing a
+        icon name instead of a callable.
+
+        The second content type hook is named ``buttons``.  The folder contents
+        view is a good place to wire up application specific functionality that
+        depends on content selection, so the button toolbar that shows up at
+        the bottom of the page is customizable. The default buttons can be
+        overridden by supplying a ``buttons`` keyword argument to the content
+        type argument list.  It must be a callable object which accepts
+        ``context, request, default_buttonspec`` and which returns a list of
+        dictionaries; each dictionary represents a button or a button group.
+
+        The ``buttons`` callable you supply will be passed the ``context`` and
+        the ``request`` and ``buttonspec`` (a sequence of default button
+        specifications). It must return a list of dictionaries representing
+        button specifications with at least a ``type`` key for the button
+        specification type and a ``buttons`` key with a list of dictionaries
+        representing the buttons. The ``type`` should be one of the string
+        values ``group`` or ``single``. A group will display its buttons side
+        by side, with no margin, while the single type will display each button
+        separately.
+
+        Each button in a ``buttons`` dictionary is rendered using the button
+        tag and requires five keys: ``id`` for the button's id attribute,
+        ``name`` for the button's name attribute, ``class`` for any additional
+        css classes to be applied to it, ``value`` for the value that will be
+        passed as a request parameter when the form is submitted and ``text``
+        for the button's text.
+        
+        Most of the time, the best strategy will be to return a value
+        containing the default buttonspec sequence passed in to the function
+        (it will be a list).::
+
+          def custom_buttons(context, request, default_buttonspec):
+              custom_buttonspec = [{'type': 'single',
+                                   'buttons': [{'id': 'button1',
+                                                'name': 'button1',
+                                                'class': 'btn-primary',
+                                                'value': 'button1',
+                                                'text': 'Button 1'},
+                                               {'id': 'button2',
+                                                'name': 'button2',
+                                                'class': 'btn-primary',
+                                                'value': 'button2',
+                                                'text': 'Button 2'}]}]
+              return default_buttonspec + custom_buttonspec
+
+          @content(
+              'My Custom Folder',
+              buttons=custom_buttons,
+              )
+          class MyCustomFolder(Persistent):
+              pass
+
+        Once the buttons are defined, a view needs to be registered to handle
+        the new buttons. The view configuration has to set Folder as a context
+        and include a ``request_param`` predicate with the same name as the
+        ``value`` defined for the corresponding button. The following template
+        can be used to register such views, changing only the ``request_param``
+        value::
+
+          @mgmt_view(
+          context=IFolder,
+          name='contents',
+          renderer='substanced.sdi:templates/contents.pt',
+          permission='sdi.manage-contents',
+          request_method='POST',
+          request_param='button1',
+          tab_condition=False,
+          )
+          def button1(context, request):
+              # add button functionality here, then go back to contents
+              request.session.flash('Just did what button1 does')
+              return HTTPFound(request.sdiapi.mgmt_path(context, '@@contents'))
+
+        Note that context has to be IFolder for this to work. If you need to
+        restrict a button to some specific list of content types, the Pyramid
+        ``content_type`` predicate can be used.
+
+        The third content-type hook is named ``columns``.  To display the
+        contents using a table with any given subobject attributes, a callable
+        named ``columns`` can be passed to a content type as metadata.  When
+        the folder contents SDI view is invoked against an object of the type,
+        the ``columns`` callable s.will be passed the folder, a subobject the
+        ``request``, and a set of default column specification It will be
+        called once for every object in the folder to obtain column
+        representations for each of its subobjects.  It must return a list of
+        dictionaries with at least a ``name`` key for the column header and a
+        ``value`` key with the correct column value given the subobject. The
+        callable **must** be prepared to receive subobjects that will *not*
+        have the desired attributes (the subobject passed will be ``None`` at
+        least once in order for the system to compute headers).
+
+        In addition to ``name`` and ``value``, the column dictionary can
+        contain the keys ``sortable`` and ``filterable``, which specify
+        respectively whether the column will have buttons for sorting the rows
+        and whether a row can be filtered using a simple text search. The
+        default value for both of those parameters is ``True``.
+
+        Here's an example of using the ``columns`` content type hook::
+
+          def custom_columns(folder, subobject, request, default_columnspec):
+              return default_columnspec + [
+                  {'name': 'Review date',
+                   'value': getattr(subobject, 'review_date', ''),
+                   'sortable': True,
+                   'filterable': False},
+                  {'name': 'Rating',
+                   'value': getattr(subobject, 'rating', ''),
+                   'filterable': False,
+                   'sortable': True}
+                  ]
+
+          @content(
+              'My Custom Folder',
+              columns=custom_columns,
+              )
+          class MyCustomFolder(Persistent):
+              pass
+        """
+        folder = self.context
+        request = self.request
+        catalog = find_catalog(folder, 'system')
+        objectmap = find_objectmap(folder)
+
+        path = catalog['path']
+        allowed = catalog['allowed']
+
+        if start is None:
+            start = 0
+
+        if end is None:
+            end = start + 40
+
+        q = ( path.eq(folder, depth=1, include_origin=False) &
+              allowed.allows(request, 'sdi.view') )
+
+        if filter_text:
+            if not filter_text.endswith('*'):
+                filter_text = filter_text + '*' # glob (prefix) search
+            text = catalog['text']
+            q = q & text.eq(filter_text)
+
+        if sort_index is None:
+            sort_index = catalog['name']
+
+        resultset = q.execute()
+        folder_length = len(resultset)
+        resultset = resultset.sort(sort_index, reverse=reverse, limit=end)
+
+        can_manage = bool(has_permission('sdi.manage-contents', folder,request))
+        custom_columns = request.registry.content.metadata(
+            folder, 'columns', _marker)
+
+        records = []
+
+        for oid in itertools.islice(resultset.ids, start, end):
+            resource = objectmap.object_for(oid)
+            name = getattr(resource, '__name__', '')
+            deletable = getattr(resource, '__sdi_deletable__', None)
+            if deletable is not None:
+                if callable(deletable):
+                    deletable = deletable(resource, request)
+            if deletable is None:
+                deletable = can_manage
+            deletable = bool(deletable) # cast return/attr value to bool
+            icon = request.registry.content.metadata(resource, 'icon')
+            if callable(icon):
+                icon = icon(resource, request)
+            url = request.sdiapi.mgmt_path(resource, '@@manage_main')
+            record = dict(
+                id=name,
+                # Use the unique name, as an id.  (A unique row id is needed
+                # for slickgrid.  In addition, we will pass back this same id
+                # from the client, when a row is selected for an operation.)
+                deletable=deletable,
+                name=name,
+                name_icon=icon,
+                name_url=url,
+            )
+            columns = default_sdi_columns(folder, resource, request)
+            if custom_columns is None:
+                columns = []
+            elif custom_columns is not _marker:
+                columns = custom_columns(folder, resource, request, columns)
+            for column in columns:
+                field = column['field']
+                record[field] = column['value']
+            records.append(record)
+
+        return folder_length, records
+
     @mgmt_view(
         request_method='GET',
         permission='sdi.view',
@@ -237,49 +416,28 @@ class FolderContentsViews(object):
         request = self.request
         context = self.context
 
-        #headers, non_sortable, non_filterable = self._column_headers(
-        #    context, request
-        #    )
-        # XXX the parallel equivalent of the above line, for slickgrid.
-        columns_sg = self._column_headers_sg(
-            context, request
-            )
+        columns = self._column_headers(context, request)
 
         buttons = self._buttons(context, request)
 
         addables = self.sdi_add_views(context, request)
 
-        seq = self.sdi_folder_contents(context, request) # generator
-
-        # We need an accurate length but len(self.context) will not take into
-        # account hidden items. To gen an accurate length we tee the generator
-        # and exaust one copy to produce a sum, we use the other copy as the
-        # items we pass to the template.  This is probably unsat for huge
-        # folders, but at least has a slight advantage over doing
-        # len(list(seq)) because we don't unnecessarily create a large data
-        # structure in memory.
-        items, items_copy = itertools.tee(seq)
-        num_items = sum(1 for _ in items_copy) 
-
-        # construct the slickgrid widget options.
+        # construct the default slickgrid widget options
         slickgrid_options = dict(
-            # default options for Slick.Grid come here.
             editable = False,
             enableAddRow = False,
             enableCellNavigation = True,
             asyncEditorLoading = True,
             forceFitColumns = True,
             rowHeight = 35,
-            # 
             )
 
-        minimum_load = 40      # load at least this many records.
-        items_sg = process_grid_rows(columns_sg, items, total=num_items, _from=0, to=minimum_load)
+        minimum_load = 40 # load at least this many records.
 
         # The sorted column is always the first sortable column in the row.
         # This gives the visual cue to the user who can see the sorted column and its direction.
         # It does _not_ affect the actual sorting, which is done on the server and not on the grid.
-        for col in columns_sg:
+        for col in columns:
             if col.get('sortable', True):
                 # We found the first sortable column.
                 sortCol = col['field'] 
@@ -289,15 +447,29 @@ class FolderContentsViews(object):
             sortCol = None
 
         sortDir = True    # True ascending, or False descending.
+        reverse = (not sortDir)
+
+        # XXX sortCol not implemented
+        folder_length, records = self._folder_contents(
+            0, minimum_load, reverse=reverse
+            )
+
+        items  = {
+            'from':0,
+            'to':minimum_load,
+            'records':records,
+            'total':folder_length,
+            }
 
         # We pass the wrapper options which contains all information
         # needed to configure the several components of the grid config.
+
         slickgrid_wrapper_options = JsonDict(
-            # VV this refers to slickgrid-config.js
+            # below line refers to slickgrid-config.js
             configName='sdi-content-grid', 
-            columns=columns_sg,
+            columns=columns,
             slickgridOptions=slickgrid_options,
-            items=items_sg,
+            items=items,
 
             # initial sorting (The grid will really not sort the initial data,
             # just display it in the order we provide it. It will use the
@@ -309,15 +481,17 @@ class FolderContentsViews(object):
             # Parameters for the remote data model
             url = '',   # use same url for ajax
             manageQueue = True,     
-            reallyAbort = False,    # A real abort makes things worse, it seems.
-            minimumLoad = 40,
+            reallyAbort = False, # A real abort makes things worse, it seems.
+            minimumLoad = minimum_load,
             )
 
-        return dict(
+        result =  dict(
             addables=addables,
             buttons=buttons,
             slickgrid_wrapper_options=slickgrid_wrapper_options,
             )
+
+        return result
 
     @mgmt_view(
         request_method='GET',
@@ -327,30 +501,30 @@ class FolderContentsViews(object):
         )
     def show_json(self):
         request = self.request
-        context = self.context
 
         _from = int(request.params.get('from'))
         to = int(request.params.get('to'))
-        sort_col = request.params.get('sortCol')
+        # sort_col = request.params.get('sortCol')  # XXX ignored
         sort_dir = (request.params.get('sortDir') in ('true', 'True'))
-        filter_text = request.params.get('filter')
+        filter_text = request.params.get('filter', '').strip()
 
-        columns_sg = self._column_headers_sg(context, request)
-        
-        items= self.sdi_folder_contents_sorted(
-            context,
-            request,
-            columns_sg=columns_sg,
-            sort_col=sort_col,
-            sort_dir=sort_dir,
-            filter_text = filter_text,
+        reverse = (not sort_dir)
+
+        start = _from
+        end = _from + to
+
+        # XXX sortCol not implemented
+        folder_length, records = self._folder_contents(
+            start, end, reverse=reverse, filter_text=filter_text
             )
-        total = len(items)
-        
-        # Convert the items to the format what the grid wants.
-        items = process_grid_rows(
-            columns_sg, items, total=total, _from=_from, to=to
-            )
+
+        items  = {
+            'from':start,
+            'to':end,
+            'records':records,
+            'total':folder_length,
+            }
+
         return items
  
     @mgmt_view(

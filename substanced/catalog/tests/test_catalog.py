@@ -553,7 +553,7 @@ class Test_catalog_buttons(unittest.TestCase):
                          [
                              {'buttons':
                               [{'text': 'Reindex',
-                                'class': 'btn-primary btn-sdi-act',
+                                'class': 'btn-primary btn-sdi-sel',
                                 'id': 'reindex',
                                 'value': 'reindex',
                                 'name': 'form.reindex'}],
@@ -613,18 +613,21 @@ class TestCatalogsService(unittest.TestCase):
         inst = CatalogsService(*arg, **kw)
         return inst
 
-    def test_add_catalog(self):
-        inst = self._makeOne()
-        inst.add_catalog('foo')
-        catalog = inst['foo']
-        self.assertFalse(catalog.__sdi_deletable__)
-
-    def test_add_catalog_with_update_indexes(self):
+    def test_add_catalog_update_indexes_defaults_True(self):
         inst = self._makeOne()
         inst.Catalog = DummyCatalog
-        catalog = inst.add_catalog('foo', update_indexes=True)
+        catalog = inst.add_catalog('foo')
         self.assertTrue('foo' in inst)
         self.assertTrue(catalog.updated)
+        self.assertEqual(catalog.indexed, [1])
+
+    def test_add_catalog_update_indexes_false(self):
+        inst = self._makeOne()
+        inst.Catalog = DummyCatalog
+        inst.add_catalog('foo', update_indexes=False)
+        catalog = inst['foo']
+        self.assertFalse(catalog.__sdi_deletable__)
+        self.assertEqual(catalog.indexed, [1])
 
 class DummyIntrospectable(dict):
     pass
@@ -674,8 +677,15 @@ class DummyObjectMap(object):
         pass
 
 class DummyCatalog(dict):
+    __oid__ = 1
+    def __init__(self):
+        self.indexed = []
+        
     def update_indexes(self, *arg, **kw):
         self.updated = True
+
+    def index_doc(self, oid, obj):
+        self.indexed.append(oid)
 
 class DummyTransaction(object):
     def __init__(self):
