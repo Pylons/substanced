@@ -166,9 +166,9 @@
             });
 
             sdiRemoteModelPlugin.onAjaxError.subscribe(function (evt, args) {
-                // If we have a 404 we get a parse error. We try to figure
-                // out from the response html, if this is because our session
-                // has expired and we got an unauthenticated reply.
+                // If we have an Unauthenticated, we get a parse error. We try to figure
+                // out from the response html, if this has happened because our session
+                // has expired.
                 if (args.textStatus == 'parsererror' &&
                         args.xhr.responseText.indexOf('Not logged in') != -1) {
                     // Suggest the user to reload the page which will enable her to login.
