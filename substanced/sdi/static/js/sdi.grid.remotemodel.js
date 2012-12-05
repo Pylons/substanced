@@ -82,6 +82,7 @@
         // events
         var onDataLoading = new Slick.Event();
         var onDataLoaded = new Slick.Event();
+        var onAjaxError = new Slick.Event();
 
         var ensureData; // STFU jslint
 
@@ -179,6 +180,11 @@
         function _ajaxError(xhr, textStatus, errorThrown) {
             if (textStatus != 'abort') {
                 log('error: ' + textStatus);
+                onAjaxError.notify({
+                    xhr: xhr,
+                    textStatus: textStatus,
+                    errorThrown: errorThrown
+                });
             }
         }
 
@@ -290,9 +296,9 @@
                     _invalidateRows(data);
                     onDataLoaded.notify(data);
                 },
-                error: function (xhr, textStatus, errorThrow) {
+                error: function (xhr, textStatus, errorThrown) {
                     _active_request = null;
-                    _ajaxError(xhr, textStatus, errorThrow);
+                    _ajaxError(xhr, textStatus, errorThrown);
                 },
                 dataType: 'json'
             };
@@ -406,7 +412,8 @@
 
             // events
             onDataLoading: onDataLoading,
-            onDataLoaded: onDataLoaded
+            onDataLoaded: onDataLoaded,
+            onAjaxError: onAjaxError
         };
     }
 

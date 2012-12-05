@@ -211,6 +211,20 @@
                 });
             });
 
+            sdiRemoteModelPlugin.onAjaxError.subscribe(function (evt, args) {
+                // If we have a 404 we get a parse error. We try to figure
+                // out from the response html, if this is because our session
+                // has expired and we got an unauthenticated reply.
+                if (args.textStatus == 'parsererror' &&
+                        args.xhr.responseText.indexOf('Not logged in') != -1) {
+                    // Suggest the user to reload the page which will enable her to login.
+                    if (confirm('It looks like your authentication session has required.\n' +
+                                'Do you wish to leve the page and log in again?')) {
+                        document.location.reload();
+                    }
+                }
+            });
+
             // sorting
             grid.onSort.subscribe(function (e, args) {
                 sortDir = args.sortAsc;
