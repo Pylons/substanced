@@ -114,54 +114,6 @@
             grid.setSelectionModel(new Slick.RowSelectionModel({selectActiveRow: false}));
             grid.registerPlugin(checkboxSelector);
 
-/*
-            this.grid.onSelectedRowsChanged.subscribe(function (evt) { 
-                var selRows = grid.getSelectedRows();
-                var $form =  $('form[action="@@contents"]');
-                var $hiddenInput =  $form.find('input[name="item-modify"]');
-
-                if (selRows.length > 100) {
-                    // XXX XXX XXX This is a problem. We need to limit the
-                    // selection size, because of cookieval is limited in 4096
-                    // bytes. An additional problem is we don't know how to
-                    // limit the selection size to assure that the submit won't
-                    // break, because the cookie size depends on the lengths of
-                    // the names, too, and not only on the size of the
-                    // selection.  TODO this must be solved somehow!
-                    alert('We currently limit the selection size in maximum ' +
-                          '100 items.\nPlease select less than 100 items!');
-                    return false;
-                }
-                var data = grid.getData();
-                var selectedIds = $.map(selRows, function (value, index) {
-                    var row = data[selRows[index]];
-                    return row.id;
-                });
-                // I think it is better to submit the list as a concatenated
-                // value, instead of adding several inputs to the dom.
-                $hiddenInput.attr('value', selectedIds.join(','));
-
-                if (selRows.length) {
-                    var disable_delete = false;
-                    var i;
-                    for (i = 0, l = selRows.length; i < l; i++) {
-                        var item = data[selRows[i]];
-                        // XXX bug: global selection will select all items that
-                        // are not present.
-                        if (!item.deletable) {
-                            disable_delete = true;
-                            break;
-                        }
-                    }
-                    $('.btn-sdi-del').attr('disabled', disable_delete);
-                    $('.btn-sdi-sel').attr('disabled', false);
-                } else {
-                    $('.btn-sdi-del').attr('disabled', true);
-                    $('.btn-sdi-sel').attr('disabled', true);
-                }
-            });
-*/
-
             // autoresize columns
             var responsivenessPlugin = new Slick.Plugins.Responsiveness({
             });
@@ -202,9 +154,11 @@
             });
 
             sdiRemoteModelPlugin.onDataLoaded.subscribe(function (evt, args) {
-                if (args.from !== undefined) {
-                    // XXX TODO restore selections
-                }
+                //if (args.from !== undefined) {
+                //   // Do what you want to happen from here. The args.from check
+                //   // makes sure that only responses with a real content
+                //   // will get processes.
+                //}
                 // indicate loading finished
                 $viewport.stop(true, true).animate({
                     opacity: 1
