@@ -87,7 +87,21 @@
         var ensureData; // STFU jslint
 
         function handleGridViewportChanged(evt, args) {
-            var vp = grid.getViewport();
+            // This event will be ignored if we
+            // have an outgoing request, currently.
+            // When the ajax arrives or gets aborted,
+            // the event will be re-triggered manually.
+            if (_active_request !== null) {
+                /* must check against null, see explanation later on. */
+                return;
+            }
+            var viewportTop;
+            if (args && args.scrollToTop) {
+                // After a filtering, we need to scroll
+                // the viewport to the top.
+                viewportTop = 0;
+            }
+            var vp = grid.getViewport(viewportTop); // if 0 is given, it scrolls up
             var top = vp.top;
             var bottom = vp.bottom;
             var direction = top >= scrollPosition ? +1 : -1;
@@ -148,16 +162,18 @@
             data = null;
         }
 
-        function clearData() {
+        function clearData(/*optional*/ scrollToTop) {
             // Delete the data
             $.each(data, function (key, value) {
                 delete data[key];
             });
+            data.length = 0;
             // We force to abort all requests, even if reallyAbort=false
             _abortRequest(true);
             // let the viewport load records currently visible
             grid.invalidateAllRows();
-            grid.onViewportChanged.notify();
+            grid.updateRowCount();
+            grid.onViewportChanged.notify({scrollToTop: scrollToTop});
         }
 
         function loadData(_data) {
@@ -176,6 +192,10 @@
 
         function _ajaxSuccess(_data) {
             loadData(_data);
+            // must re-trigger loading rows,
+            // as these events were prevented during the
+            // outgoing request.
+            grid.onViewportChanged.notify();
         }
 
         function _ajaxError(xhr, textStatus, errorThrown) {
@@ -187,6 +207,9 @@
                     errorThrown: errorThrown
                 });
             }
+            // must re-trigger loading rows
+            // (just like on success)
+            grid.onViewportChanged.notify();
         }
 
         function _invalidateRows(data) {
@@ -288,12 +311,12 @@
                     sortDir: options.sortDir
                 }, (options.extraQuery || {})),
                 success: function (data) {
+                    _active_request = null;
                     // XXX It seems, that IE bumps us
                     // here on abort(), with data=null.
                     if (data !== null) {
                         _ajaxSuccess(data);
                     }
-                    _active_request = null;
                     _invalidateRows(data);
                     onDataLoaded.notify(data);
                 },
@@ -330,7 +353,7 @@
             });
             // notify the grid if any of the filters changed
             if (changed) {
-                clearData();
+                clearData(true);   // true will cause to scroll to the top.
             }
         }
 
