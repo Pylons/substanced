@@ -511,7 +511,7 @@ class FolderContentsViews(object):
         reverse = (not sort_dir)
 
         start = _from
-        end = _from + to
+        end = to
 
         # XXX sortCol not implemented
         folder_length, records = self._folder_contents(

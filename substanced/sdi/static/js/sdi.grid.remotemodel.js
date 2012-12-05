@@ -164,6 +164,7 @@
             var from = _data.from,
                 to = _data.to,
                 i;
+            //log('loadData', from, to, to - from);
             for (i = from; i < to; i++) {
                 data[i] = _data.records[i - from];
             }
