@@ -164,6 +164,7 @@
             _abortRequest(true);
             // let the viewport load records currently visible
             grid.invalidateAllRows();
+            grid.updateRowCount();
             grid.onViewportChanged.notify({scrollToTop: scrollToTop});
         }
 
