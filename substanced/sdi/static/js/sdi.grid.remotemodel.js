@@ -87,7 +87,13 @@
         var ensureData; // STFU jslint
 
         function handleGridViewportChanged(evt, args) {
-            var vp = grid.getViewport();
+            var viewportTop;
+            if (args && args.scrollToTop) {
+                // After a filtering, we need to scroll
+                // the viewport to the top.
+                viewportTop = 0;
+            }
+            var vp = grid.getViewport(viewportTop); // if 0 is given, it scrolls up
             var top = vp.top;
             var bottom = vp.bottom;
             var direction = top >= scrollPosition ? +1 : -1;
@@ -148,16 +154,17 @@
             data = null;
         }
 
-        function clearData() {
+        function clearData(/*optional*/ scrollToTop) {
             // Delete the data
             $.each(data, function (key, value) {
                 delete data[key];
             });
+            data.length = 0;
             // We force to abort all requests, even if reallyAbort=false
             _abortRequest(true);
             // let the viewport load records currently visible
             grid.invalidateAllRows();
-            grid.onViewportChanged.notify();
+            grid.onViewportChanged.notify({scrollToTop: scrollToTop});
         }
 
         function loadData(_data) {
@@ -330,7 +337,7 @@
             });
             // notify the grid if any of the filters changed
             if (changed) {
-                clearData();
+                clearData(true);   // true will cause to scroll to the top.
             }
         }
 
