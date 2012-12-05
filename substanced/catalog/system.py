@@ -9,6 +9,7 @@ from .factories import (
     Keyword,
     Path,
     Allowed,
+    Text,
     )
 
 from . import catalog_factory
@@ -36,6 +37,8 @@ class SystemIndexViews(object):
         """ Returns the ``__name__`` of the object or ``default`` if the object
         has no ``__name__``."""
         return getattr(self.resource, '__name__', default)
+
+    text = name # use __name__ but allow overriding
 
 @catalog_factory('system')
 class SystemCatalogFactory(object):
@@ -69,9 +72,10 @@ class SystemCatalogFactory(object):
     interfaces = Keyword()
     containment = Keyword()
     allowed = Allowed()
+    text = Text()
 
 def includeme(config): # pragma: no cover
-    for name in ('interfaces', 'containment', 'name'):
+    for name in ('interfaces', 'containment', 'name', 'text'):
         config.add_indexview(
             SystemIndexViews,
             catalog_name='system',

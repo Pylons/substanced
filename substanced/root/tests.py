@@ -29,6 +29,7 @@ class TestRoot(unittest.TestCase):
         user = testing.DummyResource()
         catalog = testing.DummyResource()
         catalog.update_indexes = lambda *arg, **kw: True
+        catalog.index_doc = lambda *arg, **kw: True
         def add_user(*arg, **kw):
             return user
         def add_group(*arg, **kw):
@@ -61,6 +62,7 @@ class TestRoot(unittest.TestCase):
             }
         registry = self._makeRegistry(settings)
         inst = self._makeOne()
+        inst.__oid__ = 1
         inst.after_create(inst, registry)
         self.assertTrue('__objectmap__' in inst.__dict__)
         principals = inst['principals']
