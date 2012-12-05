@@ -157,7 +157,7 @@
                 //if (args.from !== undefined) {
                 //   // Do what you want to happen from here. The args.from check
                 //   // makes sure that only responses with a real content
-                //   // will get processes.
+                //   // will get processed.
                 //}
                 // indicate loading finished
                 $viewport.stop(true, true).animate({
