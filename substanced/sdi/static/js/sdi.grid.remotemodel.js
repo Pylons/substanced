@@ -87,6 +87,14 @@
         var ensureData; // STFU jslint
 
         function handleGridViewportChanged(evt, args) {
+            // This event will be ignored if we
+            // have an outgoing request, currently.
+            // When the ajax arrives or gets aborted,
+            // the event will be re-triggered manually.
+            if (_active_request !== null) {
+                /* must check against null, see explanation later on. */
+                return;
+            }
             var viewportTop;
             if (args && args.scrollToTop) {
                 // After a filtering, we need to scroll
@@ -184,6 +192,10 @@
 
         function _ajaxSuccess(_data) {
             loadData(_data);
+            // must re-trigger loading rows,
+            // as these events were prevented during the
+            // outgoing request.
+            grid.onViewportChanged.notify();
         }
 
         function _ajaxError(xhr, textStatus, errorThrown) {
@@ -195,6 +207,9 @@
                     errorThrown: errorThrown
                 });
             }
+            // must re-trigger loading rows
+            // (just like on success)
+            grid.onViewportChanged.notify();
         }
 
         function _invalidateRows(data) {
@@ -296,12 +311,12 @@
                     sortDir: options.sortDir
                 }, (options.extraQuery || {})),
                 success: function (data) {
+                    _active_request = null;
                     // XXX It seems, that IE bumps us
                     // here on abort(), with data=null.
                     if (data !== null) {
                         _ajaxSuccess(data);
                     }
-                    _active_request = null;
                     _invalidateRows(data);
                     onDataLoaded.notify(data);
                 },
