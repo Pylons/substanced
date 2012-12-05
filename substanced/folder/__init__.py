@@ -711,5 +711,5 @@ class CopyHook(object):
 
 def includeme(config):
     config.registry.registerAdapter(CopyHook, (Interface,), ICopyHook)
-    config.hook_zca()
+    config.hook_zca() # required by zope.copy (it uses a global adapter lkup)
     
