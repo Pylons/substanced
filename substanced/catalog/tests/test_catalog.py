@@ -553,7 +553,7 @@ class Test_catalog_buttons(unittest.TestCase):
                          [
                              {'buttons':
                               [{'text': 'Reindex',
-                                'class': 'btn-primary btn-sdi-act',
+                                'class': 'btn-primary btn-sdi-sel',
                                 'id': 'reindex',
                                 'value': 'reindex',
                                 'name': 'form.reindex'}],
