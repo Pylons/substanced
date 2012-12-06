@@ -629,6 +629,13 @@ class TestCatalogsService(unittest.TestCase):
         self.assertFalse(catalog.__sdi_deletable__)
         self.assertEqual(catalog.indexed, [1])
 
+    def test_add_catalog_with_update_indexes(self):
+        inst = self._makeOne()
+        inst.Catalog = DummyCatalog
+        catalog = inst.add_catalog('foo', update_indexes=True)
+        self.assertTrue('foo' in inst)
+        self.assertTrue(catalog.updated)
+
 class DummyIntrospectable(dict):
     pass
 
