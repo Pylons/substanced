@@ -337,6 +337,10 @@ class CatalogsService(Folder):
         catalog.index_doc(get_oid(catalog), catalog)
         return catalog
 
+    def __sdi_addable__(self, context, introspectable):
+        """ Allow nothing to be added here via the SDI """
+        return False
+
 class _IndexViewMapper(object):
     def __init__(self, attr=None):
         self.attr = attr

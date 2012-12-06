@@ -636,6 +636,10 @@ class TestCatalogsService(unittest.TestCase):
         self.assertTrue('foo' in inst)
         self.assertTrue(catalog.updated)
 
+    def test___sdi_addable__(self):
+        inst = self._makeOne()
+        self.assertFalse(inst.__sdi_addable__(None, None))
+
 class DummyIntrospectable(dict):
     pass
 
