@@ -14,11 +14,6 @@
     <div class="container-fluid" 
       tal:define="total slickgrid_wrapper_options['items']['total']">
 
-    <h2 tal:condition="total == 0">No items</h2>
-
-    <div tal:condition="total != 0">
-
-
     <div class="navbar fb-toolbar">
       <div class="navbar-inner">
         <div class="span8 fb-toolbar-box">
@@ -106,7 +101,8 @@
       </div>
     </div>
 
-    <div id="sdi-contents-table-sg" class="slickgrid-wrapper"></div>
+    <div tal:condition="total" id="sdi-contents-table-sg" class="slickgrid-wrapper"></div>
+    <h3 tal:condition="not total">No Items</h3>
 
     <script type="text/javascript">
         jQuery(function ($) {
@@ -153,8 +149,7 @@
     </div>
 
 
+    </div>
   </div>
-  </div>
-  </div>
-
 </div>
+
