@@ -63,6 +63,11 @@ Guts-Only
 
 - Add a ``substanced.load_dump`` key for use by root factory.
 
+- Evolution execution needs to be sorted by package.
+
+- Evolution should show the derived versions after a ``--latest``, not the
+  versions that were current before.
+
 Nice-to-Have Features
 ---------------------
 
