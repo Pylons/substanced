@@ -12,7 +12,11 @@ from zope.copy.interfaces import (
 
 from zope.copy import copy
 
-from persistent import Persistent
+from persistent import (
+    Persistent,
+    )
+
+from persistent.interfaces import IPersistent
 
 import BTrees
 from BTrees.Length import Length
@@ -697,19 +701,29 @@ def node_path_tuple(resource):
                            loc in lineage(resource)]))
 
 class CopyHook(object):
-    """Copy hook to avoid dumping referenced objects that are not located
-    inside an object during a copy.
+    """Copy hook adapter which avoids dumping referenced objects that are not
+    located inside an object during a copy.
     """
     def __init__(self, context):
         self.context = context
     
     def __call__(self, toplevel, register):
         if hasattr(self.context, '__parent__'):
-            if not inside(self.context, toplevel):
+            # This is a content object.
+            if inside(self.context, toplevel):
+                # If it's inside the object being copied, copy it.
                 raise ResumeCopy
-        return self.context
+            # Otherwise return it.  I don't really quite understand why we
+            # return it instead of returning None, but see zope.copy.
+            return self.context
+        # We can't register for a more specific interface than IPersistent so
+        # we have to cope with the existence of objects which are persistent
+        # but not themselves content (e.g. BTrees and friends).  In such
+        # cases, we definitely want to copy them and we signify this desire
+        # by raising ResumeCopy.
+        raise ResumeCopy
 
 def includeme(config):
-    config.registry.registerAdapter(CopyHook, (Interface,), ICopyHook)
+    config.registry.registerAdapter(CopyHook, (IPersistent,), ICopyHook)
     config.hook_zca() # required by zope.copy (it uses a global adapter lkup)
     
