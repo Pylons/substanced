@@ -440,8 +440,10 @@ class FolderContentsViews(object):
         minimum_load = 40 # load at least this many records.
 
         # The sorted column is always the first sortable column in the row.
-        # This gives the visual cue to the user who can see the sorted column and its direction.
-        # It does _not_ affect the actual sorting, which is done on the server and not on the grid.
+        # This gives the visual cue to the user who can see the sorted column
+        # and its direction.  It does _not_ affect the actual sorting, which is
+        # done on the server and not on the grid.
+
         for col in columns:
             if col.get('sortable', True):
                 # We found the first sortable column.
