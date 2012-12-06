@@ -701,9 +701,6 @@ def node_path_tuple(resource):
                            loc in lineage(resource)]))
 
 class CopyHook(object):
-    """Copy hook adapter which avoids dumping referenced objects that are not
-    located inside an object during a copy.
-    """
     def __init__(self, context):
         self.context = context
     
@@ -728,6 +725,10 @@ class CopyHook(object):
         raise ResumeCopy
 
 def includeme(config):
+    # The ICopyHook adapter avoids dumping referenced objects that are not
+    # located inside an object containment-wise when that object is copied.  If
+    # it is not registered, every copy winds up dumping all the objects in the
+    # database due to __parent__ pointers.
     config.registry.registerAdapter(CopyHook, (IPersistent,), ICopyHook)
     config.hook_zca() # required by zope.copy (it uses a global adapter lkup)
     
