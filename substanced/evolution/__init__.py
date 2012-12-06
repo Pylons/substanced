@@ -72,6 +72,15 @@ def evolve_packages(
 
     managers = list(registry.getUtilitiesFor(IEvolutionManager))
 
+    # XXX temporary hack to make substanced evolution happen before any other
+    # evolution (must die if/when we add topological sorting of evolution steps
+    # or packages)
+    for i, (pkg_name, factory) in enumerate(list(managers)):
+        if pkg_name == 'substanced.evolution':
+            managers.pop(i)
+            managers.insert(0, (pkg_name, factory))
+            break
+
     if package and package not in [x[0] for x in managers]:
         raise NoSuchPackage(package)
 

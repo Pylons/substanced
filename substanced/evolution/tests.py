@@ -193,6 +193,32 @@ class Test_evolve_packages(unittest.TestCase):
               'package': 'fred'}]
             )
 
+    def test_substanced_first_sorting_hack(self):
+        manager = DummyManager(0)
+        factory = DummyFactory(manager)
+        registry = DummyRegistry([('fred', factory),
+                                  ('substanced.evolution', factory)])
+        module = DummyModule(VERSION=1, NAME='fred')
+        importer = DummyFactory(module)
+        result = self._callFUT(
+            registry, None, latest=True, importer=importer
+            )
+        self.assertEqual(
+            result,
+            [   # substanced resorted first
+                {'db_version': 0,
+                 'sw_version': 1,
+                 'message': 'Evolved substanced.evolution to 0',
+                 'new_version': 0,
+                 'package': 'substanced.evolution'},
+                {'db_version': 0,
+                 'sw_version': 1,
+                 'message': 'Evolved fred to 0',
+                 'new_version': 0,
+                 'package': 'fred'}
+                ]
+            )
+
 class DummyModule(object):
     def __init__(self, **kw):
         self.__dict__.update(kw)
