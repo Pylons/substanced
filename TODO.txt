@@ -77,6 +77,13 @@ Dump and Load
 
 - Explain ``__dump__`` and ``__load__`` methods of resources.
 
+Grid
+----
+
+- Explain __sdi_deletable__, __sdi_addable__, __sdi_hidden__, __sdi_columns__,
+  __sdi_buttons__.
+
+
 Events
 ------
 
@@ -95,7 +102,6 @@ Security
 
 - Explain that source-integral PrincipalToACLBearing relationships are set up
   between an ACL-bearing object and the principals referred to within the ACL.
-
 
 Docs
 ----

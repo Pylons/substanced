@@ -142,12 +142,10 @@ the catalog:
 
 .. image:: images/catalog.png
 
-Catalogues are content, meaning they can be added to a folder. You can
-add/edit/delete indices to the catalog from the list of built-in index
-types. You can also visit an index in a catalog and see some statistics
-for that index. Finally, you can also use the SDI to reindex the
-contents of an index, if you suspect it has gotten out of sync with the
-content.
+Catalogues are content, meaning they show up as folder items in the SDI. You
+can visit a a catalog and update its indexes, or see some statistics for those
+index. Finally, you can also use the SDI to reindex the contents of an index,
+if you suspect it has gotten out of sync with the content.
 
 The catalog also registers a management view on content resources which
 gain a ``Indexing`` tab:
@@ -174,6 +172,9 @@ managing them (e.g. Security, References):
 
 .. image:: images/user.png
 
+Users and groups can also grow extra attributes and behavior because they're
+just content, so you can customize your user model out of the box.
+
 Workflows
 =========
 
@@ -183,14 +184,15 @@ tab on content types that have workflows registered for them:
 
 .. image:: images/workflows.png
 
-This provides a way, via the SDI, to transition a resource.
+This provides a way, via the SDI, to transition the workflow state of a
+resource.
 
 References
 ==========
 
-With the built-in support for :doc:`references <references>`,
-Substanced D helps manage the connections between resources. The SDI
-provides a UI into the reference service.
+With the built-in support for :doc:`references <references>`, Substanced D
+helps manage relationships between resources. The SDI provides a UI into the
+reference service.
 
 If the resource you are viewing has any references, a ``References``
 tab will appear:

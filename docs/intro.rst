@@ -69,8 +69,6 @@ Substance D is built upon on the following technologies:
 
 - `hypatia <https://github.com/Pylons/hypatia>`_
 
-- `repoze.evolution <http://docs.repoze.org/evolution>`_
-
 - `colander <http://docs.pylonsproject.org/projects/colander/en/latest/>`_
 
 - `deform <http://docs.pylonsproject.org/projects/deform/en/latest/>`_

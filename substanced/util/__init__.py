@@ -7,6 +7,9 @@ import json
 from zope.interface import providedBy
 from zope.interface.declarations import Declaration
 
+from zope.interface import providedBy
+from zope.interface.declarations import Declaration
+
 from pyramid.location import lineage
 from pyramid.threadlocal import get_current_registry
 
@@ -522,4 +525,3 @@ def find_catalog(resource, name):
         for cname, catalog in catalog_container.items():
             if name == cname:
                 return catalog
-
