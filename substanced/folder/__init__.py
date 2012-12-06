@@ -724,7 +724,7 @@ class CopyHook(object):
         # ResumeCopy.
         raise ResumeCopy
 
-def includeme(config):
+def includeme(config): # pragma: no cover
     # The ICopyHook adapter avoids dumping referenced objects that are not
     # located inside an object containment-wise when that object is copied.  If
     # it is not registered, every copy winds up dumping all the objects in the

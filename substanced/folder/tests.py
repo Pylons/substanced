@@ -466,7 +466,7 @@ class TestFolder(unittest.TestCase):
     def test_copy_no_newname(self):
         folder = self._makeOne()
         other = self._makeOne()
-        model = DummyExportableModel()
+        model = testing.DummyResource()
         folder['a'] = model
         folder.copy('a', other)
         self.assertEqual(other['a'].__name__, 'a')
@@ -476,7 +476,7 @@ class TestFolder(unittest.TestCase):
     def test_copy_newname(self):
         folder = self._makeOne()
         other = self._makeOne()
-        model = DummyExportableModel()
+        model = testing.DummyResource()
         folder['a'] = model
         folder.copy('a', other, 'b')
         self.assertEqual(other['b'].__name__, 'b')
@@ -753,29 +753,41 @@ class TestRandomAutoNamingFolder(unittest.TestCase):
         self.assertTrue(result in inst)
         self.assertEqual(len(result), 7)
 
+class TestCopyHook(unittest.TestCase):
+    def _makeOne(self, context):
+        from . import CopyHook
+        return CopyHook(context)
+
+    def test_nonpersistent(self):
+        from zope.copy.interfaces import ResumeCopy
+        inst = self._makeOne({})
+        self.assertRaises(ResumeCopy, inst, None, None)
+
+    def test_persistent_not_child(self):
+        from persistent import Persistent
+        class Resource(Persistent):
+            pass
+        child = Resource()
+        child.__parent__ = None
+        parent = Resource()
+        parent.__parent__ = None
+        inst = self._makeOne(child)
+        self.assertEqual(inst(parent, None), child)
+
+    def test_persistent_is_child(self):
+        from zope.copy.interfaces import ResumeCopy
+        from persistent import Persistent
+        class Resource(Persistent):
+            pass
+        parent = Resource()
+        parent.__parent__ = None
+        child = Resource()
+        child.__parent__ = parent
+        inst = self._makeOne(child)
+        self.assertRaises(ResumeCopy, inst, parent, None)
+
 class DummyModel(object):
     pass
-
-class DummyExportImport(object):
-    def __init__(self, obj):
-        self.obj = obj
-
-    def exportFile(self, oid, f):
-        pass
-
-    def importFile(self, f):
-        import copy
-        new_obj = copy.deepcopy(self.obj)
-        new_obj.__oid__ = 0
-        return new_obj
-
-class DummyExportableModel(object):
-    _p_oid = 0
-
-    @property
-    def _p_jar(self):
-        return DummyExportImport(self)
-
 
 class DummyObjectMap(object):
     def __init__(self):
