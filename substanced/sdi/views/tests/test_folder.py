@@ -250,7 +250,7 @@ class TestFolderContentsViews(unittest.TestCase):
         # in test_metadata_for_non_sortable_columns.
 
 
-    def test_metadata_for_non_sortable_columns(self):
+    def test__column_headers_for_non_sortable_columns(self):
         def sd_columns(folder, subobject, request, default_columns):
             self.assertEqual(len(default_columns), 1)
             return [
@@ -261,7 +261,7 @@ class TestFolderContentsViews(unittest.TestCase):
         context = testing.DummyResource()
         request = self._makeRequest(columns=sd_columns)
         inst = self._makeOne(context, request)
-        result = inst._column_headers(context, request)
+        result = inst._column_headers()
         self.assertEqual(len(result), 2)
 
         col = result[0]
@@ -284,6 +284,31 @@ class TestFolderContentsViews(unittest.TestCase):
 
         self.assertEqual(col['sortable'], True)
 
+
+    def test__column_headers_no_custom(self):
+        context = testing.DummyResource()
+        request = self._makeRequest()
+        inst = self._makeOne(context, request)
+        result = inst._column_headers()
+        self.assertEqual(len(result), 1)
+        self.assertEqual(
+            result[0],
+            {'minWidth': 120,
+             'field': 'name',
+             'sortable': True,
+             'name': 'Name',
+             'width': 120,
+             'formatterName': 'icon_label_url',
+             'cssClass': 'cell-name',
+             'id': 'name'}
+        )
+
+    def test__column_headers_None(self):
+        context = testing.DummyResource()
+        request = self._makeRequest(columns=None)
+        inst = self._makeOne(context, request)
+        result = inst._column_headers()
+        self.assertEqual(len(result), 0)
 
     def test_show_non_filterable_columns(self):
         dummy_column_headers = [{
@@ -815,7 +840,7 @@ class TestFolderContentsViews(unittest.TestCase):
         request = testing.DummyRequest()
         inst = self._makeOne(context, request)
         request.registry.content = DummyContent(buttons=None)
-        result = inst._buttons(context, request)
+        result = inst._buttons()
         self.assertEqual(result, [])
 
     def test_buttons_is_clbl(self):
@@ -825,7 +850,7 @@ class TestFolderContentsViews(unittest.TestCase):
             return 'abc'
         inst = self._makeOne(context, request)
         request.registry.content = DummyContent(buttons=sdi_buttons)
-        result = inst._buttons(context, request)
+        result = inst._buttons()
         self.assertEqual(result, 'abc')
 
     def _makeCatalogs(self, oids=()):
@@ -950,6 +975,45 @@ class TestFolderContentsViews(unittest.TestCase):
         item = results[0]
         self.assertEqual(item['col1'], 'val1')
         self.assertEqual(item['col2'], 'val2')
+
+    def test__folder_contents_columns_None(self):
+        from substanced.interfaces import IFolder
+        context = testing.DummyResource(__provides__=IFolder)
+        request = self._makeRequest()
+        context['catalogs'] = self._makeCatalogs(oids=[1])
+        result = testing.DummyResource()
+        result.col1 = 'val1'
+        result.col2 = 'val2'
+        result.__name__ = 'fred'
+        context.__objectmap__ = DummyObjectMap(result)
+        inst = self._makeOne(context, request)
+        request.registry.content = DummyContent(columns=None)
+        length, results = inst._folder_contents()
+        self.assertEqual(length, 1)
+        self.assertEqual(len(results), 1)
+        item = results[0]
+        self.assertEqual(
+            item,
+            {'name_icon': None,
+             'name_url': '/mgmt_path',
+             'deletable': True,
+             'name': 'fred',
+             'id': 'fred'}
+            )
+
+    def test__folder_contents_with_filter_text(self):
+        from substanced.interfaces import IFolder
+        context = testing.DummyResource(__provides__=IFolder)
+        request = self._makeRequest()
+        context['catalogs'] = self._makeCatalogs(oids=[1])
+        result = testing.DummyResource()
+        result.__name__ = 'fred'
+        context.__objectmap__ = DummyObjectMap(result)
+        inst = self._makeOne(context, request)
+        request.registry.content = DummyContent()
+        length, results = inst._folder_contents(filter_text='abc')
+        self.assertEqual(length, 1)
+        self.assertEqual(len(results), 1)
 
 class DummyFolder(object):
     oid_store = {}

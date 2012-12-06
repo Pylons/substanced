@@ -100,7 +100,14 @@ class FolderContentsViews(object):
         self.context = context
         self.request = request
 
-    def _buttons(self, context, request):
+    def _modified_items(self):
+        items = self.request.POST.get('item-modify', '').split(',')
+        modified = filter(None, items) # remove empty
+        return modified
+
+    def _buttons(self):
+        context = self.context
+        request = self.request
         buttons = default_sdi_buttons(context, request)
         custom_buttons = request.registry.content.metadata(
             context, 'buttons', _marker)
@@ -110,12 +117,10 @@ class FolderContentsViews(object):
             buttons = custom_buttons(context, request, buttons)
         return buttons
 
-    def _modified_items(self):
-        items = self.request.POST.get('item-modify', '').split(',')
-        modified = filter(None, items) # remove empty
-        return modified
+    def _column_headers(self):
+        context = self.context
+        request = self.request
 
-    def _column_headers(self, context, request):
         headers = []
 
         content_registry  = request.registry.content
@@ -416,9 +421,9 @@ class FolderContentsViews(object):
         request = self.request
         context = self.context
 
-        columns = self._column_headers(context, request)
+        columns = self._column_headers()
 
-        buttons = self._buttons(context, request)
+        buttons = self._buttons()
 
         addables = self.sdi_add_views(context, request)
 
