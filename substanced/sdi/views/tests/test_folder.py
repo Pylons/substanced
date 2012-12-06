@@ -249,6 +249,20 @@ class TestFolderContentsViews(unittest.TestCase):
         # this information is in the columns metadata. So, we test this
         # in test_metadata_for_non_sortable_columns.
 
+    def test_show_json(self):
+        context = testing.DummyResource()
+        request = self._makeRequest()
+        request.params['from'] = '1'
+        request.params['to'] = '2'
+        inst = self._makeOne(context, request)
+        inst._folder_contents = mock.Mock(
+            return_value=dummy_folder_contents_0
+            )
+        result = inst.show_json()
+        self.assertEqual(
+            result,
+            {'from':1, 'to':2, 'records':dummy_folder_contents_0[1], 'total':1}
+            )
 
     def test__column_headers_for_non_sortable_columns(self):
         def sd_columns(folder, subobject, request, default_columns):

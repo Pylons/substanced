@@ -507,16 +507,13 @@ class FolderContentsViews(object):
     def show_json(self):
         request = self.request
 
-        _from = int(request.params.get('from'))
-        to = int(request.params.get('to'))
+        start = int(request.params.get('from'))
+        end = int(request.params.get('to'))
         # sort_col = request.params.get('sortCol')  # XXX ignored
-        sort_dir = (request.params.get('sortDir') in ('true', 'True'))
+        sort_dir = request.params.get('sortDir') in ('true', 'True')
         filter_text = request.params.get('filter', '').strip()
 
         reverse = (not sort_dir)
-
-        start = _from
-        end = to
 
         # XXX sortCol not implemented
         folder_length, records = self._folder_contents(
