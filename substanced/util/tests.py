@@ -807,6 +807,14 @@ class Test_find_catalog(unittest.TestCase):
             None,
             )
 
+class TestJsonDict(unittest.TestCase):
+    def test_it(self):
+        from . import JsonDict
+        import json
+        val = {'a':1}
+        d = JsonDict(val)
+        self.assertEqual(str(d), json.dumps(val))
+
 class DummyContent(object):
     renamed_from = None
     renamed_to = None
