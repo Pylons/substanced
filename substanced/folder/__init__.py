@@ -708,19 +708,23 @@ class CopyHook(object):
         self.context = context
     
     def __call__(self, toplevel, register):
-        if hasattr(self.context, '__parent__'):
-            # This is a content object.
-            if inside(self.context, toplevel):
-                # If it's inside the object being copied, copy it.
-                raise ResumeCopy
-            # Otherwise return it.  I don't really quite understand why we
-            # return it instead of returning None, but see zope.copy.
-            return self.context
+        context = self.context
         # We can't register for a more specific interface than IPersistent so
-        # we have to cope with the existence of objects which are persistent
-        # but not themselves content (e.g. BTrees and friends).  In such
-        # cases, we definitely want to copy them and we signify this desire
-        # by raising ResumeCopy.
+        # we have to check for __parent__ here (signifiying that the object is
+        # located) and do something special rather than just registering a copy
+        # hook for things that are guaranteed to have a __parent__ (such as
+        # Zope's ILocation)
+        if hasattr(context, '__parent__'):
+            if not inside(self.context, toplevel):
+                # Return the object if we *don't* want it copied.  I don't
+                # really quite understand why we return it instead of returning
+                # None, and why we raise an exception if we *do* want it copied
+                # but mine is not to wonder why.
+                return context
+        # Otherwise, it's a persistent object that does live inside the object
+        # we're copying or a nonpersistent object.  In such cases, we
+        # definitely want to copy them and we signify this desire by raising
+        # ResumeCopy.
         raise ResumeCopy
 
 def includeme(config):
