@@ -63,6 +63,18 @@ Guts-Only
 
 - Add a ``substanced.load_dump`` key for use by root factory.
 
+- Change column definitions to use adapter?::
+
+   class DefaultSDIColumns(object):
+       def __init__(self, resource):
+           self.resource = resource
+
+       @sdicolumn(field='name', name='Name', formatter='icon_label_url')
+       def name(self, folder, request):
+           return getattr(subobject, '__name__', '')
+
+
+
 Nice-to-Have Features
 ---------------------
 
@@ -102,6 +114,10 @@ Docs
 
 - Explain __init__.py include-then-scan done by includeme and how to avoid
   scanning.
+
+- Explain substanced settings in ``ini`` file.
+
+- Explain extents.
 
 Probably Bad Ideas
 ------------------
