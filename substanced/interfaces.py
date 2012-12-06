@@ -1,3 +1,5 @@
+import BTrees
+
 from zope.interface.interfaces import IObjectEvent
 
 from hypatia.interfaces import ICatalog as _ICatalog
@@ -615,3 +617,11 @@ class ISDIAPI(Interface):
 
     def mgmt_views(context):
         """ The list of management views on a resource """
+
+BTREE_FAMILIES = {
+    'family32':BTrees.family32,
+    'family64':BTrees.family64,
+    BTrees.family32:'family32',
+    BTrees.family64:'family64'
+    }
+

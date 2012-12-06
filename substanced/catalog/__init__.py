@@ -19,6 +19,7 @@ from ..interfaces import (
     ICatalog,
     ICatalogFactory,
     IIndexView,
+    BTREE_FAMILIES,
     )
 
 from ..content import (
@@ -97,6 +98,19 @@ class Catalog(Folder):
         # registered with the is_index metadata flag.
         meta = introspectable['meta']
         return meta.get('is_index', False)
+
+    def __dump__(self):
+        values = {
+            'objectids':list(self.objectids),
+            }
+        if 'family' in self.__dict__:
+            values['family'] = BTREE_FAMILIES[self.family]
+        return values
+
+    def __load__(self, d):
+        if 'family' in d:
+            self.family = BTREE_FAMILIES[d['family']]
+        self.objectids = self.family.IF.TreeSet(d['objectids'])
 
     def reset(self):
         """ Clear all indexes in this catalog and clear self.objectids. """

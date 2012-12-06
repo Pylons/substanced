@@ -407,7 +407,7 @@ class SDIPropertiesDumper(object):
         resource._p_activate()
         d = resource.__dict__
         attributes = {}
-        for name in ('__sdi_hidden__', '__sdi_addable__', '__sdi_deletable__'):
+        for name in ('__sdi_addable__', '__sdi_deletable__'):
             val = d.get(name)
             if d is not None:
                 attributes[name] = val

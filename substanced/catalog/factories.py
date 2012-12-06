@@ -1,4 +1,3 @@
-import BTrees
 from zope.interface import implementer
 
 from pyramid.compat import is_nonstr_iter
@@ -7,6 +6,7 @@ from pyramid.traversal import resource_path
 from ..interfaces import (
     ICatalogFactory,
     IIndexFactory,
+    BTREE_FAMILIES,
     )
 from ..util import get_dotted_name
 
@@ -42,13 +42,7 @@ class IndexFactory(object):
         values['class'] = get_dotted_name(self.__class__)
         family = values.get('family', None)
         if family is not None:
-            if family == BTrees.family64:
-                family = 'family64'
-            elif family == BTrees.family32:
-                family = 'family32'
-            else:
-                raise ValueError(family)
-            values['family'] = family
+            values['family'] = BTREE_FAMILIES[family]
         return values
 
     def __hash__(self):
