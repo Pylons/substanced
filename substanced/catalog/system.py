@@ -40,8 +40,27 @@ class SystemIndexViews(object):
         if name is None: # deal with name = None at root
             return default
         return name
-
-    text = name # use __name__ but allow overriding
+ 
+    def text(self, default):
+        """ Returns a derivation of the name for text indexing.  If name has no
+        separator characters in it, the function will return the name
+        unchanged.  Otherwise it will return the name plus the derivation of
+        splitting the name on the separator characters.  The separator
+        characters are: ``, . - _``.  For example, if the name is
+        ``foo-bar_baz.pt,foz``, the return value will be ``foo-bar_baz.pt,foz
+        foo bar baz pt foz``.  This allows for the most common lookups of
+        partial index values in the filter box."""
+        name = self.name(default)
+        if name is default:
+            return default
+        if not hasattr(name, 'split'):
+            return name
+        val = name
+        for char in (',', '-', '_', '.'):
+            val = ' '.join([x.strip() for x in val.split(char)])
+        if val != name:
+            return name + ' ' + val
+        return name
 
 @catalog_factory('system')
 class SystemCatalogFactory(object):
