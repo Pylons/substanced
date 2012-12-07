@@ -68,6 +68,12 @@ Guts-Only
 - Evolution should show the derived versions after a ``--latest``, not the
   versions that were current before.
 
+UI-Only
+-------
+
+- Show spinner when a button is pressed that leads to another page
+  (e.g. reindex or duplicate).
+
 Nice-to-Have Features
 ---------------------
 
