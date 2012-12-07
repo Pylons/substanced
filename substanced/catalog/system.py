@@ -36,7 +36,10 @@ class SystemIndexViews(object):
     def name(self, default):
         """ Returns the ``__name__`` of the object or ``default`` if the object
         has no ``__name__``."""
-        return getattr(self.resource, '__name__', default)
+        name = getattr(self.resource, '__name__', default)
+        if name is None: # deal with name = None at root
+            return default
+        return name
 
     text = name # use __name__ but allow overriding
 

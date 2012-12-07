@@ -54,3 +54,9 @@ class TestSystemIndexViews(unittest.TestCase):
         result = inst.name(None)
         self.assertEqual(result, 'foo')
 
+    def test_name_has_name_None(self):
+        resource = testing.DummyResource()
+        resource.__name__ = None
+        inst = self._makeOne(resource)
+        result = inst.name('abc')
+        self.assertEqual(result, 'abc')
