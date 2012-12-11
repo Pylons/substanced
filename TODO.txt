@@ -1,7 +1,8 @@
+Features
+========
+
 UI-Plus-Guts
 ------------
-
-- Import/export from folder contents view.
 
 - Add Undo tab to Site (or per folder?) which will allow admins to undo recent
   transactions.  Implied: add transaction notes to all transactions.
@@ -20,14 +21,13 @@ UI-Plus-Guts
 Guts-Only
 ---------
 
+- Write sd_dump and sd_load scripts.
+
 - Use hasattr(__is_folder__) instead of IFolder.providedBy is is_folder.
 
 - Use is_folder view predicate instead of context=IFolder in folder views
   (holdup is testing out folder button action overrides in the face of views
   being registered against IFolder).
-
-- Decide whether to split "manage contents" permissions out for folders into
-  add, delete, rename.
 
 - Catalog event subscriber currently does a hellishly expensive recatalog of
   allowed indexes when an ACL is changed.  Not sure if there's even a general
@@ -48,10 +48,6 @@ Guts-Only
 - How to prevent objects from being moved or duplicated into a place where
   they're not addable?
 
-- Fix ``Batch`` such that seqlen is a maximum.  Rationale: the sequence that
-  the batch receives may be smaller than seqlen due to hidden objects in
-  folder contents view.
-
 - Once we depend on Pyramid 1.4b1+, normalize subscriber predicate argument
   lists.
 
@@ -63,6 +59,10 @@ Guts-Only
 
 - Evolution should show the derived versions after a ``--latest``, not the
   versions that were current before.
+
+- Figure out if YAML dump and reload will work if we get to move to Python 3.
+
+- Write unit tests for dump.
 
 UI-Only
 -------
@@ -79,6 +79,9 @@ Nice-to-Have Features
 
 - Ability to add and edit principals in existing ACEs in ACL edit view.
 
+Docs
+====
+
 Dump and Load
 -------------
 
@@ -89,7 +92,6 @@ Grid
 
 - Explain __sdi_deletable__, __sdi_addable__, __sdi_hidden__, __sdi_columns__,
   __sdi_buttons__.
-
 
 Events
 ------
@@ -110,14 +112,14 @@ Security
 - Explain that source-integral PrincipalToACLBearing relationships are set up
   between an ACL-bearing object and the principals referred to within the ACL.
 
-Docs
-----
+Initialization
+---------------
 
 - Explain __init__.py include-then-scan done by includeme and how to avoid
   scanning.
 
 Probably Bad Ideas
-------------------
+==================
 
 - Create "addable here" API that manages the __sdi_addable__ attribute of a
   folderish object.
@@ -127,4 +129,17 @@ Probably Bad Ideas
 
 - Create object map management UI (view relationships, view paths, view
   objectids).
+
+- Decide whether to split "manage contents" permissions out for folders into
+  add, delete, rename.
+
+- Import/export from folder contents view.
+
+Made Irrelevant
+===============
+
+- Fix ``Batch`` such that seqlen is a maximum.  Rationale: the sequence that
+  the batch receives may be smaller than seqlen due to hidden objects in folder
+  contents view (irrelevant because folder contents view is now
+  catalog-driven).
 
