@@ -11,8 +11,6 @@ UI-Plus-Guts
 - Allow reordering of resources in folder contents view when the folder is
   ordered.
 
-- Batching in large folders.
-
 - Change password tab on user object requires old password.  See
   https://github.com/Pylons/substanced/issues/19
 
