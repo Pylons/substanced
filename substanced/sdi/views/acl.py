@@ -117,10 +117,12 @@ class ACLEditViews(object):
         no_inherit = self.request.POST['inherit'] == 'disabled'
         if no_inherit:
             self.epilog = [NO_INHERIT]
-            self.request.sdiapi.flash_with_undo('ACL will *not* inherit from parent')
+            self.request.sdiapi.flash_with_undo(
+                'ACL will *not* inherit from parent')
         else:
             self.epilog = []
-            self.request.sdiapi.flash_with_undo('ACL will inherit from parent')
+            self.request.sdiapi.flash_with_undo(
+                'ACL will inherit from parent')
         return self.finish_acl_edit()
 
     def get_principal_name(self, principal_id):
@@ -205,7 +207,7 @@ class ACLEditViews(object):
         users = [ (get_oid(user), user.__name__) for user in users ]
         groups = principal_service['groups'].values()
         groups = [ (get_oid(group), group.__name__) for group in groups ]
-        groups = [ (Everyone, Everyone), (Authenticated, Authenticated) ] + groups
+        groups += [ (Everyone, Everyone), (Authenticated, Authenticated) ]
 
         return dict(
             parent_acl=parent_acl or (),

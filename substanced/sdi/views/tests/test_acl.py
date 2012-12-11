@@ -355,8 +355,8 @@ class DummyPost(dict):
     def getall(self, name): # pragma: no cover
         return self.getall_result
 
-    def get(self, name, default=None):
-        if self.get_result is None: # pragma: no cover
+    def get(self, name, default=None): # pragma: no cover
+        if self.get_result is None: 
             return default
         return self.get_result
 
