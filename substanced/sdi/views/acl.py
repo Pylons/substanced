@@ -7,6 +7,7 @@ from pyramid.security import (
     Everyone,
     Authenticated,
     )
+from pyramid.compat import is_nonstr_iter
 from pyramid.session import check_csrf_token
 from pyramid.view import view_defaults
 
@@ -27,6 +28,8 @@ NO_INHERIT = (Deny, Everyone, ALL_PERMISSIONS)
 @view_defaults(name='acl_edit', permission='sdi.change-acls',
                renderer='templates/acl.pt')
 class ACLEditViews(object):
+
+    get_all_permissions = staticmethod(get_all_permissions) # for testing
 
     def __init__(self, context, request):
         self.context = context
@@ -153,7 +156,7 @@ class ACLEditViews(object):
                         perms =  ('-- ALL --',)
                     else:
                         perms = ace[2]
-                    if not hasattr(perms, '__iter__'):
+                    if not is_nonstr_iter(perms):
                         perms = (perms,)
                     new_ace = (ace[0], pname, perms)
                     parent_acl.append(new_ace)
@@ -196,7 +199,7 @@ class ACLEditViews(object):
         inheriting, local_acl = self.get_local_acl()
 
         permissions = set(['-- ALL --'])
-        registered_permissions = get_all_permissions(registry)
+        registered_permissions = self.get_all_permissions(registry)
         for name in registered_permissions:
             if name != NO_PERMISSION_REQUIRED:
                 permissions.add(name)
