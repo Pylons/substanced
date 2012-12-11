@@ -18,6 +18,14 @@ UI-Plus-Guts
 - Show a derivative of output status in flash message when update indexes is
   done to a catalog.
 
+- Text search view.
+
+- Queued catalog (queue up indexing actions in conflict-resistant structure(s),
+  flush them immediately or via a script; each index might be immediate or
+  deferred).
+
+- System performance monitoring.  Wave hands.
+
 Guts-Only
 ---------
 
