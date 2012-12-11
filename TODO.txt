@@ -37,8 +37,6 @@ Guts-Only
 
 - Undo of catalog reindex doesnt?  Turned off for now.
 
-- Refactor ACL view.
-
 - Add specific configurator directives for object event registrations
   (e.g. config.subscribe_modified).
 
