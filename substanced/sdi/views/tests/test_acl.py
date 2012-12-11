@@ -342,26 +342,6 @@ class TestInherit(unittest.TestCase):
         self.assertEqual(request.sdiapi.flashed,
                          'ACL will *not* inherit from parent')
 
-class DummyFolder(object):
-    oid_store = {}
-
-    def __init__(self, exc=None):
-        self.exc = exc
-
-    def check_name(self, name):
-        if self.exc:
-            raise self.exc
-class DummyFolder(object):
-    oid_store = {}
-
-    def __init__(self, exc=None):
-        self.exc = exc
-
-    def check_name(self, name):
-        if self.exc:
-            raise self.exc
-        return name
-
 class DummyUser(object):
     def __init__(self, oid, name):
         self.__oid__ = oid
