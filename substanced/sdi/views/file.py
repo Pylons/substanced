@@ -14,6 +14,7 @@ from ...file import (
     FileUploadTempStore,
     file_upload_widget,
     file_name_node,
+    USE_MAGIC,
     )
 
 from ...interfaces import (
@@ -82,10 +83,11 @@ class AddFileView(FormView):
     schema['mimetype'].missing = colander.null
     buttons = ('add',)
 
-    def _makeob(self, stream, title):
+    def _makeob(self, stream, title, mimetype):
         return self.request.registry.content.create(
             'File',
-            stream,
+            stream=stream,
+            mimetype=mimetype,
             title=title,
             )
 
@@ -93,6 +95,7 @@ class AddFileView(FormView):
         name = appstruct['name']
         title = appstruct['title'] or None
         filedata = appstruct['file']
+        mimetype = appstruct['mimetype'] or USE_MAGIC
         stream = None
         filename = None
         if filedata:
@@ -103,7 +106,7 @@ class AddFileView(FormView):
             else:
                 stream = None
         name = name or filename
-        fileob = self._makeob(stream, title)
+        fileob = self._makeob(stream, title, mimetype)
         self.context[name] = fileob
         return HTTPFound(self.request.sdiapi.mgmt_path(self.context))
 

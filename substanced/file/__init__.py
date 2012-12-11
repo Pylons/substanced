@@ -78,7 +78,7 @@ class FileUploadPropertySheet(PropertySheet):
         request = self.request
         uid = str(get_oid(context))
         filedata = dict(
-            fp=None,
+            fp=None, # this cant be the real fp or will be written to tmpstore
             uid=uid,
             filename='',
             size = context.get_size(),

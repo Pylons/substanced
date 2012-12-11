@@ -82,7 +82,12 @@ class TestAddFileView(unittest.TestCase):
         request = testing.DummyRequest()
         request.sdiapi = DummySDIAPI()
         request.registry.content = DummyContent(created)
-        appstruct = {'name':'abc', 'file':None, 'title':None}
+        appstruct = {
+            'name':'abc',
+            'file':None,
+            'title':None,
+            'mimetype':'',
+            }
         inst = self._makeOne(context, request)
         result = inst.add_success(appstruct)
         self.assertEqual(result.location, '/mgmt_path')
@@ -95,8 +100,12 @@ class TestAddFileView(unittest.TestCase):
         request.sdiapi = DummySDIAPI()
         request.registry.content = DummyContent(created)
         fp = StringIO.StringIO('abc')
-        appstruct = {'name':None, 'title':None,
-                     'file':{'fp':fp, 'filename':'filename'}}
+        appstruct = {
+            'name':None,
+            'title':None,
+            'file':{'fp':fp, 'filename':'filename'},
+            'mimetype':'',
+            }
         inst = self._makeOne(context, request)
         result = inst.add_success(appstruct)
         self.assertEqual(result.location, '/mgmt_path')
@@ -109,27 +118,56 @@ class TestAddFileView(unittest.TestCase):
         request.sdiapi = DummySDIAPI()
         request.registry.content = DummyContent(created)
         fp = StringIO.StringIO('abc')
-        appstruct = {'name':'abc',
-                     'file':{'fp':fp, 'filename':'filename'},
-                     'title':None}
+        appstruct = {
+            'name':'abc',
+            'file':{'fp':fp, 'filename':'filename'},
+            'title':None,
+            'mimetype':'',
+            }
         inst = self._makeOne(context, request)
         result = inst.add_success(appstruct)
         self.assertEqual(result.location, '/mgmt_path')
         self.assertEqual(context['abc'], created)
 
     def test_add_success_with_filedata_but_no_fp(self):
+        from substanced.file import USE_MAGIC
         created = testing.DummyResource()
         context = testing.DummyResource()
         request = testing.DummyRequest()
         request.sdiapi = DummySDIAPI()
-        request.registry.content = DummyContent(created)
-        appstruct = {'name':'abc',
-                     'file':{'fp':None, 'filename':'filename'},
-                     'title':None}
+        content_reg = DummyContent(created)
+        request.registry.content = content_reg
+        appstruct = {
+            'name':'abc',
+            'file':{'fp':None, 'filename':'filename'},
+            'title':None,
+            'mimetype':'',
+            }
         inst = self._makeOne(context, request)
         result = inst.add_success(appstruct)
         self.assertEqual(result.location, '/mgmt_path')
         self.assertEqual(context['abc'], created)
+        self.assertEqual(content_reg.created_args[1]['mimetype'], USE_MAGIC)
+
+    def test_add_success_with_mimetype(self):
+        created = testing.DummyResource()
+        context = testing.DummyResource()
+        request = testing.DummyRequest()
+        request.sdiapi = DummySDIAPI()
+        content_reg = DummyContent(created)
+        request.registry.content = content_reg
+        appstruct = {
+            'name':'abc',
+            'file':None,
+            'title':None,
+            'mimetype':'text/xml',
+            }
+        inst = self._makeOne(context, request)
+        result = inst.add_success(appstruct)
+        self.assertEqual(result.location, '/mgmt_path')
+        self.assertEqual(context['abc'], created)
+        self.assertEqual(content_reg.created_args[1]['mimetype'], 'text/xml')
+
 
 class Test_preview_image_upload(unittest.TestCase):
     def setUp(self):
@@ -168,10 +206,12 @@ class Test_preview_image_upload(unittest.TestCase):
 class DummyContent(object):
     def __init__(self, result):
         self.result = result
+
     def istype(self, *arg, **kw):
         return self.result
 
     def create(self, *arg, **kw):
+        self.created_args = (arg, kw)
         return self.result
     
 class DummySDIAPI(object):

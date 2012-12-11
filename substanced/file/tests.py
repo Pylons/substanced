@@ -269,3 +269,4 @@ class DummyBlob(object):
 class DummySDIAPI(object):
     def mgmt_path(self, *arg, **kw):
         return '/mgmt_path'
+
