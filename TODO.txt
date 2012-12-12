@@ -143,6 +143,11 @@ Probably Bad Ideas
 
 - Import/export from folder contents view.
 
+Science Fiction
+===============
+
+- Play around with gevent and/or websockets.
+
 Made Irrelevant
 ===============
 
