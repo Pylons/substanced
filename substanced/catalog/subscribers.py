@@ -42,11 +42,29 @@ def object_added(event):
     catalogs = find_catalogs(obj)
     if not catalogs:
         return
+
+    reindex_only = False
+
+    if event.moving is not None:
+        # If we're being moved into a place with the same catalogs
+        # as the old place, just reindex; don't add.  The object_removed
+        # subscriber depends on this behavior.
+        if event.parent is event.moving:
+            # optimization to avoid calling find_catalogs (rename)
+            reindex_only = True 
+        else:
+            old_catalogs = find_catalogs(event.moving)
+            if catalogs == old_catalogs:
+                reindex_only = True
+
     for node in postorder(obj):
         oid = get_oid(node, None)
         if oid is not None:
             for catalog in catalogs:
-                catalog.index_doc(oid, node)
+                if reindex_only:
+                    catalog.reindex_doc(oid, node)
+                else:
+                    catalog.index_doc(oid, node)
 
 @subscribe_removed()
 def object_removed(event):
@@ -55,7 +73,26 @@ def object_removed(event):
     subscriber"""
     parent = event.parent
     catalogs = find_catalogs(parent)
+
+    if event.moving is not None:
+        # Don't actually unindex anything if we're moving to a place
+        # with the same set of catalogs; the object_added event subscriber
+        # will reindex everything, so there's no sense in actually doing an
+        # unindex.
+        if parent is event.moving:
+            # optimization to avoid calling find_catalogs (rename)
+            return 
+        else:
+            new_catalogs = find_catalogs(event.moving)
+            if catalogs == new_catalogs:
+                return
+
+    # If this event is not a moving event, or if it is a moving event and the
+    # set of catalogs differs between the object's old home and its new home,
+    # unindex every object related to this removal.
+
     removed = event.removed_oids
+
     for catalog in catalogs:
         for oid in catalog.family.IF.intersection(removed, catalog.objectids):
             catalog.unindex_doc(oid)

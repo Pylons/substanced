@@ -102,7 +102,7 @@ class Test_object_removed(unittest.TestCase):
     def test_no_objectmap(self):
         model = testing.DummyResource()
         parent = testing.DummyResource()
-        event = testing.DummyResource(object=model, parent=parent)
+        event = DummyEvent(object=model, parent=parent)
         event.removed_oids = None
         self._callFUT(event) # doesnt blow up
 
@@ -355,10 +355,11 @@ class DummyObjectMap:
     
 class DummyEvent(object):
     removed_oids = None
-    def __init__(self, object, parent, registry=None):
+    def __init__(self, object, parent, registry=None, moving=None):
         self.object = object
         self.parent = parent
         self.registry = registry
+        self.moving = moving
         
 class DummyContent(object):
     def istype(self, obj, whatever):

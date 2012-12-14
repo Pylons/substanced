@@ -1,4 +1,7 @@
+import colander
+import deform.widget
 import re
+import transaction
 
 import BTrees
 from persistent import Persistent
@@ -24,14 +27,24 @@ from pyramid.interfaces import IRequest
 
 from ..content import content
 from ..objectmap import find_objectmap
+from ..schema import Schema
+from ..property import PropertySheet
 
 from .discriminators import dummy_discriminator
+from . import queue
 
 PATH_WITH_OPTIONS = re.compile(r'\[(.+?)\](.+?)$')
 
 _marker = object()
 
 class ResolvingIndex(object):
+
+    _p_action_queue = None
+    action_mode = None
+
+    def seen(self, docid):
+        return docid in self.docids()
+
     def resultset_from_query(self, query, names=None, resolver=None):
         if resolver is None:
             objectmap = find_objectmap(self)
@@ -39,6 +52,55 @@ class ResolvingIndex(object):
         docids = query._apply(names)
         numdocs = len(docids)
         return hypatia.util.ResultSet(docids, numdocs, resolver)
+
+    def get_action_queue(self):
+        action_queue = self._p_action_queue
+        if action_queue is None:
+            action_queue = self._p_action_queue = queue.IndexActionQueue(self)
+            t = transaction.get()
+            t.addBeforeCommitHook(action_queue.process)
+        return action_queue
+
+    def clear_action_queue(self):
+        self._p_action_queue = None
+
+    def add_action(self, action):
+        action_queue = self.get_action_queue()
+        action_queue.add(action)
+
+    def index_content(self, docid, obj, action_mode=None):
+        if action_mode is None:
+            action_mode = self.action_mode
+        if action_mode is queue.MODE_ATCOMMIT:
+            action = queue.AddAction(self, docid, obj)
+            self.add_action(action)
+        else:
+            self.index_doc(docid, obj)
+
+    def reindex_content(self, docid, obj, action_mode=None):
+        if action_mode is None:
+            action_mode = self.action_mode
+        if action_mode is queue.MODE_ATCOMMIT:
+            action = queue.ChangeAction(self, docid, obj)
+            self.add_action(action)
+        else:
+            self.reindex_doc(docid, obj)
+
+    def unindex_content(self, docid, action_mode=None):
+        if action_mode is None:
+            action_mode = self.action_mode
+        if action_mode is queue.MODE_ATCOMMIT:
+            action = queue.RemoveAction(self, docid)
+            self.add_action(action)
+        else:
+            self.unindex_doc(docid)
+
+    def __repr__(self):
+        klass = self.__class__
+        classname = '%s.%s' % (klass.__module__, klass.__name__)
+        return '<%s object %r at %#x>' % (classname,
+                                          self.__name__,
+                                          id(self))
 
 @content(
     'Path Index',
@@ -175,10 +237,45 @@ class PathIndex(ResolvingIndex, hypatia.util.BaseIndexMixin, Persistent):
             val['include_origin'] = include_origin
         return hypatia.query.Eq(self, val)
 
+class IndexSchema(Schema):
+    """ The property schema for :class:`substanced.principal.Group`
+    objects."""
+    action_mode = colander.SchemaNode(
+        colander.String(),
+        missing=colander.null,
+        widget=deform.widget.RadioChoiceWidget(
+            values=(
+                ('', 'Default'),
+                ('MODE_IMMEDIATE', 'Immediate'),
+                ('MODE_ATCOMMIT', 'At Commit')
+                )
+            )
+        )
+
+class IndexPropertySheet(PropertySheet):
+    schema = IndexSchema()
+
+    def set(self, values):
+        action_mode = values['action_mode']
+        if not action_mode:
+            action_mode = None
+        else:
+            action_mode = getattr(queue, action_mode)
+        self.context.action_mode = action_mode
+
+    def get(self):
+        action_mode = self.context.action_mode
+        if action_mode is None:
+            action_mode = ''
+        else:
+            action_mode = action_mode.__name__
+        return {'action_mode':action_mode}
+
 @content(
     'Field Index',
     icon='icon-search',
     is_index=True,
+    propertysheets = ( ('', IndexPropertySheet), ),
     )
 class FieldIndex(ResolvingIndex, hypatia.field.FieldIndex):
     def __init__(self, discriminator=None, family=None):
@@ -190,6 +287,7 @@ class FieldIndex(ResolvingIndex, hypatia.field.FieldIndex):
     'Keyword Index',
     icon='icon-search',
     is_index=True,
+    propertysheets = ( ('', IndexPropertySheet), ),
     )
 class KeywordIndex(ResolvingIndex, hypatia.keyword.KeywordIndex):
     def __init__(self, discriminator=None, family=None):
@@ -203,6 +301,7 @@ class KeywordIndex(ResolvingIndex, hypatia.keyword.KeywordIndex):
     'Text Index',
     icon='icon-search',
     is_index=True,
+    propertysheets = ( ('', IndexPropertySheet), ),
     )
 class TextIndex(ResolvingIndex, hypatia.text.TextIndex):
     def __init__(
@@ -222,6 +321,7 @@ class TextIndex(ResolvingIndex, hypatia.text.TextIndex):
     'Facet Index',
     icon='icon-search',
     is_index=True,
+    propertysheets = ( ('', IndexPropertySheet), ),
     )
 class FacetIndex(ResolvingIndex, hypatia.facet.FacetIndex):
     def __init__(self, discriminator=None, facets=None, family=None):
@@ -237,6 +337,7 @@ class FacetIndex(ResolvingIndex, hypatia.facet.FacetIndex):
     'Allowed Index',
     icon='icon-search',
     is_index=True,
+    propertysheets = ( ('', IndexPropertySheet), ),
     )
 class AllowedIndex(KeywordIndex):
     def __init__(self, discriminator=None, family=None):
@@ -255,3 +356,4 @@ class AllowedIndex(KeywordIndex):
             principals = (principals,)
         values = [(principal, permission) for principal in principals]
         return hypatia.query.Any(self, values)
+

@@ -150,7 +150,7 @@ class TestCatalog(unittest.TestCase):
         site = _makeSite(catalog=inst, objectmap=objectmap)
         site['a'] = a
         inst.objectids = [1]
-        def reindex_doc(objectid, model, commit_mode=None):
+        def reindex_doc(objectid, model, action_mode=None):
             L.append((objectid, model))
         inst.reindex_doc = reindex_doc
         out = []
@@ -175,7 +175,7 @@ class TestCatalog(unittest.TestCase):
         site = _makeSite(catalog=inst, objectmap=objectmap)
         site['a'] = a
         inst.objectids = [1, 2]
-        def reindex_doc(objectid, model, commit_mode=None):
+        def reindex_doc(objectid, model, action_mode=None):
             L.append((objectid, model))
         inst.reindex_doc = reindex_doc
         out = []
@@ -219,7 +219,7 @@ class TestCatalog(unittest.TestCase):
         site['a'] = a
         site['b'] = b
         inst.objectids = [1, 2]
-        def reindex_doc(objectid, model, commit_mode=None):
+        def reindex_doc(objectid, model, action_mode=None):
             L.append((objectid, model))
         inst.reindex_doc = reindex_doc
         out = []
@@ -246,7 +246,7 @@ class TestCatalog(unittest.TestCase):
         site['a'] = a
         site['b'] = b
         inst.objectids = [1,2]
-        def reindex_doc(objectid, model, commit_mode=None):
+        def reindex_doc(objectid, model, action_mode=None):
             L.append((objectid, model))
         inst.reindex_doc = reindex_doc
         out = []
@@ -277,9 +277,9 @@ class TestCatalog(unittest.TestCase):
         index = DummyIndex()
         inst['index'] = index
         self.config.registry._substanced_indexes = {'index':index}
-        def reindex_doc(objectid, model, commit_mode=None):
+        def reindex_content(objectid, model, action_mode=None):
             L.append((objectid, model))
-        index.reindex_doc = reindex_doc
+        index.reindex_content = reindex_content
         out = []
         inst.reindex(indexes=('index',),  output=out.append)
         self.assertEqual(out,
@@ -705,7 +705,7 @@ class DummyCatalog(dict):
     def update_indexes(self, *arg, **kw):
         self.updated = True
 
-    def index_doc(self, oid, obj, commit_mode=None):
+    def index_doc(self, oid, obj, action_mode=None):
         self.indexed.append(oid)
 
 class DummyTransaction(object):
@@ -732,20 +732,20 @@ class DummyIndex(object):
         self.arg = arg
         self.kw = kw
 
-    def index_doc(self, docid, value):
+    def index_content(self, docid, value, action_mode=None):
         self.docid = docid
         self.value = value
         return value
 
-    def unindex_doc(self, docid):
+    def unindex_content(self, docid, action_mode=None):
         self.unindexed = docid
+
+    def reindex_content(self, docid, object, action_mode=None):
+        self.reindexed_docid = docid
+        self.reindexed_ob = object
 
     def reset(self):
         self.cleared = True
-
-    def reindex_doc(self, docid, object):
-        self.reindexed_docid = docid
-        self.reindexed_ob = object
 
     def apply_intersect(self, query, docids): # pragma: no cover
         if docids is None:

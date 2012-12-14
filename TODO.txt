@@ -29,6 +29,8 @@ UI-Plus-Guts
 Guts-Only
 ---------
 
+- Figure out why ``sd_reindex`` doesn't log anything.
+
 - Write sd_dump and sd_load scripts.
 
 - Use hasattr(__is_folder__) instead of IFolder.providedBy is is_folder.

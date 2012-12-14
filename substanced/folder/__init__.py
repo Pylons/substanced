@@ -1,10 +1,7 @@
 import random
 import string
 
-from zope.interface import (
-    implementer,
-    Interface,
-    )
+from zope.interface import implementer
 from zope.copy.interfaces import (
     ICopyHook,
     ResumeCopy
@@ -283,16 +280,19 @@ class Folder(Persistent):
         return name
 
     def add(self, name, other, send_events=True, reserved_names=(),
-            duplicating=False, moving=False, loading=False, registry=None):
+            duplicating=None, moving=None, loading=False, registry=None):
         """ Same as ``__setitem__``.
 
         If ``send_events`` is False, suppress the sending of folder events.
         Don't allow names in the ``reserved_names`` sequence to be added.
 
-        If ``duplicating`` is ``True``, oids will be replaced in objectmap.  If
-        ``moving`` is ``True``, the ``moving`` attribute of events will be
-        ``True`` too.  If ``loading`` is ``True``, the ``loading`` attribute of
-        events sent as a result of calling this method will be ``True`` too.
+        If ``duplicating`` not ``None``, it must be the object which is being
+        duplicated; a result of a non-``None`` duplicating means that oids will
+        be replaced in objectmap.  If ``moving`` is not ``None``, it must be
+        the folder from which the object is moving; this will be the ``moving``
+        attribute of events sent by this function too.  If ``loading`` is
+        ``True``, the ``loading`` attribute of events sent as a result of
+        calling this method will be ``True`` too.
 
         This method returns the name used to place the subobject in the
         folder (a derivation of ``name``, usually the result of
@@ -324,7 +324,10 @@ class Folder(Persistent):
                 # is the result of a duplication, replace the oid of the node
                 # with a new one
                 objectmap.add(
-                    node, path_tuple, duplicating=duplicating, moving=moving
+                    node,
+                    path_tuple,
+                    duplicating=duplicating is not None,
+                    moving=moving is not None,
                     )
 
         if send_events:
@@ -407,16 +410,18 @@ class Folder(Persistent):
         """
         return self.remove(name)
 
-    def remove(self, name, send_events=True, moving=False, loading=False,
+    def remove(self, name, send_events=True, moving=None, loading=False,
                registry=None):
         """ Same thing as ``__delitem__``.
 
         If ``send_events`` is false, suppress the sending of folder events.
 
-        If ``moving`` is ``True``, the ``moving`` attribute of events sent as a
-        result of calling this method will be ``True`` too.  If ``loading`` is
-        ``True``, the ``loading`` attribute of events sent as a result of
-        calling this method will be ``True`` too.
+        If ``moving`` is not ``None``, the ``moving`` argument must be the
+        folder to which the named object will be moving.  This value will be
+        passed along as the ``moving`` attribute of the events sent as the
+        result of this action.  If ``loading`` is ``True``, the ``loading``
+        attribute of events sent as a result of calling this method will be
+        ``True`` too.
         """
         name = unicode(name)
         other = self.data[name]
@@ -448,7 +453,7 @@ class Folder(Persistent):
         removed_oids = set([oid])
 
         if objectmap is not None and oid is not None:
-            removed_oids = objectmap.remove(oid, moving=moving)
+            removed_oids = objectmap.remove(oid, moving=moving is not None)
 
         if send_events:
             event = ObjectRemoved(other, self, name, removed_oids,
@@ -470,8 +475,9 @@ class Folder(Persistent):
         if registry is None:
             registry = get_current_registry()
 
-        newobj = copy(self[name])
-        return other.add(newname, newobj, duplicating=True, registry=registry)
+        obj = self[name]
+        newobj = copy(obj)
+        return other.add(newname, newobj, duplicating=obj, registry=registry)
 
     def move(self, name, other, newname=None, registry=None):
         """
@@ -488,8 +494,17 @@ class Folder(Persistent):
             newname = name
         if registry is None:
             registry = get_current_registry()
-        ob = self.remove(name, moving=True, registry=registry)
-        other.add(newname, ob, moving=True, registry=registry)
+        ob = self.remove(
+            name,
+            moving=other,
+            registry=registry
+            )
+        other.add(
+            newname,
+            ob,
+            moving=self,
+            registry=registry
+            )
         return ob
 
     def rename(self, oldname, newname, registry=None):
@@ -512,7 +527,7 @@ class Folder(Persistent):
 
         This operation is done in terms of a remove and an add.  The Removed
         and WillBeRemoved events will be sent for the old object, and the
-        WillBeAdded and Add events will be sent for the new object.
+        WillBeAdded and Added events will be sent for the new object.
         """
         if registry is None:
             registry = get_current_registry()
@@ -534,8 +549,8 @@ class _AutoNamingFolder(object):
         self,
         subobject,
         send_events=True,
-        duplicating=False,
-        moving=False,
+        duplicating=None,
+        moving=None,
         registry=None
         ):
         """Add a subobject, naming it automatically, giving it the name
@@ -619,7 +634,7 @@ class SequentialAutoNamingFolder(Folder, _AutoNamingFolder):
         return str(int(name)).zfill(self._autoname_length)
 
     def add(self, name, other, send_events=True, reserved_names=(),
-            duplicating=False, moving=False, loading=False, registry=None):
+            duplicating=None, moving=None, loading=False, registry=None):
         """ The ``add`` method of a SequentialAutoNamingFolder will raise a
         :exc:`ValueError` if the ``name`` it is passed is not intifiable, as
         its ``next_name`` method relies on controlling the types of names

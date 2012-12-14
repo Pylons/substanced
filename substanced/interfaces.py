@@ -101,32 +101,30 @@ class IObjectWillBeAdded(IObjectEvent):
     parent = Attribute('The folder to which the object is being added')
     name = Attribute('The name which the object is being added to the folder '
                      'with')
-    moving = Attribute('Boolean indicating that this add is part of an '
-                       'object move')
+    moving = Attribute('None or the folder from which the object being added '
+                       'was moved')
     loading = Attribute('Boolean indicating that this add is part of a load '
                         '(during a dump load process)')
-    duplicating = Attribute('Boolean indicating this add is part of an '
-                            'object duplication')
+    duplicating = Attribute('The object being duplicated or ``None``')
 
 class IObjectAdded(IObjectEvent):
     """ An event type sent when an object is added """
     object = Attribute('The object being added')
     parent = Attribute('The folder to which the object is being added')
     name = Attribute('The name of the object within the folder')
-    moving = Attribute('Boolean indicating that this add is part of an '
-                       'object move')
+    moving = Attribute('None or the folder from which the object being added '
+                       'was moved')
     loading = Attribute('Boolean indicating that this add is part of a load '
                         '(during a dump load process)')
-    duplicating = Attribute('Boolean indicating this add is part of an '
-                            'object duplication')
+    duplicating = Attribute('The object being duplicated or ``None``')
 
 class IObjectWillBeRemoved(IObjectEvent):
     """ An event type sent before an object is removed """
     object = Attribute('The object being removed')
     parent = Attribute('The folder from which the object is being removed')
     name = Attribute('The name of the object within the folder')
-    moving = Attribute('Boolean indicating that this removal is part of an '
-                       'object move')
+    moving = Attribute('None or the folder to which the object being removed '
+                       'will be moved')
     loading = Attribute('Boolean indicating that this remove is part of a load '
                         '(during a dump load process)')
 
@@ -135,8 +133,8 @@ class IObjectRemoved(IObjectEvent):
     object = Attribute('The object being removed')
     parent = Attribute('The folder from which the object is being removed')
     name = Attribute('The name of the object within the folder')
-    moving = Attribute('Boolean indicating that this removal is part of an '
-                       'object move')
+    moving = Attribute('None or the folder to which the object being removed '
+                       'will be moved')
     loading = Attribute('Boolean indicating that this remove is part of a load '
                         '(during a dump load process)')
     removed_oids = Attribute('The set of oids removed as the result of '
@@ -259,18 +257,18 @@ class IFolder(Interface):
         """
 
     def add(name, other, send_events=True, reserved_names=(),
-            duplicating=False, moving=False, loading=False, registry=None):
+            duplicating=None, moving=None, loading=False, registry=None):
         """ Same as ``__setitem__``.
 
         If ``send_events`` is false, suppress the sending of folder events.
-        Disallow the addition of the name provided is in the
-        ``reserved_names`` list.  If ``duplicating`` is True, the
-        ObjectWillBeAdded event sent will be marked as 'duplicating', which
-        typically has the effect that the subobject's object id will be
-        overwritten instead of reused.  If ``registry`` is passed, it should
-        be a Pyramid registry object; otherwise the
-        ``pyramid.threadlocal.get_current_registry`` function is used to look
-        up the current registry.
+        Disallow the addition of the name provided is in the ``reserved_names``
+        list.  If ``duplicating`` is not None, it must be the object being
+        duplicated; when non-None, the ObjectWillBeAdded and ObjectAdded events
+        sent will be marked as 'duplicating', which typically has the effect
+        that the subobject's object id will be overwritten instead of reused.
+        If ``registry`` is passed, it should be a Pyramid registry object;
+        otherwise the ``pyramid.threadlocal.get_current_registry`` function is
+        used to look up the current registry.
 
         This method returns the name used to place the subobject in the
         folder (a derivation of ``name``, usually the result of
@@ -327,11 +325,12 @@ class IFolder(Interface):
         and ``__parent__`` value,
         """
 
-    def remove(name, send_events=True, moving=False, loading=False):
+    def remove(name, send_events=True, moving=None, loading=False):
         """ Same thing as ``__delitem__``.
 
-        If ``send_events`` is false, suppress the sending of folder events.
-        If ``moving`` is True, the events sent will indicate that a move is
+        If ``send_events`` is false, suppress the sending of folder events.  If
+        ``moving`` is not ``None``, it should be the folder object from which
+        the object is being moved; the events sent will indicate that a move is
         in process.
         """
 
@@ -386,7 +385,8 @@ class IAutoNamingFolder(IFolder):
     def add_next(
         subobject,
         send_events=True,
-        duplicating=False,
+        duplicating=None,
+        moving=None,
         registry=None,
         ):
         """Add a subobject, naming it automatically, giving it the name

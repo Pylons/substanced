@@ -1,7 +1,5 @@
-import collections
 import inspect
 import logging
-import threading
 import transaction
 import venusian
 
@@ -17,7 +15,6 @@ from pyramid.traversal import resource_path
 from pyramid.threadlocal import get_current_registry
 from pyramid.util import (
     object_description,
-    Sentinel,
     )
 
 from ..interfaces import (
@@ -44,6 +41,8 @@ from .factories import (
     Allowed,
     Path,
     )
+
+from . import queue
 
 Text = Text # API
 Field = Field # API
@@ -78,120 +77,6 @@ def catalog_buttons(context, request, default_buttons):
         ] + default_buttons
     return buttons
 
-MODE_IMMEDIATE = Sentinel('MODE_IMMEDIATE')
-MODE_ATCOMMIT = Sentinel('MODE_ATCOMMIT')
-
-ACTION_ADD = 'index_doc'
-ACTION_CHANGE = 'reindex_doc'
-ACTION_REMOVE = 'unindex_doc'
-
-class ActionQueue(threading.local):
-    def __init__(self, catalog):
-        self.clear()
-        self.catalog = catalog
-        t = transaction.get()
-        t.addBeforeCommitHook(self.process)
-
-    def clear(self):
-        self.catalog = None
-        self.actions = collections.deque()
-
-    def add(self, action, index_name, docid, *args):
-        self.actions.append((action, index_name, docid, args))
-
-    def process(self):
-        try:
-            if self.actions:
-                self.optimize()
-                self._process()
-        finally:
-            if self.catalog is not None: # might have been called manually
-                self.catalog.atcommit_actions = None # suicide
-                self.clear() # break any circrefs
-
-    def _process(self):
-        catalog = self.catalog
-        objectids = catalog.objectids
-        while self.actions:
-            action, index_name, docid, args = self.actions.pop()
-            meth = getattr(catalog[index_name], action)
-            meth(docid, *args)
-            if action in (ACTION_ADD, ACTION_CHANGE):
-                if not docid in objectids:
-                    objectids.insert(docid)
-            else:
-                if docid in objectids:
-                    objectids.remove(docid)
-
-    def optimize(self):
-        """
-
-        State chart for optimization.  If the new action is X and the existing
-        action is Y, generate the resulting action named in the chart cells.
-        
-                                New    ADD    REMOVE    CHANGE
-                                
-           Existing     ADD            add    nothing   add
-
-                      REMOVE           change remove    add
-
-                      CHANGE           add    remove    change
-        """
-        result = {}
-
-        def donothing(index_name, docid, action1, action2):
-            del result[(index_name, docid)]
-
-        def doadd(index_name, docid, action1, action2):
-            result[(index_name, docid)] = (
-                ACTION_ADD, index_name, docid, action2[3:]
-                )
-
-        def dochange(index_name, docid, action1, action2):
-            result[(index_name, docid)] = (
-                ACTION_CHANGE, index_name, docid, action2[3:]
-                )
-
-        def dodefault(index_name, docid, action1, action2):
-            result[(index_name, docid)] = action2
-            
-        statefuncs = {
-            # txn asked to remove an object that previously it was
-            # asked to add, conclusion is to do nothing
-            (ACTION_ADD, ACTION_REMOVE):donothing,
-            # txn asked to change an object that was not previously added,
-            # concusion is to just do the add
-            (ACTION_ADD, ACTION_CHANGE):doadd,
-            # txn action asked to remove an object then readd the same
-            # object.  We translate this to a change action.
-            (ACTION_REMOVE, ACTION_ADD):dochange,
-            # txn asked us to remove an object then change it; this
-            # is technically an error, but we ignore the remove and just do the
-            # change; call this case out even though it's the default for
-            # documentation/intent purposes
-            (ACTION_REMOVE, ACTION_CHANGE):dodefault,
-            # txn asked us to change an object then add it; this
-            # is technically an error, but we ignore the remove and just do the
-            # add; call this case out even though it's the default for
-            # documentation/intent purposes
-            (ACTION_CHANGE, ACTION_ADD):dodefault,
-            }
-
-        dummy = None, None, None, None
-                     
-        while self.actions:
-            newaction = self.actions.pop()
-            new_action_name, index_name, docid, _ = newaction
-            oldaction = result.get((docid, index_name), dummy)
-            old_action_name, _, _, _ = oldaction
-            statefunc = statefuncs.get(
-                (new_action_name, old_action_name),
-                dodefault
-                )
-            statefunc(index_name, docid, oldaction, newaction)
-
-        self.actions = collections.deque(result.values())
-
 @content(
     'Catalog',
     icon='icon-search',
@@ -203,7 +88,6 @@ class Catalog(Folder):
     
     family = BTrees.family64
     transaction = transaction
-    _p_atcommit_actions = None
     
     def __init__(self, family=None):
         Folder.__init__(self)
@@ -224,110 +108,41 @@ class Catalog(Folder):
             index.reset()
         self.objectids = self.family.IF.TreeSet()
 
-    def _get_atcommit_actions(self):
-        actions = self._p_atcommit_actions
-        if actions is None:
-            actions = self._p_atcommit_actions = ActionQueue(self)
-        return actions
-
-    def _set_atcommit_actions(self, val):
-        self._p_atcommit_actions = val
-
-    atcommit_actions = property(_get_atcommit_actions, _set_atcommit_actions)
-
-    def _index_doc_atcommit(self, index_name, docid, obj):
-        if docid in self.objectids:
-            action = ACTION_ADD
-        else:
-            action = ACTION_CHANGE
-
-        self.atcommit_actions.add(action, index_name, docid, obj)
-
-    def index_doc(self, docid, obj, commit_mode=None):
+    def index_doc(self, docid, obj, action_mode=None):
         """Register the document represented by ``obj`` in indexes of
         this catalog using objectid ``docid``."""
         _assertint(docid)
 
-        deferred = False
+        for index in self.values():
+            index.index_content(docid, obj, action_mode=action_mode)
 
-        for index_name, index in self.items():
-            if commit_mode is None:
-                commit_mode = getattr(index, 'commit_mode', None)
-            if commit_mode is MODE_ATCOMMIT:
-                deferred = True
-                self._index_doc_atcommit(index_name, docid, obj)
-            else:
-                index.index_doc(docid, obj)
+        self.objectids.insert(docid)
 
-        # pessimistically avoid adding objectid to our set of objectids
-        # until all deferred indexes have had a chance to index a value
-        # for it
-                
-        if not deferred:
-            self.objectids.insert(docid)
-
-    def _unindex_doc_atcommit(self, index_name, docid):
-        action = ACTION_REMOVE
-        self.atcommit_actions.add(self, action, index_name, docid)
-
-    def unindex_doc(self, docid, commit_mode=None):
+    def unindex_doc(self, docid, action_mode=None):
         """Unregister the document represented by docid from indexes of
         this catalog."""
         _assertint(docid)
 
-        deferred = False
-
-        for index_name, index in self.items():
-            if commit_mode is None:
-                commit_mode = getattr(index, 'commit_mode', None)
-            if commit_mode is MODE_ATCOMMIT:
-                self._unindex_doc_atcommit(docid)
-                deferred = True
-            else:
-                index.unindex_doc(docid)
+        for index in self.values():
+            index.unindex_content(docid, action_mode=action_mode)
                 
-        # pessimistically avoid adding objectid to our set of objectids
-        # until all deferred indexes have had a chance to index a value
-        # for it
+        try:
+            self.objectids.remove(docid)
+        except KeyError:
+            pass
 
-        if not deferred:
-            try:
-                self.objectids.remove(docid)
-            except KeyError:
-                pass
-
-    def _reindex_doc_atcommit(self, index_name, docid, obj):
-        if not docid in self.objectids:
-            action = ACTION_ADD
-        else:
-            action = ACTION_CHANGE
-        self.atcommit_actions.add(action, index_name, docid, obj)
-        
-    def reindex_doc(self, docid, obj, commit_mode=None):
+    def reindex_doc(self, docid, obj, action_mode=None):
         """ Reindex the document referenced by docid using the object
         passed in as ``obj`` (typically just does the equivalent of
         ``unindex_doc``, then ``index_doc``, but specialized indexes
         can override the method that this API calls to do less work. """
         _assertint(docid)
 
-        deferred = False
-        
-        for index_name, index in self.items():
-            if commit_mode is None:
-                commit_mode = getattr(index, 'commit_mode', None)
-            if commit_mode is MODE_ATCOMMIT:
-                self._reindex_doc_atcommit(index_name, docid, obj)
-                deferred = True
-            else:
-                index.reindex_doc(docid, obj)
+        for index in self.values():
+            index.reindex_content(docid, obj, action_mode=action_mode)
 
-        # pessimistically avoid adding objectid to our set of objectids
-        # until all deferred indexes have had a chance to index a value
-        # for it
-
-        if not deferred:
-            if not docid in self.objectids:
-                self.objectids.insert(docid)
+        if not docid in self.objectids:
+            self.objectids.insert(docid)
 
     def reindex(self, dry_run=False, commit_interval=200, indexes=None, 
                 path_re=None, output=None, registry=None):
@@ -405,10 +220,10 @@ class Catalog(Folder):
             output and output('%s reindexing %s' % (name, path))
 
             if indexes is None:
-                self.reindex_doc(objectid, resource, commit_mode=MODE_IMMEDIATE)
+                self.reindex_doc(objectid, resource)
             else:
                 for index in indexes:
-                    self[index].reindex_doc(objectid, resource)
+                    self[index].reindex_content(objectid, resource)
 
             if i % commit_interval == 0: # pragma: no cover
                 commit_or_abort()
@@ -529,7 +344,11 @@ class CatalogsService(Folder):
         if update_indexes:
             catalog.update_indexes(replace=True, reindex=True)
         # self-index so catalog shows up in folder contents
-        catalog.index_doc(get_oid(catalog), catalog, commit_mode=MODE_IMMEDIATE)
+        catalog.index_doc(
+            get_oid(catalog),
+            catalog,
+            action_mode=queue.MODE_IMMEDIATE,
+            )
         return catalog
 
     def __sdi_addable__(self, context, introspectable):
