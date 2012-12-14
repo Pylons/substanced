@@ -55,7 +55,7 @@ class Test_user_will_be_removed(unittest.TestCase):
         return user_will_be_removed(event)
 
     def test_loading(self):
-        event = testing.DummyResource(loading=True, moving=False)
+        event = testing.DummyResource(loading=True, moving=None)
         result = self._callFUT(event)
         self.assertEqual(result, None)
 
@@ -75,7 +75,7 @@ class Test_user_will_be_removed(unittest.TestCase):
         objectmap = DummyObjectMap((reset,))
         parent.__objectmap__ = objectmap
         parent['user'] = user
-        event = testing.DummyResource(object=user, loading=False, moving=False)
+        event = testing.DummyResource(object=user, loading=False, moving=None)
         self._callFUT(event)
         self.assertTrue(reset.committed)
 
@@ -116,11 +116,11 @@ class Test_acl_maybe_added(unittest.TestCase):
         self.assertEqual(self._callFUT(event), False)
 
     def test_loading(self):
-        event = DummyEvent(moving=False, loading=True)
+        event = DummyEvent(moving=None, loading=True)
         self.assertEqual(self._callFUT(event), False)
 
     def test_objectmap_is_None(self):
-        event = DummyEvent(moving=False, object=None, loading=False)
+        event = DummyEvent(moving=None, object=None, loading=False)
         self.assertEqual(self._callFUT(event), None)
 
     def test_no_acls(self):
@@ -130,7 +130,7 @@ class Test_acl_maybe_added(unittest.TestCase):
         resource1['resource2'] = resource2
         objectmap = DummyObjectMap()
         resource1.__objectmap__ = objectmap
-        event = DummyEvent(moving=False, object=resource1, loading=False)
+        event = DummyEvent(moving=None, object=resource1, loading=False)
         self._callFUT(event)
         self.assertEqual(objectmap.connections, [])
 
@@ -144,7 +144,7 @@ class Test_acl_maybe_added(unittest.TestCase):
         resource2.__acl__ = [(None, 'bob', None), (None, 2, None)]
         objectmap = DummyObjectMap()
         resource1.__objectmap__ = objectmap
-        event = DummyEvent(moving=False, object=resource1, loading=False)
+        event = DummyEvent(moving=None, object=resource1, loading=False)
         self._callFUT(event)
         self.assertEqual(
             objectmap.connections,
