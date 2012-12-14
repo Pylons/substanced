@@ -150,7 +150,9 @@ class TestCatalog(unittest.TestCase):
         site = _makeSite(catalog=inst, objectmap=objectmap)
         site['a'] = a
         inst.objectids = [1]
-        inst.reindex_doc = lambda objectid, model: L.append((objectid, model))
+        def reindex_doc(objectid, model, commit_mode=None):
+            L.append((objectid, model))
+        inst.reindex_doc = reindex_doc
         out = []
         inst.reindex(output=out.append)
         self.assertEqual(len(L), 1)
@@ -173,7 +175,9 @@ class TestCatalog(unittest.TestCase):
         site = _makeSite(catalog=inst, objectmap=objectmap)
         site['a'] = a
         inst.objectids = [1, 2]
-        inst.reindex_doc = lambda objectid, model: L.append((objectid, model))
+        def reindex_doc(objectid, model, commit_mode=None):
+            L.append((objectid, model))
+        inst.reindex_doc = reindex_doc
         out = []
         inst.reindex(output=out.append)
         self.assertEqual(L[0][0], 1)
@@ -215,7 +219,9 @@ class TestCatalog(unittest.TestCase):
         site['a'] = a
         site['b'] = b
         inst.objectids = [1, 2]
-        inst.reindex_doc = lambda objectid, model: L.append((objectid, model))
+        def reindex_doc(objectid, model, commit_mode=None):
+            L.append((objectid, model))
+        inst.reindex_doc = reindex_doc
         out = []
         inst.reindex(
             path_re=re.compile('/a'), 
@@ -240,7 +246,9 @@ class TestCatalog(unittest.TestCase):
         site['a'] = a
         site['b'] = b
         inst.objectids = [1,2]
-        inst.reindex_doc = lambda objectid, model: L.append((objectid, model))
+        def reindex_doc(objectid, model, commit_mode=None):
+            L.append((objectid, model))
+        inst.reindex_doc = reindex_doc
         out = []
         inst.reindex(dry_run=True, output=out.append)
         self.assertEqual(len(L), 2)
@@ -269,7 +277,9 @@ class TestCatalog(unittest.TestCase):
         index = DummyIndex()
         inst['index'] = index
         self.config.registry._substanced_indexes = {'index':index}
-        index.reindex_doc = lambda objectid, model: L.append((objectid, model))
+        def reindex_doc(objectid, model, commit_mode=None):
+            L.append((objectid, model))
+        index.reindex_doc = reindex_doc
         out = []
         inst.reindex(indexes=('index',),  output=out.append)
         self.assertEqual(out,
@@ -695,7 +705,7 @@ class DummyCatalog(dict):
     def update_indexes(self, *arg, **kw):
         self.updated = True
 
-    def index_doc(self, oid, obj):
+    def index_doc(self, oid, obj, commit_mode=None):
         self.indexed.append(oid)
 
 class DummyTransaction(object):
