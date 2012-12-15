@@ -216,7 +216,7 @@ class IndexActionTM(threading.local):
         if not self.registered:
             t = transaction.get()
             t.join(self)
-            t.addBeforeCommitHook(self.process)
+            t.addBeforeCommitHook(self.flush, (False,))
             self.registered = True
 
     def savepoint(self):
@@ -246,37 +246,50 @@ class IndexActionTM(threading.local):
     def add(self, action):
         self.actions.append(action)
 
-    def process(self):
+    def flush(self, immediate=True):
         if self.actions:
             actions = self.actions
             self.actions = []
             actions = optimize_actions(actions)
-            self._process(actions)
+            self._process(actions, immediate=immediate)
 
-    def _process(self, actions):
+    def _process(self, actions, immediate=False):
         registry = get_current_registry()
-        processor = registry.queryAdapter(self.index, IIndexingActionProcessor)
-        processor_active = processor is not None and processor.active()
-        if processor_active:
-            print 'action processor active'
-            deferred = []
-            for action in actions:
-                if action.mode is MODE_DEFERRED:
-                    print 'adding deferred action %r' % (action,)
-                    deferred.append(action)
-                else:
-                    print 'executing action %r' % (action,)
-                    action.execute()
-            if deferred:
-                processor.add(deferred)
+        print 'begin index actions processing'
+        if immediate:
+            print 'executing all actions immediately: immediate flag'
+            execute_actions_immediately(actions)
+            
         else:
-            # if we don't have an active action processor, we must process all
-            # of our actions immediately
-            print 'action processor not active'
-            for action in actions:
-                print 'executing action %r' % (action,)
-                action.execute()
-        print 'done processing actions'
+            processor = registry.queryAdapter(
+                self.index,
+                IIndexingActionProcessor
+                )
+            processor_active = processor is not None and processor.active()
+            if processor_active:
+                print 'executing deferred actions: action processor active'
+                execute_actions_deferred(actions, processor)
+            else:
+                print 'executing actions all immediately: no action processor'
+                execute_actions_immediately(actions)
+        print 'done processing index actions'
+
+def execute_actions_immediately(actions):
+    for action in actions:
+        print 'executing action %r' % (action,)
+        action.execute()
+
+def execute_actions_deferred(actions, processor):
+    deferred = []
+    for action in actions:
+        if action.mode is MODE_DEFERRED:
+            print 'adding deferred action %r' % (action,)
+            deferred.append(action)
+        else:
+            print 'executing action %r' % (action,)
+            action.execute()
+    if deferred:
+        processor.add(deferred)
 
 def optimize_actions(actions):
     """

@@ -20,10 +20,6 @@ UI-Plus-Guts
 
 - Text search view.
 
-- Queued catalog (queue up indexing actions in conflict-resistant structure(s),
-  flush them immediately or via a script; each index might be immediate or
-  deferred).
-
 - System performance monitoring.  Wave hands.
 
 Guts-Only
@@ -31,6 +27,11 @@ Guts-Only
 
 - Get rid of allowed index in favor of allowed-to-sdiview index for
   efficiency's sake.
+
+- Figure out wtf to do with pending threadlocal index actions and actions sent
+  to the actions processor in the face of an undo.
+
+- Flush executable indexing actions before a query is executed.
 
 - Figure out why ``sd_reindex`` doesn't log anything.
 

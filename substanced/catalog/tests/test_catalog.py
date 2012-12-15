@@ -84,60 +84,60 @@ class TestCatalog(unittest.TestCase):
         catalog = self._makeOne(family=BTrees.family32)
         self.failUnless(catalog.family is BTrees.family32)
 
-    def test_index_doc_indexes(self):
+    def test_index_resource_indexes(self):
         catalog = self._makeOne()
         idx = DummyIndex()
         catalog['name'] = idx
-        catalog.index_doc(1, 'value')
-        self.assertEqual(idx.docid, 1)
-        self.assertEqual(idx.value, 'value')
+        catalog.index_resource('value', 1)
+        self.assertEqual(idx.oid, 1)
+        self.assertEqual(idx.resource, 'value')
 
-    def test_index_doc_objectids(self):
+    def test_index_resource_objectids(self):
         inst = self._makeOne()
-        inst.index_doc(1, object())
+        inst.index_resource(object(), 1)
         self.assertEqual(list(inst.objectids), [1])
 
-    def test_index_doc_nonint_docid(self):
+    def test_index_resource_nonint_docid(self):
         catalog = self._makeOne()
         idx = DummyIndex()
         catalog['name'] = idx
-        self.assertRaises(ValueError, catalog.index_doc, 'abc', 'value')
+        self.assertRaises(ValueError, catalog.index_resource, 'value', 'abc')
 
-    def test_unindex_doc_indexes(self):
+    def test_unindex_resource_indexes(self):
         catalog = self._makeOne()
         idx = DummyIndex()
         catalog['name'] = idx
-        catalog.unindex_doc(1)
+        catalog.unindex_resource(1)
         self.assertEqual(idx.unindexed, 1)
         
-    def test_unindex_doc_objectids_exists(self):
+    def test_unindex_resource_objectids_exists(self):
         inst = self._makeOne()
         inst.objectids.insert(1)
-        inst.unindex_doc(1)
+        inst.unindex_resource(1)
         self.assertEqual(list(inst.objectids), [])
 
-    def test_unindex_doc_objectids_notexists(self):
+    def test_unindex_resource_objectids_notexists(self):
         inst = self._makeOne()
-        inst.unindex_doc(1)
+        inst.unindex_resource(1)
         self.assertEqual(list(inst.objectids), [])
 
-    def test_reindex_doc_indexes(self):
+    def test_reindex_resource_indexes(self):
         catalog = self._makeOne()
         idx = DummyIndex()
         catalog['name'] = idx
-        catalog.reindex_doc(1, 'value')
-        self.assertEqual(idx.reindexed_docid, 1)
-        self.assertEqual(idx.reindexed_ob, 'value')
+        catalog.reindex_resource('value', 1)
+        self.assertEqual(idx.reindexed_oid, 1)
+        self.assertEqual(idx.reindexed_resource, 'value')
 
-    def test_reindex_doc_objectids_exists(self):
+    def test_reindex_resource_objectids_exists(self):
         inst = self._makeOne()
         inst.objectids.insert(1)
-        inst.reindex_doc(1, object())
+        inst.reindex_resource(object(), 1)
         self.assertEqual(list(inst.objectids), [1])
         
-    def test_reindex_doc_objectids_notexists(self):
+    def test_reindex_resource_objectids_notexists(self):
         inst = self._makeOne()
-        inst.reindex_doc(1, object())
+        inst.reindex_resource(object(), 1)
         self.assertEqual(list(inst.objectids), [1])
         
     def test_reindex(self):
@@ -150,14 +150,14 @@ class TestCatalog(unittest.TestCase):
         site = _makeSite(catalog=inst, objectmap=objectmap)
         site['a'] = a
         inst.objectids = [1]
-        def reindex_doc(objectid, model, action_mode=None):
-            L.append((objectid, model))
-        inst.reindex_doc = reindex_doc
+        def reindex_resource(resource, oid=None, action_mode=None):
+            L.append((resource, oid))
+        inst.reindex_resource = reindex_resource
         out = []
         inst.reindex(output=out.append)
         self.assertEqual(len(L), 1)
-        self.assertEqual(L[0][0], 1)
-        self.assertEqual(L[0][1], a)
+        self.assertEqual(L[0][0], a)
+        self.assertEqual(L[0][1], 1)
         self.assertEqual(out,
                           ["catalog reindexing /a",
                           '*** committing ***'])
@@ -175,13 +175,13 @@ class TestCatalog(unittest.TestCase):
         site = _makeSite(catalog=inst, objectmap=objectmap)
         site['a'] = a
         inst.objectids = [1, 2]
-        def reindex_doc(objectid, model, action_mode=None):
-            L.append((objectid, model))
-        inst.reindex_doc = reindex_doc
+        def reindex_resource(resource, oid=None, action_mode=None):
+            L.append((resource, oid))
+        inst.reindex_resource = reindex_resource
         out = []
         inst.reindex(output=out.append)
-        self.assertEqual(L[0][0], 1)
-        self.assertEqual(L[0][1], a)
+        self.assertEqual(L[0][0], a)
+        self.assertEqual(L[0][1], 1)
         self.assertEqual(out,
                           ["catalog reindexing /a",
                           "error: object at path /b not found",
@@ -219,16 +219,16 @@ class TestCatalog(unittest.TestCase):
         site['a'] = a
         site['b'] = b
         inst.objectids = [1, 2]
-        def reindex_doc(objectid, model, action_mode=None):
-            L.append((objectid, model))
-        inst.reindex_doc = reindex_doc
+        def reindex_resource(resource, oid=None, action_mode=None):
+            L.append((resource, oid))
+        inst.reindex_resource = reindex_resource
         out = []
         inst.reindex(
             path_re=re.compile('/a'), 
             output=out.append
             )
-        self.assertEqual(L[0][0], 1)
-        self.assertEqual(L[0][1], a)
+        self.assertEqual(L[0][0], a)
+        self.assertEqual(L[0][1], 1)
         self.assertEqual(out,
                           ['catalog reindexing /a',
                           '*** committing ***'])
@@ -246,17 +246,17 @@ class TestCatalog(unittest.TestCase):
         site['a'] = a
         site['b'] = b
         inst.objectids = [1,2]
-        def reindex_doc(objectid, model, action_mode=None):
-            L.append((objectid, model))
-        inst.reindex_doc = reindex_doc
+        def reindex_resource(resource, oid, action_mode=None):
+            L.append((resource, oid))
+        inst.reindex_resource = reindex_resource
         out = []
         inst.reindex(dry_run=True, output=out.append)
         self.assertEqual(len(L), 2)
         L.sort()
-        self.assertEqual(L[0][0], 1)
-        self.assertEqual(L[0][1], a)
-        self.assertEqual(L[1][0], 2)
-        self.assertEqual(L[1][1], b)
+        self.assertEqual(L[0][0], a)
+        self.assertEqual(L[0][1], 1)
+        self.assertEqual(L[1][0], b)
+        self.assertEqual(L[1][1], 2)
         self.assertEqual(out,
                          ['catalog reindexing /a',
                           'catalog reindexing /b',
@@ -277,9 +277,9 @@ class TestCatalog(unittest.TestCase):
         index = DummyIndex()
         inst['index'] = index
         self.config.registry._substanced_indexes = {'index':index}
-        def reindex_content(objectid, model, action_mode=None):
-            L.append((objectid, model))
-        index.reindex_content = reindex_content
+        def reindex_resource(resource, oid=None, action_mode=None):
+            L.append((resource, oid))
+        index.reindex_resource = reindex_resource
         out = []
         inst.reindex(indexes=('index',),  output=out.append)
         self.assertEqual(out,
@@ -288,8 +288,8 @@ class TestCatalog(unittest.TestCase):
                           '*** committing ***'])
         self.assertEqual(transaction.committed, 1)
         self.assertEqual(len(L), 1)
-        self.assertEqual(L[0][0], 1)
-        self.assertEqual(L[0][1], a)
+        self.assertEqual(L[0][0], a)
+        self.assertEqual(L[0][1], 1)
 
     def _setup_factory(self, factory=None):
         from substanced.interfaces import ICatalogFactory
@@ -705,7 +705,7 @@ class DummyCatalog(dict):
     def update_indexes(self, *arg, **kw):
         self.updated = True
 
-    def index_doc(self, oid, obj, action_mode=None):
+    def index_resource(self, resource, oid=None, action_mode=None):
         self.indexed.append(oid)
 
 class DummyTransaction(object):
@@ -723,26 +723,31 @@ class DummyTransaction(object):
 @implementer(IIndex)
 class DummyIndex(object):
 
-    value = None
-    docid = None
+    resource = None
+    oid = None
+    action_mode = None
     limit = None
     sort_type = None
+    flushed = None
 
     def __init__(self, *arg, **kw):
         self.arg = arg
         self.kw = kw
 
-    def index_content(self, docid, value, action_mode=None):
-        self.docid = docid
-        self.value = value
-        return value
+    def flush(self, immediate=True):
+        self.flushed = immediate
 
-    def unindex_content(self, docid, action_mode=None):
-        self.unindexed = docid
+    def index_resource(self, resource, oid=None, action_mode=None):
+        self.resource = resource
+        self.oid = oid
+        self.action_mode = action_mode
 
-    def reindex_content(self, docid, object, action_mode=None):
-        self.reindexed_docid = docid
-        self.reindexed_ob = object
+    def unindex_resource(self, oid, action_mode=None):
+        self.unindexed = oid
+
+    def reindex_resource(self, resource, oid=None, action_mode=None):
+        self.reindexed_oid = oid
+        self.reindexed_resource = resource
 
     def reset(self):
         self.cleared = True

@@ -39,6 +39,7 @@ install_requires = [
     'pyyaml',
     'zope.copy',
     'zope.component', # implictly depended upon by zope.copy
+    'zope.deprecation',
     ]
 
 docs_extras = ['Sphinx', 'repoze.sphinx.autointerface']

@@ -62,9 +62,9 @@ def object_added(event):
         if oid is not None:
             for catalog in catalogs:
                 if reindex_only:
-                    catalog.reindex_doc(oid, node)
+                    catalog.reindex_resource(node, oid=oid)
                 else:
-                    catalog.index_doc(oid, node)
+                    catalog.index_resource(node, oid=oid)
 
 @subscribe_removed()
 def object_removed(event):
@@ -95,7 +95,7 @@ def object_removed(event):
 
     for catalog in catalogs:
         for oid in catalog.family.IF.intersection(removed, catalog.objectids):
-            catalog.unindex_doc(oid)
+            catalog.unindex_resource(oid)
 
 @subscribe_modified()
 def object_modified(event):
@@ -107,7 +107,7 @@ def object_modified(event):
     if oid is not None:
         catalogs = find_catalogs(obj)
         for catalog in catalogs:
-            catalog.reindex_doc(oid, obj)
+            catalog.reindex_resource(obj, oid=oid)
 
 @subscribe_acl_modified()
 def acl_modified(event):
@@ -125,7 +125,7 @@ def acl_modified(event):
                     logger.info('%s: reindexing %s' % (index_path, node))
                     oid = get_oid(node, None)
                     if oid is not None:
-                        index.reindex_doc(oid, node)
+                        index.reindex_resource(node, oid=oid)
 
 @subscriber(ApplicationCreated)
 def on_startup(event):

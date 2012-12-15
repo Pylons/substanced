@@ -5,6 +5,8 @@ import venusian
 
 import BTrees
 
+from zope.deprecation import deprecated
+
 from zope.interface import (
     implementer,
     Interface,
@@ -44,6 +46,11 @@ from .factories import (
     Path,
     )
 
+from .util import (
+    oid_from_resource,
+    oid_from_resource_or_oid,
+    )
+
 from . import queue
 
 Text = Text # API
@@ -56,11 +63,6 @@ Path = Path # API
 logger = logging.getLogger(__name__) # API
 
 _marker = object()
-
-def _assertint(docid):
-    if not isinstance(docid, (int, long)):
-        raise ValueError('%r is not an integer value; document ids must be '
-                         'integers' % docid)
 
 def catalog_buttons(context, request, default_buttons):
     """ Show a reindex button before default buttons in the folder contents
@@ -104,54 +106,114 @@ class Catalog(Folder):
         meta = introspectable['meta']
         return meta.get('is_index', False)
 
+    def flush(self, immediate=True):
+        """ Flush any pending indexing actions for all indexes in this catalog.
+        If ``immediate`` is ``True``, *all* actions will be immediately
+        executed.  If ``immediate`` is ``False``,
+        :attr:`~substanced.interfaces.MODE_DEFERRED` actions will be sent to
+        the actions processor if one is active, and all other actions will be
+        executed immediately."""
+        for index in self.values():
+            index.flush(immediate=immediate)
+
     def reset(self):
-        """ Clear all indexes in this catalog and clear self.objectids. """
+        """ Reset all indexes in this catalog and clear self.objectids. """
         for index in self.values():
             index.reset()
         self.objectids = self.family.IF.TreeSet()
 
-    def index_doc(self, docid, obj, action_mode=None):
-        """Register the document represented by ``obj`` in indexes of
-        this catalog using objectid ``docid``."""
-        _assertint(docid)
+    def index_resource(self, resource, oid=None, action_mode=None):
+        """Register the resource in indexes of this catalog using objectid
+        ``oid``.  If ``oid`` is not supplied, the ``__oid__`` of the
+        ``resource`` will be used.  ``action_mode``, if supplied, should be one
+        of ``None``, :attr:`~substanced.interfaces.MODE_IMMEDIATE`,
+        :attr:`~substanced.interfaces.MODE_ATCOMMIT` or
+        :attr:`~substanced.interfaces.MODE_DEFERRED`, indicating when the
+        updates should take effect.  The ``action_mode`` value will overrule
+        any action mode a member index has been configured with."""
+        oid = oid_from_resource(resource, oid)
+        for index in self.values():
+            index.index_resource(resource, oid=oid, action_mode=action_mode)
+        self.objectids.insert(oid)
+
+    def index_doc(self, docid, obj):
+        """ Bw compatibility function """
+        return self.index_resource(obj, oid=docid)
+
+    index_doc = deprecated(
+        index_doc,
+        'index_doc is deprecated, use index_resource'
+        )
+
+    def unindex_resource(self, resource_or_oid, action_mode=None):
+        """Deregister the resource in indexes of this catalog using objectid or
+        resource ``resource_or_oid``.  If ``resource_or_oid`` is an integer, it
+        will be used as the oid; if ``resource_or_oid`` is a resource, its
+        ``__oid__`` attribute will be used as the oid.  ``action_mode``, if
+        supplied, should be one of ``None``,
+        :attr:`~substanced.interfaces.MODE_IMMEDIATE`,
+        :attr:`~substanced.interfaces.MODE_ATCOMMIT` or
+        :attr:`~substanced.interfaces.MODE_DEFERRED` indicating when the
+        updates should take effect.  The ``action_mode`` value will overrule
+        any action mode a member index has been configured with."""
+        oid = oid_from_resource_or_oid(resource_or_oid)
 
         for index in self.values():
-            index.index_content(docid, obj, action_mode=action_mode)
-
-        self.objectids.insert(docid)
-
-    def unindex_doc(self, docid, action_mode=None):
-        """Unregister the document represented by docid from indexes of
-        this catalog."""
-        _assertint(docid)
-
-        for index in self.values():
-            index.unindex_content(docid, action_mode=action_mode)
+            index.unindex_resource(oid, action_mode=action_mode)
                 
         try:
-            self.objectids.remove(docid)
+            self.objectids.remove(oid)
         except KeyError:
             pass
+        
 
-    def reindex_doc(self, docid, obj, action_mode=None):
-        """ Reindex the document referenced by docid using the object
-        passed in as ``obj`` (typically just does the equivalent of
-        ``unindex_doc``, then ``index_doc``, but specialized indexes
-        can override the method that this API calls to do less work. """
-        _assertint(docid)
+    def unindex_doc(self, docid):
+        """ Bw compatibility function """
+        return self.unindex_resource(docid)
 
+    unindex_doc = deprecated(
+        unindex_doc,
+        'unindex_doc is deprecated, use unindex_resource'
+        )
+
+    def reindex_resource(self, resource, oid=None, action_mode=None):
+        """Register the resource in indexes of this catalog using objectid
+        ``oid``.  If ``oid`` is not supplied, the ``__oid__`` of the
+        ``resource`` will be used.  ``action_mode``, if supplied, should be one
+        of ``None``, :attr:`~substanced.interfaces.MODE_IMMEDIATE`,
+        :attr:`~substanced.interfaces.MODE_ATCOMMIT` or
+        :attr:`~substanced.interfaces.MODE_DEFERRED` indicating when the
+        updates should take effect.  The ``action_mode`` value will overrule
+        any action mode a member index has been configured with.
+
+        The result of calling this method is logically the same as calling
+        ``unindex_resource``, then ``index_resource`` for the same resource/oid
+        combination, but calling those two methods in succession is often more
+        expensive than calling this single method, as member indexes can choose
+        to do smarter things during a reindex than what they would do during an
+        unindex then an index.
+        """
+        oid = oid_from_resource(resource, oid)
         for index in self.values():
-            index.reindex_content(docid, obj, action_mode=action_mode)
+            index.reindex_resource(resource, oid=oid, action_mode=action_mode)
+        if not oid in self.objectids:
+            self.objectids.insert(oid)
 
-        if not docid in self.objectids:
-            self.objectids.insert(docid)
+    def reindex_doc(self, docid, obj):
+        """ Bw compatibility method """
+        return self.reindex_resource(obj, oid=docid)
+    
+    reindex_doc = deprecated(
+        reindex_doc,
+        'reindex_doc is deprecated, use reindex_resource'
+        )
 
     def reindex(self, dry_run=False, commit_interval=200, indexes=None, 
                 path_re=None, output=None, registry=None):
 
         """\
         Reindex all objects in the catalog using the existing set of
-        indexes. 
+        indexes immediately.
 
         If ``dry_run`` is ``True``, do no actual work but send what would be
         changed to the logger.
@@ -202,16 +264,19 @@ class Catalog(Folder):
                 name, str(indexes)
                 ))
 
+        if not dry_run:
+            self.flush(immediate=True)
+
         i = 1
         objectmap = find_objectmap(self)
-        for objectid in self.objectids:
-            resource = objectmap.object_for(objectid)
+        for oid in self.objectids:
+            resource = objectmap.object_for(oid)
             if resource is None:
-                path = objectmap.path_for(objectid)
+                path = objectmap.path_for(oid)
                 if path is None:
                     output and output(
                         'error: no path for objectid %s in object map' % 
-                        objectid)
+                        oid)
                     continue
                 upath = u'/'.join(path)
                 output and output('error: object at path %s not found' % upath)
@@ -222,10 +287,18 @@ class Catalog(Folder):
             output and output('%s reindexing %s' % (name, path))
 
             if indexes is None:
-                self.reindex_doc(objectid, resource)
+                self.reindex_resource(
+                    resource,
+                    oid=oid,
+                    action_mode=MODE_IMMEDIATE,
+                    )
             else:
                 for index in indexes:
-                    self[index].reindex_content(objectid, resource)
+                    self[index].reindex_resource(
+                        resource,
+                        oid=oid,
+                        action_mode=MODE_IMMEDIATE,
+                        )
 
             if i % commit_interval == 0: # pragma: no cover
                 commit_or_abort()
@@ -346,9 +419,9 @@ class CatalogsService(Folder):
         if update_indexes:
             catalog.update_indexes(replace=True, reindex=True)
         # self-index so catalog shows up in folder contents
-        catalog.index_doc(
-            get_oid(catalog),
+        catalog.index_resource(
             catalog,
+            oid=get_oid(catalog),
             action_mode=MODE_IMMEDIATE,
             )
         return catalog

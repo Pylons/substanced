@@ -1,7 +1,5 @@
 from zope.interface.interfaces import IObjectEvent
 
-from hypatia.interfaces import ICatalog as _ICatalog
-
 from zope.interface import (
     Interface,
     Attribute,
@@ -397,10 +395,61 @@ class IAutoNamingFolder(IFolder):
         This method returns the name of the subobject.
         """
 
-class ICatalog(_ICatalog):
-    """ A collection of indices """
+class ICatalog(Interface):
+    """ A collection of indices. """
+
     objectids = Attribute(
         'a sequence of objectids that are cataloged in this catalog')
+
+    def index_resource(resource, oid=None, action_mode=None):
+        """Register the resource in indexes of this catalog using objectid
+        ``oid``.  If ``oid`` is not supplied, the ``__oid__`` of the
+        ``resource`` will be used.  ``action_mode``, if supplied, should be one
+        of ``None``, :attr:`~substanced.interfaces.MODE_IMMEDIATE`,
+        :attr:`~substanced.interfaces.MODE_ATCOMMIT` or
+        :attr:`~substanced.interfaces.MODE_DEFERRED`."""
+
+    def reindex_resource(resource, oid=None, action_mode=None):
+        """Register the resource in indexes of this catalog using objectid
+        ``oid``.  If ``oid`` is not supplied, the ``__oid__`` of the
+        ``resource`` will be used.  ``action_mode``, if supplied, should be one
+        of ``None``, :attr:`~substanced.interfaces.MODE_IMMEDIATE`,
+        :attr:`~substanced.interfaces.MODE_ATCOMMIT` or
+        :attr:`~substanced.interfaces.MODE_DEFERRED` indicating when the updates
+        should take effect.  The ``action_mode`` value will overrule any
+        action mode that a member index has been configured with.
+
+        The result of calling this method is logically the same as calling
+        ``unindex_resource``, then ``index_resource`` for the same resource/oid
+        combination, but calling those two methods in succession is often more
+        expensive than calling this single method, as member indexes can choose
+        to do smarter things during a reindex than what they would do during an
+        unindex then an index.
+        """
+
+    def unindex_resource(resource_or_oid, action_mode=None):
+        """Deregister the resource in indexes of this catalog using objectid or
+        resource ``resource_or_oid``.  If ``resource_or_oid`` is an integer, it
+        will be used as the oid; if ``resource_or_oid`` is a resource, its
+        ``__oid__`` attribute will be used as the oid.  ``action_mode``, if
+        supplied, should be one of ``None``,
+        :attr:`~substanced.interfaces.MODE_IMMEDIATE`,
+        :attr:`~substanced.interfaces.MODE_ATCOMMIT` or
+        :attr:`~substanced.interfaces.MODE_DEFERRED`."""
+
+    def __getitem__(name):
+        """ Return the index named ``name``"""
+
+    def reset():
+        """ Clear all indexes in this catalog and clear self.objectids. """
+
+    def flush(immediate=True):
+        """ Flush any pending indexing actions for all indexes in this catalog.
+        If ``immediate`` is ``True``, *all* actions will be immediately
+        executed.  If ``immediate`` is ``False``,
+        :attr:`~substanced.interfaces.MODE_DEFERRED` actions will be sent to
+        the actions processor if one is active, and all other actions will be
+        executed immediately."""
 
     def reindex(dry_run=False, commit_interval=200, indexes=None, 
                 path_re=None, output=None):
@@ -430,6 +479,17 @@ class ICatalog(_ICatalog):
         is passed (the default), the output will wind up in the
         ``substanced.catalog`` Python logger output at ``info`` level.
         """
+
+    def update_indexes(
+        registry=None,
+        dry_run=False,
+        output=None,
+        replace=False,
+        reindex=False,
+        **kw):
+        """ Use the candidate indexes registered via
+        ``config.add_catalog_factory`` to populate this catalog."""
+                       
         
 class IPrincipal(Interface):
     """ Marker interface representing a user or group """
@@ -624,11 +684,18 @@ class IIndexingActionProcessor(Interface):
 # result can be compared against an imported version using "is"
 
 class MODE_IMMEDIATE(object):
-    pass
+    """ Sentinel indicating that an indexing action should take place as
+    immediately as possible."""
 
 class MODE_ATCOMMIT(object):
-    pass
+    """ Sentinel indicating that an indexing action should take place at the
+    successful end of the current transaction."""
 
 class MODE_DEFERRED(object):
-    pass
+    """ Sentinel indicating that an indexing action should be performed by an
+    external indexing processor (e.g. ``drain_catalog_indexing``) if one is
+    active at the successful end of the current transaction.  If an indexing
+    processor is unavailable at the successful end of the current transaction,
+    this mode will be taken to imply the same thing as
+    :attr:`~substanced.interfaces.MODE_ATCOMMIT`."""
 

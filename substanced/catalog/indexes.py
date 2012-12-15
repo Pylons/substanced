@@ -30,6 +30,10 @@ from ..schema import Schema
 from ..property import PropertySheet
 
 from .discriminators import dummy_discriminator
+from .util import (
+    oid_from_resource,
+    oid_from_resource_or_oid,
+    )
 from . import queue
 
 from .. import interfaces as sd_interfaces
@@ -44,9 +48,6 @@ class ResolvingIndex(object):
 
     _p_action_tm = None
     action_mode = None
-
-    def seen(self, docid):
-        return docid in self.docids()
 
     def resultset_from_query(self, query, names=None, resolver=None):
         # XXX we should probably flush pending atcommit actions before
@@ -70,35 +71,42 @@ class ResolvingIndex(object):
     def clear_action_tm(self):
         self._p_action_tm = None
 
+    def flush(self, immediate=True):
+        if self._p_action_tm is not None:
+            self._p_action_tm.flush(immediate=immediate)
+
     def add_action(self, action):
         action_tm = self.get_action_tm()
         action_tm.add(action)
 
-    def index_content(self, docid, obj, action_mode=None):
+    def index_resource(self, resource, oid=None, action_mode=None):
+        oid = oid_from_resource(resource, oid)
         if action_mode is None:
             action_mode = self.action_mode
         if action_mode in (None, MODE_IMMEDIATE):
-            self.index_doc(docid, obj)
+            self.index_doc(oid, resource)
         else:
-            action = queue.AddAction(self, action_mode, docid, obj)
+            action = queue.AddAction(self, action_mode, oid, resource)
             self.add_action(action)
 
-    def reindex_content(self, docid, obj, action_mode=None):
+    def reindex_resource(self, resource, oid=None, action_mode=None):
+        oid = oid_from_resource(resource, oid)
         if action_mode is None:
             action_mode = self.action_mode
         if action_mode in (None, MODE_IMMEDIATE):
-            self.reindex_doc(docid, obj)
+            self.reindex_doc(oid, resource)
         else:
-            action = queue.ChangeAction(self, action_mode, docid, obj)
+            action = queue.ChangeAction(self, action_mode, oid, resource)
             self.add_action(action)
 
-    def unindex_content(self, docid, action_mode=None):
+    def unindex_resource(self, resource_or_oid, action_mode=None):
+        oid = oid_from_resource_or_oid(resource_or_oid)
         if action_mode is None:
             action_mode = self.action_mode
         if action_mode in (None, MODE_IMMEDIATE):
-            self.unindex_doc(docid)
+            self.unindex_doc(oid)
         else:
-            action = queue.RemoveAction(self, action_mode, docid)
+            action = queue.RemoveAction(self, action_mode, oid)
             self.add_action(action)
 
     def __repr__(self):

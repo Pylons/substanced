@@ -47,10 +47,10 @@ class Test_object_added(unittest.TestCase):
         self._callFUT(event)
         indexed = catalog.indexed
         self.assertEqual(len(indexed), 2)
-        self.assertEqual(indexed[0][0], 2)
-        self.assertEqual(indexed[0][1], model2)
-        self.assertEqual(indexed[1][0], 1)
-        self.assertEqual(indexed[1][1], model1)
+        self.assertEqual(indexed[0][0], model2)
+        self.assertEqual(indexed[0][1], 2)
+        self.assertEqual(indexed[1][0], model1)
+        self.assertEqual(indexed[1][1], 1)
         
     def test_catalogable_objects_disjoint(self):
         from ...interfaces import IFolder
@@ -66,8 +66,8 @@ class Test_object_added(unittest.TestCase):
         self._callFUT(event)
         indexed = catalog.indexed
         self.assertEqual(len(indexed), 1)
-        self.assertEqual(indexed[0][0], 1)
-        self.assertEqual(indexed[0][1], model2)
+        self.assertEqual(indexed[0][0], model2)
+        self.assertEqual(indexed[0][1], 1)
 
     def test_multiple_catalogs(self):
         from ...interfaces import IFolder
@@ -89,10 +89,10 @@ class Test_object_added(unittest.TestCase):
         for catalog in (catalog1, catalog2):
             indexed = catalog.indexed
             self.assertEqual(len(indexed), 2)
-            self.assertEqual(indexed[0][0], 2)
-            self.assertEqual(indexed[0][1], model2)
-            self.assertEqual(indexed[1][0], 1)
-            self.assertEqual(indexed[1][1], model1)
+            self.assertEqual(indexed[0][0], model2)
+            self.assertEqual(indexed[0][1], 2)
+            self.assertEqual(indexed[1][0], model1)
+            self.assertEqual(indexed[1][1], 1)
 
 class Test_object_removed(unittest.TestCase):
     def _callFUT(self, event):
@@ -175,8 +175,8 @@ class Test_object_modified(unittest.TestCase):
         self._callFUT(event)
         reindexed = catalog.reindexed
         self.assertEqual(len(reindexed), 1)
-        self.assertEqual(reindexed[0][0], 1)
-        self.assertEqual(reindexed[0][1], model)
+        self.assertEqual(reindexed[0][0], model)
+        self.assertEqual(reindexed[0][1], 1)
 
     def test_multiple_catalogs(self):
         objectmap = DummyObjectMap()
@@ -198,8 +198,8 @@ class Test_object_modified(unittest.TestCase):
         for catalog in (catalog1, catalog2):
             reindexed = catalog.reindexed
             self.assertEqual(len(reindexed), 1)
-            self.assertEqual(reindexed[0][0], 1)
-            self.assertEqual(reindexed[0][1], model)
+            self.assertEqual(reindexed[0][0], model)
+            self.assertEqual(reindexed[0][1], 1)
 
 class Test_acl_modified(unittest.TestCase):
     def _callFUT(self, event):
@@ -229,7 +229,7 @@ class Test_acl_modified(unittest.TestCase):
         event.registry = registry
         self._callFUT(event)
         self.assertEqual(index.oid, 1)
-        self.assertEqual(index.data, resource)
+        self.assertEqual(index.resource, resource)
 
 class Test_on_startup(unittest.TestCase):
     def setUp(self):
@@ -325,14 +325,14 @@ class DummyCatalog(dict):
         self.result = result
         self.raises = raises
 
-    def index_doc(self, objectid, obj):
-        self.indexed.append((objectid, obj))
+    def index_resource(self, resource, oid=None):
+        self.indexed.append((resource, oid))
 
-    def unindex_doc(self, objectid):
-        self.unindexed.append(objectid)
+    def unindex_resource(self, resource_or_oid):
+        self.unindexed.append(resource_or_oid)
 
-    def reindex_doc(self, objectid, obj):
-        self.reindexed.append((objectid, obj))
+    def reindex_resource(self, resource, oid=None):
+        self.reindexed.append((resource, oid))
 
     def update_indexes(self, *arg, **kw):
         if self.raises:
@@ -373,6 +373,6 @@ class DummyIndex(object):
     def __init__(self):
         self.reindexed = []
 
-    def reindex_doc(self, oid, data):
+    def reindex_resource(self, resource, oid=None, action_mode=None):
         self.oid = oid
-        self.data = data
+        self.resource = resource
