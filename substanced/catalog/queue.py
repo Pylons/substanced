@@ -65,24 +65,26 @@ class DumberNDirtActionProcessor(object):
         if queue is None:
             raise RuntimeError('Queue processor not engaged')
         queue.extend(actions)
+        self.get_root()._p_changed = True
 
     def sync(self):
         self.index._p_jar.sync()
 
     def process(self, sleep=5, once=False):
-        queue = self.get_queue()
         self.engage()
         try:
             while True:
                 print 'doing processing'
                 self.sync()
                 executed = False
+                queue = self.get_queue()
                 while queue:
                     action = queue.popleft()
                     print 'executing %s' % (action,)
                     action.execute()
                     executed = True
                 if executed:
+                    self.get_root()._p_changed = True
                     try:
                         print 'committing'
                         transaction.commit()
@@ -172,9 +174,11 @@ class IndexActionQueue(threading.local):
         processor = registry.queryAdapter(self.index, IIndexingActionProcessor)
         processor_active = processor is not None and processor.active()
         if processor_active:
+            print 'action processor active'
             deferred = []
             for action in self.actions:
                 if action.mode is MODE_DEFERRED:
+                    print 'adding deferred action %r' % (action,)
                     deferred.append(action)
                 else:
                     action.execute()
