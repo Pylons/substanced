@@ -22,6 +22,7 @@ from ..interfaces import (
     ICatalogFactory,
     IIndexView,
     IIndexingActionProcessor,
+    MODE_IMMEDIATE,
     )
 
 from ..content import (
@@ -348,7 +349,7 @@ class CatalogsService(Folder):
         catalog.index_doc(
             get_oid(catalog),
             catalog,
-            action_mode=queue.MODE_IMMEDIATE,
+            action_mode=MODE_IMMEDIATE,
             )
         return catalog
 

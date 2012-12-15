@@ -11,19 +11,10 @@ from ZODB.POSException import ConflictError
 
 from pyramid.threadlocal import get_current_registry
 
-from substanced.interfaces import IIndexingActionProcessor
-
-# MODE_ sentinels are classes so that when one is unpickled, the result can
-# be compared against an imported version using "is"
-
-class MODE_IMMEDIATE(object):
-    pass
-
-class MODE_ATCOMMIT(object):
-    pass
-
-class MODE_DEFERRED(object):
-    pass
+from substanced.interfaces import (
+    IIndexingActionProcessor,
+    MODE_DEFERRED,
+    )
 
 class Action(object):
     def __repr__(self):
@@ -32,7 +23,7 @@ class Action(object):
         return '<%s object docid %r for index %r at %#x>' % (
             classname,
             self.docid,
-            self.index.__name__,
+            getattr(self.index, '__name__', None),
             id(self)
             )
 
@@ -70,11 +61,16 @@ class DumberNDirtActionProcessor(object):
         self.context = context
 
     def get_root(self):
-        zodb_root = self.context._p_jar.root()
+        jar = self.context._p_jar
+        if jar is None:
+            return None
+        zodb_root = jar.root()
         return zodb_root
 
     def get_queue(self):
         zodb_root = self.get_root()
+        if zodb_root is None:
+            return None
         queue = zodb_root.get('dndqueue')
         return queue
 
@@ -86,6 +82,8 @@ class DumberNDirtActionProcessor(object):
         queue = self.get_queue()
         if queue is None:
             zodb_root = self.get_root()
+            if zodb_root is None:
+                raise RuntimeError('Context has no jar')
             queue = ActionsQueue()
             zodb_root['dndqueue'] = queue
             transaction.commit()
@@ -93,6 +91,8 @@ class DumberNDirtActionProcessor(object):
     def disengage(self):
         self.sync()
         zodb_root = self.get_root()
+        if zodb_root is None:
+            raise RuntimeError('Context has no jar')
         zodb_root.pop('dndqueue', None)
         transaction.commit()
 
@@ -103,7 +103,9 @@ class DumberNDirtActionProcessor(object):
         queue.extend(actions)
 
     def sync(self):
-        self.context._p_jar.sync()
+        jar = self.context._p_jar
+        if jar is not None:
+            jar.sync()
 
     def process(self, sleep=5, once=False):
         print 'engaging'
@@ -263,14 +265,18 @@ class IndexActionTM(threading.local):
                     print 'adding deferred action %r' % (action,)
                     deferred.append(action)
                 else:
+                    print 'executing action %r' % (action,)
                     action.execute()
             if deferred:
                 processor.add(deferred)
         else:
             # if we don't have an active action processor, we must process all
             # of our actions immediately
+            print 'action processor not active'
             for action in actions:
+                print 'executing action %r' % (action,)
                 action.execute()
+        print 'done processing actions'
 
 def optimize_actions(actions):
     """

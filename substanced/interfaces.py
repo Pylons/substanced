@@ -620,3 +620,15 @@ class IIndexingActionProcessor(Interface):
     """ Processor of deferred indexing/unindexing actions of
     catalogs in the system"""
 
+# MODE_ sentinels are classes so that when one is pickled, then unpickled, the
+# result can be compared against an imported version using "is"
+
+class MODE_IMMEDIATE(object):
+    pass
+
+class MODE_ATCOMMIT(object):
+    pass
+
+class MODE_DEFERRED(object):
+    pass
+

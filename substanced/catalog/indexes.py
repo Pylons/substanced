@@ -32,6 +32,10 @@ from ..property import PropertySheet
 from .discriminators import dummy_discriminator
 from . import queue
 
+from .. import interfaces as sd_interfaces
+
+from ..interfaces import MODE_IMMEDIATE
+
 PATH_WITH_OPTIONS = re.compile(r'\[(.+?)\](.+?)$')
 
 _marker = object()
@@ -73,7 +77,7 @@ class ResolvingIndex(object):
     def index_content(self, docid, obj, action_mode=None):
         if action_mode is None:
             action_mode = self.action_mode
-        if action_mode in (None, queue.MODE_IMMEDIATE):
+        if action_mode in (None, MODE_IMMEDIATE):
             self.index_doc(docid, obj)
         else:
             action = queue.AddAction(self, action_mode, docid, obj)
@@ -82,7 +86,7 @@ class ResolvingIndex(object):
     def reindex_content(self, docid, obj, action_mode=None):
         if action_mode is None:
             action_mode = self.action_mode
-        if action_mode in (None, queue.MODE_IMMEDIATE):
+        if action_mode in (None, MODE_IMMEDIATE):
             self.reindex_doc(docid, obj)
         else:
             action = queue.ChangeAction(self, action_mode, docid, obj)
@@ -91,7 +95,7 @@ class ResolvingIndex(object):
     def unindex_content(self, docid, action_mode=None):
         if action_mode is None:
             action_mode = self.action_mode
-        if action_mode in (None, queue.MODE_IMMEDIATE):
+        if action_mode in (None, MODE_IMMEDIATE):
             self.unindex_doc(docid)
         else:
             action = queue.RemoveAction(self, action_mode, docid)
@@ -263,7 +267,7 @@ class IndexPropertySheet(PropertySheet):
         if not action_mode:
             action_mode = None
         else:
-            action_mode = getattr(queue, action_mode)
+            action_mode = getattr(sd_interfaces, action_mode)
         self.context.action_mode = action_mode
 
     def get(self):
@@ -281,10 +285,11 @@ class IndexPropertySheet(PropertySheet):
     propertysheets = ( ('', IndexPropertySheet), ),
     )
 class FieldIndex(ResolvingIndex, hypatia.field.FieldIndex):
-    def __init__(self, discriminator=None, family=None):
+    def __init__(self, discriminator=None, family=None, action_mode=None):
         if discriminator is None:
             discriminator = dummy_discriminator
         hypatia.field.FieldIndex.__init__(self, discriminator, family=family)
+        self.action_mode = action_mode
 
 @content(
     'Keyword Index',
@@ -293,12 +298,13 @@ class FieldIndex(ResolvingIndex, hypatia.field.FieldIndex):
     propertysheets = ( ('', IndexPropertySheet), ),
     )
 class KeywordIndex(ResolvingIndex, hypatia.keyword.KeywordIndex):
-    def __init__(self, discriminator=None, family=None):
+    def __init__(self, discriminator=None, family=None, action_mode=None):
         if discriminator is None:
             discriminator = dummy_discriminator
         hypatia.keyword.KeywordIndex.__init__(
             self, discriminator, family=family
             )
+        self.action_mode = action_mode
 
 @content(
     'Text Index',
@@ -312,13 +318,15 @@ class TextIndex(ResolvingIndex, hypatia.text.TextIndex):
         discriminator=None,
         lexicon=None,
         index=None,
-        family=None
+        family=None,
+        action_mode=None,
         ):
         if discriminator is None:
             discriminator = dummy_discriminator
         hypatia.text.TextIndex.__init__(
             self, discriminator, lexicon=lexicon, index=index, family=family,
             )
+        self.action_mode = action_mode
 
 @content(
     'Facet Index',
@@ -327,7 +335,8 @@ class TextIndex(ResolvingIndex, hypatia.text.TextIndex):
     propertysheets = ( ('', IndexPropertySheet), ),
     )
 class FacetIndex(ResolvingIndex, hypatia.facet.FacetIndex):
-    def __init__(self, discriminator=None, facets=None, family=None):
+    def __init__(self, discriminator=None, facets=None, family=None,
+                 action_mode=None):
         if discriminator is None:
             discriminator = dummy_discriminator
         if facets is None:
@@ -335,6 +344,7 @@ class FacetIndex(ResolvingIndex, hypatia.facet.FacetIndex):
         hypatia.facet.FacetIndex.__init__(
             self, discriminator, facets=facets, family=family
             )
+        self.action_mode = action_mode
 
 @content(
     'Allowed Index',
@@ -343,11 +353,6 @@ class FacetIndex(ResolvingIndex, hypatia.facet.FacetIndex):
     propertysheets = ( ('', IndexPropertySheet), ),
     )
 class AllowedIndex(KeywordIndex):
-    def __init__(self, discriminator=None, family=None):
-        if discriminator is None:
-            discriminator = dummy_discriminator
-        KeywordIndex.__init__(self, discriminator, family=family)
-
     def allows(self, principals, permission='view'):
         """ ``principals`` may either be 1) a sequence of principal
         indentifiers, 2) a single principal identifier, or 3) a Pyramid

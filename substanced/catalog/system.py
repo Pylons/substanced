@@ -14,6 +14,11 @@ from .factories import (
 
 from . import catalog_factory
 
+from ..interfaces import (
+    MODE_DEFERRED,
+    MODE_IMMEDIATE,
+    )
+
 class SystemIndexViews(object):
     def __init__(self, resource):
         self.resource = resource
@@ -90,11 +95,11 @@ class SystemCatalogFactory(object):
 
     """
     path = Path()
-    name = Field()
-    interfaces = Keyword()
-    containment = Keyword()
-    allowed = Allowed()
-    text = Text()
+    name = Field(action_mode=MODE_DEFERRED)
+    interfaces = Keyword(action_mode=MODE_DEFERRED)
+    containment = Keyword(action_mode=MODE_DEFERRED)
+    allowed = Allowed(action_mode=MODE_IMMEDIATE)
+    text = Text(action_mode=MODE_DEFERRED)
 
 def includeme(config): # pragma: no cover
     for name in ('interfaces', 'containment', 'name', 'text'):
