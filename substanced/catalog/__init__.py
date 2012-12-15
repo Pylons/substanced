@@ -21,6 +21,7 @@ from ..interfaces import (
     ICatalog,
     ICatalogFactory,
     IIndexView,
+    IIndexingActionProcessor,
     )
 
 from ..content import (
@@ -584,10 +585,12 @@ def add_indexview(
     
     config.action(discriminator, callable=register, introspectables=(intr,))
     
-
 def includeme(config): # pragma: no cover
     config.add_view_predicate('catalogable', _CatalogablePredicate)
     config.add_directive('add_catalog_factory', add_catalog_factory)
     config.add_directive('add_indexview', add_indexview)
     config.include('.system')
     config.add_permission('view') # for allowed index .allows() default value
+    config.registry.registerAdapter(
+        queue.DumberNDirtActionProcessor, (Interface,), IIndexingActionProcessor
+        )

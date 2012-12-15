@@ -615,3 +615,8 @@ class ISDIAPI(Interface):
 
     def mgmt_views(context):
         """ The list of management views on a resource """
+
+class IIndexingActionProcessor(Interface):
+    """ Processor of deferred indexing/unindexing actions of
+    catalogs in the system"""
+

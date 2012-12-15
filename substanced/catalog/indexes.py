@@ -71,29 +71,29 @@ class ResolvingIndex(object):
     def index_content(self, docid, obj, action_mode=None):
         if action_mode is None:
             action_mode = self.action_mode
-        if action_mode is queue.MODE_ATCOMMIT:
-            action = queue.AddAction(self, docid, obj)
-            self.add_action(action)
-        else:
+        if action_mode in (None, queue.MODE_IMMEDIATE):
             self.index_doc(docid, obj)
+        else:
+            action = queue.AddAction(self, action_mode, docid, obj)
+            self.add_action(action)
 
     def reindex_content(self, docid, obj, action_mode=None):
         if action_mode is None:
             action_mode = self.action_mode
-        if action_mode is queue.MODE_ATCOMMIT:
-            action = queue.ChangeAction(self, docid, obj)
-            self.add_action(action)
-        else:
+        if action_mode in (None, queue.MODE_IMMEDIATE):
             self.reindex_doc(docid, obj)
+        else:
+            action = queue.ChangeAction(self, action_mode, docid, obj)
+            self.add_action(action)
 
     def unindex_content(self, docid, action_mode=None):
         if action_mode is None:
             action_mode = self.action_mode
-        if action_mode is queue.MODE_ATCOMMIT:
-            action = queue.RemoveAction(self, docid)
-            self.add_action(action)
-        else:
+        if action_mode in (None, queue.MODE_IMMEDIATE):
             self.unindex_doc(docid)
+        else:
+            action = queue.RemoveAction(self, action_mode, docid)
+            self.add_action(action)
 
     def __repr__(self):
         klass = self.__class__
@@ -247,7 +247,8 @@ class IndexSchema(Schema):
             values=(
                 ('', 'Default'),
                 ('MODE_IMMEDIATE', 'Immediate'),
-                ('MODE_ATCOMMIT', 'At Commit')
+                ('MODE_ATCOMMIT', 'Defer Until Commit'),
+                ('MODE_DEFERRED', 'Defer Until Action Processing'),
                 )
             )
         )
