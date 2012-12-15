@@ -29,6 +29,9 @@ UI-Plus-Guts
 Guts-Only
 ---------
 
+- Get rid of allowed index in favor of allowed-to-sdiview index for
+  efficiency's sake.
+
 - Figure out why ``sd_reindex`` doesn't log anything.
 
 - Write sd_dump and sd_load scripts.

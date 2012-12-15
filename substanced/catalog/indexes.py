@@ -1,7 +1,6 @@
 import colander
 import deform.widget
 import re
-import transaction
 
 import BTrees
 from persistent import Persistent
@@ -39,13 +38,17 @@ _marker = object()
 
 class ResolvingIndex(object):
 
-    _p_action_queue = None
+    _p_action_tm = None
     action_mode = None
 
     def seen(self, docid):
         return docid in self.docids()
 
     def resultset_from_query(self, query, names=None, resolver=None):
+        # XXX we should probably flush pending atcommit actions before
+        # executing the query; we can't just flush *this* index's actions,
+        # we have to flush actions for all indexes in all catalogs related
+        # to this query.
         if resolver is None:
             objectmap = find_objectmap(self)
             resolver = objectmap.object_for
@@ -53,20 +56,19 @@ class ResolvingIndex(object):
         numdocs = len(docids)
         return hypatia.util.ResultSet(docids, numdocs, resolver)
 
-    def get_action_queue(self):
-        action_queue = self._p_action_queue
-        if action_queue is None:
-            action_queue = self._p_action_queue = queue.IndexActionQueue(self)
-            t = transaction.get()
-            t.addBeforeCommitHook(action_queue.process)
-        return action_queue
+    def get_action_tm(self):
+        action_tm = self._p_action_tm
+        if action_tm is None:
+            action_tm = self._p_action_tm = queue.IndexActionTM(self)
+            action_tm.register()
+        return action_tm
 
-    def clear_action_queue(self):
-        self._p_action_queue = None
+    def clear_action_tm(self):
+        self._p_action_tm = None
 
     def add_action(self, action):
-        action_queue = self.get_action_queue()
-        action_queue.add(action)
+        action_tm = self.get_action_tm()
+        action_tm.add(action)
 
     def index_content(self, docid, obj, action_mode=None):
         if action_mode is None:
