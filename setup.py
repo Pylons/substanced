@@ -25,7 +25,7 @@ except IOError:
 
 install_requires = [
     'pyramid>=1.4dev', # effective_principals predicate
-    'ZODB3',
+    'ZODB3<=3.999', # dont go to ZODB4 yet
     'hypatia>=0.1a3dev', # index-based querying
     'venusian',
     'deform',
