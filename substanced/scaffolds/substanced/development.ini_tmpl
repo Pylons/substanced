@@ -29,7 +29,7 @@ port = 6543
 # Begin logging configuration
 
 [loggers]
-keys = root, {{package_logger}}
+keys = root, {{package_logger}}, substanced
 
 [handlers]
 keys = console
@@ -45,6 +45,11 @@ handlers = console
 level = DEBUG
 handlers =
 qualname = {{package}}
+
+[logger_substanced]
+level = INFO
+handlers =
+qualname = substanced
 
 [handler_console]
 class = StreamHandler
