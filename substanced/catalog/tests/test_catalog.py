@@ -153,6 +153,7 @@ class TestCatalog(unittest.TestCase):
         def reindex_resource(resource, oid=None, action_mode=None):
             L.append((resource, oid))
         inst.reindex_resource = reindex_resource
+        inst.flush = lambda *arg, **kw: True
         out = []
         inst.reindex(output=out.append)
         self.assertEqual(len(L), 1)
@@ -178,6 +179,7 @@ class TestCatalog(unittest.TestCase):
         def reindex_resource(resource, oid=None, action_mode=None):
             L.append((resource, oid))
         inst.reindex_resource = reindex_resource
+        inst.flush = lambda *arg, **kw: True
         out = []
         inst.reindex(output=out.append)
         self.assertEqual(L[0][0], a)
@@ -195,6 +197,7 @@ class TestCatalog(unittest.TestCase):
         objectmap = DummyObjectMap()
         inst = self._makeOne()
         inst.transaction = transaction
+        inst.flush = lambda *arg, **kw: True
         site = _makeSite(catalog=inst, objectmap=objectmap)
         site['a'] = a
         inst.objectids = [1]
@@ -215,6 +218,7 @@ class TestCatalog(unittest.TestCase):
         transaction = DummyTransaction()
         inst = self._makeOne()
         inst.transaction = transaction
+        inst.flush = lambda *arg, **kw: True
         site = _makeSite(catalog=inst, objectmap=objectmap)
         site['a'] = a
         site['b'] = b
@@ -249,6 +253,7 @@ class TestCatalog(unittest.TestCase):
         def reindex_resource(resource, oid, action_mode=None):
             L.append((resource, oid))
         inst.reindex_resource = reindex_resource
+        inst.flush = lambda *arg, **kw: True
         out = []
         inst.reindex(dry_run=True, output=out.append)
         self.assertEqual(len(L), 2)
@@ -280,6 +285,7 @@ class TestCatalog(unittest.TestCase):
         def reindex_resource(resource, oid=None, action_mode=None):
             L.append((resource, oid))
         index.reindex_resource = reindex_resource
+        inst.flush = lambda *arg, **kw: True
         out = []
         inst.reindex(indexes=('index',),  output=out.append)
         self.assertEqual(out,
