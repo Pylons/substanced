@@ -146,6 +146,7 @@ class UnindexAction(Action):
         self.oid = None
 
 class ActionsQueue(persistent.Persistent):
+    logger = logger
     def __init__(self):
         self.actions = []
 
@@ -207,7 +208,7 @@ class ActionsQueue(persistent.Persistent):
             mod_committed.extend(ordered_new_added)
 
         committed_state['actions'] = mod_committed
-        logger.info('resolved %s conflict' % self.__class__.__name__)
+        self.logger.info('resolved %s conflict' % self.__class__.__name__)
         return committed_state
 
 class DumberNDirtActionProcessor(object):
