@@ -246,18 +246,20 @@ class IndexActionTM(threading.local):
     def add(self, action):
         self.actions.append(action)
 
-    def flush(self, immediate=True):
+    def flush(self, all=True):
         if self.actions:
             actions = self.actions
             self.actions = []
             actions = optimize_actions(actions)
-            self._process(actions, immediate=immediate)
+            self._process(actions, all=all)
 
-    def _process(self, actions, immediate=False):
+    def _process(self, actions, all=True):
         registry = get_current_registry()
+
         print 'begin index actions processing'
-        if immediate:
-            print 'executing all actions immediately: immediate flag'
+
+        if all:
+            print 'executing all actions immediately: "all" flag'
             execute_actions_immediately(actions)
             
         else:
@@ -272,6 +274,7 @@ class IndexActionTM(threading.local):
             else:
                 print 'executing actions all immediately: no action processor'
                 execute_actions_immediately(actions)
+
         print 'done processing index actions'
 
 def execute_actions_immediately(actions):

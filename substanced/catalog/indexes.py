@@ -71,9 +71,11 @@ class ResolvingIndex(object):
     def clear_action_tm(self):
         self._p_action_tm = None
 
-    def flush(self, immediate=True):
+    def flush(self, all=True):
+        # This method will be called before query execution for every index
+        # involved in a query.
         if self._p_action_tm is not None:
-            self._p_action_tm.flush(immediate=immediate)
+            self._p_action_tm.flush(all)
 
     def add_action(self, action):
         action_tm = self.get_action_tm()

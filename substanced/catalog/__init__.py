@@ -106,15 +106,18 @@ class Catalog(Folder):
         meta = introspectable['meta']
         return meta.get('is_index', False)
 
-    def flush(self, immediate=True):
-        """ Flush any pending indexing actions for all indexes in this catalog.
-        If ``immediate`` is ``True``, *all* actions will be immediately
-        executed.  If ``immediate`` is ``False``,
-        :attr:`~substanced.interfaces.MODE_DEFERRED` actions will be sent to
-        the actions processor if one is active, and all other actions will be
-        executed immediately."""
+    def flush(self, all=True):
+        """ Flush pending indexing actions for all indexes in this catalog.
+        
+        If ``all`` is ``True``, all pending indexing actions will be
+        immediately executed regardless of its mode.  If ``all`` is ``False``,
+        however, only actions that are
+        :attr:`~substanced.interfaces.MODE_ATCOMMIT` will be executed
+        immediately (e.g. actions that are
+        :attr:`~substanced.interfaces.MODE_DEFERRED` will not be executed).
+        """
         for index in self.values():
-            index.flush(immediate=immediate)
+            index.flush(all)
 
     def reset(self):
         """ Reset all indexes in this catalog and clear self.objectids. """
@@ -264,11 +267,12 @@ class Catalog(Folder):
                 name, str(indexes)
                 ))
 
-        if not dry_run:
-            self.flush(immediate=True)
+        self.flush(all=True)
 
         i = 1
+
         objectmap = find_objectmap(self)
+
         for oid in self.objectids:
             resource = objectmap.object_for(oid)
             if resource is None:
