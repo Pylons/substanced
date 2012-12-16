@@ -146,7 +146,9 @@ class UnindexAction(Action):
         self.oid = None
 
 class ActionsQueue(persistent.Persistent):
-    logger = logger
+
+    logger = logger # for testing
+
     def __init__(self):
         self.actions = []
 
@@ -211,7 +213,31 @@ class ActionsQueue(persistent.Persistent):
         self.logger.info('resolved %s conflict' % self.__class__.__name__)
         return committed_state
 
-class DumberNDirtActionProcessor(object):
+def commit(tries):
+    def wrapper(wrapped):
+        def retry(self, *arg, **kw):
+            for _ in range(tries):
+                self.sync()
+                self.transaction.begin()
+                try:
+                    result = wrapped(self, *arg, **kw)
+                    self.transaction.commit()
+                    return result
+                except ConflictError:
+                    self.transaction.abort()
+            raise ConflictError
+        return retry
+    return wrapper
+
+class Break(Exception):
+    pass
+
+class BasicActionProcessor(object):
+
+    logger = logger # for testing
+    transaction = transaction # for testing
+    queue_name = 'basic_action_queue'
+    
     def __init__(self, context):
         self.context = context
 
@@ -226,30 +252,33 @@ class DumberNDirtActionProcessor(object):
         zodb_root = self.get_root()
         if zodb_root is None:
             return None
-        queue = zodb_root.get('dndqueue')
+        queue = zodb_root.get(self.queue_name)
         return queue
 
     def active(self):
         return self.get_queue() is not None
 
+    def sync(self):
+        jar = self.context._p_jar
+        if jar is not None:
+            jar.sync()
+
+    @commit(5)
     def engage(self):
-        self.sync()
         queue = self.get_queue()
         if queue is None:
             zodb_root = self.get_root()
             if zodb_root is None:
                 raise RuntimeError('Context has no jar')
             queue = ActionsQueue()
-            zodb_root['dndqueue'] = queue
-            transaction.commit()
+            zodb_root[self.queue_name] = queue
 
+    @commit(1)
     def disengage(self):
-        self.sync()
         zodb_root = self.get_root()
         if zodb_root is None:
             raise RuntimeError('Context has no jar')
-        zodb_root.pop('dndqueue', None)
-        transaction.commit()
+        zodb_root.pop(self.queue_name, None)
 
     def add(self, actions):
         queue = self.get_queue()
@@ -257,43 +286,49 @@ class DumberNDirtActionProcessor(object):
             raise RuntimeError('Queue processor not engaged')
         queue.extend(actions)
 
-    def sync(self):
-        jar = self.context._p_jar
-        if jar is not None:
-            jar.sync()
-
     def process(self, sleep=5, once=False):
-        logger.info('engaging')
+        self.logger.info('engaging basic action processor')
         self.engage()
-        try:
-            while True:
-                logger.info('doing processing')
+        while True:
+            try:
+                if not once: # pragma: no cover
+                    time.sleep(sleep)
+                self.logger.info('start running actions processing')
                 self.sync()
+                self.transaction.begin()
                 executed = False
                 queue = self.get_queue()
                 actions = queue.popall()
                 if actions is not None:
                     actions = optimize_actions(actions)
                     for action in actions:
-                        logger.info('executing %s' % (action,))
+                        self.logger.info('executing %s' % (action,))
                         action.execute()
                         executed = True
                 if executed:
+                    self.logger.info('committing')
                     try:
-                        logger.info('committing')
-                        transaction.commit()
+                        self.transaction.commit()
+                        self.logger.info('committed')
                     except ConflictError:
-                        transaction.abort()
+                        self.transaction.abort()
+                        self.logger.info('aborted due to conflict error')
                 else:
-                    logger.info('no actions to execute')
+                    self.logger.info('no actions to execute')
+                self.logger.info('end running actions processing')
                 if once:
+                    raise Break()
+            except (SystemExit, Break):
+                once = True
+                try:
+                    self.logger.info('disengaging basic action processor')
+                    self.disengage()
                     break
-                time.sleep(sleep)
-        except KeyboardInterrupt:
-            pass
-        finally:
-            logger.info('disengaging')
-            self.disengage()
+                except ConflictError:
+                    self.logger.info(
+                        'couldnt disengage due to conflict, process queue one '
+                        'more time'
+                        )
 
 class IndexActionSavepoint(object):
     """ Transaction savepoints  """
@@ -461,4 +496,3 @@ def optimize_actions(actions):
 
     result = list(sorted(result.values()))
     return result
-

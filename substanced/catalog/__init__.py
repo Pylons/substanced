@@ -664,6 +664,6 @@ def includeme(config): # pragma: no cover
     config.include('.system')
     config.add_permission('view') # for allowed index .allows() default value
     config.registry.registerAdapter(
-        deferred.DumberNDirtActionProcessor,
+        deferred.BasicActionProcessor,
         (Interface,), IIndexingActionProcessor
         )
