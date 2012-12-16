@@ -44,10 +44,11 @@ PATH_WITH_OPTIONS = re.compile(r'\[(.+?)\](.+?)$')
 
 _marker = object()
 
-class ResolvingIndex(object):
+class SDIndex(object):
 
     _p_action_tm = None
     action_mode = None
+    tm_class = queue.IndexActionTM # for testing
 
     def resultset_from_query(self, query, names=None, resolver=None):
         # XXX we should probably flush pending atcommit actions before
@@ -64,7 +65,7 @@ class ResolvingIndex(object):
     def get_action_tm(self):
         action_tm = self._p_action_tm
         if action_tm is None:
-            action_tm = self._p_action_tm = queue.IndexActionTM(self)
+            action_tm = self._p_action_tm = self.tm_class(self)
             action_tm.register()
         return action_tm
 
@@ -88,7 +89,7 @@ class ResolvingIndex(object):
         if action_mode in (None, MODE_IMMEDIATE):
             self.index_doc(oid, resource)
         else:
-            action = queue.AddAction(self, action_mode, oid, resource)
+            action = queue.IndexAction(self, action_mode, oid, resource)
             self.add_action(action)
 
     def reindex_resource(self, resource, oid=None, action_mode=None):
@@ -98,7 +99,7 @@ class ResolvingIndex(object):
         if action_mode in (None, MODE_IMMEDIATE):
             self.reindex_doc(oid, resource)
         else:
-            action = queue.ChangeAction(self, action_mode, oid, resource)
+            action = queue.ReindexAction(self, action_mode, oid, resource)
             self.add_action(action)
 
     def unindex_resource(self, resource_or_oid, action_mode=None):
@@ -108,14 +109,14 @@ class ResolvingIndex(object):
         if action_mode in (None, MODE_IMMEDIATE):
             self.unindex_doc(oid)
         else:
-            action = queue.RemoveAction(self, action_mode, oid)
+            action = queue.UnindexAction(self, action_mode, oid)
             self.add_action(action)
 
     def __repr__(self):
         klass = self.__class__
         classname = '%s.%s' % (klass.__module__, klass.__name__)
         return '<%s object %r at %#x>' % (classname,
-                                          self.__name__,
+                                          getattr(self, '__name__', None),
                                           id(self))
 
 @content(
@@ -124,7 +125,7 @@ class ResolvingIndex(object):
     is_index=True,
     )
 @implementer(hypatia.interfaces.IIndex)
-class PathIndex(ResolvingIndex, hypatia.util.BaseIndexMixin, Persistent):
+class PathIndex(SDIndex, hypatia.util.BaseIndexMixin, Persistent):
     """ Uses the objectmap to apply a query to retrieve object identifiers at
     or under a path"""
     family = BTrees.family64
@@ -294,7 +295,7 @@ class IndexPropertySheet(PropertySheet):
     is_index=True,
     propertysheets = ( ('', IndexPropertySheet), ),
     )
-class FieldIndex(ResolvingIndex, hypatia.field.FieldIndex):
+class FieldIndex(SDIndex, hypatia.field.FieldIndex):
     def __init__(self, discriminator=None, family=None, action_mode=None):
         if discriminator is None:
             discriminator = dummy_discriminator
@@ -307,7 +308,7 @@ class FieldIndex(ResolvingIndex, hypatia.field.FieldIndex):
     is_index=True,
     propertysheets = ( ('', IndexPropertySheet), ),
     )
-class KeywordIndex(ResolvingIndex, hypatia.keyword.KeywordIndex):
+class KeywordIndex(SDIndex, hypatia.keyword.KeywordIndex):
     def __init__(self, discriminator=None, family=None, action_mode=None):
         if discriminator is None:
             discriminator = dummy_discriminator
@@ -322,7 +323,7 @@ class KeywordIndex(ResolvingIndex, hypatia.keyword.KeywordIndex):
     is_index=True,
     propertysheets = ( ('', IndexPropertySheet), ),
     )
-class TextIndex(ResolvingIndex, hypatia.text.TextIndex):
+class TextIndex(SDIndex, hypatia.text.TextIndex):
     def __init__(
         self,
         discriminator=None,
@@ -344,7 +345,7 @@ class TextIndex(ResolvingIndex, hypatia.text.TextIndex):
     is_index=True,
     propertysheets = ( ('', IndexPropertySheet), ),
     )
-class FacetIndex(ResolvingIndex, hypatia.facet.FacetIndex):
+class FacetIndex(SDIndex, hypatia.facet.FacetIndex):
     def __init__(self, discriminator=None, facets=None, family=None,
                  action_mode=None):
         if discriminator is None:

@@ -20,9 +20,9 @@ class Action(object):
     def __repr__(self):
         klass = self.__class__
         classname = '%s.%s' % (klass.__module__, klass.__name__)
-        return '<%s object docid %r for index %r at %#x>' % (
+        return '<%s object oid %r for index %r at %#x>' % (
             classname,
-            self.docid,
+            self.oid,
             getattr(self.index, '__name__', None),
             id(self)
             )
@@ -140,54 +140,54 @@ class DumberNDirtActionProcessor(object):
             print 'disengaging'
             self.disengage()
 
-class AddAction(Action):
+class IndexAction(Action):
 
     position = 2
 
-    def __init__(self, index, mode, docid, obj):
+    def __init__(self, index, mode, oid, obj):
         self.index = index
         self.mode = mode
-        self.docid = docid
+        self.oid = oid
         self.obj = obj
 
     def execute(self):
-        self.index.index_doc(self.docid, self.obj)
+        self.index.index_doc(self.oid, self.obj)
         # break all refs
         self.index = None
-        self.docid = None
+        self.oid = None
         self.obj = None
 
-class ChangeAction(Action):
+class ReindexAction(Action):
 
     position = 1
     
-    def __init__(self, index, mode, docid, obj):
+    def __init__(self, index, mode, oid, obj):
         self.index = index
         self.mode = mode
-        self.docid = docid
+        self.oid = oid
         self.obj = obj
 
     def execute(self):
-        self.index.reindex_doc(self.docid, self.obj)
+        self.index.reindex_doc(self.oid, self.obj)
         # break all refs
         self.index = None
-        self.docid = None
+        self.oid = None
         self.obj = None
 
-class RemoveAction(Action):
+class UnindexAction(Action):
 
     position = 0
     
-    def __init__(self, index, mode, docid):
+    def __init__(self, index, mode, oid):
         self.index = index
         self.mode = mode
-        self.docid = docid
+        self.oid = oid
 
     def execute(self):
-        self.index.unindex_doc(self.docid)
+        self.index.unindex_doc(self.oid)
         # break all refs
         self.index = None
-        self.docid = None
+        self.oid = None
 
 class IndexActionSavepoint(object):
     """ Transaction savepoints  """
@@ -299,13 +299,13 @@ def optimize_actions(actions):
     State chart for optimization.  If the new action is X and the existing
     action is Y, generate the resulting action named in the chart cells.
 
-                            New    ADD      REMOVE     CHANGE
+                            New    INDEX    UNINDEX   REINDEX
 
-       Existing     ADD            add      nothing*   add*
+       Existing    INDEX           index     nothing*   index*
 
-                  REMOVE           change*  remove     change
+                 UNINDEX           reindex*  unindex    reindex
 
-                  CHANGE           add      remove     change
+                 REINDEX           index     unindex    reindex
 
     Starred entries in the chart above indicate special cases.  Typically
     the last action encountered in the actions list is the most optimal
@@ -313,44 +313,44 @@ def optimize_actions(actions):
     """
     result = {}
 
-    def donothing(docid, index_oid, action1, action2):
-        del result[(index_oid, docid)]
+    def donothing(oid, index_oid, action1, action2):
+        del result[(oid, index_oid)]
 
-    def doadd(docid, index_oid, action1, action2):
-        result[(index_oid, docid)] = action1
+    def doadd(oid, index_oid, action1, action2):
+        result[(oid, index_oid)] = action1
 
-    def dochange(docid, index_oid, action1, action2):
-        result[(index_oid, docid)] = ChangeAction(
-            action2.index, docid, action2.obj
+    def dochange(oid, index_oid, action1, action2):
+        result[(oid, index_oid)] = ReindexAction(
+            action2.index, oid, action2.obj
             )
 
-    def dodefault(docid, index_oid, action1, action2):
-        result[(index_oid, docid)] = action2
+    def dodefault(oid, index_oid, action1, action2):
+        result[(oid, index_oid)] = action2
 
     statefuncs = {
         # txn asked to remove an object that previously it was
         # asked to add, conclusion is to do nothing
-        (AddAction, RemoveAction):donothing,
+        (IndexAction, UnindexAction):donothing,
         # txn asked to change an object that was not previously added,
         # concusion is to just do the add
-        (AddAction, ChangeAction):doadd,
+        (IndexAction, ReindexAction):doadd,
         # txn action asked to remove an object then readd the same
         # object.  We translate this to a single change action.
-        (RemoveAction, AddAction):dochange,
+        (UnindexAction, IndexAction):dochange,
         }
 
     for newaction in actions:
-        docid = newaction.docid
+        oid = newaction.oid
         index_oid = newaction.index.__oid__
-        oldaction = result.get((index_oid, docid))
+        oldaction = result.get((oid, index_oid))
         statefunc = statefuncs.get(
             (oldaction.__class__, newaction.__class__),
             dodefault,
             )
-        statefunc(docid, index_oid, oldaction, newaction)
+        statefunc(oid, index_oid, oldaction, newaction)
 
     def sorter(action):
-        return (action.index.__oid__, action.position, action.docid)
+        return (action.oid, action.index.__oid__, action.position)
 
     result = list(sorted(result.values(), key=sorter))
     return result

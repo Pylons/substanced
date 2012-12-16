@@ -110,9 +110,9 @@ class Catalog(Folder):
         """ Flush pending indexing actions for all indexes in this catalog.
         
         If ``all`` is ``True``, all pending indexing actions will be
-        immediately executed regardless of its mode.
+        immediately executed regardless of the action's mode.
 
-        If ``all`` is ``False``, pending actions which are
+        If ``all`` is ``False``, pending indexing actions which are
         :attr:`~substanced.interfaces.MODE_ATCOMMIT` will be executed but
         actions which are :attr:`~substanced.interfaces.MODE_DEFERRED` will not
         be executed.
