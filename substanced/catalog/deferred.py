@@ -10,6 +10,7 @@ from transaction.interfaces import ISavepointDataManager
 from zope.interface import implementer
 
 from ZODB.POSException import ConflictError
+from ZODB.ConflictResolution import PersistentReference
 
 from pyramid.threadlocal import get_current_registry
 
@@ -21,6 +22,15 @@ from substanced.interfaces import (
 from ..util import get_oid
 
 logger = logging.getLogger(__name__)
+
+## class DummyLogger(object):
+##     def debug(self, msg):
+##         print msg
+
+##     def info(self, msg):
+##         print msg
+
+## logger = DummyLogger()
 
 # functools.total_ordering allows us to define __eq__ and __lt__ and it takes
 # care of the rest of the rich comparison methods (2.7+ only)
@@ -48,10 +58,10 @@ class Action(object):
     def __eq__(self, other):
         # In the case this is called during conflict resolution, self.index and
         # self.resource will be instances of
-        # ZODB.ConflictResolution.PersistentReference; that's ok because
-        # two PersistentReferences to the same object compare equal
-        self_cmp = (self.index, self.oid, self.resource)
-        other_cmp = (other.index, other.oid, other.resource)
+        # ZODB.ConflictResolution.PersistentReference; we have to wrap them in
+        # proxies if so; see PersistentReferenceProxy docstring for rationale.
+        self_cmp = (prwrap(self.index), self.oid, prwrap(self.resource))
+        other_cmp = (prwrap(other.index), other.oid, prwrap(other.resource))
         return self_cmp == other_cmp
 
     def __lt__(self, other):
@@ -59,6 +69,36 @@ class Action(object):
         self_cmp = (self.oid, get_oid(self.index, None), self.position)
         other_cmp = (other.oid, get_oid(other.index, None), other.position)
         return self_cmp < other_cmp
+
+def prwrap(obj):
+    if isinstance(obj, PersistentReference):
+        return PersistentReferenceProxy(obj)
+    return obj
+
+class PersistentReferenceProxy(object):
+    """PersistentReferenceProxy
+
+    `ZODB.ConflictResolution.PersistentReference` doesn't get handled correctly
+    in the __eq__ method due to lack of the `__hash__` method.
+    So we make workaround here to utilize `__cmp__` method of
+    `PersistentReference`.
+
+    """
+    def __init__(self, pr):
+        assert isinstance(pr, PersistentReference)
+        self.pr = pr
+
+    def __hash__(self):
+        return 1
+
+    def __eq__(self, other):
+        try:
+            return self.pr == other.pr
+        except ValueError:
+            return False
+
+    def __repr__(self):
+        return self.pr.__repr__()
 
 class IndexAction(Action):
 
@@ -171,7 +211,7 @@ class ActionsQueue(persistent.Persistent):
             mod_committed.extend(ordered_new_added)
 
         committed_state['actions'] = mod_committed
-        logger.debug('resolved %s conflict' % self.__class__.__name__)
+        logger.info('resolved %s conflict' % self.__class__.__name__)
         return committed_state
 
 class DumberNDirtActionProcessor(object):
@@ -226,11 +266,11 @@ class DumberNDirtActionProcessor(object):
             jar.sync()
 
     def process(self, sleep=5, once=False):
-        logger.debug('engaging')
+        logger.info('engaging')
         self.engage()
         try:
             while True:
-                logger.debug('doing processing')
+                logger.info('doing processing')
                 self.sync()
                 executed = False
                 queue = self.get_queue()
@@ -238,24 +278,24 @@ class DumberNDirtActionProcessor(object):
                 if actions is not None:
                     actions = optimize_actions(actions)
                     for action in actions:
-                        logger.debug('executing %s' % (action,))
+                        logger.info('executing %s' % (action,))
                         action.execute()
                         executed = True
                 if executed:
                     try:
-                        logger.debug('committing')
+                        logger.info('committing')
                         transaction.commit()
                     except ConflictError:
                         transaction.abort()
                 else:
-                    logger.debug('no actions to execute')
+                    logger.info('no actions to execute')
                 if once:
                     break
                 time.sleep(sleep)
         except KeyboardInterrupt:
             pass
         finally:
-            logger.debug('disengaging')
+            logger.info('disengaging')
             self.disengage()
 
 class IndexActionSavepoint(object):
