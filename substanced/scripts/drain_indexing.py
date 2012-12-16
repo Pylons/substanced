@@ -7,7 +7,7 @@ from pyramid.paster import (
     bootstrap,
     )
 
-from substanced.catalog.queue import DumberNDirtActionProcessor
+from substanced.catalog.deferred import DumberNDirtActionProcessor
 
 def main():
     parser = OptionParser(description=__doc__)
