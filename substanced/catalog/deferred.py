@@ -30,6 +30,9 @@ logger = logging.getLogger(__name__)
 class Action(object):
 
     resource = None
+    oid = None
+    index = None
+    position = None
 
     def __repr__(self):
         klass = self.__class__
@@ -52,17 +55,19 @@ class Action(object):
         # self.resource will be instances of
         # ZODB.ConflictResolution.PersistentReference; we have to wrap them in
         # proxies if so; see PersistentReferenceProxy docstring for rationale.
-        self_cmp = (prwrap(self.index), self.oid, prwrap(self.resource))
-        other_cmp = (prwrap(other.index), other.oid, prwrap(other.resource))
+        self_cmp = (pr_wrap(self.index), self.oid, pr_wrap(self.resource))
+        other_cmp = (pr_wrap(other.index), other.oid, pr_wrap(other.resource))
         return self_cmp == other_cmp
 
     def __lt__(self, other):
-        # This is used by optimize_actions
+        # This is used by optimize_actions, but must not be called during
+        # conflict resolution because self.index and other.index will be
+        # persistent references instead of normal persistent objects
         self_cmp = (self.oid, get_oid(self.index, None), self.position)
         other_cmp = (other.oid, get_oid(other.index, None), other.position)
         return self_cmp < other_cmp
 
-def prwrap(obj):
+def pr_wrap(obj):
     if isinstance(obj, PersistentReference):
         return PersistentReferenceProxy(obj)
     return obj
@@ -77,7 +82,6 @@ class PersistentReferenceProxy(object):
 
     """
     def __init__(self, pr):
-        assert isinstance(pr, PersistentReference)
         self.pr = pr
 
     def __hash__(self):
@@ -89,8 +93,8 @@ class PersistentReferenceProxy(object):
         except ValueError:
             return False
 
-    def __repr__(self):
-        return self.pr.__repr__()
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
 class IndexAction(Action):
 
