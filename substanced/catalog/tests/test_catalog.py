@@ -27,9 +27,13 @@ class TestCatalog(unittest.TestCase):
     
     def setUp(self):
         self.config = testing.setUp()
+        from zope.deprecation import __show__
+        __show__.off()
 
     def tearDown(self):
         testing.tearDown()
+        from zope.deprecation import __show__
+        __show__.on()
 
     def _getTargetClass(self):
         from .. import Catalog
@@ -62,6 +66,13 @@ class TestCatalog(unittest.TestCase):
         from ...interfaces import ICatalog
         inst = self._makeOne()
         verifyObject(ICatalog, inst)
+
+    def test_flush(self):
+        inst = self._makeOne()
+        idx = DummyIndex()
+        inst['name'] = idx
+        inst.flush()
+        self.assertEqual(idx.flushed, True)
 
     def test_reset(self):
         catalog = self._makeOne()
@@ -103,6 +114,14 @@ class TestCatalog(unittest.TestCase):
         catalog['name'] = idx
         self.assertRaises(ValueError, catalog.index_resource, 'value', 'abc')
 
+    def test_index_doc(self):
+        catalog = self._makeOne()
+        idx = DummyIndex()
+        catalog['name'] = idx
+        catalog.index_doc(1, 'value')
+        self.assertEqual(idx.oid, 1)
+        self.assertEqual(idx.resource, 'value')
+
     def test_unindex_resource_indexes(self):
         catalog = self._makeOne()
         idx = DummyIndex()
@@ -119,6 +138,12 @@ class TestCatalog(unittest.TestCase):
     def test_unindex_resource_objectids_notexists(self):
         inst = self._makeOne()
         inst.unindex_resource(1)
+        self.assertEqual(list(inst.objectids), [])
+
+    def test_unindex_doc(self):
+        inst = self._makeOne()
+        inst.objectids.insert(1)
+        inst.unindex_doc(1)
         self.assertEqual(list(inst.objectids), [])
 
     def test_reindex_resource_indexes(self):
@@ -140,6 +165,14 @@ class TestCatalog(unittest.TestCase):
         inst.reindex_resource(object(), 1)
         self.assertEqual(list(inst.objectids), [1])
         
+    def test_reindex_doc(self):
+        catalog = self._makeOne()
+        idx = DummyIndex()
+        catalog['name'] = idx
+        catalog.reindex_doc(1, 'value')
+        self.assertEqual(idx.reindexed_oid, 1)
+        self.assertEqual(idx.reindexed_resource, 'value')
+
     def test_reindex(self):
         a = testing.DummyModel()
         L = []
@@ -738,6 +771,9 @@ class DummyIndex(object):
     def __init__(self, *arg, **kw):
         self.arg = arg
         self.kw = kw
+
+    def flush(self, all):
+        self.flushed = all
 
     def index_resource(self, resource, oid=None, action_mode=None):
         self.resource = resource

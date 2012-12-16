@@ -5,7 +5,7 @@ import venusian
 
 import BTrees
 
-from zope.deprecation import deprecated
+from zope.deprecation import deprecate
 
 from zope.interface import (
     implementer,
@@ -142,14 +142,10 @@ class Catalog(Folder):
             index.index_resource(resource, oid=oid, action_mode=action_mode)
         self.objectids.insert(oid)
 
+    @deprecate('index_doc is deprecated, use index_resource')
     def index_doc(self, docid, obj):
         """ Bw compatibility function """
         return self.index_resource(obj, oid=docid)
-
-    index_doc = deprecated(
-        index_doc,
-        'index_doc is deprecated, use index_resource'
-        )
 
     def unindex_resource(self, resource_or_oid, action_mode=None):
         """Deregister the resource in indexes of this catalog using objectid or
@@ -174,15 +170,10 @@ class Catalog(Folder):
         except KeyError:
             pass
         
-
+    @deprecate('unindex_doc is deprecated, use unindex_resource')
     def unindex_doc(self, docid):
         """ Bw compatibility function """
         return self.unindex_resource(docid)
-
-    unindex_doc = deprecated(
-        unindex_doc,
-        'unindex_doc is deprecated, use unindex_resource'
-        )
 
     def reindex_resource(self, resource, oid=None, action_mode=None):
         """Register the resource in indexes of this catalog using objectid
@@ -209,15 +200,11 @@ class Catalog(Folder):
         if not oid in self.objectids:
             self.objectids.insert(oid)
 
+    @deprecate('reindex_doc is deprecated, use reindex_resource')
     def reindex_doc(self, docid, obj):
         """ Bw compatibility method """
         return self.reindex_resource(obj, oid=docid)
     
-    reindex_doc = deprecated(
-        reindex_doc,
-        'reindex_doc is deprecated, use reindex_resource'
-        )
-
     def reindex(self, dry_run=False, commit_interval=200, indexes=None, 
                 path_re=None, output=None, registry=None):
 
