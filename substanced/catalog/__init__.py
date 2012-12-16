@@ -110,11 +110,12 @@ class Catalog(Folder):
         """ Flush pending indexing actions for all indexes in this catalog.
         
         If ``all`` is ``True``, all pending indexing actions will be
-        immediately executed regardless of its mode.  If ``all`` is ``False``,
-        however, only actions that are
-        :attr:`~substanced.interfaces.MODE_ATCOMMIT` will be executed
-        immediately (e.g. actions that are
-        :attr:`~substanced.interfaces.MODE_DEFERRED` will not be executed).
+        immediately executed regardless of its mode.
+
+        If ``all`` is ``False``, pending actions which are
+        :attr:`~substanced.interfaces.MODE_ATCOMMIT` will be executed but
+        actions which are :attr:`~substanced.interfaces.MODE_DEFERRED` will not
+        be executed.
         """
         for index in self.values():
             index.flush(all)
@@ -133,7 +134,9 @@ class Catalog(Folder):
         :attr:`~substanced.interfaces.MODE_ATCOMMIT` or
         :attr:`~substanced.interfaces.MODE_DEFERRED`, indicating when the
         updates should take effect.  The ``action_mode`` value will overrule
-        any action mode a member index has been configured with."""
+        any action mode a member index has been configured with except ``None``
+        which explicitly indicates that you'd like to use the index's
+        action_mode value."""
         oid = oid_from_resource(resource, oid)
         for index in self.values():
             index.index_resource(resource, oid=oid, action_mode=action_mode)
@@ -158,7 +161,9 @@ class Catalog(Folder):
         :attr:`~substanced.interfaces.MODE_ATCOMMIT` or
         :attr:`~substanced.interfaces.MODE_DEFERRED` indicating when the
         updates should take effect.  The ``action_mode`` value will overrule
-        any action mode a member index has been configured with."""
+        any action mode a member index has been configured with except ``None``
+        which explicitly indicates that you'd like to use the index's
+        action_mode value."""
         oid = oid_from_resource_or_oid(resource_or_oid)
 
         for index in self.values():
@@ -187,14 +192,16 @@ class Catalog(Folder):
         :attr:`~substanced.interfaces.MODE_ATCOMMIT` or
         :attr:`~substanced.interfaces.MODE_DEFERRED` indicating when the
         updates should take effect.  The ``action_mode`` value will overrule
-        any action mode a member index has been configured with.
+        any action mode a member index has been configured with except ``None``
+        which explicitly indicates that you'd like to use the index's
+        action_mode value.
 
         The result of calling this method is logically the same as calling
-        ``unindex_resource``, then ``index_resource`` for the same resource/oid
-        combination, but calling those two methods in succession is often more
-        expensive than calling this single method, as member indexes can choose
-        to do smarter things during a reindex than what they would do during an
-        unindex then an index.
+        ``unindex_resource``, then ``index_resource`` with the same resource,
+        but calling those two methods in succession is often more expensive
+        than calling this single method, as member indexes can choose to do
+        smarter things during a reindex than what they would do during an
+        unindex followed by a successive index.
         """
         oid = oid_from_resource(resource, oid)
         for index in self.values():
