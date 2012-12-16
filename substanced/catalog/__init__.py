@@ -51,7 +51,7 @@ from .util import (
     oid_from_resource_or_oid,
     )
 
-from . import queue
+from . import deferred
 
 Text = Text # API
 Field = Field # API
@@ -664,5 +664,6 @@ def includeme(config): # pragma: no cover
     config.include('.system')
     config.add_permission('view') # for allowed index .allows() default value
     config.registry.registerAdapter(
-        queue.DumberNDirtActionProcessor, (Interface,), IIndexingActionProcessor
+        deferred.DumberNDirtActionProcessor,
+        (Interface,), IIndexingActionProcessor
         )

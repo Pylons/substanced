@@ -1,3 +1,4 @@
+import logging
 import persistent
 import threading
 import time
@@ -16,6 +17,8 @@ from substanced.interfaces import (
     MODE_DEFERRED,
     )
 
+logger = logging.getLogger(__name__)
+
 class Action(object):
     def __repr__(self):
         klass = self.__class__
@@ -26,6 +29,55 @@ class Action(object):
             getattr(self.index, '__name__', None),
             id(self)
             )
+
+class IndexAction(Action):
+
+    position = 2
+
+    def __init__(self, index, mode, oid, obj):
+        self.index = index
+        self.mode = mode
+        self.oid = oid
+        self.obj = obj
+
+    def execute(self):
+        self.index.index_doc(self.oid, self.obj)
+        # break all refs
+        self.index = None
+        self.oid = None
+        self.obj = None
+
+class ReindexAction(Action):
+
+    position = 1
+    
+    def __init__(self, index, mode, oid, obj):
+        self.index = index
+        self.mode = mode
+        self.oid = oid
+        self.obj = obj
+
+    def execute(self):
+        self.index.reindex_doc(self.oid, self.obj)
+        # break all refs
+        self.index = None
+        self.oid = None
+        self.obj = None
+
+class UnindexAction(Action):
+
+    position = 0
+    
+    def __init__(self, index, mode, oid):
+        self.index = index
+        self.mode = mode
+        self.oid = oid
+
+    def execute(self):
+        self.index.unindex_doc(self.oid)
+        # break all refs
+        self.index = None
+        self.oid = None
 
 class ActionsQueue(persistent.Persistent):
     def __init__(self):
@@ -52,8 +104,8 @@ class ActionsQueue(persistent.Persistent):
         committed_actions = committed_state['actions']
         new_actions = new_state['actions']
         all_actions = committed_actions + new_actions
-        print 'resolved actionsqueue conflict with result %r' % (all_actions,)
         committed_state['actions'] = all_actions
+        logger.debug('resolved %s conflict' % self.__class__.__name__)
         return committed_state
 
 class DumberNDirtActionProcessor(object):
@@ -108,11 +160,11 @@ class DumberNDirtActionProcessor(object):
             jar.sync()
 
     def process(self, sleep=5, once=False):
-        print 'engaging'
+        logger.debug('engaging')
         self.engage()
         try:
             while True:
-                print 'doing processing'
+                logger.debug('doing processing')
                 self.sync()
                 executed = False
                 queue = self.get_queue()
@@ -120,74 +172,25 @@ class DumberNDirtActionProcessor(object):
                 if actions is not None:
                     actions = optimize_actions(actions)
                     for action in actions:
-                        print 'executing %s' % (action,)
+                        logger.debug('executing %s' % (action,))
                         action.execute()
                         executed = True
                 if executed:
                     try:
-                        print 'committing'
+                        logger.debug('committing')
                         transaction.commit()
                     except ConflictError:
                         transaction.abort()
                 else:
-                    print 'no actions to execute'
+                    logger.debug('no actions to execute')
                 if once:
                     break
                 time.sleep(sleep)
         except KeyboardInterrupt:
             pass
         finally:
-            print 'disengaging'
+            logger.debug('disengaging')
             self.disengage()
-
-class IndexAction(Action):
-
-    position = 2
-
-    def __init__(self, index, mode, oid, obj):
-        self.index = index
-        self.mode = mode
-        self.oid = oid
-        self.obj = obj
-
-    def execute(self):
-        self.index.index_doc(self.oid, self.obj)
-        # break all refs
-        self.index = None
-        self.oid = None
-        self.obj = None
-
-class ReindexAction(Action):
-
-    position = 1
-    
-    def __init__(self, index, mode, oid, obj):
-        self.index = index
-        self.mode = mode
-        self.oid = oid
-        self.obj = obj
-
-    def execute(self):
-        self.index.reindex_doc(self.oid, self.obj)
-        # break all refs
-        self.index = None
-        self.oid = None
-        self.obj = None
-
-class UnindexAction(Action):
-
-    position = 0
-    
-    def __init__(self, index, mode, oid):
-        self.index = index
-        self.mode = mode
-        self.oid = oid
-
-    def execute(self):
-        self.index.unindex_doc(self.oid)
-        # break all refs
-        self.index = None
-        self.oid = None
 
 class IndexActionSavepoint(object):
     """ Transaction savepoints  """
@@ -256,10 +259,10 @@ class IndexActionTM(threading.local):
     def _process(self, actions, all=True):
         registry = get_current_registry()
 
-        print 'begin index actions processing'
+        logger.debug('begin index actions processing')
 
         if all:
-            print 'executing all actions immediately: "all" flag'
+            logger.debug('executing all actions immediately: "all" flag')
             execute_actions_immediately(actions)
             
         else:
@@ -269,27 +272,31 @@ class IndexActionTM(threading.local):
                 )
             processor_active = processor is not None and processor.active()
             if processor_active:
-                print 'executing deferred actions: action processor active'
+                logger.debug(
+                    'executing deferred actions: action processor active'
+                    )
                 execute_actions_deferred(actions, processor)
             else:
-                print 'executing actions all immediately: no action processor'
+                logger.debug(
+                    'executing actions all immediately: no action processor'
+                    )
                 execute_actions_immediately(actions)
 
-        print 'done processing index actions'
+        logger.debug('done processing index actions')
 
 def execute_actions_immediately(actions):
     for action in actions:
-        print 'executing action %r' % (action,)
+        logger.debug('executing action %r' % (action,))
         action.execute()
 
 def execute_actions_deferred(actions, processor):
     deferred = []
     for action in actions:
         if action.mode is MODE_DEFERRED:
-            print 'adding deferred action %r' % (action,)
+            logger.debug('adding deferred action %r' % (action,))
             deferred.append(action)
         else:
-            print 'executing action %r' % (action,)
+            logger.debug('executing action %r' % (action,))
             action.execute()
     if deferred:
         processor.add(deferred)

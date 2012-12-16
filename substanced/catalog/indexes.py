@@ -34,7 +34,7 @@ from .util import (
     oid_from_resource,
     oid_from_resource_or_oid,
     )
-from . import queue
+from . import deferred
 
 from .. import interfaces as sd_interfaces
 
@@ -48,7 +48,7 @@ class SDIndex(object):
 
     _p_action_tm = None
     action_mode = None
-    tm_class = queue.IndexActionTM # for testing
+    tm_class = deferred.IndexActionTM # for testing
 
     def resultset_from_query(self, query, names=None, resolver=None):
         # XXX we should probably flush pending atcommit actions before
@@ -89,7 +89,7 @@ class SDIndex(object):
         if action_mode in (None, MODE_IMMEDIATE):
             self.index_doc(oid, resource)
         else:
-            action = queue.IndexAction(self, action_mode, oid, resource)
+            action = deferred.IndexAction(self, action_mode, oid, resource)
             self.add_action(action)
 
     def reindex_resource(self, resource, oid=None, action_mode=None):
@@ -99,7 +99,7 @@ class SDIndex(object):
         if action_mode in (None, MODE_IMMEDIATE):
             self.reindex_doc(oid, resource)
         else:
-            action = queue.ReindexAction(self, action_mode, oid, resource)
+            action = deferred.ReindexAction(self, action_mode, oid, resource)
             self.add_action(action)
 
     def unindex_resource(self, resource_or_oid, action_mode=None):
@@ -109,7 +109,7 @@ class SDIndex(object):
         if action_mode in (None, MODE_IMMEDIATE):
             self.unindex_doc(oid)
         else:
-            action = queue.UnindexAction(self, action_mode, oid)
+            action = deferred.UnindexAction(self, action_mode, oid)
             self.add_action(action)
 
     def __repr__(self):
