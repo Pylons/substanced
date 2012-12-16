@@ -94,6 +94,69 @@ class Test_object_added(unittest.TestCase):
             self.assertEqual(indexed[1][0], model1)
             self.assertEqual(indexed[1][1], 1)
 
+    def test_moving_rename(self):
+        from ...interfaces import IFolder
+        catalog = DummyCatalog()
+        objectmap = DummyObjectMap()
+        site = _makeSite(objectmap=objectmap, catalog=catalog)
+        model1 = testing.DummyResource(__provides__=(IFolder,))
+        model1.__oid__ = 1
+        model2 = testing.DummyResource()
+        model2.__oid__ = 2
+        model1['model2'] = model2
+        site['model1'] = model1
+        event = DummyEvent(model1, site, moving=site)
+        self._callFUT(event)
+        reindexed = catalog.reindexed
+        self.assertEqual(len(reindexed), 2)
+        self.assertEqual(reindexed[0][0], model2)
+        self.assertEqual(reindexed[0][1], 2)
+        self.assertEqual(reindexed[1][0], model1)
+        self.assertEqual(reindexed[1][1], 1)
+
+    def test_moving_not_rename_same_catalogs(self):
+        from ...interfaces import IFolder
+        catalog = DummyCatalog()
+        objectmap = DummyObjectMap()
+        site = _makeSite(objectmap=objectmap, catalog=catalog)
+        model1 = testing.DummyResource(__provides__=(IFolder,))
+        model1.__oid__ = 1
+        model2 = testing.DummyResource()
+        model2.__oid__ = 2
+        model1['model2'] = model2
+        site['model1'] = model1
+        foo = site['foo'] = testing.DummyResource()
+        event = DummyEvent(model1, site, moving=foo)
+        self._callFUT(event)
+        reindexed = catalog.reindexed
+        self.assertEqual(len(reindexed), 2)
+        self.assertEqual(reindexed[0][0], model2)
+        self.assertEqual(reindexed[0][1], 2)
+        self.assertEqual(reindexed[1][0], model1)
+        self.assertEqual(reindexed[1][1], 1)
+        
+    def test_moving_not_rename_different_catalogs(self):
+        from ...interfaces import IFolder
+        catalog = DummyCatalog()
+        catalog2 = DummyCatalog()
+        objectmap = DummyObjectMap()
+        site = _makeSite(objectmap=objectmap, catalog=catalog)
+        site2 = _makeSite(catalog=catalog2)
+        model1 = testing.DummyResource(__provides__=(IFolder,))
+        model1.__oid__ = 1
+        model2 = testing.DummyResource()
+        model2.__oid__ = 2
+        model1['model2'] = model2
+        site['model1'] = model1
+        event = DummyEvent(model1, site, moving=site2)
+        self._callFUT(event)
+        indexed = catalog.indexed
+        self.assertEqual(len(indexed), 2)
+        self.assertEqual(indexed[0][0], model2)
+        self.assertEqual(indexed[0][1], 2)
+        self.assertEqual(indexed[1][0], model1)
+        self.assertEqual(indexed[1][1], 1)
+
 class Test_object_removed(unittest.TestCase):
     def _callFUT(self, event):
         from ..subscribers import object_removed
@@ -143,6 +206,36 @@ class Test_object_removed(unittest.TestCase):
         self._callFUT(event)
         self.assertEqual(catalog1.unindexed, [1])
         self.assertEqual(catalog2.unindexed, [2])
+
+    def test_moving_rename(self):
+        catalog = DummyCatalog()
+        catalog.objectids = catalog.family.IF.Set([1,2])
+        site = _makeSite(catalog=catalog)
+        event = DummyEvent(None, site, moving=site)
+        event.removed_oids = catalog.family.IF.Set([1,2])
+        self._callFUT(event)
+        self.assertEqual(catalog.unindexed, [])
+        
+    def test_moving_not_rename_same_catalogs(self):
+        catalog = DummyCatalog()
+        catalog.objectids = catalog.family.IF.Set([1,2])
+        site = _makeSite(catalog=catalog)
+        foo = site['foo'] = testing.DummyResource()
+        event = DummyEvent(None, site, moving=foo)
+        event.removed_oids = catalog.family.IF.Set([1,2])
+        self._callFUT(event)
+        self.assertEqual(catalog.unindexed, [])
+
+    def test_moving_not_rename_different_catalogs(self):
+        catalog = DummyCatalog()
+        catalog.objectids = catalog.family.IF.Set([1,2])
+        catalog2 = DummyCatalog()
+        site = _makeSite(catalog=catalog)
+        site2 = _makeSite(catalog=catalog2)
+        event = DummyEvent(None, site, moving=site2)
+        event.removed_oids = catalog.family.IF.Set([1,2])
+        self._callFUT(event)
+        self.assertEqual(catalog.unindexed, [1,2])
         
 class Test_object_modified(unittest.TestCase):
     def _callFUT(self, event):
@@ -324,6 +417,9 @@ class DummyCatalog(dict):
         self.objectids = self.family.II.TreeSet()
         self.result = result
         self.raises = raises
+
+    def __eq__(self, other):
+        return other is self
 
     def index_resource(self, resource, oid=None):
         self.indexed.append((resource, oid))

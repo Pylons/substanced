@@ -75,12 +75,13 @@ def object_removed(event):
     catalogs = find_catalogs(parent)
 
     if event.moving is not None:
-        # Don't actually unindex anything if we're moving to a place
-        # with the same set of catalogs; the object_added event subscriber
-        # will reindex everything, so there's no sense in actually doing an
-        # unindex.
-        if parent is event.moving:
-            # optimization to avoid calling find_catalogs (rename)
+        # Don't actually unindex anything if we're moving to a place that has a
+        # lineage with the same set of catalogs; the object_added event
+        # subscriber will reindex everything, so there's no sense in actually
+        # doing an unindex.
+        rename_in_progress = parent is event.moving
+        if rename_in_progress:
+            # Common-case optimization to avoid calling find_catalogs below
             return 
         else:
             new_catalogs = find_catalogs(event.moving)
