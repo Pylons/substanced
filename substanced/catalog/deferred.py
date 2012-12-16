@@ -23,17 +23,9 @@ from ..util import get_oid
 
 logger = logging.getLogger(__name__)
 
-## class DummyLogger(object):
-##     def debug(self, msg):
-##         print msg
-
-##     def info(self, msg):
-##         print msg
-
-## logger = DummyLogger()
-
 # functools.total_ordering allows us to define __eq__ and __lt__ and it takes
 # care of the rest of the rich comparison methods (2.7+ only)
+
 @functools.total_ordering
 class Action(object):
 
