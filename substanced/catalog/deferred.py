@@ -1,3 +1,4 @@
+import functools
 import logging
 import persistent
 import threading
@@ -17,9 +18,17 @@ from substanced.interfaces import (
     MODE_DEFERRED,
     )
 
+from ..util import get_oid
+
 logger = logging.getLogger(__name__)
 
+# functools.total_ordering allows us to define __eq__ and __lt__ and it takes
+# care of the rest of the rich comparison methods (2.7+ only)
+@functools.total_ordering
 class Action(object):
+
+    resource = None
+
     def __repr__(self):
         klass = self.__class__
         classname = '%s.%s' % (klass.__module__, klass.__name__)
@@ -30,39 +39,60 @@ class Action(object):
             id(self)
             )
 
+    def __hash__(self):
+        # We don't actually need to supply a unique hash value to allow
+        # instances of this class to be unique according to set membership
+        # or dict key membership or whatever
+        return 1
+
+    def __eq__(self, other):
+        # In the case this is called during conflict resolution, self.index and
+        # self.resource will be instances of
+        # ZODB.ConflictResolution.PersistentReference; that's ok because
+        # two PersistentReferences to the same object compare equal
+        self_cmp = (self.index, self.oid, self.resource)
+        other_cmp = (other.index, other.oid, other.resource)
+        return self_cmp == other_cmp
+
+    def __lt__(self, other):
+        # This is used by optimize_actions
+        self_cmp = (self.oid, get_oid(self.index, None), self.position)
+        other_cmp = (other.oid, get_oid(other.index, None), other.position)
+        return self_cmp < other_cmp
+
 class IndexAction(Action):
 
     position = 2
 
-    def __init__(self, index, mode, oid, obj):
+    def __init__(self, index, mode, oid, resource):
         self.index = index
         self.mode = mode
         self.oid = oid
-        self.obj = obj
+        self.resource = resource
 
     def execute(self):
-        self.index.index_doc(self.oid, self.obj)
+        self.index.index_doc(self.oid, self.resource)
         # break all refs
         self.index = None
         self.oid = None
-        self.obj = None
+        self.resource = None
 
 class ReindexAction(Action):
 
     position = 1
     
-    def __init__(self, index, mode, oid, obj):
+    def __init__(self, index, mode, oid, resource):
         self.index = index
         self.mode = mode
         self.oid = oid
-        self.obj = obj
+        self.resource = resource
 
     def execute(self):
-        self.index.reindex_doc(self.oid, self.obj)
+        self.index.reindex_doc(self.oid, self.resource)
         # break all refs
         self.index = None
         self.oid = None
-        self.obj = None
+        self.resource = None
 
 class UnindexAction(Action):
 
@@ -95,16 +125,52 @@ class ActionsQueue(persistent.Persistent):
         return actions
 
     def _p_resolveConflict(self, old_state, committed_state, new_state):
-        for k, v in new_state.items():
-            if k != 'actions':
-                if committed_state.get(k) != v:
-                    # cant cope with a conflict for anything except 'actions'
-                    raise ConflictError
+        # Most of this code is cadged from zc.queue._queue
+        
+        # we only know how to merge actions.  If anything else is different,
+        # puke.
+        if set(new_state.keys()) != set(committed_state.keys()):
+            raise ConflictError
 
-        committed_actions = committed_state['actions']
-        new_actions = new_state['actions']
-        all_actions = committed_actions + new_actions
-        committed_state['actions'] = all_actions
+        for key, val in new_state.items():
+            if key != 'actions' and val != committed_state[key]:
+                raise ConflictError  # can't resolve
+
+        old = old_state['actions']
+        committed = committed_state['actions']
+        new = new_state['actions']
+
+        old_set = set(old)
+        committed_set = set(committed)
+        new_set = set(new)
+
+        committed_added = committed_set - old_set
+        committed_removed = old_set - committed_set
+        new_added = new_set - old_set
+        new_removed = old_set - new_set
+
+        if new_removed & committed_removed:
+            # they both removed (claimed) the same one.  Puke.
+            raise ConflictError  # can't resolve
+
+        elif new_added & committed_added:
+            # they both added the same one.  Puke.
+            raise ConflictError  # can't resolve
+
+        # Now we do the merge.  We'll merge into the committed state and
+        # return it.
+        mod_committed = []
+
+        for v in committed:
+            if v not in new_removed:
+                mod_committed.append(v)
+
+        if new_added:
+            ordered_new_added = new[-len(new_added):]
+            assert set(ordered_new_added) == new_added
+            mod_committed.extend(ordered_new_added)
+
+        committed_state['actions'] = mod_committed
         logger.debug('resolved %s conflict' % self.__class__.__name__)
         return committed_state
 
@@ -328,7 +394,7 @@ def optimize_actions(actions):
 
     def dochange(oid, index_oid, action1, action2):
         result[(oid, index_oid)] = ReindexAction(
-            action2.index, oid, action2.obj
+            action2.index, oid, action2.resource
             )
 
     def dodefault(oid, index_oid, action1, action2):
@@ -356,9 +422,6 @@ def optimize_actions(actions):
             )
         statefunc(oid, index_oid, oldaction, newaction)
 
-    def sorter(action):
-        return (action.oid, action.index.__oid__, action.position)
-
-    result = list(sorted(result.values(), key=sorter))
+    result = list(sorted(result.values()))
     return result
 
