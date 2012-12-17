@@ -25,9 +25,6 @@ UI-Plus-Guts
 Guts-Only
 ---------
 
-- Get rid of allowed index in favor of allowed-to-sdiview index for
-  efficiency's sake.
-
 - Figure out wtf to do with pending threadlocal index actions and actions sent
   to the actions processor in the face of an undo.
 
