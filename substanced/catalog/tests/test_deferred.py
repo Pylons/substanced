@@ -679,6 +679,63 @@ class TestIndexActionTM(unittest.TestCase):
              'done processing index actions']
             )
 
+class Test_optimize_actions(unittest.TestCase):
+    def _callFUT(self, actions):
+        from ..deferred import optimize_actions
+        return optimize_actions(actions)
+
+    def test_donothing(self):
+        from ..deferred import IndexAction, UnindexAction
+        index = DummyIndex()
+        actions = [ IndexAction(index, 'mode', 'oid', 'resource'),
+                    UnindexAction(index, 'mode', 'oid') ]
+        result = self._callFUT(actions)
+        self.assertEqual(result, [])
+
+    def test_doadd(self):
+        from ..deferred import IndexAction, ReindexAction
+        index = DummyIndex()
+        actions = [ IndexAction(index, 'mode', 'oid', 'resource'),
+                    ReindexAction(index, 'mode', 'oid', 'resource') ]
+        result = self._callFUT(actions)
+        self.assertEqual(result, [actions[0]])
+
+    def test_dochange(self):
+        from ..deferred import IndexAction, UnindexAction, ReindexAction
+        index = DummyIndex()
+        actions = [ UnindexAction(index, 'mode', 'oid'),
+                    IndexAction(index, 'mode', 'oid', 'resource') ]
+        result = self._callFUT(actions)
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0].__class__, ReindexAction)
+        self.assertEqual(result[0].index, index)
+        self.assertEqual(result[0].oid, 'oid')
+        self.assertEqual(result[0].resource, 'resource')
+
+    def test_dodefault(self):
+        from ..deferred import IndexAction
+        index = DummyIndex()
+        actions = [ IndexAction(index, 'mode', 'oid', 'resource'),
+                    IndexAction(index, 'mode', 'oid', 'resource') ]
+        result = self._callFUT(actions)
+        self.assertEqual(result, [actions[-1]])
+
+    def test_sorting(self):
+        from ..deferred import IndexAction, ReindexAction, UnindexAction
+        index1 = DummyIndex()
+        index1.__name__ = 'index1'
+        index2 = DummyIndex()
+        index2.__oid__ = 2
+        index2.__name__ = 'index2'
+        a1 = IndexAction(index2, 'mode', 'oid1', 'resource')
+        a2 = ReindexAction(index1, 'mode', 'oid3', 'resource')
+        a3 = IndexAction(index2, 'mode', 'oid2', 'resource')
+        a4 = IndexAction(index2, 'mode', 'oid3', 'resource')
+        a5 = UnindexAction(index1, 'mode', 'oid1')
+        actions = [a1, a2, a3, a4, a5]
+        result = self._callFUT(actions)
+        self.assertEqual(result, [a5, a1, a3, a2, a4])
+
 class DummyIndexActionTM(object):
     def __init__(self, actions):
         self.actions = actions

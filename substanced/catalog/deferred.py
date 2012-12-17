@@ -476,7 +476,7 @@ def optimize_actions(actions):
 
     def dochange(oid, index_oid, action1, action2):
         result[(oid, index_oid)] = ReindexAction(
-            action2.index, oid, action2.resource
+            action2.index, action2.mode, oid, action2.resource
             )
 
     def dodefault(oid, index_oid, action1, action2):
