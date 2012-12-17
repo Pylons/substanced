@@ -318,7 +318,7 @@ class BasicActionProcessor(object):
                 self.logger.info('end running actions processing')
                 if once:
                     raise Break()
-            except (SystemExit, Break):
+            except (SystemExit, KeyboardInterrupt, Break):
                 once = True
                 try:
                     self.logger.info('disengaging basic action processor')
