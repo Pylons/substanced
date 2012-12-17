@@ -7,7 +7,7 @@ from pyramid.paster import (
     bootstrap,
     )
 
-from substanced.catalog.deferred import DumberNDirtActionProcessor
+from substanced.catalog.deferred import BasicActionProcessor
 
 def main():
     parser = OptionParser(description=__doc__)
@@ -23,7 +23,7 @@ def main():
     env = bootstrap(config_uri)
     site = env['root']
 
-    processor = DumberNDirtActionProcessor(site)
+    processor = BasicActionProcessor(site)
     processor.process() # loops
 
 if __name__ == '__main__':
