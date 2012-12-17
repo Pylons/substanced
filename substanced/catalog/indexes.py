@@ -364,11 +364,28 @@ class FacetIndex(SDIndex, hypatia.facet.FacetIndex):
     propertysheets = ( ('', IndexPropertySheet), ),
     )
 class AllowedIndex(KeywordIndex):
-    def allows(self, principals, permission='view'):
+    def allows(self, principals, permission=None):
         """ ``principals`` may either be 1) a sequence of principal
         indentifiers, 2) a single principal identifier, or 3) a Pyramid
         request, which indicates that all the effective principals implied by
-        the request are used."""
+        the request are used.
+
+        ``permission`` may be ``None`` if this index is configured with
+        only a single permission.  Otherwise a permission name must be passed
+        or an error will be raised.
+        """
+        permissions = self.discriminator.permissions
+        if permission is None:
+            if len(permissions) > 1:
+                raise ValueError('Must pass a permission')
+            else:
+                permission = list(permissions)[0]
+        else:
+            if permissions is not None and not permission in permissions:
+                raise ValueError(
+                    'This index does not support the %s '
+                    'permission' % (permission,)
+                    )
         if IRequest.providedBy(principals):
             principals = effective_principals(principals)
         elif not is_nonstr_iter(principals):

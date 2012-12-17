@@ -360,8 +360,8 @@ class FolderContentsViews(object):
         if filter_text:
             if not filter_text.endswith('*'):
                 filter_text = filter_text + '*' # glob (prefix) search
-            text = catalog['text']
-            q = q & text.eq(filter_text)
+            name_text = catalog['name_text']
+            q = q & name_text.eq(filter_text)
 
         if sort_index is None:
             sort_index = catalog['name']

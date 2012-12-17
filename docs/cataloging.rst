@@ -26,14 +26,15 @@ A default set of indexes is available in the ``system`` catalog:
 
   Represents the set of interfaces possessed by the content object.
 
-- containment (a ``keyword`` index), uses a custom discriminator exclusively.
+- allowed (an ``allowed`` index)
 
-  Represents the set of interfaces and classes which are possessed by
-  parents of the content object (inclusive of itself)
+  Represents the set of users granted the ``sdi.view`` permission to each
+  content object.
 
-- allowed (an ``allowed`` index), uses a custom discriminator exclusively.
+- name_text (a ``text`` index)
 
-  Represents the set of users granted a permission to each content object.
+  Represents the text searched for when you use a search box within the SDI
+  for each content object.
 
 Querying the Catalog
 --------------------

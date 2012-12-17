@@ -453,24 +453,40 @@ class TestAllowedIndex(unittest.TestCase):
         return index
 
     def test_allows_request_default_permission(self):
-        index = self._makeOne()
+        discriminator = DummyAllowsDiscriminator(('view',))
+        index = self._makeOne(discriminator)
         request = testing.DummyRequest()
         q = index.allows(request)
         self.assertEqual(q._value, [('system.Everyone', 'view')])
 
     def test_allows_request_nondefault_permission(self):
-        index = self._makeOne()
+        discriminator = DummyAllowsDiscriminator(('view', 'edit'))
+        index = self._makeOne(discriminator)
         request = testing.DummyRequest()
         q = index.allows(request, 'edit')
         self.assertEqual(q._value, [('system.Everyone', 'edit')])
 
+    def test_allows_no_default_permission(self):
+        discriminator = DummyAllowsDiscriminator(('view', 'edit'))
+        index = self._makeOne(discriminator)
+        request = testing.DummyRequest()
+        self.assertRaises(ValueError, index.allows, request)
+
+    def test_allows_bad__permission(self):
+        discriminator = DummyAllowsDiscriminator(('view', 'edit'))
+        index = self._makeOne(discriminator)
+        request = testing.DummyRequest()
+        self.assertRaises(ValueError, index.allows, request, 'whatever')
+
     def test_allows_iterable(self):
-        index = self._makeOne()
+        discriminator = DummyAllowsDiscriminator(('edit',))
+        index = self._makeOne(discriminator)
         q = index.allows(['bob', 'joe'], 'edit')
         self.assertEqual(q._value, [('bob', 'edit'), ('joe', 'edit')])
 
     def test_allows_single(self):
-        index = self._makeOne()
+        discriminator = DummyAllowsDiscriminator(('edit',))
+        index = self._makeOne(discriminator)
         q = index.allows('bob', 'edit')
         self.assertEqual(q._value, [('bob', 'edit')])
 
@@ -539,3 +555,9 @@ class DummyActionTM(object):
     def add(self, action):
         self.actions.append(action)
         
+class DummyAllowsDiscriminator(object):
+    def __init__(self, permissions):
+        self.permissions = permissions
+
+    def __call__(self): pass
+    

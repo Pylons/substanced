@@ -24,23 +24,6 @@ class TestSystemIndexViews(unittest.TestCase):
         self.assertTrue(Dummy2 in result)
         self.assertTrue(Interface in result)
 
-    def test_containment(self):
-        class Dummy1(Interface):
-            pass
-        class Dummy2(Interface):
-            pass
-        root = testing.DummyModel()
-        alsoProvides(root, Dummy1)
-        resource = testing.DummyResource()
-        alsoProvides(resource, Dummy2)
-        root['foo'] = resource
-        inst = self._makeOne(resource)
-        result = inst.containment(None)
-        self.assertEqual(len(result), 3)
-        self.assertTrue(Dummy1 in result)
-        self.assertTrue(Dummy2 in result)
-        self.assertTrue(Interface in result)
-
     def test_name_has_no_name(self):
         resource = object()
         inst = self._makeOne(resource)
@@ -61,29 +44,29 @@ class TestSystemIndexViews(unittest.TestCase):
         result = inst.name('abc')
         self.assertEqual(result, 'abc')
 
-    def test_text_name_doesnt_exist(self):
+    def test_name_text_name_doesnt_exist(self):
         resource = testing.DummyResource()
         inst = self._makeOne(resource)
-        result = inst.text(None)
+        result = inst.name_text(None)
         self.assertEqual(result, None)
 
-    def test_text_name_is_not_string(self):
+    def test_name_text_name_is_not_string(self):
         resource = testing.DummyResource()
         resource.__name__ = False
         inst = self._makeOne(resource)
-        result = inst.text(None)
+        result = inst.name_text(None)
         self.assertEqual(result, False)
 
-    def test_text_name_has_no_separators(self):
+    def test_name_text_name_has_no_separators(self):
         resource = testing.DummyResource()
         resource.__name__ = 'foobar'
         inst = self._makeOne(resource)
-        result = inst.text(None)
+        result = inst.name_text(None)
         self.assertEqual(result, 'foobar')
 
-    def test_text_name_has_separators(self):
+    def test_name_text_name_has_separators(self):
         resource = testing.DummyResource()
         resource.__name__ = 'foo-bar_baz.pt,foz'
         inst = self._makeOne(resource)
-        result = inst.text(None)
+        result = inst.name_text(None)
         self.assertEqual(result, 'foo-bar_baz.pt,foz foo bar baz pt foz')

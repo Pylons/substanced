@@ -662,7 +662,7 @@ def includeme(config): # pragma: no cover
     config.add_directive('add_catalog_factory', add_catalog_factory)
     config.add_directive('add_indexview', add_indexview)
     config.include('.system')
-    config.add_permission('view') # for allowed index .allows() default value
+    config.add_permission('view') # canonize this as a permission name
     config.registry.registerAdapter(
         deferred.BasicActionProcessor,
         (Interface,), IIndexingActionProcessor

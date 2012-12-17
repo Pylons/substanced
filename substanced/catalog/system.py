@@ -1,5 +1,3 @@
-from pyramid.location import lineage
-
 from ..util import (
     get_interfaces,
     )
@@ -29,15 +27,6 @@ class SystemIndexViews(object):
         """
         return get_interfaces(self.resource, classes=False)
 
-    def containment(self, default):
-        """ Return a set of all interfaces implemented by the object *and its
-        containment ancestors*, including inherited interfaces.  This does
-        not index classes."""
-        ifaces = set()
-        for ancestor in lineage(self.resource):
-            ifaces.update(get_interfaces(ancestor, classes=False))
-        return ifaces
-
     def name(self, default):
         """ Returns the ``__name__`` of the object or ``default`` if the object
         has no ``__name__``."""
@@ -46,7 +35,7 @@ class SystemIndexViews(object):
             return default
         return name
  
-    def text(self, default):
+    def name_text(self, default):
         """ Returns a derivation of the name for text indexing.  If name has no
         separator characters in it, the function will return the name
         unchanged.  Otherwise it will return the name plus the derivation of
@@ -83,26 +72,27 @@ class SystemCatalogFactory(object):
 
       Represents the set of interfaces possessed by the content object.
 
-    - containment (a KeywordIndex)
-
-      Represents the set of interfaces and classes which are possessed by
-      parents of the content object (inclusive of itself)
-
     - allowed (an AllowedIndex)
 
-      Represents the set of principals allowed to take some permission against
-      a content object.
+      Represents the set of principals with the ``sdi.view`` or ``view``
+      permission against a content object.
+
+    - name_text (a TextIndex)
+
+      Indexes text used for the Substance D folder contents filter box.
 
     """
     path = Path()
-    name = Field(action_mode=MODE_DEFERRED)
+    name = Field(action_mode=MODE_IMMEDIATE)
     interfaces = Keyword(action_mode=MODE_DEFERRED)
-    containment = Keyword(action_mode=MODE_DEFERRED)
-    allowed = Allowed(action_mode=MODE_IMMEDIATE)
-    text = Text(action_mode=MODE_DEFERRED)
+    allowed = Allowed(
+        permissions=('sdi.view', 'view'),
+        action_mode=MODE_IMMEDIATE
+        )
+    name_text = Text(action_mode=MODE_DEFERRED)
 
 def includeme(config): # pragma: no cover
-    for name in ('interfaces', 'containment', 'name', 'text'):
+    for name in ('interfaces', 'name', 'name_text'):
         config.add_indexview(
             SystemIndexViews,
             catalog_name='system',
