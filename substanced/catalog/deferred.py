@@ -346,6 +346,9 @@ class IndexActionTM(threading.local):
     # This is a data manager solely to provide savepoint support, we'd
     # otherwise be able to get away with just using a before commit hook to
     # call .process
+
+    transaction = transaction # for testing
+    logger = logger # for testing
     
     def __init__(self, index):
         self.index = index
@@ -355,7 +358,7 @@ class IndexActionTM(threading.local):
 
     def register(self):
         if not self.registered:
-            t = transaction.get()
+            t = self.transaction.get()
             t.join(self)
             t.addBeforeCommitHook(self.flush, (False,))
             self.registered = True
@@ -366,11 +369,7 @@ class IndexActionTM(threading.local):
     def tpc_begin(self, t):
         pass
 
-    def commit(self, t):
-        pass
-
-    def tpc_vote(self, t):
-        pass
+    commit = tpc_vote = tpc_begin
 
     def tpc_finish(self, t):
         self.registered = False
@@ -397,47 +396,58 @@ class IndexActionTM(threading.local):
     def _process(self, actions, all=True):
         registry = get_current_registry()
 
-        logger.debug('begin index actions processing')
+        self.logger.debug('begin index actions processing')
 
         if all:
-            logger.debug('executing all actions immediately: "all" flag')
-            execute_actions_immediately(actions)
+            self.logger.debug('executing all actions immediately: "all" flag')
+            self.execute_actions_immediately(actions)
             
         else:
             processor = registry.queryAdapter(
                 self.index,
                 IIndexingActionProcessor
                 )
-            processor_active = processor is not None and processor.active()
-            if processor_active:
-                logger.debug(
+
+            active = False
+            reason = None
+
+            if processor:
+                active = processor.active()
+                if not active:
+                    reason = 'inactive'
+            else:
+                reason = 'no'
+
+            if active:
+                self.logger.debug(
                     'executing deferred actions: action processor active'
                     )
-                execute_actions_deferred(actions, processor)
+                self.execute_actions_deferred(actions, processor)
             else:
-                logger.debug(
-                    'executing actions all immediately: no action processor'
+                self.logger.debug(
+                    'executing actions all immediately: %s action '
+                    'processor' % (reason,)
                     )
-                execute_actions_immediately(actions)
+                self.execute_actions_immediately(actions)
 
-        logger.debug('done processing index actions')
+        self.logger.debug('done processing index actions')
 
-def execute_actions_immediately(actions):
-    for action in actions:
-        logger.debug('executing action %r' % (action,))
-        action.execute()
-
-def execute_actions_deferred(actions, processor):
-    deferred = []
-    for action in actions:
-        if action.mode is MODE_DEFERRED:
-            logger.debug('adding deferred action %r' % (action,))
-            deferred.append(action)
-        else:
-            logger.debug('executing action %r' % (action,))
+    def execute_actions_immediately(self, actions):
+        for action in actions:
+            self.logger.debug('executing action %r' % (action,))
             action.execute()
-    if deferred:
-        processor.add(deferred)
+
+    def execute_actions_deferred(self, actions, processor):
+        deferred = []
+        for action in actions:
+            if action.mode is MODE_DEFERRED:
+                self.logger.debug('adding deferred action %r' % (action,))
+                deferred.append(action)
+            else:
+                self.logger.debug('executing action %r' % (action,))
+                action.execute()
+        if deferred:
+            processor.add(deferred)
 
 def optimize_actions(actions):
     """

@@ -240,7 +240,7 @@ class Test_commit(unittest.TestCase):
         return commit(tries)(meth)
 
     def test_gardenpath(self):
-        ap = DummyActionProcessor()
+        ap = DummyActionProcessor(None)
         def fakemethod(ap):
             ap.called += 1
         inst = self._makeOne(3, fakemethod)
@@ -252,7 +252,9 @@ class Test_commit(unittest.TestCase):
 
     def test_conflict_overflow(self):
         from ZODB.POSException import ConflictError
-        ap = DummyActionProcessor([ConflictError, ConflictError, ConflictError])
+        ap = DummyActionProcessor(
+            None, [ConflictError, ConflictError, ConflictError]
+            )
         def fakemethod(ap):
             ap.called += 1
         inst = self._makeOne(3, fakemethod)
@@ -265,7 +267,10 @@ class Test_commit(unittest.TestCase):
 
     def test_conflicts_but_success(self):
         from ZODB.POSException import ConflictError
-        ap = DummyActionProcessor([ConflictError, ConflictError])
+        ap = DummyActionProcessor(
+            None,
+            [ConflictError, ConflictError]
+            )
         def fakemethod(ap):
             ap.called += 1
         inst = self._makeOne(3, fakemethod)
@@ -495,9 +500,192 @@ class TestBasicActionProcessor(unittest.TestCase):
              'end running actions processing',
              'disengaging basic action processor']            
             )
+
+class TestIndexActionSavepoint(unittest.TestCase):
+    def _makeOne(self, tm):
+        from ..deferred import IndexActionSavepoint
+        return IndexActionSavepoint(tm)
+
+    def test_rollback(self):
+        tm = DummyIndexActionTM([1])
+        inst = self._makeOne(tm)
+        tm.actions = None
+        inst.rollback()
+        self.assertEqual(tm.actions, [1])
+
+class TestIndexActionTM(unittest.TestCase):
+    def setUp(self):
+        self.config = testing.setUp()
+
+    def tearDown(self):
+        testing.tearDown()
         
+    def _makeOne(self, index):
+        from ..deferred import IndexActionTM
+        return IndexActionTM(index)
+
+    def test_register(self):
+        index = DummyIndex()
+        inst = self._makeOne(index)
+        transaction = DummyTransaction()
+        inst.transaction = transaction
+        inst.register()
+        self.assertTrue(transaction.joined)
+        self.assertEqual(transaction.beforecommit_fn, inst.flush)
+        self.assertEqual(transaction.beforecommit_args, (False,))
+        self.assertTrue(inst.registered)
+
+    def test_register_already_registered(self):
+        index = DummyIndex()
+        inst = self._makeOne(index)
+        transaction = DummyTransaction()
+        inst.transaction = transaction
+        inst.registered = True
+        inst.register()
+        self.assertFalse(transaction.joined)
+
+    def test_savepoint(self):
+        index = DummyIndex()
+        inst = self._makeOne(index)
+        sp = inst.savepoint()
+        self.assertEqual(sp.tm, inst)
+
+    def test_tpc_begin(self):
+        index = DummyIndex()
+        inst = self._makeOne(index)
+        self.assertEqual(inst.tpc_begin(None), None)
+
+    def test_tpc_finish(self):
+        index = DummyIndex()
+        inst = self._makeOne(index)
+        self.assertEqual(inst.tpc_finish(None), None)
+        self.assertTrue(index.cleared)
+        self.assertEqual(inst.index, None)
+        self.assertFalse(inst.registered)
+        self.assertEqual(inst.actions, [])
+
+    def test_sortKey(self):
+        index = DummyIndex()
+        inst = self._makeOne(index)
+        self.assertEqual(inst.sortKey(), 1)
+
+    def test_add(self):
+        index = DummyIndex()
+        inst = self._makeOne(index)
+        inst.add(1)
+        self.assertEqual(inst.actions, [1])
+
+    def test_flush(self):
+        index = DummyIndex()
+        inst = self._makeOne(index)
+        a1 = DummyAction(1)
+        inst.actions = [a1]
+        L = []
+        inst._process = lambda actions, all=None: L.append((actions, all))
+        inst.flush(all=False)
+        self.assertEqual(L, [([a1], False)])
+
+    def test_flush_no_actions(self):
+        index = DummyIndex()
+        inst = self._makeOne(index)
+        L = []
+        inst._process = lambda actions, all=None: L.append((actions, all))
+        inst.flush(all=False)
+        self.assertEqual(L, [])
+
+    def test__process_all_True(self):
+        index = DummyIndex()
+        inst = self._makeOne(index)
+        logger = DummyLogger()
+        inst.logger = logger
+        a1 = DummyAction(1)
+        inst._process([a1])
+        self.assertTrue(a1.executed)
+        self.assertEqual(
+            logger.messages,
+            ['begin index actions processing',
+             'executing all actions immediately: "all" flag',
+             'executing action action 1',
+             'done processing index actions']
+            )
+
+    def test__process_all_False_no_action_processor(self):
+        index = DummyIndex()
+        inst = self._makeOne(index)
+        logger = DummyLogger()
+        inst.logger = logger
+        a1 = DummyAction(1)
+        inst._process([a1], all=False)
+        self.assertTrue(a1.executed)
+        self.assertEqual(
+            logger.messages,
+            ['begin index actions processing',
+             'executing actions all immediately: no action processor',
+             'executing action action 1',
+             'done processing index actions']
+            )
+
+    def test__process_all_False_inactive_action_processor(self):
+        from substanced.interfaces import IIndexingActionProcessor
+        from zope.interface import Interface
+        self.config.registry.registerAdapter(
+            DummyActionProcessor, (Interface,), IIndexingActionProcessor
+            )
+        index = DummyIndex()
+        index.active = False
+        inst = self._makeOne(index)
+        logger = DummyLogger()
+        inst.logger = logger
+        a1 = DummyAction(1)
+        inst._process([a1], all=False)
+        self.assertTrue(a1.executed)
+        self.assertEqual(
+            logger.messages,
+            ['begin index actions processing',
+             'executing actions all immediately: inactive action processor',
+             'executing action action 1',
+             'done processing index actions']
+            )
+
+    def test__process_all_False_active_action_processor(self):
+        from substanced.interfaces import (
+            IIndexingActionProcessor,
+            MODE_DEFERRED,
+            MODE_ATCOMMIT,
+            )
+        from zope.interface import Interface
+        self.config.registry.registerAdapter(
+            DummyActionProcessor, (Interface,), IIndexingActionProcessor
+            )
+        index = DummyIndex()
+        index.active = True
+        inst = self._makeOne(index)
+        logger = DummyLogger()
+        inst.logger = logger
+        a1 = DummyAction(1)
+        a1.mode = MODE_DEFERRED
+        a2 = DummyAction(2)
+        a2.mode = MODE_ATCOMMIT
+        inst._process([a1, a2], all=False)
+        self.assertFalse(a1.executed)
+        self.assertTrue(a2.executed)
+        self.assertEqual(index.added, [a1])
+        self.assertEqual(
+            logger.messages,
+            ['begin index actions processing',
+             'executing deferred actions: action processor active',
+             'adding deferred action action 1',
+             'executing action action 2',
+             'done processing index actions']
+            )
+
+class DummyIndexActionTM(object):
+    def __init__(self, actions):
+        self.actions = actions
 
 class DummyIndex(object):
+    __oid__ = 1
+    cleared = False
     def index_doc(self, oid, resource):
         self.oid = oid
         self.resource = resource
@@ -507,11 +695,15 @@ class DummyIndex(object):
     def unindex_doc(self, oid):
         self.oid = oid
 
+    def clear_action_tm(self):
+        self.cleared = True
+
 class DummyLogger(object):
     def __init__(self):
         self.messages = []
     def info(self, msg):
         self.messages.append(msg)
+    debug = info
         
 
 class DummyJar(object):
@@ -526,6 +718,7 @@ class DummyJar(object):
 
 
 class DummyTransaction(object):
+    joined = False
     def __init__(self, raises=None):
         if raises is None:
             raises = []
@@ -546,6 +739,16 @@ class DummyTransaction(object):
 
     def abort(self):
         self.aborted += 1
+
+    def get(self):
+        return self
+
+    def join(self, tm):
+        self.joined = tm
+
+    def addBeforeCommitHook(self, fn, args):
+        self.beforecommit_fn = fn
+        self.beforecommit_args = args
 
 class DummyAction(object):
     index = testing.DummyResource()
@@ -570,14 +773,21 @@ class DummyQueue(object):
         return result
 
 class DummyActionProcessor(object):
-    def __init__(self, commit_raises=None):
+    def __init__(self, context, commit_raises=None):
+        self.context = context
         if commit_raises is None:
             commit_raises = []
         self.transaction = DummyTransaction(commit_raises)
         self.synced = 0
         self.called = 0
 
+    def active(self):
+        return self.context.active
+
     def sync(self):
         self.synced+=1
+
+    def add(self, actions):
+        self.context.added = actions
 
     
