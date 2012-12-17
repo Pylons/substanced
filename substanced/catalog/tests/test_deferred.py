@@ -313,20 +313,32 @@ class TestBasicActionProcessor(unittest.TestCase):
     def test_active_True(self):
         context = testing.DummyResource()
         inst = self._makeOne(context)
-        context._p_jar = DummyJar({inst.queue_name:'queue'})
+        queue = DummyQueue()
+        queue.processor_active = True
+        context._p_jar = DummyJar({inst.queue_name:queue})
         self.assertTrue(inst.active())
         
-    def test_active_False(self):
+    def test_active_False_no_queue(self):
         context = testing.DummyResource()
         context._p_jar = None
         inst = self._makeOne(context)
         self.assertFalse(inst.active())
 
-    def test_engage_queue_already_exists(self):
+    def test_active_False_processor_not_active(self):
         context = testing.DummyResource()
+        queue = DummyQueue()
+        queue.processor_active = False
         inst = self._makeOne(context)
-        context._p_jar = DummyJar({inst.queue_name:'queue'})
+        context._p_jar = DummyJar({inst.queue_name:queue})
+        self.assertFalse(inst.active())
+
+    def test_engage_queue_already_present(self):
+        context = testing.DummyResource()
+        queue = DummyQueue()
+        inst = self._makeOne(context)
+        context._p_jar = DummyJar({inst.queue_name:queue})
         self.assertEqual(inst.engage(), None)
+        self.assertTrue(queue.processor_active)
 
     def test_engage_queue_missing_context_has_no_jar(self):
         context = testing.DummyResource()
@@ -342,24 +354,26 @@ class TestBasicActionProcessor(unittest.TestCase):
         root = {}
         context._p_jar = DummyJar(root)
         self.assertEqual(inst.engage(), None)
-        self.assertTrue(root[inst.queue_name])
+        queue = root[inst.queue_name]
         self.assertTrue(transaction.committed)
+        self.assertTrue(queue.processor_active)
 
-    def test_disengage_context_has_no_jar(self):
+    def test_disengage_no_queue(self):
         context = testing.DummyResource()
         inst = self._makeOne(context)
         context._p_jar = DummyJar(None)
-        self.assertRaises(RuntimeError, inst.disengage)
+        self.assertEqual(inst.disengage(), None)
 
-    def test_disengage_queue_removed(self):
+    def test_disengage(self):
         context = testing.DummyResource()
         inst = self._makeOne(context)
-        root = {inst.queue_name:True}
+        queue = DummyQueue()
+        root = {inst.queue_name:queue}
         transaction = DummyTransaction()
         inst.transaction = transaction
         context._p_jar = DummyJar(root)
         inst.disengage()
-        self.assertEqual(root, {})
+        self.assertEqual(queue.processor_active, False)
         self.assertTrue(transaction.committed)
 
     def test_add_not_engaged(self):
@@ -396,13 +410,13 @@ class TestBasicActionProcessor(unittest.TestCase):
         self.assertEqual(transaction.committed, 3) # engage, process, disengage
         self.assertEqual(
             logger.messages,
-            ['engaging basic action processor',
+            ['starting basic action processor',
              'start running actions processing',
              'executing action 1',
              'committing',
              'committed',
              'end running actions processing',
-             'disengaging basic action processor']
+             'stopping basic action processor']
             )
 
     def test_process_gardenpath_no_actions(self):
@@ -423,11 +437,11 @@ class TestBasicActionProcessor(unittest.TestCase):
         self.assertEqual(transaction.committed, 2) # engage, disengage
         self.assertEqual(
             logger.messages,
-            ['engaging basic action processor',
+            ['starting basic action processor',
              'start running actions processing',
              'no actions to execute',
              'end running actions processing',
-             'disengaging basic action processor']
+             'stopping basic action processor']
             )
 
     def test_process_conflicterror_at_initial_commit(self):
@@ -453,13 +467,13 @@ class TestBasicActionProcessor(unittest.TestCase):
         self.assertTrue(transaction.aborted)
         self.assertEqual(
             logger.messages,
-            ['engaging basic action processor',
+            ['starting basic action processor',
              'start running actions processing',
              'executing action 1',
              'committing',
              'aborted due to conflict error',
              'end running actions processing',
-             'disengaging basic action processor']
+             'stopping basic action processor']
             )
 
     def test_process_conflicterror_at_disengage(self):
@@ -487,18 +501,18 @@ class TestBasicActionProcessor(unittest.TestCase):
         self.assertTrue(a1.executed)
         self.assertEqual(
             logger.messages,
-            ['engaging basic action processor',
+            ['starting basic action processor',
              'start running actions processing',
              'executing action 1',
              'committing',
              'committed',
              'end running actions processing',
-             'disengaging basic action processor',
-             'couldnt disengage due to conflict, process queue one more time',
+             'stopping basic action processor',
+             'couldnt disengage due to conflict, processing queue once more',
              'start running actions processing',
              'no actions to execute',
              'end running actions processing',
-             'disengaging basic action processor']            
+             'stopping basic action processor']            
             )
 
 class TestIndexActionSavepoint(unittest.TestCase):
@@ -822,7 +836,7 @@ class DummyAction(object):
         return 'action %s' % self.oid
 
 class DummyQueue(object):
-    def __init__(self, result):
+    def __init__(self, result=()):
         self.result = result
     def popall(self):
         result = self.result[:]

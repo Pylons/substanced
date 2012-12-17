@@ -62,7 +62,7 @@ regardless of the mode of any index configured in the catalog's factory.
 
 ``MODE_DEFERRED`` operations are meant to be processed by an *action
 processor*.  An example action processor is in
-``substanced.catalog.deferred.BasicActionProcessor`, which may be run via the
+``substanced.catalog.deferred.BasicActionProcessor``, which may be run via the
 console script named ``sd_drain_indexing``.  When an action processor is
 running, and handling event processing, it is said to be "active".  When it is
 not running, or it is shutting down, it is said to be "inactive".  Typically a

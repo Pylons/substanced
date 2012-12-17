@@ -151,6 +151,7 @@ class ActionsQueue(persistent.Persistent):
 
     def __init__(self):
         self.actions = []
+        self.processor_active = False
 
     def extend(self, actions):
         self.actions.extend(actions)
@@ -256,7 +257,10 @@ class BasicActionProcessor(object):
         return queue
 
     def active(self):
-        return self.get_queue() is not None
+        queue = self.get_queue()
+        if queue is None:
+            return False
+        return queue.processor_active
 
     def sync(self):
         jar = self.context._p_jar
@@ -271,14 +275,16 @@ class BasicActionProcessor(object):
             if zodb_root is None:
                 raise RuntimeError('Context has no jar')
             queue = ActionsQueue()
+            queue.processor_active = True
             zodb_root[self.queue_name] = queue
+        else:
+            queue.processor_active = True
 
     @commit(1)
     def disengage(self):
-        zodb_root = self.get_root()
-        if zodb_root is None:
-            raise RuntimeError('Context has no jar')
-        zodb_root.pop(self.queue_name, None)
+        queue = self.get_queue()
+        if queue is not None:
+            queue.processor_active = False
 
     def add(self, actions):
         queue = self.get_queue()
@@ -287,7 +293,7 @@ class BasicActionProcessor(object):
         queue.extend(actions)
 
     def process(self, sleep=5, once=False):
-        self.logger.info('engaging basic action processor')
+        self.logger.info('starting basic action processor')
         self.engage()
         while True:
             try:
@@ -321,13 +327,13 @@ class BasicActionProcessor(object):
             except (SystemExit, KeyboardInterrupt, Break):
                 once = True
                 try:
-                    self.logger.info('disengaging basic action processor')
+                    self.logger.info('stopping basic action processor')
                     self.disengage()
                     break
                 except ConflictError:
                     self.logger.info(
-                        'couldnt disengage due to conflict, process queue one '
-                        'more time'
+                        'couldnt disengage due to conflict, processing queue '
+                        'once more'
                         )
 
 class IndexActionSavepoint(object):
