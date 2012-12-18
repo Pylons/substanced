@@ -42,16 +42,16 @@ dotted_name_resolver = DottedNameResolver()
 class IDumperFactories(Interface):
     pass
 
-# grrr.. pyyaml has class-based global registries, so we need to subclass
-# to provide them
-
-class SDumper(yaml.Dumper):
-    pass
-
-class SLoader(yaml.Loader):
-    pass
-
 def set_yaml(registry):
+    # grrr.. pyyaml has class-based global registries, so we need to subclass
+    # to provide them
+
+    class SDumper(yaml.Dumper):
+        pass
+
+    class SLoader(yaml.Loader):
+        pass
+
     registry.yaml_loader = SLoader
     registry.yaml_dumper = SDumper
     def iface_representer(dumper, data):
