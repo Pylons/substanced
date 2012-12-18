@@ -25,12 +25,25 @@ UI-Plus-Guts
 Guts-Only
 ---------
 
+- See if we can make field indexes and keyword indexes register fewer
+  persistent objects at indexing time.  Also test reindexing and see if that
+  does less work than plain indexing.
+
+- Really provide an "interfaces" index?  It registers a shitton of objects when
+  something is added and it adds global object refs.
+
 - Figure out wtf to do with pending threadlocal index actions and actions sent
   to the actions processor in the face of an undo.
 
 - Flush executable indexing actions before a query is executed.
 
 - Figure out why ``sd_reindex`` doesn't log anything.
+
+- Catalog event subscriber currently does a hellishly expensive recatalog of
+  allowed indexes when an ACL is changed.  Not sure if there's even a general
+  way to make this do less work, but could be.
+
+- Undo of catalog reindex doesnt?  Turned off for now.
 
 - Write sd_dump and sd_load scripts.
 
@@ -39,12 +52,6 @@ Guts-Only
 - Use is_folder view predicate instead of context=IFolder in folder views
   (holdup is testing out folder button action overrides in the face of views
   being registered against IFolder).
-
-- Catalog event subscriber currently does a hellishly expensive recatalog of
-  allowed indexes when an ACL is changed.  Not sure if there's even a general
-  way to make this do less work, but could be.
-
-- Undo of catalog reindex doesnt?  Turned off for now.
 
 - Add specific configurator directives for object event registrations
   (e.g. config.subscribe_modified).
