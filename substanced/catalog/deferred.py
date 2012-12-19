@@ -1,4 +1,3 @@
-import sys
 import functools
 import logging
 import persistent
@@ -251,6 +250,8 @@ class ActionsQueue(persistent.Persistent):
             # what value to return for a generation value when coping with an
             # undo situation.  Brain too small, time too short.
             #
+            self.logger.info(
+                'Could not resolve action queue conflict due to undo')
             raise ConflictError
 
         gen = max(committed_gen, new_gen)
