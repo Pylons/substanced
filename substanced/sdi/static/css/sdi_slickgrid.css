@@ -6,6 +6,13 @@
   position: relative;
   border-bottom: 1px solid #dddddd;
 }
+.slickgrid-wrapper input[type="checkbox"] {
+  vertical-align: baseline;
+  margin: 0;
+}
+.slickgrid-wrapper .slick-viewport {
+  border-top: 1px solid #dddddd;
+}
 .slickgrid-wrapper .grid-canvas {
   /* XXX ... needed ? */
 
@@ -16,8 +23,8 @@
 }
 .slickgrid-wrapper .grid-canvas .slick-cell,
 .slickgrid-wrapper .grid-canvas .slick-headerrow-column {
-  border-top: 1px solid #dddddd;
-  border-bottom: 0;
+  border-top: 0;
+  border-bottom: 1px solid #dddddd;
   border-left: 0;
   border-right: 0;
 }
@@ -70,8 +77,6 @@ body .slickgrid-wrapper .grid-canvas .slick-cell {
   height: 20px;
   line-height: 20px;
   margin: 0;
-  /* XXX ... needed to override from slickgrid ? */
-
   border-right: 1px solid #FFFFFF;
   border-left: 0px;
   border-top: 0px;
@@ -79,7 +84,7 @@ body .slickgrid-wrapper .grid-canvas .slick-cell {
   /* like TH  */
 
   background: transparent;
-  font-family: Georgia, "Times New Roman", Times, serif;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   color: #333333;
   font-weight: bold;
   text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4);
@@ -99,13 +104,13 @@ body .slickgrid-wrapper .slick-header-columns .slick-header-column.ui-state-defa
   color: #333333;
 }
 .slickgrid-wrapper .slick-header-columns .slick-header-column a:hover {
-  color: #666666;
+  color: #333333;
 }
 .slickgrid-wrapper .slick-header-columns .slick-header-column.ui-state-default {
   /* like TH  */
 
   background: transparent;
-  font-family: Georgia, "Times New Roman", Times, serif;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   color: #333333;
   font-weight: bold;
   text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4);
@@ -115,14 +120,14 @@ body .slickgrid-wrapper .slick-header-columns .slick-header-column.ui-state-defa
   color: #333333;
 }
 .slickgrid-wrapper .slick-header-columns .slick-header-column.ui-state-default a:hover {
-  color: #666666;
+  color: #333333;
 }
 .slickgrid-wrapper .slick-header-columns .slick-header-column.slick-header-column-sorted {
   font-style: normal;
-  color: #666666;
+  color: #333333;
 }
 .slickgrid-wrapper .slick-header-columns .slick-header-column:hover {
-  color: #666666;
+  color: #333333;
 }
 .slickgrid-wrapper .slick-header-columns .slick-header-column .slick-sort-indicator-asc {
   vertical-align: middle;
