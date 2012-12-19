@@ -1,3 +1,4 @@
+import sys
 import functools
 import logging
 import persistent
@@ -47,7 +48,7 @@ class Action(object):
     def __hash__(self):
         # We don't actually need to supply a unique hash value to allow
         # instances of this class to be unique according to set membership
-        # or dict key membership or whatever
+        # (dict membership); __eq__ will be called for each.
         return 1
 
     def __eq__(self, other):
@@ -150,11 +151,39 @@ class ActionsQueue(persistent.Persistent):
     logger = logger # for testing
 
     def __init__(self):
+        self.gen = 0
         self.actions = []
         self.processor_active = False
 
+    def bumpgen(self):
+        # At an average rate of 100 bumps per second, this value won't exceed
+        # sys.maxint for:
+        #
+        # About 8 months on a 32-bit system.
+        #
+        # About 92 years on a 64-bit system.
+        #
+        # The software will work fine after it exceeds sys.maxint, it'll
+        # overflow to a long integer and it'll just be slower to do the math to
+        # bump.
+        #
+        # I choose to not care about the slowdown that overflowing to a long
+        # integer on incredibly busy 32-bit systems will imply.  If someone
+        # uses this software 100 years from now, and they're still using a 64
+        # bit CPU, they'll also need to deal with the slowdown implied by
+        # overflowing to a long integer too.
+        #
+        # It is possible to reset this value to 0 periodically.  Resetting this
+        # value to 0 should can be done immediately after a pack.  It is only
+        # used to compare old object revisions to newer ones, and after a pack,
+        # there are no old object revisions anymore.  It would be ideal to be
+        # able to hook a pack and do this automatically, but meh.
+        newgen = self.gen + 1
+        self.gen = newgen
+
     def extend(self, actions):
         self.actions.extend(actions)
+        self.bumpgen()
         self._p_changed = True
 
     def popall(self):
@@ -162,19 +191,69 @@ class ActionsQueue(persistent.Persistent):
             return None
         actions = self.actions[:]
         self.actions = []
+        self.bumpgen()
         return actions
 
     def _p_resolveConflict(self, old_state, committed_state, new_state):
-        # Most of this code is cadged from zc.queue._queue
+        # Most of this code is cadged from zc.queue._queue; the undo logic
+        # comes from from Products.QueueCatalog
         
-        # we only know how to merge actions.  If anything else is different,
-        # puke.
+        # We only know how to merge actions and resolve the generation.  If
+        # anything else is different, puke.
         if set(new_state.keys()) != set(committed_state.keys()):
             raise ConflictError
 
         for key, val in new_state.items():
-            if key != 'actions' and val != committed_state[key]:
-                raise ConflictError  # can't resolve
+            if ( key not in ('actions', 'gen') and
+                 val != committed_state.get(key) ):
+                raise ConflictError  # cant deal w/ processor_active diff either
+
+        processor_active = new_state['processor_active']
+
+        new_gen = new_state['gen']
+        old_gen = old_state['gen']
+        committed_gen = committed_state['gen']
+
+        # If the new state's generation number is less than the old state's
+        # generation number, we know we're in the process of undoing a
+        # transaction that involved the queue.  This is because during an undo
+        # the "new_state" state is the state of the queue in the transaction
+        # prior to the undone transaction (the state that would have been
+        # rolled back to if this conflict did not occur), and the "old_state"
+        # is actually the state of the transaction we're trying to undo.
+
+        undoing = (old_gen > new_gen)
+
+        if undoing:
+            # Brain too small to cope with properly supporting the undo case
+            # despite ~4 hours of intense trying; must support soon, but have
+            # to move on (which chaps my ass something fierce).  Findings:
+            #
+            # While we're undoing, it's not enough to just depend on set state
+            # differences.  Instead we need to add anti-actions for every
+            # action we'll end up removing.  For example, if we determine via
+            # conflict resolution that an UnindexAction was in the old state
+            # but will be removed from the state we'll return, we'll need to
+            # add an IndexAction to the returned state in order to get the
+            # object into the indexed state eventually (when the queue
+            # processor runs).
+            #
+            # I got as far as adding this bit of code:
+            #
+            #         if undoing:
+            #             mod_committed.extend(
+            #                 [a.anti() for a in new_removed])
+            #
+            # Where a.anti() generates an anti-action for the removed action.
+            # That code isn't even right though, because it doesnt preserve the
+            # ordering of removed actions.  Also not sure if we have to
+            # generate anti-actions for any *added* actions.  Also don't know
+            # what value to return for a generation value when coping with an
+            # undo situation.  Brain too small, time too short.
+            #
+            raise ConflictError
+
+        gen = max(committed_gen, new_gen)
 
         old = old_state['actions']
         committed = committed_state['actions']
@@ -197,13 +276,12 @@ class ActionsQueue(persistent.Persistent):
             # they both added the same one.  Puke.
             raise ConflictError  # can't resolve
 
-        # Now we do the merge.  We'll merge into the committed state and
-        # return it.
+        # Merge into the committed state and return it.
         mod_committed = []
 
-        for v in committed:
-            if v not in new_removed:
-                mod_committed.append(v)
+        for action in committed:
+            if not action in new_removed:
+                mod_committed.append(action)
 
         if new_added:
             ordered_new_added = new[-len(new_added):]
@@ -211,7 +289,11 @@ class ActionsQueue(persistent.Persistent):
             mod_committed.extend(ordered_new_added)
 
         committed_state['actions'] = mod_committed
+        committed_state['gen'] = gen
+        committed_state['processor_active'] = processor_active
+
         self.logger.info('resolved %s conflict' % self.__class__.__name__)
+
         return committed_state
 
 def commit(tries):

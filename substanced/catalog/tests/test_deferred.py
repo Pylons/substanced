@@ -152,16 +152,19 @@ class TestActionsQueue(unittest.TestCase):
         self.assertEqual(inst.actions, [1])
         # cant check for _p_changed getting set, some magic goes on that causes
         # it to be false, bleh
+        self.assertEqual(inst.gen, 1)
 
     def test_popall_no_actions(self):
         inst = self._makeOne()
         self.assertEqual(inst.popall(), None)
+        self.assertEqual(inst.gen, 0)
 
     def test_popall_with_actions(self):
         inst = self._makeOne()
         inst.actions = [1, 2]
         self.assertEqual(inst.popall(), [1,2])
         self.assertEqual(inst.actions, [])
+        self.assertEqual(inst.gen, 1)
 
     def test__p_resolveConflict_states_have_different_keys(self):
         from ZODB.POSException import ConflictError
@@ -182,9 +185,9 @@ class TestActionsQueue(unittest.TestCase):
     def test_both_new_and_commited_removed_same(self):
         from ZODB.POSException import ConflictError
         inst = self._makeOne()
-        old = {'actions':[1]}
-        committed = {'actions':[]}
-        new = {'actions':[]}
+        old = {'actions':[1], 'gen':0, 'processor_active':True}
+        committed = {'actions':[], 'gen':0, 'processor_active':True}
+        new = {'actions':[], 'gen':0, 'processor_active':True}
         self.assertRaises(
             ConflictError,
             inst._p_resolveConflict, old, committed, new
@@ -193,9 +196,9 @@ class TestActionsQueue(unittest.TestCase):
     def test_both_new_and_commited_added_same(self):
         from ZODB.POSException import ConflictError
         inst = self._makeOne()
-        old = {'actions':[]}
-        committed = {'actions':[1]}
-        new = {'actions':[1]}
+        old = {'actions':[], 'gen':0, 'processor_active':True}
+        committed = {'actions':[1], 'gen':0, 'processor_active':True}
+        new = {'actions':[1], 'gen':0, 'processor_active':True}
         self.assertRaises(
             ConflictError,
             inst._p_resolveConflict, old, committed, new
@@ -203,36 +206,71 @@ class TestActionsQueue(unittest.TestCase):
         
     def test_with_no_new_added(self):
         inst = self._makeOne()
-        old = {'actions':[]}
-        committed = {'actions':[2]}
-        new = {'actions':[]}
+        old = {'actions':[], 'gen':0, 'processor_active':True}
+        committed = {'actions':[2], 'gen':0, 'processor_active':True}
+        new = {'actions':[], 'gen':0, 'processor_active':True}
         logger = DummyLogger()
         inst.logger = logger
         result = inst._p_resolveConflict(old, committed, new)
         self.assertEqual(len(logger.messages), 1)
-        self.assertEqual(result, {'actions':[2]})
+        self.assertEqual(result['actions'], [2])
 
     def test_with_new_added(self):
         inst = self._makeOne()
-        old = {'actions':[]}
-        committed = {'actions':[2]}
-        new = {'actions':[3]}
+        old = {'actions':[], 'gen':0, 'processor_active':True}
+        committed = {'actions':[2], 'gen':0, 'processor_active':True}
+        new = {'actions':[3], 'gen':0, 'processor_active':True}
         logger = DummyLogger()
         inst.logger = logger
         result = inst._p_resolveConflict(old, committed, new)
         self.assertEqual(len(logger.messages), 1)
-        self.assertEqual(result, {'actions':[2, 3]})
+        self.assertEqual(result['actions'], [2, 3])
 
     def test_with_new_removed(self):
         inst = self._makeOne()
-        old = {'actions':[1]}
-        committed = {'actions':[1, 2]}
-        new = {'actions':[]}
+        old = {'actions':[1], 'gen':0, 'processor_active':True}
+        committed = {'actions':[1, 2], 'gen':0, 'processor_active':True}
+        new = {'actions':[], 'gen':0, 'processor_active':True}
         logger = DummyLogger()
         inst.logger = logger
         result = inst._p_resolveConflict(old, committed, new)
         self.assertEqual(len(logger.messages), 1)
-        self.assertEqual(result, {'actions':[2]})
+        self.assertEqual(result['actions'], [2])
+
+    def test_undo_raises_conflict(self):
+        from ZODB.POSException import ConflictError
+        inst = self._makeOne()
+        old = {'actions':[1], 'gen':1, 'processor_active':True}
+        committed = {'actions':[1], 'gen':0, 'processor_active':True}
+        new = {'actions':[], 'gen':0, 'processor_active':True}
+        self.assertRaises(
+            ConflictError,
+            inst._p_resolveConflict, old, committed, new
+            )
+
+    def test_resolved_returns_higher_generation_number(self):
+        inst = self._makeOne()
+        old = {'actions':[1], 'gen':0, 'processor_active':True}
+        committed = {'actions':[1], 'gen':2, 'processor_active':True}
+        new = {'actions':[], 'gen':1, 'processor_active':True}
+        logger = DummyLogger()
+        inst.logger = logger
+        result = inst._p_resolveConflict(old, committed, new)
+        self.assertEqual(len(logger.messages), 1)
+        self.assertEqual(result['actions'], [])
+        self.assertEqual(result['gen'], 2)
+
+    def test_resolved_returns_agreed_upon_processor_active(self):
+        inst = self._makeOne()
+        old = {'actions':[1], 'gen':0, 'processor_active':True}
+        committed = {'actions':[1], 'gen':2, 'processor_active':True}
+        new = {'actions':[], 'gen':1, 'processor_active':True}
+        logger = DummyLogger()
+        inst.logger = logger
+        result = inst._p_resolveConflict(old, committed, new)
+        self.assertEqual(len(logger.messages), 1)
+        self.assertEqual(result['actions'], [])
+        self.assertEqual(result['processor_active'], True)
 
 class Test_commit(unittest.TestCase):
     def _makeOne(self, tries, meth):
