@@ -37,34 +37,34 @@ class Test_rename_duplicated_resource(unittest.TestCase):
         return rename_duplicated_resource(context, name)
         
     def test_rename_first(self):
-        context = testing.DummyResource()
+        context = DummyResource()
         new_name = self._callFUT(context, 'foobar')
         self.assertEqual(new_name, 'foobar')
 
     def test_rename_second(self):
-        context = testing.DummyResource()
-        context['foobar'] = testing.DummyResource()
+        context = DummyResource()
+        context['foobar'] = DummyResource()
         new_name = self._callFUT(context, 'foobar')
         self.assertEqual(new_name, 'foobar-1')
 
     def test_rename_twentyfirst(self):
-        context = testing.DummyResource()
-        context['foobar-21'] = testing.DummyResource()
+        context = DummyResource()
+        context['foobar-21'] = DummyResource()
         new_name = self._callFUT(context, 'foobar-21')
         self.assertEqual(new_name, 'foobar-22')
 
     def test_rename_multiple_dashes(self):
-        context = testing.DummyResource()
-        context['foo-bar'] = testing.DummyResource()
+        context = DummyResource()
+        context['foo-bar'] = DummyResource()
         new_name = self._callFUT(context, 'foo-bar')
         self.assertEqual(new_name, 'foo-bar-1')
 
     def test_rename_take_fisrt_available(self):
-        context = testing.DummyResource()
-        context['foobar'] = testing.DummyResource()
-        context['foobar-1'] = testing.DummyResource()
-        context['foobar-2'] = testing.DummyResource()
-        context['foobar-4'] = testing.DummyResource()
+        context = DummyResource()
+        context['foobar'] = DummyResource()
+        context['foobar-1'] = DummyResource()
+        context['foobar-2'] = DummyResource()
+        context['foobar-4'] = DummyResource()
         new_name = self._callFUT(context, 'foobar')
         self.assertEqual(new_name, 'foobar-3')
 
@@ -80,9 +80,9 @@ class TestAddFolderView(unittest.TestCase):
         return request
 
     def test_add_success(self):
-        resource = testing.DummyResource()
+        resource = DummyResource()
         request = self._makeRequest(Folder=resource)
-        context = testing.DummyResource()
+        context = DummyResource()
         inst = self._makeOne(context, request)
         resp = inst.add_success({'name': 'name'})
         self.assertEqual(context['name'], resource)
@@ -108,7 +108,7 @@ class TestFolderContentsViews(unittest.TestCase):
 
     def test_show_no_columns(self):
         dummy_column_headers = []
-        context = testing.DummyResource()
+        context = DummyResource()
         request = self._makeRequest(columns=None)
         inst = self._makeOne(context, request)
         inst._folder_contents = mock.Mock(
@@ -155,7 +155,7 @@ class TestFolderContentsViews(unittest.TestCase):
             'field': 'col2',
             'sortable': True,
             }]
-        context = testing.DummyResource()
+        context = DummyResource()
         request = self._makeRequest()
         inst = self._makeOne(context, request)
         inst._folder_contents = mock.Mock(
@@ -203,7 +203,7 @@ class TestFolderContentsViews(unittest.TestCase):
             'field': 'col2',
             'sortable': True,
             }]
-        context = testing.DummyResource()
+        context = DummyResource()
         request = self._makeRequest()
         inst = self._makeOne(context, request)
         inst._folder_contents = mock.Mock(
@@ -250,7 +250,7 @@ class TestFolderContentsViews(unittest.TestCase):
         # in test_metadata_for_non_sortable_columns.
 
     def test_show_json(self):
-        context = testing.DummyResource()
+        context = DummyResource()
         request = self._makeRequest()
         request.params['from'] = '1'
         request.params['to'] = '2'
@@ -272,7 +272,7 @@ class TestFolderContentsViews(unittest.TestCase):
                  'col1', 'sortable': False},
                 {'name': 'Col 2', 'field': 'col2', 'value': 'col2'}
                 ]
-        context = testing.DummyResource()
+        context = DummyResource()
         request = self._makeRequest(columns=sd_columns)
         inst = self._makeOne(context, request)
         result = inst._column_headers()
@@ -300,7 +300,7 @@ class TestFolderContentsViews(unittest.TestCase):
 
 
     def test__column_headers_no_custom(self):
-        context = testing.DummyResource()
+        context = DummyResource()
         request = self._makeRequest()
         inst = self._makeOne(context, request)
         result = inst._column_headers()
@@ -318,7 +318,7 @@ class TestFolderContentsViews(unittest.TestCase):
         )
 
     def test__column_headers_None(self):
-        context = testing.DummyResource()
+        context = DummyResource()
         request = self._makeRequest(columns=None)
         inst = self._makeOne(context, request)
         result = inst._column_headers()
@@ -332,7 +332,7 @@ class TestFolderContentsViews(unittest.TestCase):
             'field': 'col2',
             'sortable': True,
             }]
-        context = testing.DummyResource()
+        context = DummyResource()
         request = self._makeRequest()
         inst = self._makeOne(context, request)
         inst._folder_contents = mock.Mock(
@@ -378,7 +378,7 @@ class TestFolderContentsViews(unittest.TestCase):
 
 
     def test_delete_none_deleted(self):
-        context = testing.DummyResource()
+        context = DummyResource()
         request = self._makeRequest()
         request.POST = DummyPost()
         inst = self._makeOne(context, request)
@@ -387,8 +387,8 @@ class TestFolderContentsViews(unittest.TestCase):
         self.assertEqual(result.location, '/mgmt_path')
 
     def test_delete_one_deleted(self):
-        context = testing.DummyResource()
-        context['a'] = testing.DummyResource()
+        context = DummyResource()
+        context['a'] = DummyResource()
         request = self._makeRequest()
         request.POST = DummyPost(None, 'a')
         inst = self._makeOne(context, request)
@@ -398,9 +398,9 @@ class TestFolderContentsViews(unittest.TestCase):
         self.assertFalse('a' in context)
 
     def test_delete_multiple_deleted(self):
-        context = testing.DummyResource()
-        context['a'] = testing.DummyResource()
-        context['b'] = testing.DummyResource()
+        context = DummyResource()
+        context['a'] = DummyResource()
+        context['b'] = DummyResource()
         request = self._makeRequest()
         request.POST = DummyPost(None, 'a,b')
         inst = self._makeOne(context, request)
@@ -411,8 +411,8 @@ class TestFolderContentsViews(unittest.TestCase):
         self.assertFalse('b' in context)
 
     def test_delete_undeletable_item(self):
-        context = testing.DummyResource()
-        context['a'] = testing.DummyResource()
+        context = DummyResource()
+        context['a'] = DummyResource()
         request = self._makeRequest()
         request.POST = DummyPost(None, 'a,b')
         inst = self._makeOne(context, request)
@@ -466,8 +466,8 @@ class TestFolderContentsViews(unittest.TestCase):
         request.sdiapi.mgmt_path.called_once_with(context, '@@contents')
 
     def test_rename_one(self):
-        context = testing.DummyResource()
-        context['foobar'] = testing.DummyResource()
+        context = DummyResource()
+        context['foobar'] = DummyResource()
         request = self._makeRequest()
         request.POST = DummyPost(None, 'foobar')
         inst = self._makeOne(context, request)
@@ -475,8 +475,8 @@ class TestFolderContentsViews(unittest.TestCase):
         self.assertEqual(result, {'torename': [context['foobar']]})
 
     def test_rename_missing_child(self):
-        context = testing.DummyResource()
-        context['foobar'] = testing.DummyResource()
+        context = DummyResource()
+        context['foobar'] = DummyResource()
         request = self._makeRequest()
         request.POST = DummyPost(None, 'foobar,foobar1')
         inst = self._makeOne(context, request)
@@ -484,10 +484,10 @@ class TestFolderContentsViews(unittest.TestCase):
         self.assertEqual(result, {'torename': [context['foobar']]})
 
     def test_rename_multiple(self):
-        context = testing.DummyResource()
-        context['foobar'] = testing.DummyResource()
-        context['foobar2'] = testing.DummyResource()
-        context['foobar3'] = testing.DummyResource()
+        context = DummyResource()
+        context['foobar'] = DummyResource()
+        context['foobar2'] = DummyResource()
+        context['foobar3'] = DummyResource()
         request = self._makeRequest()
         request.POST = DummyPost(None, 'foobar,foobar3')
         inst = self._makeOne(context, request)
@@ -496,10 +496,10 @@ class TestFolderContentsViews(unittest.TestCase):
                                                context['foobar3']]})
 
     def test_rename_none(self):
-        context = testing.DummyResource()
-        context['foobar'] = testing.DummyResource()
-        context['foobar2'] = testing.DummyResource()
-        context['foobar3'] = testing.DummyResource()
+        context = DummyResource()
+        context['foobar'] = DummyResource()
+        context['foobar2'] = DummyResource()
+        context['foobar3'] = DummyResource()
         request = self._makeRequest()
         request.POST = DummyPost(None, '')
         inst = self._makeOne(context, request)
@@ -850,7 +850,7 @@ class TestFolderContentsViews(unittest.TestCase):
         request.session.flash.assert_called_once_with(u'foobar', 'error')
 
     def test_buttons_is_None(self):
-        context = testing.DummyResource()
+        context = DummyResource()
         request = testing.DummyRequest()
         inst = self._makeOne(context, request)
         request.registry.content = DummyContent(buttons=None)
@@ -858,7 +858,7 @@ class TestFolderContentsViews(unittest.TestCase):
         self.assertEqual(result, [])
 
     def test_buttons_is_clbl(self):
-        context = testing.DummyResource()
+        context = DummyResource()
         request = testing.DummyRequest()
         def sdi_buttons(contexr, request, default_buttons):
             return 'abc'
@@ -867,18 +867,18 @@ class TestFolderContentsViews(unittest.TestCase):
         result = inst._buttons()
         self.assertEqual(result, 'abc')
 
-    def _makeCatalogs(self, oids=()):
+    def _makeCatalogs(self, oids=(), sort=True):
         catalogs = DummyCatalogs()
-        catalog = DummyCatalog(oids)
+        catalog = DummyCatalog(oids, sort)
         catalogs['system'] = catalog
         return catalogs
 
     def test__folder_contents_computable_icon(self):
         from substanced.interfaces import IFolder
-        context = testing.DummyResource(__provides__=IFolder)
+        context = DummyResource(__provides__=IFolder)
         request = self._makeRequest()
         context['catalogs'] = self._makeCatalogs(oids=[1])
-        result = testing.DummyResource()
+        result = DummyResource()
         result.__name__ = 'fred'
         context.__objectmap__ = DummyObjectMap(result)
         inst = self._makeOne(context, request)
@@ -899,10 +899,10 @@ class TestFolderContentsViews(unittest.TestCase):
 
     def test__folder_contents_literal_icon(self):
         from substanced.interfaces import IFolder
-        context = testing.DummyResource(__provides__=IFolder)
+        context = DummyResource(__provides__=IFolder)
         request = self._makeRequest()
         context['catalogs'] = self._makeCatalogs(oids=[1])
-        result = testing.DummyResource()
+        result = DummyResource()
         result.__name__ = 'fred'
         context.__objectmap__ = DummyObjectMap(result)
         inst = self._makeOne(context, request)
@@ -919,10 +919,10 @@ class TestFolderContentsViews(unittest.TestCase):
 
     def test__folder_contents_deletable_callable(self):
         from substanced.interfaces import IFolder
-        context = testing.DummyResource(__provides__=IFolder)
+        context = DummyResource(__provides__=IFolder)
         request = self._makeRequest()
         context['catalogs'] = self._makeCatalogs(oids=[1])
-        result = testing.DummyResource()
+        result = DummyResource()
         result.__name__ = 'fred'
         context.__objectmap__ = DummyObjectMap(result)
         inst = self._makeOne(context, request)
@@ -944,10 +944,10 @@ class TestFolderContentsViews(unittest.TestCase):
 
     def test__folder_contents_deletable_boolean(self):
         from substanced.interfaces import IFolder
-        context = testing.DummyResource(__provides__=IFolder)
+        context = DummyResource(__provides__=IFolder)
         request = self._makeRequest()
         context['catalogs'] = self._makeCatalogs(oids=[1])
-        result = testing.DummyResource()
+        result = DummyResource()
         result.__name__ = 'fred'
         context.__objectmap__ = DummyObjectMap(result)
         inst = self._makeOne(context, request)
@@ -965,10 +965,10 @@ class TestFolderContentsViews(unittest.TestCase):
 
     def test__folder_contents_columns_callable(self):
         from substanced.interfaces import IFolder
-        context = testing.DummyResource(__provides__=IFolder)
+        context = DummyResource(__provides__=IFolder)
         request = self._makeRequest()
         context['catalogs'] = self._makeCatalogs(oids=[1])
-        result = testing.DummyResource()
+        result = DummyResource()
         result.col1 = 'val1'
         result.col2 = 'val2'
         result.__name__ = 'fred'
@@ -992,10 +992,10 @@ class TestFolderContentsViews(unittest.TestCase):
 
     def test__folder_contents_columns_None(self):
         from substanced.interfaces import IFolder
-        context = testing.DummyResource(__provides__=IFolder)
+        context = DummyResource(__provides__=IFolder)
         request = self._makeRequest()
         context['catalogs'] = self._makeCatalogs(oids=[1])
-        result = testing.DummyResource()
+        result = DummyResource()
         result.col1 = 'val1'
         result.col2 = 'val2'
         result.__name__ = 'fred'
@@ -1017,10 +1017,10 @@ class TestFolderContentsViews(unittest.TestCase):
 
     def test__folder_contents_with_filter_text(self):
         from substanced.interfaces import IFolder
-        context = testing.DummyResource(__provides__=IFolder)
+        context = DummyResource(__provides__=IFolder)
         request = self._makeRequest()
         context['catalogs'] = self._makeCatalogs(oids=[1])
-        result = testing.DummyResource()
+        result = DummyResource()
         result.__name__ = 'fred'
         context.__objectmap__ = DummyObjectMap(result)
         inst = self._makeOne(context, request)
@@ -1028,6 +1028,45 @@ class TestFolderContentsViews(unittest.TestCase):
         length, results = inst._folder_contents(filter_text='abc')
         self.assertEqual(length, 1)
         self.assertEqual(len(results), 1)
+
+    def test__folder_contents_unordered_folder(self):
+        from substanced.interfaces import IFolder
+        context = DummyResource(__provides__=IFolder)
+        request = self._makeRequest()
+        context['catalogs'] = self._makeCatalogs(oids=[1, 2])
+        result1 = DummyResource()
+        result1.__name__ = 'fred'
+        result2 = DummyResource()
+        result2.__name__ = 'barney'
+        context.__objectmap__ = DummyObjectMap({1: result1, 2:result2})
+        inst = self._makeOne(context, request)
+        length, results = inst._folder_contents()
+        self.assertEqual(length, 2)
+        self.assertEqual(len(results), 2)
+        item1 = results[0]
+        item2 = results[1]
+        self.assertEqual(item1['id'], 'barney')
+        self.assertEqual(item2['id'], 'fred')
+
+    def test__folder_contents_ordered_folder(self):
+        from substanced.interfaces import IFolder
+        context = DummyResource(__provides__=IFolder, _folder_ordered=True)
+        request = self._makeRequest()
+        context['catalogs'] = self._makeCatalogs(oids=[1, 2], sort=False)
+        result1 = DummyResource()
+        result1.__name__ = 'fred'
+        result2 = DummyResource()
+        result2.__name__ = 'barney'
+        context.__objectmap__ = DummyObjectMap({1: result1, 2:result2})
+        inst = self._makeOne(context, request)
+        request.registry.content = DummyContent()
+        length, results = inst._folder_contents()
+        self.assertEqual(length, 2)
+        self.assertEqual(len(results), 2)
+        item1 = results[0]
+        item2 = results[1]
+        self.assertEqual(item1['id'], 'fred')
+        self.assertEqual(item2['id'], 'barney')
 
 class DummyFolder(object):
     oid_store = {}
@@ -1039,6 +1078,10 @@ class DummyFolder(object):
         if self.exc:
             raise self.exc
         return name
+
+class DummyResource(testing.DummyResource):
+    def is_ordered(self):
+        return getattr(self, '_folder_ordered', False)
 
 class DummyContent(object):
     def __init__(self, **kw):
@@ -1092,14 +1135,17 @@ class DummyCatalogs(testing.DummyResource):
     __is_service__ = True
 
 class DummyCatalog(object):
-    def __init__(self, result=()):
-        self.result = DummyResultSet(result)
+    def __init__(self, result=(), sort=True):
+        self.result = DummyResultSet(result, sort)
 
     def __getitem__(self, name):
         return DummyIndex(self.result)
 
 class DummyResultSet(object):
-    def __init__(self, result):
+    def __init__(self, result, sort):
+        if sort:
+            result = list(result)
+            result.reverse()
         self.ids = result
 
     def sort(self, *arg, **kw):
@@ -1128,4 +1174,8 @@ class DummyObjectMap(object):
     def __init__(self, result):
         self.result = result
     def object_for(self, oid):
-        return self.result
+        if type(self.result) == type({}):
+            result = self.result[oid]
+        else:
+            result = self.result
+        return result

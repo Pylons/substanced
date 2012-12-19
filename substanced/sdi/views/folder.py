@@ -368,7 +368,8 @@ class FolderContentsViews(object):
 
         resultset = q.execute()
         folder_length = len(resultset)
-        resultset = resultset.sort(sort_index, reverse=reverse, limit=end)
+        if not folder.is_ordered():
+            resultset = resultset.sort(sort_index, reverse=reverse, limit=end)
 
         can_manage = bool(has_permission('sdi.manage-contents', folder,request))
         custom_columns = request.registry.content.metadata(
