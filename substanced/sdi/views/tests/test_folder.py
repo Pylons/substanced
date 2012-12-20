@@ -1050,16 +1050,17 @@ class TestFolderContentsViews(unittest.TestCase):
 
     def test__folder_contents_ordered_folder(self):
         from substanced.interfaces import IFolder
-        context = DummyResource(__provides__=IFolder, _folder_ordered=True)
+        context = DummyResource(__provides__=IFolder,
+                                _folder_ordered=True,
+                                order=('fred', 'barney'))
+        context['catalogs'] = self._makeCatalogs(oids=[1, 2])
         request = self._makeRequest()
-        context['catalogs'] = self._makeCatalogs(oids=[1, 2], sort=False)
         result1 = DummyResource()
-        result1.__name__ = 'fred'
         result2 = DummyResource()
-        result2.__name__ = 'barney'
-        context.__objectmap__ = DummyObjectMap({1: result1, 2:result2})
+        context['barney'] = result2
+        context['fred'] = result1
+        context.order = ('fred', 'barney')
         inst = self._makeOne(context, request)
-        request.registry.content = DummyContent()
         length, results = inst._folder_contents()
         self.assertEqual(length, 2)
         self.assertEqual(len(results), 2)

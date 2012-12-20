@@ -354,22 +354,31 @@ class FolderContentsViews(object):
         if end is None:
             end = start + 40
 
-        q = ( path.eq(folder, depth=1, include_origin=False) &
-              allowed.allows(request, 'sdi.view') )
+        if folder.is_ordered():
 
-        if filter_text:
-            if not filter_text.endswith('*'):
-                filter_text = filter_text + '*' # glob (prefix) search
-            text = catalog['text']
-            q = q & text.eq(filter_text)
+            result_ids = folder.order
 
-        if sort_index is None:
-            sort_index = catalog['name']
+        else:
 
-        resultset = q.execute()
-        folder_length = len(resultset)
-        if not folder.is_ordered():
+            q = ( path.eq(folder, depth=1, include_origin=False) &
+                  allowed.allows(request, 'sdi.view') )
+
+            if filter_text:
+                if not filter_text.endswith('*'):
+                    filter_text = filter_text + '*' # glob (prefix) search
+                text = catalog['text']
+                q = q & text.eq(filter_text)
+
+            if sort_index is None:
+                sort_index = catalog['name']
+
+            resultset = q.execute()
+
             resultset = resultset.sort(sort_index, reverse=reverse, limit=end)
+
+            result_ids = resultset.ids
+
+        folder_length = len(result_ids)
 
         can_manage = bool(has_permission('sdi.manage-contents', folder,request))
         custom_columns = request.registry.content.metadata(
@@ -377,8 +386,11 @@ class FolderContentsViews(object):
 
         records = []
 
-        for oid in itertools.islice(resultset.ids, start, end):
-            resource = objectmap.object_for(oid)
+        for oid in itertools.islice(result_ids, start, end):
+            if folder.is_ordered():
+                resource = folder[oid]
+            else:
+                resource = objectmap.object_for(oid)
             name = getattr(resource, '__name__', '')
             deletable = getattr(resource, '__sdi_deletable__', None)
             if deletable is not None:
