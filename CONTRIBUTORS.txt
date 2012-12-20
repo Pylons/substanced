@@ -109,3 +109,4 @@ Contributors
 
 - Balazs Ree, 2012/11/20
 
+- David Glick, 2012/12/20

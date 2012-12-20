@@ -74,6 +74,10 @@ class TestFolder(unittest.TestCase):
         del folder.order
         self.assertEqual(list(folder.keys()), ['a', 'b'])
 
+    def test_keys_no_items(self):
+        folder = self._makeOne()
+        self.assertEqual(list(folder.keys()), [])
+
     def test__iter__(self):
         folder = self._makeOne({'a': 1, 'b': 2})
         self.assertEqual(list(folder), ['a', 'b'])
@@ -82,6 +86,10 @@ class TestFolder(unittest.TestCase):
         folder = self._makeOne({'a': 1, 'b': 2})
         folder.order = ['b', 'a']
         self.assertEqual(list(folder), ['b', 'a'])
+
+    def test__iter__no_items(self):
+        folder = self._makeOne()
+        self.assertEqual(list(folder), [])
 
     def test_values(self):
         folder = self._makeOne({'a': 1, 'b': 2})
@@ -92,6 +100,10 @@ class TestFolder(unittest.TestCase):
         folder.order = ['b', 'a']
         self.assertEqual(list(folder.values()), [2, 1])
 
+    def test_values_no_items(self):
+        folder = self._makeOne()
+        self.assertEqual(list(folder.values()), [])
+
     def test_items(self):
         folder = self._makeOne({'a': 1, 'b': 2})
         self.assertEqual(list(folder.items()), [('a', 1), ('b', 2)])
@@ -101,20 +113,36 @@ class TestFolder(unittest.TestCase):
         folder.order = ['b', 'a']
         self.assertEqual(list(folder.items()), [('b', 2), ('a', 1)])
 
+    def test_items_no_items(self):
+        folder = self._makeOne()
+        self.assertEqual(list(folder.items()), [])
+
     def test__len__(self):
         folder = self._makeOne({'a': 1, 'b': 2})
         self.assertEqual(len(folder), 2)
         del folder['a']
         self.assertEqual(len(folder), 1)
 
+    def test__len__no_items(self):
+        folder = self._makeOne()
+        self.assertEqual(len(folder), 0)
+
     def test__contains__(self):
         folder = self._makeOne({'a': 1, 'b': 2})
         self.failUnless('a' in folder)
         self.failIf('c' in folder)
 
+    def test__contains__no_items(self):
+        folder = self._makeOne()
+        self.failIf('a' in folder)
+
     def test___nonzero__(self):
         folder = self._makeOne()
         self.failUnless(folder)
+
+    def test__getitem__no_items(self):
+        folder = self._makeOne()
+        self.assertRaises(KeyError, folder.__getitem__, 'a')
 
     def test___setitem__nonstring(self):
         folder = self._makeOne()
@@ -138,9 +166,9 @@ class TestFolder(unittest.TestCase):
         self._registerEventListener(listener, IObjectEvent)
         dummy = DummyModel()
         folder = self._makeOne()
-        self.assertEqual(folder._num_objects(), 0)
+        self.assertEqual(len(folder), 0)
         folder['a'] = dummy
-        self.assertEqual(folder._num_objects(), 1)
+        self.assertEqual(len(folder), 1)
         self.assertEqual(len(events), 2)
         self.failUnless(IObjectWillBeAdded.providedBy(events[0]))
         self.assertEqual(events[0].object, dummy)
@@ -187,9 +215,9 @@ class TestFolder(unittest.TestCase):
         self._registerEventListener(listener, IObjectEvent)
         dummy = DummyModel()
         folder = self._makeOne()
-        self.assertEqual(folder._num_objects(), 0)
+        self.assertEqual(len(folder), 0)
         folder.add('a', dummy, send_events=True)
-        self.assertEqual(folder._num_objects(), 1)
+        self.assertEqual(len(folder), 1)
         self.assertEqual(len(events), 2)
         self.failUnless(IObjectWillBeAdded.providedBy(events[0]))
         self.assertEqual(events[0].object, dummy)
@@ -209,9 +237,9 @@ class TestFolder(unittest.TestCase):
         self._registerEventListener(listener, IObjectEvent)
         dummy = DummyModel()
         folder = self._makeOne()
-        self.assertEqual(folder._num_objects(), 0)
+        self.assertEqual(len(folder), 0)
         folder.add('a', dummy, send_events=False)
-        self.assertEqual(folder._num_objects(), 1)
+        self.assertEqual(len(folder), 1)
         self.assertEqual(len(events), 0)
         self.assertEqual(folder['a'], dummy)
 

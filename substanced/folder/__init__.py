@@ -71,12 +71,17 @@ class Folder(Persistent):
     __name__ = None
     __parent__ = None
 
+    # Keep track of lazy creation of the BTree
+    __initialized = False
+
     # Default uses ordering of underlying BTree.
     _order = None
 
     def _get_order(self):
         if self._order is not None:
             return self._order
+        if not self.__initialized:
+            return []
         return self.data.keys()
 
     def _set_order(self, value):
@@ -97,10 +102,18 @@ class Folder(Persistent):
         name to object. """
         if family is not None:
             self.family = family
+        if data is not None:
+            self._initialize_btree(data)
+
+    def _initialize_btree(self, data=None):
+        if self.__initialized:
+            return
+
         if data is None:
             data = {}
         self.data = self.family.OO.BTree(data)
         self._num_objects = Length(len(data))
+        self.__initialized = True
 
     def find_service(self, service_name):
         """ Return a service named by ``service_name`` in this folder *or any
@@ -139,6 +152,8 @@ class Folder(Persistent):
 
         Respect ``order``, if set.
         """
+        if not self.__initialized:
+            return []
         if self._order is not None:
             return [self.data[name] for name in self.order]
         return self.data.values()
@@ -148,6 +163,8 @@ class Folder(Persistent):
 
         Respect ``order``, if set.
         """
+        if not self.__initialized:
+            return []
         if self._order is not None:
             return [(name, self.data[name]) for name in self.order]
         return self.data.items()
@@ -155,6 +172,8 @@ class Folder(Persistent):
     def __len__(self):
         """ Return the number of objects in the folder.
         """
+        if not self.__initialized:
+            return 0
         return self._num_objects()
 
     def __nonzero__(self):
@@ -176,6 +195,8 @@ class Folder(Persistent):
         encoding.
         """
         name = unicode(name)
+        if not self.__initialized:
+            raise KeyError(name)
         return self.data[name]
 
     def get(self, name, default=None):
@@ -187,6 +208,8 @@ class Folder(Persistent):
         system default encoding.
         """
         name = unicode(name)
+        if not self.__initialized:
+            return default
         return self.data.get(name, default)
 
     def __contains__(self, name):
@@ -198,6 +221,8 @@ class Folder(Persistent):
         system default encoding.
         """
         name = unicode(name)
+        if not self.__initialized:
+            return False
         return name in self.data
 
     def __setitem__(self, name, other):
@@ -277,7 +302,7 @@ class Folder(Persistent):
 
         name = self.validate_name(name, reserved_names=reserved_names)
 
-        if name in self.data:
+        if self.__initialized and name in self.data:
             raise FolderKeyError('An object named %s already exists' % name)
 
         return name
@@ -337,6 +362,7 @@ class Folder(Persistent):
         other.__parent__ = self
         other.__name__ = name
 
+        self._initialize_btree()
         self.data[name] = other
         self._num_objects.change(1)
 
@@ -419,6 +445,8 @@ class Folder(Persistent):
         calling this method will be ``True`` too.
         """
         name = unicode(name)
+        if not self.__initialized:
+            raise KeyError(name)
         other = self.data[name]
         oid = get_oid(other, None)
 
@@ -610,7 +638,7 @@ class SequentialAutoNamingFolder(Folder, _AutoNamingFolder):
         """
         try:
             maxkey = self.data.maxKey()
-        except ValueError: # empty tree
+        except (AttributeError, ValueError): # empty tree
             maxkey = self._autoname_start
         name = self._zfill(int(maxkey) + 1)
         return name
