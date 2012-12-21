@@ -45,8 +45,7 @@ class Action(object):
             )
 
     def __hash__(self):
-        # We rely on __eq__ for dict/set key uniqueness
-        return 1
+        return hash((self.oid, self.index_oid))
 
     def __eq__(self, other):
         # Note that we don't take our class or position into account because
@@ -55,6 +54,7 @@ class Action(object):
         return (self.oid, self.index_oid) == (other.oid, other.index_oid)
 
     def __lt__(self, other):
+        # Note that during sorting we *do* take our position into account.
         self_cmp = (self.oid, self.index_oid, self.position)
         other_cmp = (other.oid, other.index_oid, other.position)
         return self_cmp < other_cmp

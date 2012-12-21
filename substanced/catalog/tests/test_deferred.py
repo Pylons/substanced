@@ -18,7 +18,7 @@ class TestAction(unittest.TestCase):
 
     def test___hash__(self):
         inst = self._makeOne()
-        self.assertEqual(hash(inst), 1)
+        self.assertEqual(hash(inst), hash((inst.oid, inst.index_oid)))
 
     def test___eq__True(self):
         inst = self._makeOne()
@@ -443,7 +443,7 @@ class Test_action_union(unittest.TestCase):
         s1 = set([a1, a3])
         s2 = set([a2])
         result = self._callFUT(s1, s2)
-        self.assertEqual(list(result), [a1, a3])
+        self.assertEqual(sorted(list(result)), [a1, a3])
 
 class Test_commit(unittest.TestCase):
     def _makeOne(self, tries, meth):
