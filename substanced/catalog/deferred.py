@@ -10,7 +10,6 @@ from transaction.interfaces import ISavepointDataManager
 from zope.interface import implementer
 
 from ZODB.POSException import ConflictError
-from ZODB.ConflictResolution import PersistentReference
 
 from pyramid.threadlocal import get_current_registry
 
@@ -50,11 +49,6 @@ class Action(object):
         return 1
 
     def __eq__(self, other):
-        # In the case this is called
-        # during conflict resolution, self.index will be an instance of
-        # ZODB.ConflictResolution.PersistentReference; we have to wrap it in a
-        # proxy if so; see PersistentReferenceProxy docstring for rationale.
-        #
         # Note that we don't take our class or position into account because
         # we want to compare equal to any other action that has the same
         # oid for the same index.
@@ -71,35 +65,6 @@ class Action(object):
         if resource is None:
             raise ResourceNotFound(self.oid)
         return resource
-
-def pr_wrap(obj):
-    if isinstance(obj, PersistentReference):
-        return PersistentReferenceProxy(obj)
-    return obj
-
-class PersistentReferenceProxy(object):
-    """PersistentReferenceProxy
-
-    `ZODB.ConflictResolution.PersistentReference` doesn't get handled correctly
-    in the __eq__ method due to lack of the `__hash__` method.
-    So we make workaround here to utilize `__cmp__` method of
-    `PersistentReference`.
-
-    """
-    def __init__(self, pr):
-        self.pr = pr
-
-    def __hash__(self):
-        return 1
-
-    def __eq__(self, other):
-        try:
-            return self.pr == other.pr
-        except ValueError:
-            return False
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
 
 class ResourceNotFound(Exception):
     def __init__(self, oid):

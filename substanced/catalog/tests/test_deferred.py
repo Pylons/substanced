@@ -75,59 +75,6 @@ class TestResourceNotFound(unittest.TestCase):
             'Indexing error: cannot find resource for oid 1'
             )
 
-class Test_pr_wrap(unittest.TestCase):
-    def _callFUT(self, obj):
-        from ..deferred import pr_wrap
-        return pr_wrap(obj)
-
-    def test_with_nonref(self):
-        self.assertEqual(self._callFUT(1), 1)
-
-    def test_with_ref(self):
-        from ZODB.ConflictResolution import PersistentReference
-        from ..deferred import PersistentReferenceProxy
-        ref = PersistentReference((None, None))
-        self.assertEqual(self._callFUT(ref).__class__, PersistentReferenceProxy)
-
-class TestPersistentReferenceProxy(unittest.TestCase):
-    def _makeOne(self, pr):
-        from ..deferred import PersistentReferenceProxy
-        return PersistentReferenceProxy(pr)
-
-    def test___hash__(self):
-        inst = self._makeOne(None)
-        self.assertEqual(hash(inst), 1)
-
-    def test___eq__True(self):
-        inst1 = self._makeOne(None)
-        inst2 = self._makeOne(None)
-        self.assertTrue(inst1 == inst2)
-
-    def test___eq__False(self):
-        inst1 = self._makeOne(None)
-        inst2 = self._makeOne(True)
-        self.assertFalse(inst1 == inst2)
-
-    def test___eq__raises_ValueError(self):
-        class DummyPR(object):
-            def __eq__(self, other):
-                raise ValueError
-        pr = DummyPR()
-        inst1 = self._makeOne(pr)
-        inst2 = self._makeOne(None)
-        result = inst1 == inst2
-        self.assertFalse(result)
-        
-    def test___ne__True(self):
-        inst1 = self._makeOne(None)
-        inst2 = self._makeOne(True)
-        self.assertTrue(inst1 != inst2)
-        
-    def test___ne__False(self):
-        inst1 = self._makeOne(None)
-        inst2 = self._makeOne(None)
-        self.assertFalse(inst1 != inst2)
-
 class TestIndexAction(unittest.TestCase):
     def _makeOne(self, index, mode='mode', oid='oid'):
         from ..deferred import IndexAction
