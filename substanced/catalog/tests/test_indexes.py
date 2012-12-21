@@ -14,9 +14,11 @@ def _makeSite(**kw):
     return site
 
 class TestSDIndex(unittest.TestCase):
-    def _makeOne(self):
+    def _makeOne(self, oid=1):
         from ..indexes import SDIndex
-        return SDIndex()
+        index = SDIndex()
+        index.__oid__ = oid
+        return index
 
     def test_resultset_from_query_no_resolver(self):
         inst = self._makeOne()
