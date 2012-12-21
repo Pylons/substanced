@@ -112,7 +112,17 @@ class TestCatalog(unittest.TestCase):
         catalog = self._makeOne()
         idx = DummyIndex()
         catalog['name'] = idx
-        self.assertRaises(ValueError, catalog.index_resource, 'value', 'abc')
+        self.assertRaises(TypeError, catalog.index_resource, 'value', 'abc')
+
+    def test_index_resource_oid_is_None(self):
+        resource = testing.DummyResource()
+        resource.__oid__ = 1
+        catalog = self._makeOne()
+        idx = DummyIndex()
+        catalog['name'] = idx
+        catalog.index_resource(resource)
+        self.assertEqual(idx.oid, 1)
+        self.assertEqual(idx.resource, resource)
 
     def test_index_doc(self):
         catalog = self._makeOne()
@@ -140,6 +150,15 @@ class TestCatalog(unittest.TestCase):
         inst.unindex_resource(1)
         self.assertEqual(list(inst.objectids), [])
 
+    def test_index_resource_or_oid_is_resource_without_oid(self):
+        resource = testing.DummyResource()
+        catalog = self._makeOne()
+        self.assertRaises(ValueError, catalog.unindex_resource, resource)
+
+    def test_index_resource_or_oid_is_noninteger(self):
+        catalog = self._makeOne()
+        self.assertRaises(ValueError, catalog.unindex_resource, 'foo')
+
     def test_unindex_doc(self):
         inst = self._makeOne()
         inst.objectids.insert(1)
@@ -165,6 +184,16 @@ class TestCatalog(unittest.TestCase):
         inst.reindex_resource(object(), 1)
         self.assertEqual(list(inst.objectids), [1])
         
+    def test_reindex_resource_oid_is_None(self):
+        resource = testing.DummyResource()
+        resource.__oid__ = 1
+        catalog = self._makeOne()
+        idx = DummyIndex()
+        catalog['name'] = idx
+        catalog.reindex_resource(resource)
+        self.assertEqual(idx.reindexed_oid, 1)
+        self.assertEqual(idx.reindexed_resource, resource)
+
     def test_reindex_doc(self):
         catalog = self._makeOne()
         idx = DummyIndex()

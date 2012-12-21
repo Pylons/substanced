@@ -105,6 +105,15 @@ class TestSDIndex(unittest.TestCase):
         self.assertEqual(action.mode, MODE_ATCOMMIT)
         self.assertEqual(action.index, inst)
 
+    def test_index_resource_oid_is_None(self):
+        resource = testing.DummyResource()
+        resource.__oid__ = 1
+        inst = self._makeOne()
+        L = []
+        inst.index_doc = lambda oid, resource: L.append((oid, resource))
+        inst.index_resource(resource)
+        self.assertEqual(L, [(1, resource)])
+
     def test_reindex_resource_no_action_mode(self):
         resource = testing.DummyResource()
         inst = self._makeOne()
@@ -136,7 +145,16 @@ class TestSDIndex(unittest.TestCase):
         self.assertEqual(action.mode, MODE_ATCOMMIT)
         self.assertEqual(action.index, inst)
 
-    def test_unreindex_resource_no_action_mode(self):
+    def test_reindex_resource_no_oid(self):
+        resource = testing.DummyResource()
+        resource.__oid__ = 1
+        inst = self._makeOne()
+        L = []
+        inst.reindex_doc = lambda oid, resource: L.append((oid, resource))
+        inst.reindex_resource(resource)
+        self.assertEqual(L, [(1, resource)])
+
+    def test_unindex_resource_no_action_mode(self):
         inst = self._makeOne()
         L = []
         inst.unindex_doc = lambda oid: L.append(oid)
@@ -163,6 +181,15 @@ class TestSDIndex(unittest.TestCase):
         self.assertEqual(action.oid, 1)
         self.assertEqual(action.mode, MODE_ATCOMMIT)
         self.assertEqual(action.index, inst)
+
+    def test_unindex_resource_resource_is_not_oid(self):
+        resource = testing.DummyResource()
+        resource.__oid__ = 1
+        inst = self._makeOne()
+        L = []
+        inst.unindex_doc = lambda oid: L.append(oid)
+        inst.unindex_resource(resource)
+        self.assertEqual(L, [1])
 
     def test_repr(self):
         inst = self._makeOne()

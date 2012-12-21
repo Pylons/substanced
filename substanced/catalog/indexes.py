@@ -30,10 +30,8 @@ from ..schema import Schema
 from ..property import PropertySheet
 
 from .discriminators import dummy_discriminator
-from .util import (
-    oid_from_resource,
-    oid_from_resource_or_oid,
-    )
+from .util import oid_from_resource
+
 from . import deferred
 
 from .. import interfaces as sd_interfaces
@@ -74,36 +72,42 @@ class SDIndex(object):
 
     def flush(self, all=True):
         # This method will be called before query execution for every index
-        # involved in a query.
+        # involved in a query.  It must be callable more than once without
+        # having any issues.
         if self._p_action_tm is not None:
-            self._p_action_tm.flush(all)
+            self._p_action_tm.flush(all=all)
 
     def add_action(self, action):
         action_tm = self.get_action_tm()
         action_tm.add(action)
 
     def index_resource(self, resource, oid=None, action_mode=None):
-        oid = oid_from_resource(resource, oid)
+        if oid is None:
+            oid = oid_from_resource(resource)
         if action_mode is None:
             action_mode = self.action_mode
         if action_mode in (None, MODE_IMMEDIATE):
             self.index_doc(oid, resource)
         else:
-            action = deferred.IndexAction(self, action_mode, oid, resource)
+            action = deferred.IndexAction(self, action_mode, oid)
             self.add_action(action)
 
     def reindex_resource(self, resource, oid=None, action_mode=None):
-        oid = oid_from_resource(resource, oid)
+        if oid is None:
+            oid = oid_from_resource(resource)
         if action_mode is None:
             action_mode = self.action_mode
         if action_mode in (None, MODE_IMMEDIATE):
             self.reindex_doc(oid, resource)
         else:
-            action = deferred.ReindexAction(self, action_mode, oid, resource)
+            action = deferred.ReindexAction(self, action_mode, oid)
             self.add_action(action)
 
     def unindex_resource(self, resource_or_oid, action_mode=None):
-        oid = oid_from_resource_or_oid(resource_or_oid)
+        if isinstance(resource_or_oid, int):
+            oid = resource_or_oid
+        else:
+            oid = oid_from_resource(resource_or_oid)
         if action_mode is None:
             action_mode = self.action_mode
         if action_mode in (None, MODE_IMMEDIATE):

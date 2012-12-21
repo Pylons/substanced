@@ -45,6 +45,37 @@ class TestAction(unittest.TestCase):
         inst.oid = 1
         self.assertTrue(other.__gt__(inst))
 
+    def test_find_resource_resource_cant_be_found(self):
+        from ..deferred import ResourceNotFound
+        index = testing.DummyResource()
+        index.__objectmap__ = DummyObjectmap(None)
+        inst = self._makeOne()
+        inst.index = index
+        inst.oid = 1
+        self.assertRaises(ResourceNotFound, inst.find_resource)
+
+    def test_find_resource(self):
+        index = testing.DummyResource()
+        index.__objectmap__ = DummyObjectmap('abc')
+        inst = self._makeOne()
+        inst.index = index
+        inst.oid = 1
+        self.assertEqual(inst.find_resource(), 'abc')
+
+class TestResourceNotFound(unittest.TestCase):
+    def _makeOne(self, action):
+        from ..deferred import ResourceNotFound
+        return ResourceNotFound(action)
+
+    def test___repr__(self):
+        action = testing.DummyResource()
+        action.oid = 1
+        inst = self._makeOne(action)
+        self.assertEqual(
+            repr(inst),
+            'Indexing error: cannot find object for oid 1'
+            )
+
 class Test_pr_wrap(unittest.TestCase):
     def _callFUT(self, obj):
         from ..deferred import pr_wrap
@@ -99,34 +130,50 @@ class TestPersistentReferenceProxy(unittest.TestCase):
         self.assertFalse(inst1 != inst2)
 
 class TestIndexAction(unittest.TestCase):
-    def _makeOne(self, index, mode='mode', oid='oid', resource='resource'):
+    def _makeOne(self, index, mode='mode', oid='oid'):
         from ..deferred import IndexAction
-        return IndexAction(index, mode, oid, resource)
+        return IndexAction(index, mode, oid)
 
     def test_execute(self):
         index = DummyIndex()
         inst = self._makeOne(index)
+        resource = testing.DummyResource()
+        inst.find_resource = lambda *arg: resource
         inst.execute()
         self.assertEqual(index.oid, 'oid')
-        self.assertEqual(index.resource, 'resource')
-        self.assertEqual(inst.index, None)
-        self.assertEqual(inst.oid, None)
-        self.assertEqual(inst.resource, None)
+        self.assertEqual(index.resource, resource)
+
+    def test_anti(self):
+        from ..deferred import UnindexAction
+        inst = self._makeOne('index')
+        result = inst.anti()
+        self.assertEqual(result.__class__, UnindexAction)
+        self.assertEqual(result.index, 'index')
+        self.assertEqual(result.mode, 'mode')
+        self.assertEqual(result.oid, 'oid')
 
 class TestReindexAction(unittest.TestCase):
-    def _makeOne(self, index, mode='mode', oid='oid', resource='resource'):
+    def _makeOne(self, index, mode='mode', oid='oid'):
         from ..deferred import ReindexAction
-        return ReindexAction(index, mode, oid, resource)
+        return ReindexAction(index, mode, oid)
 
     def test_execute(self):
         index = DummyIndex()
         inst = self._makeOne(index)
+        resource = testing.DummyResource()
+        inst.find_resource = lambda *arg: resource
         inst.execute()
         self.assertEqual(index.oid, 'oid')
-        self.assertEqual(index.resource, 'resource')
-        self.assertEqual(inst.index, None)
-        self.assertEqual(inst.oid, None)
-        self.assertEqual(inst.resource, None)
+        self.assertEqual(index.resource, resource)
+
+    def test_anti(self):
+        from ..deferred import ReindexAction
+        inst = self._makeOne('index')
+        result = inst.anti()
+        self.assertEqual(result.__class__, ReindexAction)
+        self.assertEqual(result.index, 'index')
+        self.assertEqual(result.mode, 'mode')
+        self.assertEqual(result.oid, 'oid')
 
 class TestUnindexAction(unittest.TestCase):
     def _makeOne(self, index, mode='mode', oid='oid'):
@@ -138,8 +185,15 @@ class TestUnindexAction(unittest.TestCase):
         inst = self._makeOne(index)
         inst.execute()
         self.assertEqual(index.oid, 'oid')
-        self.assertEqual(inst.index, None)
-        self.assertEqual(inst.oid, None)
+
+    def test_anti(self):
+        from ..deferred import IndexAction
+        inst = self._makeOne('index')
+        result = inst.anti()
+        self.assertEqual(result.__class__, IndexAction)
+        self.assertEqual(result.index, 'index')
+        self.assertEqual(result.mode, 'mode')
+        self.assertEqual(result.oid, 'oid')
 
 class TestActionsQueue(unittest.TestCase):
     def _makeOne(self):
@@ -185,9 +239,9 @@ class TestActionsQueue(unittest.TestCase):
     def test_both_new_and_commited_removed_same(self):
         from ZODB.POSException import ConflictError
         inst = self._makeOne()
-        old = {'actions':[1], 'gen':0, 'processor_active':True}
-        committed = {'actions':[], 'gen':0, 'processor_active':True}
-        new = {'actions':[], 'gen':0, 'processor_active':True}
+        old = {'actions':[1], 'gen':0, 'pactive':True}
+        committed = {'actions':[], 'gen':0, 'pactive':True}
+        new = {'actions':[], 'gen':0, 'pactive':True}
         self.assertRaises(
             ConflictError,
             inst._p_resolveConflict, old, committed, new
@@ -196,9 +250,9 @@ class TestActionsQueue(unittest.TestCase):
     def test_both_new_and_commited_added_same(self):
         from ZODB.POSException import ConflictError
         inst = self._makeOne()
-        old = {'actions':[], 'gen':0, 'processor_active':True}
-        committed = {'actions':[1], 'gen':0, 'processor_active':True}
-        new = {'actions':[1], 'gen':0, 'processor_active':True}
+        old = {'actions':[], 'gen':0, 'pactive':True}
+        committed = {'actions':[1], 'gen':0, 'pactive':True}
+        new = {'actions':[1], 'gen':0, 'pactive':True}
         self.assertRaises(
             ConflictError,
             inst._p_resolveConflict, old, committed, new
@@ -206,43 +260,43 @@ class TestActionsQueue(unittest.TestCase):
         
     def test_with_no_new_added(self):
         inst = self._makeOne()
-        old = {'actions':[], 'gen':0, 'processor_active':True}
-        committed = {'actions':[2], 'gen':0, 'processor_active':True}
-        new = {'actions':[], 'gen':0, 'processor_active':True}
+        old = {'actions':[], 'gen':0, 'pactive':True}
+        committed = {'actions':[2], 'gen':0, 'pactive':True}
+        new = {'actions':[], 'gen':0, 'pactive':True}
         logger = DummyLogger()
         inst.logger = logger
         result = inst._p_resolveConflict(old, committed, new)
-        self.assertEqual(len(logger.messages), 1)
+        self.assertEqual(len(logger.messages), 2)
         self.assertEqual(result['actions'], [2])
 
     def test_with_new_added(self):
         inst = self._makeOne()
-        old = {'actions':[], 'gen':0, 'processor_active':True}
-        committed = {'actions':[2], 'gen':0, 'processor_active':True}
-        new = {'actions':[3], 'gen':0, 'processor_active':True}
+        old = {'actions':[], 'gen':0, 'pactive':True}
+        committed = {'actions':[2], 'gen':0, 'pactive':True}
+        new = {'actions':[3], 'gen':0, 'pactive':True}
         logger = DummyLogger()
         inst.logger = logger
         result = inst._p_resolveConflict(old, committed, new)
-        self.assertEqual(len(logger.messages), 1)
+        self.assertEqual(len(logger.messages), 2)
         self.assertEqual(result['actions'], [2, 3])
 
     def test_with_new_removed(self):
         inst = self._makeOne()
-        old = {'actions':[1], 'gen':0, 'processor_active':True}
-        committed = {'actions':[1, 2], 'gen':0, 'processor_active':True}
-        new = {'actions':[], 'gen':0, 'processor_active':True}
+        old = {'actions':[1], 'gen':0, 'pactive':True}
+        committed = {'actions':[1, 2], 'gen':0, 'pactive':True}
+        new = {'actions':[], 'gen':0, 'pactive':True}
         logger = DummyLogger()
         inst.logger = logger
         result = inst._p_resolveConflict(old, committed, new)
-        self.assertEqual(len(logger.messages), 1)
+        self.assertEqual(len(logger.messages), 2)
         self.assertEqual(result['actions'], [2])
 
     def test_undo_raises_conflict(self):
         from ZODB.POSException import ConflictError
         inst = self._makeOne()
-        old = {'actions':[1], 'gen':1, 'processor_active':True}
-        committed = {'actions':[1], 'gen':0, 'processor_active':True}
-        new = {'actions':[], 'gen':0, 'processor_active':True}
+        old = {'actions':[1], 'gen':1, 'pactive':True}
+        committed = {'actions':[1], 'gen':0, 'pactive':True}
+        new = {'actions':[], 'gen':0, 'pactive':True}
         self.assertRaises(
             ConflictError,
             inst._p_resolveConflict, old, committed, new
@@ -250,27 +304,27 @@ class TestActionsQueue(unittest.TestCase):
 
     def test_resolved_returns_higher_generation_number(self):
         inst = self._makeOne()
-        old = {'actions':[1], 'gen':0, 'processor_active':True}
-        committed = {'actions':[1], 'gen':2, 'processor_active':True}
-        new = {'actions':[], 'gen':1, 'processor_active':True}
+        old = {'actions':[1], 'gen':0, 'pactive':True}
+        committed = {'actions':[1], 'gen':2, 'pactive':True}
+        new = {'actions':[], 'gen':1, 'pactive':True}
         logger = DummyLogger()
         inst.logger = logger
         result = inst._p_resolveConflict(old, committed, new)
-        self.assertEqual(len(logger.messages), 1)
+        self.assertEqual(len(logger.messages), 2)
         self.assertEqual(result['actions'], [])
         self.assertEqual(result['gen'], 2)
 
-    def test_resolved_returns_agreed_upon_processor_active(self):
+    def test_resolved_returns_agreed_upon_pactive(self):
         inst = self._makeOne()
-        old = {'actions':[1], 'gen':0, 'processor_active':True}
-        committed = {'actions':[1], 'gen':2, 'processor_active':True}
-        new = {'actions':[], 'gen':1, 'processor_active':True}
+        old = {'actions':[1], 'gen':0, 'pactive':True}
+        committed = {'actions':[1], 'gen':2, 'pactive':True}
+        new = {'actions':[], 'gen':1, 'pactive':True}
         logger = DummyLogger()
         inst.logger = logger
         result = inst._p_resolveConflict(old, committed, new)
-        self.assertEqual(len(logger.messages), 1)
+        self.assertEqual(len(logger.messages), 2)
         self.assertEqual(result['actions'], [])
-        self.assertEqual(result['processor_active'], True)
+        self.assertEqual(result['pactive'], True)
 
 class Test_commit(unittest.TestCase):
     def _makeOne(self, tries, meth):
@@ -352,7 +406,7 @@ class TestBasicActionProcessor(unittest.TestCase):
         context = testing.DummyResource()
         inst = self._makeOne(context)
         queue = DummyQueue()
-        queue.processor_active = True
+        queue.pactive = True
         context._p_jar = DummyJar({inst.queue_name:queue})
         self.assertTrue(inst.active())
         
@@ -365,7 +419,7 @@ class TestBasicActionProcessor(unittest.TestCase):
     def test_active_False_processor_not_active(self):
         context = testing.DummyResource()
         queue = DummyQueue()
-        queue.processor_active = False
+        queue.pactive = False
         inst = self._makeOne(context)
         context._p_jar = DummyJar({inst.queue_name:queue})
         self.assertFalse(inst.active())
@@ -376,7 +430,7 @@ class TestBasicActionProcessor(unittest.TestCase):
         inst = self._makeOne(context)
         context._p_jar = DummyJar({inst.queue_name:queue})
         self.assertEqual(inst.engage(), None)
-        self.assertTrue(queue.processor_active)
+        self.assertTrue(queue.pactive)
 
     def test_engage_queue_missing_context_has_no_jar(self):
         context = testing.DummyResource()
@@ -394,7 +448,7 @@ class TestBasicActionProcessor(unittest.TestCase):
         self.assertEqual(inst.engage(), None)
         queue = root[inst.queue_name]
         self.assertTrue(transaction.committed)
-        self.assertTrue(queue.processor_active)
+        self.assertTrue(queue.pactive)
 
     def test_disengage_no_queue(self):
         context = testing.DummyResource()
@@ -411,7 +465,7 @@ class TestBasicActionProcessor(unittest.TestCase):
         inst.transaction = transaction
         context._p_jar = DummyJar(root)
         inst.disengage()
-        self.assertEqual(queue.processor_active, False)
+        self.assertEqual(queue.pactive, False)
         self.assertTrue(transaction.committed)
 
     def test_add_not_engaged(self):
@@ -551,6 +605,38 @@ class TestBasicActionProcessor(unittest.TestCase):
              'no actions to execute',
              'end running actions processing',
              'stopping basic action processor']            
+            )
+
+    def test_process_resource_not_found_at_execute(self):
+        from ..deferred import ResourceNotFound
+        context = testing.DummyResource()
+        inst = self._makeOne(context)
+        transaction = DummyTransaction()
+        inst.transaction = transaction
+        logger = DummyLogger()
+        inst.logger = logger
+        inst.engage = lambda *arg, **kw: False
+        inst.disengage = lambda *arg, **kw: False
+        a1 = DummyAction(1)
+        a1.raises = ResourceNotFound(a1)
+        queue = DummyQueue([a1])
+        root = {inst.queue_name:queue}
+        jar = DummyJar(root)
+        context._p_jar = jar
+        inst.process(once=True)
+        self.assertTrue(jar.synced)
+        self.assertEqual(queue.result, [])
+        self.assertFalse(a1.executed)
+        self.assertTrue(transaction.begun)
+        self.assertFalse(transaction.committed)
+        self.assertEqual(
+            logger.messages,
+            ['starting basic action processor',
+             'start running actions processing',
+             'executing action 1',
+             'Indexing error: cannot find object for oid 1',
+             'end running actions processing',
+             'stopping basic action processor']
             )
 
 class TestIndexActionSavepoint(unittest.TestCase):
@@ -739,7 +825,7 @@ class Test_optimize_actions(unittest.TestCase):
     def test_donothing(self):
         from ..deferred import IndexAction, UnindexAction
         index = DummyIndex()
-        actions = [ IndexAction(index, 'mode', 'oid', 'resource'),
+        actions = [ IndexAction(index, 'mode', 'oid'),
                     UnindexAction(index, 'mode', 'oid') ]
         result = self._callFUT(actions)
         self.assertEqual(result, [])
@@ -747,8 +833,8 @@ class Test_optimize_actions(unittest.TestCase):
     def test_doadd(self):
         from ..deferred import IndexAction, ReindexAction
         index = DummyIndex()
-        actions = [ IndexAction(index, 'mode', 'oid', 'resource'),
-                    ReindexAction(index, 'mode', 'oid', 'resource') ]
+        actions = [ IndexAction(index, 'mode', 'oid'),
+                    ReindexAction(index, 'mode', 'oid') ]
         result = self._callFUT(actions)
         self.assertEqual(result, [actions[0]])
 
@@ -756,19 +842,18 @@ class Test_optimize_actions(unittest.TestCase):
         from ..deferred import IndexAction, UnindexAction, ReindexAction
         index = DummyIndex()
         actions = [ UnindexAction(index, 'mode', 'oid'),
-                    IndexAction(index, 'mode', 'oid', 'resource') ]
+                    IndexAction(index, 'mode', 'oid') ]
         result = self._callFUT(actions)
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0].__class__, ReindexAction)
         self.assertEqual(result[0].index, index)
         self.assertEqual(result[0].oid, 'oid')
-        self.assertEqual(result[0].resource, 'resource')
 
     def test_dodefault(self):
         from ..deferred import IndexAction
         index = DummyIndex()
-        actions = [ IndexAction(index, 'mode', 'oid', 'resource'),
-                    IndexAction(index, 'mode', 'oid', 'resource') ]
+        actions = [ IndexAction(index, 'mode', 'oid'),
+                    IndexAction(index, 'mode', 'oid') ]
         result = self._callFUT(actions)
         self.assertEqual(result, [actions[-1]])
 
@@ -779,10 +864,10 @@ class Test_optimize_actions(unittest.TestCase):
         index2 = DummyIndex()
         index2.__oid__ = 2
         index2.__name__ = 'index2'
-        a1 = IndexAction(index2, 'mode', 'oid1', 'resource')
-        a2 = ReindexAction(index1, 'mode', 'oid3', 'resource')
-        a3 = IndexAction(index2, 'mode', 'oid2', 'resource')
-        a4 = IndexAction(index2, 'mode', 'oid3', 'resource')
+        a1 = IndexAction(index2, 'mode', 'oid1')
+        a2 = ReindexAction(index1, 'mode', 'oid3')
+        a3 = IndexAction(index2, 'mode', 'oid2')
+        a4 = IndexAction(index2, 'mode', 'oid3')
         a5 = UnindexAction(index1, 'mode', 'oid1')
         actions = [a1, a2, a3, a4, a5]
         result = self._callFUT(actions)
@@ -864,10 +949,13 @@ class DummyAction(object):
     index.__oid__ = 1
     executed = False
 
-    def __init__(self, oid):
+    def __init__(self, oid, raises=None):
         self.oid = oid
+        self.raises = raises
 
     def execute(self):
+        if self.raises:
+            raise self.raises
         self.executed = True
 
     def __repr__(self):
@@ -899,4 +987,11 @@ class DummyActionProcessor(object):
     def add(self, actions):
         self.context.added = actions
 
+    
+class DummyObjectmap(object):
+    def __init__(self, result):
+        self.result = result
+
+    def object_for(self, oid):
+        return self.result
     

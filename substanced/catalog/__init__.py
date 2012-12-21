@@ -46,10 +46,7 @@ from .factories import (
     Path,
     )
 
-from .util import (
-    oid_from_resource,
-    oid_from_resource_or_oid,
-    )
+from .util import oid_from_resource
 
 from . import deferred
 
@@ -127,17 +124,20 @@ class Catalog(Folder):
         self.objectids = self.family.IF.TreeSet()
 
     def index_resource(self, resource, oid=None, action_mode=None):
-        """Register the resource in indexes of this catalog using objectid
-        ``oid``.  If ``oid`` is not supplied, the ``__oid__`` of the
-        ``resource`` will be used.  ``action_mode``, if supplied, should be one
-        of ``None``, :attr:`~substanced.interfaces.MODE_IMMEDIATE`,
+        """Register the resource in indexes of this catalog using ``oid`` as
+        the indexing identifier.  If ``oid`` is not supplied, the ``__oid__``
+        attribute of the ``resource`` will be used as the indexing identifier.
+
+        ``action_mode``, if supplied, should be one of ``None``,
+        :attr:`~substanced.interfaces.MODE_IMMEDIATE`,
         :attr:`~substanced.interfaces.MODE_ATCOMMIT` or
         :attr:`~substanced.interfaces.MODE_DEFERRED`, indicating when the
         updates should take effect.  The ``action_mode`` value will overrule
         any action mode a member index has been configured with except ``None``
         which explicitly indicates that you'd like to use the index's
         action_mode value."""
-        oid = oid_from_resource(resource, oid)
+        if oid is None:
+            oid = oid_from_resource(resource)
         for index in self.values():
             index.index_resource(resource, oid=oid, action_mode=action_mode)
         self.objectids.insert(oid)
@@ -148,11 +148,13 @@ class Catalog(Folder):
         return self.index_resource(obj, oid=docid)
 
     def unindex_resource(self, resource_or_oid, action_mode=None):
-        """Deregister the resource in indexes of this catalog using objectid or
-        resource ``resource_or_oid``.  If ``resource_or_oid`` is an integer, it
-        will be used as the oid; if ``resource_or_oid`` is a resource, its
-        ``__oid__`` attribute will be used as the oid.  ``action_mode``, if
-        supplied, should be one of ``None``,
+        """Deregister the resource in indexes of this catalog using the
+        indexing identifier ``resource_or_oid``.  If ``resource_or_oid`` is an
+        integer, it will be used as the indexing identifier; if
+        ``resource_or_oid`` is a resource, its ``__oid__`` attribute will be
+        used as the indexing identifier.
+
+        ``action_mode``, if supplied, should be one of ``None``,
         :attr:`~substanced.interfaces.MODE_IMMEDIATE`,
         :attr:`~substanced.interfaces.MODE_ATCOMMIT` or
         :attr:`~substanced.interfaces.MODE_DEFERRED` indicating when the
@@ -160,7 +162,12 @@ class Catalog(Folder):
         any action mode a member index has been configured with except ``None``
         which explicitly indicates that you'd like to use the index's
         action_mode value."""
-        oid = oid_from_resource_or_oid(resource_or_oid)
+        oid = get_oid(resource_or_oid, resource_or_oid)
+        if not isinstance(oid, int):
+            raise ValueError(
+                'resource_or_oid must be a resource object with an __oid__ '
+                'attribute or an integer oid'
+                )
 
         for index in self.values():
             index.unindex_resource(oid, action_mode=action_mode)
@@ -176,10 +183,12 @@ class Catalog(Folder):
         return self.unindex_resource(docid)
 
     def reindex_resource(self, resource, oid=None, action_mode=None):
-        """Register the resource in indexes of this catalog using objectid
-        ``oid``.  If ``oid`` is not supplied, the ``__oid__`` of the
-        ``resource`` will be used.  ``action_mode``, if supplied, should be one
-        of ``None``, :attr:`~substanced.interfaces.MODE_IMMEDIATE`,
+        """Register the resource in indexes of this catalog using ``oid`` as
+        the indexing identifier.  If ``oid`` is not supplied, the ``__oid__``
+        attribute of ``resource`` will be used as the indexing identifier.
+
+        ``action_mode``, if supplied, should be one of ``None``,
+        :attr:`~substanced.interfaces.MODE_IMMEDIATE`,
         :attr:`~substanced.interfaces.MODE_ATCOMMIT` or
         :attr:`~substanced.interfaces.MODE_DEFERRED` indicating when the
         updates should take effect.  The ``action_mode`` value will overrule
@@ -194,7 +203,8 @@ class Catalog(Folder):
         smarter things during a reindex than what they would do during an
         unindex followed by a successive index.
         """
-        oid = oid_from_resource(resource, oid)
+        if oid is None:
+            oid = oid_from_resource(resource)
         for index in self.values():
             index.reindex_resource(resource, oid=oid, action_mode=action_mode)
         if not oid in self.objectids:
@@ -204,7 +214,7 @@ class Catalog(Folder):
     def reindex_doc(self, docid, obj):
         """ Bw compatibility method """
         return self.reindex_resource(obj, oid=docid)
-    
+
     def reindex(self, dry_run=False, commit_interval=200, indexes=None, 
                 path_re=None, output=None, registry=None):
 

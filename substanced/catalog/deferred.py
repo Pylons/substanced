@@ -19,6 +19,7 @@ from substanced.interfaces import (
     MODE_DEFERRED,
     )
 
+from ..objectmap import find_objectmap
 from ..util import get_oid
 
 logger = logging.getLogger(__name__)
@@ -29,7 +30,6 @@ logger = logging.getLogger(__name__)
 @functools.total_ordering
 class Action(object):
 
-    resource = None
     oid = None
     index = None
     position = None
@@ -45,18 +45,16 @@ class Action(object):
             )
 
     def __hash__(self):
-        # We don't actually need to supply a unique hash value to allow
-        # instances of this class to be unique according to set membership
-        # (dict membership); __eq__ will be called for each.
+        # We rely on __eq__ for dict/set key uniqueness
         return 1
 
     def __eq__(self, other):
-        # In the case this is called during conflict resolution, self.index and
-        # self.resource will be instances of
-        # ZODB.ConflictResolution.PersistentReference; we have to wrap them in
-        # proxies if so; see PersistentReferenceProxy docstring for rationale.
-        self_cmp = (pr_wrap(self.index), self.oid, pr_wrap(self.resource))
-        other_cmp = (pr_wrap(other.index), other.oid, pr_wrap(other.resource))
+        # In the case this is called
+        # during conflict resolution, self.index will be an instance of
+        # ZODB.ConflictResolution.PersistentReference; we have to wrap it in a
+        # proxy if so; see PersistentReferenceProxy docstring for rationale.
+        self_cmp = (self.oid, pr_wrap(self.index), self.position)
+        other_cmp = (other.oid, pr_wrap(other.index), other.position)
         return self_cmp == other_cmp
 
     def __lt__(self, other):
@@ -66,6 +64,13 @@ class Action(object):
         self_cmp = (self.oid, get_oid(self.index, None), self.position)
         other_cmp = (other.oid, get_oid(other.index, None), other.position)
         return self_cmp < other_cmp
+
+    def find_resource(self):
+        objectmap = find_objectmap(self.index)
+        resource = objectmap.object_for(self.oid)
+        if resource is None:
+            raise ResourceNotFound(self)
+        return resource
 
 def pr_wrap(obj):
     if isinstance(obj, PersistentReference):
@@ -96,39 +101,45 @@ class PersistentReferenceProxy(object):
     def __ne__(self, other):
         return not self.__eq__(other)
 
+class ResourceNotFound(Exception):
+    def __init__(self, action):
+        self.action = action
+
+    def __repr__(self):
+        return 'Indexing error: cannot find object for oid %s' % (
+            self.action.oid,)
+
 class IndexAction(Action):
 
     position = 2
 
-    def __init__(self, index, mode, oid, resource):
+    def __init__(self, index, mode, oid):
         self.index = index
         self.mode = mode
         self.oid = oid
-        self.resource = resource
 
     def execute(self):
-        self.index.index_doc(self.oid, self.resource)
-        # break all refs
-        self.index = None
-        self.oid = None
-        self.resource = None
+        resource = self.find_resource()
+        self.index.index_doc(self.oid, resource)
+
+    def anti(self):
+        return UnindexAction(self.index, self.mode, self.oid)
 
 class ReindexAction(Action):
 
     position = 1
     
-    def __init__(self, index, mode, oid, resource):
+    def __init__(self, index, mode, oid):
         self.index = index
         self.mode = mode
         self.oid = oid
-        self.resource = resource
 
     def execute(self):
-        self.index.reindex_doc(self.oid, self.resource)
-        # break all refs
-        self.index = None
-        self.oid = None
-        self.resource = None
+        resource = self.find_resource()
+        self.index.reindex_doc(self.oid, resource)
+
+    def anti(self):
+        return self
 
 class UnindexAction(Action):
 
@@ -141,18 +152,19 @@ class UnindexAction(Action):
 
     def execute(self):
         self.index.unindex_doc(self.oid)
-        # break all refs
-        self.index = None
-        self.oid = None
+
+    def anti(self):
+        return IndexAction(self.index, self.mode, self.oid)
 
 class ActionsQueue(persistent.Persistent):
 
     logger = logger # for testing
 
     def __init__(self):
+        self.undo = False # will be True in states resulting from an undo
         self.gen = 0
         self.actions = []
-        self.processor_active = False
+        self.pactive = False
 
     def bumpgen(self):
         # At an average rate of 100 bumps per second, this value won't exceed
@@ -167,18 +179,22 @@ class ActionsQueue(persistent.Persistent):
         # bump.
         #
         # I choose to not care about the slowdown that overflowing to a long
-        # integer on incredibly busy 32-bit systems will imply.  If someone
-        # uses this software 100 years from now, and they're still using a 64
-        # bit CPU, they'll also need to deal with the slowdown implied by
-        # overflowing to a long integer too.
+        # integer on incredibly busy 32-bit systems will imply.  32-bit systems
+        # will have a real chance of getting slower over time as this integer
+        # continually increases and its long integer representation uses more
+        # bits as it does.  If someone uses this software 100 years from now,
+        # and they're still using a 64 bit CPU, they'll also need to deal with
+        # the slowdown implied by overflowing to a long integer too, but that's
+        # obviously not too concerning.
         #
-        # It is possible to reset this value to 0 periodically.  Resetting this
-        # value to 0 should can be done immediately after a pack.  It is only
+        # It's possible to reset this value to 0 periodically.  Resetting this
+        # value to 0 should only be done immediately after a pack.  It is only
         # used to compare old object revisions to newer ones, and after a pack,
         # there are no old object revisions anymore.  It would be ideal to be
-        # able to hook a pack and do this automatically, but meh.
-        newgen = self.gen + 1
-        self.gen = newgen
+        # able to hook into the pack process to do this automatically, but
+        # there aren't really any hooks for it.
+        self.undo = False
+        self.gen = self.gen + 1
 
     def extend(self, actions):
         self.actions.extend(actions)
@@ -194,24 +210,15 @@ class ActionsQueue(persistent.Persistent):
         return actions
 
     def _p_resolveConflict(self, old_state, committed_state, new_state):
-        # Most of this code is cadged from zc.queue._queue; the undo logic
-        # comes from from Products.QueueCatalog
-        
         # We only know how to merge actions and resolve the generation.  If
         # anything else is different, puke.
         if set(new_state.keys()) != set(committed_state.keys()):
             raise ConflictError
 
         for key, val in new_state.items():
-            if ( key not in ('actions', 'gen') and
+            if ( key not in ('actions', 'gen', 'undo') and
                  val != committed_state.get(key) ):
-                raise ConflictError  # cant deal w/ processor_active diff either
-
-        processor_active = new_state['processor_active']
-
-        new_gen = new_state['gen']
-        old_gen = old_state['gen']
-        committed_gen = committed_state['gen']
+                raise ConflictError
 
         # If the new state's generation number is less than the old state's
         # generation number, we know we're in the process of undoing a
@@ -221,40 +228,23 @@ class ActionsQueue(persistent.Persistent):
         # rolled back to if this conflict did not occur), and the "old_state"
         # is actually the state of the transaction we're trying to undo.
 
-        undoing = (old_gen > new_gen)
+        undoing = (old_state['gen'] > new_state['gen'])
 
         if undoing:
-            # Brain too small to cope with properly supporting the undo case
-            # despite ~4 hours of intense trying; must support soon, but have
-            # to move on (which chaps my ass something fierce).  Findings:
-            #
-            # While we're undoing, it's not enough to just depend on set state
-            # differences.  Instead we need to add anti-actions for every
-            # action we'll end up removing.  For example, if we determine via
-            # conflict resolution that an UnindexAction was in the old state
-            # but will be removed from the state we'll return, we'll need to
-            # add an IndexAction to the returned state in order to get the
-            # object into the indexed state eventually (when the queue
-            # processor runs).
-            #
-            # I got as far as adding this bit of code:
-            #
-            #         if undoing:
-            #             mod_committed.extend(
-            #                 [a.anti() for a in new_removed])
-            #
-            # Where a.anti() generates an anti-action for the removed action.
-            # That code isn't even right though, because it doesnt preserve the
-            # ordering of removed actions.  Also not sure if we have to
-            # generate anti-actions for any *added* actions.  Also don't know
-            # what value to return for a generation value when coping with an
-            # undo situation.  Brain too small, time too short.
-            #
-            self.logger.info(
-                'Could not resolve action queue conflict due to undo')
-            raise ConflictError
+            return self._p_resolveUndoConflict(
+                old_state, committed_state, new_state
+                )
 
-        gen = max(committed_gen, new_gen)
+        else:
+            return self._p_resolveNonUndoConflict(
+                old_state, committed_state, new_state
+                )
+
+    def _p_resolveNonUndoConflict(self, old_state, committed_state, new_state):
+        # Most of this code is cadged from zc.queue._queue
+        
+        self.logger.info('Running _p_resolveNonUndoConflict for %s' %
+                         self.__class__.__name__)
 
         old = old_state['actions']
         committed = committed_state['actions']
@@ -269,16 +259,16 @@ class ActionsQueue(persistent.Persistent):
         new_added = new_set - old_set
         new_removed = old_set - new_set
 
-        if new_removed & committed_removed:
-            # they both removed (claimed) the same one.  Puke.
-            raise ConflictError  # can't resolve
-
-        elif new_added & committed_added:
-            # they both added the same one.  Puke.
-            raise ConflictError  # can't resolve
-
         # Merge into the committed state and return it.
         mod_committed = []
+
+        if new_removed & committed_removed:
+            # They both removed (claimed) the same action, can't resolve
+            raise ConflictError
+
+        if new_added & committed_added:
+            # They both added the same action, can't resolve
+            raise ConflictError
 
         for action in committed:
             if not action in new_removed:
@@ -289,11 +279,72 @@ class ActionsQueue(persistent.Persistent):
             assert set(ordered_new_added) == new_added
             mod_committed.extend(ordered_new_added)
 
+        gen = max(committed_state['gen'], new_state['gen'])
+
         committed_state['actions'] = mod_committed
         committed_state['gen'] = gen
-        committed_state['processor_active'] = processor_active
 
-        self.logger.info('resolved %s conflict' % self.__class__.__name__)
+        self.logger.info(
+            'resolved %s conflict in _p_resolveNonUndoConflict' % (
+                self.__class__.__name__)
+            )
+        return committed_state
+
+    def _p_resolveUndoConflict(self, old_state, committed_state, new_state):
+        # During an undo the "new_state" state is the state of the queue in the
+        # transaction prior to the undone transaction (the state that we're
+        # rolling back to), and the "old_state" is actually the state of the
+        # transaction we're trying to undo.
+
+        # While we're undoing, it's not enough to just depend on set state
+        # differences of actions.  Instead we need to add anti-actions for
+        # every action in the state that we're undoing.  For example, if we
+        # determine via that an UnindexAction was in the old state, we'll need
+        # to add an IndexAction to the returned state in order to get the
+        # object into the indexed state eventually (when the queue processor
+        # runs).  If there was an IndexAction, we need to add an UnindexAction,
+        # etc.
+
+        # We only handle this case without throwing a conflict error if both
+        # the committed state and the state we're undoing to have an empty
+        # queue.  If the queue is not empty in the committed state, it means
+        # there are pending queue actions that have not yet been run by the
+        # processor that were added very recently.  Not really sure what to do
+        # then, because queue actions require ordering.  If the queue is not
+        # empty in the state we're undoing to, those actions may or may not
+        # have already been processed by a processor.  Not sure what to do
+        # there either.  We can probably do better.
+
+        # Some inspiration from undo logic comes from staring at
+        # Products.QueueCatalog
+        
+        self.logger.info('Running _p_resolveUndoConflict for %s' %
+                         self.__class__.__name__)
+
+        old = old_state['actions']
+        committed = committed_state['actions']
+        new = new_state['actions']
+
+        mod_committed = []
+        
+        if not new and not committed:
+            # Both the committed state and the state we're undoing to have an
+            # empty queue state.  Put anti-actions related to the state being
+            # undone into the returned state.
+            for action in old:
+                mod_committed.append(action.anti())
+        else:
+            # otherwise, conflict.
+            raise ConflictError
+
+        committed_state['actions'] = mod_committed
+        committed_state['undo'] = True
+        committed_state['gen'] = committed_state['gen'] + 1
+
+        self.logger.info(
+            'resolved %s conflict in _p_resolveUndoConflict' % (
+                self.__class__.__name__)
+            )
 
         return committed_state
 
@@ -343,7 +394,7 @@ class BasicActionProcessor(object):
         queue = self.get_queue()
         if queue is None:
             return False
-        return queue.processor_active
+        return queue.pactive
 
     def sync(self):
         jar = self.context._p_jar
@@ -358,16 +409,16 @@ class BasicActionProcessor(object):
             if zodb_root is None:
                 raise RuntimeError('Context has no jar')
             queue = ActionsQueue()
-            queue.processor_active = True
+            queue.pactive = True
             zodb_root[self.queue_name] = queue
         else:
-            queue.processor_active = True
+            queue.pactive = True
 
     @commit(1)
     def disengage(self):
         queue = self.get_queue()
         if queue is not None:
-            queue.processor_active = False
+            queue.pactive = False
 
     def add(self, actions):
         queue = self.get_queue()
@@ -380,21 +431,33 @@ class BasicActionProcessor(object):
         self.engage()
         while True:
             try:
+
                 if not once: # pragma: no cover
                     time.sleep(sleep)
+
                 self.logger.info('start running actions processing')
                 self.sync()
                 self.transaction.begin()
+
                 executed = False
+                commit = False
+
                 queue = self.get_queue()
                 actions = queue.popall()
+
                 if actions is not None:
                     actions = optimize_actions(actions)
                     for action in actions:
                         self.logger.info('executing %s' % (action,))
-                        action.execute()
-                        executed = True
-                if executed:
+                        try:
+                            executed = True
+                            action.execute()
+                        except ResourceNotFound as e:
+                            self.logger.info(repr(e))
+                        else:
+                            commit = True
+
+                if commit:
                     self.logger.info('committing')
                     try:
                         self.transaction.commit()
@@ -402,11 +465,14 @@ class BasicActionProcessor(object):
                     except ConflictError:
                         self.transaction.abort()
                         self.logger.info('aborted due to conflict error')
-                else:
+
+                if not executed:
                     self.logger.info('no actions to execute')
                 self.logger.info('end running actions processing')
+
                 if once:
                     raise Break()
+
             except (SystemExit, KeyboardInterrupt, Break):
                 once = True
                 try:
@@ -565,7 +631,7 @@ def optimize_actions(actions):
 
     def dochange(oid, index_oid, action1, action2):
         result[(oid, index_oid)] = ReindexAction(
-            action2.index, action2.mode, oid, action2.resource
+            action2.index, action2.mode, oid,
             )
 
     def dodefault(oid, index_oid, action1, action2):
