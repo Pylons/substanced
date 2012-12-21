@@ -183,12 +183,12 @@ class ActionsQueue(persistent.Persistent):
         return actions
 
     def _p_resolveConflict(self, old_state, committed_state, new_state):
-        # We only know how to merge actions and resolve the generation.  If
-        # anything else is different, puke.
         self.logger.info(
             'Running _p_resolveConflict for %s' % self.__class__.__name__
             )
 
+        # We only know how to merge actions and resolve the generation and undo
+        # flag.  If anything else is different, puke.
         if set(new_state.keys()) != set(committed_state.keys()):
             raise ConflictError
 
@@ -204,7 +204,6 @@ class ActionsQueue(persistent.Persistent):
         optimize_states(old_state, committed_state, new_state)
 
         # A good bit of this code was cadged from zc.queue._queue
-
         old = old_state['actions']
         committed = committed_state['actions']
         new = new_state['actions']
@@ -293,14 +292,16 @@ class ActionsQueue(persistent.Persistent):
             # Some inspiration from this undo logic comes from staring at
             # Products.QueueCatalog
             result.update([action.anti() for action in removed])
+            committed_state['undo'] = True
+            gen = committed_state['gen'] + 1
+        else:
+            gen = max(committed_state['gen'], new_state['gen'])
 
         # NB: ordering doesn't make a damn bit of difference because the
         # actions we already optimized and it is impossible to have more than
         # one action per (oid,index) in the result, but we sort here for test
         # sanity.
         result = list(sorted(result))
-
-        gen = max(committed_state['gen'], new_state['gen'])
 
         committed_state['actions'] = result
         committed_state['gen'] = gen

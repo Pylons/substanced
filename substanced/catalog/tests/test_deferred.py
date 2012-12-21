@@ -310,6 +310,8 @@ class TestActionsQueue(unittest.TestCase):
         self.assertTrue(actions[0]._anti, True)
         self.assertEqual(actions[1].oid, 2)
         self.assertTrue(actions[1]._anti, True)
+        self.assertEqual(result['undo'], True)
+        self.assertEqual(result['gen'], 1)
 
     def test__p_resolveConflict_undo_no_antiactions_to_generate(self):
         inst = self._makeOne()
@@ -326,6 +328,8 @@ class TestActionsQueue(unittest.TestCase):
         self.assertEqual(actions, [a1, a2])
         self.assertFalse(actions[0]._anti)
         self.assertFalse(actions[1]._anti)
+        self.assertEqual(result['undo'], True)
+        self.assertEqual(result['gen'], 1)
 
     def test__p_resolveConflict_resolved_returns_higher_generation_number(self):
         inst = self._makeOne()
