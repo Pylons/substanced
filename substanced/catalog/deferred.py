@@ -112,9 +112,11 @@ class IndexAction(Action):
 
     position = 2
 
-    def __init__(self, index, mode, oid):
+    def __init__(self, index, mode, oid, index_oid=None):
         self.index = index
-        self.index_oid = get_oid(index)
+        if index_oid is None:
+            index_oid = get_oid(index)
+        self.index_oid = index_oid
         self.mode = mode
         self.oid = oid
 
@@ -123,15 +125,17 @@ class IndexAction(Action):
         self.index.index_doc(self.oid, resource)
 
     def anti(self):
-        return UnindexAction(self.index, self.mode, self.oid)
+        return UnindexAction(self.index, self.mode, self.oid, self.index_oid)
 
 class ReindexAction(Action):
 
     position = 1
     
-    def __init__(self, index, mode, oid):
+    def __init__(self, index, mode, oid, index_oid=None):
         self.index = index
-        self.index_oid = get_oid(index)
+        if index_oid is None:
+            index_oid = get_oid(index)
+        self.index_oid = index_oid
         self.mode = mode
         self.oid = oid
 
@@ -146,9 +150,11 @@ class UnindexAction(Action):
 
     position = 0
     
-    def __init__(self, index, mode, oid):
+    def __init__(self, index, mode, oid, index_oid=None):
         self.index = index
-        self.index_oid = get_oid(index)
+        if index_oid is None:
+            index_oid = get_oid(index)
+        self.index_oid = index_oid
         self.mode = mode
         self.oid = oid
 
@@ -156,7 +162,7 @@ class UnindexAction(Action):
         self.index.unindex_doc(self.oid)
 
     def anti(self):
-        return IndexAction(self.index, self.mode, self.oid)
+        return IndexAction(self.index, self.mode, self.oid, self.index_oid)
 
 class ActionsQueue(persistent.Persistent):
 

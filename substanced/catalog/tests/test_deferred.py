@@ -133,6 +133,11 @@ class TestIndexAction(unittest.TestCase):
         from ..deferred import IndexAction
         return IndexAction(index, mode, oid)
 
+    def test_index_oid_from_index(self):
+        index = DummyIndex()
+        inst = self._makeOne(index)
+        self.assertEqual(inst.index_oid, index.__oid__)
+
     def test_execute(self):
         index = DummyIndex()
         inst = self._makeOne(index)
@@ -159,6 +164,11 @@ class TestReindexAction(unittest.TestCase):
         from ..deferred import ReindexAction
         return ReindexAction(index, mode, oid)
 
+    def test_index_oid_from_index(self):
+        index = DummyIndex()
+        inst = self._makeOne(index)
+        self.assertEqual(inst.index_oid, index.__oid__)
+
     def test_execute(self):
         index = DummyIndex()
         inst = self._makeOne(index)
@@ -184,6 +194,11 @@ class TestUnindexAction(unittest.TestCase):
     def _makeOne(self, index, mode='mode', oid='oid'):
         from ..deferred import UnindexAction
         return UnindexAction(index, mode, oid)
+
+    def test_index_oid_from_index(self):
+        index = DummyIndex()
+        inst = self._makeOne(index)
+        self.assertEqual(inst.index_oid, index.__oid__)
 
     def test_execute(self):
         index = DummyIndex()
