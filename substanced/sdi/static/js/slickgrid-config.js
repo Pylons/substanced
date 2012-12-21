@@ -88,6 +88,17 @@
             var columns = this.columns;
             var wrapperOptions = this.wrapperOptions;
 
+            // move column: add it
+            columns.unshift({
+                id: "#",
+                name: "",
+                width: 40,
+                behavior: "selectAndMove",
+                selectable: false,
+                resizable: false,
+                cssClass: "cell-reorder dnd"
+            });
+
             // checkbox column: add it
             var checkboxSelector = new Slick.CheckboxSelectColumn({});
             columns.unshift(checkboxSelector.getColumnDefinition());
@@ -188,7 +199,36 @@
                 ////dataView.sort(comparer, args.sortAsc);
             });
 
+            var moveRowsPlugin = new Slick.RowMoveManager({
+                cancelEditOnDrag: true
+            });
+            grid.registerPlugin(moveRowsPlugin);
 
+            //moveRowsPlugin.onBeforeMoveRows.subscribe(function (e, data) {
+            //    console.log('onBeforeMoveRows', data);
+            //});
+
+            moveRowsPlugin.onMoveRows.subscribe(function (e, args) {
+                var selRows = args.rows;
+                var data = grid.getData();
+                var selectedIds = $.map(selRows, function (value, index) {
+                    var row = data[value];
+                    return row.id;
+                });
+                var insertBeforeId = data[args.insertBefore].id;
+                console.log('onMoveRows, rows=', selectedIds, 'insertBefore=', insertBeforeId);
+            });
+
+            // XXX This is just to help debugging, with no real function here.
+            grid.onSelectedRowsChanged.subscribe(function (evt) { 
+                var selRows = grid.getSelectedRows();
+                var data = grid.getData();
+                var selectedIds = $.map(selRows, function (value, index) {
+                    var row = data[value];
+                    return row.id;
+                });
+                console.log('onSelectedRowsChanged rows=', selectedIds);
+            });
 
             if (wrapperOptions.items) {
                 // load the items

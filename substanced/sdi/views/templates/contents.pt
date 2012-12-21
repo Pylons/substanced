@@ -62,7 +62,7 @@
                     }
                     var data = grid.getData();
                     var selectedIds = $.map(selRows, function (value, index) {
-                        var row = data[selRows[index]];
+                        var row = data[value];
                         return row.id;
                     });
                     // I think it is better to submit the list as a
