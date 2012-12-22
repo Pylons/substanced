@@ -3,7 +3,6 @@ import string
 
 from zope.interface import (
     implementer,
-    Interface,
     )
 from zope.copy.interfaces import (
     ICopyHook,
@@ -74,19 +73,21 @@ class Folder(Persistent):
     # Default uses ordering of underlying BTree.
     _order = None
 
-    def _get_order(self):
+    def get_order(self):
         if self._order is not None:
-            return self._order
+            return tuple([item[0] for item in self._order])
         return self.data.keys()
 
-    def _set_order(self, value):
-        # XXX:  should we test against self.data.keys()?
-        self._order = tuple([unicode(x) for x in value])
+    def set_order(self, value):
+        order = []
+        for name in value:
+            name = unicode(name)
+            oid = get_oid(self[name])
+            order.append((name, oid))
+        self._order = tuple(order)
 
-    def _del_order(self):
+    def unset_order(self):
         del self._order
-
-    order = property(_get_order, _set_order, _del_order)
 
     def is_ordered(self):
         """ Return true if the folder is manually ordered, false otherwise. """
@@ -122,17 +123,24 @@ class Folder(Persistent):
         self.add(name, obj, **kw)
         obj.__is_service__ = True
 
+    def oids(self):
+        """ Returns a tuple with the oids of the objects inside this folder.
+        """
+        if self._order is not None:
+            return tuple([item[1] for item in self._order])
+        return tuple([get_oid(self[name], None) for name in self.get_order()])
+
     def keys(self):
         """ Return an iterable sequence of object names present in the folder.
 
         Respect ``order``, if set.
         """
-        return self.order
+        return self.get_order()
 
     def __iter__(self):
         """ An alias for ``keys``
         """
-        return iter(self.order)
+        return iter(self.keys())
 
     def values(self):
         """ Return an iterable sequence of the values present in the folder.
@@ -140,7 +148,7 @@ class Folder(Persistent):
         Respect ``order``, if set.
         """
         if self._order is not None:
-            return [self.data[name] for name in self.order]
+            return [self.data[name] for name in self.keys()]
         return self.data.values()
 
     def items(self):
@@ -149,7 +157,7 @@ class Folder(Persistent):
         Respect ``order``, if set.
         """
         if self._order is not None:
-            return [(name, self.data[name]) for name in self.order]
+            return [(name, self.data[name]) for name in self.keys()]
         return self.data.items()
 
     def __len__(self):
@@ -341,7 +349,8 @@ class Folder(Persistent):
         self._num_objects.change(1)
 
         if self._order is not None:
-            self._order += (name,)
+            oid = get_oid(other)
+            self._order += ((name, oid),)
 
         if send_events:
             event = ObjectAdded(
@@ -441,7 +450,7 @@ class Folder(Persistent):
         self._num_objects.change(-1)
 
         if self._order is not None:
-            self._order = tuple([x for x in self._order if x != name])
+            self._order = tuple([x for x in self._order if x[0] != name])
 
         objectmap = find_objectmap(self)
 
