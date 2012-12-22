@@ -368,7 +368,12 @@ class FolderContentsViews(object):
 
         resultset = q.execute()
         folder_length = len(resultset)
-        resultset = resultset.sort(sort_index, reverse=reverse, limit=end)
+
+        if folder.is_ordered():
+            ids = [oid for oid in folder.oids() if oid in resultset.ids]
+        else:
+            resultset = resultset.sort(sort_index, reverse=reverse, limit=end)
+            ids = resultset.ids
 
         can_manage = bool(has_permission('sdi.manage-contents', folder,request))
         custom_columns = request.registry.content.metadata(
@@ -376,7 +381,7 @@ class FolderContentsViews(object):
 
         records = []
 
-        for oid in itertools.islice(resultset.ids, start, end):
+        for oid in itertools.islice(ids, start, end):
             resource = objectmap.object_for(oid)
             name = getattr(resource, '__name__', '')
             deletable = getattr(resource, '__sdi_deletable__', None)

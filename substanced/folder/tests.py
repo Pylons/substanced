@@ -51,12 +51,16 @@ class TestFolder(unittest.TestCase):
             listener, (iface, Interface, Interface))
 
     def test_keys(self):
-        folder = self._makeOne({'a': 1, 'b': 2})
+        model1 = DummyModel()
+        model2 = DummyModel()
+        folder = self._makeOne({'a': model1, 'b': model2})
         self.assertEqual(list(folder.keys()), ['a', 'b'])
 
     def test_is_ordered_true(self):
-        folder = self._makeOne({'a': 1, 'b': 2})
-        folder.order = ('a', 'b')
+        model1 = DummyModel()
+        model2 = DummyModel()
+        folder = self._makeOne({'a': model1, 'b': model2})
+        folder.set_order(['a', 'b'])
         self.assertTrue(folder.is_ordered())
 
     def test_is_ordered_false(self):
@@ -64,23 +68,31 @@ class TestFolder(unittest.TestCase):
         self.assertFalse(folder.is_ordered())
 
     def test_keys_with_order(self):
-        folder = self._makeOne({'a': 1, 'b': 2})
-        folder.order = ['b', 'a']
+        model1 = DummyModel()
+        model2 = DummyModel()
+        folder = self._makeOne({'a': model1, 'b': model2})
+        folder.set_order(['b', 'a'])
         self.assertEqual(list(folder.keys()), ['b', 'a'])
 
-    def test_keys_after_del_order(self):
-        folder = self._makeOne({'a': 1, 'b': 2})
-        folder.order = ['b', 'a']
-        del folder.order
+    def test_keys_after_unset_order(self):
+        model1 = DummyModel()
+        model2 = DummyModel()
+        folder = self._makeOne({'a': model1, 'b': model2})
+        folder.set_order(['b', 'a'])
+        folder.unset_order()
         self.assertEqual(list(folder.keys()), ['a', 'b'])
 
     def test__iter__(self):
-        folder = self._makeOne({'a': 1, 'b': 2})
+        model1 = DummyModel()
+        model2 = DummyModel()
+        folder = self._makeOne({'a': model1, 'b': model2})
         self.assertEqual(list(folder), ['a', 'b'])
 
     def test__iter___with_order(self):
-        folder = self._makeOne({'a': 1, 'b': 2})
-        folder.order = ['b', 'a']
+        model1 = DummyModel()
+        model2 = DummyModel()
+        folder = self._makeOne({'a': model1, 'b': model2})
+        folder.set_order(['b', 'a'])
         self.assertEqual(list(folder), ['b', 'a'])
 
     def test_values(self):
@@ -88,18 +100,22 @@ class TestFolder(unittest.TestCase):
         self.assertEqual(list(folder.values()), [1, 2])
 
     def test_values_with_order(self):
-        folder = self._makeOne({'a': 1, 'b': 2})
-        folder.order = ['b', 'a']
-        self.assertEqual(list(folder.values()), [2, 1])
+        model1 = DummyModel()
+        model2 = DummyModel()
+        folder = self._makeOne({'a': model1, 'b': model2})
+        folder.set_order(['b', 'a'])
+        self.assertEqual(list(folder.values()), [model2, model1])
 
     def test_items(self):
         folder = self._makeOne({'a': 1, 'b': 2})
         self.assertEqual(list(folder.items()), [('a', 1), ('b', 2)])
 
     def test_items_with_order(self):
-        folder = self._makeOne({'a': 1, 'b': 2})
-        folder.order = ['b', 'a']
-        self.assertEqual(list(folder.items()), [('b', 2), ('a', 1)])
+        model1 = DummyModel()
+        model2 = DummyModel()
+        folder = self._makeOne({'a': model1, 'b': model2})
+        folder.set_order(['b', 'a'])
+        self.assertEqual(list(folder.items()), [('b', model2), ('a', model1)])
 
     def test__len__(self):
         folder = self._makeOne({'a': 1, 'b': 2})
@@ -217,11 +233,11 @@ class TestFolder(unittest.TestCase):
 
     def test_add_with_order_appends_name(self):
         folder = self._makeOne()
-        folder.order = []
+        folder.set_order([])
         folder.add('a', DummyModel())
-        self.assertEqual(folder.order, ('a',))
+        self.assertEqual(folder.get_order(), ('a',))
         folder.add('b', DummyModel())
-        self.assertEqual(folder.order, ('a', 'b'))
+        self.assertEqual(folder.get_order(), ('a', 'b'))
 
     def test_add_with_object_has_parent(self):
         folder = self._makeOne()
@@ -498,9 +514,9 @@ class TestFolder(unittest.TestCase):
         folder = self._makeOne()
         folder['a'] = DummyModel()
         folder['b'] = DummyModel()
-        folder.order = ['a', 'b']
+        folder.set_order(['a', 'b'])
         folder.remove('a')
-        self.assertEqual(folder.order, ('b',))
+        self.assertEqual(folder.get_order(), ('b',))
 
     def test_replace_existing(self):
         folder = self._makeOne()
@@ -675,6 +691,21 @@ class TestFolder(unittest.TestCase):
         event.object = DummyModel()
         inst._notify(event)
 
+    def test_oids_unordered_folder(self):
+        model1 = DummyModel()
+        model2 = DummyModel()
+        model2.__oid__ = 2
+        folder = self._makeOne({'a': model1, 'b': model2})
+        self.assertEqual(list(folder.oids()), [1, 2])
+
+    def test_oids_ordered_folder(self):
+        model1 = DummyModel()
+        model2 = DummyModel()
+        model2.__oid__ = 2
+        folder = self._makeOne({'a': model1, 'b': model2})
+        folder.set_order(['b', 'a'])
+        self.assertEqual(list(folder.oids()), [2, 1])
+
 class TestSequentialAutoNamingFolder(unittest.TestCase):
     def _makeOne(self, d=None, autoname_length=None, autoname_start=None):
         from . import SequentialAutoNamingFolder
@@ -787,7 +818,7 @@ class TestCopyHook(unittest.TestCase):
         self.assertRaises(ResumeCopy, inst, parent, None)
 
 class DummyModel(object):
-    pass
+    __oid__ = 1
 
 class DummyObjectMap(object):
     def __init__(self):
