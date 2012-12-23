@@ -941,7 +941,7 @@ class _ReferencedPredicate(object):
 
 @subscribe_will_be_removed()
 def referential_integrity(event):
-    if event.moving:
+    if event.moving is not None: # being moved
         return
     obj = event.object
     obj_oid = get_oid(obj, None)

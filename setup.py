@@ -39,6 +39,7 @@ install_requires = [
     'pyyaml',
     'zope.copy',
     'zope.component', # implictly depended upon by zope.copy
+    'zope.deprecation',
     ]
 
 docs_extras = ['Sphinx', 'repoze.sphinx.autointerface']
@@ -52,7 +53,6 @@ setup(name='substanced',
         "Intended Audience :: Developers",
         "Programming Language :: Python",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 2.6",
         "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: Implementation :: CPython",
         "Framework :: Pylons",
@@ -74,6 +74,7 @@ setup(name='substanced',
       [console_scripts]
       sd_evolve = substanced.scripts.evolve:main
       sd_reindex = substanced.scripts.reindex:main
+      sd_drain_indexing = substanced.scripts.drain_indexing:main
       [pyramid.scaffold]
       substanced=substanced.scaffolds:SubstanceDProjectTemplate
       """,

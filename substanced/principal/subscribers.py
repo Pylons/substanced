@@ -41,7 +41,7 @@ def user_added(event):
 def user_will_be_removed(event):
     """ Remove all password reset objects associated with a user when the user
     is removed """
-    if event.moving: # it's not really being removed
+    if event.moving is not None: # it's not really being removed
         return
     if event.loading: # fbo dump/load
         return
@@ -92,7 +92,7 @@ def _referenceable_principals(acl):
 
 @subscribe_added()
 def acl_maybe_added(event):
-    if event.moving or event.loading:
+    if event.moving is not None or event.loading:
         return False # meaningful only to tests
 
     obj = event.object

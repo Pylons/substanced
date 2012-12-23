@@ -1,7 +1,5 @@
 from zope.interface.interfaces import IObjectEvent
 
-from hypatia.interfaces import ICatalog as _ICatalog
-
 from zope.interface import (
     Interface,
     Attribute,
@@ -101,32 +99,30 @@ class IObjectWillBeAdded(IObjectEvent):
     parent = Attribute('The folder to which the object is being added')
     name = Attribute('The name which the object is being added to the folder '
                      'with')
-    moving = Attribute('Boolean indicating that this add is part of an '
-                       'object move')
+    moving = Attribute('None or the folder from which the object being added '
+                       'was moved')
     loading = Attribute('Boolean indicating that this add is part of a load '
                         '(during a dump load process)')
-    duplicating = Attribute('Boolean indicating this add is part of an '
-                            'object duplication')
+    duplicating = Attribute('The object being duplicated or ``None``')
 
 class IObjectAdded(IObjectEvent):
     """ An event type sent when an object is added """
     object = Attribute('The object being added')
     parent = Attribute('The folder to which the object is being added')
     name = Attribute('The name of the object within the folder')
-    moving = Attribute('Boolean indicating that this add is part of an '
-                       'object move')
+    moving = Attribute('None or the folder from which the object being added '
+                       'was moved')
     loading = Attribute('Boolean indicating that this add is part of a load '
                         '(during a dump load process)')
-    duplicating = Attribute('Boolean indicating this add is part of an '
-                            'object duplication')
+    duplicating = Attribute('The object being duplicated or ``None``')
 
 class IObjectWillBeRemoved(IObjectEvent):
     """ An event type sent before an object is removed """
     object = Attribute('The object being removed')
     parent = Attribute('The folder from which the object is being removed')
     name = Attribute('The name of the object within the folder')
-    moving = Attribute('Boolean indicating that this removal is part of an '
-                       'object move')
+    moving = Attribute('None or the folder to which the object being removed '
+                       'will be moved')
     loading = Attribute('Boolean indicating that this remove is part of a load '
                         '(during a dump load process)')
 
@@ -135,8 +131,8 @@ class IObjectRemoved(IObjectEvent):
     object = Attribute('The object being removed')
     parent = Attribute('The folder from which the object is being removed')
     name = Attribute('The name of the object within the folder')
-    moving = Attribute('Boolean indicating that this removal is part of an '
-                       'object move')
+    moving = Attribute('None or the folder to which the object being removed '
+                       'will be moved')
     loading = Attribute('Boolean indicating that this remove is part of a load '
                         '(during a dump load process)')
     removed_oids = Attribute('The set of oids removed as the result of '
@@ -259,18 +255,18 @@ class IFolder(Interface):
         """
 
     def add(name, other, send_events=True, reserved_names=(),
-            duplicating=False, moving=False, loading=False, registry=None):
+            duplicating=None, moving=None, loading=False, registry=None):
         """ Same as ``__setitem__``.
 
         If ``send_events`` is false, suppress the sending of folder events.
-        Disallow the addition of the name provided is in the
-        ``reserved_names`` list.  If ``duplicating`` is True, the
-        ObjectWillBeAdded event sent will be marked as 'duplicating', which
-        typically has the effect that the subobject's object id will be
-        overwritten instead of reused.  If ``registry`` is passed, it should
-        be a Pyramid registry object; otherwise the
-        ``pyramid.threadlocal.get_current_registry`` function is used to look
-        up the current registry.
+        Disallow the addition of the name provided is in the ``reserved_names``
+        list.  If ``duplicating`` is not None, it must be the object being
+        duplicated; when non-None, the ObjectWillBeAdded and ObjectAdded events
+        sent will be marked as 'duplicating', which typically has the effect
+        that the subobject's object id will be overwritten instead of reused.
+        If ``registry`` is passed, it should be a Pyramid registry object;
+        otherwise the ``pyramid.threadlocal.get_current_registry`` function is
+        used to look up the current registry.
 
         This method returns the name used to place the subobject in the
         folder (a derivation of ``name``, usually the result of
@@ -327,11 +323,12 @@ class IFolder(Interface):
         and ``__parent__`` value,
         """
 
-    def remove(name, send_events=True, moving=False, loading=False):
+    def remove(name, send_events=True, moving=None, loading=False):
         """ Same thing as ``__delitem__``.
 
-        If ``send_events`` is false, suppress the sending of folder events.
-        If ``moving`` is True, the events sent will indicate that a move is
+        If ``send_events`` is false, suppress the sending of folder events.  If
+        ``moving`` is not ``None``, it should be the folder object from which
+        the object is being moved; the events sent will indicate that a move is
         in process.
         """
 
@@ -386,7 +383,8 @@ class IAutoNamingFolder(IFolder):
     def add_next(
         subobject,
         send_events=True,
-        duplicating=False,
+        duplicating=None,
+        moving=None,
         registry=None,
         ):
         """Add a subobject, naming it automatically, giving it the name
@@ -397,10 +395,61 @@ class IAutoNamingFolder(IFolder):
         This method returns the name of the subobject.
         """
 
-class ICatalog(_ICatalog):
-    """ A collection of indices """
+class ICatalog(Interface):
+    """ A collection of indices. """
+
     objectids = Attribute(
         'a sequence of objectids that are cataloged in this catalog')
+
+    def index_resource(resource, oid=None, action_mode=None):
+        """Register the resource in indexes of this catalog using objectid
+        ``oid``.  If ``oid`` is not supplied, the ``__oid__`` of the
+        ``resource`` will be used.  ``action_mode``, if supplied, should be one
+        of ``None``, :attr:`~substanced.interfaces.MODE_IMMEDIATE`,
+        :attr:`~substanced.interfaces.MODE_ATCOMMIT` or
+        :attr:`~substanced.interfaces.MODE_DEFERRED`."""
+
+    def reindex_resource(resource, oid=None, action_mode=None):
+        """Register the resource in indexes of this catalog using objectid
+        ``oid``.  If ``oid`` is not supplied, the ``__oid__`` of the
+        ``resource`` will be used.  ``action_mode``, if supplied, should be one
+        of ``None``, :attr:`~substanced.interfaces.MODE_IMMEDIATE`,
+        :attr:`~substanced.interfaces.MODE_ATCOMMIT` or
+        :attr:`~substanced.interfaces.MODE_DEFERRED` indicating when the updates
+        should take effect.  The ``action_mode`` value will overrule any
+        action mode that a member index has been configured with.
+
+        The result of calling this method is logically the same as calling
+        ``unindex_resource``, then ``index_resource`` for the same resource/oid
+        combination, but calling those two methods in succession is often more
+        expensive than calling this single method, as member indexes can choose
+        to do smarter things during a reindex than what they would do during an
+        unindex then an index.
+        """
+
+    def unindex_resource(resource_or_oid, action_mode=None):
+        """Deregister the resource in indexes of this catalog using objectid or
+        resource ``resource_or_oid``.  If ``resource_or_oid`` is an integer, it
+        will be used as the oid; if ``resource_or_oid`` is a resource, its
+        ``__oid__`` attribute will be used as the oid.  ``action_mode``, if
+        supplied, should be one of ``None``,
+        :attr:`~substanced.interfaces.MODE_IMMEDIATE`,
+        :attr:`~substanced.interfaces.MODE_ATCOMMIT` or
+        :attr:`~substanced.interfaces.MODE_DEFERRED`."""
+
+    def __getitem__(name):
+        """ Return the index named ``name``"""
+
+    def reset():
+        """ Clear all indexes in this catalog and clear self.objectids. """
+
+    def flush(immediate=True):
+        """ Flush any pending indexing actions for all indexes in this catalog.
+        If ``immediate`` is ``True``, *all* actions will be immediately
+        executed.  If ``immediate`` is ``False``,
+        :attr:`~substanced.interfaces.MODE_DEFERRED` actions will be sent to
+        the actions processor if one is active, and all other actions will be
+        executed immediately."""
 
     def reindex(dry_run=False, commit_interval=200, indexes=None, 
                 path_re=None, output=None):
@@ -430,6 +479,17 @@ class ICatalog(_ICatalog):
         is passed (the default), the output will wind up in the
         ``substanced.catalog`` Python logger output at ``info`` level.
         """
+
+    def update_indexes(
+        registry=None,
+        dry_run=False,
+        output=None,
+        replace=False,
+        reindex=False,
+        **kw):
+        """ Use the candidate indexes registered via
+        ``config.add_catalog_factory`` to populate this catalog."""
+                       
         
 class IPrincipal(Interface):
     """ Marker interface representing a user or group """
@@ -615,3 +675,27 @@ class ISDIAPI(Interface):
 
     def mgmt_views(context):
         """ The list of management views on a resource """
+
+class IIndexingActionProcessor(Interface):
+    """ Processor of deferred indexing/unindexing actions of
+    catalogs in the system"""
+
+# MODE_ sentinels are classes so that when one is pickled, then unpickled, the
+# result can be compared against an imported version using "is"
+
+class MODE_IMMEDIATE(object):
+    """ Sentinel indicating that an indexing action should take place as
+    immediately as possible."""
+
+class MODE_ATCOMMIT(object):
+    """ Sentinel indicating that an indexing action should take place at the
+    successful end of the current transaction."""
+
+class MODE_DEFERRED(object):
+    """ Sentinel indicating that an indexing action should be performed by an
+    external indexing processor (e.g. ``drain_catalog_indexing``) if one is
+    active at the successful end of the current transaction.  If an indexing
+    processor is unavailable at the successful end of the current transaction,
+    this mode will be taken to imply the same thing as
+    :attr:`~substanced.interfaces.MODE_ATCOMMIT`."""
+

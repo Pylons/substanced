@@ -24,23 +24,6 @@ class TestSystemIndexViews(unittest.TestCase):
         self.assertTrue(Dummy2 in result)
         self.assertTrue(Interface in result)
 
-    def test_containment(self):
-        class Dummy1(Interface):
-            pass
-        class Dummy2(Interface):
-            pass
-        root = testing.DummyModel()
-        alsoProvides(root, Dummy1)
-        resource = testing.DummyResource()
-        alsoProvides(resource, Dummy2)
-        root['foo'] = resource
-        inst = self._makeOne(resource)
-        result = inst.containment(None)
-        self.assertEqual(len(result), 3)
-        self.assertTrue(Dummy1 in result)
-        self.assertTrue(Dummy2 in result)
-        self.assertTrue(Interface in result)
-
     def test_name_has_no_name(self):
         resource = object()
         inst = self._makeOne(resource)

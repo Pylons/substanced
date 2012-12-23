@@ -7,9 +7,6 @@ import json
 from zope.interface import providedBy
 from zope.interface.declarations import Declaration
 
-from zope.interface import providedBy
-from zope.interface.declarations import Declaration
-
 from pyramid.location import lineage
 from pyramid.threadlocal import get_current_registry
 

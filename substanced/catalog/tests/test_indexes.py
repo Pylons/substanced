@@ -13,10 +13,12 @@ def _makeSite(**kw):
         v.__is_service__ = True
     return site
 
-class TestResolvingIndex(unittest.TestCase):
-    def _makeOne(self):
-        from ..indexes import ResolvingIndex
-        return ResolvingIndex()
+class TestSDIndex(unittest.TestCase):
+    def _makeOne(self, oid=1):
+        from ..indexes import SDIndex
+        index = SDIndex()
+        index.__oid__ = oid
+        return index
 
     def test_resultset_from_query_no_resolver(self):
         inst = self._makeOne()
@@ -25,6 +27,7 @@ class TestResolvingIndex(unittest.TestCase):
         resultset = inst.resultset_from_query(query)
         self.assertEqual(resultset.ids, [1,2,3])
         self.assertEqual(resultset.resolver, inst.__objectmap__.object_for)
+        self.assertTrue(query.flushed)
 
     def test_resultset_from_query_with_resolver(self):
         inst = self._makeOne()
@@ -34,6 +37,172 @@ class TestResolvingIndex(unittest.TestCase):
         resultset = inst.resultset_from_query(query, resolver=resolver)
         self.assertEqual(resultset.ids, [1,2,3])
         self.assertEqual(resultset.resolver, resolver)
+        self.assertTrue(query.flushed)
+
+    def test_get_action_tm_existing_action_tm(self):
+        inst = self._makeOne()
+        tm = DummyActionTM(None)
+        inst._p_action_tm = tm
+        self.assertEqual(inst.get_action_tm(), tm)
+        
+    def test_get_action_tm_no_existing_action_tm(self):
+        inst = self._makeOne()
+        inst.tm_class = DummyActionTM
+        result = inst.get_action_tm()
+        self.assertEqual(result.__class__, DummyActionTM)
+        self.assertEqual(result.index, inst)
+        self.assertTrue(result.registered)
+
+    def test_clear_action_tm(self):
+        inst = self._makeOne()
+        inst._p_action_tm = True
+        inst.clear_action_tm()
+        self.assertEqual(inst._p_action_tm, None)
+
+    def test_flush(self):
+        inst = self._makeOne()
+        tm = DummyActionTM(None)
+        inst._p_action_tm = tm
+        inst.flush('abc')
+        self.assertEqual(tm.flushed, 'abc')
+
+    def test_flush_no_tm(self):
+        inst = self._makeOne()
+        inst._p_action_tm = None
+        self.assertEqual(inst.flush(), None)
+
+    def test_add_action(self):
+        inst = self._makeOne()
+        tm = DummyActionTM(None)
+        inst._p_action_tm = tm
+        inst.add_action(True)
+        self.assertEqual(tm.actions, [True])
+
+    def test_index_resource_no_action_mode(self):
+        resource = testing.DummyResource()
+        inst = self._makeOne()
+        L = []
+        inst.index_doc = lambda oid, resource: L.append((oid, resource))
+        inst.index_resource(resource, 1)
+        self.assertEqual(L, [(1, resource)])
+
+    def test_index_resource_action_MODE_IMMEDIATE(self):
+        from substanced.interfaces import MODE_IMMEDIATE
+        resource = testing.DummyResource()
+        inst = self._makeOne()
+        L = []
+        inst.index_doc = lambda oid, resource: L.append((oid, resource))
+        inst.index_resource(resource, 1, action_mode=MODE_IMMEDIATE)
+        self.assertEqual(L, [(1, resource)])
+
+    def test_index_resource_action_MODE_ATCOMMIT(self):
+        from substanced.interfaces import MODE_ATCOMMIT
+        resource = testing.DummyResource()
+        inst = self._makeOne()
+        tm = DummyActionTM(None)
+        inst._p_action_tm = tm
+        inst.index_resource(resource, 1, action_mode=MODE_ATCOMMIT)
+        self.assertEqual(len(tm.actions), 1)
+        action = tm.actions[0]
+        self.assertEqual(action.__class__.__name__, 'IndexAction')
+        self.assertEqual(action.oid, 1)
+        self.assertEqual(action.mode, MODE_ATCOMMIT)
+        self.assertEqual(action.index, inst)
+
+    def test_index_resource_oid_is_None(self):
+        resource = testing.DummyResource()
+        resource.__oid__ = 1
+        inst = self._makeOne()
+        L = []
+        inst.index_doc = lambda oid, resource: L.append((oid, resource))
+        inst.index_resource(resource)
+        self.assertEqual(L, [(1, resource)])
+
+    def test_reindex_resource_no_action_mode(self):
+        resource = testing.DummyResource()
+        inst = self._makeOne()
+        L = []
+        inst.reindex_doc = lambda oid, resource: L.append((oid, resource))
+        inst.reindex_resource(resource, 1)
+        self.assertEqual(L, [(1, resource)])
+
+    def test_reindex_resource_action_MODE_IMMEDIATE(self):
+        from substanced.interfaces import MODE_IMMEDIATE
+        resource = testing.DummyResource()
+        inst = self._makeOne()
+        L = []
+        inst.reindex_doc = lambda oid, resource: L.append((oid, resource))
+        inst.reindex_resource(resource, 1, action_mode=MODE_IMMEDIATE)
+        self.assertEqual(L, [(1, resource)])
+
+    def test_reindex_resource_action_MODE_ATCOMMIT(self):
+        from substanced.interfaces import MODE_ATCOMMIT
+        resource = testing.DummyResource()
+        inst = self._makeOne()
+        tm = DummyActionTM(None)
+        inst._p_action_tm = tm
+        inst.reindex_resource(resource, 1, action_mode=MODE_ATCOMMIT)
+        self.assertEqual(len(tm.actions), 1)
+        action = tm.actions[0]
+        self.assertEqual(action.__class__.__name__, 'ReindexAction')
+        self.assertEqual(action.oid, 1)
+        self.assertEqual(action.mode, MODE_ATCOMMIT)
+        self.assertEqual(action.index, inst)
+
+    def test_reindex_resource_no_oid(self):
+        resource = testing.DummyResource()
+        resource.__oid__ = 1
+        inst = self._makeOne()
+        L = []
+        inst.reindex_doc = lambda oid, resource: L.append((oid, resource))
+        inst.reindex_resource(resource)
+        self.assertEqual(L, [(1, resource)])
+
+    def test_unindex_resource_no_action_mode(self):
+        inst = self._makeOne()
+        L = []
+        inst.unindex_doc = lambda oid: L.append(oid)
+        inst.unindex_resource(1)
+        self.assertEqual(L, [1])
+
+    def test_unindex_resource_action_MODE_IMMEDIATE(self):
+        from substanced.interfaces import MODE_IMMEDIATE
+        inst = self._makeOne()
+        L = []
+        inst.unindex_doc = lambda oid: L.append(oid)
+        inst.unindex_resource(1, action_mode=MODE_IMMEDIATE)
+        self.assertEqual(L, [1])
+
+    def test_unindex_resource_action_MODE_ATCOMMIT(self):
+        from substanced.interfaces import MODE_ATCOMMIT
+        inst = self._makeOne()
+        tm = DummyActionTM(None)
+        inst._p_action_tm = tm
+        inst.unindex_resource(1, action_mode=MODE_ATCOMMIT)
+        self.assertEqual(len(tm.actions), 1)
+        action = tm.actions[0]
+        self.assertEqual(action.__class__.__name__, 'UnindexAction')
+        self.assertEqual(action.oid, 1)
+        self.assertEqual(action.mode, MODE_ATCOMMIT)
+        self.assertEqual(action.index, inst)
+
+    def test_unindex_resource_resource_is_not_oid(self):
+        resource = testing.DummyResource()
+        resource.__oid__ = 1
+        inst = self._makeOne()
+        L = []
+        inst.unindex_doc = lambda oid: L.append(oid)
+        inst.unindex_resource(resource)
+        self.assertEqual(L, [1])
+
+    def test_repr(self):
+        inst = self._makeOne()
+        inst.__name__ = 'fred'
+        r = repr(inst)
+        self.assertTrue(r.startswith(
+           "<substanced.catalog.indexes.SDIndex object 'fred' at"))
+        
+        
 
 class TestPathIndex(unittest.TestCase):
     def _makeOne(self, family=None):
@@ -315,26 +484,75 @@ class TestAllowedIndex(unittest.TestCase):
         return index
 
     def test_allows_request_default_permission(self):
-        index = self._makeOne()
+        discriminator = DummyAllowsDiscriminator(('view',))
+        index = self._makeOne(discriminator)
         request = testing.DummyRequest()
         q = index.allows(request)
         self.assertEqual(q._value, [('system.Everyone', 'view')])
 
     def test_allows_request_nondefault_permission(self):
-        index = self._makeOne()
+        discriminator = DummyAllowsDiscriminator(('view', 'edit'))
+        index = self._makeOne(discriminator)
         request = testing.DummyRequest()
         q = index.allows(request, 'edit')
         self.assertEqual(q._value, [('system.Everyone', 'edit')])
 
+    def test_allows_no_default_permission(self):
+        discriminator = DummyAllowsDiscriminator(('view', 'edit'))
+        index = self._makeOne(discriminator)
+        request = testing.DummyRequest()
+        self.assertRaises(ValueError, index.allows, request)
+
+    def test_allows_bad__permission(self):
+        discriminator = DummyAllowsDiscriminator(('view', 'edit'))
+        index = self._makeOne(discriminator)
+        request = testing.DummyRequest()
+        self.assertRaises(ValueError, index.allows, request, 'whatever')
+
     def test_allows_iterable(self):
-        index = self._makeOne()
+        discriminator = DummyAllowsDiscriminator(('edit',))
+        index = self._makeOne(discriminator)
         q = index.allows(['bob', 'joe'], 'edit')
         self.assertEqual(q._value, [('bob', 'edit'), ('joe', 'edit')])
 
     def test_allows_single(self):
-        index = self._makeOne()
+        discriminator = DummyAllowsDiscriminator(('edit',))
+        index = self._makeOne(discriminator)
         q = index.allows('bob', 'edit')
         self.assertEqual(q._value, [('bob', 'edit')])
+
+class TestIndexPropertySheet(unittest.TestCase):
+    def _makeOne(self, context, request):
+        from ..indexes import IndexPropertySheet
+        return IndexPropertySheet(context, request)
+
+    def test_set_action_mode_empty(self):
+        context = testing.DummyResource()
+        inst = self._makeOne(context, None)
+        inst.set({'action_mode':''})
+        self.assertEqual(context.action_mode, None)
+
+    def test_set_action_mode_nonempty(self):
+        from substanced.interfaces import MODE_IMMEDIATE
+        context = testing.DummyResource()
+        inst = self._makeOne(context, None)
+        inst.set({'action_mode':'MODE_IMMEDIATE'})
+        self.assertEqual(context.action_mode, MODE_IMMEDIATE)
+
+    def test_get_action_mode_None(self):
+        context = testing.DummyResource()
+        context.action_mode = None
+        inst = self._makeOne(context, None)
+        result = inst.get()
+        self.assertEqual(result['action_mode'], '')
+
+    def test_get_action_mode_not_None(self):
+        from substanced.interfaces import MODE_IMMEDIATE
+        context = testing.DummyResource()
+        context.action_mode = MODE_IMMEDIATE
+        inst = self._makeOne(context, None)
+        result = inst.get()
+        self.assertEqual(result['action_mode'], 'MODE_IMMEDIATE')
 
 class Dummy(object):
     pass
@@ -350,9 +568,30 @@ class DummyObjectmap(object):
     def object_for(self, docid): return 'a'
 
 class DummyQuery(object):
+    def flush(self, *arg, **kw):
+        self.flushed = True
+        
     def _apply(self, names):
         return [1,2,3]
     
 class DummyDiscriminator(object):
     permissions = (1, 2)
     def __call__(self): pass
+
+class DummyActionTM(object):
+    def __init__(self, index):
+        self.index = index
+        self.actions = []
+    def register(self):
+        self.registered = True
+    def flush(self, all):
+        self.flushed = all
+    def add(self, action):
+        self.actions.append(action)
+        
+class DummyAllowsDiscriminator(object):
+    def __init__(self, permissions):
+        self.permissions = permissions
+
+    def __call__(self): pass
+    
