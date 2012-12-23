@@ -36,8 +36,9 @@ class UndoViews(object):
             try:
                 db.undo(undo['id'])
                 # provoke MultipleUndoErrors exception immediately
-                self.transaction.commit() 
                 msg = 'Undone: %s' % undo['clean_description']
+                self.transaction.get().note(msg)
+                self.transaction.commit() 
                 request.session.flash(msg, 'success')
             except ZODB.POSException.POSError:
                 self.transaction.abort()

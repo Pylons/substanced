@@ -211,24 +211,59 @@ class TestActionsQueue(unittest.TestCase):
         logger = DummyLogger()
         inst.logger = logger
         a1 = DummyAction(1)
-        old = {'actions':[], 'gen':0, 'pactive':True}
-        committed = {'actions':[a1, a1], 'gen':0, 'pactive':True}
-        new = {'actions':[], 'gen':0, 'pactive':True}
+        old = state([])
+        committed = state([a1, a1])
+        new = state([])
         result = inst._p_resolveConflict(old, committed, new)
         self.assertEqual(len(logger.messages), 2)
         self.assertEqual(result['actions'], [a1])
 
+    def test__p_resolveConflict_action_intersection_states_conflict(self):
+        from ZODB.POSException import ConflictError
+        from ..deferred import IndexAction, UnindexAction
+        inst = self._makeOne()
+        logger = DummyLogger()
+        inst.logger = logger
+        index = DummyIndex()
+        a1 = IndexAction(index, 'mode', 'oid')
+        a2 = UnindexAction(index, 'mode', 'oid')
+        old = state([a1])
+        committed = state([a2])
+        new = state([])
+        self.assertRaises(
+            ConflictError, inst._p_resolveConflict, old, committed, new)
+
+    def test__p_resolveConflict_action_intersection_states_resolveable(self):
+        from ..deferred import IndexAction, ReindexAction
+        inst = self._makeOne()
+        logger = DummyLogger()
+        inst.logger = logger
+        index = DummyIndex()
+        a1 = IndexAction(index, 'mode', 'oid')
+        a2 = ReindexAction(index, 'mode', 'oid')
+        old = state([a1])
+        committed = state([a2])
+        new = state([])
+        result = inst._p_resolveConflict(old, committed, new)
+        self.assertEqual(len(logger.messages), 2)
+        self.assertEqual(result['actions'], [])
+
     def test__p_resolveConflict_both_new_and_commited_remove_same(self):
+        from ZODB.POSException import ConflictError
         inst = self._makeOne()
         logger = DummyLogger()
         inst.logger = logger
         a1 = DummyAction(1)
-        old = {'actions':[a1], 'gen':0, 'pactive':True}
-        committed = {'actions':[], 'gen':0, 'pactive':True}
-        new = {'actions':[], 'gen':0, 'pactive':True}
-        result = inst._p_resolveConflict(old, committed, new)
+        old = state([a1])
+        committed = state([])
+        new = state([])
+        self.assertRaises(
+            ConflictError,
+            inst._p_resolveConflict,
+            old,
+            committed,
+            new)
         self.assertEqual(len(logger.messages), 2)
-        self.assertEqual(result['actions'], [])
 
     def test__p_resolveConflict_new_and_commited_remove_different(self):
         inst = self._makeOne()
@@ -236,24 +271,30 @@ class TestActionsQueue(unittest.TestCase):
         inst.logger = logger
         a1 = DummyAction(1)
         a2 = DummyAction(2)
-        old = {'actions':[a1, a2], 'gen':0, 'pactive':True}
-        committed = {'actions':[a1], 'gen':0, 'pactive':True}
-        new = {'actions':[a2], 'gen':0, 'pactive':True}
+        old = state([a1, a2])
+        committed = state([a1])
+        new = state([a2])
         result = inst._p_resolveConflict(old, committed, new)
         self.assertEqual(len(logger.messages), 2)
         self.assertEqual(result['actions'], [])
 
     def test__p_resolveConflict_both_new_and_commited_add_same(self):
+        from ZODB.POSException import ConflictError
         inst = self._makeOne()
         logger = DummyLogger()
         inst.logger = logger
         a1 = DummyAction(1)
-        old = {'actions':[], 'gen':0, 'pactive':True}
-        committed = {'actions':[a1], 'gen':0, 'pactive':True}
-        new = {'actions':[a1], 'gen':0, 'pactive':True}
-        result = inst._p_resolveConflict(old, committed, new)
+        old = state([])
+        committed = state([a1])
+        new = state([a1])
+        self.assertRaises(
+            ConflictError,
+            inst._p_resolveConflict,
+            old,
+            committed,
+            new
+            )
         self.assertEqual(len(logger.messages), 2)
-        self.assertEqual(result['actions'], [a1])
 
     def test__p_resolveConflict_new_and_commited_add_different(self):
         inst = self._makeOne()
@@ -261,9 +302,9 @@ class TestActionsQueue(unittest.TestCase):
         inst.logger = logger
         a1 = DummyAction(1)
         a2 = DummyAction(2)
-        old = {'actions':[], 'gen':0, 'pactive':True}
-        committed = {'actions':[a1], 'gen':0, 'pactive':True}
-        new = {'actions':[a2], 'gen':0, 'pactive':True}
+        old = state([])
+        committed = state([a1])
+        new = state([a2])
         result = inst._p_resolveConflict(old, committed, new)
         self.assertEqual(len(logger.messages), 2)
         self.assertEqual(result['actions'], [a1, a2])
@@ -271,9 +312,9 @@ class TestActionsQueue(unittest.TestCase):
     def test__p_resolveConflict_with_committed_added_new_not_added(self):
         inst = self._makeOne()
         a1 = DummyAction(1)
-        old = {'actions':[], 'gen':0, 'pactive':True}
-        committed = {'actions':[a1], 'gen':0, 'pactive':True}
-        new = {'actions':[], 'gen':0, 'pactive':True}
+        old = state([])
+        committed = state([a1])
+        new = state([])
         logger = DummyLogger()
         inst.logger = logger
         result = inst._p_resolveConflict(old, committed, new)
@@ -284,9 +325,9 @@ class TestActionsQueue(unittest.TestCase):
         inst = self._makeOne()
         a1 = DummyAction(1)
         a2 = DummyAction(2)
-        old = {'actions':[a1], 'gen':0, 'pactive':True}
-        committed = {'actions':[a1, a2], 'gen':0, 'pactive':True}
-        new = {'actions':[], 'gen':0, 'pactive':True}
+        old = state([a1])
+        committed = state([a1, a2])
+        new = state([])
         logger = DummyLogger()
         inst.logger = logger
         result = inst._p_resolveConflict(old, committed, new)
@@ -297,45 +338,54 @@ class TestActionsQueue(unittest.TestCase):
         inst = self._makeOne()
         a1 = DummyAction(1)
         a2 = DummyAction(2)
-        old = {'actions':[a1, a2], 'gen':1, 'pactive':True}
-        committed = {'actions':[a1], 'gen':0, 'pactive':True}
-        new = {'actions':[a2], 'gen':0, 'pactive':True}
+        old = state([a1, a2], gen=1)
+        committed = state([a1], gen=0)
+        new = state([a2], gen=0)
         logger = DummyLogger()
         inst.logger = logger
         result = inst._p_resolveConflict(old, committed, new)
         self.assertEqual(len(logger.messages), 3)
         actions = result['actions']
-        self.assertEqual(len(actions), 2)
+        self.assertEqual(len(actions), 1)
         self.assertEqual(actions[0].oid, 1)
         self.assertTrue(actions[0]._anti, True)
-        self.assertEqual(actions[1].oid, 2)
-        self.assertTrue(actions[1]._anti, True)
-        self.assertEqual(result['undo'], True)
         self.assertEqual(result['gen'], 1)
 
     def test__p_resolveConflict_undo_no_antiactions_to_generate(self):
         inst = self._makeOne()
         a1 = DummyAction(1)
         a2 = DummyAction(2)
-        old = {'actions':[a1, a2], 'gen':1, 'pactive':True}
-        committed = {'actions':[a1, a2], 'gen':0, 'pactive':True}
-        new = {'actions':[a1, a2], 'gen':0, 'pactive':True}
+        old = state([a1, a2], gen=1)
+        committed = state([a1, a2], gen=0)
+        new = state([a1, a2], gen=0)
         logger = DummyLogger()
         inst.logger = logger
         result = inst._p_resolveConflict(old, committed, new)
-        self.assertEqual(len(logger.messages), 3)
+        self.assertEqual(len(logger.messages), 2)
         actions = result['actions']
-        self.assertEqual(actions, [a1, a2])
-        self.assertFalse(actions[0]._anti)
-        self.assertFalse(actions[1]._anti)
-        self.assertEqual(result['undo'], True)
+        self.assertEqual(actions, [])
         self.assertEqual(result['gen'], 1)
+
+    def test__p_resolveConflict_undo_anti_already_in_new_added(self):
+        from ZODB.POSException import ConflictError
+        inst = self._makeOne()
+        a1 = DummyAction(1)
+        a2 = DummyAction(2, antiresult=a1)
+        old = state([a2], gen=1)
+        committed = state([], gen=0)
+        new = state([a1], gen=0)
+        logger = DummyLogger()
+        inst.logger = logger
+        self.assertRaises(
+            ConflictError,
+            inst._p_resolveConflict, old, committed, new
+            )
 
     def test__p_resolveConflict_resolved_returns_higher_generation_number(self):
         inst = self._makeOne()
-        old = {'actions':[], 'gen':0, 'pactive':True}
-        committed = {'actions':[], 'gen':2, 'pactive':True}
-        new = {'actions':[], 'gen':1, 'pactive':True}
+        old = state([], gen=0)
+        committed = state([], gen=2)
+        new = state([], gen=1)
         logger = DummyLogger()
         inst.logger = logger
         result = inst._p_resolveConflict(old, committed, new)
@@ -345,9 +395,9 @@ class TestActionsQueue(unittest.TestCase):
 
     def test__p_resolveConflict_resolved_returns_agreed_upon_pactive(self):
         inst = self._makeOne()
-        old = {'actions':[], 'gen':0, 'pactive':True}
-        committed = {'actions':[], 'gen':2, 'pactive':True}
-        new = {'actions':[], 'gen':1, 'pactive':True}
+        old = state([], gen=0)
+        committed = state([], gen=2)
+        new = state([], gen=1)
         logger = DummyLogger()
         inst.logger = logger
         result = inst._p_resolveConflict(old, committed, new)
@@ -413,10 +463,10 @@ class Test_which_action(unittest.TestCase):
         a2 = IndexAction(index, 'mode', 'oid')
         self.assertEqual(self._callFUT(a1, a2), a1)
 
-class Test_action_union(unittest.TestCase):
+class Test_action_intersection(unittest.TestCase):
     def _callFUT(self, a1, a2):
-        from ..deferred import action_union
-        return action_union(a1, a2)
+        from ..deferred import action_intersection
+        return action_intersection(a1, a2)
 
     def test_conflict_I_U(self):
         from ZODB.POSException import ConflictError
@@ -438,16 +488,27 @@ class Test_action_union(unittest.TestCase):
         result = self._callFUT(s1, s2)
         self.assertEqual(list(result), [a1])
 
-    def test_union_works(self):
+    def test_no_matches(self):
         from ..deferred import IndexAction, ReindexAction
         index = DummyIndex()
-        a1 = IndexAction(index, 'mode', 'oid')
-        a2 = ReindexAction(index, 'mode', 'oid')
-        a3 = IndexAction(index, 'mode', 'oid2')
+        a1 = IndexAction(index, 'mode', 'oid1')
+        a2 = ReindexAction(index, 'mode', 'oid2')
+        a3 = IndexAction(index, 'mode', 'oid3')
         s1 = set([a1, a3])
         s2 = set([a2])
         result = self._callFUT(s1, s2)
-        self.assertEqual(sorted(list(result)), [a1, a3])
+        self.assertEqual(sorted(list(result)), [])
+
+    def test_only_some_matches(self):
+        from ..deferred import IndexAction, ReindexAction
+        index = DummyIndex()
+        a1_a = IndexAction(index, 'mode', 'oid1')
+        a1_b = ReindexAction(index, 'mode', 'oid1')
+        a2 = IndexAction(index, 'mode', 'oid2')
+        s1 = set([a1_a, a2])
+        s2 = set([a1_b])
+        result = self._callFUT(s1, s2)
+        self.assertEqual(sorted(list(result)), [a1_a])
 
 class Test_commit(unittest.TestCase):
     def _makeOne(self, tries, meth):
@@ -551,6 +612,7 @@ class TestBasicActionProcessor(unittest.TestCase):
         context = testing.DummyResource()
         queue = DummyQueue()
         inst = self._makeOne(context)
+        inst.transaction = DummyTransaction()
         context._p_jar = DummyJar({inst.queue_name:queue})
         self.assertEqual(inst.engage(), None)
         self.assertTrue(queue.pactive)
@@ -558,6 +620,7 @@ class TestBasicActionProcessor(unittest.TestCase):
     def test_engage_queue_missing_context_has_no_jar(self):
         context = testing.DummyResource()
         inst = self._makeOne(context)
+        inst.transaction = DummyTransaction()
         context._p_jar = DummyJar(None)
         self.assertRaises(RuntimeError, inst.engage)
 
@@ -626,11 +689,9 @@ class TestBasicActionProcessor(unittest.TestCase):
         self.assertEqual(
             logger.messages,
             ['starting basic action processor',
-             'start running actions processing',
              'executing action 1',
              'committing',
              'committed',
-             'end running actions processing',
              'stopping basic action processor']
             )
 
@@ -653,9 +714,7 @@ class TestBasicActionProcessor(unittest.TestCase):
         self.assertEqual(
             logger.messages,
             ['starting basic action processor',
-             'start running actions processing',
              'no actions to execute',
-             'end running actions processing',
              'stopping basic action processor']
             )
 
@@ -683,11 +742,9 @@ class TestBasicActionProcessor(unittest.TestCase):
         self.assertEqual(
             logger.messages,
             ['starting basic action processor',
-             'start running actions processing',
              'executing action 1',
              'committing',
              'aborted due to conflict error',
-             'end running actions processing',
              'stopping basic action processor']
             )
 
@@ -717,16 +774,12 @@ class TestBasicActionProcessor(unittest.TestCase):
         self.assertEqual(
             logger.messages,
             ['starting basic action processor',
-             'start running actions processing',
              'executing action 1',
              'committing',
              'committed',
-             'end running actions processing',
              'stopping basic action processor',
              'couldnt disengage due to conflict, processing queue once more',
-             'start running actions processing',
              'no actions to execute',
-             'end running actions processing',
              'stopping basic action processor']            
             )
 
@@ -755,10 +808,8 @@ class TestBasicActionProcessor(unittest.TestCase):
         self.assertEqual(
             logger.messages,
             ['starting basic action processor',
-             'start running actions processing',
              'executing action 1',
              'Indexing error: cannot find resource for oid 1',
-             'end running actions processing',
              'stopping basic action processor']
             )
 
@@ -1057,6 +1108,9 @@ class DummyTransaction(object):
     def abort(self):
         self.aborted += 1
 
+    def note(self, msg):
+        self._note = msg
+
     def get(self):
         return self
 
@@ -1071,13 +1125,16 @@ class DummyTransaction(object):
 class DummyAction(object):
     index = testing.DummyResource()
     index.__oid__ = 1
-    index_oid = 1
     executed = False
 
-    def __init__(self, oid, raises=None, anti=False):
+    def __init__(self, oid, index_oid=1, position=1, raises=None, anti=False,
+                 antiresult=None):
         self.oid = oid
+        self.index_oid = index_oid
+        self.position = position
         self.raises = raises
         self._anti = anti
+        self.antiresult = antiresult
 
     def execute(self):
         if self.raises:
@@ -1091,6 +1148,8 @@ class DummyAction(object):
         return self.oid < other.oid
 
     def anti(self):
+        if self.antiresult:
+            return self.antiresult
         return DummyAction(self.oid, anti=True)
 
 class DummyQueue(object):
@@ -1127,3 +1186,5 @@ class DummyObjectmap(object):
     def object_for(self, oid):
         return self.result
     
+def state(actions, gen=0, pactive=True, undo=False):
+    return dict(locals())

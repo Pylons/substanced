@@ -116,4 +116,10 @@ class DummyTransaction(object):
 
     def abort(self):
         self.aborted = True
+
+    def note(self, msg):
+        self._note = msg
+
+    def get(self):
+        return self
         

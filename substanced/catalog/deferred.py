@@ -134,7 +134,6 @@ class ActionsQueue(persistent.Persistent):
     logger = logger # for testing
 
     def __init__(self):
-        self.undo = False # will be True in states resulting from an undo
         self.gen = 0
         self.actions = []
         self.pactive = False
@@ -166,7 +165,6 @@ class ActionsQueue(persistent.Persistent):
         # there are no old object revisions anymore.  It would be ideal to be
         # able to hook into the pack process to do this automatically, but
         # there aren't really any hooks for it.
-        self.undo = False
         self.gen = self.gen + 1
 
     def extend(self, actions):
@@ -183,81 +181,30 @@ class ActionsQueue(persistent.Persistent):
         return actions
 
     def _p_resolveConflict(self, old_state, committed_state, new_state):
+        clsname = self.__class__.__name__
         self.logger.info(
-            'Running _p_resolveConflict for %s' % self.__class__.__name__
+            'Running _p_resolveConflict for %s' % clsname
             )
 
         # We only know how to merge actions and resolve the generation and undo
         # flag.  If anything else is different, puke.
         if set(new_state.keys()) != set(committed_state.keys()):
+            self.logger.info(
+                'Keys differ in new and committed states in _p_resolveConflict '
+                'of %s (new: %r; committed: %r), cannot resolve' % (
+                    clsname, new_state.keys(), committed_state.keys()
+                    )
+                )
             raise ConflictError
 
         for key, val in new_state.items():
-            if ( key not in ('actions', 'gen', 'undo') and
-                 val != committed_state[key] ):
-                raise ConflictError
-
-        # we need to get rid of duplicate actions to make actions merging
-        # possible; optimize_states mutates the actions in the states so that
-        # each list has exactly one and only one action per oid+index
-        # combination
-        optimize_states(old_state, committed_state, new_state)
-
-        # A good bit of this code was cadged from zc.queue._queue
-        old = old_state['actions']
-        committed = committed_state['actions']
-        new = new_state['actions']
-        
-        old_set = set(old)
-        committed_set = set(committed)
-        new_set = set(new)
-
-        committed_added = committed_set - old_set
-        committed_removed = old_set - committed_set
-
-        new_added = new_set - old_set
-        new_removed = old_set - new_set
-
-        # At this point we know which (oid,index) identifiers should be added
-        # to the old state and which should be removed: the union of
-        # new_removed and committed_removed should be removed, and the union of
-        # new_added and committed_added should be added.  But if there are
-        # individual actions within the removed or added sets that compare
-        # equal, the actions are keyed in the set only by (oid,index) and their
-        # __eq__ doesn't take into account the action type.  For example, there
-        # might be two different actions which compare equal in the different
-        # sets: a reindex action for oid 1 in the new_removed set and an
-        # unindex action for the same oid in the committed_removed set.
-        #
-        # The 'action_union' function will return a union of two sets composed
-        # of actions.  When two actions in the sets compare otherwise equal it
-        # will return the "real" action or it will conflict for two actions
-        # that compare equal but which are mutually incompatible.  For example,
-        # if we have an index action for oid 1 in new_removed, and a reindex
-        # action for oid 1 in committed_removed, the index action will be
-        # returned (the reindex action will be discarded).  There is no
-        # conflict in this case. On the other hand, the action_union function
-        # might raise a ConflictError if it can't determine what to do; an
-        # example of a case where action_union wouldn't know what to do is if
-        # there's an index action for oid 1 in new_removed, and an unindex
-        # action for oid 1 in committed_removed.
-
-        removed = action_union(new_removed, committed_removed)
-        assert(removed == new_removed|committed_removed) # chris' sanity
-
-        added = action_union(new_added, committed_added)
-        assert(added == new_added|committed_added) # chris' sanity
-
-        # The union of the old actions and the added actions represents
-        # something we can subtract our removed actions from.
-
-        union = action_union(old_set, added)
-        # chris' sanity
-        assert(union == old_set|added)
-
-        result = union - removed
-        # chris' sanity
-        assert(result == (old_set|added) - (new_removed|committed_removed))
+            if key not in ('actions', 'gen'):
+                if val != committed_state[key]:
+                    self.logger.info(
+                        'Unknown key %s differs in states, cannot resolve '
+                        'conflict in _p_resolveConflict of %s' % (key, clsname)
+                        )
+                    raise ConflictError
 
         # If the new state's generation number is less than the old state's
         # generation number, we know we're in the process of undoing a
@@ -268,53 +215,179 @@ class ActionsQueue(persistent.Persistent):
         # is actually the state of the transaction we're trying to undo.
         undoing = (old_state['gen'] > new_state['gen'])
 
+        gen = max(committed_state['gen'], new_state['gen'])
+
+        # Get rid of duplicate actions so that each list has exactly one and
+        # only one action per oid+index combination to prevent us from needing
+        # to think about preserving ordering.
+        optimize_states(old_state, committed_state, new_state)
+
+        # A good bit of this code was cadged from zc.queue._queue
+        old = old_state['actions']
+        committed = committed_state['actions']
+        new = new_state['actions']
+
+        old_set = set(old)
+        committed_set = set(committed)
+        new_set = set(new)
+
+        # Make sure no state has an action that conflicts with an action in
+        # another state.  For example, if the old state indicates it wants to
+        # unindex a particular oid+index and the new state indicates it wants
+        # to index the same oid+index, throw a conflict error.  On the other
+        # hand, if one state says it wants to reindex, and another state says
+        # it wants to index, prefer the index operation over the reindex one
+        # and use it (don't conflict); and if one state says it wants to index
+        # and the other state says it wants to index too, that's fine as well.
+        for (s1, s2) in (
+            (old_set, new_set),
+            (new_set, committed_set),
+            (old_set, committed_set)
+            ):
+            intersect = action_intersection(s1, s2)
+            s1.update(intersect)
+            s2.update(intersect)
+
+        committed_added = committed_set - old_set
+        committed_removed = old_set - committed_set
+
+        new_added = new_set - old_set
+        new_removed = old_set - new_set
+
         if undoing:
-            self.logger.info(
-                'generating anti-actions during undo in %s '
-                '_p_resolveConflict' % (
-                    self.__class__.__name__
-                    )
-                )
-            # During an undo the "new_state" state is the state of the queue in
-            # the transaction prior to the undone transaction (the state that
-            # we're rolling back to), and the "old_state" is actually the state
-            # of the transaction we're trying to undo.
 
-            # While we're undoing, it's not enough to just omit the removed
-            # actions from the returned action state, as we do in the non-undo
-            # case.  Instead we need to add anti-actions for every action in
-            # the state that we're undoing.  For example, if we determine via
-            # that an UnindexAction was in the old state, we'll need to add an
-            # IndexAction to the returned state in order to get the object into
-            # the indexed state eventually (when the queue processor runs).  If
-            # there was an IndexAction, we need to add an UnindexAction, etc.
-
-            # Some inspiration from this undo logic comes from staring at
-            # Products.QueueCatalog
-            result.update([action.anti() for action in removed])
-            committed_state['undo'] = True
             gen = committed_state['gen'] + 1
-        else:
-            gen = max(committed_state['gen'], new_state['gen'])
+
+            if new_removed:
+                # During an undo, the "new_state" state is the state of the
+                # queue in the transaction prior to the undone transaction (the
+                # state that we're rolling back to), and the "old_state" is
+                # actually the state of the transaction we're trying to undo.
+                #
+                # While we're undoing, it's not enough to just omit the removed
+                # actions from the returned action state, as we do in the
+                # non-undo case.  Instead we need to add anti-actions for every
+                # action in the state that we're undoing.  For example, if we
+                # determine via that an UnindexAction was in the old state,
+                # we'll need to add an IndexAction to the returned state in
+                # order to get the object into the indexed state eventually
+                # (when the queue processor runs).  If there was an
+                # IndexAction, we need to add an UnindexAction, and if there
+                # was a ReindexAction in the old state, we need to add a
+                # ReindexAction.
+                #
+                # NB: doing this before we compare committed_removed &
+                # new_removed and conflict if there's an intersection prevents
+                # an inappropriate conflict error.  If we didn't mutate
+                # new_removed and new_added before this, an undo attempt that
+                # involved the queue would almost always raise a conflict
+                # error.
+                #
+                # Some inspiration from this undo logic comes from staring at
+                # Products.QueueCatalog
+                self.logger.info(
+                    'generating anti-actions during undo in %s '
+                    '_p_resolveConflict' % clsname
+                    )
+                for removed_action in list(new_removed):
+                    anti = removed_action.anti()
+                    if anti in new_added:
+                        raise ConflictError
+                    new_added.add(anti)
+                    new_removed.remove(removed_action)
+
+        # It's theoretically possible to resolve cases where the new and
+        # committed states remove/add the same oid+indexoid combination.  In
+        # theory, the union of actions in new_removed and committed_removed
+        # should be removed, and the union of actions in new_added and
+        # committed_added should be added.  But note that when there are
+        # individual actions within the removed or added sets that compare
+        # equal, the actions are keyed in the set only by (oid,index) and their
+        # __eq__ doesn't take into account the action type.  For example, there
+        # might be two different actions which compare equal in the different
+        # sets: a reindex action for oid 1 in the new_removed set and an
+        # unindex action for the same oid in the committed_removed set.
+        #
+        # We could create an 'action_union' function which would return a union
+        # of two sets composed of actions.  When two actions in the sets
+        # compare otherwise equal it would return the "real" action or it would
+        # conflict for two actions that compare equal but which are mutually
+        # incompatible.  For example, if we had an index action for oid 1 in
+        # new_removed, and a reindex action for oid 1 in committed_removed, the
+        # index action would be returned (the reindex action would be
+        # discarded).  There would be no conflict in this case. On the other
+        # hand, the action_union function might raise a ConflictError if it
+        # can't determine what to do; an example of a case where action_union
+        # wouldn't know what to do is if there's an index action for oid 1 in
+        # new_removed, and an unindex action for oid 1 in committed_removed.
+        #
+        # In practice, however, this strategy plays hell with undo.  For
+        # example:
+        #
+        #   T1    unindex lots of objects
+        #   T2    undo T1
+        #   T3    process actions in T1 queue
+        #
+        # I had originally thought that all undo operations would call
+        # _p_resolveConflict here, but it's not true; if an undo can just copy
+        # an old record forward, it does so.  So in the sequence of events
+        # above, T1 will commit OK, and then T2 will commit OK (without calling
+        # _p_resolveConflict), and we'll be left with a conflict resolution
+        # problem in the (non-undo) T3.
+        #
+        # If T3 causes conflict as above, the old state (T1) will contain lots
+        # of unindex actions, and neither the new state (T3) nor committed
+        # state (from T2) will contain any actions.  If we used the
+        # "action_union" strategy, all of the actions would be perfectly
+        # resolveable, and we'd wind up returning a state without any actions
+        # in it.  However, this would also be completely wrong, because we
+        # don't actually *want* the transaction state resulting from the
+        # unindex actions; instead, we want T3 to conflict with T2, so the
+        # executions of the unindex actions fail, because we don't actually
+        # want the objects unindexed anymore.
+        #
+        # Such a problem is probably generalizable to any two transactions
+        # which simultaneously remove actions that conflict, but I noticed it
+        # in the undo case, so the description above focuses on it.  Also, the
+        # only thing that removes actions is an actions processor thread.
+        # Since there's generally only going to be one of those, undo will
+        # typically be the only time an action is removed as the result of an
+        # action taken by a human that has a possibility of the remove
+        # conflicting with another transaction (the actions processor).
+
+        if new_removed & committed_removed:
+            self.logger.info(
+                'Both the new state and the committed state removed an action '
+                'related to the same oid+index in _p_resolveConflict of %s, '
+                'cannot resolve ' % clsname
+                )
+            raise ConflictError
+
+        if new_added & committed_added:
+            self.logger.info(
+                'Both the new state and the committed state added an action '
+                'related to the same oid+index in _p_resolveConflict of %s, '
+                'cannot resolve ' % clsname
+                )
+            raise ConflictError
+
+        mod_committed = committed_added - new_removed
+        mod_committed.update(new_added)
 
         # NB: ordering doesn't make a damn bit of difference because the
-        # actions we already optimized and it is impossible to have more than
-        # one action per (oid,index) in the result, but we sort here for test
-        # sanity.
-        result = list(sorted(result))
-
-        committed_state['actions'] = result
+        # actions are already optimized and thus is impossible to have more
+        # than one action per (oid,index) in the result, but we sort here to
+        # listify and for ease of testing.
+        committed_state['actions'] = sorted(mod_committed)
         committed_state['gen'] = gen
 
         self.logger.info(
-            'resolved %s conflict in _p_resolveConflict' % (
-                self.__class__.__name__
-                )
+            'resolved %s conflict in _p_resolveConflict' % clsname
             )
 
         return committed_state
 
-def commit(tries):
+def commit(tries, msg=''):
     def wrapper(wrapped):
         def retry(self, *arg, **kw):
             for _ in range(tries):
@@ -322,6 +395,7 @@ def commit(tries):
                 self.transaction.begin()
                 try:
                     result = wrapped(self, *arg, **kw)
+                    self.transaction.get().note(msg)
                     self.transaction.commit()
                     return result
                 except ConflictError:
@@ -367,7 +441,7 @@ class BasicActionProcessor(object):
         if jar is not None:
             jar.sync()
 
-    @commit(5)
+    @commit(5, 'engaging actions processor')
     def engage(self):
         queue = self.get_queue()
         if queue is None:
@@ -380,7 +454,7 @@ class BasicActionProcessor(object):
         else:
             queue.pactive = True
 
-    @commit(1)
+    @commit(1, 'disengaging actions processor')
     def disengage(self):
         queue = self.get_queue()
         if queue is not None:
@@ -401,7 +475,6 @@ class BasicActionProcessor(object):
                 if not once: # pragma: no cover
                     time.sleep(sleep)
 
-                self.logger.info('start running actions processing')
                 self.sync()
                 self.transaction.begin()
 
@@ -426,6 +499,7 @@ class BasicActionProcessor(object):
                 if commit:
                     self.logger.info('committing')
                     try:
+                        self.transaction.get().note('action processor executed')
                         self.transaction.commit()
                         self.logger.info('committed')
                     except ConflictError:
@@ -434,7 +508,6 @@ class BasicActionProcessor(object):
 
                 if not executed:
                     self.logger.info('no actions to execute')
-                self.logger.info('end running actions processing')
 
                 if once:
                     raise Break()
@@ -570,12 +643,12 @@ class IndexActionTM(threading.local):
         if deferred:
             processor.add(deferred)
 
-def action_union(s1, s2):
+def action_intersection(s1, s2):
     """ Call which_action for each action in s1 that has an analogue in s2 to
     determine which of two actions that operate against the same oid+index
     should be preferred.  If neither is preferred, a ConflictError will be
     raised."""
-    union = s1 | s2
+    isect = s1 & s2
     L1 = [ ( (a.oid, a.index_oid), a) for a in s1 ]
     L2 = [ ( (a.oid, a.index_oid), a) for a in s2 ]
     ds1 = dict(L1)
@@ -584,8 +657,8 @@ def action_union(s1, s2):
         action2 = ds2.get(k1)
         if action2 is not None:
             # replace action in union with correct one or conflict
-            union.add(which_action(action1, action2))
-    return union
+            isect.add(which_action(action1, action2))
+    return isect
 
 def which_action(a1, a2):
     """
