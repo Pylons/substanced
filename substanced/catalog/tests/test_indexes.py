@@ -27,6 +27,7 @@ class TestSDIndex(unittest.TestCase):
         resultset = inst.resultset_from_query(query)
         self.assertEqual(resultset.ids, [1,2,3])
         self.assertEqual(resultset.resolver, inst.__objectmap__.object_for)
+        self.assertTrue(query.flushed)
 
     def test_resultset_from_query_with_resolver(self):
         inst = self._makeOne()
@@ -36,6 +37,7 @@ class TestSDIndex(unittest.TestCase):
         resultset = inst.resultset_from_query(query, resolver=resolver)
         self.assertEqual(resultset.ids, [1,2,3])
         self.assertEqual(resultset.resolver, resolver)
+        self.assertTrue(query.flushed)
 
     def test_get_action_tm_existing_action_tm(self):
         inst = self._makeOne()
@@ -566,6 +568,9 @@ class DummyObjectmap(object):
     def object_for(self, docid): return 'a'
 
 class DummyQuery(object):
+    def flush(self, *arg, **kw):
+        self.flushed = True
+        
     def _apply(self, names):
         return [1,2,3]
     

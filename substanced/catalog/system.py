@@ -14,7 +14,7 @@ from . import catalog_factory
 
 from ..interfaces import (
     MODE_DEFERRED,
-    MODE_IMMEDIATE,
+    MODE_ATCOMMIT,
     )
 
 class SystemIndexViews(object):
@@ -83,11 +83,11 @@ class SystemCatalogFactory(object):
 
     """
     path = Path()
-    name = Field(action_mode=MODE_IMMEDIATE)
+    name = Field(action_mode=MODE_ATCOMMIT)
     interfaces = Keyword(action_mode=MODE_DEFERRED)
     allowed = Allowed(
         permissions=('sdi.view', 'view'),
-        action_mode=MODE_IMMEDIATE
+        action_mode=MODE_ATCOMMIT
         )
     text = Text(action_mode=MODE_DEFERRED)
 

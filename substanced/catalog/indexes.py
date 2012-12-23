@@ -56,6 +56,7 @@ class SDIndex(object):
         if resolver is None:
             objectmap = find_objectmap(self)
             resolver = objectmap.object_for
+        query.flush()
         docids = query._apply(names)
         numdocs = len(docids)
         return hypatia.util.ResultSet(docids, numdocs, resolver)
