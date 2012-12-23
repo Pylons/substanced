@@ -35,7 +35,7 @@ class SystemIndexViews(object):
             return default
         return name
  
-    def name_text(self, default):
+    def text(self, default):
         """ Returns a derivation of the name for text indexing.  If name has no
         separator characters in it, the function will return the name
         unchanged.  Otherwise it will return the name plus the derivation of
@@ -77,7 +77,7 @@ class SystemCatalogFactory(object):
       Represents the set of principals with the ``sdi.view`` or ``view``
       permission against a content object.
 
-    - name_text (a TextIndex)
+    - text (a TextIndex)
 
       Indexes text used for the Substance D folder contents filter box.
 
@@ -89,10 +89,10 @@ class SystemCatalogFactory(object):
         permissions=('sdi.view', 'view'),
         action_mode=MODE_IMMEDIATE
         )
-    name_text = Text(action_mode=MODE_DEFERRED)
+    text = Text(action_mode=MODE_DEFERRED)
 
 def includeme(config): # pragma: no cover
-    for name in ('interfaces', 'name', 'name_text'):
+    for name in ('interfaces', 'name', 'text'):
         config.add_indexview(
             SystemIndexViews,
             catalog_name='system',

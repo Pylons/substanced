@@ -44,29 +44,29 @@ class TestSystemIndexViews(unittest.TestCase):
         result = inst.name('abc')
         self.assertEqual(result, 'abc')
 
-    def test_name_text_name_doesnt_exist(self):
+    def test_text_name_doesnt_exist(self):
         resource = testing.DummyResource()
         inst = self._makeOne(resource)
-        result = inst.name_text(None)
+        result = inst.text(None)
         self.assertEqual(result, None)
 
-    def test_name_text_name_is_not_string(self):
+    def test_text_name_is_not_string(self):
         resource = testing.DummyResource()
         resource.__name__ = False
         inst = self._makeOne(resource)
-        result = inst.name_text(None)
+        result = inst.text(None)
         self.assertEqual(result, False)
 
-    def test_name_text_name_has_no_separators(self):
+    def test_text_name_has_no_separators(self):
         resource = testing.DummyResource()
         resource.__name__ = 'foobar'
         inst = self._makeOne(resource)
-        result = inst.name_text(None)
+        result = inst.text(None)
         self.assertEqual(result, 'foobar')
 
-    def test_name_text_name_has_separators(self):
+    def test_text_name_has_separators(self):
         resource = testing.DummyResource()
         resource.__name__ = 'foo-bar_baz.pt,foz'
         inst = self._makeOne(resource)
-        result = inst.name_text(None)
+        result = inst.text(None)
         self.assertEqual(result, 'foo-bar_baz.pt,foz foo bar baz pt foz')
