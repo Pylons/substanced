@@ -129,7 +129,10 @@ class CatalogFactory(object):
                         index_name,
                         )
                     )
-                del catalog[index_name]
+                # we don't want to send events while removing an index because
+                # we don't want catalog removed event subscribers to add
+                # actions to indexes that are about to be removed
+                catalog.remove(index_name, send_events=False)
                 result = True
         return result
 
@@ -152,7 +155,11 @@ class CatalogFactory(object):
 
             index = index_factory(self.name, index_name)
             index.__sdi_deletable__ = False
-            catalog.replace(index_name, index)
+            # we don't want to send events while removing or adding an index
+            # because we don't want catalog removed event subscribers or
+            # catalog added event subscribers to add actions to indexes that
+            # are about to be removed
+            catalog.replace(index_name, index, send_events=False)
             to_reindex.add(index_name)
             changed = True
 
@@ -175,9 +182,11 @@ class CatalogFactory(object):
                 output and output(
                     '%s: adding index named %r' % (catalog_path, index_name),
                     )
-                index = catalog[index_name] = index_factory(
-                    self.name, index_name
-                    )
+                index = index_factory(self.name, index_name)
+                # we don't want to send events while adding an index because we
+                # don't want catalog add event subscribers to add actions to
+                # indexes that are about to be removed
+                catalog.add(index_name, index, send_events=False)
                 changed = True
                 to_reindex.add(index_name)
 
@@ -192,7 +201,11 @@ class CatalogFactory(object):
                     )
                 index = index_factory(self.name, index_name)
                 index.__sdi_deletable__ = False
-                catalog.replace(index_name, index)
+                # we don't want to send events while removing or adding an
+                # index because we don't want catalog removed event subscribers
+                # or catalog added event subscribers to add actions to indexes
+                # that are about to be removed
+                catalog.replace(index_name, index, send_events=False)
                 to_reindex.add(index_name)
                 changed = True
 

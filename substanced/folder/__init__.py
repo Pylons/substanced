@@ -519,7 +519,7 @@ class Folder(Persistent):
             registry = get_current_registry()
         return self.move(oldname, self, newname, registry=registry)
 
-    def replace(self, name, newobject, registry=None):
+    def replace(self, name, newobject, send_events=True, registry=None):
         """ Replace an existing object named ``name`` in this folder with a
         new object ``newobject``.  If there isn't an object named ``name`` in
         this folder, an exception will *not* be raised; instead, the new
@@ -532,8 +532,8 @@ class Folder(Persistent):
         if registry is None:
             registry = get_current_registry()
         if name in self:
-            self.remove(name)
-        self.add(name, newobject, registry=registry)
+            self.remove(name, send_events=send_events)
+        self.add(name, newobject, send_events=send_events, registry=registry)
 
     def load(self, name, newobject, registry=None):
         """ A replace method used by the code that loads an existing dump.
