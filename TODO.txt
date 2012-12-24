@@ -17,8 +17,8 @@ UI-Plus-Guts
 - Change password tab on user object requires old password.  See
   https://github.com/Pylons/substanced/issues/19
 
-- Show a derivative of output status in flash message when update indexes is
-  done to a catalog.
+- Show a derivative of output status in flash message when update indexes /
+  reindex catalog is done to a catalog.
 
 - Text search view.
 
@@ -26,6 +26,9 @@ UI-Plus-Guts
 
 Guts-Only
 ---------
+
+- @@properties view of group errors out right now due to a boneheaded change to
+  deform that I stupidly let pass by.  Fucking people, contributing things! ;-)
 
 - Fix actions processor so it won't drop actions on the floor if
   a keyboardinterrupt or another exception happens after a popall.
