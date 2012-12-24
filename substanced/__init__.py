@@ -27,6 +27,7 @@ def include(config): # pragma: no cover
     default aspects of the SDI to work."""
     config.include('pyramid_zodbconn')
     config.include('pyramid_mailer')
+    config.include('.stats')
     config.include('.folder')
     config.include('.event')
     config.include('.sdi')

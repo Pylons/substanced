@@ -522,3 +522,4 @@ def find_catalog(resource, name):
         for cname, catalog in catalog_container.items():
             if name == cname:
                 return catalog
+

@@ -699,3 +699,5 @@ class MODE_DEFERRED(object):
     this mode will be taken to imply the same thing as
     :attr:`~substanced.interfaces.MODE_ATCOMMIT`."""
 
+class IStatsDConnection(Interface):
+    """ An interface representing a python-statsd connection """

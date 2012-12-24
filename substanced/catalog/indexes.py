@@ -28,6 +28,7 @@ from ..content import content
 from ..objectmap import find_objectmap
 from ..schema import Schema
 from ..property import PropertySheet
+from ..stats import statsd_timer
 
 from .discriminators import dummy_discriminator
 from .util import oid_from_resource
@@ -57,7 +58,8 @@ class SDIndex(object):
             objectmap = find_objectmap(self)
             resolver = objectmap.object_for
         query.flush()
-        docids = query._apply(names)
+        with statsd_timer('substanced.catalog.query'):
+            docids = query._apply(names)
         numdocs = len(docids)
         return hypatia.util.ResultSet(docids, numdocs, resolver)
 
@@ -307,6 +309,20 @@ class FieldIndex(SDIndex, hypatia.field.FieldIndex):
         hypatia.field.FieldIndex.__init__(self, discriminator, family=family)
         self.action_mode = action_mode
 
+    def index_doc(self, docid, value):
+        with statsd_timer('substanced.%s.index_doc' % self.__class__.__name__):
+            return hypatia.field.FieldIndex.index_doc(self, docid, value)
+
+    def reindex_doc(self, docid, value):
+        with statsd_timer(
+            'substanced.%s.reindex_doc' % self.__class__.__name__):
+            return hypatia.field.FieldIndex.reindex_doc(self, docid, value)
+
+    def unindex_doc(self, docid):
+        with statsd_timer(
+            'substanced.%s.unindex_doc' % self.__class__.__name__):
+            return hypatia.field.FieldIndex.unindex_doc(self, docid)
+
 @content(
     'Keyword Index',
     icon='icon-search',
@@ -321,6 +337,20 @@ class KeywordIndex(SDIndex, hypatia.keyword.KeywordIndex):
             self, discriminator, family=family
             )
         self.action_mode = action_mode
+
+    def index_doc(self, docid, value):
+        with statsd_timer('substanced.%s.index_doc' % self.__class__.__name__):
+            return hypatia.keyword.KeywordIndex.index_doc(self, docid, value)
+
+    def reindex_doc(self, docid, value):
+        with statsd_timer(
+            'substanced.%s.reindex_doc' % self.__class__.__name__):
+            return hypatia.keyword.KeywordIndex.reindex_doc(self, docid, value)
+
+    def unindex_doc(self, docid):
+        with statsd_timer(
+            'substanced.%s.unindex_doc' % self.__class__.__name__):
+            return hypatia.keyword.KeywordIndex.unindex_doc(self, docid)
 
 @content(
     'Text Index',
@@ -344,6 +374,20 @@ class TextIndex(SDIndex, hypatia.text.TextIndex):
             )
         self.action_mode = action_mode
 
+    def index_doc(self, docid, value):
+        with statsd_timer('substanced.%s.index_doc' % self.__class__.__name__):
+            return hypatia.text.TextIndex.index_doc(self, docid, value)
+
+    def reindex_doc(self, docid, value):
+        with statsd_timer(
+            'substanced.%s.reindex_doc' % self.__class__.__name__):
+            return hypatia.text.TextIndex.reindex_doc(self, docid, value)
+
+    def unindex_doc(self, docid):
+        with statsd_timer(
+            'substanced.%s.unindex_doc' % self.__class__.__name__):
+            return hypatia.text.TextIndex.unindex_doc(self, docid)
+
 @content(
     'Facet Index',
     icon='icon-search',
@@ -361,6 +405,20 @@ class FacetIndex(SDIndex, hypatia.facet.FacetIndex):
             self, discriminator, facets=facets, family=family
             )
         self.action_mode = action_mode
+
+    def index_doc(self, docid, value):
+        with statsd_timer('substanced.%s.index_doc' % self.__class__.__name__):
+            return hypatia.facet.FacetIndex.index_doc(self, docid, value)
+
+    def reindex_doc(self, docid, value):
+        with statsd_timer(
+            'substanced.%s.reindex_doc' % self.__class__.__name__):
+            return hypatia.facet.FacetIndex.reindex_doc(self, docid, value)
+
+    def unindex_doc(self, docid):
+        with statsd_timer(
+            'substanced.%s.unindex_doc' % self.__class__.__name__):
+            return hypatia.facet.FacetIndex.unindex_doc(self, docid)
 
 @content(
     'Allowed Index',
