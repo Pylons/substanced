@@ -27,20 +27,11 @@ UI-Plus-Guts
 Guts-Only
 ---------
 
-- Specialize recatalog during a rename, so only indexes that are
-  context-sensitive are reindexed.
-
 - Fix actions processor so it won't drop actions on the floor if
   a keyboardinterrupt or another exception happens after a popall.
 
-- See if we can make field indexes and keyword indexes register fewer
-  persistent objects at indexing time.  Also test reindexing and see if that
-  does less work than plain indexing.
-
-- Really provide an "interfaces" index?  It registers a shitton of objects when
-  something is added and it adds global object refs.
-
-- Flush executable indexing actions before a query is executed.
+- Really provide an "interfaces" index?  Probably be better off with a
+  content_type index.
 
 - Catalog event subscriber currently does a hellishly expensive recatalog of
   allowed indexes when an ACL is changed.  Not sure if there's even a general
@@ -155,6 +146,9 @@ Probably Bad Ideas
   add, delete, rename.
 
 - Import/export from folder contents view.
+
+- Specialize recatalog during a rename, so only indexes that are
+  context-sensitive are reindexed.
 
 Science Fiction
 ===============
