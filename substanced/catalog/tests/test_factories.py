@@ -367,17 +367,14 @@ class DummyCatalog(testing.DummyResource):
     __name__ = 'catalog'
     __parent__ = None
     def add(self, name, value, send_events=True):
-        assert send_events == False
         self[name] = value
 
     def replace(self, name, value, send_events=True):
-        assert send_events == False
         self[name] = value
 
     def reindex(self, **kw):
         self.reindexed = kw
 
     def remove(self, name, send_events=True):
-        assert send_events == False
         del self[name]
         

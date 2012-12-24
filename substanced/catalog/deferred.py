@@ -23,6 +23,17 @@ from ..util import get_oid
 
 logger = logging.getLogger(__name__)
 
+class ResourceNotFound(Exception):
+    def __init__(self, oid):
+        self.oid = oid
+
+    def __repr__(self):
+        return 'Indexing error: cannot find resource for oid %s' % self.oid
+
+class ObjectMapNotFound(Exception):
+    def __init__(self, action):
+        self.action = action
+
 # functools.total_ordering allows us to define __eq__ and __lt__ and it takes
 # care of the rest of the rich comparison methods (2.7+ only)
 
@@ -33,6 +44,7 @@ class Action(object):
     index = None
     index_oid = None
     position = None
+    logger = logger
 
     def __repr__(self):
         klass = self.__class__
@@ -61,17 +73,12 @@ class Action(object):
 
     def find_resource(self):
         objectmap = find_objectmap(self.index)
+        if objectmap is None:
+            raise ObjectMapNotFound(self)
         resource = objectmap.object_for(self.oid)
         if resource is None:
             raise ResourceNotFound(self.oid)
         return resource
-
-class ResourceNotFound(Exception):
-    def __init__(self, oid):
-        self.oid = oid
-
-    def __repr__(self):
-        return 'Indexing error: cannot find resource for oid %s' % self.oid
 
 class IndexAction(Action):
 
@@ -86,7 +93,11 @@ class IndexAction(Action):
         self.oid = oid
 
     def execute(self):
-        resource = self.find_resource()
+        try:
+            resource = self.find_resource()
+        except ObjectMapNotFound:
+            self.logger.info('Objectmap not found for index %s' % (self.index,))
+            return
         self.index.index_doc(self.oid, resource)
 
     def anti(self):
@@ -105,7 +116,11 @@ class ReindexAction(Action):
         self.oid = oid
 
     def execute(self):
-        resource = self.find_resource()
+        try:
+            resource = self.find_resource()
+        except ObjectMapNotFound:
+            self.logger.info('Objectmap not found for index %s' % (self.index,))
+            return
         self.index.reindex_doc(self.oid, resource)
 
     def anti(self):

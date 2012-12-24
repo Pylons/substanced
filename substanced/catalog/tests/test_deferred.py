@@ -55,6 +55,14 @@ class TestAction(unittest.TestCase):
         inst.oid = 1
         self.assertRaises(ResourceNotFound, inst.find_resource)
 
+    def test_find_resource_objectmap_cant_be_found(self):
+        from ..deferred import ObjectMapNotFound
+        index = testing.DummyResource()
+        inst = self._makeOne()
+        inst.index = index
+        inst.oid = 1
+        self.assertRaises(ObjectMapNotFound, inst.find_resource)
+
     def test_find_resource(self):
         index = testing.DummyResource()
         index.__objectmap__ = DummyObjectmap('abc')
@@ -94,6 +102,19 @@ class TestIndexAction(unittest.TestCase):
         self.assertEqual(index.oid, 'oid')
         self.assertEqual(index.resource, resource)
 
+    def test_execute_objectmap_not_found(self):
+        from ..deferred import ObjectMapNotFound
+        index = DummyIndex()
+        inst = self._makeOne(index)
+        logger = DummyLogger()
+        inst.logger = logger
+        def find_resource():
+            raise ObjectMapNotFound(None)
+        inst.find_resource = find_resource
+        inst.execute()
+        self.assertEqual(len(logger.messages), 1)
+        self.assertEqual(index.oid, None)
+
     def test_anti(self):
         from ..deferred import UnindexAction
         index = testing.DummyResource()
@@ -124,6 +145,19 @@ class TestReindexAction(unittest.TestCase):
         inst.execute()
         self.assertEqual(index.oid, 'oid')
         self.assertEqual(index.resource, resource)
+
+    def test_execute_objectmap_not_found(self):
+        from ..deferred import ObjectMapNotFound
+        index = DummyIndex()
+        inst = self._makeOne(index)
+        logger = DummyLogger()
+        inst.logger = logger
+        def find_resource():
+            raise ObjectMapNotFound(None)
+        inst.find_resource = find_resource
+        inst.execute()
+        self.assertEqual(index.oid, None)
+        self.assertEqual(len(logger.messages), 1)
 
     def test_anti(self):
         from ..deferred import ReindexAction
@@ -1054,6 +1088,7 @@ class DummyIndexActionTM(object):
 class DummyIndex(object):
     __oid__ = 1
     cleared = False
+    oid = None
     def index_doc(self, oid, resource):
         self.oid = oid
         self.resource = resource
