@@ -1,12 +1,12 @@
 
-/*jslint undef: true, newcap: true, nomen: false, white: true, regexp: true */
-/*jslint plusplus: false, bitwise: true, maxerr: 50, maxlen: 110, indent: 4 */
+/*jslint undef: true, newcap: true, nomen: true, white: true, regexp: true */
+/*jslint plusplus: true, bitwise: true, maxerr: 50, maxlen: 110, indent: 4 */
 /*jslint sub: true */
 /*globals window navigator document */
-/*globals setTimeout clearTimeout setInterval */ 
+/*globals setTimeout clearTimeout setInterval */
 /*globals jQuery Slick alert confirm */
 
-
+ 
 (function ($) {
 
     var log = function () {
@@ -17,7 +17,7 @@
     };
 
 
-    /* 
+    /*
      * SlickGrid's remote data manager, customized for SDI.
      * OO coding model follows SlickGrid's plugin convention.
      *
@@ -37,46 +37,53 @@
      *     });
      *
      *
-     * When the client queries the server for data, the 
+     * When the client queries the server for data, the
      * server will receive the following query parameters:
      *
      *     from, to, sortCol, sortDir, + everything from extraQuery.
      *
+     *
+     * The manager will initiate a refresh query from the server, if
+     *
+     * - the viewport of the grid changes, and previously unloaded elements
+     *   become visible for the user
+     *
+     * - setSorting() or setFilterArgs() are called, causing the entire cached data
+     *   to be invalidated
+     *
+     * - an ajax response arrives to the client, and after having it processed,
+     *   the viewport of the grid contains previously unloaded elements.
+     *   (this is needed because any viewport change events during the
+     *   active request would have been suppressed, so we have a last manual one)
+     *
+     *
+     * The manager contains a custom ajax() method that behaves similarly to $.ajax,
+     * but is also implementing a queue policy. Our current policy is that there can
+     * only be 1 outgoung request at all times, and if a next request is launched then
+     * the previously active request will be cancelled and its payload will
+     * not be processed.
+     *
+     * Any actions that change the content of the grid are advised to do their
+     * ajax with SdiRemoteModel.ajax(...), to allow these requests also participate
+     * in the queue management. The requests will, by default, deplete all cached data
+     * and add the query information that is needed to provid a refresh from
+     * the server side.
+     *
      */
-
-    var _createdQ = false;
-    var _qName = 'sdigridloaderQueue';
-
-    function _createQ() {
-        if (! _createdQ) {
-            $.manageAjax.create(_qName, {
-                queue: true,
-                maxRequests: 1
-            });
-            _createdQ = true;
-        }
-    }
-
 
     function SdiRemoteModel(_options) {
 
         // default options
         var options = {
             //url: null,         // the url of the server side search
-            manageQueue: true,   // if to use the ajax queue manager
             //sortCol: null,
-            sortDir: true,       // true = ascending, false = descending.
-            reallyAbort: false   // Really abort all the outgoing requests. Set this to false,
-                                 // if a real abort is undesirable. Note that independently of this
-                                 // setting, the data clearings (resort, or refilter) always do an abort.
-                                 // XXX we keep this false, as it seems the abort
-                                 // actually causes more requests
+            sortDir: true        // true = ascending, false = descending.
             //extraQuery: {}     // Additional parameters that will be passed to the server.
         };
 
         var grid;
         var data;
-        var _active_request;
+        var activeRequest;
         var scrollPosition;  // scrolling movement (prefetch) forward or backward
 
         // events
@@ -84,15 +91,96 @@
         var onDataLoaded = new Slick.Event();
         var onAjaxError = new Slick.Event();
 
-        var ensureData; // STFU jslint
+        function init(_grid) {
+            grid = _grid;
+            $.extend(options, _options);
+
+            // ajax queue management
+            activeRequest = null;
+
+            // Bind our data to the grid.
+            data = {length: 0};
+            grid.setData(data);
+
+            // scrolling
+            scrollPosition = -1;  // force movement forward, initially
+            grid.onViewportChanged.subscribe(handleGridViewportChanged);
+        }
+
+        function destroy() {
+            // Abort the request
+            abortRequest();
+            // (be paranoid about IE memory leaks)
+            data = null;
+        }
+
+        function hasActiveRequest() {
+            return activeRequest ? true : false;
+        }
+     
+        function abortRequest() {
+            if (hasActiveRequest()) {
+                activeRequest.abort();
+            }
+        }
+
+        function finishRequest() {
+            activeRequest = null;
+            // must re-trigger loading rows,
+            // as these events were prevented during the
+            // outgoing request.
+            //grid.onViewportChanged.notify();
+        }
+        
+        function ajax(ajaxOpts, /*optional*/ ignoreMissing) {
+            // Make an ajax request by keeping our specific queue policy
+
+            var jqXHR,
+                dfd = $.Deferred(),
+                promise = dfd.promise();
+         
+            // If we have an active request: always abort it.
+            abortRequest();
+
+            // add the abort method
+            promise.abort = function (statusText) {
+                // proxy abort to the jqXHR if it is active
+                if (jqXHR) {
+                    return jqXHR.abort(statusText);
+                }
+                // and then reject the deferred
+                dfd.rejectWith(ajaxOpts.context || ajaxOpts, [promise, statusText, ""]);
+                return promise;
+            };
+         
+            // the request automatically gets the to, from... parameters,
+            // enabling to produce a refresh together with the required action.
+            if (! ignoreMissing) {
+                // Clear the data that we have. We assume that the
+                // request that came in, will change the data.
+                _clearData();
+                // Find out the data that we need to request
+                var query = findMissingData(from, to, direction);
+                // By default, we add the missing info to the query.
+                ajaxOpts = $.extend({}, ajaxOpts, query);
+            }
+            // make the actual request
+            jqXHR = $.ajax(ajaxOpts)
+                .done(dfd.resolve)
+                .fail(dfd.reject)
+                .then(finishRequest, finishRequest);
+
+            // Remember that this request is now the active one
+            activeRequest = jqXHR;
+            return promise;
+        }
 
         function handleGridViewportChanged(evt, args) {
             // This event will be ignored if we
-            // have an outgoing request, currently.
+            // have an outgoing request.
             // When the ajax arrives or gets aborted,
             // the event will be re-triggered manually.
-            if (_active_request !== null) {
-                /* must check against null, see explanation later on. */
+            if (hasActiveRequest()) {
                 return;
             }
             var viewportTop;
@@ -109,67 +197,18 @@
             scrollPosition = top;
         }
 
-        function init(_grid) {
-            grid = _grid;
-            $.extend(options, _options);
-
-            // ajax queue management
-            if (options.manageQueue) {
-                // Is the code present?
-                if (! $.manageAjax) {
-                    throw new Error('The jquery.ajaxmanager.js must be loaded, if the grid is ' +
-                        'created with the default option manageQueue=true.');
-                }
-                // Sadly, there is no way to check if a given named queue
-                // exists.... so we need to do this globally
-                _createQ();
-            }
-            _active_request = null;
-
-            // Bind our data to the grid.
-            data = {length: 0};
-            grid.setData(data);
-
-            // scrolling
-            scrollPosition = -1;  // force movement forward
-            grid.onViewportChanged.subscribe(handleGridViewportChanged);
-        }
-
-        function _abortRequest(force) {
-            // (Note that in case the queue manager is used,
-            // 'undefined' is a valid, non-null result for the
-            // _active_request id. So, we _always_ check against 'null'!)
-            // The 'force' parameter is set true when a clear data is complete
-            // (on change of sorting or filtering), otherwise the 'reallyAbort'
-            // parameter specifies if a physical abort is being performed.
-            if (_active_request !== null) {
-                // abort the previous request
-                if (options.manageQueue) {
-                    $.manageAjax.clear(_qName, force || options.reallyAbort);
-                } else {
-                    if (force || options.reallyAbort) {
-                        _active_request.abort();
-                    }
-                }
-            }
-            _active_request = null;
-        }
-
-        function destroy() {
-            // Just abort the request, make sure it always happens
-            _abortRequest(true);
-            // (be paranoid about IE memory leaks)
-            data = null;
-        }
-
-        function clearData(/*optional*/ scrollToTop) {
+        function _clearData() {
             // Delete the data
             $.each(data, function (key, value) {
                 delete data[key];
             });
             data.length = 0;
-            // We force to abort all requests, even if reallyAbort=false
-            _abortRequest(true);
+        }
+
+        function clearData(/*optional*/ scrollToTop) {
+             // Delete the data
+            _clearData();
+            abortRequest();
             // let the viewport load records currently visible
             grid.invalidateAllRows();
             grid.updateRowCount();
@@ -192,10 +231,6 @@
 
         function _ajaxSuccess(_data) {
             loadData(_data);
-            // must re-trigger loading rows,
-            // as these events were prevented during the
-            // outgoing request.
-            grid.onViewportChanged.notify();
         }
 
         function _ajaxError(xhr, textStatus, errorThrown) {
@@ -207,9 +242,6 @@
                     errorThrown: errorThrown
                 });
             }
-            // must re-trigger loading rows
-            // (just like on success)
-            grid.onViewportChanged.notify();
         }
 
         function _invalidateRows(data) {
@@ -224,10 +256,46 @@
             }
         }
 
-        ensureData = function (from, to, direction) {
-            //log('Records in viewport:', from, to, direction);
+        function ensureData(from, to, direction) {
             // abort the previous request
-            _abortRequest();
+            abortRequest();
+
+            // Find out the data that we need to ask for
+            var query = findMissingData(from, to, direction);
+
+            if (query.from !== undefined) {   // query = {}, if there is no need to fetch
+
+                // Prepare the options, include the query for missing data.
+                var ajaxOptions = {
+                    type: 'GET',
+                    url: options.url,
+                    data: query,
+                    success: function (data) {
+                        // It seems, that IE bumps us
+                        // here on abort(), with data=null.
+                        if (data !== null) {
+                            _ajaxSuccess(data);
+                        }
+                        _invalidateRows(data);
+                        onDataLoaded.notify(data);
+                    },
+                    error: function (xhr, textStatus, errorThrown) {
+                        _ajaxError(xhr, textStatus, errorThrown);
+                    },
+                    dataType: 'json'
+                };
+
+                // Make the ajax request. 'true' means: do not add missing data again,
+                // as we have just provided it from above.
+                ajax(ajaxOptions, true);
+            }
+
+            // must trigger loaded, even if no actual data
+            onDataLoading.notify({from: query.from, to: query.to});
+        }
+
+        function findMissingData(from, to, direction) {
+            //log('Records in viewport:', from, to, direction);
 
             if (from < 0) {
                 throw new Error('"from" must not be negative');
@@ -268,9 +336,7 @@
                 // We can return, nothing to fetch.
                 //log('Has already', start, end);
                 //
-                // must trigger loaded, even if no actual data
-                onDataLoaded.notify({});
-                return;
+                return {};
             }
 
             start = firstMissing;
@@ -297,42 +363,17 @@
             // 'to' is the last item now = make it an index.
             to += 1;
 
-            //log('Will load:', from, to, direction);
-
-            onDataLoading.notify({from: from, to: to});
-
-            var ajaxOptions = {
-                type: "GET",
-                url: options.url,
-                data: $.extend({
+            var results = $.extend({
                     from: from,
                     to: to,
                     sortCol: options.sortCol,
                     sortDir: options.sortDir
-                }, (options.extraQuery || {})),
-                success: function (data) {
-                    _active_request = null;
-                    // XXX It seems, that IE bumps us
-                    // here on abort(), with data=null.
-                    if (data !== null) {
-                        _ajaxSuccess(data);
-                    }
-                    _invalidateRows(data);
-                    onDataLoaded.notify(data);
-                },
-                error: function (xhr, textStatus, errorThrown) {
-                    _active_request = null;
-                    _ajaxError(xhr, textStatus, errorThrown);
-                },
-                dataType: 'json'
-            };
+                }, (options.extraQuery || {}));
 
-            if (options.manageQueue) {
-                _active_request = $.manageAjax.add(_qName, ajaxOptions);
-            } else {
-                _active_request = $.ajax(ajaxOptions);
-            }
-        };
+            //log('Will load:', from, to, direction);
+
+            return results;
+        }
 
         function setSorting(sortCol, sortDir) {
             if (options.sortCol != sortCol || options.sortDir != sortDir) {
@@ -359,8 +400,8 @@
 
         // --
         // synchronize selections, needed if sorting changed.
-        // -- 
-        
+        // --
+
         function mapRowsToIds(rowArray) {
             var ids = {};
             $.each(rowArray, function (index, rowIndex) {
@@ -433,6 +474,7 @@
             setSorting: setSorting,
             setFilterArgs: setFilterArgs,
             syncGridSelection: syncGridSelection,
+            ajax: ajax,
 
             // events
             onDataLoading: onDataLoading,
