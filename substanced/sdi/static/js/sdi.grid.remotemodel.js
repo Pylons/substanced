@@ -59,7 +59,7 @@
      *
      * The manager contains a custom ajax() method that behaves similarly to $.ajax,
      * but is also implementing a queue policy. Our current policy is that there can
-     * only be 1 outgoung request at all times, and if a next request is launched then
+     * only be 1 outgoing request at all times, and if a next request is launched then
      * the previously active request will be cancelled and its payload will
      * not be processed.
      *
@@ -129,7 +129,7 @@
             // must re-trigger loading rows,
             // as these events were prevented during the
             // outgoing request.
-            //grid.onViewportChanged.notify();
+            grid.onViewportChanged.notify();
         }
         
         function ajax(ajaxOpts, /*optional*/ ignoreMissing) {
@@ -288,10 +288,11 @@
                 // Make the ajax request. 'true' means: do not add missing data again,
                 // as we have just provided it from above.
                 ajax(ajaxOptions, true);
-            }
+            
 
-            // must trigger loaded, even if no actual data
-            onDataLoading.notify({from: query.from, to: query.to});
+                // must trigger loaded, even if no actual data
+                onDataLoading.notify({from: query.from, to: query.to});
+            }
         }
 
         function findMissingData(from, to, direction) {
