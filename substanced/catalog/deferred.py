@@ -185,7 +185,6 @@ class ActionsQueue(persistent.Persistent):
     def extend(self, actions):
         self.actions.extend(actions)
         self.bumpgen()
-        self._p_changed = True
 
     def popall(self):
         if not self.actions:
@@ -241,6 +240,10 @@ class ActionsQueue(persistent.Persistent):
         old = old_state['actions']
         committed = committed_state['actions']
         new = new_state['actions']
+
+        oldlen = len(old)
+        committedlen = len(committed)
+        newlen = len(new)
 
         old_set = set(old)
         committed_set = set(committed)
@@ -306,7 +309,7 @@ class ActionsQueue(persistent.Persistent):
                     )
                 for removed_action in list(new_removed):
                     anti = removed_action.anti()
-                    if anti in new_added:
+                    if (anti in new_added) or (anti in committed_set):
                         raise ConflictError
                     new_added.add(anti)
                     new_removed.remove(removed_action)
@@ -386,7 +389,7 @@ class ActionsQueue(persistent.Persistent):
                 )
             raise ConflictError
 
-        mod_committed = committed_added - new_removed
+        mod_committed = committed_set - new_removed
         mod_committed.update(new_added)
 
         # NB: ordering doesn't make a damn bit of difference because the
@@ -396,8 +399,12 @@ class ActionsQueue(persistent.Persistent):
         committed_state['actions'] = sorted(mod_committed)
         committed_state['gen'] = gen
 
+        actionslen = len(committed_state['actions'])
+
         self.logger.info(
-            'resolved %s conflict in _p_resolveConflict' % clsname
+            'resolved %s conflict in _p_resolveConflict: '
+            'oldlen %s, committedlen %s, newlen %s, actionslen %s' % (
+                clsname, oldlen, committedlen, newlen, actionslen)
             )
 
         return committed_state
