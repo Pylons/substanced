@@ -83,8 +83,10 @@ class SystemCatalogFactory(object):
 
     """
     path = Path()
-    name = Field(action_mode=MODE_ATCOMMIT)
+    # name is MODE_ATCOMMIT for next-request folder contents consistency
+    name = Field(action_mode=MODE_ATCOMMIT) 
     interfaces = Keyword(action_mode=MODE_DEFERRED)
+    # allowed is MODE_ATCOMMIT for next-request folder contents consistency
     allowed = Allowed(
         permissions=('sdi.view', 'view'),
         action_mode=MODE_ATCOMMIT
