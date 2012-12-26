@@ -372,18 +372,22 @@ class TestActionsQueue(unittest.TestCase):
         inst = self._makeOne()
         a1 = DummyAction(1)
         a2 = DummyAction(2)
+        a3 = DummyAction(3)
         old = state([a1, a2], gen=1)
-        committed = state([a1], gen=0)
-        new = state([a2], gen=0)
+        committed = state([a3], gen=0)
+        new = state([], gen=0)
         logger = DummyLogger()
         inst.logger = logger
         result = inst._p_resolveConflict(old, committed, new)
         self.assertEqual(len(logger.messages), 3)
         actions = result['actions']
-        self.assertEqual(len(actions), 1)
-        self.assertEqual(actions[0].oid, 1)
-        self.assertTrue(actions[0]._anti, True)
         self.assertEqual(result['gen'], 1)
+        self.assertEqual(actions[0].oid, 1)
+        self.assertEqual(actions[1].oid, 2)
+        self.assertEqual(actions[2].oid, 3)
+        self.assertTrue(actions[0]._anti)
+        self.assertTrue(actions[1]._anti)
+        self.assertFalse(actions[2]._anti)
 
     def test__p_resolveConflict_undo_no_antiactions_to_generate(self):
         inst = self._makeOne()
@@ -397,7 +401,7 @@ class TestActionsQueue(unittest.TestCase):
         result = inst._p_resolveConflict(old, committed, new)
         self.assertEqual(len(logger.messages), 2)
         actions = result['actions']
-        self.assertEqual(actions, [])
+        self.assertEqual(actions, [a1, a2])
         self.assertEqual(result['gen'], 1)
 
     def test__p_resolveConflict_undo_anti_already_in_new_added(self):
@@ -408,6 +412,21 @@ class TestActionsQueue(unittest.TestCase):
         old = state([a2], gen=1)
         committed = state([], gen=0)
         new = state([a1], gen=0)
+        logger = DummyLogger()
+        inst.logger = logger
+        self.assertRaises(
+            ConflictError,
+            inst._p_resolveConflict, old, committed, new
+            )
+
+    def test__p_resolveConflict_undo_anti_already_in_committed(self):
+        from ZODB.POSException import ConflictError
+        inst = self._makeOne()
+        a1 = DummyAction(1)
+        a2 = DummyAction(2, antiresult=a1)
+        old = state([a2], gen=1)
+        committed = state([a1], gen=0)
+        new = state([], gen=0)
         logger = DummyLogger()
         inst.logger = logger
         self.assertRaises(
