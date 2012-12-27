@@ -407,6 +407,18 @@ Other Helpers
 .. autoclass:: Root
    :members:
 
+:mod:`substanced.stats` API
+--------------------------
+
+.. automodule:: substanced.stats
+
+.. autofunction:: statsd_timer
+
+.. autofunction:: statsd_gauge
+
+.. autofunction:: statsd_incr
+
+
 :mod:`substanced.util` API
 --------------------------
 

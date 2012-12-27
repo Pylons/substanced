@@ -22,8 +22,6 @@ UI-Plus-Guts
 
 - Text search view.
 
-- System performance monitoring.  Wave hands.
-
 Guts-Only
 ---------
 
@@ -132,6 +130,14 @@ Initialization
 
 - Explain __init__.py include-then-scan done by includeme and how to avoid
   scanning.
+
+Monitoring and Statistics
+-------------------------
+
+- Explain how to configure statsd client (e.g. ``substanced.statsd.enabled`` in
+  config file).
+
+- Explain how to send statsd stuff to Datadog.
 
 Probably Bad Ideas
 ==================

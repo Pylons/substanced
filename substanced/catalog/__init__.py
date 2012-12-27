@@ -33,6 +33,7 @@ from ..content import (
     )
 from ..folder import Folder
 from ..objectmap import find_objectmap
+from ..stats import statsd_timer
 from ..util import get_oid
 
 from .factories import (
@@ -136,11 +137,12 @@ class Catalog(Folder):
         any action mode a member index has been configured with except ``None``
         which explicitly indicates that you'd like to use the index's
         action_mode value."""
-        if oid is None:
-            oid = oid_from_resource(resource)
-        for index in self.values():
-            index.index_resource(resource, oid=oid, action_mode=action_mode)
-        self.objectids.insert(oid)
+        with statsd_timer('catalog.index_resource'):
+            if oid is None:
+                oid = oid_from_resource(resource)
+            for index in self.values():
+                index.index_resource(resource, oid=oid, action_mode=action_mode)
+            self.objectids.insert(oid)
 
     @deprecate('index_doc is deprecated, use index_resource')
     def index_doc(self, docid, obj):
@@ -169,13 +171,14 @@ class Catalog(Folder):
                 'attribute or an integer oid'
                 )
 
-        for index in self.values():
-            index.unindex_resource(oid, action_mode=action_mode)
-                
-        try:
-            self.objectids.remove(oid)
-        except KeyError:
-            pass
+        with statsd_timer('catalog.unindex_resource'):
+            for index in self.values():
+                index.unindex_resource(oid, action_mode=action_mode)
+
+            try:
+                self.objectids.remove(oid)
+            except KeyError:
+                pass
         
     @deprecate('unindex_doc is deprecated, use unindex_resource')
     def unindex_doc(self, docid):
@@ -205,10 +208,13 @@ class Catalog(Folder):
         """
         if oid is None:
             oid = oid_from_resource(resource)
-        for index in self.values():
-            index.reindex_resource(resource, oid=oid, action_mode=action_mode)
-        if not oid in self.objectids:
-            self.objectids.insert(oid)
+        with statsd_timer('catalog.reindex_resource'):
+            for index in self.values():
+                index.reindex_resource(
+                    resource, oid=oid, action_mode=action_mode
+                    )
+            if not oid in self.objectids:
+                self.objectids.insert(oid)
 
     @deprecate('reindex_doc is deprecated, use reindex_resource')
     def reindex_doc(self, docid, obj):

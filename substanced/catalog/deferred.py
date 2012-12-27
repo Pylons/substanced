@@ -20,6 +20,7 @@ from substanced.interfaces import (
 
 from ..objectmap import find_objectmap
 from ..util import get_oid
+from ..stats import statsd_gauge
 
 logger = logging.getLogger(__name__)
 
@@ -185,6 +186,9 @@ class ActionsQueue(persistent.Persistent):
     def extend(self, actions):
         self.actions.extend(actions)
         self.bumpgen()
+
+    def __len__(self):
+        return len(self.actions)
 
     def popall(self):
         if not self.actions:
@@ -504,7 +508,9 @@ class BasicActionProcessor(object):
                 commit = False
 
                 queue = self.get_queue()
+                queue_len = len(queue)
                 actions = queue.popall()
+                statsd_gauge('catalog.queue_length', queue_len, rate=.5)
 
                 if actions is not None:
                     actions = optimize_actions(actions)

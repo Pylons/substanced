@@ -2,6 +2,8 @@ import transaction
 from pyramid_zodbconn import get_connection
 from substanced.evolution import evolve_packages
 
+from .stats import statsd_incr
+
 def root_factory(request, t=transaction, g=get_connection,
                  evolve_packages=evolve_packages):
     """ A function which can be used as a Pyramid ``root_factory``.  It
@@ -20,6 +22,7 @@ def root_factory(request, t=transaction, g=get_connection,
             mark_all_current=True,
             )
         t.commit()
+    statsd_incr('root_factory', rate=.1)
     return zodb_root['app_root']
 
 def include(config): # pragma: no cover

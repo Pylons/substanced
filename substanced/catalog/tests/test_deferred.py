@@ -212,6 +212,11 @@ class TestActionsQueue(unittest.TestCase):
         # it to be false, bleh
         self.assertEqual(inst.gen, 1)
 
+    def test_len(self):
+        inst = self._makeOne()
+        inst.extend([1])
+        self.assertEqual(len(inst), 1)
+
     def test_popall_no_actions(self):
         inst = self._makeOne()
         self.assertEqual(inst.popall(), None)
@@ -1213,6 +1218,8 @@ class DummyQueue(object):
         result = self.result[:]
         self.result = []
         return result
+    def __len__(self):
+        return len(self.result)
 
 class DummyActionProcessor(object):
     def __init__(self, context, commit_raises=None):

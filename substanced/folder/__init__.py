@@ -31,6 +31,7 @@ from ..interfaces import (
     marker,
     )
 
+from ..stats import statsd_timer
 from ..content import content
 
 from ..event import (
@@ -172,8 +173,9 @@ class Folder(Persistent):
         object or directly decodeable to Unicode using the system default
         encoding.
         """
-        name = unicode(name)
-        return self.data[name]
+        with statsd_timer('folder.get'):
+            name = unicode(name)
+            return self.data[name]
 
     def get(self, name, default=None):
         """ Return the object named by ``name`` or the default.
@@ -183,8 +185,9 @@ class Folder(Persistent):
         If ``name`` is a bytestring object, it must be decodable using the
         system default encoding.
         """
-        name = unicode(name)
-        return self.data.get(name, default)
+        with statsd_timer('folder.get'):
+            name = unicode(name)
+            return self.data.get(name, default)
 
     def __contains__(self, name):
         """ Does the container contains an object named by name?
@@ -311,49 +314,51 @@ class Folder(Persistent):
                     other, self, self.__parent__)
                 )
 
-        objectmap = find_objectmap(self)
+        with statsd_timer('folder.add'):
 
-        if objectmap is not None:
+            objectmap = find_objectmap(self)
 
-            basepath = resource_path_tuple(self)
+            if objectmap is not None:
 
-            for node in postorder(other):
-                node_path = node_path_tuple(node)
-                path_tuple = basepath + (name,) + node_path[1:]
-                # the below gives node an objectid; if the will-be-added event
-                # is the result of a duplication, replace the oid of the node
-                # with a new one
-                objectmap.add(
-                    node,
-                    path_tuple,
-                    duplicating=duplicating is not None,
-                    moving=moving is not None,
+                basepath = resource_path_tuple(self)
+
+                for node in postorder(other):
+                    node_path = node_path_tuple(node)
+                    path_tuple = basepath + (name,) + node_path[1:]
+                    # the below gives node an objectid; if the will-be-added
+                    # event is the result of a duplication, replace the oid of
+                    # the node with a new one
+                    objectmap.add(
+                        node,
+                        path_tuple,
+                        duplicating=duplicating is not None,
+                        moving=moving is not None,
+                        )
+
+            if send_events:
+                event = ObjectWillBeAdded(
+                    other, self, name, duplicating=duplicating, moving=moving,
+                    loading=loading,
                     )
+                self._notify(event, registry)
 
-        if send_events:
-            event = ObjectWillBeAdded(
-                other, self, name, duplicating=duplicating, moving=moving,
-                loading=loading,
-                )
-            self._notify(event, registry)
+            other.__parent__ = self
+            other.__name__ = name
 
-        other.__parent__ = self
-        other.__name__ = name
+            self.data[name] = other
+            self._num_objects.change(1)
 
-        self.data[name] = other
-        self._num_objects.change(1)
+            if self._order is not None:
+                self._order += (name,)
 
-        if self._order is not None:
-            self._order += (name,)
+            if send_events:
+                event = ObjectAdded(
+                    other, self, name, duplicating=duplicating, moving=moving,
+                    loading=loading,
+                    )
+                self._notify(event, registry)
 
-        if send_events:
-            event = ObjectAdded(
-                other, self, name, duplicating=duplicating, moving=moving,
-                loading=loading,
-                )
-            self._notify(event, registry)
-
-        return name
+            return name
 
     def pop(self, name, default=marker, registry=None):
         """ Remove the item stored in the under ``name`` and return it.
@@ -430,37 +435,39 @@ class Folder(Persistent):
         if registry is None:
             registry = get_current_registry()
 
-        if send_events:
-            event = ObjectWillBeRemoved(
-                other, self, name, moving=moving, loading=loading
-                )
-            self._notify(event, registry)
+        with statsd_timer('folder.remove'):
 
-        if hasattr(other, '__parent__'):
-            del other.__parent__
+            if send_events:
+                event = ObjectWillBeRemoved(
+                    other, self, name, moving=moving, loading=loading
+                    )
+                self._notify(event, registry)
 
-        if hasattr(other, '__name__'):
-            del other.__name__
+            if hasattr(other, '__parent__'):
+                del other.__parent__
 
-        del self.data[name]
-        self._num_objects.change(-1)
+            if hasattr(other, '__name__'):
+                del other.__name__
 
-        if self._order is not None:
-            self._order = tuple([x for x in self._order if x != name])
+            del self.data[name]
+            self._num_objects.change(-1)
 
-        objectmap = find_objectmap(self)
+            if self._order is not None:
+                self._order = tuple([x for x in self._order if x != name])
 
-        removed_oids = set([oid])
+            objectmap = find_objectmap(self)
 
-        if objectmap is not None and oid is not None:
-            removed_oids = objectmap.remove(oid, moving=moving is not None)
+            removed_oids = set([oid])
 
-        if send_events:
-            event = ObjectRemoved(other, self, name, removed_oids,
-                                  moving=moving, loading=loading)
-            self._notify(event, registry)
+            if objectmap is not None and oid is not None:
+                removed_oids = objectmap.remove(oid, moving=moving is not None)
 
-        return other
+            if send_events:
+                event = ObjectRemoved(other, self, name, removed_oids,
+                                      moving=moving, loading=loading)
+                self._notify(event, registry)
+
+            return other
 
     def copy(self, name, other, newname=None, registry=None):
         """
@@ -475,9 +482,12 @@ class Folder(Persistent):
         if registry is None:
             registry = get_current_registry()
 
-        obj = self[name]
-        newobj = copy(obj)
-        return other.add(newname, newobj, duplicating=obj, registry=registry)
+        with statsd_timer('folder.copy'):
+            obj = self[name]
+            newobj = copy(obj)
+            return other.add(
+                newname, newobj, duplicating=obj, registry=registry
+                )
 
     def move(self, name, other, newname=None, registry=None):
         """
