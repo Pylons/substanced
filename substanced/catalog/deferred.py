@@ -495,6 +495,7 @@ class BasicActionProcessor(object):
     def process(self, sleep=5, once=False):
         self.logger.info('starting basic action processor')
         self.engage()
+        i = 0
         while True:
             try:
 
@@ -535,7 +536,10 @@ class BasicActionProcessor(object):
                         self.logger.info('aborted due to conflict error')
 
                 if not executed:
-                    self.logger.info('no actions to execute')
+                    if i % 10 == 0:
+                        self.logger.info('no actions to execute')
+
+                i += 1
 
                 if once:
                     raise Break()

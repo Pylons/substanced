@@ -837,7 +837,6 @@ class TestBasicActionProcessor(unittest.TestCase):
              'committed',
              'stopping basic action processor',
              'couldnt disengage due to conflict, processing queue once more',
-             'no actions to execute',
              'stopping basic action processor']            
             )
 
