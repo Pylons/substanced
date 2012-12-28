@@ -123,7 +123,10 @@ def acl_modified(event):
             index_path = resource_path(index)
             if registry.content.istype(index, 'Allowed Index'):
                 for node in postorder(resource):
-                    logger.info('%s: reindexing %s' % (index_path, node))
+                    logger.info(
+                        '%s: reindexing %s due to ACL modified' % (
+                            index_path, node)
+                        )
                     oid = get_oid(node, None)
                     if oid is not None:
                         index.reindex_resource(node, oid=oid)
