@@ -536,7 +536,7 @@ class BasicActionProcessor(object):
                         self.logger.info('aborted due to conflict error')
 
                 if not executed:
-                    if i % 10 == 0:
+                    if i % 12 == 0:
                         self.logger.info('no actions to execute')
 
                 i += 1
