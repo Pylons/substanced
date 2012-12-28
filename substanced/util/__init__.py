@@ -3,6 +3,7 @@ import itertools
 import math
 import urlparse
 import json
+import types
 
 from zope.interface import providedBy
 from zope.interface.declarations import Declaration
@@ -389,6 +390,8 @@ def set_created(resource, created):
 def get_dotted_name(g):
     """ Return the dotted name of a global object. """
     name = g.__name__
+    if isinstance(g, types.ModuleType):
+        return name
     module = g.__module__
     return '.'.join((module, name))
 

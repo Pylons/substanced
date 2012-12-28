@@ -102,6 +102,10 @@ Dump and Load
 
 - Explain ``__dump__`` and ``__load__`` methods of resources.
 
+- Explain how to add a dumper.
+
+- Add API docs for dump/load, and dump contexts.
+
 Grid
 ----
 

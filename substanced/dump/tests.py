@@ -12,7 +12,7 @@ class Test_set_yaml(unittest.TestCase):
         self.assertEqual(registry['yaml_loader'].__name__, 'SLoader')
         self.assertEqual(registry['yaml_dumper'].__name__, 'SDumper')
 
-    def test_iface_represente(self):
+    def test_iface_representer(self):
         registry = DummyRegistry(None)
         self._callFUT(registry)
         import StringIO
@@ -280,6 +280,23 @@ class Test_YAMLOperations(unittest.TestCase):
         result = inst.dump_yaml('abc', 'fn')
         self.assertEqual(result, None)
         self.assertEqual(io.getvalue(), 'abc\n...\n')
+
+class Test_ResourceContext(unittest.TestCase):
+    def _makeOne(self):
+        from . import _ResourceContext
+        return _ResourceContext()
+
+    def test_resolve_dotted_name(self):
+        import substanced.dump.tests
+        inst = self._makeOne()
+        result = inst.resolve_dotted_name('substanced.dump.tests')
+        self.assertEqual(result, substanced.dump.tests)
+
+    def test_get_dotted_name(self):
+        import substanced.dump.tests
+        inst = self._makeOne()
+        result = inst.get_dotted_name(substanced.dump.tests)
+        self.assertEqual(result, 'substanced.dump.tests')
 
 from zope.interface import Interface
 

@@ -471,6 +471,20 @@ class Test_get_created(unittest.TestCase):
         obj = testing.DummyResource()
         self.assertEqual(self._callFUT(obj, 1), 1)
 
+class Test_get_dotted_name(unittest.TestCase):
+    def _callFUT(self, obj):
+        from . import get_dotted_name
+        return get_dotted_name(obj)
+
+    def test_module(self):
+        from substanced import util
+        result = self._callFUT(util)
+        self.assertEqual(result, 'substanced.util')
+
+    def test_nonmodule(self):
+        result = self._callFUT(self.__class__)
+        self.assertEqual(result, 'substanced.util.tests.Test_get_dotted_name')
+
 class Test_set_created(unittest.TestCase):
     def _callFUT(self, obj, val):
         from . import set_created

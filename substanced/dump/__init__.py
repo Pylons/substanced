@@ -270,16 +270,16 @@ class _YAMLOperations(_FileOperations):
         with self.openfile_w(filename) as fp:
             return yaml.dump(obj, fp, Dumper=self.registry['yaml_dumper'])
 
-class ResourceContext(_YAMLOperations):
+class _ResourceContext(_YAMLOperations):
     dotted_name_resolver = dotted_name_resolver
     
     def resolve_dotted_name(self, dotted):
         return self.dotted_name_resolver.resolve(dotted)
 
-    def get_dotted_name(self, object):
-        return get_dotted_name(object)
+    def get_dotted_name(self, obj):
+        return get_dotted_name(obj)
 
-class ResourceDumpContext(ResourceContext):
+class ResourceDumpContext(_ResourceContext):
     def __init__(self, directory, registry, dumpers, verbose, dry_run):
         self.directory = directory
         self.registry = registry
@@ -310,7 +310,7 @@ class ResourceDumpContext(ResourceContext):
         dumper_callbacks = self.registry.get('dumper_callbacks', [])
         dumper_callbacks.append(callback)
 
-class ResourceLoadContext(ResourceContext):
+class ResourceLoadContext(_ResourceContext):
     logger = logger
     def __init__(self, directory, registry, loaders, verbose, dry_run):
         self.directory = directory
