@@ -294,6 +294,11 @@ class _ResourceContext(_YAMLOperations):
         return get_dotted_name(obj)
 
 class _ResourceDumpContext(_ResourceContext):
+
+    get_content_type = staticmethod(get_content_type) # testing
+    get_created = staticmethod(get_created) # testing
+    get_oid = staticmethod(get_oid) # testing
+
     def __init__(self, directory, registry, dumpers, verbose, dry_run):
         self.directory = directory
         self.registry = registry
@@ -303,16 +308,16 @@ class _ResourceDumpContext(_ResourceContext):
 
     def dump_resource(self, resource):
         registry = self.registry
-        ct = get_content_type(resource, registry)
-        created = get_created(resource, None)
+        ct = self.get_content_type(resource, registry)
+        created = self.get_created(resource, None)
         data = {
             'content_type':ct,
             'name':resource.__name__,
-            'oid':get_oid(resource),
+            'oid':self.get_oid(resource),
             'created':created,
             'is_service':bool(getattr(resource, '__is_service__', False)),
             }
-        self.dump_yaml(data, RESOURCE_FILENAME)
+        return self.dump_yaml(data, RESOURCE_FILENAME)
 
     def dump(self, resource):
         self.resource = resource
@@ -321,7 +326,7 @@ class _ResourceDumpContext(_ResourceContext):
             dumper.dump(self)
 
     def add_callback(self, callback):
-        dumper_callbacks = self.registry.get('dumper_callbacks', [])
+        dumper_callbacks = self.registry.setdefault('dumper_callbacks', [])
         dumper_callbacks.append(callback)
 
 class _ResourceLoadContext(_ResourceContext):

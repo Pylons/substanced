@@ -303,7 +303,63 @@ class Test_ResourceContext(unittest.TestCase):
         result = inst.get_dotted_name(substanced.dump.tests)
         self.assertEqual(result, 'substanced.dump.tests')
 
+class Test_ResourceDumpContext(unittest.TestCase):
+    def _makeOne(self, directory, registry, dumpers, verbose, dry_run):
+        from . import _ResourceDumpContext
+        return _ResourceDumpContext(
+            directory, registry, dumpers, verbose, dry_run
+            )
+
+    def test_dump_resource(self):
+        registry = {}
+        inst = self._makeOne(None, registry, None, None, None)
+        resource = testing.DummyResource()
+        resource.__name__ = 'foo'
+        resource.__is_service__ = True
+        def get_content_type(rsrc, reg):
+            self.assertEqual(rsrc, resource)
+            self.assertEqual(reg, registry)
+            return 'ct'
+        def get_created(rsrc, next):
+            self.assertEqual(rsrc, resource)
+            return 'created'
+        def get_oid(resource):
+            return 'oid'
+        def dump_yaml(data, filename):
+            self.assertEqual(data['content_type'], 'ct')
+            self.assertEqual(data['name'], resource.__name__)
+            self.assertEqual(data['oid'], 'oid')
+            self.assertEqual(data['created'], 'created')
+            self.assertEqual(data['is_service'], True)
+            return 'dumped'
+        inst.get_content_type = get_content_type
+        inst.get_created = get_created
+        inst.get_oid = get_oid
+        inst.dump_yaml = dump_yaml
+        result = inst.dump_resource(resource)
+        self.assertEqual(result, 'dumped')
+
+    def test_dump(self):
+        resource = testing.DummyResource()
+        dumper = DummyDumper()
+        inst = self._makeOne(None, None, [dumper], None, None)
+        def dump_resource(rsrc):
+            self.assertEqual(rsrc, resource)
+        inst.dump_resource = dump_resource
+        inst.dump(resource)
+        self.assertEqual(dumper.context, inst)
+
+    def test_add_callback(self):
+        registry = {}
+        inst = self._makeOne(None, registry, None, None, None)
+        inst.add_callback(True)
+        self.assertEqual(registry['dumper_callbacks'], [True])
+
 from zope.interface import Interface
+
+class DummyDumper(object):
+    def dump(self, context):
+        self.context = context
 
 class DummyResourceDumpContext(object):
     def __init__(self, result=None):
