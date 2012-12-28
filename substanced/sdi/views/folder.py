@@ -473,26 +473,23 @@ class FolderContentsViews(object):
 
         slickgrid_wrapper_options = JsonDict(
             # below line refers to slickgrid-config.js
-            configName='sdi-content-grid', 
+            configName='sdi-content-grid',
             columns=columns,
             slickgridOptions=slickgrid_options,
             items=items,
-
             # initial sorting (The grid will really not sort the initial data,
             # just display it in the order we provide it. It will use the
             # information to just visually show in the headers the sorted
             # column.)
-            sortCol = sortCol,
-            sortDir = sortDir,
+            sortCol=sortCol,
+            sortDir=sortDir,
             #
             # Parameters for the remote data model
-            url = '',   # use same url for ajax
-            manageQueue = True,     
-            reallyAbort = False, # A real abort makes things worse, it seems.
-            minimumLoad = minimum_load,
+            url='',   # use same url for ajax
+            minimumLoad=minimum_load,
             )
 
-        result =  dict(
+        result = dict(
             addables=addables,
             buttons=buttons,
             slickgrid_wrapper_options=slickgrid_wrapper_options,
