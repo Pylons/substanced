@@ -1,6 +1,13 @@
 
 (function ($) {
 
+    var log = function () {
+        var c = window.console;
+        if (c && c.log) {
+            c.log(Array.prototype.slice.call(arguments));
+        }
+    };
+
     // our custom validator
     function requiredFieldValidator(value) {
         if (value === null || value === undefined || !value.length) {
@@ -136,11 +143,13 @@
                 sortCol: wrapperOptions.sortCol,
                 sortDir: wrapperOptions.sortDir,
                 extraQuery: {
-                    filter: ''    
+                    filter: ''
                 },
                 minimumLoad: wrapperOptions.minimumLoad
             });
             grid.registerPlugin(sdiRemoteModelPlugin);
+            // make it available on the grid wrapper
+            this.sdiRemoteModelPlugin = sdiRemoteModelPlugin;
 
             sdiRemoteModelPlugin.syncGridSelection(true); // true means: keep hidden selections
 
@@ -154,12 +163,7 @@
             });
 
             sdiRemoteModelPlugin.onDataLoaded.subscribe(function (evt, args) {
-                //if (args.from !== undefined) {
-                //   // Do what you want to happen from here. The args.from check
-                //   // makes sure that only responses with a real content
-                //   // will get processed.
-                //}
-                // indicate loading finished
+                // stop indication of loading
                 $viewport.stop(true, true).animate({
                     opacity: 1
                 });
