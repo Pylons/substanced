@@ -84,9 +84,23 @@ class _DumpAndLoad(object):
     oslistdir = staticmethod(os.listdir) # for testing
     logger = logger # for testing
 
-    def _make_context(self, directory, registry, dumpers, verbose, dry_run):
+    def _make_dump_context(
+        self, directory, registry, dumpers, verbose, dry_run
+        ):
         # broken out for testing
-        return ResourceDumpContext(
+        return _ResourceDumpContext(
+            directory,
+            registry,
+            dumpers,
+            verbose,
+            dry_run
+            )
+
+    def _make_load_context(
+        self, directory, registry, dumpers, verbose, dry_run
+        ):
+        # broken out for testing
+        return _ResourceLoadContext(
             directory,
             registry,
             dumpers,
@@ -126,7 +140,7 @@ class _DumpAndLoad(object):
             if first is None:
                 first = resource
 
-            context = self._make_context(
+            context = self._make_dump_context(
                 directory,
                 registry,
                 dumpers,
@@ -180,7 +194,7 @@ class _DumpAndLoad(object):
 
             directory, parent = stack.pop()
 
-            context = self._make_context(
+            context = self._make_load_context(
                 directory,
                 registry,
                 dumpers,
@@ -279,7 +293,7 @@ class _ResourceContext(_YAMLOperations):
     def get_dotted_name(self, obj):
         return get_dotted_name(obj)
 
-class ResourceDumpContext(_ResourceContext):
+class _ResourceDumpContext(_ResourceContext):
     def __init__(self, directory, registry, dumpers, verbose, dry_run):
         self.directory = directory
         self.registry = registry
@@ -310,7 +324,7 @@ class ResourceDumpContext(_ResourceContext):
         dumper_callbacks = self.registry.get('dumper_callbacks', [])
         dumper_callbacks.append(callback)
 
-class ResourceLoadContext(_ResourceContext):
+class _ResourceLoadContext(_ResourceContext):
     logger = logger
     def __init__(self, directory, registry, loaders, verbose, dry_run):
         self.directory = directory

@@ -71,16 +71,21 @@ class Test_DumpAndLoad(unittest.TestCase):
         from . import _DumpAndLoad
         return _DumpAndLoad()
 
-    def test__make_context(self):
+    def test__make_dump_context(self):
         inst = self._makeOne()
-        c = inst._make_context('dir', 'reg', 'dumpers', True, False)
-        self.assertEqual(c.__class__.__name__, 'ResourceDumpContext')
+        c = inst._make_dump_context('dir', 'reg', 'dumpers', True, False)
+        self.assertEqual(c.__class__.__name__, '_ResourceDumpContext')
+
+    def test__make_load_context(self):
+        inst = self._makeOne()
+        c = inst._make_load_context('dir', 'reg', 'dumpers', True, False)
+        self.assertEqual(c.__class__.__name__, '_ResourceLoadContext')
 
     def test_dump_no_subresources(self):
         inst = self._makeOne()
         resource = testing.DummyResource()
         context = DummyResourceDumpContext()
-        inst._make_context = lambda *arg, **kw: context
+        inst._make_dump_context = lambda *arg, **kw: context
         inst.dump(resource, 'directory', subresources=False)
         self.assertEqual(context.dumped, resource)
 
@@ -89,7 +94,7 @@ class Test_DumpAndLoad(unittest.TestCase):
         resource = testing.DummyResource()
         resource['a'] = testing.DummyResource()
         context = DummyResourceDumpContext()
-        inst._make_context = lambda *arg, **kw: context
+        inst._make_dump_context = lambda *arg, **kw: context
         inst.dump(resource, 'directory', subresources=True)
         self.assertEqual(context.dumped, resource)
 
@@ -101,7 +106,7 @@ class Test_DumpAndLoad(unittest.TestCase):
         directlyProvides(resource, IFolder)
         resource['a'] = testing.DummyResource()
         context = DummyResourceDumpContext()
-        inst._make_context = lambda *arg, **kw: context
+        inst._make_dump_context = lambda *arg, **kw: context
         inst.dump(resource, 'directory', subresources=True)
         self.assertEqual(context.dumped, resource['a'])
 
@@ -116,7 +121,7 @@ class Test_DumpAndLoad(unittest.TestCase):
         resource = testing.DummyResource()
         directlyProvides(resource, IFolder)
         context = DummyResourceDumpContext()
-        inst._make_context = lambda *arg, **kw: context
+        inst._make_dump_context = lambda *arg, **kw: context
         inst.dump(resource, 'directory', subresources=True)
         self.assertEqual(context.dumped, resource)
 
@@ -124,7 +129,7 @@ class Test_DumpAndLoad(unittest.TestCase):
         inst = self._makeOne()
         resource = testing.DummyResource()
         context = DummyResourceDumpContext(resource)
-        inst._make_context = lambda *arg, **kw: context
+        inst._make_load_context = lambda *arg, **kw: context
         result = inst.load('directory', subresources=False)
         self.assertEqual(result, resource)
 
@@ -134,7 +139,7 @@ class Test_DumpAndLoad(unittest.TestCase):
         inst.oslistdir = DummyOSListdir(['a'])
         resource = testing.DummyResource()
         context = DummyResourceDumpContext(resource)
-        inst._make_context = lambda *arg, **kw: context
+        inst._make_load_context = lambda *arg, **kw: context
         result = inst.load('directory', subresources=True)
         self.assertEqual(result, resource)
 
@@ -145,7 +150,7 @@ class Test_DumpAndLoad(unittest.TestCase):
             self.assertEqual(rsrc, resource)
         self.config.registry['loader_callbacks'] = [cb]
         context = DummyResourceDumpContext(resource)
-        inst._make_context = lambda *arg, **kw: context
+        inst._make_load_context = lambda *arg, **kw: context
         result = inst.load('directory', subresources=False)
         self.assertEqual(result, resource)
 
