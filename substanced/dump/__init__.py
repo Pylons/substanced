@@ -221,14 +221,26 @@ dump = _dumpandload.dump
 load = _dumpandload.load
                     
 class _FileOperations(object):
+
+    def _makedirs(self, path): # for testing
+        return os.makedirs(path)
+
+    def _open(self, path, mode): # for testing
+        return open(path, mode)
+
+    def _exists(self, path): # for testing
+        return os.path.exists(path) 
+
     def _get_fullpath(self, filename, makedirs=False):
         subdirs, filename = os.path.split(os.path.normpath(filename))
 
+        # self.directory defined in subclasses
         prefix = os.path.join(self.directory, subdirs)
 
         if makedirs:
-            if not os.path.exists(prefix):
-                os.makedirs(prefix)
+            if not self._exists(prefix):
+                # XXX race condition
+                self._makedirs(prefix)
 
         fullpath = os.path.join(prefix, filename)
 
@@ -236,17 +248,17 @@ class _FileOperations(object):
         
     def openfile_w(self, filename, mode='w', makedirs=True):
         path = self._get_fullpath(filename, makedirs=makedirs)
-        fp = open(path, mode)
+        fp = self._open(path, mode)
         return fp
 
     def openfile_r(self, filename, mode='r'):
         path = self._get_fullpath(filename)
-        fp = open(path, mode)
+        fp = self._open(path, mode)
         return fp
 
     def exists(self, filename):
         path = self._get_fullpath(filename)
-        return os.path.exists(path)
+        return self._exists(path)
 
 class _YAMLOperations(_FileOperations):
 

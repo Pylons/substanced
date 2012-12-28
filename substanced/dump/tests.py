@@ -149,6 +149,102 @@ class Test_DumpAndLoad(unittest.TestCase):
         result = inst.load('directory', subresources=False)
         self.assertEqual(result, resource)
 
+class Test_FileOperations(unittest.TestCase):
+    def _makeOne(self):
+        from . import _FileOperations
+        return _FileOperations()
+
+    def test__makedirs(self):
+        import os, tempfile, shutil
+        inst = self._makeOne()
+        try:
+            td = tempfile.mkdtemp()
+            dn = os.path.join(td, 'foo')
+            inst._makedirs(dn)
+            self.assertTrue(os.path.isdir(dn))
+        finally:
+            shutil.rmtree(td)
+
+    def test__open(self):
+        import os
+        foo = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            'fixture', 'foo.txt'
+            )
+        inst = self._makeOne()
+        with inst._open(foo, 'rb') as fp:
+            self.assertEqual(fp.read(), 'Foo.\n')
+            
+    def test__exists(self):
+        import os
+        foo = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            'fixture', 'foo.txt'
+            )
+        inst = self._makeOne()
+        self.assertTrue(inst._exists(foo))
+
+    def test__get_fullpath_makedirs_true(self):
+        import os
+        inst = self._makeOne()
+        prefix = os.path.dirname(os.path.abspath(__file__))
+        def makedirs(dn):
+            self.assertEqual(os.path.normpath(dn), os.path.normpath(prefix))
+        inst._exists = lambda *arg: False
+        inst._makedirs = makedirs
+        inst.directory = os.path.join(prefix)
+        result = inst._get_fullpath('bar', makedirs=True)
+        self.assertEqual(result, os.path.join(prefix, 'bar'))
+
+    def test__get_fullpath_makedirs_false(self):
+        import os
+        inst = self._makeOne()
+        prefix = os.path.dirname(os.path.abspath(__file__))
+        inst.directory = os.path.join(prefix)
+        result = inst._get_fullpath('bar', makedirs=False)
+        self.assertEqual(result, os.path.join(prefix, 'bar'))
+
+    def test_openfile_w(self):
+        inst = self._makeOne()
+        def _get_fullpath(fn, makedirs):
+            self.assertEqual(fn, 'a')
+            self.assertEqual(makedirs, True)
+            return fn
+        inst._get_fullpath = _get_fullpath
+        def _open(path, mode):
+            self.assertEqual(path, 'a')
+            self.assertEqual(mode, 'w')
+            return 'fp'
+        inst._open = _open
+        self.assertEqual(inst.openfile_w('a'), 'fp')
+
+    def test_openfile_r(self):
+        inst = self._makeOne()
+        def _get_fullpath(fn, makedirs=False):
+            self.assertEqual(fn, 'a')
+            self.assertEqual(makedirs, False)
+            return fn
+        inst._get_fullpath = _get_fullpath
+        def _open(path, mode):
+            self.assertEqual(path, 'a')
+            self.assertEqual(mode, 'r')
+            return 'fp'
+        inst._open = _open
+        self.assertEqual(inst.openfile_r('a'), 'fp')
+
+    def test_exists(self):
+        inst = self._makeOne()
+        def _get_fullpath(fn, makedirs=False):
+            self.assertEqual(fn, 'a')
+            self.assertEqual(makedirs, False)
+            return fn
+        inst._get_fullpath = _get_fullpath
+        def _exists(path):
+            self.assertEqual(path, 'a')
+            return True
+        inst._exists = _exists
+        self.assertEqual(inst.exists('a'), True)
+
 from zope.interface import Interface
 
 class DummyResourceDumpContext(object):
