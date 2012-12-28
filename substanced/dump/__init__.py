@@ -43,8 +43,8 @@ class IDumperFactories(Interface):
     pass
 
 def set_yaml(registry):
-    # grrr.. pyyaml has class-based global registries, so we need to subclass
-    # to provide them
+    # grrr.. pyyaml has class-based global registries, so we need to
+    # subclass to provide them
 
     class SDumper(yaml.Dumper):
         pass
@@ -54,10 +54,12 @@ def set_yaml(registry):
 
     registry.yaml_loader = SLoader
     registry.yaml_dumper = SDumper
+
     def iface_representer(dumper, data):
         return dumper.represent_scalar(u'!interface', get_dotted_name(data))
     def iface_constructor(loader, node):
         return dotted_name_resolver.resolve(node.value)
+
     SDumper.add_multi_representer(InterfaceClass, iface_representer)
     SLoader.add_constructor(u'!interface', iface_constructor)
 
@@ -65,8 +67,7 @@ def get_dumpers(registry):
     ordered = registry.queryUtility(IDumperFactories, default=None)
     if ordered is None:
         tsorter = TopologicalSorter()
-        dumpers = _setattrdefault(registry, '_sd_dumpers', [])
-        del registry._sd_dumpers
+        dumpers = registry.pop('_sd_dumpers', [])
         for n, f, b, a in dumpers:
             tsorter.add(n, f, before=b, after=a)
         ordered = tsorter.sorted()
@@ -74,36 +75,15 @@ def get_dumpers(registry):
     dumpers = [f(n, registry) for n, f in ordered]
     return dumpers
 
-def dump(
-    resource,
-    directory,
-    subresources=True,
-    verbose=False,
-    dry_run=False,
-    registry=None
-    ):
-    """ Dump a resource to ``directory``. The resource will be represented by
-    at least one properties file and other subdirectories.  Sub-resources
-    will dumped as subdirectories if ``subresources`` is True."""
+class _DumpAndLoad(object):
+    # this is only a class for testing purposes
 
-    if registry is None:
-        registry = get_current_registry()
+    set_yaml = staticmethod(set_yaml) # for testing
+    get_dumpers = staticmethod(get_dumpers) # for testing
 
-    set_yaml(registry)
-
-    dumpers = get_dumpers(registry)
-
-    stack = [(os.path.abspath(os.path.normpath(directory)), resource)]
-    first = None
-
-    while stack: # breadth-first is easiest
-
-        directory, resource = stack.pop()
-
-        if first is None:
-            first = resource
-
-        context = ResourceDumpContext(
+    def _make_context(self, directory, registry, dumpers, verbose, dry_run):
+        # broken out for testing
+        return ResourceDumpContext(
             directory,
             registry,
             dumpers,
@@ -111,82 +91,128 @@ def dump(
             dry_run
             )
 
-        logger.info('Dumping %s' % resource_path(resource))
-        context.dump(resource)
+    def dump(
+        self,
+        resource,
+        directory,
+        subresources=True,
+        verbose=False,
+        dry_run=False,
+        registry=None
+        ):
+        """ Dump a resource to ``directory``. The resource will be represented
+        by at least one properties file and other subdirectories.
+        Sub-resources will dumped as subdirectories if ``subresources`` is
+        True."""
 
-        if not subresources:
-            break
+        if registry is None:
+            registry = get_current_registry()
 
-        if is_folder(resource):
-            for subresource in resource.values():
-                subdirectory = os.path.join(
-                    directory,
-                    RESOURCES_DIRNAME,
-                    subresource.__name__
-                    )
-                stack.append((subdirectory, subresource))
+        self.set_yaml(registry)
 
-    callbacks = registry.__dict__.pop('dumper_callbacks', ())
+        dumpers = self.get_dumpers(registry)
 
-    for callback in callbacks:
-        callback(first)
+        stack = [(os.path.abspath(os.path.normpath(directory)), resource)]
+        first = None
 
-def load(
-    directory,
-    parent=None,
-    subresources=True,
-    verbose=False,
-    dry_run=False,
-    registry=None
-    ):
-    """ Load a dump of a resource and return the resource."""
- 
-    if registry is None:
-        registry = get_current_registry()
+        while stack: # breadth-first is easiest
 
-    set_yaml(registry)
+            directory, resource = stack.pop()
 
-    stack = [(os.path.abspath(os.path.normpath(directory)), parent)]
+            if first is None:
+                first = resource
 
-    first = None
+            context = self._make_context(
+                directory,
+                registry,
+                dumpers,
+                verbose,
+                dry_run
+                )
 
-    dumpers = get_dumpers(registry)
+            logger.info('Dumping %s' % resource_path(resource))
+            context.dump(resource)
 
-    while stack: # breadth-first is easiest
+            if not subresources:
+                break
 
-        directory, parent = stack.pop()
+            if is_folder(resource):
+                for subresource in resource.values():
+                    subdirectory = os.path.join(
+                        directory,
+                        RESOURCES_DIRNAME,
+                        subresource.__name__
+                        )
+                    stack.append((subdirectory, subresource))
 
-        context = ResourceLoadContext(
-            directory,
-            registry,
-            dumpers,
-            verbose,
-            dry_run
-            )
+        callbacks = registry.pop('dumper_callbacks', ())
 
-        logger.info('Loading %s' % directory)
-        resource = context.load(parent)
+        for callback in callbacks:
+            callback(first)
 
-        if first is None:
-            first = resource
+    def load(
+        self,
+        directory,
+        parent=None,
+        subresources=True,
+        verbose=False,
+        dry_run=False,
+        registry=None
+        ):
+        """ Load a dump of a resource and return the resource."""
 
-        if not subresources:
-            break
-        
-        subobjects_dir = os.path.join(directory, RESOURCES_DIRNAME)
+        if registry is None:
+            registry = get_current_registry()
 
-        if os.path.exists(subobjects_dir):
-            for fn in os.listdir(subobjects_dir):
-                fullpath = os.path.join(subobjects_dir, fn)
-                subresource_fn = os.path.join(fullpath, RESOURCE_FILENAME)
-                if os.path.isdir(fullpath) and os.path.exists(subresource_fn):
-                    stack.append((fullpath, resource))
+        self.set_yaml(registry)
 
-    callbacks = registry.__dict__.pop('loader_callbacks', ())
-    for callback in callbacks:
-        callback(first)
+        stack = [(os.path.abspath(os.path.normpath(directory)), parent)]
 
-    return first
+        first = None
+
+        dumpers = self.get_dumpers(registry)
+
+        while stack: # breadth-first is easiest
+
+            directory, parent = stack.pop()
+
+            context = ResourceLoadContext(
+                directory,
+                registry,
+                dumpers,
+                verbose,
+                dry_run
+                )
+
+            logger.info('Loading %s' % directory)
+            resource = context.load(parent)
+
+            if first is None:
+                first = resource
+
+            if not subresources:
+                break
+
+            subobjects_dir = os.path.join(directory, RESOURCES_DIRNAME)
+
+            if os.path.exists(subobjects_dir):
+                for fn in os.listdir(subobjects_dir):
+                    fullpath = os.path.join(subobjects_dir, fn)
+                    subresource_fn = os.path.join(fullpath, RESOURCE_FILENAME)
+                    if os.path.isdir(fullpath) and os.path.exists(
+                        subresource_fn):
+                        stack.append((fullpath, resource))
+
+        callbacks = registry.__dict__.pop('loader_callbacks', ())
+        for callback in callbacks:
+            callback(first)
+
+        return first
+
+_dumpandload = _DumpAndLoad()
+
+dump = _dumpandload.dump
+load = _dumpandload.load
                     
 class _FileOperations(object):
     def _get_fullpath(self, filename, makedirs=False):
@@ -263,9 +289,8 @@ class ResourceDumpContext(ResourceContext):
             dumper.dump(self)
 
     def add_callback(self, callback):
-        dumper_callbacks = getattr(self.registry, 'dumper_callbacks', [])
+        dumper_callbacks = self.registry.get('dumper_callbacks', [])
         dumper_callbacks.append(callback)
-        self.registry.dumper_callbacks = dumper_callbacks
 
 class ResourceLoadContext(ResourceContext):
     def __init__(self, directory, registry, loaders, verbose, dry_run):
@@ -546,21 +571,10 @@ class AdhocAttrDumper(object):
                 for k, v in values.items():
                     setattr(resource, k, v)
 
-_marker = object()
-
-def _setattrdefault(ob, name, default=_marker):
-    v = getattr(ob, name, _marker)
-    if v is _marker:
-        if default is _marker:
-            raise AttributeError(name)
-        v = default
-        setattr(ob, name, v)
-    return v
-
 def add_dumper(config, dumper_name, dumper_factory, before=None, after=None):
     registry = config.registry
     def register():
-        dumpers = _setattrdefault(registry, '_sd_dumpers', [])
+        dumpers = registry['_sd_dumpers'] = []
         dumpers.append([dumper_name, dumper_factory, before, after])
     discriminator = ('sd_dumper', dumper_name)
     config.action(discriminator, callable=register)

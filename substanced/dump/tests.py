@@ -1,4 +1,5 @@
 import unittest
+from pyramid import testing
 
 class Test_set_yaml(unittest.TestCase):
     def _callFUT(self, registry):
@@ -54,19 +55,84 @@ class Test_get_dumpers(unittest.TestCase):
             self.assertEqual(reg, registry)
             return 'dumpers'
         registry = DummyRegistry(None)
-        registry._sd_dumpers = [(1, f, None, None)]
+        registry['_sd_dumpers'] = [(1, f, None, None)]
         result = self._callFUT(registry)
         self.assertEqual(result, ['dumpers'])
         self.assertEqual(registry.ordered, [(1, f)])
 
+class Test_DumpAndLoad(unittest.TestCase):
+    def setUp(self):
+        self.config = testing.setUp()
+
+    def tearDown(self):
+        testing.tearDown()
+        
+    def _makeOne(self):
+        from . import _DumpAndLoad
+        return _DumpAndLoad()
+
+    def test__make_context(self):
+        inst = self._makeOne()
+        c = inst._make_context('dir', 'reg', 'dumpers', True, False)
+        self.assertEqual(c.__class__.__name__, 'ResourceDumpContext')
+
+    def test_dump_no_subresources(self):
+        inst = self._makeOne()
+        resource = testing.DummyResource()
+        context = DummyResourceDumpContext()
+        inst._make_context = lambda *arg, **kw: context
+        inst.dump(resource, 'directory', subresources=False)
+        self.assertEqual(context.dumped, resource)
+
+    def test_dump_with_subresources_resource_is_not_folder(self):
+        inst = self._makeOne()
+        resource = testing.DummyResource()
+        resource['a'] = testing.DummyResource()
+        context = DummyResourceDumpContext()
+        inst._make_context = lambda *arg, **kw: context
+        inst.dump(resource, 'directory', subresources=True)
+        self.assertEqual(context.dumped, resource)
+
+    def test_dump_with_subresources_resource_is_folder(self):
+        from zope.interface import directlyProvides
+        from substanced.interfaces import IFolder
+        inst = self._makeOne()
+        resource = testing.DummyResource()
+        directlyProvides(resource, IFolder)
+        resource['a'] = testing.DummyResource()
+        context = DummyResourceDumpContext()
+        inst._make_context = lambda *arg, **kw: context
+        inst.dump(resource, 'directory', subresources=True)
+        self.assertEqual(context.dumped, resource['a'])
+
+    def test_dump_callbacks(self):
+        from zope.interface import directlyProvides
+        from substanced.interfaces import IFolder
+        self.config.registry
+        inst = self._makeOne()
+        def callback(rsrc):
+            self.assertEqual(rsrc, resource)
+        self.config.registry['dumper_callbacks'] = [callback]
+        resource = testing.DummyResource()
+        directlyProvides(resource, IFolder)
+        context = DummyResourceDumpContext()
+        inst._make_context = lambda *arg, **kw: context
+        inst.dump(resource, 'directory', subresources=True)
+        self.assertEqual(context.dumped, resource)
+
 from zope.interface import Interface
+
+class DummyResourceDumpContext(object):
+    def dump(self, resource):
+        self.dumped = resource
         
 class DummyInterface(Interface):
     pass
         
-class DummyRegistry(object):
+class DummyRegistry(dict):
     def __init__(self, result):
         self.result = result
+        dict.__init__(self)
 
     def queryUtility(self, iface, default=None):
         return self.result
