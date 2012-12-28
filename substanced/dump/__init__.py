@@ -80,6 +80,8 @@ class _DumpAndLoad(object):
 
     set_yaml = staticmethod(set_yaml) # for testing
     get_dumpers = staticmethod(get_dumpers) # for testing
+    ospath = os.path # for testing
+    logger = logger # for testing
 
     def _make_context(self, directory, registry, dumpers, verbose, dry_run):
         # broken out for testing
@@ -112,7 +114,8 @@ class _DumpAndLoad(object):
 
         dumpers = self.get_dumpers(registry)
 
-        stack = [(os.path.abspath(os.path.normpath(directory)), resource)]
+        stack = [(self.ospath.abspath(self.ospath.normpath(directory)),
+                  resource)]
         first = None
 
         while stack: # breadth-first is easiest
@@ -138,7 +141,7 @@ class _DumpAndLoad(object):
 
             if is_folder(resource):
                 for subresource in resource.values():
-                    subdirectory = os.path.join(
+                    subdirectory = self.ospath.join(
                         directory,
                         RESOURCES_DIRNAME,
                         subresource.__name__
@@ -166,7 +169,7 @@ class _DumpAndLoad(object):
 
         self.set_yaml(registry)
 
-        stack = [(os.path.abspath(os.path.normpath(directory)), parent)]
+        stack = [(self.ospath.abspath(self.ospath.normpath(directory)), parent)]
 
         first = None
 
@@ -176,7 +179,7 @@ class _DumpAndLoad(object):
 
             directory, parent = stack.pop()
 
-            context = ResourceLoadContext(
+            context = self._make_context(
                 directory,
                 registry,
                 dumpers,
@@ -184,7 +187,7 @@ class _DumpAndLoad(object):
                 dry_run
                 )
 
-            logger.info('Loading %s' % directory)
+            self.logger.info('Loading %s' % directory)
             resource = context.load(parent)
 
             if first is None:
@@ -193,17 +196,19 @@ class _DumpAndLoad(object):
             if not subresources:
                 break
 
-            subobjects_dir = os.path.join(directory, RESOURCES_DIRNAME)
+            subobjects_dir = self.ospath.join(directory, RESOURCES_DIRNAME)
 
-            if os.path.exists(subobjects_dir):
+            if self.ospath.exists(subobjects_dir):
                 for fn in os.listdir(subobjects_dir):
-                    fullpath = os.path.join(subobjects_dir, fn)
-                    subresource_fn = os.path.join(fullpath, RESOURCE_FILENAME)
-                    if os.path.isdir(fullpath) and os.path.exists(
+                    fullpath = self.ospath.join(subobjects_dir, fn)
+                    subresource_fn = self.ospath.join(
+                        fullpath, RESOURCE_FILENAME
+                        )
+                    if self.ospath.isdir(fullpath) and self.ospath.exists(
                         subresource_fn):
                         stack.append((fullpath, resource))
 
-        callbacks = registry.__dict__.pop('loader_callbacks', ())
+        callbacks = registry.pop('loader_callbacks', ())
         for callback in callbacks:
             callback(first)
 
@@ -293,6 +298,7 @@ class ResourceDumpContext(ResourceContext):
         dumper_callbacks.append(callback)
 
 class ResourceLoadContext(ResourceContext):
+    logger = logger
     def __init__(self, directory, registry, loaders, verbose, dry_run):
         self.directory = directory
         self.registry = registry
@@ -310,7 +316,9 @@ class ResourceLoadContext(ResourceContext):
         try:
             resource = registry.content.create(data['content_type'], __oid=oid)
         except:
-            logger.warn('While trying to load resource with data %r' % (data,))
+            self.logger.warn(
+                'While trying to load resource with data %r' % (data,)
+                )
             raise
         resource.__name__ = name
         set_oid(resource, oid)
@@ -331,9 +339,8 @@ class ResourceLoadContext(ResourceContext):
         return resource
 
     def add_callback(self, callback):
-        loader_callbacks = getattr(self.registry, 'loader_callbacks', [])
+        loader_callbacks = self.registry.setdefault('loader_callbacks', [])
         loader_callbacks.append(callback)
-        self.registry.loader_callbacks = loader_callbacks
 
 class ACLDumper(object):
     def __init__(self, name, registry):
@@ -574,7 +581,7 @@ class AdhocAttrDumper(object):
 def add_dumper(config, dumper_name, dumper_factory, before=None, after=None):
     registry = config.registry
     def register():
-        dumpers = registry['_sd_dumpers'] = []
+        dumpers = registry.setdefault('_sd_dumpers', [])
         dumpers.append([dumper_name, dumper_factory, before, after])
     discriminator = ('sd_dumper', dumper_name)
     config.action(discriminator, callable=register)

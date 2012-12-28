@@ -120,11 +120,26 @@ class Test_DumpAndLoad(unittest.TestCase):
         inst.dump(resource, 'directory', subresources=True)
         self.assertEqual(context.dumped, resource)
 
+    def test_load_no_subresources(self):
+        inst = self._makeOne()
+        resource = testing.DummyResource()
+        context = DummyResourceDumpContext(resource)
+        inst._make_context = lambda *arg, **kw: context
+        result = inst.load('directory', subresources=False)
+        self.assertEqual(result, resource)
+        
+
 from zope.interface import Interface
 
 class DummyResourceDumpContext(object):
+    def __init__(self, result=None):
+        self.result = result
+
     def dump(self, resource):
         self.dumped = resource
+
+    def load(self, parent):
+        return self.result
         
 class DummyInterface(Interface):
     pass
