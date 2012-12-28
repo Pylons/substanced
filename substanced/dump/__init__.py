@@ -81,6 +81,7 @@ class _DumpAndLoad(object):
     set_yaml = staticmethod(set_yaml) # for testing
     get_dumpers = staticmethod(get_dumpers) # for testing
     ospath = os.path # for testing
+    oslistdir = staticmethod(os.listdir) # for testing
     logger = logger # for testing
 
     def _make_context(self, directory, registry, dumpers, verbose, dry_run):
@@ -199,13 +200,13 @@ class _DumpAndLoad(object):
             subobjects_dir = self.ospath.join(directory, RESOURCES_DIRNAME)
 
             if self.ospath.exists(subobjects_dir):
-                for fn in os.listdir(subobjects_dir):
+                for fn in self.oslistdir(subobjects_dir):
                     fullpath = self.ospath.join(subobjects_dir, fn)
                     subresource_fn = self.ospath.join(
                         fullpath, RESOURCE_FILENAME
                         )
-                    if self.ospath.isdir(fullpath) and self.ospath.exists(
-                        subresource_fn):
+                    if ( self.ospath.isdir(fullpath) and
+                         self.ospath.exists(subresource_fn) ):
                         stack.append((fullpath, resource))
 
         callbacks = registry.pop('loader_callbacks', ())

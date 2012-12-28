@@ -127,7 +127,27 @@ class Test_DumpAndLoad(unittest.TestCase):
         inst._make_context = lambda *arg, **kw: context
         result = inst.load('directory', subresources=False)
         self.assertEqual(result, resource)
-        
+
+    def test_load_with_subresources(self):
+        inst = self._makeOne()
+        inst.ospath = DummyOSPath()
+        inst.oslistdir = DummyOSListdir(['a'])
+        resource = testing.DummyResource()
+        context = DummyResourceDumpContext(resource)
+        inst._make_context = lambda *arg, **kw: context
+        result = inst.load('directory', subresources=True)
+        self.assertEqual(result, resource)
+
+    def test_load_loader_callbacks(self):
+        inst = self._makeOne()
+        resource = testing.DummyResource()
+        def cb(rsrc):
+            self.assertEqual(rsrc, resource)
+        self.config.registry['loader_callbacks'] = [cb]
+        context = DummyResourceDumpContext(resource)
+        inst._make_context = lambda *arg, **kw: context
+        result = inst.load('directory', subresources=False)
+        self.assertEqual(result, resource)
 
 from zope.interface import Interface
 
@@ -154,4 +174,28 @@ class DummyRegistry(dict):
 
     def registerUtility(self, ordered, iface):
         self.ordered = ordered
-    
+
+class DummyOSPath(object):
+    def join(self, directory, other):
+        return other
+
+    def exists(self, dir):
+        return True
+
+    def abspath(self, path):
+        return path
+
+    def normpath(self, path):
+        return path
+
+    def isdir(self, dir):
+        return True
+
+class DummyOSListdir(object):
+    def __init__(self, results):
+        self.results = results
+
+    def __call__(self, dir):
+        if self.results:
+            return self.results.pop(0)
+        return []
