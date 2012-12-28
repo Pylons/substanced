@@ -52,8 +52,8 @@ def set_yaml(registry):
     class SLoader(yaml.Loader):
         pass
 
-    registry.yaml_loader = SLoader
-    registry.yaml_dumper = SDumper
+    registry['yaml_loader'] = SLoader
+    registry['yaml_dumper'] = SDumper
 
     def iface_representer(dumper, data):
         return dumper.represent_scalar(u'!interface', get_dotted_name(data))
@@ -264,11 +264,11 @@ class _YAMLOperations(_FileOperations):
 
     def load_yaml(self, filename):
         with self.openfile_r(filename) as fp:
-            return yaml.load(fp, Loader=self.registry.yaml_loader)
+            return yaml.load(fp, Loader=self.registry['yaml_loader'])
 
     def dump_yaml(self, obj, filename):
         with self.openfile_w(filename) as fp:
-            return yaml.dump(obj, fp, Dumper=self.registry.yaml_dumper)
+            return yaml.dump(obj, fp, Dumper=self.registry['yaml_dumper'])
 
 class ResourceContext(_YAMLOperations):
     dotted_name_resolver = dotted_name_resolver
@@ -364,11 +364,11 @@ class ACLDumper(object):
             return ALL_PERMISSIONS
         def ap_representer(dumper, data):
             return dumper.represent_scalar(u'!all_permissions', '')
-        registry.yaml_loader.add_constructor(
+        registry['yaml_loader'].add_constructor(
             u'!all_permissions',
             ap_constructor,
             )
-        registry.yaml_dumper.add_representer(
+        registry['yaml_dumper'].add_representer(
             AllPermissionsList,
             ap_representer,
             )
@@ -519,15 +519,15 @@ class PropertySheetDumper(object):
             return colander.null
         def cn_representer(dumper, data):
             return dumper.represent_scalar(u'!colander_null', '')
-        registry.yaml_loader.add_constructor(
+        registry['yaml_loader'].add_constructor(
             u'!colander_null',
             cn_constructor,
             )
-        registry.yaml_dumper.add_representer(
+        registry['yaml_dumper'].add_representer(
             colander.null.__class__,
             cn_representer,
             )
-        registry.yaml_dumper.add_representer(
+        registry['yaml_dumper'].add_representer(
             Multireference,
             cn_representer,
             )

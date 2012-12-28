@@ -9,8 +9,8 @@ class Test_set_yaml(unittest.TestCase):
     def test_loader_and_dumper_set(self):
         registry = DummyRegistry(None)
         self._callFUT(registry)
-        self.assertEqual(registry.yaml_loader.__name__, 'SLoader')
-        self.assertEqual(registry.yaml_dumper.__name__, 'SDumper')
+        self.assertEqual(registry['yaml_loader'].__name__, 'SLoader')
+        self.assertEqual(registry['yaml_dumper'].__name__, 'SDumper')
 
     def test_iface_represente(self):
         registry = DummyRegistry(None)
@@ -18,7 +18,7 @@ class Test_set_yaml(unittest.TestCase):
         import StringIO
         io = StringIO.StringIO()
         import yaml
-        yaml.dump(DummyInterface, io, Dumper=registry.yaml_dumper)
+        yaml.dump(DummyInterface, io, Dumper=registry['yaml_dumper'])
         self.assertEqual(
             io.getvalue(),
             "!interface 'substanced.dump.tests.DummyInterface'\n"
@@ -32,7 +32,7 @@ class Test_set_yaml(unittest.TestCase):
             "!interface 'substanced.dump.tests.DummyInterface'\n"
             )
         import yaml
-        result = yaml.load(io, Loader=registry.yaml_loader)
+        result = yaml.load(io, Loader=registry['yaml_loader'])
         self.assertEqual(result, DummyInterface)
 
 class Test_get_dumpers(unittest.TestCase):
@@ -244,6 +244,42 @@ class Test_FileOperations(unittest.TestCase):
             return True
         inst._exists = _exists
         self.assertEqual(inst.exists('a'), True)
+
+class Test_YAMLOperations(unittest.TestCase):
+    def _makeOne(self):
+        from . import _YAMLOperations
+        return _YAMLOperations()
+
+    def test_load_yaml(self):
+        import contextlib
+        inst = self._makeOne()
+        import StringIO
+        io = StringIO.StringIO('foo 1')
+        @contextlib.contextmanager
+        def openfile(fn):
+            self.assertEqual(fn, 'fn')
+            yield io
+        inst.openfile_r = openfile
+        from yaml.loader import Loader
+        inst.registry = {'yaml_loader':Loader}
+        result = inst.load_yaml('fn')
+        self.assertEqual(result, 'foo 1')
+
+    def test_dump_yaml(self):
+        import contextlib
+        inst = self._makeOne()
+        import StringIO
+        io = StringIO.StringIO()
+        @contextlib.contextmanager
+        def openfile(fn):
+            self.assertEqual(fn, 'fn')
+            yield io
+        inst.openfile_w = openfile
+        from yaml.dumper import Dumper
+        inst.registry = {'yaml_dumper':Dumper}
+        result = inst.dump_yaml('abc', 'fn')
+        self.assertEqual(result, None)
+        self.assertEqual(io.getvalue(), 'abc\n...\n')
 
 from zope.interface import Interface
 
