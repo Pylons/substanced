@@ -10,7 +10,7 @@
   </div>
 
   <div metal:fill-slot="main">
-    <div class="container-fluid" 
+    <div class="container-fluid"
       tal:define="total slickgrid_wrapper_options['items']['total']">
 
     <div class="navbar fb-toolbar">
@@ -19,7 +19,7 @@
 
     <form action="@@contents" method="POST" class="sdi-contents-actions">
       <fieldset>
-      <input type="hidden" name="csrf_token" 
+      <input type="hidden" name="csrf_token"
              value="${request.session.get_csrf_token()}"/>
 
         <div tal:repeat="group buttons"
@@ -62,7 +62,7 @@
                     var data = grid.getData();
                     var selectedIds = $.map(selRows, function (value, index) {
                         var row = data[value];
-                        return row.id;
+                        return (row || {}).id;
                     });
                     // I think it is better to submit the list as a
                     // concatenated value, instead of adding several inputs to the dom.
@@ -73,14 +73,14 @@
 
         <tal:block tal:condition="'tocopy' not in request.session and 'tomove' not in request.session">
         <div class="btn-group pull-left sdi-add-button" tal:condition="addables">
-          <a class="btn btn-primary" 
-             href="${request.sdiapi.mgmt_path(context, '@@add')}"><i 
+          <a class="btn btn-primary"
+             href="${request.sdiapi.mgmt_path(context, '@@add')}"><i
              class="icon-plus-sign icon-white"></i> Add</a>
-          <a class="btn btn-primary dropdown-toggle" 
+          <a class="btn btn-primary dropdown-toggle"
               data-toggle="dropdown" href="#"><span class="caret"></span></a>
           <ul class="dropdown-menu">
             <li tal:repeat="addable addables">
-               <a href="${addable['url']}"><i 
+               <a href="${addable['url']}"><i
               class="${addable['icon']}"></i> ${addable['type_name']}</a></li>
           </ul>
         </div>
@@ -118,7 +118,7 @@
 
             // Update the buttons if the selection has changed.
             var grid = gridWrapper.grid;
-            grid.onSelectedRowsChanged.subscribe(function (evt) { 
+            grid.onSelectedRowsChanged.subscribe(function (evt) {
                 var selRows = grid.getSelectedRows();
                 var data = grid.getData();
                 if (selRows.length) {
@@ -138,6 +138,19 @@
                 } else {
                     $('.btn-sdi-del').attr('disabled', true);
                     $('.btn-sdi-sel').attr('disabled', true);
+                }
+            });
+
+            // Inject flash messages that arrive from the server via ajax.
+            gridWrapper.sdiRemoteModelPlugin.onDataLoaded.subscribe(function (evt, args) {
+                if (args.flash) {
+                    // Clear existing messages, and add this one.
+                    $('#messages')
+                        .empty()
+                        .append(
+                            $('<div class="alert"></div>')
+                                .append(args.flash)
+                        );
                 }
             });
 

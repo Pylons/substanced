@@ -6,7 +6,7 @@
 /*globals setTimeout clearTimeout setInterval */
 /*globals jQuery Slick alert confirm */
 
- 
+
 (function ($) {
 
     var log = function () {
@@ -117,28 +117,56 @@
         function hasActiveRequest() {
             return activeRequest ? true : false;
         }
-     
+
         function abortRequest() {
             if (hasActiveRequest()) {
                 activeRequest.abort();
             }
         }
 
-        function finishRequest() {
+        function handleAjaxSuccess(xhr) {
+            // IE seems to dump us here
+            // on abort(), with data=null.
+            if (xhr === null) {
+                return;
+            }
+
             activeRequest = null;
+
+            // load the data that arrived in the payload.
+            loadData(xhr);
+
+            _invalidateRows(xhr);
+            onDataLoaded.notify(xhr);
+
             // must re-trigger loading rows,
             // as these events were prevented during the
             // outgoing request.
             grid.onViewportChanged.notify();
         }
-        
+
+        function handleAjaxError(xhr, textStatus, errorThrown) {
+            activeRequest = null;
+            // We do not re-trigger rows, as it would cause the client
+            // go into an infinite loop if there is no network to the server
+            if (textStatus != 'abort') {
+                // Signal the error, unless it is an abort.
+                log('error: ' + textStatus);
+                onAjaxError.notify({
+                    xhr: xhr,
+                    textStatus: textStatus,
+                    errorThrown: errorThrown
+                });
+            }
+        }
+
         function ajax(ajaxOpts, /*optional*/ ignoreMissing) {
             // Make an ajax request by keeping our specific queue policy
 
             var jqXHR,
                 dfd = $.Deferred(),
                 promise = dfd.promise();
-         
+
             // If we have an active request: always abort it.
             abortRequest();
 
@@ -152,7 +180,7 @@
                 dfd.rejectWith(ajaxOpts.context || ajaxOpts, [promise, statusText, ""]);
                 return promise;
             };
-         
+
             // the request automatically gets the to, from... parameters,
             // enabling to produce a refresh together with the required action.
             if (! ignoreMissing) {
@@ -160,15 +188,15 @@
                 // request that came in, will change the data.
                 _clearData();
                 // Find out the data that we need to request
-                var query = findMissingData(from, to, direction);
+                var query = getMissingRowsInViewportChanged(undefined);
                 // By default, we add the missing info to the query.
-                ajaxOpts = $.extend({}, ajaxOpts, query);
+                ajaxOpts.data = $.extend({}, ajaxOpts.data, query);
             }
             // make the actual request
             jqXHR = $.ajax(ajaxOpts)
                 .done(dfd.resolve)
                 .fail(dfd.reject)
-                .then(finishRequest, finishRequest);
+                .then(handleAjaxSuccess, handleAjaxError);
 
             // Remember that this request is now the active one
             activeRequest = jqXHR;
@@ -189,12 +217,18 @@
                 // the viewport to the top.
                 viewportTop = 0;
             }
+            var query = getMissingRowsInViewportChanged(viewportTop);
+            ensureData(query);
+        }
+
+        function getMissingRowsInViewportChanged(viewportTop) {
             var vp = grid.getViewport(viewportTop); // if 0 is given, it scrolls up
             var top = vp.top;
             var bottom = vp.bottom;
             var direction = top >= scrollPosition ? +1 : -1;
-            ensureData(top, bottom, direction);
+            var query = findMissingData(top, bottom, direction);
             scrollPosition = top;
+            return query;
         }
 
         function _clearData() {
@@ -219,28 +253,15 @@
             var from = _data.from,
                 to = _data.to,
                 i;
-            //log('loadData', from, to, to - from);
-            for (i = from; i < to; i++) {
-                data[i] = _data.records[i - from];
-            }
-            data.length = _data.total;
-            // Update the grid.
-            grid.updateRowCount();
-            grid.render();
-        }
-
-        function _ajaxSuccess(_data) {
-            loadData(_data);
-        }
-
-        function _ajaxError(xhr, textStatus, errorThrown) {
-            if (textStatus != 'abort') {
-                log('error: ' + textStatus);
-                onAjaxError.notify({
-                    xhr: xhr,
-                    textStatus: textStatus,
-                    errorThrown: errorThrown
-                });
+            if (from !== undefined) {
+                //log('loadData', from, to, to - from);
+                for (i = from; i < to; i++) {
+                    data[i] = _data.records[i - from];
+                }
+                data.length = _data.total;
+                // Update the grid.
+                grid.updateRowCount();
+                grid.render();
             }
         }
 
@@ -256,12 +277,9 @@
             }
         }
 
-        function ensureData(from, to, direction) {
+        function ensureData(query) {
             // abort the previous request
             abortRequest();
-
-            // Find out the data that we need to ask for
-            var query = findMissingData(from, to, direction);
 
             if (query.from !== undefined) {   // query = {}, if there is no need to fetch
 
@@ -270,25 +288,12 @@
                     type: 'GET',
                     url: options.url,
                     data: query,
-                    success: function (data) {
-                        // It seems, that IE bumps us
-                        // here on abort(), with data=null.
-                        if (data !== null) {
-                            _ajaxSuccess(data);
-                        }
-                        _invalidateRows(data);
-                        onDataLoaded.notify(data);
-                    },
-                    error: function (xhr, textStatus, errorThrown) {
-                        _ajaxError(xhr, textStatus, errorThrown);
-                    },
                     dataType: 'json'
                 };
 
                 // Make the ajax request. 'true' means: do not add missing data again,
                 // as we have just provided it from above.
                 ajax(ajaxOptions, true);
-            
 
                 // must trigger loaded, even if no actual data
                 onDataLoading.notify({from: query.from, to: query.to});
@@ -332,11 +337,22 @@
                 i += direction;
             }
 
-            if (firstMissing === null) {
-                // All records present.
-                // We can return, nothing to fetch.
-                //log('Has already', start, end);
+            var total = data.length;
+            if (firstMissing === null || total > 0 &&
+                firstMissing >= total && lastMissing >= total) {
+                // We can return, nothing to fetch. One of the followings
+                // has happened:
                 //
+                // 1. All records requested are present in the data.
+                //
+                // 2. The requested data is beyond the available total number
+                //    of records. (We skip this check if total == 0, which
+                //    means that we have just cleared the cache and
+                //    a full update is due.)
+                //
+
+                //log('Has already', start, end);
+
                 return {};
             }
 
@@ -346,8 +362,8 @@
             //log('Missing:', firstMissing, lastMissing);
 
             // Load at least minimumLoad records
-            if (options.minimumLoad && (to - from) < options.minimumLoad) {
-                end = start + direction * options.minimumLoad - 1;
+            if (options.minimumLoad && direction * (end - start) < options.minimumLoad) {
+                end = start + direction * (options.minimumLoad - 1);
             }
 
             // Sort start and end now, and we can start loading.
@@ -414,7 +430,7 @@
             });
             return ids;
         }
-   
+
         function mapIdsToRows(ids, from, to) {
             var rows = [];
             var i;
@@ -471,7 +487,6 @@
 
             clearData: clearData,
             loadData: loadData,
-            ensureData: ensureData,
             setSorting: setSorting,
             setFilterArgs: setFilterArgs,
             syncGridSelection: syncGridSelection,
