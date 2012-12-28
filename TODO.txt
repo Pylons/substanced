@@ -42,6 +42,8 @@ Guts-Only
 
 - Write sd_dump and sd_load scripts.
 
+- Ability to dump FileData in propertysheets.
+
 - Use hasattr(__is_folder__) instead of IFolder.providedBy is is_folder.
 
 - Use is_folder view predicate instead of context=IFolder in folder views
@@ -137,7 +139,18 @@ Monitoring and Statistics
 - Explain how to configure statsd client (e.g. ``substanced.statsd.enabled`` in
   config file).
 
+- Explain how to send stats from your own application.
+
 - Explain how to send statsd stuff to Datadog.
+
+Cataloging
+----------
+
+- Explain index_resource/unindex_resource/reindex_resource mode parameters.
+
+- Explain default index modes.
+
+- Explain starting an indexer process.
 
 Probably Bad Ideas
 ==================
