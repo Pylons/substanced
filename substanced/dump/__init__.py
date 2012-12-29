@@ -619,7 +619,7 @@ def add_dumper(config, dumper_name, dumper_factory, before=None, after=None):
     discriminator = ('sd_dumper', dumper_name)
     config.action(discriminator, callable=register)
 
-def includeme(config):
+def includeme(config): # pragma: no cover
     DEFAULT_DUMPERS = [
         ('acl', ACLDumper),
         ('workflow', WorkflowDumper),
