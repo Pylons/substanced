@@ -188,13 +188,12 @@ class Test_reindex_indexes(unittest.TestCase):
         context = DummyCatalog()
         request = testing.DummyRequest()
         request.sdiapi = DummySDIAPI()
-        request.POST = testing.DummyResource()
-        request.POST.getall = {'item-modify':['a']}.get
+        request.POST = {'item-modify':'a'}
         result = self._callFUT(context, request)
         self.assertEqual(result.location, '/mgmt_path')
         self.assertEqual(
             request.session['_f_success'],
-            ['Reindex of selected indexes succeeded'])
+            ['Reindex of selected indexes a succeeded'])
         self.assertEqual(context.reindexed, ['a'])
 
     def test_without_indexes(self):
