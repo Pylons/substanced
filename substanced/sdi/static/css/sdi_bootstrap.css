@@ -7534,3 +7534,8 @@ a.site-title {
   vertical-align: top;
   display: inline-block;
 }
+#sdi_header #sdi_searchbox {
+  vertical-align: bottom;
+  width: 8em;
+  margin: 0 0.2em 0 0;
+}

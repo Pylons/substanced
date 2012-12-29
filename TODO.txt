@@ -100,7 +100,7 @@ Dump and Load
 Grid
 ----
 
-- Explain __sdi_deletable__, __sdi_addable__, __sdi_hidden__, __sdi_columns__,
+- Explain __sdi_deletable__, __sdi_addable__, __sdi_columns__,
   __sdi_buttons__.
 
 Events

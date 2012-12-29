@@ -39,7 +39,7 @@
 
 <body tal:define="home_path request.sdiapi.mgmt_path(request.root)">
 
-<div class="navbar navbar-fixed-top">
+<div id="sdi_header" class="navbar navbar-fixed-top">
     <div class="navbar-inner">
         <div class="container-fluid">
             <a class="btn btn-navbar" data-toggle="collapse"
@@ -52,6 +52,16 @@
 
             <div class="nav-collapse">
                 <div class="nav pull-right">
+
+                    <input id="sdi_searchbox" type="text"
+                           data-sourceurl='/manage/@@search'
+                           placeholder="Search..."
+                           data-provide="typeahead"
+                           data-source='["Alabama", "Arkansas",
+                    "California", "Kentucky"]'
+                           title="Provide at least two letters"
+                            />
+
                     <div class="btn-group" tal:condition="request.user">
                         <a class="btn btn-primary"
                            href="${request.sdiapi.mgmt_path(request.user)}"><i
@@ -138,6 +148,8 @@
 
 </div>
 
+<script type="text/javascript"
+        src="${request.static_url('substanced.sdi:static/js/sdi.searchbox.js')}"></script>
 <more tal:omit-tag="" metal:define-slot="tail-more"></more>
 
 </body>
