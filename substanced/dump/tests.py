@@ -817,10 +817,36 @@ class TestAdhocAttrDumper(unittest.TestCase):
         inst.load(context)
         self.assertEqual(resource.a, 1)
 
+class Test_add_dumper(unittest.TestCase):
+    def _callFUT(
+        self, config, dumper_name, dumper_factory, before=None, after=None
+        ):
+        from . import add_dumper
+        return add_dumper(
+            config, dumper_name, dumper_factory, before=before, after=after
+            )
+
+    def test_it(self):
+        config = DummyConfigurator()
+        registry = {}
+        config.registry = registry
+        self._callFUT(config, 'dumper', 'factory', 'before', 'after')
+        self.assertEqual(config.discriminator, ('sd_dumper', 'dumper'))
+        config.callable()
+        self.assertEqual(
+            registry['_sd_dumpers'],
+            [['dumper', 'factory', 'before', 'after']]
+            )
+
 from zope.interface import Interface
 
 class IDummy(Interface):
     pass
+
+class DummyConfigurator(object):
+    def action(self, discriminator, callable=None):
+        self.discriminator = discriminator
+        self.callable = callable
 
 class DummySheet(object):
     def __init__(self, result):

@@ -587,6 +587,7 @@ class PropertySheetDumper(object):
                 cstruct,
                 'propsheets/%s/properties.yaml' % sheetname,
                 )
+
     def load(self, context):
         sheets = self._get_sheets(context)
         for sheetname, sheet in sheets:
