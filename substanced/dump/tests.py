@@ -769,7 +769,53 @@ class TestPropertySheetDumper(unittest.TestCase):
         context.load_yaml = load_yaml
         inst.load(context)
         self.assertEqual(sheet.appstruct, {'a':1})
+
+class TestAdhocAttrDumper(unittest.TestCase):
+    def _makeOne(self, name, registry):
+        from . import AdhocAttrDumper
+        return AdhocAttrDumper(name, registry)
+
+    def test_dump(self):
+        def dump_yaml(v, fn):
+            self.assertEqual(v, {'a':1})
+            self.assertEqual(fn, 'name.yaml')
+        context = testing.DummyResource()
+        context.dump_yaml = dump_yaml
+        resource = testing.DummyResource()
+        context.resource = resource
+        def dump():
+            return {'a':1}
+        resource.__dump__ = dump
+        inst = self._makeOne('name', None)
+        inst.dump(context)
         
+    def test_load(self):
+        def load_yaml(fn):
+            self.assertEqual(fn, 'name.yaml')
+            return {'a':1}
+        context = testing.DummyResource()
+        context.exists = lambda *arg: True
+        context.load_yaml = load_yaml
+        resource = testing.DummyResource()
+        context.resource = resource
+        def load(values):
+            self.assertEqual(values, {'a':1})
+        resource.__load__ = load
+        inst = self._makeOne('name', None)
+        inst.load(context)
+        
+    def test_load_without_underunder_load(self):
+        def load_yaml(fn):
+            self.assertEqual(fn, 'name.yaml')
+            return {'a':1}
+        context = testing.DummyResource()
+        context.exists = lambda *arg: True
+        context.load_yaml = load_yaml
+        resource = testing.DummyResource()
+        context.resource = resource
+        inst = self._makeOne('name', None)
+        inst.load(context)
+        self.assertEqual(resource.a, 1)
 
 from zope.interface import Interface
 
