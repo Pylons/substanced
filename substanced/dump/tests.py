@@ -526,7 +526,74 @@ class TestWorkflowDumper(unittest.TestCase):
         inst.load(context)
         self.assertEqual(getattr(resource, STATE_ATTR), True)
 
+class TestReferencesDumper(unittest.TestCase):
+    def _makeOne(self, name, registry):
+        from . import ReferencesDumper
+        return ReferencesDumper(name, registry)
+
+    def test_dump(self):
+        context = testing.DummyResource()
+        resource = testing.DummyResource()
+        context.resource = resource
+        inst = self._makeOne('name', None)
+        objectmap = DummyObjectmap([1], [2])
+        inst.find_objectmap = lambda *arg: objectmap
+        def dump_yaml(references, fn):
+            self.assertEqual(
+                references,
+                {'reftype': {'sources': [1], 'targets': [2]}}
+                )
+            self.assertEqual(fn, 'name.yaml')
+        context.dump_yaml = dump_yaml
+        inst.dump(context)
+
+    def test_load(self):
+        context = testing.DummyResource()
+        context.exists = lambda *arg: True
+        resource = testing.DummyResource()
+        context.resource = resource
+        inst = self._makeOne('name', None)
+        inst.get_oid = lambda *arg: 0
+        objectmap = DummyObjectmap([1], [2])
+        inst.find_objectmap = lambda *arg: objectmap
+        def load_yaml(fn):
+            self.assertEqual(fn, 'name.yaml')
+            return {'reftype': {'sources': [1], 'targets': [2]}}
+        callbacks = []
+        def add_callback(f):
+            callbacks.append(f)
+        context.load_yaml = load_yaml
+        context.add_callback = add_callback
+        inst.load(context)
+        self.assertEqual(len(callbacks), 1)
+        callbacks[0](inst)
+        self.assertEqual(
+            objectmap.connected,
+            [(0, 2, 'reftype'), (1, 0, 'reftype')]
+            )
+
 from zope.interface import Interface
+
+class DummyObjectmap(object):
+    def __init__(self, sourceids, targetids):
+        self._sourceids = sourceids
+        self._targetids = targetids
+        self.connected = []
+
+    def has_references(self, resource):
+        return True
+
+    def get_reftypes(self):
+        return ['reftype']
+
+    def sourceids(self, resource, reftype):
+        return self._sourceids
+
+    def targetids(self, resource, reftype):
+        return self._targetids
+
+    def connect(self, oid, target, reftype):
+        self.connected.append((oid, target, reftype))
 
 class DummyYAMLDumperLoader(object):
     def __init__(self):

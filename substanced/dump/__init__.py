@@ -330,7 +330,9 @@ class _ResourceDumpContext(_ResourceContext):
         dumper_callbacks.append(callback)
 
 class _ResourceLoadContext(_ResourceContext):
-    logger = logger
+
+    logger = logger # testing
+
     def __init__(self, directory, registry, loaders, verbose, dry_run):
         self.directory = directory
         self.registry = registry
@@ -375,7 +377,9 @@ class _ResourceLoadContext(_ResourceContext):
         loader_callbacks.append(callback)
 
 class ACLDumper(object):
-    get_acl = staticmethod(get_acl)
+
+    get_acl = staticmethod(get_acl) # testing
+
     def __init__(self, name, registry):
         self.name = name
         self.registry = registry
@@ -421,6 +425,10 @@ class WorkflowDumper(object):
             setattr(context.resource, STATE_ATTR, states)
 
 class ReferencesDumper(object):
+
+    find_objectmap = staticmethod(find_objectmap) # testing
+    get_oid = staticmethod(get_oid)
+
     def __init__(self, name, registry):
         self.name = name
         self.registry = registry
@@ -428,7 +436,7 @@ class ReferencesDumper(object):
 
     def dump(self, context):
         resource = context.resource
-        objectmap = find_objectmap(resource)
+        objectmap = self.find_objectmap(resource)
         references = {}
         if objectmap is not None:
             if objectmap.has_references(resource):
@@ -448,17 +456,18 @@ class ReferencesDumper(object):
         if context.exists(self.fn):
             references = context.load_yaml(self.fn)
             resource = context.resource
-            oid = get_oid(resource)
+            oid = self.get_oid(resource)
             def add_references(root):
-                for reftype, d in references.items():
-                    targets = d.get('targets', ())
-                    sources = d.get('sources', ())
-                    objectmap = find_objectmap(root)
-                    if objectmap is not None:
-                        for target in targets:
-                            objectmap.connect(oid, target, reftype)
-                        for source in sources:
-                            objectmap.connect(source, oid, reftype)
+                objectmap = self.find_objectmap(root)
+                if objectmap is not None:
+                    for reftype, d in references.items():
+                        targets = d.get('targets', ())
+                        sources = d.get('sources', ())
+                        if objectmap is not None:
+                            for target in targets:
+                                objectmap.connect(oid, target, reftype)
+                            for source in sources:
+                                objectmap.connect(source, oid, reftype)
             context.add_callback(add_references)
     
 class SDIPropertiesDumper(object):
