@@ -413,7 +413,7 @@ class WorkflowDumper(object):
     def dump(self, context):
         resource = context.resource
         if hasattr(resource, STATE_ATTR):
-            self.context.dump_yaml(getattr(resource, STATE_ATTR), self.fn)
+            context.dump_yaml(getattr(resource, STATE_ATTR), self.fn)
 
     def load(self, context):
         if context.exists(self.fn):

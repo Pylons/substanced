@@ -493,7 +493,38 @@ class TestACLDumper(unittest.TestCase):
         context.resource = resource
         inst.load(context)
         self.assertEqual(resource.__acl__, [])
+
+class TestWorkflowDumper(unittest.TestCase):
+    def _makeOne(self, name, registry):
+        from . import WorkflowDumper
+        return WorkflowDumper(name, registry)
+
+    def test_dump(self):
+        from . import STATE_ATTR
+        def dump_yaml(v, fn):
+            self.assertEqual(v, True)
+            self.assertEqual(fn, 'name.yaml')
+        context = testing.DummyResource()
+        context.dump_yaml = dump_yaml
+        resource = testing.DummyResource()
+        context.resource = resource
+        setattr(resource, STATE_ATTR, True)
+        inst = self._makeOne('name', None)
+        inst.dump(context)
         
+    def test_load(self):
+        from . import STATE_ATTR
+        def load_yaml(fn):
+            self.assertEqual(fn, 'name.yaml')
+            return True
+        context = testing.DummyResource()
+        context.exists = lambda *arg: True
+        context.load_yaml = load_yaml
+        resource = testing.DummyResource()
+        context.resource = resource
+        inst = self._makeOne('name', None)
+        inst.load(context)
+        self.assertEqual(getattr(resource, STATE_ATTR), True)
 
 from zope.interface import Interface
 
