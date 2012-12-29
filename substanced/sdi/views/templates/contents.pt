@@ -68,6 +68,23 @@
                     // concatenated value, instead of adding several inputs to the dom.
                     $hiddenInput.attr('value', selectedIds.join(','));
                 });
+ 
+                // ajaxify delete button
+                $form.find('button#delete').click(function (evt) {
+                    var gridWrapper = $('#sdi-contents-table-sg').data('slickgrid');
+                    gridWrapper.sdiRemoteModelPlugin.ajax({
+                        url: '.',
+                        type: 'POST',
+                        url: './@@contents',
+                        data: {
+                            'item-modify': $hiddenInput.attr('value'),
+                            'form.delete': 'delete'
+                        },
+                        dataType: 'json'
+                    })
+                    return false;
+                });
+
             });
         </script>
 

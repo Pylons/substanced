@@ -64,16 +64,16 @@ def add_mgmt_view(
     request_param=None,
     containment=None,
     attr=None,
-    renderer=None, 
+    renderer=None,
     wrapper=None,
     xhr=None,
     accept=None,
     header=None,
-    path_info=None, 
+    path_info=None,
     custom_predicates=(),
     context=None,
     decorator=None,
-    mapper=None, 
+    mapper=None,
     http_cache=None,
     match_param=None,
     tab_title=None,
@@ -83,7 +83,7 @@ def add_mgmt_view(
     tab_near=None,
     **predicates
     ):
-    
+
     view = config.maybe_dotted(view)
     context = config.maybe_dotted(context)
     containment = config.maybe_dotted(containment)
@@ -109,7 +109,7 @@ def add_mgmt_view(
         )
 
     predlist = config.get_predlist('view')
-    
+
     def view_discrim_func():
         # We need to defer the discriminator until we know what the phash
         # is.  It can't be computed any sooner because thirdparty
@@ -138,22 +138,22 @@ def add_mgmt_view(
         request_param=request_param,
         containment=containment,
         attr=attr,
-        renderer=renderer, 
+        renderer=renderer,
         wrapper=wrapper,
         xhr=xhr,
         accept=accept,
-        header=header, 
+        header=header,
         path_info=path_info,
-        custom_predicates=custom_predicates, 
+        custom_predicates=custom_predicates,
         context=context,
         decorator=decorator,
-        mapper=mapper, 
+        mapper=mapper,
         http_cache=http_cache,
-        match_param=match_param, 
+        match_param=match_param,
         request_type=request_type,
         **predicates
         )
-    
+
     intr = config.introspectable(
         'sdi views', discriminator, view_desc, 'sdi view'
         )
@@ -197,7 +197,7 @@ class mgmt_view(object):
     venusian = venusian
     def __init__(self, **settings):
         self.__dict__.update(settings)
-    
+
     def __call__(self, wrapped):
         settings = self.__dict__.copy()
 
@@ -205,7 +205,7 @@ class mgmt_view(object):
             config = context.config.with_package(info.module)
             # was "substanced.sdi" included?
             add_mgmt_view = getattr(config, 'add_mgmt_view', None)
-            if add_mgmt_view is not None: 
+            if add_mgmt_view is not None:
                 add_mgmt_view(view=ob, **settings)
 
         info = self.venusian.attach(wrapped, callback, category='substanced')
@@ -237,10 +237,10 @@ def sdi_mgmt_views(context, request, names=None):
     req.script_name = request.script_name
     req.context = context
     req.matched_route = request.matched_route
-    req.method = 'GET' 
+    req.method = 'GET'
     req.registry = request.registry
 
-    for data in introspector.get_category('sdi views'): 
+    for data in introspector.get_category('sdi views'):
         related = data['related']
         sdi_intr = data['introspectable']
         tab_title = sdi_intr['tab_title']
@@ -296,7 +296,7 @@ def sdi_mgmt_views(context, request, names=None):
     manually_ordered = []
 
     tab_order = request.registry.content.metadata(context, 'tab_order')
-    
+
     if tab_order is not None:
         ordered_names = [ y for y in tab_order if y in
                           [ x['view_name'] for x in unordered ] ]
@@ -452,8 +452,8 @@ def sdi_add_views(context, request):
     introspector = registry.introspector
 
     candidates = {}
-    
-    for data in introspector.get_category('substance d content types'): 
+
+    for data in introspector.get_category('substance d content types'):
         intr = data['introspectable']
         meta = intr['meta']
         content_type = intr['content_type']
@@ -516,7 +516,7 @@ class sdiapi(object):
     get_connection = staticmethod(get_connection) # testing
     transaction = transaction # testing
     sdi_mgmt_views = staticmethod(sdi_mgmt_views) # testing
-    
+
     def __init__(self, request):
         self.request = request
 
@@ -525,24 +525,32 @@ class sdiapi(object):
         return get_renderer(
             'substanced.sdi.views:templates/master.pt').implementation()
 
-    def flash_with_undo(self, msg, queue='', allow_duplicate=True):
+    def get_flash_with_undo_snippet(self, msg):
         request = self.request
         conn = self.get_connection(request)
         db = conn.db()
         has_perm = has_permission('sdi.undo', request.context, request)
-        if db.supportsUndo() and has_perm:
+        can_undo = db.supportsUndo() and has_perm
+        snippet = msg
+        hsh = None
+        if can_undo:
             hsh = str(id(request)) + str(hash(msg))
             t = self.transaction.get()
             t.note(msg)
-            t.note('hash:'+hsh)
+            t.note('hash:' + hsh)
             csrf_token = request.session.get_csrf_token()
-            query = {'csrf_token':csrf_token, 'hash':hsh}
+            query = {'csrf_token': csrf_token, 'hash': hsh}
             url = self.mgmt_path(request.context, '@@undo_one', _query=query)
-            vars = {'msg':msg, 'url':url}
-            button= render(
+            vars = {'msg': msg, 'url': url}
+            button = render(
                 'views/templates/undobutton.pt', vars, request=request)
-            msg = button
-        request.session.flash(msg, queue, allow_duplicate=allow_duplicate)
+            snippet = button
+        return snippet
+
+    def flash_with_undo(self, msg, queue='', allow_duplicate=True):
+        request = self.request
+        snippet = self.get_flash_with_undo_snippet(msg)
+        request.session.flash(snippet, queue, allow_duplicate=allow_duplicate)
 
     def mgmt_path(self, obj, *arg, **kw):
         request = self.request

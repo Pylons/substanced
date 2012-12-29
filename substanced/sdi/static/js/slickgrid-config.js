@@ -8,6 +8,13 @@
         }
     };
 
+    var log = function () {
+        var c = window.console;
+        if (c && c.log) {
+            c.log(Array.prototype.slice.call(arguments));
+        }
+    };
+
     // our custom validator
     function requiredFieldValidator(value) {
         if (value === null || value === undefined || !value.length) {
@@ -17,7 +24,6 @@
         }
     }
 
-    
     var months = ['January', 'February', 'March', 'April', 'May', 'June',
         'July', 'August', 'September', 'October', 'November', 'December'];
 
@@ -188,7 +194,7 @@
                 sortDir = args.sortAsc;
                 sortCol = args.sortCol.field;
 
-                sdiRemoteModelPlugin.setSorting(sortCol, sortDir); 
+                sdiRemoteModelPlugin.setSorting(sortCol, sortDir);
                 ////dataView.sort(comparer, args.sortAsc);
             });
 

@@ -134,15 +134,15 @@ class FolderContentsViews(object):
 
         if custom_columns is not _marker:
             columns = custom_columns(context, None, request, columns)
-        
+
         for order, column in enumerate(columns):
             name = column['name']
             field = column['field']
             sortable = column.get('sortable', True)
             formatter = column.get('formatter', '')
-            
+
             headers.append({
-                "id": field, 
+                "id": field,
                 "name": name,
                 "field": field,
                 "width": 120,
@@ -153,7 +153,7 @@ class FolderContentsViews(object):
                 })
 
         return headers
-   
+
     def _folder_contents(
         self,
         start=None,
@@ -248,7 +248,7 @@ class FolderContentsViews(object):
         css classes to be applied to it, ``value`` for the value that will be
         passed as a request parameter when the form is submitted and ``text``
         for the button's text.
-        
+
         Most of the time, the best strategy will be to return a value
         containing the default buttonspec sequence passed in to the function
         (it will be a list).::
@@ -447,7 +447,7 @@ class FolderContentsViews(object):
         for col in columns:
             if col.get('sortable', True):
                 # We found the first sortable column.
-                sortCol = col['field'] 
+                sortCol = col['field']
                 break
         else:
             # Nothing is sortable.
@@ -504,39 +504,39 @@ class FolderContentsViews(object):
         renderer='json',
         )
     def show_json(self):
+        return self._get_json()
+
+    def _get_json(self):
         request = self.request
 
-        start = int(request.params.get('from'))
-        end = int(request.params.get('to'))
-        # sort_col = request.params.get('sortCol')  # XXX ignored
-        sort_dir = request.params.get('sortDir') in ('true', 'True')
-        filter_text = request.params.get('filter', '').strip()
+        if 'from' in request.params:
+            start = int(request.params.get('from'))
+            end = int(request.params.get('to'))
+            # sort_col = request.params.get('sortCol')  # XXX ignored
+            sort_dir = request.params.get('sortDir') in ('true', 'True')
+            filter_text = request.params.get('filter', '').strip()
 
-        reverse = (not sort_dir)
+            reverse = (not sort_dir)
 
-        # XXX sortCol not implemented
-        folder_length, records = self._folder_contents(
-            start, end, reverse=reverse, filter_text=filter_text
-            )
+            # XXX sortCol not implemented
+            folder_length, records = self._folder_contents(
+                start, end, reverse=reverse, filter_text=filter_text
+                )
 
-        items  = {
-            'from':start,
-            'to':end,
-            'records':records,
-            'total':folder_length,
-            }
+            items = {
+                'from': start,
+                'to': end,
+                'records': records,
+                'total': folder_length,
+                }
+        else:
+            # If the request did not ask for an data update,
+            # just return an empty dict.
+            items = {}
 
         return items
- 
-    @mgmt_view(
-        request_method='POST',
-        request_param="form.delete",
-        permission='sdi.manage-contents',
-        tab_condition=False,
-        check_csrf=True
-        )
-    def delete(self):
-        request = self.request
+
+    def _delete(self):
         context = self.context
         todelete = self._modified_items()
         deleted = 0
@@ -545,6 +545,19 @@ class FolderContentsViews(object):
             if v is not None:
                 del context[name]
                 deleted += 1
+        return deleted
+
+    @mgmt_view(
+        request_method='POST',
+        request_param='form.delete',
+        permission='sdi.manage-contents',
+        tab_condition=False,
+        check_csrf=True
+        )
+    def delete(self):
+        request = self.request
+        context = self.context
+        deleted = self._delete()
         if not deleted:
             msg = 'No items deleted'
             request.session.flash(msg)
@@ -555,6 +568,33 @@ class FolderContentsViews(object):
             msg = 'Deleted %s items' % deleted
             request.sdiapi.flash_with_undo(msg)
         return HTTPFound(request.sdiapi.mgmt_path(context, '@@contents'))
+
+    @mgmt_view(
+        request_method='POST',
+        xhr=True,
+        renderer='json',
+        request_param='form.delete',
+        permission='sdi.manage-contents',
+        tab_condition=False,
+        check_csrf=False,           # XXX ???
+        )
+    def delete_ajax(self):
+        request = self.request
+        deleted = self._delete()
+        if not deleted:
+            msg = 'No items deleted'
+        else:
+            if deleted == 1:
+                msg = 'Deleted 1 item'
+            else:
+                msg = 'Deleted %s items' % deleted
+            msg = request.sdiapi.get_flash_with_undo_snippet(msg)
+        results = {
+            'flash': msg,
+            }
+        # Generate content update as requested by the client.
+        results.update(self._get_json())
+        return results
 
     @mgmt_view(
         request_method='POST',
@@ -644,7 +684,7 @@ class FolderContentsViews(object):
         request = self.request
         context = self.context
         tocopy = self._modified_items()
-        
+
         if tocopy:
             l = []
             for name in tocopy:
