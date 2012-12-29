@@ -648,6 +648,48 @@ class TestDirectlyProvidedInterfacesDumper(unittest.TestCase):
         self.assertEqual(list(directlyProvidedBy(resource).interfaces()),
                          [IDummy])
 
+class TestFolderOrderDumper(unittest.TestCase):
+    def _makeOne(self, name, registry):
+        from . import FolderOrderDumper
+        return FolderOrderDumper(name, registry)
+
+    def test_dump(self):
+        from zope.interface import directlyProvides
+        from substanced.interfaces import IFolder
+        context = testing.DummyResource()
+        resource = testing.DummyResource()
+        resource.order = ['a']
+        context.resource = resource
+        def is_ordered():
+            return True
+        resource.is_ordered = is_ordered
+        directlyProvides(resource, IFolder)
+        def dump_yaml(v, fn):
+            self.assertEqual(v, ['a'])
+            self.assertEqual(fn, 'name.yaml')
+        context.dump_yaml = dump_yaml
+        inst = self._makeOne('name', None)
+        inst.dump(context)
+
+    def test_load(self):
+        context = testing.DummyResource()
+        resource = testing.DummyResource()
+        context.exists = lambda *arg: True
+        context.resource = resource
+        def load_yaml(fn):
+            self.assertEqual(fn, 'name.yaml')
+            return ['a']
+        context.load_yaml = load_yaml
+        callbacks = []
+        def add_callback(f):
+            callbacks.append(f)
+        context.add_callback = add_callback
+        registry = {}
+        inst = self._makeOne('name', registry)
+        inst.load(context)
+        callbacks[0](inst)
+        self.assertEqual(resource.order, ['a'])
+
 from zope.interface import Interface
 
 class IDummy(Interface):
