@@ -338,7 +338,7 @@ class _ResourceLoadContext(_ResourceContext):
         self.verbose = verbose
         self.dry_run = dry_run
 
-    def _load_resource(self):
+    def load_resource(self):
         registry = self.registry
         data = self.load_yaml(RESOURCE_FILENAME)
         name = data['name']
@@ -348,7 +348,7 @@ class _ResourceLoadContext(_ResourceContext):
         try:
             resource = registry.content.create(data['content_type'], __oid=oid)
         except:
-            self.logger.warn(
+            self.logger.error(
                 'While trying to load resource with data %r' % (data,)
                 )
             raise
@@ -361,7 +361,7 @@ class _ResourceLoadContext(_ResourceContext):
         return name, resource
 
     def load(self, parent):
-        name, resource = self._load_resource()
+        name, resource = self.load_resource()
         self.name = name
         self.resource = resource
         for loader in self.loaders:

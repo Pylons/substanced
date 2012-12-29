@@ -341,7 +341,7 @@ class Test_ResourceDumpContext(unittest.TestCase):
 
     def test_dump(self):
         resource = testing.DummyResource()
-        dumper = DummyDumper()
+        dumper = DummyDumperAndLoader()
         inst = self._makeOne(None, None, [dumper], None, None)
         def dump_resource(rsrc):
             self.assertEqual(rsrc, resource)
@@ -355,11 +355,117 @@ class Test_ResourceDumpContext(unittest.TestCase):
         inst.add_callback(True)
         self.assertEqual(registry['dumper_callbacks'], [True])
 
+class Test_ResourceLoadContext(unittest.TestCase):
+    def setUp(self):
+        self.config = testing.setUp()
+
+    def tearDown(self):
+        testing.tearDown()
+        
+    def _makeOne(self, directory, registry, dumpers, verbose, dry_run):
+        from . import _ResourceLoadContext
+        return _ResourceLoadContext(
+            directory, registry, dumpers, verbose, dry_run
+            )
+
+    def test_load_resource(self):
+        import datetime
+        from . import RESOURCE_FILENAME
+        registry = self.config.registry
+        resource = testing.DummyResource()
+        content = DummyContentRegistry(resource)
+        registry.content = content
+        now = datetime.datetime.now()
+        data = {
+            'name':'name',
+            'oid':1,
+            'created':now,
+            'is_service':True,
+            'content_type':'content_type',
+            }
+        def load_yaml(fn):
+            self.assertEqual(fn, RESOURCE_FILENAME)
+            return data
+        inst = self._makeOne(None, registry, None, None, None)
+        inst.load_yaml = load_yaml
+        name, result = inst.load_resource()
+        self.assertEqual(name, 'name')
+        self.assertEqual(result, resource)
+        self.assertEqual(resource.__name__, 'name')
+        self.assertEqual(resource.__oid__, 1)
+        self.assertEqual(resource.__created__, now)
+        self.assertTrue(resource.__is_service__)
+        self.assertEqual(content.content_type, 'content_type')
+        self.assertEqual(content.oid, 1)
+
+    def test_load_resource_create_exc(self):
+        import datetime
+        from . import RESOURCE_FILENAME
+        registry = self.config.registry
+        resource = testing.DummyResource()
+        content = DummyContentRegistry(resource, raises=ValueError)
+        registry.content = content
+        now = datetime.datetime.now()
+        data = {
+            'name':'name',
+            'oid':1,
+            'created':now,
+            'is_service':True,
+            'content_type':'content_type',
+            }
+        def load_yaml(fn):
+            self.assertEqual(fn, RESOURCE_FILENAME)
+            return data
+        inst = self._makeOne(None, registry, None, None, None)
+        inst.load_yaml = load_yaml
+        self.assertRaises(ValueError, inst.load_resource)
+
+    def test_load(self):
+        resource = testing.DummyResource()
+        def load_resource():
+            return 'name', resource
+        loader = DummyDumperAndLoader()
+        registry = self.config.registry
+        inst = self._makeOne(None, registry, [loader], None, None)
+        inst.load_resource = load_resource
+        parent = DummyParent()
+        result = inst.load(parent)
+        self.assertEqual(result, resource)
+        self.assertEqual(parent.name, 'name')
+        self.assertEqual(parent.resource, resource)
+        self.assertEqual(loader.context, inst)
+
+    def test_add_callback(self):
+        registry = {}
+        inst = self._makeOne(None, registry, None, None, None)
+        inst.add_callback(True)
+        self.assertEqual(registry['loader_callbacks'], [True])
+
 from zope.interface import Interface
 
-class DummyDumper(object):
+class DummyContentRegistry(object):
+    def __init__(self, result, raises=None):
+        self.result = result
+        self.raises = raises
+
+    def create(self, content_type, **kw):
+        self.content_type = content_type
+        self.oid = kw['__oid']
+        if self.raises:
+            raise self.raises
+        return self.result
+
+class DummyParent(object):
+    def load(self, name, resource, registry=None):
+        self.name = name
+        self.resource = resource
+        self.registry = registry
+
+class DummyDumperAndLoader(object):
     def dump(self, context):
         self.context = context
+
+    load = dump
 
 class DummyResourceDumpContext(object):
     def __init__(self, result=None):
