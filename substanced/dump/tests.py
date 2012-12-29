@@ -441,7 +441,70 @@ class Test_ResourceLoadContext(unittest.TestCase):
         inst.add_callback(True)
         self.assertEqual(registry['loader_callbacks'], [True])
 
+class TestACLDumper(unittest.TestCase):
+    def _makeOne(self, name, registry):
+        from . import ACLDumper
+        return ACLDumper(name, registry)
+
+    def test_init_adds_yaml_stuff(self):
+        from pyramid.security import ALL_PERMISSIONS
+        yamlthing = DummyYAMLDumperLoader()
+        registry = {'yaml_loader':yamlthing, 'yaml_dumper':yamlthing}
+        self._makeOne('name', registry)
+        self.assertEqual(len(yamlthing.constructors), 1)
+        self.assertEqual(len(yamlthing.representers), 1)
+        self.assertEqual(
+            yamlthing.constructors[0][1](None, None), ALL_PERMISSIONS
+            )
+        dumper = testing.DummyResource()
+        def represent_scalar(one, two):
+            self.assertEqual(one, u'!all_permissions')
+        dumper.represent_scalar = represent_scalar
+        yamlthing.representers[0][1](dumper, None)
+
+    def test_dump_no_acl(self): 
+        yamlthing = DummyYAMLDumperLoader()
+        registry = {'yaml_loader':yamlthing, 'yaml_dumper':yamlthing}
+        inst = self._makeOne('name', registry)
+        context = testing.DummyResource()
+        resource = testing.DummyResource()
+        context.resource = resource
+        result = inst.dump(context)
+        self.assertEqual(result, None)
+
+    def test_dump_with_acl(self): 
+        yamlthing = DummyYAMLDumperLoader()
+        registry = {'yaml_loader':yamlthing, 'yaml_dumper':yamlthing}
+        inst = self._makeOne('name', registry)
+        resource = testing.DummyResource()
+        resource.__acl__ = []
+        context = DummyResourceDumpContext(resource)
+        context.resource = resource
+        result = inst.dump(context)
+        self.assertEqual(result, None)
+        self.assertEqual(context.dumped, [])
+
+    def test_load(self):
+        yamlthing = DummyYAMLDumperLoader()
+        registry = {'yaml_loader':yamlthing, 'yaml_dumper':yamlthing}
+        inst = self._makeOne('name', registry)
+        resource = testing.DummyResource()
+        context = DummyResourceDumpContext([])
+        context.resource = resource
+        inst.load(context)
+        self.assertEqual(resource.__acl__, [])
+        
+
 from zope.interface import Interface
+
+class DummyYAMLDumperLoader(object):
+    def __init__(self):
+        self.constructors = []
+        self.representers = []
+    def add_constructor(self, spec, ctor):
+        self.constructors.append((spec, ctor))
+    def add_representer(self, thing, repr):
+        self.representers.append((thing, repr))
 
 class DummyContentRegistry(object):
     def __init__(self, result, raises=None):
@@ -476,6 +539,15 @@ class DummyResourceDumpContext(object):
 
     def load(self, parent):
         return self.result
+
+    def dump_yaml(self, obj, fn):
+        self.dumped = obj
+
+    def load_yaml(self, fn):
+        return self.result
+
+    def exists(self, fn):
+        return True
         
 class DummyInterface(Interface):
     pass

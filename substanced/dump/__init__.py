@@ -375,6 +375,7 @@ class _ResourceLoadContext(_ResourceContext):
         loader_callbacks.append(callback)
 
 class ACLDumper(object):
+    get_acl = staticmethod(get_acl)
     def __init__(self, name, registry):
         self.name = name
         self.registry = registry
@@ -393,7 +394,7 @@ class ACLDumper(object):
             )
 
     def dump(self, context):
-        acl = get_acl(context.resource, None)
+        acl = self.get_acl(context.resource, None)
         if acl is None:
             return
         context.dump_yaml(acl, self.fn)
