@@ -218,10 +218,21 @@
                 var data = grid.getData();
                 var selectedIds = $.map(selRows, function (value, index) {
                     var row = data[value];
-                    return row.id;
+                    return (row || {}).id;
                 });
                 var insertBeforeId = data[args.insertBefore].id;
                 log('onMoveRows, rows=', selectedIds, 'insertBefore=', insertBeforeId);
+
+                sdiRemoteModelPlugin.ajax({
+                        type: 'POST',
+                        url: './@@contents',
+                        data: {
+                            'ajax.reorder': 'ajax.reorder',
+                            'item-modify': selectedIds.join('/'),
+                            'insert-before': insertBeforeId
+                        },
+                        dataType: 'json'
+                });
 
             });
 

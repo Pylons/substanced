@@ -509,30 +509,38 @@ class FolderContentsViews(object):
         renderer='json',
         )
     def show_json(self):
+        return self._get_json()
+
+    def _get_json(self):
         request = self.request
 
-        start = int(request.params.get('from'))
-        end = int(request.params.get('to'))
-        # sort_col = request.params.get('sortCol')  # XXX ignored
-        sort_dir = request.params.get('sortDir') in ('true', 'True')
-        filter_text = request.params.get('filter', '').strip()
+        if 'from' in request.params:
+            start = int(request.params.get('from'))
+            end = int(request.params.get('to'))
+            # sort_col = request.params.get('sortCol')  # XXX ignored
+            sort_dir = request.params.get('sortDir') in ('true', 'True')
+            filter_text = request.params.get('filter', '').strip()
 
-        reverse = (not sort_dir)
+            reverse = (not sort_dir)
 
-        # XXX sortCol not implemented
-        folder_length, records = self._folder_contents(
-            start, end, reverse=reverse, filter_text=filter_text
-            )
+            # XXX sortCol not implemented
+            folder_length, records = self._folder_contents(
+                start, end, reverse=reverse, filter_text=filter_text
+                )
 
-        items  = {
-            'from':start,
-            'to':end,
-            'records':records,
-            'total':folder_length,
-            }
+            items = {
+                'from': start,
+                'to': end,
+                'records': records,
+                'total': folder_length,
+                }
+        else:
+            # If the request did not ask for an data update,
+            # just return an empty dict.
+            items = {}
 
         return items
- 
+
     @mgmt_view(
         request_method='POST',
         request_param="form.delete",
@@ -758,3 +766,24 @@ class FolderContentsViews(object):
 
         return HTTPFound(request.sdiapi.mgmt_path(context, '@@contents'))
 
+    @mgmt_view(
+        request_method='POST',
+        xhr=True,
+        renderer='json',
+        request_param="ajax.reorder",
+        permission='sdi.manage-contents',
+        tab_condition=False,
+        check_csrf=False
+        )
+    def reorder_rows(self):
+        request = self.request
+        item_modify = request.params.get('item-modify').split('/')
+        insert_before = request.params.get('insert-before')
+        print 'XXX Will reorder:', item_modify, 'insert before:', insert_before
+        msg = '%i rows moved. (Well, not really yet.)' % (len(item_modify), )
+        results = {
+            'flash': msg,
+            }
+        # Generate content update as requested by the client.
+        results.update(self._get_json())
+        return results
