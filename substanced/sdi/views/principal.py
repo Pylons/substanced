@@ -97,18 +97,12 @@ def password_validator(node, kw):
 
 class UserPasswordSchema(Schema):
     """ The schema for validating password change requests."""
-    old_password = colander.SchemaNode(
-        colander.String(),
-        validator=password_validator,
-        widget = deform.widget.PasswordWidget(),
-        )
     password = colander.SchemaNode(
         colander.String(),
-        title='New Password',
+        title='Password',
         validator=colander.Length(min=3, max=100),
         widget = deform.widget.CheckedPasswordWidget(),
         )
-
 
 @mgmt_view(
     context=IUser,
