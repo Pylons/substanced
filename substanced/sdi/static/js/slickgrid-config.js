@@ -199,7 +199,7 @@
                 sortDir = args.sortAsc;
                 sortCol = args.sortCol.field;
 
-                sdiRemoteModelPlugin.setSorting(sortCol, sortDir); 
+                sdiRemoteModelPlugin.setSorting(sortCol, sortDir);
                 ////dataView.sort(comparer, args.sortAsc);
             });
 
@@ -226,7 +226,7 @@
             });
 
             // XXX This is just to help debugging, with no real function here.
-            grid.onSelectedRowsChanged.subscribe(function (evt) { 
+            grid.onSelectedRowsChanged.subscribe(function (evt) {
                 var selRows = grid.getSelectedRows();
                 var data = grid.getData();
                 var selectedIds = $.map(selRows, function (value, index) {
