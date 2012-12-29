@@ -609,7 +609,49 @@ class TestSDIPropertiesDumper(unittest.TestCase):
         self.assertTrue(resource._p_changed)
         self.assertEqual(resource.a, 1)
 
+class TestDirectlyProvidedInterfacesDumper(unittest.TestCase):
+    def _makeOne(self, name, registry):
+        from . import DirectlyProvidedInterfacesDumper
+        return DirectlyProvidedInterfacesDumper(name, registry)
+
+    def test_dump(self):
+        from zope.interface import directlyProvides
+        context = testing.DummyResource()
+        resource = testing.DummyResource()
+        context.resource = resource
+        def get_dotted_name(i):
+            return 'substanced.dump.IDummy'
+        context.get_dotted_name = get_dotted_name
+        directlyProvides(resource, IDummy)
+        def dump_yaml(v, fn):
+            self.assertEqual(v, ['substanced.dump.IDummy'])
+            self.assertEqual(fn, 'name.yaml')
+        context.dump_yaml = dump_yaml
+        inst = self._makeOne('name', None)
+        inst.dump(context)
+
+    def test_load(self):
+        from zope.interface import directlyProvidedBy
+        context = testing.DummyResource()
+        resource = testing.DummyResource()
+        context.exists = lambda *arg: True
+        context.resource = resource
+        def resolve_dotted_name(n):
+            return IDummy
+        context.resolve_dotted_name = resolve_dotted_name
+        def load_yaml(fn):
+            self.assertEqual(fn, 'name.yaml')
+            return ['substanced.dump.IDummy']
+        context.load_yaml = load_yaml
+        inst = self._makeOne('name', None)
+        inst.load(context)
+        self.assertEqual(list(directlyProvidedBy(resource).interfaces()),
+                         [IDummy])
+
 from zope.interface import Interface
+
+class IDummy(Interface):
+    pass
 
 class DummyObjectmap(object):
     def __init__(self, sourceids, targetids):
