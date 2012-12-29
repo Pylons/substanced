@@ -34,10 +34,6 @@ Guts-Only
 - Really provide an "interfaces" index?  Probably be better off with a
   content_type index.
 
-- Catalog event subscriber currently does a hellishly expensive recatalog of
-  allowed indexes when an ACL is changed.  Not sure if there's even a general
-  way to make this do less work, but could be.
-
 - Undo of catalog reindex doesnt?  Turned off for now.
 
 - Write sd_dump and sd_load scripts.
@@ -80,8 +76,8 @@ Guts-Only
 UI-Only
 -------
 
-- Show spinner when a button is pressed that leads to another page
-  (e.g. reindex or duplicate).
+- Show spinner when a button is pressed on the folder contents view that leads
+  to another page (e.g. reindex or duplicate).
 
 Nice-to-Have Features
 ---------------------
@@ -173,6 +169,10 @@ Probably Bad Ideas
 
 - Specialize recatalog during a rename, so only indexes that are
   context-sensitive are reindexed.
+
+- Catalog event subscriber currently does a hellishly expensive recatalog of
+  allowed indexes when an ACL is changed.  Not sure if there's even a general
+  way to make this do less work, but could be.
 
 Science Fiction
 ===============
