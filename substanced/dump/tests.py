@@ -690,10 +690,117 @@ class TestFolderOrderDumper(unittest.TestCase):
         callbacks[0](inst)
         self.assertEqual(resource.order, ['a'])
 
+class TestPropertySheetDumper(unittest.TestCase):
+    def _makeOne(self, name, registry):
+        from . import PropertySheetDumper
+        return PropertySheetDumper(name, registry)
+
+    def test_init_adds_yaml_stuff(self):
+        import colander
+        yamlthing = DummyYAMLDumperLoader()
+        registry = {'yaml_loader':yamlthing, 'yaml_dumper':yamlthing}
+        self._makeOne('name', registry)
+        self.assertEqual(len(yamlthing.constructors), 1)
+        self.assertEqual(len(yamlthing.representers), 2)
+        self.assertEqual(
+            yamlthing.constructors[0][1](None, None), colander.null
+            )
+        dumper = testing.DummyResource()
+        def represent_scalar(one, two):
+            self.assertEqual(one, u'!colander_null')
+        dumper.represent_scalar = represent_scalar
+        yamlthing.representers[0][1](dumper, None)
+
+    def test__get_sheets(self):
+        yamlthing = DummyYAMLDumperLoader()
+        registry = DummyRegistry(None)
+        registry.update({'yaml_loader':yamlthing, 'yaml_dumper':yamlthing})
+        inst = self._makeOne('name', registry)
+        context = testing.DummyResource()
+        resource = testing.DummyResource()
+        context.exists = lambda *arg: True
+        context.resource = resource
+        sheet = DummySheet(None)
+        def sheetfactory(rsrc, req):
+            self.assertEqual(rsrc, resource)
+            self.assertEqual(req.__class__.__name__, 'Request')
+            return sheet
+        content = DummyContentRegistry([('', sheetfactory)])
+        registry.content = content
+        val = inst._get_sheets(context)
+        result = list(val)
+        self.assertEqual(
+            result,
+            [('__unnamed__', sheet)]
+            )
+
+    def test_dump(self):
+        yamlthing = DummyYAMLDumperLoader()
+        registry = DummyRegistry(None)
+        registry.update({'yaml_loader':yamlthing, 'yaml_dumper':yamlthing})
+        inst = self._makeOne('name', registry)
+        context = testing.DummyResource()
+        sheet = DummySheet({'a':1})
+        def _get_sheets(ctx):
+            self.assertEqual(ctx, context)
+            return [('sheet', sheet)]
+        inst._get_sheets = _get_sheets
+        def dump_yaml(cstruct, fn):
+            self.assertEqual(cstruct, {'a':1})
+            self.assertEqual(fn, 'propsheets/sheet/properties.yaml')
+        context.dump_yaml = dump_yaml
+        inst.dump(context)
+
+    def test_load(self):
+        yamlthing = DummyYAMLDumperLoader()
+        registry = DummyRegistry(None)
+        registry.update({'yaml_loader':yamlthing, 'yaml_dumper':yamlthing})
+        inst = self._makeOne('name', registry)
+        context = testing.DummyResource()
+        context.exists = lambda *arg: True
+        sheet = DummySheet(None)
+        def _get_sheets(ctx):
+            self.assertEqual(ctx, context)
+            return [('', sheet)]
+        inst._get_sheets = _get_sheets
+        def load_yaml(fn):
+            self.assertEqual(fn, 'propsheets/__unnamed__/properties.yaml')
+            return {'a':1}
+        context.load_yaml = load_yaml
+        inst.load(context)
+        self.assertEqual(sheet.appstruct, {'a':1})
+        
+
 from zope.interface import Interface
 
 class IDummy(Interface):
     pass
+
+class DummySheet(object):
+    def __init__(self, result):
+        self.result = result
+
+    @property
+    def schema(self):
+        return self
+
+    def bind(self, request=None, context=None, loading=None):
+        self.request = request
+        self.context = context
+        self.loading = loading
+
+    def get(self):
+        return self.result
+
+    def set(self, appstruct):
+        self.appstruct = appstruct
+
+    def serialize(self, appstruct):
+        return appstruct
+
+    def deserialize(self, cstruct):
+        return cstruct
+
 
 class DummyObjectmap(object):
     def __init__(self, sourceids, targetids):
@@ -735,6 +842,9 @@ class DummyContentRegistry(object):
         self.oid = kw['__oid']
         if self.raises:
             raise self.raises
+        return self.result
+
+    def metadata(self, resource, what, default=None):
         return self.result
 
 class DummyParent(object):

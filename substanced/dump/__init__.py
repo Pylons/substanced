@@ -562,7 +562,7 @@ class PropertySheetDumper(object):
             )
 
     def _get_sheets(self, context):
-        registry = context.registry
+        registry = self.registry
         resource = context.resource
         sheets = registry.content.metadata(resource, 'propertysheets', ())
         for sheetname, sheetfactory in sheets:
@@ -592,7 +592,7 @@ class PropertySheetDumper(object):
         for sheetname, sheet in sheets:
             if not sheetname:
                 sheetname = '__unnamed__'
-            fn = 'propsheets/%s/properties.yaml'
+            fn = 'propsheets/%s/properties.yaml' % sheetname
             if context.exists(fn):
                 cstruct = context.load_yaml(fn)
                 appstruct = sheet.schema.deserialize(cstruct)
