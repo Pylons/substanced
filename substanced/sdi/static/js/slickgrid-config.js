@@ -210,7 +210,7 @@
             grid.registerPlugin(moveRowsPlugin);
 
             //moveRowsPlugin.onBeforeMoveRows.subscribe(function (e, data) {
-            //    console.log('onBeforeMoveRows', data);
+            //    log('onBeforeMoveRows', data);
             //});
 
             moveRowsPlugin.onMoveRows.subscribe(function (e, args) {
@@ -221,7 +221,8 @@
                     return row.id;
                 });
                 var insertBeforeId = data[args.insertBefore].id;
-                console.log('onMoveRows, rows=', selectedIds, 'insertBefore=', insertBeforeId);
+                log('onMoveRows, rows=', selectedIds, 'insertBefore=', insertBeforeId);
+
             });
 
             // XXX This is just to help debugging, with no real function here.
@@ -232,7 +233,7 @@
                     var row = data[value];
                     return row.id;
                 });
-                console.log('onSelectedRowsChanged rows=', selectedIds);
+                log('onSelectedRowsChanged rows=', selectedIds);
             });
 
             if (wrapperOptions.items) {
@@ -257,4 +258,3 @@
 
     });
 })(window.jQuery);
-
