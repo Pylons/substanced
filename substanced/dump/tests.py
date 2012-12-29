@@ -572,6 +572,43 @@ class TestReferencesDumper(unittest.TestCase):
             [(0, 2, 'reftype'), (1, 0, 'reftype')]
             )
 
+class TestSDIPropertiesDumper(unittest.TestCase):
+    def _makeOne(self, name, registry):
+        from . import SDIPropertiesDumper
+        return SDIPropertiesDumper(name, registry)
+
+    def test_dump(self):
+        context = testing.DummyResource()
+        resource = testing.DummyResource()
+        def _p_activate():
+            pass # this will not be covered if not run
+        context.resource = resource
+        resource._p_activate = _p_activate
+        resource.__sdi_hidden__ = True
+        def dump_yaml(v, fn):
+            self.assertEqual(v, {'__sdi_hidden__':True})
+            self.assertEqual(fn, 'name.yaml')
+        context.dump_yaml = dump_yaml
+        inst = self._makeOne('name', None)
+        inst.dump(context)
+
+    def test_load(self):
+        context = testing.DummyResource()
+        resource = testing.DummyResource()
+        context.exists = lambda *arg: True
+        def _p_activate():
+            pass # this will not be covered if not run
+        context.resource = resource
+        resource._p_activate = _p_activate
+        def load_yaml(fn):
+            self.assertEqual(fn, 'name.yaml')
+            return {'a':1}
+        context.load_yaml = load_yaml
+        inst = self._makeOne('name', None)
+        inst.load(context)
+        self.assertTrue(resource._p_changed)
+        self.assertEqual(resource.a, 1)
+
 from zope.interface import Interface
 
 class DummyObjectmap(object):

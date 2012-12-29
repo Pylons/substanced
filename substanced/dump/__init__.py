@@ -407,7 +407,7 @@ class ACLDumper(object):
         if context.exists(self.fn):
             acl = context.load_yaml(self.fn)
             context.resource.__acl__ = acl
-        
+
 class WorkflowDumper(object):
     def __init__(self, name, registry):
         self.name = name
@@ -469,7 +469,7 @@ class ReferencesDumper(object):
                             for source in sources:
                                 objectmap.connect(source, oid, reftype)
             context.add_callback(add_references)
-    
+
 class SDIPropertiesDumper(object):
     def __init__(self, name, registry):
         self.name = name
@@ -483,7 +483,7 @@ class SDIPropertiesDumper(object):
         attributes = {}
         for name in ('__sdi_hidden__', '__sdi_addable__', '__sdi_deletable__'):
             val = d.get(name)
-            if d is not None:
+            if val is not None:
                 attributes[name] = val
         if attributes:
             context.dump_yaml(attributes, self.fn)
@@ -495,7 +495,7 @@ class SDIPropertiesDumper(object):
             resource._p_activate()
             resource.__dict__.update(attributes)
             resource._p_changed = True
-            
+
 class DirectlyProvidedInterfacesDumper(object):
     def __init__(self, name, registry):
         self.name = name
