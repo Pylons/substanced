@@ -26,9 +26,12 @@ Guts-Only
   be useless and harmful if someone tries to use it in the face of a pending
   stable sort change.
 
+- Release deform2 (merge deform_bootstrap).
+
 - @@properties view of user errors out right now due to a boneheaded change to
   deform that I stupidly let pass by.  See
-  https://github.com/Pylons/deform/issues/81#issuecomment-11762983
+  https://github.com/Pylons/deform/issues/81#issuecomment-11762983.  This
+  should be undone in Deform 2.
 
 - Fix actions processor so it won't drop actions on the floor if
   a keyboardinterrupt or another exception happens after a popall.
