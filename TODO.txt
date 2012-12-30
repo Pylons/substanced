@@ -4,15 +4,10 @@ Features
 UI-Plus-Guts
 ------------
 
-- Add a redo button to undo flash messages.
-
 - Stamp created objects with creator information?
 
 - Allow reordering of resources in folder contents view when the folder is
   ordered.
-
-- Show a derivative of output status in flash message when update indexes /
-  reindex catalog is done to a catalog.
 
 - Text search view.
 
@@ -90,6 +85,12 @@ Nice-to-Have Features
 - Drag and drop ACE reordering in ACL edit view.
 
 - Ability to add and edit principals in existing ACEs in ACL edit view.
+
+- Add a redo button to undo flash messages.
+
+- Show a derivative of output status in flash message when update indexes /
+  reindex catalog is done to a catalog.
+
 
 Docs
 ====
