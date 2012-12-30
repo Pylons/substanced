@@ -17,10 +17,6 @@ Guts-Only
 - Allow second sort of a hypatia result set to specify that it wants a stable
   sort.
 
-- Remove ``sort_type`` parameter from hypatia ResultSet sort method.  This will
-  be useless and harmful if someone tries to use it in the face of a pending
-  stable sort change.
-
 - Release deform2 (merge deform_bootstrap).
 
 - @@properties view of user errors out right now due to a boneheaded change to
