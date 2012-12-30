@@ -103,28 +103,31 @@ class TestUndoViews(unittest.TestCase):
         self.assertEqual(db, conn._db)
 
     def test__undoable_transactions(self):
+        import time
         request = testing.DummyRequest()
         context = testing.DummyResource()
+        now = time.time()
+        now_ctime = time.ctime(now)[4:][:-5]
         record1 = dict(
-            time=1,
+            time=now,
             description='abc',
             user_name='1',
             id='0',
             )
         record2 = dict(
-            time=1,
+            time=now,
             description='abc',
             user_name='cantintify',
             id='1',
             )
         record3 = dict(
-            time=1,
+            time=now,
             description='',
             user_name='cantintify',
             id='1',
             )
         record4 = dict(
-            time=1,
+            time=now,
             description='a'*81,
             user_name='1',
             id='1',
@@ -150,19 +153,19 @@ class TestUndoViews(unittest.TestCase):
                 {'description': 'abc',
                  'user_name': 'fred',
                  'id': 'MA==\n abc',
-                 'time': 'Dec 31 19:00:01'},
+                 'time': now_ctime},
                 {'description': 'abc',
                  'user_name': 'cantintify',
                  'id': 'MQ==\n abc',
-                 'time': 'Dec 31 19:00:01'},
+                 'time': now_ctime},
                 {'description': '',
                  'user_name': 'cantintify',
                  'id': 'MQ==\n ',
-                 'time': 'Dec 31 19:00:01'},
+                 'time': now_ctime},
                 {'description': ('a'*81),
                  'user_name': 'fred',
                  'id': 'MQ==\n ' + ('a' * 76) + ' ...',
-                 'time': 'Dec 31 19:00:01'}
+                 'time': now_ctime}
                 ]
             )
 
