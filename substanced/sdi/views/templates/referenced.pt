@@ -3,8 +3,6 @@
   <div metal:fill-slot="main"
        tal:define="root_url request.sdiapi.mgmt_url(request.root)">
 
-    <h1>References</h1>
-
     <div tal:repeat="(title, ids) [('As source', targets), ('As target', sources)]">
 
       <div tal:condition="ids">
