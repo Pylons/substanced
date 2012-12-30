@@ -69,9 +69,9 @@ statsd_gauge = helper.gauge
 statsd_timer = helper.timer
 
 def includeme(config): # pragma: no cover
+    import pdb; pdb.set_trace()
     settings = config.registry.settings
     statsd_enabled = asbool(settings.get('substanced.statsd.enabled', False))
-    statsd_enabled = False
     if statsd_enabled:
         host = settings.get('substanced.statsd.host', 'localhost')
         port = int(settings.get('substanced.statsd.port', 8125))
