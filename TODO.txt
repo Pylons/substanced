@@ -4,9 +4,6 @@ Features
 UI-Plus-Guts
 ------------
 
-- Add Undo tab to Site (or per folder?) which will allow admins to undo recent
-  transactions.  Implied: add transaction notes to all transactions.
-
 - Add a redo button to undo flash messages.
 
 - Stamp created objects with creator information?

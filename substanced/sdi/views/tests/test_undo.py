@@ -2,9 +2,9 @@ import unittest
 from pyramid import testing
 
 class TestUndoViews(unittest.TestCase):
-    def _makeOne(self, request):
+    def _makeOne(self, context, request):
         from ..undo import UndoViews
-        return UndoViews(request)
+        return UndoViews(context, request)
 
     def test_undo_one_no_referrer(self):
         conn = DummyConnection()
@@ -13,7 +13,8 @@ class TestUndoViews(unittest.TestCase):
         request.sdiapi = DummySDIAPI()
         request.referrer = None
         request.params['hash'] = 'hash'
-        inst = self._makeOne(request)
+        context = testing.DummyResource()
+        inst = self._makeOne(context, request)
         resp = inst.undo_one()
         self.assertEqual(resp.location, '/mgmt_path')
         
@@ -24,7 +25,8 @@ class TestUndoViews(unittest.TestCase):
         request.sdiapi = DummySDIAPI()
         request.referrer = 'loc'
         request.params['hash'] = 'hash'
-        inst = self._makeOne(request)
+        context = testing.DummyResource()
+        inst = self._makeOne(context, request)
         resp = inst.undo_one()
         self.assertEqual(resp.location, 'loc')
 
@@ -35,7 +37,8 @@ class TestUndoViews(unittest.TestCase):
         request.sdiapi = DummySDIAPI()
         request.referrer = 'loc'
         request.params['hash'] = 'hash'
-        inst = self._makeOne(request)
+        context = testing.DummyResource()
+        inst = self._makeOne(context, request)
         inst.undo_one()
         self.assertEqual(request.session['_f_error'], ['Could not undo, sorry'])
         
@@ -47,7 +50,8 @@ class TestUndoViews(unittest.TestCase):
         request.sdiapi = DummySDIAPI()
         request.referrer = 'loc'
         request.params['hash'] = 'hash'
-        inst = self._makeOne(request)
+        context = testing.DummyResource()
+        inst = self._makeOne(context, request)
         inst.undo_one()
         self.assertEqual(request.session['_f_error'], ['Could not undo, sorry'])
 
@@ -59,7 +63,8 @@ class TestUndoViews(unittest.TestCase):
         request.sdiapi = DummySDIAPI()
         request.referrer = 'loc'
         request.params['hash'] = 'abc'
-        inst = self._makeOne(request)
+        context = testing.DummyResource()
+        inst = self._makeOne(context, request)
         transaction = DummyTransaction()
         inst.transaction = transaction
         inst.undo_one()
@@ -77,12 +82,234 @@ class TestUndoViews(unittest.TestCase):
         request.referrer = 'loc'
         request.params['hash'] = 'abc'
         transaction = DummyTransaction()
-        inst = self._makeOne(request)
+        context = testing.DummyResource()
+        inst = self._makeOne(context, request)
         inst.transaction = transaction
         inst.undo_one()
         self.assertEqual(len(request.session['_f_error']), 1)
         self.assertEqual(len(conn._db.undone), 0)
         self.assertEqual(transaction.aborted, True)
+
+    def test__get_db(self):
+        request = testing.DummyRequest()
+        context = testing.DummyResource()
+        inst = self._makeOne(context, request)
+        conn = DummyConnection()
+        def get_connection(req):
+            self.assertEqual(req, request)
+            return conn
+        inst.get_connection = get_connection
+        db = inst._get_db()
+        self.assertEqual(db, conn._db)
+
+    def test__undoable_transactions(self):
+        request = testing.DummyRequest()
+        context = testing.DummyResource()
+        record1 = dict(
+            time=1,
+            description='abc',
+            user_name='1',
+            id='0',
+            )
+        record2 = dict(
+            time=1,
+            description='abc',
+            user_name='cantintify',
+            id='1',
+            )
+        record3 = dict(
+            time=1,
+            description='',
+            user_name='cantintify',
+            id='1',
+            )
+        record4 = dict(
+            time=1,
+            description='a'*81,
+            user_name='1',
+            id='1',
+            )
+        records = [record1, record2, record3, record4]
+        db = DummyDB(True, records)
+        def _get_db():
+            return db
+        inst = self._makeOne(context, request)
+        inst._get_db = _get_db
+        user = testing.DummyResource(__name__='fred')
+        objectmap = DummyObjectmap(user)
+        def find_objectmap(ctx):
+            self.assertEqual(ctx, context)
+            return objectmap
+        inst.find_objectmap = find_objectmap
+        result = inst._undoable_transactions(0, 10)
+        self.assertEqual(db.first, 0)
+        self.assertEqual(db.last, 10)
+        self.assertEqual(
+            result,
+            [
+                {'description': 'abc',
+                 'user_name': 'fred',
+                 'id': 'MA==\n abc',
+                 'time': 'Dec 31 19:00:01'},
+                {'description': 'abc',
+                 'user_name': 'cantintify',
+                 'id': 'MQ==\n abc',
+                 'time': 'Dec 31 19:00:01'},
+                {'description': '',
+                 'user_name': 'cantintify',
+                 'id': 'MQ==\n ',
+                 'time': 'Dec 31 19:00:01'},
+                {'description': ('a'*81),
+                 'user_name': 'fred',
+                 'id': 'MQ==\n ' + ('a' * 76) + ' ...',
+                 'time': 'Dec 31 19:00:01'}
+                ]
+            )
+
+    def test_undo_multiple(self):
+        import binascii
+        request = testing.DummyRequest()
+        context = testing.DummyResource()
+        inst = self._makeOne(context, request)
+        conn = DummyConnection()
+        def get_connection(req):
+            self.assertEqual(req, request)
+            return conn
+        inst.get_connection = get_connection
+        def unauthenticated_userid(req):
+            self.assertEqual(req, request)
+            return 1
+        post = testing.DummyResource()
+        enca = binascii.b2a_base64('a')
+        encb = binascii.b2a_base64('b')
+        info = [enca + ' b', encb + ' f']
+        def getall(n):
+            self.assertEqual(n, 'transaction')
+            return info
+        post.getall = getall
+        request.POST = post
+        request.sdiapi = DummySDIAPI()
+        inst.unauthenticated_userid = unauthenticated_userid
+        txn = DummyTransaction()
+        inst.transaction = txn
+        result = inst.undo_multiple()
+        self.assertEqual(result.location, '/mgmt_path')
+        self.assertEqual(conn._db.tids, ['a', 'b'])
+        self.assertTrue(txn.committed)
+        self.assertEqual(txn.user, 1)
+
+    def test_undo_multiple_with_exception(self):
+        import binascii
+        from ZODB.POSException import POSError
+        request = testing.DummyRequest()
+        context = testing.DummyResource()
+        inst = self._makeOne(context, request)
+        conn = DummyConnection()
+        def get_connection(req):
+            self.assertEqual(req, request)
+            return conn
+        conn._db.undo_exc = POSError
+        inst.get_connection = get_connection
+        def unauthenticated_userid(req):
+            self.assertEqual(req, request)
+            return 1
+        post = testing.DummyResource()
+        enca = binascii.b2a_base64('a')
+        encb = binascii.b2a_base64('b')
+        info = [enca + ' b', encb + ' f']
+        def getall(n):
+            self.assertEqual(n, 'transaction')
+            return info
+        post.getall = getall
+        request.POST = post
+        request.sdiapi = DummySDIAPI()
+        inst.unauthenticated_userid = unauthenticated_userid
+        txn = DummyTransaction()
+        inst.transaction = txn
+        result = inst.undo_multiple()
+        self.assertEqual(result.location, '/mgmt_path')
+        self.assertTrue(txn.aborted)
+        self.assertEqual(
+            request.session,
+            {'_f_error': ['Could not undo, sorry']}
+            )
+
+    def test_undo_no_transactions(self):
+        request = testing.DummyRequest()
+        request.sdiapi = DummySDIAPI()
+        context = testing.DummyResource()
+        inst = self._makeOne(context, request)
+        def _undoable_transactions(first, last):
+            return []
+        inst._undoable_transactions = _undoable_transactions
+        result = inst.undo()
+        self.assertEqual(
+            result,
+            {'batch_num': 0, 'earlier': None, 'batch': [], 'later': None}
+            )
+
+    def test_undo_some_transactions_first(self):
+        request = testing.DummyRequest()
+        request.sdiapi = DummySDIAPI()
+        context = testing.DummyResource()
+        inst = self._makeOne(context, request)
+        def _undoable_transactions(first, last):
+            return [None] * 10
+        inst._undoable_transactions = _undoable_transactions
+        result = inst.undo()
+        self.assertEqual(
+            result,
+            {'batch_num': 0,
+             'earlier': '/mgmt_path',
+             'batch': [None] * 10,
+             'later': None,
+             }
+            )
+
+    def test_undo_some_transactions_notfirst(self):
+        request = testing.DummyRequest()
+        request.GET['first'] = '10'
+        request.sdiapi = DummySDIAPI()
+        context = testing.DummyResource()
+        inst = self._makeOne(context, request)
+        def _undoable_transactions(first, last):
+            return [None] * 10
+        inst._undoable_transactions = _undoable_transactions
+        result = inst.undo()
+        self.assertEqual(
+            result,
+            {'batch_num': 1,
+             'earlier': '/mgmt_path',
+             'batch': [None] * 10,
+             'later': '/mgmt_path'}
+            )
+
+class Test_encode64(unittest.TestCase):
+    def _callFUT(self, v):
+        from ..undo import encode64
+        return encode64(v)
+    
+    def test_it_len_lt_58(self):
+        import binascii
+        result = self._callFUT('a')
+        self.assertEqual(result, binascii.b2a_base64('a'))
+        
+    def test_it_len_gt_58(self):
+        import binascii
+        result = self._callFUT('a'*80)
+        self.assertEqual(result, binascii.b2a_base64('a'*80)[:-1])
+
+class Test_decode64(unittest.TestCase):
+    def _callFUT(self, v):
+        from ..undo import decode64
+        return decode64(v)
+    
+    def test_it_len_lt_58(self):
+        import binascii
+        send = binascii.b2a_base64('a')
+        result = self._callFUT(send)
+        self.assertEqual(result, 'a')
+    
 
 class DummyDB(object):
     def __init__(self, supports_undo, undo_info, undo_exc=None):
@@ -94,10 +321,20 @@ class DummyDB(object):
     def undoInfo(self):
         return self.undo_info
 
+    def undoLog(self, first, last):
+        self.first = first
+        self.last = last
+        return self.undo_info
+
     def undo(self, id):
         if self.undo_exc:
             raise self.undo_exc
         self.undone.append(id)
+
+    def undoMultiple(self, tids):
+        if self.undo_exc:
+            raise self.undo_exc
+        self.tids = tids
         
 class DummyConnection(object):
     def __init__(self, supports_undo=True, undo_info=(), undo_exc=None):
@@ -122,4 +359,12 @@ class DummyTransaction(object):
 
     def get(self):
         return self
+
+    def setUser(self, user):
+        self.user = user
         
+class DummyObjectmap(object):
+    def __init__(self, result):
+        self.result = result
+    def object_for(self, other):
+        return self.result
