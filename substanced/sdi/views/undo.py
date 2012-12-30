@@ -37,14 +37,13 @@ class UndoViews(object):
         )
     def undo_one(self):
         request = self.request
-        needle = 'hash:' + request.params['hash']
+        undohash = request.params['undohash']
         undo = None
         db = self._get_db()
-        for record in db.undoInfo(): # by default, the last 20 transactions
-            description = record['description']
-            if needle in description:
+        for record in db.undoLog(0, -50):
+            # the last 50 transactions
+            if record.get('undohash') == undohash:
                 undo = dict(record)
-                undo['clean_description'] = description.replace(needle, '')
                 break
         if undo is None:
             request.session.flash('Could not undo, sorry', 'error')
@@ -53,7 +52,7 @@ class UndoViews(object):
             try:
                 db.undo(tid)
                 # provoke MultipleUndoErrors exception immediately
-                msg = 'Undid: %s' % undo['clean_description']
+                msg = 'Undid: %s' % undo['description']
                 self.transaction.get().note(msg)
                 self.transaction.commit() 
                 request.session.flash(msg, 'success')

@@ -12,7 +12,7 @@ class TestUndoViews(unittest.TestCase):
         request._primary_zodb_conn = conn # XXX not an API, will break
         request.sdiapi = DummySDIAPI()
         request.referrer = None
-        request.params['hash'] = 'hash'
+        request.params['undohash'] = 'undohash'
         context = testing.DummyResource()
         inst = self._makeOne(context, request)
         resp = inst.undo_one()
@@ -24,7 +24,7 @@ class TestUndoViews(unittest.TestCase):
         request._primary_zodb_conn = conn # XXX not an API, will break
         request.sdiapi = DummySDIAPI()
         request.referrer = 'loc'
-        request.params['hash'] = 'hash'
+        request.params['undohash'] = 'undohash'
         context = testing.DummyResource()
         inst = self._makeOne(context, request)
         resp = inst.undo_one()
@@ -36,7 +36,7 @@ class TestUndoViews(unittest.TestCase):
         request._primary_zodb_conn = conn # XXX not an API, will break
         request.sdiapi = DummySDIAPI()
         request.referrer = 'loc'
-        request.params['hash'] = 'hash'
+        request.params['undohash'] = 'undohash'
         context = testing.DummyResource()
         inst = self._makeOne(context, request)
         inst.undo_one()
@@ -49,20 +49,20 @@ class TestUndoViews(unittest.TestCase):
         request._primary_zodb_conn = conn # XXX not an API, will break
         request.sdiapi = DummySDIAPI()
         request.referrer = 'loc'
-        request.params['hash'] = 'hash'
+        request.params['undohash'] = 'undohash'
         context = testing.DummyResource()
         inst = self._makeOne(context, request)
         inst.undo_one()
         self.assertEqual(request.session['_f_error'], ['Could not undo, sorry'])
 
     def test_undo_one_with_undo_info_match(self):
-        record = {'description':'hash:abc', 'id':'abc'}
+        record = {'undohash':'abc', 'id':'abc', 'description':'desc'}
         conn = DummyConnection(undo_info=[record])
         request = testing.DummyRequest()
         request._primary_zodb_conn = conn # XXX not an API, will break
         request.sdiapi = DummySDIAPI()
         request.referrer = 'loc'
-        request.params['hash'] = 'abc'
+        request.params['undohash'] = 'abc'
         context = testing.DummyResource()
         inst = self._makeOne(context, request)
         transaction = DummyTransaction()
@@ -74,13 +74,13 @@ class TestUndoViews(unittest.TestCase):
 
     def test_undo_one_with_undo_info_POSError(self):
         from ZODB.POSException import POSError
-        record = {'description':'hash:abc', 'id':'abc'}
+        record = {'undohash':'abc', 'id':'abc'}
         conn = DummyConnection(undo_info=[record], undo_exc=POSError)
         request = testing.DummyRequest()
         request._primary_zodb_conn = conn # XXX not an API, will break
         request.sdiapi = DummySDIAPI()
         request.referrer = 'loc'
-        request.params['hash'] = 'abc'
+        request.params['undohash'] = 'abc'
         transaction = DummyTransaction()
         context = testing.DummyResource()
         inst = self._makeOne(context, request)
@@ -320,9 +320,6 @@ class DummyDB(object):
         self.undo_info = undo_info
         self.undone = []
         self.undo_exc = undo_exc
-
-    def undoInfo(self):
-        return self.undo_info
 
     def undoLog(self, first, last):
         self.first = first

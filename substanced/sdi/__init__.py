@@ -534,9 +534,9 @@ class sdiapi(object):
             hsh = str(id(request)) + str(hash(msg))
             t = self.transaction.get()
             t.note(msg)
-            t.note('hash:'+hsh)
+            t.setExtendedInfo('undohash', hsh)
             csrf_token = request.session.get_csrf_token()
-            query = {'csrf_token':csrf_token, 'hash':hsh}
+            query = {'csrf_token':csrf_token, 'undohash':hsh}
             url = self.mgmt_path(request.context, '@@undo_one', _query=query)
             vars = {'msg':msg, 'url':url}
             button= render(
