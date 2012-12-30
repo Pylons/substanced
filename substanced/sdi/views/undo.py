@@ -4,16 +4,14 @@ import ZODB.POSException
 
 from pyramid_zodbconn import get_connection
 from pyramid.httpexceptions import HTTPFound
-from pyramid.view import view_defaults
-from pyramid.security import unauthenticated_userid
+from pyramid.security import (
+    authenticated_userid,
+    unauthenticated_userid
+    )
 
 from .. import mgmt_view
 from ...objectmap import find_objectmap
 
-@view_defaults(
-    physical_path='/',
-    permission='sdi.undo'
-    )
 class UndoViews(object):
     transaction = transaction # for tests
     get_connection = staticmethod(get_connection) # for tests
@@ -31,18 +29,31 @@ class UndoViews(object):
         return db
 
     @mgmt_view(
-        name='undo_one',
+        name='undo_recent',
         tab_condition=False, 
-        check_csrf=True
+        check_csrf=True,
+        permission='sdi.view',
         )
-    def undo_one(self):
+    def undo_recent(self):
         request = self.request
         undohash = request.params['undohash']
         undo = None
         db = self._get_db()
+        userid = authenticated_userid(request)
+        # I am permitted to undo it if:
+        #
+        # - It happend within the most recent 50 transactions.
+        #
+        # - I personally did it.
+        #
+        # NB: do not break these assertions, as this view is protected only by
+        # sdi.view permission.
         for record in db.undoLog(0, -50):
-            # the last 50 transactions
-            if record.get('undohash') == undohash:
+            try:
+                r_userid = int(record.get('user_name', None))
+            except:
+                r_userid = None
+            if (record.get('undohash') == undohash and r_userid == userid):
                 undo = dict(record)
                 break
         if undo is None:
@@ -68,6 +79,8 @@ class UndoViews(object):
         name='undo_multiple',
         tab_condition=False, 
         check_csrf=True,
+        physical_path='/',
+        permission='sdi.undo',
         )
     def undo_multiple(self):
         request = self.request
@@ -130,6 +143,8 @@ class UndoViews(object):
         name='undo',
         tab_title='Undo',
         renderer='templates/undo.pt',
+        physical_path='/',
+        permission='sdi.undo',
         )
     def undo(self):
         first = int(self.request.GET.get('first', 0))

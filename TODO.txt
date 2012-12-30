@@ -19,7 +19,7 @@ UI-Plus-Guts
 Guts-Only
 ---------
 
-- @@properties view of group errors out right now due to a boneheaded change to
+- @@properties view of user errors out right now due to a boneheaded change to
   deform that I stupidly let pass by.  Fucking people, contributing things! ;-)
 
 - Fix actions processor so it won't drop actions on the floor if

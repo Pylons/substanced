@@ -6,7 +6,7 @@ class TestUndoViews(unittest.TestCase):
         from ..undo import UndoViews
         return UndoViews(context, request)
 
-    def test_undo_one_no_referrer(self):
+    def test_undo_recent_no_referrer(self):
         conn = DummyConnection()
         request = testing.DummyRequest()
         request._primary_zodb_conn = conn # XXX not an API, will break
@@ -15,10 +15,10 @@ class TestUndoViews(unittest.TestCase):
         request.params['undohash'] = 'undohash'
         context = testing.DummyResource()
         inst = self._makeOne(context, request)
-        resp = inst.undo_one()
+        resp = inst.undo_recent()
         self.assertEqual(resp.location, '/mgmt_path')
         
-    def test_undo_one_with_referrer(self):
+    def test_undo_recent_with_referrer(self):
         conn = DummyConnection()
         request = testing.DummyRequest()
         request._primary_zodb_conn = conn # XXX not an API, will break
@@ -27,10 +27,10 @@ class TestUndoViews(unittest.TestCase):
         request.params['undohash'] = 'undohash'
         context = testing.DummyResource()
         inst = self._makeOne(context, request)
-        resp = inst.undo_one()
+        resp = inst.undo_recent()
         self.assertEqual(resp.location, 'loc')
 
-    def test_undo_one_no_undo_info(self):
+    def test_undo_recent_no_undo_info(self):
         conn = DummyConnection()
         request = testing.DummyRequest()
         request._primary_zodb_conn = conn # XXX not an API, will break
@@ -39,10 +39,10 @@ class TestUndoViews(unittest.TestCase):
         request.params['undohash'] = 'undohash'
         context = testing.DummyResource()
         inst = self._makeOne(context, request)
-        inst.undo_one()
+        inst.undo_recent()
         self.assertEqual(request.session['_f_error'], ['Could not undo, sorry'])
         
-    def test_undo_one_with_undo_info_no_match(self):
+    def test_undo_recent_with_undo_info_no_match(self):
         record = {'description':'desc', 'id':'abc'}
         conn = DummyConnection(undo_info=[record])
         request = testing.DummyRequest()
@@ -52,10 +52,10 @@ class TestUndoViews(unittest.TestCase):
         request.params['undohash'] = 'undohash'
         context = testing.DummyResource()
         inst = self._makeOne(context, request)
-        inst.undo_one()
+        inst.undo_recent()
         self.assertEqual(request.session['_f_error'], ['Could not undo, sorry'])
 
-    def test_undo_one_with_undo_info_match(self):
+    def test_undo_recent_with_undo_info_match(self):
         record = {'undohash':'abc', 'id':'abc', 'description':'desc'}
         conn = DummyConnection(undo_info=[record])
         request = testing.DummyRequest()
@@ -67,12 +67,12 @@ class TestUndoViews(unittest.TestCase):
         inst = self._makeOne(context, request)
         transaction = DummyTransaction()
         inst.transaction = transaction
-        inst.undo_one()
+        inst.undo_recent()
         self.assertEqual(len(request.session['_f_success']), 1)
         self.assertEqual(len(conn._db.undone), 1)
         self.assertEqual(transaction.committed, True)
 
-    def test_undo_one_with_undo_info_POSError(self):
+    def test_undo_recent_with_undo_info_POSError(self):
         from ZODB.POSException import POSError
         record = {'undohash':'abc', 'id':'abc'}
         conn = DummyConnection(undo_info=[record], undo_exc=POSError)
@@ -85,7 +85,7 @@ class TestUndoViews(unittest.TestCase):
         context = testing.DummyResource()
         inst = self._makeOne(context, request)
         inst.transaction = transaction
-        inst.undo_one()
+        inst.undo_recent()
         self.assertEqual(len(request.session['_f_error']), 1)
         self.assertEqual(len(conn._db.undone), 0)
         self.assertEqual(transaction.aborted, True)
