@@ -19,16 +19,22 @@ UI-Plus-Guts
 Guts-Only
 ---------
 
+- Allow second sort of a hypatia result set to specify that it wants a stable
+  sort.
+
+- Remove ``sort_type`` parameter from hypatia ResultSet sort method.  This will
+  be useless and harmful if someone tries to use it in the face of a pending
+  stable sort change.
+
 - @@properties view of user errors out right now due to a boneheaded change to
-  deform that I stupidly let pass by.  Fucking people, contributing things! ;-)
+  deform that I stupidly let pass by.  See
+  https://github.com/Pylons/deform/issues/81#issuecomment-11762983
 
 - Fix actions processor so it won't drop actions on the floor if
   a keyboardinterrupt or another exception happens after a popall.
 
 - Really provide an "interfaces" index?  Probably be better off with a
   content_type index.
-
-- Undo of catalog reindex doesnt?  Turned off for now.
 
 - Write sd_dump and sd_load scripts.
 
