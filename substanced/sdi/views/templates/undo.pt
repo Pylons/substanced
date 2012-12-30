@@ -25,7 +25,7 @@
 
     </div>
 
-    <form action="${request.sdiapi.mgmt_url(context, 'undo_multiple')}" 
+    <form action="${request.sdiapi.mgmt_url(context, '@@undo_multiple')}" 
           method="post">
       <table tal:condition="batch|None" class="table table-striped">
 
