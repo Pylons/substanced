@@ -528,7 +528,14 @@ class BasicActionProcessor(object):
                 if commit:
                     self.logger.info('committing')
                     try:
-                        self.transaction.get().note('action processor executed')
+                        if len(actions) == 1:
+                            plural = 'action'
+                        else:
+                            plural = 'actions'
+                        self.transaction.get().note(
+                            'indexing action processor executed %s %s' %
+                              (len(actions), plural)
+                            )
                         self.transaction.commit()
                         self.logger.info('committed')
                     except ConflictError:
