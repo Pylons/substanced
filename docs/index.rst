@@ -81,13 +81,17 @@ API Documentation
 
    api
 
-Reporting Bugs / Development Versions
--------------------------------------
+Support / Reporting Bugs / Development Versions
+-----------------------------------------------
 
 Visit http://github.com/Pylons/substanced to download development or tagged
 versions.
 
 Visit http://github.com/Pylons/substanced/issues to report bugs.
+
+The mailing list exists at https://groups.google.com/group/substanced-users
+
+The IRC channel is at irc://freenode.net/#substanced
 
 Indices and tables
 ------------------
