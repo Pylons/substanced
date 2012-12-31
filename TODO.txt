@@ -108,6 +108,11 @@ Integration
 
 - Explain how to set up with RelStorage.
 
+Misc
+++++
+
+- Explain the objectmap get_extents API.
+
 
 Can wait until after alpha 1
 ============================
