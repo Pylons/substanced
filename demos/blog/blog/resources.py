@@ -140,6 +140,10 @@ class Blog(Root):
     @property
     def sdi_title(self):
         return self.title
+
+    @sdi_title.setter
+    def sdi_title(self, value):
+        self.title = value
     
     def after_create2(self, inst, registry):
         acl = getattr(self, '__acl__', [])
