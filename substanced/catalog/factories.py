@@ -49,10 +49,6 @@ class IndexFactory(object):
             else:
                 raise ValueError(family)
             values['family'] = family
-        action_mode = values.get('action_mode', None)
-        if action_mode is not None:
-            action_mode = get_dotted_name(action_mode)
-            values['action_mode'] = action_mode
         return values
 
     def __hash__(self):

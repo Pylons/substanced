@@ -47,13 +47,6 @@ class TestIndexFactory(unittest.TestCase):
         inst = self._makeOne(a=1, family=True)
         self.assertRaises(ValueError, inst.hashvalues)
 
-    def test_hashvalues_action_mode(self):
-        from substanced.interfaces import MODE_IMMEDIATE
-        inst = self._makeOne(action_mode=MODE_IMMEDIATE)
-        values = inst.hashvalues()
-        self.assertEqual(values['action_mode'],
-                         'substanced.interfaces.MODE_IMMEDIATE')
-
     def test_is_stale(self):
         inst = self._makeOne(a=1)
         index = testing.DummyResource()
