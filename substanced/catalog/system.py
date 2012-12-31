@@ -12,10 +12,8 @@ from .factories import (
 
 from . import catalog_factory
 
-from ..interfaces import (
-    MODE_DEFERRED,
-    MODE_ATCOMMIT,
-    )
+from ..interfaces import MODE_DEFERRED
+from ..util import get_content_type
 
 class SystemIndexViews(object):
     def __init__(self, resource):
@@ -34,6 +32,10 @@ class SystemIndexViews(object):
         if name is None: # deal with name = None at root
             return default
         return name
+
+    def content_type(self, default):
+        """ Returns the Substance D content type of the resource """
+        return get_content_type(self.resource)
  
     def text(self, default):
         """ Returns a derivation of the name for text indexing.  If name has no
@@ -72,6 +74,10 @@ class SystemCatalogFactory(object):
 
       Represents the set of interfaces possessed by the content object.
 
+    - content_type (a FieldIndex)
+
+      Represents the Substance D content type of an added object.
+
     - allowed (an AllowedIndex)
 
       Represents the set of principals with the ``sdi.view`` or ``view``
@@ -96,8 +102,10 @@ class SystemCatalogFactory(object):
 
     text = Text(action_mode=MODE_DEFERRED)
 
+    content_type = Field(action_mode=MODE_DEFERRED)
+
 def includeme(config): # pragma: no cover
-    for name in ('interfaces', 'name', 'text'):
+    for name in ('interfaces', 'content_type', 'name', 'text'):
         config.add_indexview(
             SystemIndexViews,
             catalog_name='system',

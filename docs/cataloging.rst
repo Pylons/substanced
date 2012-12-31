@@ -26,15 +26,19 @@ A default set of indexes is available in the ``system`` catalog:
 
   Represents the set of interfaces possessed by the content object.
 
+- content_type (a ``field`` index)
+
+  Represents the Susbtance D content-type of an object.
+
 - allowed (an ``allowed`` index)
 
   Represents the set of users granted the ``sdi.view`` permission to each
   content object.
 
-- name_text (a ``text`` index)
+- text (a ``text`` index)
 
-  Represents the text searched for when you use a search box within the SDI
-  for each content object.
+  Represents the text searched for when you use the filter box within the
+  folder contents view of the SDI.
 
 Querying the Catalog
 --------------------
@@ -112,7 +116,6 @@ Here's an example catalog factory:
 
    from substanced.catalog import (
        catalog_factory,
-       Field,
        Text,
        )
 
