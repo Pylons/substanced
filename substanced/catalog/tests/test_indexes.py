@@ -78,13 +78,13 @@ class TestSDIndex(unittest.TestCase):
         inst.add_action(True)
         self.assertEqual(tm.actions, [True])
 
-    def test_index_resource_no_action_mode(self):
+    def test_index_resource_default_action_mode_is_MODE_ATCOMMIT(self):
         resource = testing.DummyResource()
         inst = self._makeOne()
-        L = []
-        inst.index_doc = lambda oid, resource: L.append((oid, resource))
+        tm = DummyActionTM(None)
+        inst._p_action_tm = tm
         inst.index_resource(resource, 1)
-        self.assertEqual(L, [(1, resource)])
+        self.assertEqual(len(tm.actions), 1)
 
     def test_index_resource_action_MODE_IMMEDIATE(self):
         from substanced.interfaces import MODE_IMMEDIATE
@@ -110,21 +110,23 @@ class TestSDIndex(unittest.TestCase):
         self.assertEqual(action.index, inst)
 
     def test_index_resource_oid_is_None(self):
+        from substanced.interfaces import MODE_IMMEDIATE
         resource = testing.DummyResource()
         resource.__oid__ = 1
         inst = self._makeOne()
         L = []
         inst.index_doc = lambda oid, resource: L.append((oid, resource))
-        inst.index_resource(resource)
+        inst.index_resource(resource, action_mode=MODE_IMMEDIATE)
         self.assertEqual(L, [(1, resource)])
 
-    def test_reindex_resource_no_action_mode(self):
+    def test_reindex_resource_default_action_mode_is_MODE_ATCOMMIT(self):
         resource = testing.DummyResource()
         inst = self._makeOne()
-        L = []
-        inst.reindex_doc = lambda oid, resource: L.append((oid, resource))
+        inst = self._makeOne()
+        tm = DummyActionTM(None)
+        inst._p_action_tm = tm
         inst.reindex_resource(resource, 1)
-        self.assertEqual(L, [(1, resource)])
+        self.assertEqual(len(tm.actions), 1)
 
     def test_reindex_resource_action_MODE_IMMEDIATE(self):
         from substanced.interfaces import MODE_IMMEDIATE
@@ -150,20 +152,21 @@ class TestSDIndex(unittest.TestCase):
         self.assertEqual(action.index, inst)
 
     def test_reindex_resource_no_oid(self):
+        from substanced.interfaces import MODE_IMMEDIATE
         resource = testing.DummyResource()
         resource.__oid__ = 1
         inst = self._makeOne()
         L = []
         inst.reindex_doc = lambda oid, resource: L.append((oid, resource))
-        inst.reindex_resource(resource)
+        inst.reindex_resource(resource, action_mode=MODE_IMMEDIATE)
         self.assertEqual(L, [(1, resource)])
 
-    def test_unindex_resource_no_action_mode(self):
+    def test_unindex_resource_default_mode_is_MODE_ATCOMMIT(self):
         inst = self._makeOne()
-        L = []
-        inst.unindex_doc = lambda oid: L.append(oid)
+        tm = DummyActionTM(None)
+        inst._p_action_tm = tm
         inst.unindex_resource(1)
-        self.assertEqual(L, [1])
+        self.assertEqual(len(tm.actions), 1)
 
     def test_unindex_resource_action_MODE_IMMEDIATE(self):
         from substanced.interfaces import MODE_IMMEDIATE
@@ -187,12 +190,13 @@ class TestSDIndex(unittest.TestCase):
         self.assertEqual(action.index, inst)
 
     def test_unindex_resource_resource_is_not_oid(self):
+        from substanced.interfaces import MODE_IMMEDIATE
         resource = testing.DummyResource()
         resource.__oid__ = 1
         inst = self._makeOne()
         L = []
         inst.unindex_doc = lambda oid: L.append(oid)
-        inst.unindex_resource(resource)
+        inst.unindex_resource(resource, action_mode=MODE_IMMEDIATE)
         self.assertEqual(L, [1])
 
     def test_repr(self):
@@ -413,9 +417,9 @@ class TestPathIndex(unittest.TestCase):
             )
 
 class TestFieldIndex(unittest.TestCase):
-    def _makeOne(self, discriminator=None, family=None):
+    def _makeOne(self, discriminator=None, family=None, action_mode=None):
         from ..indexes import FieldIndex
-        return FieldIndex(discriminator, family)
+        return FieldIndex(discriminator, family, action_mode=action_mode)
     
     def test_ctor_with_discriminator(self):
         inst = self._makeOne('abc')
@@ -424,11 +428,21 @@ class TestFieldIndex(unittest.TestCase):
     def test_ctor_without_discriminator(self):
         inst = self._makeOne()
         self.assertEqual(inst.discriminator.__class__, type(lambda x: True))
+
+    def test_ctor_with_action_mode(self):
+        from substanced.interfaces import MODE_IMMEDIATE
+        inst = self._makeOne('abc', action_mode=MODE_IMMEDIATE)
+        self.assertEqual(inst.action_mode, MODE_IMMEDIATE)
+
+    def test_ctor_without_action_mode(self):
+        from substanced.interfaces import MODE_ATCOMMIT
+        inst = self._makeOne('abc')
+        self.assertEqual(inst.action_mode, MODE_ATCOMMIT)
 
 class TestKeywordIndex(unittest.TestCase):
-    def _makeOne(self, discriminator=None, family=None):
+    def _makeOne(self, discriminator=None, family=None, action_mode=None):
         from ..indexes import KeywordIndex
-        return KeywordIndex(discriminator, family)
+        return KeywordIndex(discriminator, family, action_mode=action_mode)
     
     def test_ctor_with_discriminator(self):
         inst = self._makeOne('abc')
@@ -438,10 +452,22 @@ class TestKeywordIndex(unittest.TestCase):
         inst = self._makeOne()
         self.assertEqual(inst.discriminator.__class__, type(lambda x: True))
 
+    def test_ctor_with_action_mode(self):
+        from substanced.interfaces import MODE_IMMEDIATE
+        inst = self._makeOne('abc', action_mode=MODE_IMMEDIATE)
+        self.assertEqual(inst.action_mode, MODE_IMMEDIATE)
+
+    def test_ctor_without_action_mode(self):
+        from substanced.interfaces import MODE_ATCOMMIT
+        inst = self._makeOne('abc')
+        self.assertEqual(inst.action_mode, MODE_ATCOMMIT)
+
 class TestFacetIndex(unittest.TestCase):
-    def _makeOne(self, discriminator=None, facets=None, family=None):
+    def _makeOne(self, discriminator=None, facets=None, family=None,
+                 action_mode=None):
         from ..indexes import FacetIndex
-        return FacetIndex(discriminator, facets, family)
+        return FacetIndex(discriminator, facets, family,
+                          action_mode=action_mode)
     
     def test_ctor_with_discriminator(self):
         inst = self._makeOne('abc')
@@ -452,16 +478,27 @@ class TestFacetIndex(unittest.TestCase):
         inst = self._makeOne()
         self.assertEqual(inst.discriminator.__class__, type(lambda x: True))
 
+    def test_ctor_with_action_mode(self):
+        from substanced.interfaces import MODE_IMMEDIATE
+        inst = self._makeOne('abc', action_mode=MODE_IMMEDIATE)
+        self.assertEqual(inst.action_mode, MODE_IMMEDIATE)
+
+    def test_ctor_without_action_mode(self):
+        from substanced.interfaces import MODE_ATCOMMIT
+        inst = self._makeOne('abc')
+        self.assertEqual(inst.action_mode, MODE_ATCOMMIT)
+
 class TestTextIndex(unittest.TestCase):
     def _makeOne(
         self,
         discriminator=None,
         lexicon=None,
         index=None,
-        family=None
+        family=None,
+        action_mode=None,
         ):
         from ..indexes import TextIndex
-        return TextIndex(discriminator, family)
+        return TextIndex(discriminator, family, action_mode=action_mode)
     
     def test_ctor_with_discriminator(self):
         inst = self._makeOne('abc')
@@ -470,6 +507,16 @@ class TestTextIndex(unittest.TestCase):
     def test_ctor_without_discriminator(self):
         inst = self._makeOne()
         self.assertEqual(inst.discriminator.__class__, type(lambda x: True))
+
+    def test_ctor_with_action_mode(self):
+        from substanced.interfaces import MODE_IMMEDIATE
+        inst = self._makeOne(action_mode=MODE_IMMEDIATE)
+        self.assertEqual(inst.action_mode, MODE_IMMEDIATE)
+
+    def test_ctor_without_action_mode(self):
+        from substanced.interfaces import MODE_ATCOMMIT
+        inst = self._makeOne()
+        self.assertEqual(inst.action_mode, MODE_ATCOMMIT)
 
 class TestAllowedIndex(unittest.TestCase):
     def setUp(self):
@@ -526,27 +573,26 @@ class TestIndexPropertySheet(unittest.TestCase):
         from ..indexes import IndexPropertySheet
         return IndexPropertySheet(context, request)
 
-    def test_set_action_mode_empty(self):
+    def test_set_action_mode_different(self):
+        from substanced.interfaces import (
+            MODE_IMMEDIATE,
+            MODE_ATCOMMIT,
+            )
         context = testing.DummyResource()
-        inst = self._makeOne(context, None)
-        inst.set({'action_mode':''})
-        self.assertEqual(context.action_mode, None)
-
-    def test_set_action_mode_nonempty(self):
-        from substanced.interfaces import MODE_IMMEDIATE
-        context = testing.DummyResource()
+        context.action_mode = MODE_ATCOMMIT
         inst = self._makeOne(context, None)
         inst.set({'action_mode':'MODE_IMMEDIATE'})
         self.assertEqual(context.action_mode, MODE_IMMEDIATE)
 
-    def test_get_action_mode_None(self):
+    def test_set_action_mode_same(self):
+        from substanced.interfaces import MODE_ATCOMMIT
         context = testing.DummyResource()
-        context.action_mode = None
+        context.action_mode = MODE_ATCOMMIT
         inst = self._makeOne(context, None)
-        result = inst.get()
-        self.assertEqual(result['action_mode'], '')
+        inst.set({'action_mode':'MODE_ATCOMMIT'})
+        self.assertEqual(context.action_mode, MODE_ATCOMMIT)
 
-    def test_get_action_mode_not_None(self):
+    def test_get_action_mode(self):
         from substanced.interfaces import MODE_IMMEDIATE
         context = testing.DummyResource()
         context.action_mode = MODE_IMMEDIATE

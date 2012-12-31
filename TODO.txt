@@ -7,8 +7,6 @@ Features
 - Allow reordering of resources in folder contents view when the folder is
   ordered.
 
-- Default indexes to MODE_ATCOMMIT.
-
 - Release deform2 (merge deform_bootstrap).
 
 - Write sd_dump and sd_load scripts.
@@ -38,6 +36,10 @@ Features
 
 - Show spinner when a button is pressed on the folder contents view that leads
   to another page (e.g. reindex or duplicate).
+
+- Separate out reindexing from catalog autosync at startup.
+
+- Add an autoevolve setting.
 
 Docs
 ----
