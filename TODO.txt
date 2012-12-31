@@ -101,7 +101,10 @@ Cataloging
 
 - Explain starting an indexer process.
 
+Integration
++++++++++++
 
+- Explain how to set up with RelStorage.
 
 
 Can wait until after alpha 1
