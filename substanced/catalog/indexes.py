@@ -37,7 +37,10 @@ from . import deferred
 
 from .. import interfaces as sd_interfaces
 
-from ..interfaces import MODE_IMMEDIATE
+from ..interfaces import (
+    MODE_IMMEDIATE,
+    MODE_ATCOMMIT,
+    )
 
 PATH_WITH_OPTIONS = re.compile(r'\[(.+?)\](.+?)$')
 
@@ -46,7 +49,7 @@ _marker = object()
 class SDIndex(object):
 
     _p_action_tm = None
-    action_mode = None
+    action_mode = MODE_ATCOMMIT
     tm_class = deferred.IndexActionTM # for testing
 
     def resultset_from_query(self, query, names=None, resolver=None):
@@ -89,7 +92,7 @@ class SDIndex(object):
             oid = oid_from_resource(resource)
         if action_mode is None:
             action_mode = self.action_mode
-        if action_mode in (None, MODE_IMMEDIATE):
+        if action_mode is MODE_IMMEDIATE:
             self.index_doc(oid, resource)
         else:
             action = deferred.IndexAction(self, action_mode, oid)
@@ -100,7 +103,7 @@ class SDIndex(object):
             oid = oid_from_resource(resource)
         if action_mode is None:
             action_mode = self.action_mode
-        if action_mode in (None, MODE_IMMEDIATE):
+        if action_mode is MODE_IMMEDIATE:
             self.reindex_doc(oid, resource)
         else:
             action = deferred.ReindexAction(self, action_mode, oid)
@@ -113,7 +116,7 @@ class SDIndex(object):
             oid = oid_from_resource(resource_or_oid)
         if action_mode is None:
             action_mode = self.action_mode
-        if action_mode in (None, MODE_IMMEDIATE):
+        if action_mode is MODE_IMMEDIATE:
             self.unindex_doc(oid)
         else:
             action = deferred.UnindexAction(self, action_mode, oid)
@@ -269,7 +272,6 @@ class IndexSchema(Schema):
         missing=colander.null,
         widget=deform.widget.RadioChoiceWidget(
             values=(
-                ('', 'Default'),
                 ('MODE_IMMEDIATE', 'Immediate'),
                 ('MODE_ATCOMMIT', 'Defer Until Commit'),
                 ('MODE_DEFERRED', 'Defer Until Action Processing'),
@@ -282,18 +284,13 @@ class IndexPropertySheet(PropertySheet):
 
     def set(self, values):
         action_mode = values['action_mode']
-        if not action_mode:
-            action_mode = None
-        else:
-            action_mode = getattr(sd_interfaces, action_mode)
-        self.context.action_mode = action_mode
+        action_mode = getattr(sd_interfaces, action_mode)
+        if action_mode != self.context.action_mode:
+            self.context.action_mode = action_mode
 
     def get(self):
         action_mode = self.context.action_mode
-        if action_mode is None:
-            action_mode = ''
-        else:
-            action_mode = action_mode.__name__
+        action_mode = action_mode.__name__
         return {'action_mode':action_mode}
 
 @content(
@@ -307,7 +304,8 @@ class FieldIndex(SDIndex, hypatia.field.FieldIndex):
         if discriminator is None:
             discriminator = dummy_discriminator
         hypatia.field.FieldIndex.__init__(self, discriminator, family=family)
-        self.action_mode = action_mode
+        if action_mode is not None:
+            self.action_mode = action_mode
 
 @content(
     'Keyword Index',
@@ -322,7 +320,8 @@ class KeywordIndex(SDIndex, hypatia.keyword.KeywordIndex):
         hypatia.keyword.KeywordIndex.__init__(
             self, discriminator, family=family
             )
-        self.action_mode = action_mode
+        if action_mode is not None:
+            self.action_mode = action_mode
 
 @content(
     'Text Index',
@@ -344,7 +343,8 @@ class TextIndex(SDIndex, hypatia.text.TextIndex):
         hypatia.text.TextIndex.__init__(
             self, discriminator, lexicon=lexicon, index=index, family=family,
             )
-        self.action_mode = action_mode
+        if action_mode is not None:
+            self.action_mode = action_mode
 
 @content(
     'Facet Index',
@@ -362,7 +362,8 @@ class FacetIndex(SDIndex, hypatia.facet.FacetIndex):
         hypatia.facet.FacetIndex.__init__(
             self, discriminator, facets=facets, family=family
             )
-        self.action_mode = action_mode
+        if action_mode is not None:
+            self.action_mode = action_mode
 
 @content(
     'Allowed Index',
