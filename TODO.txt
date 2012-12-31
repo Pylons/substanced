@@ -7,6 +7,8 @@ Features
 - Allow reordering of resources in folder contents view when the folder is
   ordered.
 
+- Default indexes to MODE_ATCOMMIT.
+
 - Release deform2 (merge deform_bootstrap).
 
 - Write sd_dump and sd_load scripts.
