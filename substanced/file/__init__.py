@@ -235,7 +235,7 @@ class File(Persistent):
         ``pyramid.response.FileResponse`` constructor as its keyword
         arguments."""
         if not 'content_type' in kw:
-            kw['content_type'] = self.mimetype
+            kw['content_type'] = str(self.mimetype)
         path = self.blob.committed()
         response = FileResponse(path, **kw)
         return response
