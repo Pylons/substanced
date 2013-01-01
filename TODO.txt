@@ -13,10 +13,9 @@ Features
 
 - Ability to dump FileData in propertysheets.
 
-- Really provide an "interfaces" index?  Probably be better off with a
-  content_type index.
+- Remove interfaces index?
 
-- Use hasattr(__is_folder__) instead of IFolder.providedBy is is_folder.
+- Use hasattr(__is_folder__) instead of IFolder.providedBy in is_folder.
 
 - How to prevent objects from being moved or duplicated into a place where
   they're not addable?
