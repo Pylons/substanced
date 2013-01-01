@@ -192,3 +192,139 @@ How does that get signified? An item is 'deletable' if the user has
 the ``sdi.manage-contents`` permission on ``folder`` *and* if the
 subobject has a ``__sdi_deletable__`` attribute which resolves to a
 boolean ``True`` value.
+
+Filtering What Can Be Added
+===========================
+
+Not all kinds of resources make sense to be added inside a certain kind
+of container. For example, :py:class:`substanced.catalog.Catalog`
+is a content type that can hold only indexes. That is,it isn't meant to
+hold any arbitrary kind of thing.
+
+To tell the SDI what can be added inside a container content type,
+add a ``__sdi_addable__`` method to your content type. This method is
+passed the Substance D
+:attr:`introspector <pyramid:pyramid.config.Configurator.introspector>`,
+which you method can then use to see what content types are registered
+in the site. Your ``__sdi_addable__`` method can perform some logic,
+then return a filtered sequence.
+
+As an example, the ``__sdi_addable__`` method on the ``Catalog``
+filters out the kinds of things that can be added in a catalog.
+
+Extending Which Columns Are Displayed
+=====================================
+
+The folder contents grid displays a number of columns by default. If
+you are managing content with custom properties, in some cases you want
+to list those properties in the columns the grid can display. You can
+do so on custom folder content types by adding a ``columns`` argument
+to your ``@content`` decorator.
+
+As an example, imagine a ``Binder`` kind of container. It has a content
+type declaration:
+
+.. code-block:: python
+
+    @content(
+        'Binder',
+        icon='icon-book',
+        add_view='add_binder',
+        propertysheets = (
+            ('Basic', BinderPropertySheet),
+            ),
+        columns=binder_columns,
+        catalog=True,
+        )
+
+The ``binder_columns`` points to a callable where we perform the work
+to both add the column to the list of columns, but also specify how to
+get the row data for that column:
+
+.. code-block: python
+
+    def binder_columns(folder, subobject, request, default_columnspec):
+        subobject_name = getattr(subobject, '__name__', str(subobject))
+        objectmap = find_objectmap(folder)
+        user_oid = getattr(subobject, '__creator__', None)
+        created = getattr(subobject, '__created__', None)
+        modified = getattr(subobject, '__modified__', None)
+        if user_oid is not None:
+            user = objectmap.object_for(user_oid)
+            user_name = getattr(user, '__name__', 'anonymous')
+        else:
+            user_name = 'anonymous'
+        if created is not None:
+            created = created.isoformat()
+        if modified is not None:
+            modified = modified.isoformat()
+        return default_columnspec + [
+            {'name': 'Title',
+            'field': 'title',
+            'value': getattr(subobject, 'title', subobject_name),
+            'sortable': True,
+            'formatter': 'icon_label_url',
+            },
+            {'name': 'Created',
+            'field': 'created',
+            'value': created,
+            'sortable': True,
+            'formatter': 'date',
+            },
+            {'name': 'Last edited',
+            'field': 'modified',
+            'value': modified,
+            'sortable': True,
+            'formatter': 'date',
+            },
+            {'name': 'Creator',
+            'field': 'creator',
+            'value': user_name,
+            'sortable': True,
+            }
+            ]
+
+Here we add four columns to the standard set of grid columns,
+whenever we are in a ``Binder`` folder.
+
+Adding New Folder Contents Buttons
+==================================
+
+The grid in folder contents makes it easy to select multiple resources
+then click a button to perform an action. Wouldn't it be great, though,
+if we could add a new button to all or certain folders,
+to perform custom actions?
+
+In the previous section we saw how to pass another argument to the
+``@content`` decorator. We do the same for new buttons. A content type
+can pass in ``buttons=callable`` to modify the list of buttons on a
+particular kind of folder.
+
+For example, the :py:func:`substanced.catalog.catalog_buttons` callable
+adds a new ``Reindex`` button in front of the standard set of buttons:
+
+.. code-block:: python
+
+    def catalog_buttons(context, request, default_buttons):
+        """ Show a reindex button before default buttons in the folder contents
+        view of a catalog"""
+        buttons = [
+            {'type':'single',
+             'buttons':
+             [
+                 {'id':'reindex',
+                  'name':'form.reindex',
+                  'class':'btn-primary btn-sdi-sel',
+                  'value':'reindex',
+                  'text':'Reindex'}
+                 ]
+             }
+            ] + default_buttons
+        return buttons
+
+The button is disabled until one or more resources are selected which
+have the correct permission (discussed above.) If our new button is
+clicked, the form is posted with the ``form.reindex`` value in post
+data. You can then make a ``@mgmt_view`` with
+``request_param='form.reindex'`` in the declaration to handle the form
+post when that button is clicked.
