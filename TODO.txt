@@ -9,8 +9,6 @@ Features
 
 - Release deform2 (merge deform_bootstrap).
 
-- Write sd_dump and sd_load scripts.
-
 - Ability to dump FileData in propertysheets.
 
 - Remove interfaces index?
@@ -51,6 +49,9 @@ Dump and Load
 - Explain how to add a dumper.
 
 - Add API docs for dump/load, and dump contexts.
+
+- Document ``sd_dump`` console script.  Explain that there is no ``sd_load``,
+  as loading is more a development effort rather than an administrative one.
 
 Events
 ++++++

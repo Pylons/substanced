@@ -77,6 +77,7 @@ setup(name='substanced',
       sd_evolve = substanced.scripts.evolve:main
       sd_reindex = substanced.scripts.reindex:main
       sd_drain_indexing = substanced.scripts.drain_indexing:main
+      sd_dump = substanced.scripts.dump:main
       [pyramid.scaffold]
       substanced=substanced.scaffolds:SubstanceDProjectTemplate
       """,

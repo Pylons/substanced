@@ -622,6 +622,7 @@ class AdhocAttrDumper(object):
                     setattr(resource, k, v)
 
 def add_dumper(config, dumper_name, dumper_factory, before=None, after=None):
+    """ Configurator directive for adding a dumper """
     registry = config.registry
     def register():
         dumpers = registry.setdefault('_sd_dumpers', [])

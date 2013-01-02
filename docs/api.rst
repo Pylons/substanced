@@ -163,6 +163,19 @@ Other Helpers
 
 .. autofunction:: includeme
 
+:mod:`substanced.dump` API
+-----------------------------
+
+.. automodule:: substanced.dump
+
+.. autofunction:: dump
+
+.. autofunction:: load
+
+.. autofunction:: add_dumper
+
+.. autofunction:: includeme
+
 :mod:`substanced.event` API
 ---------------------------
 
@@ -408,7 +421,7 @@ Other Helpers
    :members:
 
 :mod:`substanced.stats` API
---------------------------
+---------------------------
 
 .. automodule:: substanced.stats
 
