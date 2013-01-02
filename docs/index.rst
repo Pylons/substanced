@@ -71,6 +71,7 @@ Narrative Documentation
    workflows
    evolution
    folder_contents
+   configuration
    retail
 
 API Documentation
