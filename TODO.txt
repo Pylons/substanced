@@ -107,6 +107,8 @@ Misc
 
 - Explain the objectmap get_extents API.
 
+- Explain goggles ("@@")
+
 
 Can wait until after alpha 1
 ============================
