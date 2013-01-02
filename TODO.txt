@@ -84,6 +84,7 @@ Misc
 
 - Explain goggles ("@@")
 
+- Explain undo tab
 
 Can wait until after alpha 1
 ============================
