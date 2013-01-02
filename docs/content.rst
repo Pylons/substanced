@@ -567,3 +567,109 @@ Affecting the Tab Order for Management Views
 The ``tab_order`` parameter overrides the mgmt_view tab settings,
 for a content type, with a sequence of view names that should be
 ordered (and everything not in the sequence, after.)
+
+Handling Content Events
+=======================
+
+Adding and modifying data related to content is, thanks to the framework,
+easy to do. Sometimes, though, you want to intervene and, for example,
+perform some extra work when content resources are added. Substance D
+has several framework events you can subscribe to using
+:ref:`Pyramid events <pyramid:events_chapter>`.
+
+The :py:mod:`substanced.events` module imports these events as interfaces
+from :py:mod:`substanced.interfaces` and then provides decorator
+subscribers as convenience for each:
+
+- :py:class:`substanced.interfaces.IObjectAdded` as subscriber
+  ``@subscriber_added``
+
+- :py:class:`substanced.interfaces.IObjectWillBeAdded` as subscriber
+  ``@subscriber_will_be_added``
+
+- :py:class:`substanced.interfaces.IObjectRemoved` as subscriber
+  ``@subscriber_removed``
+
+- :py:class:`substanced.interfaces.IObjectWillBeRemoved` as subscriber
+  ``@subscriber_will_be_removed``
+
+- :py:class:`substanced.interfaces.IObjectModified` as subscriber
+  ``@subscriber_modified``
+
+- :py:class:`substanced.interfaces.IACLModified` as subscriber
+  ``@subscriber_acl_modified``
+
+- :py:class:`substanced.interfaces.IContentCreated` as subscriber
+  ``@subscriber_created``
+
+As an example, the
+:py:func:`substanced.principal.subscribers.user_added` function is a
+subscriber to the ``IObjectAdded`` event:
+
+.. code-block:: python
+
+    @subscribe_added(IUser)
+    def user_added(event):
+        """ Give each user permission to change their own password."""
+        if event.loading: # fbo dump/load
+            return
+        user = event.object
+        registry = event.registry
+        set_acl(
+            user,
+            [(Allow, get_oid(user), ('sdi.view', 'sdi.change-password'))],
+            registry=registry,
+            )
+
+As with the rest of Pyramid, you can do imperative configuration if you
+don't like decorator-based configuration, using
+``config.add_content_subscriber`` Both the declarative and imperative
+forms result in :func:`substanced.event.add_content_subscriber`.
+
+.. note::
+
+    While the event subscriber is de-coupled logically from the action
+    that triggers the event, both the action and the subscriber run
+    in the same transaction.
+
+The ``IACLModified`` event (and ``@subscriber_acl_modified`` subscriber)
+is used internally to Substance D to re-index information the system
+catalog's ACL index. Substance D also uses this event to maintain
+references between resources and principals. Substance D applications
+can use this in different ways, for example recording a security audit
+trail on security changes.
+
+Sometimes when you perform operations on objects you don't want to
+perform the standard events. For example, in folder contents you can
+select a number of resources and move them to another folder. Normally
+this would fire content change events that re-index the files. This is
+fairly pointless: the content of the file hasn't changed.
+
+If you looked at the interface for one of the content events,
+you would see some extra information supported. For example, in
+:py:class:`substanced.interfaces.IObjectWillBeAdded`:
+
+.. code-block:: python
+
+    class IObjectWillBeAdded(IObjectEvent):
+        """ An event type sent when an before an object is added """
+        object = Attribute('The object being added')
+        parent = Attribute('The folder to which the object is being added')
+        name = Attribute('The name which the object is being added to the folder '
+                         'with')
+        moving = Attribute('None or the folder from which the object being added '
+                           'was moved')
+        loading = Attribute('Boolean indicating that this add is part of a load '
+                            '(during a dump load process)')
+        duplicating = Attribute('The object being duplicated or ``None``')
+
+``moving``, ``loading``, and ``duplicating`` are flags that can be set
+on the event when certain actions are triggered. These help in cases
+such as the one above: certain subscribers might want "flavors" of
+standard events and, in some cases, handle the event in a different
+way. This helps avoid lots of special-case events or the need for a
+hierarchy of events.
+
+Thus in the case above, the catalog subscriber can see that the changes
+triggered by the event where in the special case of "moving". This can
+be seen in :attr:`substanced.catalog.subscribers.object_added`.

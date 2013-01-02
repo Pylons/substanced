@@ -53,15 +53,6 @@ Dump and Load
 - Document ``sd_dump`` console script.  Explain that there is no ``sd_load``,
   as loading is more a development effort rather than an administrative one.
 
-Events
-++++++
-
-- Explain event listener decorators and add_content_subscriber.
-
-- Explain subscribe_acl_modified.
-
-- Explain "moving" and "duplicating" flags on added and removed events.
-
 Security
 ++++++++
 
