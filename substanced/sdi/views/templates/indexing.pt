@@ -2,8 +2,6 @@
 
   <div metal:fill-slot="main">
 
-    <h1>Object Indexing Status</h1>
-
     <div tal:repeat="(catalog,indexes) catalogs" style="margin-top: 20px">
     
       <h2>For catalog service at "${request.resource_path(catalog)}"</h2>

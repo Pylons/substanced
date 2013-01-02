@@ -2,6 +2,8 @@ import transaction
 from pyramid_zodbconn import get_connection
 from substanced.evolution import evolve_packages
 
+from .stats import statsd_incr
+
 def root_factory(request, t=transaction, g=get_connection,
                  evolve_packages=evolve_packages):
     """ A function which can be used as a Pyramid ``root_factory``.  It
@@ -20,6 +22,7 @@ def root_factory(request, t=transaction, g=get_connection,
             mark_all_current=True,
             )
         t.commit()
+    statsd_incr('root_factory', rate=.1)
     return zodb_root['app_root']
 
 def include(config): # pragma: no cover
@@ -27,6 +30,7 @@ def include(config): # pragma: no cover
     default aspects of the SDI to work."""
     config.include('pyramid_zodbconn')
     config.include('pyramid_mailer')
+    config.include('.stats')
     config.include('.folder')
     config.include('.event')
     config.include('.sdi')
@@ -42,6 +46,7 @@ def include(config): # pragma: no cover
 def scan(config): # pragma: no cover
     """ Perform all ``config.scan`` tasks required for Substance D and the
     default aspects of the SDI to work."""
+    config.scan('.stats')
     config.scan('.catalog')
     config.scan('.file')
     config.scan('.folder')

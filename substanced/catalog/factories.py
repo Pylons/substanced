@@ -125,7 +125,7 @@ class CatalogFactory(object):
                         index_name,
                         )
                     )
-                del catalog[index_name]
+                catalog.remove(index_name)
                 result = True
         return result
 
@@ -171,9 +171,8 @@ class CatalogFactory(object):
                 output and output(
                     '%s: adding index named %r' % (catalog_path, index_name),
                     )
-                index = catalog[index_name] = index_factory(
-                    self.name, index_name
-                    )
+                index = index_factory(self.name, index_name)
+                catalog.add(index_name, index)
                 changed = True
                 to_reindex.add(index_name)
 

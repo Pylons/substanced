@@ -233,14 +233,15 @@ class ObjectMap(Persistent):
 
         omap = self.pathindex.get(path_tuple)
 
-        # rationale: if this key isn't present, no path added ever contained it
+        # rationale: if this key isn't present, no path added ever
+        # contained it
         if omap is None:
             return set()
 
         removed = self.family.IF.Set()
         items = omap.items()
         removepaths = []
-        
+
         for k, dm in self.pathindex.items(min=path_tuple):
             if k[:pathlen] == path_tuple:
                 for oidset in dm.values():
@@ -271,10 +272,10 @@ class ObjectMap(Persistent):
                 for oid in oidset:
                     if oid in oidset2:
                         oidset2.remove(oid)
-                        # adding to removed and removing from objectid_to_path
-                        # and path_to_objectid should have been taken care of
-                        # above in the for k, dm in self.pathindex.items()
-                        # loop
+                        # adding to removed and removing from
+                        # objectid_to_path and path_to_objectid should have
+                        # been taken care of above in the for k, dm in
+                        # self.pathindex.items() loop
                         assert oid in removed, oid
                         assert not oid in self.objectid_to_path, oid
 
@@ -941,7 +942,7 @@ class _ReferencedPredicate(object):
 
 @subscribe_will_be_removed()
 def referential_integrity(event):
-    if event.moving:
+    if event.moving is not None: # being moved
         return
     obj = event.object
     obj_oid = get_oid(obj, None)

@@ -32,6 +32,16 @@ class TestPropertySheet(unittest.TestCase):
         self.assertEqual(context.title, 't')
         self.assertEqual(context.description, 'd')
 
+    def test_set_nochange(self):
+        context = testing.DummyResource()
+        request = testing.DummyRequest()
+        inst = self._makeOne(context, request)
+        context.title = 't'
+        context.description = 'd'
+        inst.set(dict(title='t', description='d'))
+        self.assertEqual(context.title, 't')
+        self.assertEqual(context.description, 'd')
+
     def test_set_with_omit_iter(self):
         context = testing.DummyResource()
         request = testing.DummyRequest()

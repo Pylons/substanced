@@ -149,8 +149,14 @@ class File(Persistent):
              of additional dependencies.  See :ref:`optional_dependencies`.
         """
         self.blob = Blob()
-        self.mimetype = mimetype or 'application/octet-stream'
         self.title = title or u''
+
+        # mimetype will be overridden by upload if there's a stream
+        if mimetype is USE_MAGIC:
+            self.mimetype = 'application/octet-stream'
+        else:
+            self.mimetype = mimetype or 'application/octet-stream'
+
         if stream is not None:
             if mimetype is USE_MAGIC:
                 hint = USE_MAGIC
@@ -229,7 +235,7 @@ class File(Persistent):
         ``pyramid.response.FileResponse`` constructor as its keyword
         arguments."""
         if not 'content_type' in kw:
-            kw['content_type'] = self.mimetype
+            kw['content_type'] = str(self.mimetype)
         path = self.blob.committed()
         response = FileResponse(path, **kw)
         return response

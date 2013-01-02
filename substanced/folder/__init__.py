@@ -33,6 +33,7 @@ from ..interfaces import (
     marker,
     )
 
+from ..stats import statsd_timer
 from ..content import content
 
 from ..event import (
@@ -183,8 +184,9 @@ class Folder(Persistent):
         object or directly decodeable to Unicode using the system default
         encoding.
         """
-        name = unicode(name)
-        return self.data[name]
+        with statsd_timer('folder.get'):
+            name = unicode(name)
+            return self.data[name]
 
     def get(self, name, default=None):
         """ Return the object named by ``name`` or the default.
@@ -194,8 +196,9 @@ class Folder(Persistent):
         If ``name`` is a bytestring object, it must be decodable using the
         system default encoding.
         """
-        name = unicode(name)
-        return self.data.get(name, default)
+        with statsd_timer('folder.get'):
+            name = unicode(name)
+            return self.data.get(name, default)
 
     def __contains__(self, name):
         """ Does the container contains an object named by name?
@@ -291,16 +294,19 @@ class Folder(Persistent):
         return name
 
     def add(self, name, other, send_events=True, reserved_names=(),
-            duplicating=False, moving=False, loading=False, registry=None):
+            duplicating=None, moving=None, loading=False, registry=None):
         """ Same as ``__setitem__``.
 
         If ``send_events`` is False, suppress the sending of folder events.
         Don't allow names in the ``reserved_names`` sequence to be added.
 
-        If ``duplicating`` is ``True``, oids will be replaced in objectmap.  If
-        ``moving`` is ``True``, the ``moving`` attribute of events will be
-        ``True`` too.  If ``loading`` is ``True``, the ``loading`` attribute of
-        events sent as a result of calling this method will be ``True`` too.
+        If ``duplicating`` not ``None``, it must be the object which is being
+        duplicated; a result of a non-``None`` duplicating means that oids will
+        be replaced in objectmap.  If ``moving`` is not ``None``, it must be
+        the folder from which the object is moving; this will be the ``moving``
+        attribute of events sent by this function too.  If ``loading`` is
+        ``True``, the ``loading`` attribute of events sent as a result of
+        calling this method will be ``True`` too.
 
         This method returns the name used to place the subobject in the
         folder (a derivation of ``name``, usually the result of
@@ -319,47 +325,52 @@ class Folder(Persistent):
                     other, self, self.__parent__)
                 )
 
-        objectmap = find_objectmap(self)
+        with statsd_timer('folder.add'):
 
-        if objectmap is not None:
+            objectmap = find_objectmap(self)
 
-            basepath = resource_path_tuple(self)
+            if objectmap is not None:
 
-            for node in postorder(other):
-                node_path = node_path_tuple(node)
-                path_tuple = basepath + (name,) + node_path[1:]
-                # the below gives node an objectid; if the will-be-added event
-                # is the result of a duplication, replace the oid of the node
-                # with a new one
-                objectmap.add(
-                    node, path_tuple, duplicating=duplicating, moving=moving
+                basepath = resource_path_tuple(self)
+
+                for node in postorder(other):
+                    node_path = node_path_tuple(node)
+                    path_tuple = basepath + (name,) + node_path[1:]
+                    # the below gives node an objectid; if the will-be-added
+                    # event is the result of a duplication, replace the oid of
+                    # the node with a new one
+                    objectmap.add(
+                        node,
+                        path_tuple,
+                        duplicating=duplicating is not None,
+                        moving=moving is not None,
+                        )
+
+            if send_events:
+                event = ObjectWillBeAdded(
+                    other, self, name, duplicating=duplicating, moving=moving,
+                    loading=loading,
                     )
+                self._notify(event, registry)
 
-        if send_events:
-            event = ObjectWillBeAdded(
-                other, self, name, duplicating=duplicating, moving=moving,
-                loading=loading,
-                )
-            self._notify(event, registry)
+            other.__parent__ = self
+            other.__name__ = name
 
-        other.__parent__ = self
-        other.__name__ = name
+            self.data[name] = other
+            self._num_objects.change(1)
 
-        self.data[name] = other
-        self._num_objects.change(1)
+            if self._order is not None:
+                oid = get_oid(other)
+                self._order += ((name, oid),)
 
-        if self._order is not None:
-            oid = get_oid(other)
-            self._order += ((name, oid),)
+            if send_events:
+                event = ObjectAdded(
+                    other, self, name, duplicating=duplicating, moving=moving,
+                    loading=loading,
+                    )
+                self._notify(event, registry)
 
-        if send_events:
-            event = ObjectAdded(
-                other, self, name, duplicating=duplicating, moving=moving,
-                loading=loading,
-                )
-            self._notify(event, registry)
-
-        return name
+            return name
 
     def pop(self, name, default=marker, registry=None):
         """ Remove the item stored in the under ``name`` and return it.
@@ -416,16 +427,18 @@ class Folder(Persistent):
         """
         return self.remove(name)
 
-    def remove(self, name, send_events=True, moving=False, loading=False,
+    def remove(self, name, send_events=True, moving=None, loading=False,
                registry=None):
         """ Same thing as ``__delitem__``.
 
         If ``send_events`` is false, suppress the sending of folder events.
 
-        If ``moving`` is ``True``, the ``moving`` attribute of events sent as a
-        result of calling this method will be ``True`` too.  If ``loading`` is
-        ``True``, the ``loading`` attribute of events sent as a result of
-        calling this method will be ``True`` too.
+        If ``moving`` is not ``None``, the ``moving`` argument must be the
+        folder to which the named object will be moving.  This value will be
+        passed along as the ``moving`` attribute of the events sent as the
+        result of this action.  If ``loading`` is ``True``, the ``loading``
+        attribute of events sent as a result of calling this method will be
+        ``True`` too.
         """
         name = unicode(name)
         other = self.data[name]
@@ -434,37 +447,39 @@ class Folder(Persistent):
         if registry is None:
             registry = get_current_registry()
 
-        if send_events:
-            event = ObjectWillBeRemoved(
-                other, self, name, moving=moving, loading=loading
-                )
-            self._notify(event, registry)
+        with statsd_timer('folder.remove'):
 
-        if hasattr(other, '__parent__'):
-            del other.__parent__
+            if send_events:
+                event = ObjectWillBeRemoved(
+                    other, self, name, moving=moving, loading=loading
+                    )
+                self._notify(event, registry)
 
-        if hasattr(other, '__name__'):
-            del other.__name__
+            if hasattr(other, '__parent__'):
+                del other.__parent__
 
-        del self.data[name]
-        self._num_objects.change(-1)
+            if hasattr(other, '__name__'):
+                del other.__name__
 
-        if self._order is not None:
-            self._order = tuple([x for x in self._order if x[0] != name])
+            del self.data[name]
+            self._num_objects.change(-1)
 
-        objectmap = find_objectmap(self)
+            if self._order is not None:
+                self._order = tuple([x for x in self._order if x[0] != name])
 
-        removed_oids = set([oid])
+            objectmap = find_objectmap(self)
 
-        if objectmap is not None and oid is not None:
-            removed_oids = objectmap.remove(oid, moving=moving)
+            removed_oids = set([oid])
 
-        if send_events:
-            event = ObjectRemoved(other, self, name, removed_oids,
-                                  moving=moving, loading=loading)
-            self._notify(event, registry)
+            if objectmap is not None and oid is not None:
+                removed_oids = objectmap.remove(oid, moving=moving is not None)
 
-        return other
+            if send_events:
+                event = ObjectRemoved(other, self, name, removed_oids,
+                                      moving=moving, loading=loading)
+                self._notify(event, registry)
+
+            return other
 
     def copy(self, name, other, newname=None, registry=None):
         """
@@ -479,8 +494,12 @@ class Folder(Persistent):
         if registry is None:
             registry = get_current_registry()
 
-        newobj = copy(self[name])
-        return other.add(newname, newobj, duplicating=True, registry=registry)
+        with statsd_timer('folder.copy'):
+            obj = self[name]
+            newobj = copy(obj)
+            return other.add(
+                newname, newobj, duplicating=obj, registry=registry
+                )
 
     def move(self, name, other, newname=None, registry=None):
         """
@@ -497,8 +516,17 @@ class Folder(Persistent):
             newname = name
         if registry is None:
             registry = get_current_registry()
-        ob = self.remove(name, moving=True, registry=registry)
-        other.add(newname, ob, moving=True, registry=registry)
+        ob = self.remove(
+            name,
+            moving=other,
+            registry=registry
+            )
+        other.add(
+            newname,
+            ob,
+            moving=self,
+            registry=registry
+            )
         return ob
 
     def rename(self, oldname, newname, registry=None):
@@ -513,7 +541,7 @@ class Folder(Persistent):
             registry = get_current_registry()
         return self.move(oldname, self, newname, registry=registry)
 
-    def replace(self, name, newobject, registry=None):
+    def replace(self, name, newobject, send_events=True, registry=None):
         """ Replace an existing object named ``name`` in this folder with a
         new object ``newobject``.  If there isn't an object named ``name`` in
         this folder, an exception will *not* be raised; instead, the new
@@ -521,13 +549,13 @@ class Folder(Persistent):
 
         This operation is done in terms of a remove and an add.  The Removed
         and WillBeRemoved events will be sent for the old object, and the
-        WillBeAdded and Add events will be sent for the new object.
+        WillBeAdded and Added events will be sent for the new object.
         """
         if registry is None:
             registry = get_current_registry()
         if name in self:
-            self.remove(name)
-        self.add(name, newobject, registry=registry)
+            self.remove(name, send_events=send_events)
+        self.add(name, newobject, send_events=send_events, registry=registry)
 
     def load(self, name, newobject, registry=None):
         """ A replace method used by the code that loads an existing dump.
@@ -543,8 +571,8 @@ class _AutoNamingFolder(object):
         self,
         subobject,
         send_events=True,
-        duplicating=False,
-        moving=False,
+        duplicating=None,
+        moving=None,
         registry=None
         ):
         """Add a subobject, naming it automatically, giving it the name
@@ -628,7 +656,7 @@ class SequentialAutoNamingFolder(Folder, _AutoNamingFolder):
         return str(int(name)).zfill(self._autoname_length)
 
     def add(self, name, other, send_events=True, reserved_names=(),
-            duplicating=False, moving=False, loading=False, registry=None):
+            duplicating=None, moving=None, loading=False, registry=None):
         """ The ``add`` method of a SequentialAutoNamingFolder will raise a
         :exc:`ValueError` if the ``name`` it is passed is not intifiable, as
         its ``next_name`` method relies on controlling the types of names

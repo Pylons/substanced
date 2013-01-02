@@ -26,14 +26,19 @@ A default set of indexes is available in the ``system`` catalog:
 
   Represents the set of interfaces possessed by the content object.
 
-- containment (a ``keyword`` index), uses a custom discriminator exclusively.
+- content_type (a ``field`` index)
 
-  Represents the set of interfaces and classes which are possessed by
-  parents of the content object (inclusive of itself)
+  Represents the Susbtance D content-type of an object.
 
-- allowed (an ``allowed`` index), uses a custom discriminator exclusively.
+- allowed (an ``allowed`` index)
 
-  Represents the set of users granted a permission to each content object.
+  Represents the set of users granted the ``sdi.view`` permission to each
+  content object.
+
+- text (a ``text`` index)
+
+  Represents the text searched for when you use the filter box within the
+  folder contents view of the SDI.
 
 Querying the Catalog
 --------------------
@@ -111,7 +116,6 @@ Here's an example catalog factory:
 
    from substanced.catalog import (
        catalog_factory,
-       Field,
        Text,
        )
 

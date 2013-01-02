@@ -8,6 +8,8 @@ from pyramid.compat import is_nonstr_iter
 from ..interfaces import IPropertySheet
 from ..event import ObjectModified
 
+_marker = object()
+
 @implementer(IPropertySheet)
 class PropertySheet(object):
     """ Convenience base class for concrete property sheet implementations """
@@ -38,7 +40,12 @@ class PropertySheet(object):
             omit = (omit,)
         for k in struct:
             if not k in omit:
-                setattr(self.context, k, struct[k])
+                # avoid setting an attribute on the object if it's the same
+                # value as the existing value to avoid database bloat
+                existing_val = getattr(self.context, k, _marker)
+                new_val = struct[k]
+                if existing_val != new_val:
+                    setattr(self.context, k, new_val)
 
     def after_set(self):
         event = ObjectModified(self.context)

@@ -42,11 +42,29 @@ def object_added(event):
     catalogs = find_catalogs(obj)
     if not catalogs:
         return
+
+    reindex_only = False
+
+    if event.moving is not None:
+        # If we're being moved into a place with the same catalogs
+        # as the old place, just reindex; don't add.  The object_removed
+        # subscriber depends on this behavior.
+        if event.parent is event.moving:
+            # optimization to avoid calling find_catalogs (rename)
+            reindex_only = True 
+        else:
+            old_catalogs = find_catalogs(event.moving)
+            if catalogs == old_catalogs:
+                reindex_only = True
+
     for node in postorder(obj):
         oid = get_oid(node, None)
         if oid is not None:
             for catalog in catalogs:
-                catalog.index_doc(oid, node)
+                if reindex_only:
+                    catalog.reindex_resource(node, oid=oid)
+                else:
+                    catalog.index_resource(node, oid=oid)
 
 @subscribe_removed()
 def object_removed(event):
@@ -55,10 +73,30 @@ def object_removed(event):
     subscriber"""
     parent = event.parent
     catalogs = find_catalogs(parent)
+
+    if event.moving is not None:
+        # Don't actually unindex anything if we're moving to a place that has a
+        # lineage with the same set of catalogs; the object_added event
+        # subscriber will reindex everything, so there's no sense in actually
+        # doing an unindex.
+        rename_in_progress = parent is event.moving
+        if rename_in_progress:
+            # Common-case optimization to avoid calling find_catalogs below
+            return 
+        else:
+            new_catalogs = find_catalogs(event.moving)
+            if catalogs == new_catalogs:
+                return
+
+    # If this event is not a moving event, or if it is a moving event and the
+    # set of catalogs differs between the object's old home and its new home,
+    # unindex every object related to this removal.
+
     removed = event.removed_oids
+
     for catalog in catalogs:
         for oid in catalog.family.IF.intersection(removed, catalog.objectids):
-            catalog.unindex_doc(oid)
+            catalog.unindex_resource(oid)
 
 @subscribe_modified()
 def object_modified(event):
@@ -70,7 +108,7 @@ def object_modified(event):
     if oid is not None:
         catalogs = find_catalogs(obj)
         for catalog in catalogs:
-            catalog.reindex_doc(oid, obj)
+            catalog.reindex_resource(obj, oid=oid)
 
 @subscribe_acl_modified()
 def acl_modified(event):
@@ -85,10 +123,13 @@ def acl_modified(event):
             index_path = resource_path(index)
             if registry.content.istype(index, 'Allowed Index'):
                 for node in postorder(resource):
-                    logger.info('%s: reindexing %s' % (index_path, node))
+                    logger.info(
+                        '%s: reindexing %s due to ACL modified' % (
+                            index_path, node)
+                        )
                     oid = get_oid(node, None)
                     if oid is not None:
-                        index.reindex_doc(oid, node)
+                        index.reindex_resource(node, oid=oid)
 
 @subscriber(ApplicationCreated)
 def on_startup(event):

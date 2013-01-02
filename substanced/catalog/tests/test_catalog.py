@@ -27,9 +27,13 @@ class TestCatalog(unittest.TestCase):
     
     def setUp(self):
         self.config = testing.setUp()
+        from zope.deprecation import __show__
+        __show__.off()
 
     def tearDown(self):
         testing.tearDown()
+        from zope.deprecation import __show__
+        __show__.on()
 
     def _getTargetClass(self):
         from .. import Catalog
@@ -63,6 +67,13 @@ class TestCatalog(unittest.TestCase):
         inst = self._makeOne()
         verifyObject(ICatalog, inst)
 
+    def test_flush(self):
+        inst = self._makeOne()
+        idx = DummyIndex()
+        inst['name'] = idx
+        inst.flush()
+        self.assertEqual(idx.flushed, True)
+
     def test_reset(self):
         catalog = self._makeOne()
         idx = DummyIndex()
@@ -84,62 +95,113 @@ class TestCatalog(unittest.TestCase):
         catalog = self._makeOne(family=BTrees.family32)
         self.failUnless(catalog.family is BTrees.family32)
 
-    def test_index_doc_indexes(self):
+    def test_index_resource_indexes(self):
+        catalog = self._makeOne()
+        idx = DummyIndex()
+        catalog['name'] = idx
+        catalog.index_resource('value', 1)
+        self.assertEqual(idx.oid, 1)
+        self.assertEqual(idx.resource, 'value')
+
+    def test_index_resource_objectids(self):
+        inst = self._makeOne()
+        inst.index_resource(object(), 1)
+        self.assertEqual(list(inst.objectids), [1])
+
+    def test_index_resource_nonint_docid(self):
+        catalog = self._makeOne()
+        idx = DummyIndex()
+        catalog['name'] = idx
+        self.assertRaises(TypeError, catalog.index_resource, 'value', 'abc')
+
+    def test_index_resource_oid_is_None(self):
+        resource = testing.DummyResource()
+        resource.__oid__ = 1
+        catalog = self._makeOne()
+        idx = DummyIndex()
+        catalog['name'] = idx
+        catalog.index_resource(resource)
+        self.assertEqual(idx.oid, 1)
+        self.assertEqual(idx.resource, resource)
+
+    def test_index_doc(self):
         catalog = self._makeOne()
         idx = DummyIndex()
         catalog['name'] = idx
         catalog.index_doc(1, 'value')
-        self.assertEqual(idx.docid, 1)
-        self.assertEqual(idx.value, 'value')
+        self.assertEqual(idx.oid, 1)
+        self.assertEqual(idx.resource, 'value')
 
-    def test_index_doc_objectids(self):
-        inst = self._makeOne()
-        inst.index_doc(1, object())
-        self.assertEqual(list(inst.objectids), [1])
-
-    def test_index_doc_nonint_docid(self):
+    def test_unindex_resource_indexes(self):
         catalog = self._makeOne()
         idx = DummyIndex()
         catalog['name'] = idx
-        self.assertRaises(ValueError, catalog.index_doc, 'abc', 'value')
-
-    def test_unindex_doc_indexes(self):
-        catalog = self._makeOne()
-        idx = DummyIndex()
-        catalog['name'] = idx
-        catalog.unindex_doc(1)
+        catalog.unindex_resource(1)
         self.assertEqual(idx.unindexed, 1)
         
-    def test_unindex_doc_objectids_exists(self):
+    def test_unindex_resource_objectids_exists(self):
+        inst = self._makeOne()
+        inst.objectids.insert(1)
+        inst.unindex_resource(1)
+        self.assertEqual(list(inst.objectids), [])
+
+    def test_unindex_resource_objectids_notexists(self):
+        inst = self._makeOne()
+        inst.unindex_resource(1)
+        self.assertEqual(list(inst.objectids), [])
+
+    def test_index_resource_or_oid_is_resource_without_oid(self):
+        resource = testing.DummyResource()
+        catalog = self._makeOne()
+        self.assertRaises(ValueError, catalog.unindex_resource, resource)
+
+    def test_index_resource_or_oid_is_noninteger(self):
+        catalog = self._makeOne()
+        self.assertRaises(ValueError, catalog.unindex_resource, 'foo')
+
+    def test_unindex_doc(self):
         inst = self._makeOne()
         inst.objectids.insert(1)
         inst.unindex_doc(1)
         self.assertEqual(list(inst.objectids), [])
 
-    def test_unindex_doc_objectids_notexists(self):
-        inst = self._makeOne()
-        inst.unindex_doc(1)
-        self.assertEqual(list(inst.objectids), [])
+    def test_reindex_resource_indexes(self):
+        catalog = self._makeOne()
+        idx = DummyIndex()
+        catalog['name'] = idx
+        catalog.reindex_resource('value', 1)
+        self.assertEqual(idx.reindexed_oid, 1)
+        self.assertEqual(idx.reindexed_resource, 'value')
 
-    def test_reindex_doc_indexes(self):
+    def test_reindex_resource_objectids_exists(self):
+        inst = self._makeOne()
+        inst.objectids.insert(1)
+        inst.reindex_resource(object(), 1)
+        self.assertEqual(list(inst.objectids), [1])
+        
+    def test_reindex_resource_objectids_notexists(self):
+        inst = self._makeOne()
+        inst.reindex_resource(object(), 1)
+        self.assertEqual(list(inst.objectids), [1])
+        
+    def test_reindex_resource_oid_is_None(self):
+        resource = testing.DummyResource()
+        resource.__oid__ = 1
+        catalog = self._makeOne()
+        idx = DummyIndex()
+        catalog['name'] = idx
+        catalog.reindex_resource(resource)
+        self.assertEqual(idx.reindexed_oid, 1)
+        self.assertEqual(idx.reindexed_resource, resource)
+
+    def test_reindex_doc(self):
         catalog = self._makeOne()
         idx = DummyIndex()
         catalog['name'] = idx
         catalog.reindex_doc(1, 'value')
-        self.assertEqual(idx.reindexed_docid, 1)
-        self.assertEqual(idx.reindexed_ob, 'value')
+        self.assertEqual(idx.reindexed_oid, 1)
+        self.assertEqual(idx.reindexed_resource, 'value')
 
-    def test_reindex_doc_objectids_exists(self):
-        inst = self._makeOne()
-        inst.objectids.insert(1)
-        inst.reindex_doc(1, object())
-        self.assertEqual(list(inst.objectids), [1])
-        
-    def test_reindex_doc_objectids_notexists(self):
-        inst = self._makeOne()
-        inst.reindex_doc(1, object())
-        self.assertEqual(list(inst.objectids), [1])
-        
     def test_reindex(self):
         a = testing.DummyModel()
         L = []
@@ -150,7 +212,10 @@ class TestCatalog(unittest.TestCase):
         site = _makeSite(catalog=inst, objectmap=objectmap)
         site['a'] = a
         inst.objectids = [1]
-        inst.reindex_doc = lambda objectid, model: L.append((objectid, model))
+        def reindex_resource(resource, oid=None, action_mode=None):
+            L.append((oid, resource))
+        inst.reindex_resource = reindex_resource
+        inst.flush = lambda *arg, **kw: True
         out = []
         inst.reindex(output=out.append)
         self.assertEqual(len(L), 1)
@@ -173,7 +238,10 @@ class TestCatalog(unittest.TestCase):
         site = _makeSite(catalog=inst, objectmap=objectmap)
         site['a'] = a
         inst.objectids = [1, 2]
-        inst.reindex_doc = lambda objectid, model: L.append((objectid, model))
+        def reindex_resource(resource, oid=None, action_mode=None):
+            L.append((oid, resource))
+        inst.reindex_resource = reindex_resource
+        inst.flush = lambda *arg, **kw: True
         out = []
         inst.reindex(output=out.append)
         self.assertEqual(L[0][0], 1)
@@ -191,6 +259,7 @@ class TestCatalog(unittest.TestCase):
         objectmap = DummyObjectMap()
         inst = self._makeOne()
         inst.transaction = transaction
+        inst.flush = lambda *arg, **kw: True
         site = _makeSite(catalog=inst, objectmap=objectmap)
         site['a'] = a
         inst.objectids = [1]
@@ -211,11 +280,14 @@ class TestCatalog(unittest.TestCase):
         transaction = DummyTransaction()
         inst = self._makeOne()
         inst.transaction = transaction
+        inst.flush = lambda *arg, **kw: True
         site = _makeSite(catalog=inst, objectmap=objectmap)
         site['a'] = a
         site['b'] = b
         inst.objectids = [1, 2]
-        inst.reindex_doc = lambda objectid, model: L.append((objectid, model))
+        def reindex_resource(resource, oid=None, action_mode=None):
+            L.append((oid, resource))
+        inst.reindex_resource = reindex_resource
         out = []
         inst.reindex(
             path_re=re.compile('/a'), 
@@ -240,7 +312,10 @@ class TestCatalog(unittest.TestCase):
         site['a'] = a
         site['b'] = b
         inst.objectids = [1,2]
-        inst.reindex_doc = lambda objectid, model: L.append((objectid, model))
+        def reindex_resource(resource, oid, action_mode=None):
+            L.append((oid, resource))
+        inst.reindex_resource = reindex_resource
+        inst.flush = lambda *arg, **kw: True
         out = []
         inst.reindex(dry_run=True, output=out.append)
         self.assertEqual(len(L), 2)
@@ -269,7 +344,10 @@ class TestCatalog(unittest.TestCase):
         index = DummyIndex()
         inst['index'] = index
         self.config.registry._substanced_indexes = {'index':index}
-        index.reindex_doc = lambda objectid, model: L.append((objectid, model))
+        def reindex_resource(resource, oid=None, action_mode=None):
+            L.append((oid, resource))
+        index.reindex_resource = reindex_resource
+        inst.flush = lambda *arg, **kw: True
         out = []
         inst.reindex(indexes=('index',),  output=out.append)
         self.assertEqual(out,
@@ -695,7 +773,7 @@ class DummyCatalog(dict):
     def update_indexes(self, *arg, **kw):
         self.updated = True
 
-    def index_doc(self, oid, obj):
+    def index_resource(self, resource, oid=None, action_mode=None):
         self.indexed.append(oid)
 
 class DummyTransaction(object):
@@ -713,8 +791,9 @@ class DummyTransaction(object):
 @implementer(IIndex)
 class DummyIndex(object):
 
-    value = None
-    docid = None
+    resource = None
+    oid = None
+    action_mode = None
     limit = None
     sort_type = None
 
@@ -722,20 +801,23 @@ class DummyIndex(object):
         self.arg = arg
         self.kw = kw
 
-    def index_doc(self, docid, value):
-        self.docid = docid
-        self.value = value
-        return value
+    def flush(self, all):
+        self.flushed = all
 
-    def unindex_doc(self, docid):
-        self.unindexed = docid
+    def index_resource(self, resource, oid=None, action_mode=None):
+        self.resource = resource
+        self.oid = oid
+        self.action_mode = action_mode
+
+    def unindex_resource(self, oid, action_mode=None):
+        self.unindexed = oid
+
+    def reindex_resource(self, resource, oid=None, action_mode=None):
+        self.reindexed_oid = oid
+        self.reindexed_resource = resource
 
     def reset(self):
         self.cleared = True
-
-    def reindex_doc(self, docid, object):
-        self.reindexed_docid = docid
-        self.reindexed_ob = object
 
     def apply_intersect(self, query, docids): # pragma: no cover
         if docids is None:

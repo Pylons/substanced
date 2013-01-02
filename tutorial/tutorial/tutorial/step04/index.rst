@@ -1,5 +1,0 @@
-
-Shows
-=====
-
-- Simplest content type

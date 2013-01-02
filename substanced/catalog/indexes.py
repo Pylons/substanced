@@ -1,3 +1,5 @@
+import colander
+import deform.widget
 import re
 
 import BTrees
@@ -24,21 +26,108 @@ from pyramid.interfaces import IRequest
 
 from ..content import content
 from ..objectmap import find_objectmap
+from ..schema import Schema
+from ..property import PropertySheet
+from ..stats import statsd_timer
 
 from .discriminators import dummy_discriminator
+from .util import oid_from_resource
+
+from . import deferred
+
+from .. import interfaces as sd_interfaces
+
+from ..interfaces import (
+    MODE_IMMEDIATE,
+    MODE_ATCOMMIT,
+    )
 
 PATH_WITH_OPTIONS = re.compile(r'\[(.+?)\](.+?)$')
 
 _marker = object()
 
-class ResolvingIndex(object):
+class SDIndex(object):
+
+    _p_action_tm = None
+    action_mode = MODE_ATCOMMIT
+    tm_class = deferred.IndexActionTM # for testing
+
     def resultset_from_query(self, query, names=None, resolver=None):
+        # XXX we should probably flush pending atcommit actions before
+        # executing the query; we can't just flush *this* index's actions,
+        # we have to flush actions for all indexes in all catalogs related
+        # to this query.
         if resolver is None:
             objectmap = find_objectmap(self)
             resolver = objectmap.object_for
-        docids = query._apply(names)
-        numdocs = len(docids)
-        return hypatia.util.ResultSet(docids, numdocs, resolver)
+        with statsd_timer('catalog.query'):
+            query.flush()
+            docids = query._apply(names)
+            numdocs = len(docids)
+            return hypatia.util.ResultSet(docids, numdocs, resolver)
+
+    def get_action_tm(self):
+        action_tm = self._p_action_tm
+        if action_tm is None:
+            action_tm = self._p_action_tm = self.tm_class(self)
+            action_tm.register()
+        return action_tm
+
+    def clear_action_tm(self):
+        self._p_action_tm = None
+
+    def flush(self, all=True):
+        # This method will be called before query execution for every index
+        # involved in a query.  It must be callable more than once without
+        # having any issues.
+        if self._p_action_tm is not None:
+            self._p_action_tm.flush(all=all)
+
+    def add_action(self, action):
+        action_tm = self.get_action_tm()
+        action_tm.add(action)
+
+    def index_resource(self, resource, oid=None, action_mode=None):
+        if oid is None:
+            oid = oid_from_resource(resource)
+        if action_mode is None:
+            action_mode = self.action_mode
+        if action_mode is MODE_IMMEDIATE:
+            self.index_doc(oid, resource)
+        else:
+            action = deferred.IndexAction(self, action_mode, oid)
+            self.add_action(action)
+
+    def reindex_resource(self, resource, oid=None, action_mode=None):
+        if oid is None:
+            oid = oid_from_resource(resource)
+        if action_mode is None:
+            action_mode = self.action_mode
+        if action_mode is MODE_IMMEDIATE:
+            self.reindex_doc(oid, resource)
+        else:
+            action = deferred.ReindexAction(self, action_mode, oid)
+            self.add_action(action)
+
+    def unindex_resource(self, resource_or_oid, action_mode=None):
+        if isinstance(resource_or_oid, int):
+            oid = resource_or_oid
+        else:
+            oid = oid_from_resource(resource_or_oid)
+        if action_mode is None:
+            action_mode = self.action_mode
+        if action_mode is MODE_IMMEDIATE:
+            self.unindex_doc(oid)
+        else:
+            action = deferred.UnindexAction(self, action_mode, oid)
+            self.add_action(action)
+
+    def __repr__(self):
+        klass = self.__class__
+        classname = '%s.%s' % (klass.__module__, klass.__name__)
+        return '<%s object %r at %#x>' % (classname,
+                                          getattr(self, '__name__', None),
+                                          id(self))
 
 @content(
     'Path Index',
@@ -46,7 +135,7 @@ class ResolvingIndex(object):
     is_index=True,
     )
 @implementer(hypatia.interfaces.IIndex)
-class PathIndex(ResolvingIndex, hypatia.util.BaseIndexMixin, Persistent):
+class PathIndex(SDIndex, hypatia.util.BaseIndexMixin, Persistent):
     """ Uses the objectmap to apply a query to retrieve object identifiers at
     or under a path"""
     family = BTrees.family64
@@ -175,56 +264,97 @@ class PathIndex(ResolvingIndex, hypatia.util.BaseIndexMixin, Persistent):
             val['include_origin'] = include_origin
         return hypatia.query.Eq(self, val)
 
+class IndexSchema(Schema):
+    """ The property schema for :class:`substanced.principal.Group`
+    objects."""
+    action_mode = colander.SchemaNode(
+        colander.String(),
+        missing=colander.null,
+        widget=deform.widget.RadioChoiceWidget(
+            values=(
+                ('MODE_IMMEDIATE', 'Immediate'),
+                ('MODE_ATCOMMIT', 'Defer Until Commit'),
+                ('MODE_DEFERRED', 'Defer Until Action Processing'),
+                )
+            )
+        )
+
+class IndexPropertySheet(PropertySheet):
+    schema = IndexSchema()
+
+    def set(self, values):
+        action_mode = values['action_mode']
+        action_mode = getattr(sd_interfaces, action_mode)
+        if action_mode != self.context.action_mode:
+            self.context.action_mode = action_mode
+
+    def get(self):
+        action_mode = self.context.action_mode
+        action_mode = action_mode.__name__
+        return {'action_mode':action_mode}
+
 @content(
     'Field Index',
     icon='icon-search',
     is_index=True,
+    propertysheets = ( ('', IndexPropertySheet), ),
     )
-class FieldIndex(ResolvingIndex, hypatia.field.FieldIndex):
-    def __init__(self, discriminator=None, family=None):
+class FieldIndex(SDIndex, hypatia.field.FieldIndex):
+    def __init__(self, discriminator=None, family=None, action_mode=None):
         if discriminator is None:
             discriminator = dummy_discriminator
         hypatia.field.FieldIndex.__init__(self, discriminator, family=family)
+        if action_mode is not None:
+            self.action_mode = action_mode
 
 @content(
     'Keyword Index',
     icon='icon-search',
     is_index=True,
+    propertysheets = ( ('', IndexPropertySheet), ),
     )
-class KeywordIndex(ResolvingIndex, hypatia.keyword.KeywordIndex):
-    def __init__(self, discriminator=None, family=None):
+class KeywordIndex(SDIndex, hypatia.keyword.KeywordIndex):
+    def __init__(self, discriminator=None, family=None, action_mode=None):
         if discriminator is None:
             discriminator = dummy_discriminator
         hypatia.keyword.KeywordIndex.__init__(
             self, discriminator, family=family
             )
+        if action_mode is not None:
+            self.action_mode = action_mode
 
 @content(
     'Text Index',
     icon='icon-search',
     is_index=True,
+    propertysheets = ( ('', IndexPropertySheet), ),
     )
-class TextIndex(ResolvingIndex, hypatia.text.TextIndex):
+class TextIndex(SDIndex, hypatia.text.TextIndex):
     def __init__(
         self,
         discriminator=None,
         lexicon=None,
         index=None,
-        family=None
+        family=None,
+        action_mode=None,
         ):
         if discriminator is None:
             discriminator = dummy_discriminator
         hypatia.text.TextIndex.__init__(
             self, discriminator, lexicon=lexicon, index=index, family=family,
             )
+        if action_mode is not None:
+            self.action_mode = action_mode
 
 @content(
     'Facet Index',
     icon='icon-search',
     is_index=True,
+    propertysheets = ( ('', IndexPropertySheet), ),
     )
-class FacetIndex(ResolvingIndex, hypatia.facet.FacetIndex):
-    def __init__(self, discriminator=None, facets=None, family=None):
+class FacetIndex(SDIndex, hypatia.facet.FacetIndex):
+    def __init__(self, discriminator=None, facets=None, family=None,
+                 action_mode=None):
         if discriminator is None:
             discriminator = dummy_discriminator
         if facets is None:
@@ -232,26 +362,42 @@ class FacetIndex(ResolvingIndex, hypatia.facet.FacetIndex):
         hypatia.facet.FacetIndex.__init__(
             self, discriminator, facets=facets, family=family
             )
+        if action_mode is not None:
+            self.action_mode = action_mode
 
 @content(
     'Allowed Index',
     icon='icon-search',
     is_index=True,
+    propertysheets = ( ('', IndexPropertySheet), ),
     )
 class AllowedIndex(KeywordIndex):
-    def __init__(self, discriminator=None, family=None):
-        if discriminator is None:
-            discriminator = dummy_discriminator
-        KeywordIndex.__init__(self, discriminator, family=family)
-
-    def allows(self, principals, permission='view'):
+    def allows(self, principals, permission=None):
         """ ``principals`` may either be 1) a sequence of principal
         indentifiers, 2) a single principal identifier, or 3) a Pyramid
         request, which indicates that all the effective principals implied by
-        the request are used."""
+        the request are used.
+
+        ``permission`` may be ``None`` if this index is configured with
+        only a single permission.  Otherwise a permission name must be passed
+        or an error will be raised.
+        """
+        permissions = self.discriminator.permissions
+        if permission is None:
+            if len(permissions) > 1:
+                raise ValueError('Must pass a permission')
+            else:
+                permission = list(permissions)[0]
+        else:
+            if permissions is not None and not permission in permissions:
+                raise ValueError(
+                    'This index does not support the %s '
+                    'permission' % (permission,)
+                    )
         if IRequest.providedBy(principals):
             principals = effective_principals(principals)
         elif not is_nonstr_iter(principals):
             principals = (principals,)
         values = [(principal, permission) for principal in principals]
         return hypatia.query.Any(self, values)
+

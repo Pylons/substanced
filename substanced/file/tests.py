@@ -175,6 +175,11 @@ class TestFile(unittest.TestCase):
         fp.seek(0)
         self.assertEqual(fp.read(), 'abc')
 
+    def test_ctor_mimetype_is_USE_MAGIC_no_stream(self):
+        from . import USE_MAGIC
+        inst = self._makeOne(None, USE_MAGIC)
+        self.assertEqual(inst.mimetype, 'application/octet-stream')
+
     def test_upload_stream_is_None(self):
         inst = self._makeOne(None, None)
         inst.upload(None)

@@ -53,6 +53,7 @@ from ..util import (
     set_acl,
     find_service,
     )
+from ..stats import statsd_gauge
 
 def _gen_random_token():
     length = random.choice(range(10, 16))
@@ -346,6 +347,7 @@ class User(Folder):
         """ Checks if the plaintext password passed as ``password`` matches
         this user's stored, encrypted password.  Returns ``True`` or
         ``False``."""
+        statsd_gauge('check_password', 1)
         return self.pwd_manager.check(self.password, password)
 
     def set_password(self, password):

@@ -160,11 +160,13 @@ class SearchCatalogView(FormView):
     tab_condition=False,
     )
 def reindex_indexes(context, request):
-    toreindex = request.POST.getall('item-modify')
+    toreindex_str = request.POST.get('item-modify', '')
+    toreindex = filter(None, toreindex_str.split(','))
+    toreindex_fmt = ', '.join(toreindex)
     if toreindex:
         context.reindex(indexes=toreindex, registry=request.registry)
         request.session.flash(
-            'Reindex of selected indexes succeeded',
+            'Reindex of selected indexes %s succeeded' % (toreindex_fmt,),
             'success'
             )
     else:

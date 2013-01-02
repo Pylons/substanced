@@ -2182,7 +2182,7 @@ class TestReferentialIntegrityError(unittest.TestCase):
 
 
 class DummyEvent(object):
-    def __init__(self, object, moving=False):
+    def __init__(self, object, moving=None):
         self.object = object
         self.moving = moving
 
