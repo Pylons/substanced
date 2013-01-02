@@ -16,6 +16,8 @@ You can convince the management interface that your particular resources are
 content.  To define a resource as content, you need to associate a resource
 with a :term:`content type`.
 
+.. _registering_content:
+
 Registering Content
 ===================
 
