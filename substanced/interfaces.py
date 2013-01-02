@@ -682,7 +682,8 @@ class IIndexingActionProcessor(Interface):
 
 # MODE_ sentinels are classes so that when one is pickled, then unpickled, the
 # result can be compared against an imported version using "is".  They are
-# interfaces so they have a stable __hash__.
+# interfaces so they have a stable __hash__ (their __hash__ will be called as a
+# result of substanced.catalog.factory is_stale and other stuff in there).
 
 class MODE_IMMEDIATE(Interface):
     """ Sentinel indicating that an indexing action should take place as
