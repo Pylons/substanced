@@ -53,16 +53,6 @@ Dump and Load
 - Document ``sd_dump`` console script.  Explain that there is no ``sd_load``,
   as loading is more a development effort rather than an administrative one.
 
-Security
-++++++++
-
-- Explain that allowed indexes are reindexed when an object's ACL is changed.
-
-- Explain change_acl.
-
-- Explain that source-integral PrincipalToACLBearing relationships are set up
-  between an ACL-bearing object and the principals referred to within the ACL.
-
 Initialization
 ++++++++++++++
 
