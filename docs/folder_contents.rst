@@ -236,8 +236,8 @@ the content type.  The introspectable contains the following keys:
 See :ref:`registering_content` for more information about content type
 registration and what the above introspectable values mean.
 
-Your ``__sdi_addable__`` method can perform some logic using the , then return a filtered
-sequence.
+Your ``__sdi_addable__`` method can perform some logic using the values it is
+passed, and then it must return a filtered sequence.
 
 As an example, the ``__sdi_addable__`` method on the ``Catalog``
 filters out the kinds of things that can be added in a catalog.
