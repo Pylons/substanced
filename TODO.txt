@@ -53,12 +53,6 @@ Dump and Load
 - Document ``sd_dump`` console script.  Explain that there is no ``sd_load``,
   as loading is more a development effort rather than an administrative one.
 
-Initialization
-++++++++++++++
-
-- Explain __init__.py include-then-scan done by includeme and how to avoid
-  scanning.
-
 Monitoring and Statistics
 +++++++++++++++++++++++++
 
