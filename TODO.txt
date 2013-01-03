@@ -9,8 +9,6 @@ Features
 
 - Release deform2 (merge deform_bootstrap).
 
-- Write sd_dump and sd_load scripts.
-
 - Ability to dump FileData in propertysheets.
 
 - Remove interfaces index?
@@ -40,6 +38,8 @@ Features
 
 - Add an autoevolve setting.
 
+- Make folder contents view work with debugtoolbar.
+
 Docs
 ----
 
@@ -52,36 +52,8 @@ Dump and Load
 
 - Add API docs for dump/load, and dump contexts.
 
-Grid
-++++
-
-- Explain __sdi_deletable__, __sdi_addable__, __sdi_hidden__, __sdi_columns__,
-  __sdi_buttons__.
-
-Events
-++++++
-
-- Explain event listener decorators and add_content_subscriber.
-
-- Explain subscribe_acl_modified.
-
-- Explain "moving" and "duplicating" flags on added and removed events.
-
-Security
-++++++++
-
-- Explain that allowed indexes are reindexed when an object's ACL is changed.
-
-- Explain change_acl.
-
-- Explain that source-integral PrincipalToACLBearing relationships are set up
-  between an ACL-bearing object and the principals referred to within the ACL.
-
-Initialization
-++++++++++++++
-
-- Explain __init__.py include-then-scan done by includeme and how to avoid
-  scanning.
+- Document ``sd_dump`` console script.  Explain that there is no ``sd_load``,
+  as loading is more a development effort rather than an administrative one.
 
 Monitoring and Statistics
 +++++++++++++++++++++++++
@@ -112,6 +84,9 @@ Misc
 
 - Explain the objectmap get_extents API.
 
+- Explain goggles ("@@")
+
+- Explain undo tab
 
 Can wait until after alpha 1
 ============================
@@ -140,6 +115,8 @@ Can wait until after alpha 1
 - Add a ``substanced.load_dump`` key for use by root factory.
 
 - Figure out if YAML dump and reload will work if we get to move to Python 3.
+
+- Work out OpenID/Twitter/whatever authentication.
 
 Can Wait Forever (Nice-to-Have)
 ===============================

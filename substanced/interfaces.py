@@ -540,7 +540,7 @@ class IFile(Interface):
         - A string containing a filename with an extension; the mimetype will
           be derived from the extension in the filename.
 
-        - The constant :ref:`pyramid.file.USE_MAGIC`, which will derive the
+        - The constant :attr:`substanced.file.USE_MAGIC`, which will derive the
           content type using the ``python-magic`` library based on the
           stream's actual content.
         """
@@ -687,17 +687,19 @@ class IIndexingActionProcessor(Interface):
     catalogs in the system"""
 
 # MODE_ sentinels are classes so that when one is pickled, then unpickled, the
-# result can be compared against an imported version using "is"
+# result can be compared against an imported version using "is".  They are
+# interfaces so they have a stable __hash__ (their __hash__ will be called as a
+# result of substanced.catalog.factory is_stale and other stuff in there).
 
-class MODE_IMMEDIATE(object):
+class MODE_IMMEDIATE(Interface):
     """ Sentinel indicating that an indexing action should take place as
     immediately as possible."""
 
-class MODE_ATCOMMIT(object):
+class MODE_ATCOMMIT(Interface):
     """ Sentinel indicating that an indexing action should take place at the
     successful end of the current transaction."""
 
-class MODE_DEFERRED(object):
+class MODE_DEFERRED(Interface):
     """ Sentinel indicating that an indexing action should be performed by an
     external indexing processor (e.g. ``drain_catalog_indexing``) if one is
     active at the successful end of the current transaction.  If an indexing
