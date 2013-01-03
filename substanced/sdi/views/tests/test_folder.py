@@ -270,6 +270,15 @@ class TestFolderContentsViews(unittest.TestCase):
             {'from':1, 'to':2, 'records':dummy_folder_contents_0[1], 'total':1}
             )
 
+    def test_show_json_no_from(self):
+        context = testing.DummyResource()
+        request = self._makeRequest()
+        inst = self._makeOne(context, request)
+        result = inst.show_json()
+        self.assertEqual(
+            result,
+            {}
+            )
 
     def test__column_headers_for_non_sortable_columns(self):
         def sd_columns(folder, subobject, request, default_columns):
@@ -1111,6 +1120,41 @@ class TestFolderContentsViews(unittest.TestCase):
         length, results = inst._folder_contents(filter_text='abc')
         self.assertEqual(length, 1)
         self.assertEqual(len(results), 1)
+
+    def test__folder_contents_folder_is_ordered(self):
+        from substanced.interfaces import IFolder
+        context = DummyFolder(__provides__=IFolder)
+        request = self._makeRequest()
+        context['catalogs'] = self._makeCatalogs(oids=[1])
+        result = testing.DummyResource()
+        result.__name__ = 'fred'
+        context.__objectmap__ = DummyObjectMap(result)
+        inst = self._makeOne(context, request)
+        context.is_ordered = lambda *arg: True
+        context.oids = lambda *arg: [1, 2]
+        request.registry.content = DummyContent()
+        length, results = inst._folder_contents()
+        self.assertEqual(length, 1)
+        self.assertEqual(len(results), 1)
+
+    def test_reorder_rows(self):
+        context = testing.DummyResource()
+        request = self._makeRequest()
+        request.params['item-modify'] = 'a/b'
+        request.params['insert-before'] = 'c'
+        def reorder(item_modify, insert_before):
+            self.assertEqual(item_modify, ['a', 'b'])
+            self.assertEqual(insert_before, 'c')
+        context.reorder = reorder
+        inst = self._makeOne(context, request)
+        def _get_json():
+            return {'foo':'bar'}
+        inst._get_json = _get_json
+        result = inst.reorder_rows()
+        self.assertEqual(result, {'foo':'bar', 'flash':'2 rows moved.'})
+        
+
+
 
 class DummyContainer(object):
     oid_store = {}
