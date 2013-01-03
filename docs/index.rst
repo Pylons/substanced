@@ -72,6 +72,7 @@ Narrative Documentation
    evolution
    folder_contents
    configuration
+   statistics
    retail
 
 API Documentation
