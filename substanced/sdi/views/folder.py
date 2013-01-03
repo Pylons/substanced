@@ -777,10 +777,11 @@ class FolderContentsViews(object):
         )
     def reorder_rows(self):
         request = self.request
+        context = self.context
         item_modify = request.params.get('item-modify').split('/')
         insert_before = request.params.get('insert-before')
-        print 'XXX Will reorder:', item_modify, 'insert before:', insert_before
-        msg = '%i rows moved. (Well, not really yet.)' % (len(item_modify), )
+        context.reorder(item_modify, insert_before)
+        msg = '%i rows moved.' % (len(item_modify), )
         results = {
             'flash': msg,
             }

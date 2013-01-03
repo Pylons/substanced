@@ -706,6 +706,15 @@ class TestFolder(unittest.TestCase):
         folder.set_order(['b', 'a'])
         self.assertEqual(list(folder.oids()), [2, 1])
 
+    def test_reorder_folder(self):
+        model1 = DummyModel()
+        model2 = DummyModel()
+        model3 = DummyModel()
+        folder = self._makeOne({'a': model1, 'b': model2, 'c': model3})
+        folder.set_order(['a', 'b', 'c'])
+        folder.reorder(['b', 'c'], 'a')
+        self.assertEqual(list(folder), ['b', 'c', 'a'])
+
 class TestSequentialAutoNamingFolder(unittest.TestCase):
     def _makeOne(self, d=None, autoname_length=None, autoname_start=None):
         from . import SequentialAutoNamingFolder

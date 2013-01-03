@@ -90,8 +90,20 @@ class Folder(Persistent):
     def unset_order(self):
         del self._order
 
+    def reorder(self, items, before):
+        order = []
+        for (name, oid) in self._order:
+            if name == before:
+                for item in items:
+                    item = unicode(item)
+                    item_oid = get_oid(self[item])
+                    order.append((item, item_oid))
+            if name not in items:
+                order.append((name, oid))
+        self._order = tuple(order)
+
     def is_ordered(self):
-        """ Return true if the folder is manually ordered, false otherwise. """
+        """ Return true if the folder has a set order, false otherwise. """
         return self._order is not None
 
     def __init__(self, data=None, family=None):
