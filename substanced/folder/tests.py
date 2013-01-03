@@ -82,6 +82,22 @@ class TestFolder(unittest.TestCase):
         folder.unset_order()
         self.assertEqual(list(folder.keys()), ['a', 'b'])
 
+    def test_is_orderable_by_default(self):
+        model1 = DummyModel()
+        model2 = DummyModel()
+        folder = self._makeOne({'a': model1, 'b': model2})
+        folder.set_order(['a', 'b'])
+        self.assertTrue(folder.is_orderable())
+
+    def test_make_orderable_false(self):
+        model1 = DummyModel()
+        model2 = DummyModel()
+        folder = self._makeOne({'a': model1, 'b': model2})
+        folder.set_order(['a', 'b'])
+        self.assertTrue(folder.is_orderable())
+        folder.set_orderable(False)
+        self.assertFalse(folder.is_orderable())
+
     def test__iter__(self):
         model1 = DummyModel()
         model2 = DummyModel()

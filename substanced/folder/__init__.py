@@ -73,6 +73,7 @@ class Folder(Persistent):
 
     # Default uses ordering of underlying BTree.
     _order = None
+    _orderable = False
 
     def get_order(self):
         if self._order is not None:
@@ -80,31 +81,44 @@ class Folder(Persistent):
         return self.data.keys()
 
     def set_order(self, value):
-        order = []
-        for name in value:
-            name = unicode(name)
-            oid = get_oid(self[name])
-            order.append((name, oid))
-        self._order = tuple(order)
+        if self._order is None:
+            # make orderable by default on first ordering
+            self.set_orderable(True)
+        if self.is_orderable():
+            order = []
+            for name in value:
+                name = unicode(name)
+                oid = get_oid(self[name])
+                order.append((name, oid))
+            self._order = tuple(order)
 
     def unset_order(self):
         del self._order
 
     def reorder(self, items, before):
-        order = []
-        for (name, oid) in self._order:
-            if name == before:
-                for item in items:
-                    item = unicode(item)
-                    item_oid = get_oid(self[item])
-                    order.append((item, item_oid))
-            if name not in items:
-                order.append((name, oid))
-        self._order = tuple(order)
+        if self.is_ordered() and self.is_orderable():
+            order = []
+            for (name, oid) in self._order:
+                if name == before:
+                    for item in items:
+                        item = unicode(item)
+                        item_oid = get_oid(self[item])
+                        order.append((item, item_oid))
+                if name not in items:
+                    order.append((name, oid))
+            self._order = tuple(order)
 
     def is_ordered(self):
         """ Return true if the folder has a set order, false otherwise. """
         return self._order is not None
+
+    def set_orderable(self, value):
+        """ Set to true if the folder can be manually ordered, false otherwise. """
+        self._orderable = value
+
+    def is_orderable(self):
+        """ Return true if the folder can be manually ordered, false otherwise. """
+        return self._orderable
 
     def __init__(self, data=None, family=None):
         """ Constructor.  Data may be an initial dictionary mapping object
