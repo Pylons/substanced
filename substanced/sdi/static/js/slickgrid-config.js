@@ -95,16 +95,20 @@
             var columns = this.columns;
             var wrapperOptions = this.wrapperOptions;
 
-            // move column: add it
-            columns.unshift({
-                id: "#",
-                name: "",
-                width: 40,
-                behavior: "selectAndMove",
-                selectable: false,
-                resizable: false,
-                cssClass: "cell-reorder dnd"
-            });
+            var ordered = this.wrapperOptions.isOrdered;
+
+            if (ordered) {
+                // move column: add it
+                columns.unshift({
+                    id: "#",
+                    name: "",
+                    width: 40,
+                    behavior: "selectAndMove",
+                    selectable: false,
+                    resizable: false,
+                    cssClass: "cell-reorder dnd"
+                });
+            }
 
             // checkbox column: add it
             var checkboxSelector = new Slick.CheckboxSelectColumn({});
@@ -209,32 +213,36 @@
             });
             grid.registerPlugin(moveRowsPlugin);
 
-            //moveRowsPlugin.onBeforeMoveRows.subscribe(function (e, data) {
-            //    log('onBeforeMoveRows', data);
-            //});
 
-            moveRowsPlugin.onMoveRows.subscribe(function (e, args) {
-                var selRows = args.rows;
-                var data = grid.getData();
-                var selectedIds = $.map(selRows, function (value, index) {
-                    var row = data[value];
-                    return (row || {}).id;
+            if (ordered) {
+
+                //moveRowsPlugin.onBeforeMoveRows.subscribe(function (e, data) {
+                //    log('onBeforeMoveRows', data);
+                //});
+
+                moveRowsPlugin.onMoveRows.subscribe(function (e, args) {
+                    var selRows = args.rows;
+                    var data = grid.getData();
+                    var selectedIds = $.map(selRows, function (value, index) {
+                        var row = data[value];
+                        return (row || {}).id;
+                    });
+                    var insertBeforeId = data[args.insertBefore].id;
+                    //log('onMoveRows, rows=', selectedIds, 'insertBefore=', insertBeforeId);
+
+                    sdiRemoteModelPlugin.ajax({
+                            type: 'POST',
+                            url: './@@contents',
+                            data: {
+                                'ajax.reorder': 'ajax.reorder',
+                                'item-modify': selectedIds.join('/'),
+                                'insert-before': insertBeforeId
+                            },
+                            dataType: 'json'
+                    });
+
                 });
-                var insertBeforeId = data[args.insertBefore].id;
-                log('onMoveRows, rows=', selectedIds, 'insertBefore=', insertBeforeId);
-
-                sdiRemoteModelPlugin.ajax({
-                        type: 'POST',
-                        url: './@@contents',
-                        data: {
-                            'ajax.reorder': 'ajax.reorder',
-                            'item-modify': selectedIds.join('/'),
-                            'insert-before': insertBeforeId
-                        },
-                        dataType: 'json'
-                });
-
-            });
+            }
 
             // XXX This is just to help debugging, with no real function here.
             grid.onSelectedRowsChanged.subscribe(function (evt) {
@@ -244,7 +252,7 @@
                     var row = data[value];
                     return row.id;
                 });
-                log('onSelectedRowsChanged rows=', selectedIds);
+                //log('onSelectedRowsChanged rows=', selectedIds);
             });
 
             if (wrapperOptions.items) {
