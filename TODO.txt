@@ -38,6 +38,8 @@ Features
 
 - Add an autoevolve setting.
 
+- Make folder contents view work with debugtoolbar.
+
 Docs
 ----
 
