@@ -55,31 +55,6 @@ Dump and Load
 - Document ``sd_dump`` console script.  Explain that there is no ``sd_load``,
   as loading is more a development effort rather than an administrative one.
 
-Events
-++++++
-
-- Explain event listener decorators and add_content_subscriber.
-
-- Explain subscribe_acl_modified.
-
-- Explain "moving" and "duplicating" flags on added and removed events.
-
-Security
-++++++++
-
-- Explain that allowed indexes are reindexed when an object's ACL is changed.
-
-- Explain change_acl.
-
-- Explain that source-integral PrincipalToACLBearing relationships are set up
-  between an ACL-bearing object and the principals referred to within the ACL.
-
-Initialization
-++++++++++++++
-
-- Explain __init__.py include-then-scan done by includeme and how to avoid
-  scanning.
-
 Monitoring and Statistics
 +++++++++++++++++++++++++
 
@@ -111,6 +86,7 @@ Misc
 
 - Explain goggles ("@@")
 
+- Explain undo tab
 
 Can wait until after alpha 1
 ============================

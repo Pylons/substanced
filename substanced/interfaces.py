@@ -534,7 +534,7 @@ class IFile(Interface):
         - A string containing a filename with an extension; the mimetype will
           be derived from the extension in the filename.
 
-        - The constant :ref:`pyramid.file.USE_MAGIC`, which will derive the
+        - The constant :attr:`substanced.file.USE_MAGIC`, which will derive the
           content type using the ``python-magic`` library based on the
           stream's actual content.
         """

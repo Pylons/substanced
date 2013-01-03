@@ -205,3 +205,30 @@ Hopefully soon we'll make this registration bit a bit less verbose.  But in any
 case, once this is done, whenever an object is added to the system, a value
 (the result of the ``freaky()`` method of the catalog view) will be indexed in
 the ``freaky`` field index.
+
+Allowed Index and Security
+--------------------------
+
+The Substance D system catalog at
+:class:`substanced.catalog.system.SystemCatalogFactory`
+contains a number of default indexes, including an ``Allowed`` index.
+Its job is to index security information to allow security-aware results
+in queries.
+
+In Substance D we index two permissions on each catalogued resource:
+``view`` and ``sdi.view``. This allows us to constrain queries to the
+system catalog based on whether the principal issuing the request has
+either of those permissions on the matching resource.
+
+To set the ACL in a way that helps keep track of all the contracts,
+the helper function :func:`substanced.util.set_acl` can be used. For
+example, the site root at :class:`substanced.root.Root` finishes with:
+
+.. code-block:: python
+
+    set_acl(
+        self,
+        [(Allow, get_oid(admins), ALL_PERMISSIONS)],
+        registry=registry,
+        )
+

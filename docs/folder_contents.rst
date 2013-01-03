@@ -201,13 +201,43 @@ of container. For example, :py:class:`substanced.catalog.Catalog`
 is a content type that can hold only indexes. That is,it isn't meant to
 hold any arbitrary kind of thing.
 
-To tell the SDI what can be added inside a container content type,
-add a ``__sdi_addable__`` method to your content type. This method is
-passed the Substance D
-:attr:`introspector <pyramid:pyramid.config.Configurator.introspector>`,
-which you method can then use to see what content types are registered
-in the site. Your ``__sdi_addable__`` method can perform some logic,
-then return a filtered sequence.
+To tell the SDI what can be added inside a container content type, add a
+``__sdi_addable__`` method to your content type. This method is passed the
+folder object representing the place the object might be added, and a Substance
+D :term:`pyramid:introspectable` for a content type.  When Substance D tries to
+figure out whether an object is addable to a particular folder, it will call
+the ``__sdi_addable__`` method of your folderish type once for each content
+type.
+
+The introspectable is a dictionary-like object which contains information about
+the content type.  The introspectable contains the following keys:
+
+``meta``
+  A dictionary representing "meta" values passed to
+  :func:`~substanced.content.add_content_type`.  For example, if you pass
+  ``add_view='foo'`` to :func:`~substanced.content.add_content_type`, the
+  ``meta`` of the content type will be ``{'add_view':'foo'}``.
+
+``content_type``
+  The content type value passed to :func:`~substanced.content.add_content_type`.
+
+``factory_type``
+  The ``factory_type`` value passed to
+  :func:`~substanced.content.add_content_type`.
+
+``original_factory``
+  The original content factory (without any wrapping) passed to
+  :func:`~substanced.content.add_content_type`.
+
+``factory``
+  The potentially wrapped content factory derived from the original factory in
+  :func:`~substanced.content.add_content_type`.
+
+See :ref:`registering_content` for more information about content type
+registration and what the above introspectable values mean.
+
+Your ``__sdi_addable__`` method can perform some logic using the values it is
+passed, and then it must return a filtered sequence.
 
 As an example, the ``__sdi_addable__`` method on the ``Catalog``
 filters out the kinds of things that can be added in a catalog.
