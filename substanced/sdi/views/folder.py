@@ -139,6 +139,10 @@ class FolderContentsViews(object):
             name = column['name']
             field = column['field']
             sortable = column.get('sortable', True)
+
+            if context.is_orderable():
+                sortable = False
+
             formatter = column.get('formatter', '')
             
             headers.append({

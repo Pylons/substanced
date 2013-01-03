@@ -272,7 +272,7 @@ class TestFolderContentsViews(unittest.TestCase):
                  'col1', 'sortable': False},
                 {'name': 'Col 2', 'field': 'col2', 'value': 'col2'}
                 ]
-        context = testing.DummyResource()
+        context = testing.DummyResource(is_orderable=lambda: False)
         request = self._makeRequest(columns=sd_columns)
         inst = self._makeOne(context, request)
         result = inst._column_headers()
@@ -299,8 +299,32 @@ class TestFolderContentsViews(unittest.TestCase):
         self.assertEqual(col['sortable'], True)
 
 
+    def test__column_headers_sortable_false_for_orderable_folder(self):
+        def sd_columns(folder, subobject, request, default_columns):
+            self.assertEqual(len(default_columns), 1)
+            return [
+                {'name': 'Col 1', 'field': 'col1', 'value':
+                 'col1', 'sortable': True},
+                {'name': 'Col 2', 'field': 'col2', 'value':
+                 'col2', 'sortable': True}
+                ]
+        context = testing.DummyResource(is_orderable=lambda: True)
+        request = self._makeRequest(columns=sd_columns)
+        inst = self._makeOne(context, request)
+        result = inst._column_headers()
+        self.assertEqual(len(result), 2)
+
+        col = result[0]
+        self.assertEqual(col['field'], 'col1')
+        self.assertEqual(col['sortable'], False)
+
+        col = result[1]
+        self.assertEqual(col['field'], 'col2')
+        self.assertEqual(col['sortable'], False)
+
+
     def test__column_headers_no_custom(self):
-        context = testing.DummyResource()
+        context = testing.DummyResource(is_orderable=lambda: False)
         request = self._makeRequest()
         inst = self._makeOne(context, request)
         result = inst._column_headers()
