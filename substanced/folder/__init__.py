@@ -76,11 +76,16 @@ class Folder(Persistent):
     _orderable = False
 
     def get_order(self):
+        """ If the folder is ordered, return the ids in order. If not just
+        return them in BTree order. """
         if self._order is not None:
             return tuple([item[0] for item in self._order])
         return self.data.keys()
 
     def set_order(self, value):
+        """ Sets the folder order. ``value`` is a list of names for existing
+        folder items, in the desired order. The first time an order is set,
+        the folder is automatically marked as orderable. """
         if self._order is None:
             # make orderable by default on first ordering
             self.set_orderable(True)
@@ -93,9 +98,14 @@ class Folder(Persistent):
             self._order = tuple(order)
 
     def unset_order(self):
+        """ Remove set order from a folder, making it unordered. """
         del self._order
 
     def reorder(self, items, before):
+        """ Move one or more items from a folder into new positions inside
+        that folder. ``items`` is a list of ids of existing folder items,
+        which will be inserted in order before the item named ``before``. All
+        other items are left in the same order they had. """
         if self.is_ordered() and self.is_orderable():
             order = []
             for (name, oid) in self._order:
@@ -113,7 +123,8 @@ class Folder(Persistent):
         return self._order is not None
 
     def set_orderable(self, value):
-        """ Set to true if the folder can be manually ordered, false otherwise. """
+        """ Set to true if the folder can be manually ordered, false
+        otherwise. """
         self._orderable = value
 
     def is_orderable(self):
