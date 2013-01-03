@@ -14,7 +14,7 @@ class Test_name_validator(unittest.TestCase):
 
     def _makeKw(self, exc=None):
         request = testing.DummyRequest()
-        request.context = DummyFolder(exc)
+        request.context = DummyContainer(exc)
         return dict(request=request)
 
     def test_it_exception(self):
@@ -875,7 +875,7 @@ class TestFolderContentsViews(unittest.TestCase):
 
     def test__folder_contents_computable_icon(self):
         from substanced.interfaces import IFolder
-        context = testing.DummyResource(__provides__=IFolder)
+        context = DummyFolder(__provides__=IFolder)
         request = self._makeRequest()
         context['catalogs'] = self._makeCatalogs(oids=[1])
         result = testing.DummyResource()
@@ -899,7 +899,7 @@ class TestFolderContentsViews(unittest.TestCase):
 
     def test__folder_contents_literal_icon(self):
         from substanced.interfaces import IFolder
-        context = testing.DummyResource(__provides__=IFolder)
+        context = DummyFolder(__provides__=IFolder)
         request = self._makeRequest()
         context['catalogs'] = self._makeCatalogs(oids=[1])
         result = testing.DummyResource()
@@ -919,7 +919,7 @@ class TestFolderContentsViews(unittest.TestCase):
 
     def test__folder_contents_deletable_callable(self):
         from substanced.interfaces import IFolder
-        context = testing.DummyResource(__provides__=IFolder)
+        context = DummyFolder(__provides__=IFolder)
         request = self._makeRequest()
         context['catalogs'] = self._makeCatalogs(oids=[1])
         result = testing.DummyResource()
@@ -944,7 +944,7 @@ class TestFolderContentsViews(unittest.TestCase):
 
     def test__folder_contents_deletable_boolean(self):
         from substanced.interfaces import IFolder
-        context = testing.DummyResource(__provides__=IFolder)
+        context = DummyFolder(__provides__=IFolder)
         request = self._makeRequest()
         context['catalogs'] = self._makeCatalogs(oids=[1])
         result = testing.DummyResource()
@@ -965,7 +965,7 @@ class TestFolderContentsViews(unittest.TestCase):
 
     def test__folder_contents_columns_callable(self):
         from substanced.interfaces import IFolder
-        context = testing.DummyResource(__provides__=IFolder)
+        context = DummyFolder(__provides__=IFolder)
         request = self._makeRequest()
         context['catalogs'] = self._makeCatalogs(oids=[1])
         result = testing.DummyResource()
@@ -992,7 +992,7 @@ class TestFolderContentsViews(unittest.TestCase):
 
     def test__folder_contents_columns_None(self):
         from substanced.interfaces import IFolder
-        context = testing.DummyResource(__provides__=IFolder)
+        context = DummyFolder(__provides__=IFolder)
         request = self._makeRequest()
         context['catalogs'] = self._makeCatalogs(oids=[1])
         result = testing.DummyResource()
@@ -1017,7 +1017,7 @@ class TestFolderContentsViews(unittest.TestCase):
 
     def test__folder_contents_with_filter_text(self):
         from substanced.interfaces import IFolder
-        context = testing.DummyResource(__provides__=IFolder)
+        context = DummyFolder(__provides__=IFolder)
         request = self._makeRequest()
         context['catalogs'] = self._makeCatalogs(oids=[1])
         result = testing.DummyResource()
@@ -1029,7 +1029,7 @@ class TestFolderContentsViews(unittest.TestCase):
         self.assertEqual(length, 1)
         self.assertEqual(len(results), 1)
 
-class DummyFolder(object):
+class DummyContainer(object):
     oid_store = {}
 
     def __init__(self, exc=None):
@@ -1087,6 +1087,10 @@ dummy_folder_contents_2 = [1, [{
     'name_icon': 'the_icon',
     }] ]
 
+
+class DummyFolder(testing.DummyResource):
+    def is_ordered(self):
+        return False
 
 class DummyCatalogs(testing.DummyResource):
     __is_service__ = True
