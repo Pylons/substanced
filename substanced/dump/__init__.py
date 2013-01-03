@@ -1,3 +1,4 @@
+import base64
 import logging
 import os
 import yaml
@@ -32,6 +33,8 @@ from substanced.util import (
     is_folder,
     )
 
+from ZODB.blob import Blob
+
 logger = logging.getLogger(__name__)
 
 RESOURCE_FILENAME = 'resource.yaml'
@@ -62,6 +65,17 @@ def set_yaml(registry):
 
     SDumper.add_multi_representer(InterfaceClass, iface_representer)
     SLoader.add_constructor(u'!interface', iface_constructor)
+
+    def blob_representer(dumper, data):
+        return dumper.represent_scalar(
+            u'!blob', base64.encodestring(data.open('r').read())
+            )
+    def blob_constructor(loader, node):
+        return Blob(base64.decodestring(node.value))
+
+    SDumper.add_representer(Blob, blob_representer)
+    SLoader.add_constructor(u'!blob', blob_constructor)
+
 
 def get_dumpers(registry):
     ordered = registry.queryUtility(IDumperFactories, default=None)
@@ -366,10 +380,10 @@ class _ResourceLoadContext(_ResourceContext):
         name, resource = self.load_resource()
         self.name = name
         self.resource = resource
-        for loader in self.loaders:
-            loader.load(self)
         if parent is not None:
             parent.load(name, resource, registry=self.registry)
+        for loader in self.loaders:
+            loader.load(self)
         return resource
 
     def add_callback(self, callback):
@@ -573,9 +587,11 @@ class PropertySheetDumper(object):
             request.context = context.resource
             request.sdiapi = sdiapi(request)
             sheet = sheetfactory(context.resource, request)
-            sheet.schema.bind(
+            sheet.schema = sheet.schema.bind(
                 request=request, context=context.resource, loading=True
                 )
+            if '_csrf_token_' in sheet.schema:
+                del sheet.schema['_csrf_token_']
             yield sheetname, sheet
 
     def dump(self, context):
@@ -595,9 +611,14 @@ class PropertySheetDumper(object):
                 sheetname = '__unnamed__'
             fn = 'propsheets/%s/properties.yaml' % sheetname
             if context.exists(fn):
-                cstruct = context.load_yaml(fn)
-                appstruct = sheet.schema.deserialize(cstruct)
-                sheet.set(appstruct)
+                def callback(root, sheet=sheet, fn=fn, context=context):
+                    cstruct = context.load_yaml(fn)
+                    appstruct = sheet.schema.deserialize(cstruct)
+                    sheet.set(appstruct)
+                # this needs to be a callback due to multireference properties
+                # that require other objects to be in the objectmap before
+                # they can be assigned.
+                context.add_callback(callback)
 
 class AdhocAttrDumper(object):
     def __init__(self, name, registry):
