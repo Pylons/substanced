@@ -78,25 +78,27 @@ class TestFolder(unittest.TestCase):
         model1 = DummyModel()
         model2 = DummyModel()
         folder = self._makeOne({'a': model1, 'b': model2})
-        folder.set_order(['b', 'a'])
+        folder.set_order(['b', 'a'], reorderable=True)
         folder.unset_order()
         self.assertEqual(list(folder.keys()), ['a', 'b'])
+        self.assertEqual(folder._order, None)
+        self.assertEqual(folder._reorderable, None)
 
-    def test_is_orderable_by_default(self):
+    def test_is_non_reorderable_by_default(self):
         model1 = DummyModel()
         model2 = DummyModel()
         folder = self._makeOne({'a': model1, 'b': model2})
         folder.set_order(['a', 'b'])
-        self.assertTrue(folder.is_orderable())
+        self.assertFalse(folder.is_reorderable())
 
     def test_make_orderable_false(self):
         model1 = DummyModel()
         model2 = DummyModel()
         folder = self._makeOne({'a': model1, 'b': model2})
-        folder.set_order(['a', 'b'])
-        self.assertTrue(folder.is_orderable())
-        folder.set_orderable(False)
-        self.assertFalse(folder.is_orderable())
+        folder.set_order(['a', 'b'], reorderable=False)
+        self.assertFalse(folder.is_reorderable())
+        folder.set_order(['a', 'b'], reorderable=True)
+        self.assertTrue(folder.is_reorderable())
 
     def test__iter__(self):
         model1 = DummyModel()
@@ -727,9 +729,17 @@ class TestFolder(unittest.TestCase):
         model2 = DummyModel()
         model3 = DummyModel()
         folder = self._makeOne({'a': model1, 'b': model2, 'c': model3})
-        folder.set_order(['a', 'b', 'c'])
+        folder.set_order(['a', 'b', 'c'], reorderable=True)
         folder.reorder(['b', 'c'], 'a')
         self.assertEqual(list(folder), ['b', 'c', 'a'])
+
+    def test_reorder_folder_non_reorderable(self):
+        model1 = DummyModel()
+        model2 = DummyModel()
+        model3 = DummyModel()
+        folder = self._makeOne({'a': model1, 'b': model2, 'c': model3})
+        folder.set_order(['a', 'b', 'c'], reorderable=False)
+        self.assertRaises(ValueError, folder.reorder, ['b', 'c'], 'a')
 
 class TestSequentialAutoNamingFolder(unittest.TestCase):
     def _makeOne(self, d=None, autoname_length=None, autoname_start=None):

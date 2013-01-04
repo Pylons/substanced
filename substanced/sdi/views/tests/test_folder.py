@@ -116,6 +116,7 @@ class TestFolderContentsViews(unittest.TestCase):
             )
         inst._column_headers = mock.Mock(return_value=dummy_column_headers)
         inst.sdi_add_views = mock.Mock(return_value=('b',))
+        context.is_reorderable = mock.Mock(return_value=False)
         context.is_ordered = mock.Mock(return_value=False)
         result = inst.show()
         self.assert_('slickgrid_wrapper_options' in result)
@@ -165,6 +166,7 @@ class TestFolderContentsViews(unittest.TestCase):
             )
         inst._column_headers = mock.Mock(return_value=dummy_column_headers)
         inst.sdi_add_views = mock.Mock(return_value=('b',))
+        context.is_reorderable = mock.Mock(return_value=False)
         context.is_ordered = mock.Mock(return_value=False)
         result = inst.show()
         self.assert_('slickgrid_wrapper_options' in result)
@@ -215,6 +217,7 @@ class TestFolderContentsViews(unittest.TestCase):
             )
         inst._column_headers = mock.Mock(return_value=dummy_column_headers)
         inst.sdi_add_views = mock.Mock(return_value=('b',))
+        context.is_reorderable = mock.Mock(return_value=False)
         context.is_ordered = mock.Mock(return_value=False)
         result = inst.show()
         self.assert_('slickgrid_wrapper_options' in result)
@@ -288,7 +291,7 @@ class TestFolderContentsViews(unittest.TestCase):
                  'col1', 'sortable': False},
                 {'name': 'Col 2', 'field': 'col2', 'value': 'col2'}
                 ]
-        context = testing.DummyResource(is_orderable=lambda: False)
+        context = testing.DummyResource(is_ordered=lambda: False)
         request = self._makeRequest(columns=sd_columns)
         inst = self._makeOne(context, request)
         result = inst._column_headers()
@@ -315,7 +318,7 @@ class TestFolderContentsViews(unittest.TestCase):
         self.assertEqual(col['sortable'], True)
 
 
-    def test__column_headers_sortable_false_for_orderable_folder(self):
+    def test__column_headers_sortable_false_for_ordered_folder(self):
         def sd_columns(folder, subobject, request, default_columns):
             self.assertEqual(len(default_columns), 1)
             return [
@@ -324,7 +327,7 @@ class TestFolderContentsViews(unittest.TestCase):
                 {'name': 'Col 2', 'field': 'col2', 'value':
                  'col2', 'sortable': True}
                 ]
-        context = testing.DummyResource(is_orderable=lambda: True)
+        context = testing.DummyResource(is_ordered=lambda: True)
         request = self._makeRequest(columns=sd_columns)
         inst = self._makeOne(context, request)
         result = inst._column_headers()
@@ -340,7 +343,7 @@ class TestFolderContentsViews(unittest.TestCase):
 
 
     def test__column_headers_no_custom(self):
-        context = testing.DummyResource(is_orderable=lambda: False)
+        context = testing.DummyResource(is_ordered=lambda: False)
         request = self._makeRequest()
         inst = self._makeOne(context, request)
         result = inst._column_headers()
@@ -380,6 +383,7 @@ class TestFolderContentsViews(unittest.TestCase):
             )
         inst._column_headers = mock.Mock(return_value=dummy_column_headers)
         inst.sdi_add_views = mock.Mock(return_value=('b',))
+        context.is_reorderable = mock.Mock(return_value=False)
         context.is_ordered = mock.Mock(return_value=False)
         result = inst.show()
         self.assert_('slickgrid_wrapper_options' in result)
@@ -434,6 +438,7 @@ class TestFolderContentsViews(unittest.TestCase):
             )
         inst._column_headers = mock.Mock(return_value=dummy_column_headers)
         inst.sdi_add_views = mock.Mock(return_value=('b',))
+        context.is_reorderable = mock.Mock(return_value=True)
         context.is_ordered = mock.Mock(return_value=True)
         result = inst.show()
         self.assert_('slickgrid_wrapper_options' in result)

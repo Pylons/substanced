@@ -73,7 +73,7 @@ class Folder(Persistent):
 
     # Default uses ordering of underlying BTree.
     _order = None
-    _orderable = False
+    _reorderable = None
 
     def get_order(self):
         """ If the folder is ordered, return the ids in order. If not just
@@ -82,54 +82,70 @@ class Folder(Persistent):
             return tuple([item[0] for item in self._order])
         return self.data.keys()
 
-    def set_order(self, value):
+    def set_order(self, value, reorderable=None):
         """ Sets the folder order. ``value`` is a list of names for existing
-        folder items, in the desired order. The first time an order is set,
-        the folder is automatically marked as orderable. """
-        if self._order is None:
-            # make orderable by default on first ordering
-            self.set_orderable(True)
-        if self.is_orderable():
-            order = []
-            for name in value:
-                name = unicode(name)
-                oid = get_oid(self[name])
-                order.append((name, oid))
-            self._order = tuple(order)
+        folder items, in the desired order.
+
+        If ``reorderable`` is passed, value, it must be ``None``, ``True`` or
+        ``False``.  If it is ``None``, the reorderable flag will not be reset
+        from its current value.  If it is anything except ``None``, it will be
+        treated as a boolean and the reorderable flag will be set to that
+        value.  The ``reorderable`` value of a folder will be returned by that
+        folder's :meth:`~substanced.folder.Folder.is_reorderable` method.
+
+        The :meth:`~substanced.folder.Folder.is_reorderable` method is used by
+        the SDI folder contents view to indicate that the folder can or cannot
+        be reordered via the web UI.
+
+        If ``reorderable`` is set to ``True``, the
+        :meth:`~substanced.folder.Folder.reorder` method will work properly,
+        otherwise it will raise a :exc:`ValueError` when called.
+        """
+        order = []
+        for name in value:
+            name = unicode(name)
+            oid = get_oid(self[name])
+            order.append((name, oid))
+        self._order = tuple(order)
+        if reorderable is not None:
+            self._reorderable = bool(reorderable)
 
     def unset_order(self):
-        """ Remove set order from a folder, making it unordered. """
-        del self._order
+        """ Remove set order from a folder, making it unordered, and
+        non-reorderable."""
+        if self._order is not None:
+            del self._order
+        if self._reorderable is not None:
+            del self._reorderable
 
     def reorder(self, items, before):
-        """ Move one or more items from a folder into new positions inside
-        that folder. ``items`` is a list of ids of existing folder items,
-        which will be inserted in order before the item named ``before``. All
-        other items are left in the same order they had. """
-        if self.is_ordered() and self.is_orderable():
-            order = []
-            for (name, oid) in self._order:
-                if name == before:
-                    for item in items:
-                        item = unicode(item)
-                        item_oid = get_oid(self[item])
-                        order.append((item, item_oid))
-                if name not in items:
-                    order.append((name, oid))
-            self._order = tuple(order)
+        """ Move one or more items from a folder into new positions inside that
+        folder. ``items`` is a list of ids of existing folder items, which will
+        be inserted in order before the item named ``before``. All other items
+        are left in the original order.  If this method is called on a folder
+        which does not have an order set, or which is not reorderable, a
+        :exc:`ValueError` will be raised."""
+        if not self._reorderable:
+            raise ValueError('Folder is not reorderable')
+        order = []
+        for (name, oid) in self._order:
+            if name == before:
+                for item in items:
+                    item = unicode(item)
+                    item_oid = get_oid(self[item])
+                    order.append((item, item_oid))
+            if name not in items:
+                order.append((name, oid))
+        self._order = tuple(order)
 
     def is_ordered(self):
-        """ Return true if the folder has a set order, false otherwise. """
+        """ Return true if the folder has a manually set ordering, false
+        otherwise."""
         return self._order is not None
 
-    def set_orderable(self, value):
-        """ Set to true if the folder can be manually ordered, false
-        otherwise. """
-        self._orderable = value
-
-    def is_orderable(self):
-        """ Return true if the folder can be manually ordered, false otherwise. """
-        return self._orderable
+    def is_reorderable(self):
+        """ Return true if the folder can be reordered, false otherwise."""
+        return self._reorderable
 
     def __init__(self, data=None, family=None):
         """ Constructor.  Data may be an initial dictionary mapping object

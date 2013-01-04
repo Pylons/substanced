@@ -140,7 +140,7 @@ class FolderContentsViews(object):
             field = column['field']
             sortable = column.get('sortable', True)
 
-            if context.is_orderable():
+            if context.is_ordered():
                 sortable = False
 
             formatter = column.get('formatter', '')
@@ -450,15 +450,16 @@ class FolderContentsViews(object):
 
         # Is the folder content ordered?
         is_ordered = context.is_ordered()
+        is_reorderable = context.is_reorderable()
 
         if is_ordered:
-            # Nothing is sortable, if the content is ordered.
+            # Nothing is sortable if the content is ordered.
             sortCol = None
         else:
             # The sorted column is always the first sortable column in the row.
-            # This gives the visual cue to the user who can see the sorted column
-            # and its direction.  It does _not_ affect the actual sorting, which is
-            # done on the server and not on the grid.
+            # This gives the visual cue to the user who can see the sorted
+            # column and its direction.  It does _not_ affect the actual
+            # sorting, which is done on the server and not on the grid.
             for col in columns:
                 if col.get('sortable', True):
                     # We found the first sortable column.
@@ -498,8 +499,8 @@ class FolderContentsViews(object):
             # column.)
             sortCol=sortCol,
             sortDir=sortDir,
-            # is the grid orderable?
-            isOrdered=is_ordered,
+            # is the grid reorderable?
+            isOrdered=is_reorderable,
             #
             # Parameters for the remote data model
             url='',   # use same url for ajax
