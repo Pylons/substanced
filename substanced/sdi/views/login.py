@@ -69,7 +69,11 @@ def login(context, request):
         password = password,
         )
 
-@mgmt_view(name='logout', tab_condition=False)
+@mgmt_view(
+    name='logout',
+    tab_condition=False,
+    permission=NO_PERMISSION_REQUIRED
+    )
 def logout(request):
     headers = forget(request)
     return HTTPFound(location = request.sdiapi.mgmt_path(request.context),
