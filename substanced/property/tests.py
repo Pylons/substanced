@@ -28,14 +28,29 @@ class TestPropertySheet(unittest.TestCase):
         inst = self._makeOne(context, request)
         context.title = 'title'
         context.description = 'description'
+        inst.schema = [DummySchemaNode('title'),
+                       DummySchemaNode('description')]
         inst.set(dict(title='t', description='d'))
         self.assertEqual(context.title, 't')
         self.assertEqual(context.description, 'd')
+
+    def test_set_schema_missing_value(self):
+        context = testing.DummyResource()
+        request = testing.DummyRequest()
+        inst = self._makeOne(context, request)
+        context.title = 'title'
+        context.description = 'description'
+        inst.schema = [DummySchemaNode('title')]
+        inst.set(dict(title='t', description='d'))
+        self.assertEqual(context.title, 't')
+        self.assertEqual(context.description, 'description')
 
     def test_set_nochange(self):
         context = testing.DummyResource()
         request = testing.DummyRequest()
         inst = self._makeOne(context, request)
+        inst.schema = [DummySchemaNode('title'),
+                       DummySchemaNode('description')]
         context.title = 't'
         context.description = 'd'
         inst.set(dict(title='t', description='d'))
@@ -48,6 +63,8 @@ class TestPropertySheet(unittest.TestCase):
         inst = self._makeOne(context, request)
         context.title = 'title'
         context.description = 'description'
+        inst.schema = [DummySchemaNode('title'),
+                       DummySchemaNode('description')]
         inst.set(dict(title='t', description='d'), omit=('title',))
         self.assertEqual(context.title, 'title')
         self.assertEqual(context.description, 'd')
@@ -58,6 +75,8 @@ class TestPropertySheet(unittest.TestCase):
         inst = self._makeOne(context, request)
         context.title = 'title'
         context.description = 'description'
+        inst.schema = [DummySchemaNode('title'),
+                       DummySchemaNode('description')]
         inst.set(dict(title='t', description='d'), omit='title')
         self.assertEqual(context.title, 'title')
         self.assertEqual(context.description, 'd')

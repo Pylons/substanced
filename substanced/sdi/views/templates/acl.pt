@@ -78,7 +78,7 @@
 
      <td width="25%">
       <select data-placeholder="Choose a Principal"
-              name="principal" id="principal" class="chzn-select">
+              name="principal" id="principal">
        <option value=""></option>
        <optgroup label="Groups">
          <option tal:repeat="(group_id, group_name) groups"
@@ -89,21 +89,15 @@
                  value="${user_id}">${user_name}</option>
        </optgroup>
       </select>
-      <script type="text/javascript">
-        $('#principal').chosen()
-      </script>
      </td>
 
      <td width="40%">
        <select name="permissions" data-placeholder="Choose Permissions"
-               id="permissions" class="chzn-select" multiple="multiple">
+               id="permissions" multiple="multiple">
          <option value=""></option>
          <option tal:repeat="permission permissions"
                  value="${permission}">${permission}</option>
        </select>
-       <script type="text/javascript">
-       $('#permissions').chosen()
-       </script>
      </td>
 
      <td width="15%">

@@ -89,6 +89,7 @@ class Root(Folder):
         user = principals.add_user(login, password, email, registry=registry)
         admins = principals.add_group('admins', registry=registry)
         admins.memberids.connect([user])
+        self.sdi_title = 'Substance D'
         set_acl(
             self,
             [(Allow, get_oid(admins), ALL_PERMISSIONS)],

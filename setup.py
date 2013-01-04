@@ -25,7 +25,7 @@ except IOError:
 
 install_requires = [
     'pyramid>=1.4dev', # effective_principals predicate
-    'ZODB3<=3.10.999', # dont go to ZODB4/ZODB3.11 (same thing) yet
+    'ZODB3', 
     'hypatia>=0.1a3dev', # index-based querying
     'venusian',
     'deform',
@@ -54,6 +54,7 @@ setup(name='substanced',
         "Intended Audience :: Developers",
         "Programming Language :: Python",
         "Programming Language :: Python",
+        "Programming Language :: Python :: 2.6",
         "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: Implementation :: CPython",
         "Framework :: Pylons",
@@ -76,6 +77,7 @@ setup(name='substanced',
       sd_evolve = substanced.scripts.evolve:main
       sd_reindex = substanced.scripts.reindex:main
       sd_drain_indexing = substanced.scripts.drain_indexing:main
+      sd_dump = substanced.scripts.dump:main
       [pyramid.scaffold]
       substanced=substanced.scaffolds:SubstanceDProjectTemplate
       """,

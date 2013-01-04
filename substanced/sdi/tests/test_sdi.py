@@ -1234,6 +1234,9 @@ class DummyTransaction(object):
     def note(self, note):
         self.notes.append(note)
 
+    def setExtendedInfo(self, name, value):
+        self.extinfo = (name, value)
+
 class DummySDIAPI(object):
     def __init__(self, result=None):
         self.result = result

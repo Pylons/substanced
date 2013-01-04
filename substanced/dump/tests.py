@@ -35,6 +35,31 @@ class Test_set_yaml(unittest.TestCase):
         result = yaml.load(io, Loader=registry['yaml_loader'])
         self.assertEqual(result, DummyInterface)
 
+    def test_blob_representer(self):
+        from ZODB.blob import Blob
+        registry = DummyRegistry(None)
+        self._callFUT(registry)
+        import StringIO
+        io = StringIO.StringIO()
+        import yaml
+        blob = Blob('abc')
+        yaml.dump(blob, io, Dumper=registry['yaml_dumper'])
+        self.assertEqual(
+            io.getvalue(),
+            "!blob 'YWJj\n\n  '\n" 
+            )
+
+    def test_blob_constructor(self):
+        registry = DummyRegistry(None)
+        self._callFUT(registry)
+        import StringIO
+        io = StringIO.StringIO(
+            "!blob 'YWJj\n\n  '\n" 
+            )
+        import yaml
+        result = yaml.load(io, Loader=registry['yaml_loader'])
+        self.assertEqual(result.open('r').read(), 'abc')
+
 class Test_get_dumpers(unittest.TestCase):
     def _callFUT(self, registry):
         from . import get_dumpers
@@ -733,6 +758,7 @@ class TestPropertySheetDumper(unittest.TestCase):
             result,
             [('__unnamed__', sheet)]
             )
+        self.assertEqual(sheet.deleted, '_csrf_token_')
 
     def test_dump(self):
         yamlthing = DummyYAMLDumperLoader()
@@ -757,7 +783,10 @@ class TestPropertySheetDumper(unittest.TestCase):
         registry.update({'yaml_loader':yamlthing, 'yaml_dumper':yamlthing})
         inst = self._makeOne('name', registry)
         context = testing.DummyResource()
+        def add_callback(cb):
+            context.cb = cb
         context.exists = lambda *arg: True
+        context.add_callback = add_callback
         sheet = DummySheet(None)
         def _get_sheets(ctx):
             self.assertEqual(ctx, context)
@@ -768,6 +797,7 @@ class TestPropertySheetDumper(unittest.TestCase):
             return {'a':1}
         context.load_yaml = load_yaml
         inst.load(context)
+        context.cb(None)
         self.assertEqual(sheet.appstruct, {'a':1})
 
 class TestAdhocAttrDumper(unittest.TestCase):
@@ -852,10 +882,20 @@ class DummySheet(object):
     def __init__(self, result):
         self.result = result
 
-    @property
-    def schema(self):
+    def get_schema(self):
         return self
 
+    def set_schema(self, schema):
+        self._schema = schema
+
+    schema = property(get_schema, set_schema)
+
+    def __contains__(self, val):
+        return True
+
+    def __delitem__(self, val):
+        self.deleted = val
+        
     def bind(self, request=None, context=None, loading=None):
         self.request = request
         self.context = context

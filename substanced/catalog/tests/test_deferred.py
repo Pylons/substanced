@@ -1179,7 +1179,9 @@ class DummyTransaction(object):
         self.beforecommit_fn = fn
         self.beforecommit_args = args
 
-@functools.total_ordering
+from substanced.compat import total_ordering
+
+@total_ordering
 class DummyAction(object):
     index = testing.DummyResource()
     index.__oid__ = 1
