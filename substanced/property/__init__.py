@@ -38,14 +38,15 @@ class PropertySheet(object):
     def set(self, struct, omit=()):
         if not is_nonstr_iter(omit):
             omit = (omit,)
-        for k in struct:
-            if not k in omit:
+        for child in self.schema:
+            name = child.name
+            if (name in struct) and not (name in omit):
                 # avoid setting an attribute on the object if it's the same
                 # value as the existing value to avoid database bloat
-                existing_val = getattr(self.context, k, _marker)
-                new_val = struct[k]
+                existing_val = getattr(self.context, name, _marker)
+                new_val = struct[name]
                 if existing_val != new_val:
-                    setattr(self.context, k, new_val)
+                    setattr(self.context, name, new_val)
 
     def after_set(self):
         event = ObjectModified(self.context)
