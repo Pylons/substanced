@@ -95,7 +95,7 @@
             var columns = this.columns;
             var wrapperOptions = this.wrapperOptions;
 
-            var isReorderable = this.wrapperOptions.isisReorderable;
+            var isReorderable = this.wrapperOptions.isReorderable;
 
             if (isReorderable) {
                 // move column: add it
