@@ -127,7 +127,7 @@ class TestFolderContentsViews(unittest.TestCase):
             'sdi-content-grid'
             )
         # None because it cannot be sorted.  
-        self.assertEqual(slickgrid_wrapper_options['isOrdered'], False)
+        self.assertEqual(slickgrid_wrapper_options['isReorderable'], False)
         self.assertEqual(slickgrid_wrapper_options['sortCol'], None)   
         self.assertEqual(slickgrid_wrapper_options['sortDir'], True)
         self.assertEqual(slickgrid_wrapper_options['url'], '')
@@ -175,7 +175,7 @@ class TestFolderContentsViews(unittest.TestCase):
         self.assertEqual(
             slickgrid_wrapper_options['configName'], 'sdi-content-grid'
             )
-        self.assertEqual(slickgrid_wrapper_options['isOrdered'], False)
+        self.assertEqual(slickgrid_wrapper_options['isReorderable'], False)
         self.assertEqual(slickgrid_wrapper_options['sortCol'], 'col1')  
         self.assertEqual(slickgrid_wrapper_options['sortDir'], True)
         self.assertEqual(slickgrid_wrapper_options['url'], '')
@@ -228,7 +228,7 @@ class TestFolderContentsViews(unittest.TestCase):
             'sdi-content-grid'
             )
 
-        self.assertEqual(slickgrid_wrapper_options['isOrdered'], False)
+        self.assertEqual(slickgrid_wrapper_options['isReorderable'], False)
         # col2 here, as col1 was not sortable.
         self.assertEqual(slickgrid_wrapper_options['sortCol'], 'col2')  
         
@@ -447,7 +447,7 @@ class TestFolderContentsViews(unittest.TestCase):
         self.assertEqual(
             slickgrid_wrapper_options['configName'], 'sdi-content-grid'
             )
-        self.assertEqual(slickgrid_wrapper_options['isOrdered'], True)
+        self.assertEqual(slickgrid_wrapper_options['isReorderable'], True)
         self.assertEqual(slickgrid_wrapper_options['sortCol'], None)  
         self.assertEqual(slickgrid_wrapper_options['sortDir'], True)
         self.assertEqual(slickgrid_wrapper_options['url'], '')

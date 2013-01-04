@@ -500,7 +500,7 @@ class FolderContentsViews(object):
             sortCol=sortCol,
             sortDir=sortDir,
             # is the grid reorderable?
-            isOrdered=is_reorderable,
+            isReorderable=is_reorderable,
             #
             # Parameters for the remote data model
             url='',   # use same url for ajax

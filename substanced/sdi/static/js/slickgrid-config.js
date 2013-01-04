@@ -95,9 +95,9 @@
             var columns = this.columns;
             var wrapperOptions = this.wrapperOptions;
 
-            var ordered = this.wrapperOptions.isOrdered;
+            var isReorderable = this.wrapperOptions.isisReorderable;
 
-            if (ordered) {
+            if (isReorderable) {
                 // move column: add it
                 columns.unshift({
                     id: "#",
@@ -214,7 +214,7 @@
             grid.registerPlugin(moveRowsPlugin);
 
 
-            if (ordered) {
+            if (isReorderable) {
 
                 //moveRowsPlugin.onBeforeMoveRows.subscribe(function (e, data) {
                 //    log('onBeforeMoveRows', data);
