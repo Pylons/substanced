@@ -38,6 +38,7 @@ class Test_login(unittest.TestCase):
         self.assertEqual(result['came_from'], 'http://example.com')
         self.assertEqual(result['login'], '')
         self.assertEqual(result['password'], '')
+        self.assertEqual(request.session['sdi.came_from'], 'http://example.com')
 
     def test_form_submitted_csrf_error(self):
         request = testing.DummyRequest()
@@ -50,6 +51,7 @@ class Test_login(unittest.TestCase):
         self.assertEqual(result['login'], '')
         self.assertEqual(result['password'], '')
         self.assertEqual(request.session['_f_error'], ['Failed login (CSRF)'])
+        self.assertEqual(request.session['sdi.came_from'], 'http://example.com')
         
     def test_form_submitted_failed_login_no_user(self):
         from ....testing import make_site
@@ -66,6 +68,7 @@ class Test_login(unittest.TestCase):
         self.assertEqual(result['login'], 'login')
         self.assertEqual(result['password'], 'password')
         self.assertEqual(request.session['_f_error'], ['Failed login'])
+        self.assertEqual(request.session['sdi.came_from'], 'http://example.com')
 
     def test_form_submitted_failed_login_wrong_password(self):
         from ....testing import make_site
@@ -83,6 +86,7 @@ class Test_login(unittest.TestCase):
         self.assertEqual(result['login'], 'login')
         self.assertEqual(result['password'], 'password')
         self.assertEqual(request.session['_f_error'], ['Failed login'])
+        self.assertEqual(request.session['sdi.came_from'], 'http://example.com')
 
     def test_form_submitted_success(self):
         from ....testing import make_site
@@ -99,6 +103,7 @@ class Test_login(unittest.TestCase):
         result = self._callFUT(context, request)
         self.assertEqual(result.location, 'http://example.com')
         self.assertTrue(result.headers)
+        self.assertTrue('sdi.came_from' not in request.session)
 
 class DummyUser(object):
     def __init__(self, result):
