@@ -787,6 +787,24 @@ class TestFolder(unittest.TestCase):
         folder.reorder(['b', 'c'], 'a')
         self.assertEqual(list(folder), ['b', 'c', 'a'])
 
+    def test_reorder_folder_afterlast(self):
+        model1 = DummyModel()
+        model2 = DummyModel()
+        model3 = DummyModel()
+        folder = self._makeOne({'a': model1, 'b': model2, 'c': model3})
+        folder.set_order(['a', 'b', 'c'], reorderable=True)
+        folder.reorder(['a', 'b'], None)
+        self.assertEqual(list(folder), ['c', 'a', 'b'])
+
+    def test_reorder_folder_wrongid(self):
+        model1 = DummyModel()
+        model2 = DummyModel()
+        model3 = DummyModel()
+        folder = self._makeOne({'a': model1, 'b': model2, 'c': model3})
+        folder.set_order(['a', 'b', 'c'], reorderable=True)
+        self.assertRaises(ValueError,
+               folder.reorder, ['a', 'b'], 'NOSUCH')
+
     def test_reorder_folder_non_reorderable(self):
         model1 = DummyModel()
         model2 = DummyModel()

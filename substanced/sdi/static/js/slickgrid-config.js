@@ -227,7 +227,15 @@
                         var row = data[value];
                         return (row || {}).id;
                     });
-                    var insertBeforeId = data[args.insertBefore].id;
+                    var insertBeforeId;
+                    if (args.insertBefore < data.length) {
+                        insertBeforeId = data[args.insertBefore].id;
+                    } else {
+                        // inserting after the last element
+                        // an empty id will mean "after last" to the server
+                        insertBeforeId = '';
+                    }
+
                     //log('onMoveRows, rows=', selectedIds, 'insertBefore=', insertBeforeId);
 
                     sdiRemoteModelPlugin.ajax({

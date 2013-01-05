@@ -132,20 +132,30 @@ class Folder(Persistent):
         """ Move one or more items from a folder into new positions inside that
         folder. ``items`` is a list of ids of existing folder items, which will
         be inserted in order before the item named ``before``. All other items
-        are left in the original order.  If this method is called on a folder
-        which does not have an order set, or which is not reorderable, a
-        :exc:`ValueError` will be raised."""
+        are left in the original order. If ``before`` is None, the items will be
+        appended after the last item in the current order. If this method is
+        called on a folder which does not have an order set, or which is not
+        reorderable, a :exc:`ValueError` will be raised."""
         if not self._reorderable:
             raise ValueError('Folder is not reorderable')
+        insert_order = []
+        for item in items:
+            item = unicode(item)
+            item_oid = get_oid(self[item])
+            insert_order.append((item, item_oid))
         order = []
+        inserted = False
         for (name, oid) in self._order:
             if name == before:
-                for item in items:
-                    item = unicode(item)
-                    item_oid = get_oid(self[item])
-                    order.append((item, item_oid))
+                order.extend(insert_order)
+                inserted = True
             if name not in items:
                 order.append((name, oid))
+        if not inserted:
+            if before is not None:
+                raise ValueError('Non-existent item name: %r' % (before, ))
+            # Appending after the last element.
+            order.extend(insert_order)
         self._order = tuple(order)
 
     def is_ordered(self):
