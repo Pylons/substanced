@@ -170,17 +170,56 @@ class IFolder(Interface):
         """Return an iterable sequence of name and oid tuples for each
         object in the folder, respecting order if set."""
 
-    def set_order(value):
+    def set_order(value, reorderable=None):
         """Makes the folder orderable and sets its order to the list of
         names provided in value. Names should be existing names for objects
-        contained in the folder at the time order is set."""
+        contained in the folder at the time order is set.
+
+        If ``reorderable`` is passed, value, it must be ``None``, ``True`` or
+        ``False``.  If it is ``None``, the reorderable flag will not be reset
+        from its current value.  If it is anything except ``None``, it will be
+        treated as a boolean and the reorderable flag will be set to that
+        value.  The ``reorderable`` value of a folder will be returned by that
+        folder's :meth:`~substanced.folder.Folder.is_reorderable` method.
+
+        The :meth:`~substanced.folder.Folder.is_reorderable` method is used by
+        the SDI folder contents view to indicate that the folder can or cannot
+        be reordered via the web UI.
+
+        If ``reorderable`` is set to ``True``, the
+        :meth:`~substanced.folder.Folder.reorder` method will work properly,
+        otherwise it will raise a :exc:`ValueError` when called.
+        """
 
     def unset_order():
-        """Removes the folder internal ordering, making it an unordered folder."""
+        """Removes the folder internal ordering, making it an unordered
+        folder."""
 
     def is_ordered():
         """ Return ``True`` if the folder has a manual ordering (e.g. its
         ``order`` attribute has been set), ``False`` otherwise."""
+
+    def is_reorderable():
+        """ Return true if the folder can be reordered, false otherwise."""
+
+    def reorder(items, before):
+        """ Move one or more items from a folder into new positions inside that
+        folder. ``items`` is a list of ids of existing folder items, which will
+        be inserted in order before the item named ``before``. All other items
+        are left in the original order.  If this method is called on a folder
+        which does not have an order set, or which is not reorderable, a
+        :exc:`ValueError` will be raised."""
+
+    def sort(oids, reverse=False, limit=None):
+        """ Return the intersection of the oids of the folder's order with the
+        oids passed in.  If ``reverse`` is True, reverse the result set.  If
+        ``limit`` is an integer, return only that number of items (after
+        reversing, if reverse is True)."""
+
+    def oids():
+        """ Returns a tuple with the oids of the objects inside this folder (in
+        the folder's order if set).
+        """
 
     def keys():
         """ Return an iterable sequence of object names present in the folder.

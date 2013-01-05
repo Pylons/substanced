@@ -367,17 +367,18 @@ class FolderContentsViews(object):
             text = catalog['text']
             q = q & text.eq(filter_text)
 
+        if folder.is_ordered() and sort_index is None:
+            # hypatia resultset.sort will call IFolder.sort method
+            sort_index = folder
+
         if sort_index is None:
             sort_index = catalog['name']
 
         resultset = q.execute()
         folder_length = len(resultset)
 
-        if folder.is_ordered():
-            ids = [oid for oid in folder.oids() if oid in resultset.ids]
-        else:
-            resultset = resultset.sort(sort_index, reverse=reverse, limit=end)
-            ids = resultset.ids
+        resultset = resultset.sort(sort_index, reverse=reverse, limit=end)
+        ids = resultset.ids
 
         can_manage = bool(has_permission('sdi.manage-contents', folder,request))
         custom_columns = request.registry.content.metadata(

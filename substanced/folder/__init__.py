@@ -75,6 +75,16 @@ class Folder(Persistent):
     _order = None
     _reorderable = None
 
+    def __init__(self, data=None, family=None):
+        """ Constructor.  Data may be an initial dictionary mapping object
+        name to object. """
+        if family is not None:
+            self.family = family
+        if data is None:
+            data = {}
+        self.data = self.family.OO.BTree(data)
+        self._num_objects = Length(len(data))
+
     def get_order(self):
         """ If the folder is ordered, return the ids in order. If not just
         return them in BTree order. """
@@ -147,15 +157,15 @@ class Folder(Persistent):
         """ Return true if the folder can be reordered, false otherwise."""
         return self._reorderable
 
-    def __init__(self, data=None, family=None):
-        """ Constructor.  Data may be an initial dictionary mapping object
-        name to object. """
-        if family is not None:
-            self.family = family
-        if data is None:
-            data = {}
-        self.data = self.family.OO.BTree(data)
-        self._num_objects = Length(len(data))
+    def sort(self, oids, reverse=False, limit=None):
+        # used by the hypatia resultset "sort" method when the folder contents
+        # view uses us as a "sort index"
+        ids = [oid for oid in self.oids() if oid in oids]
+        if reverse:
+            ids = ids[::-1]
+        if limit is not None:
+            ids = ids[:limit]
+        return ids
 
     def find_service(self, service_name):
         """ Return a service named by ``service_name`` in this folder *or any

@@ -100,6 +100,60 @@ class TestFolder(unittest.TestCase):
         folder.set_order(['a', 'b'], reorderable=True)
         self.assertTrue(folder.is_reorderable())
 
+    def test_sort_no_reverse_no_limit(self):
+        model1 = DummyModel()
+        model1.__oid__ = 1
+        model2 = DummyModel()
+        model2.__oid__ = 2
+        folder = self._makeOne({'a': model1, 'b': model2})
+        result = folder.sort([1,2])
+        self.assertEqual(result, [1, 2])
+
+    def test_sort_no_reverse_no_limit_catalog_has_more_results_than_fold(self):
+        model1 = DummyModel()
+        model1.__oid__ = 1
+        model2 = DummyModel()
+        model2.__oid__ = 2
+        folder = self._makeOne({'a': model1, 'b': model2})
+        result = folder.sort([1,2,3])
+        self.assertEqual(result, [1, 2])
+
+    def test_sort_no_reverse_no_limit_fold_has_more_results_than_catalog(self):
+        model1 = DummyModel()
+        model1.__oid__ = 1
+        model2 = DummyModel()
+        model2.__oid__ = 2
+        folder = self._makeOne({'a': model1, 'b': model2})
+        result = folder.sort([1])
+        self.assertEqual(result, [1])
+
+    def test_sort_reverse_no_limit(self):
+        model1 = DummyModel()
+        model1.__oid__ = 1
+        model2 = DummyModel()
+        model2.__oid__ = 2
+        folder = self._makeOne({'a': model1, 'b': model2})
+        result = folder.sort([1, 2], reverse=True)
+        self.assertEqual(result, [2, 1])
+
+    def test_sort_reverse_limit(self):
+        model1 = DummyModel()
+        model1.__oid__ = 1
+        model2 = DummyModel()
+        model2.__oid__ = 2
+        folder = self._makeOne({'a': model1, 'b': model2})
+        result = folder.sort([1, 2], reverse=True, limit=1)
+        self.assertEqual(result, [2])
+
+    def test_sort_forward_limit(self):
+        model1 = DummyModel()
+        model1.__oid__ = 1
+        model2 = DummyModel()
+        model2.__oid__ = 2
+        folder = self._makeOne({'a': model1, 'b': model2})
+        result = folder.sort([1, 2], limit=1)
+        self.assertEqual(result, [1])
+
     def test__iter__(self):
         model1 = DummyModel()
         model2 = DummyModel()
