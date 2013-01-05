@@ -132,10 +132,12 @@ class Folder(Persistent):
         """ Move one or more items from a folder into new positions inside that
         folder. ``items`` is a list of ids of existing folder items, which will
         be inserted in order before the item named ``before``. All other items
-        are left in the original order. If ``before`` is None, the items will be
-        appended after the last item in the current order. If this method is
+        are left in the original order. If ``before`` is None, the items will
+        be appended after the last item in the current order. If this method is
         called on a folder which does not have an order set, or which is not
-        reorderable, a :exc:`ValueError` will be raised."""
+        reorderable, a :exc:`ValueError` will be raised. A :exc:`ValueError` is
+        also raised, if ``before`` does not correspond to any item, and
+        is not None."""
         if not self._reorderable:
             raise ValueError('Folder is not reorderable')
         insert_order = []
