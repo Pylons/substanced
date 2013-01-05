@@ -261,8 +261,133 @@ class TestFolderContentsViews(unittest.TestCase):
         result = inst.show_json()
         self.assertEqual(
             result,
-            {'from':1, 'to':2, 'records':dummy_folder_contents_0[1], 'total':1}
+            {'from': 1, 'to': 2,
+             'records': dummy_folder_contents_0[1], 'total': 1}
             )
+
+    def test_show_json_nodata(self):
+        context = testing.DummyResource()
+        request = self._makeRequest()
+        # No 'from' -> no data response.
+        inst = self._makeOne(context, request)
+        inst._folder_contents = mock.Mock(
+            return_value=dummy_folder_contents_0
+            )
+        result = inst.show_json()
+        self.assertEqual(
+            result,
+            {}
+            )
+
+    def test_delete_ajax(self):
+        context = testing.DummyResource()
+        context['a'] = testing.DummyResource()
+        context['b'] = testing.DummyResource()
+        request = self._makeRequest()
+        request.params['item-modify'] = 'a,b'
+        # Also ask for an update.
+        request.params['from'] = '1'
+        request.params['to'] = '2'
+        inst = self._makeOne(context, request)
+        inst._folder_contents = mock.Mock(
+            return_value=dummy_folder_contents_0
+            )
+        mockundowrapper = request.sdiapi.get_flash_with_undo_snippet = mock.Mock(
+            return_value='STATUSMESSG<a>Undo</a>'
+            )
+        result = inst.delete_ajax()
+        mockundowrapper.assert_called_once_with('Deleted 2 items')
+        self.assertEqual(
+            result,
+            {'from': 1, 'to': 2,
+             'records': dummy_folder_contents_0[1], 'total': 1,
+             'flash': 'STATUSMESSG<a>Undo</a>'}
+            )
+        self.assertFalse('a' in context)
+        self.assertFalse('b' in context)
+
+    def test_delete_ajax_one(self):
+        context = testing.DummyResource()
+        context['a'] = testing.DummyResource()
+        context['b'] = testing.DummyResource()
+        request = self._makeRequest()
+        request.params['item-modify'] = 'a'
+        # Also ask for an update.
+        request.params['from'] = '1'
+        request.params['to'] = '2'
+        inst = self._makeOne(context, request)
+        inst._folder_contents = mock.Mock(
+            return_value=dummy_folder_contents_0
+            )
+        mockundowrapper = request.sdiapi.get_flash_with_undo_snippet = mock.Mock(
+            return_value='STATUSMESSG<a>Undo</a>'
+            )
+        result = inst.delete_ajax()
+        mockundowrapper.assert_called_once_with('Deleted 1 item')
+        self.assertEqual(
+            result,
+            {'from': 1, 'to': 2,
+             'records': dummy_folder_contents_0[1], 'total': 1,
+             'flash': 'STATUSMESSG<a>Undo</a>'}
+            )
+        self.assertFalse('a' in context)
+        self.assertTrue('b' in context)
+
+    def test_delete_ajax_none(self):
+        context = testing.DummyResource()
+        context['a'] = testing.DummyResource()
+        context['b'] = testing.DummyResource()
+        request = self._makeRequest()
+        request.params['item-modify'] = ''
+        # Also ask for an update.
+        request.params['from'] = '1'
+        request.params['to'] = '2'
+        inst = self._makeOne(context, request)
+        inst._folder_contents = mock.Mock(
+            return_value=dummy_folder_contents_0
+            )
+        mockundowrapper = request.sdiapi.get_flash_with_undo_snippet = mock.Mock(
+            return_value='STATUSMESSG<a>Undo</a>'
+            )
+        result = inst.delete_ajax()
+        mockundowrapper.assert_not_called()
+        self.assertEqual(
+            result,
+            {'from': 1, 'to': 2,
+             'records': dummy_folder_contents_0[1], 'total': 1,
+             'flash': 'No items deleted'}
+            )
+        self.assertTrue('a' in context)
+        self.assertTrue('b' in context)
+
+    def test_delete_ajax_missing(self):
+        context = testing.DummyResource()
+        context['a'] = testing.DummyResource()
+        context['b'] = testing.DummyResource()
+        request = self._makeRequest()
+        # These items are not there, so it silently will ignore them.
+        request.params['item-modify'] = 'c,d'
+        # Also ask for an update.
+        request.params['from'] = '1'
+        request.params['to'] = '2'
+        inst = self._makeOne(context, request)
+        inst._folder_contents = mock.Mock(
+            return_value=dummy_folder_contents_0
+            )
+        mockundowrapper = request.sdiapi.get_flash_with_undo_snippet = mock.Mock(
+            return_value='STATUSMESSG<a>Undo</a>'
+            )
+        result = inst.delete_ajax()
+        mockundowrapper.assert_not_called()
+        self.assertEqual(
+            result,
+            {'from': 1, 'to': 2,
+             'records': dummy_folder_contents_0[1], 'total': 1,
+             'flash': 'No items deleted'}
+            )
+        self.assertTrue('a' in context)
+        self.assertTrue('b' in context)
+
 
     def test__column_headers_for_non_sortable_columns(self):
         def sd_columns(folder, subobject, request, default_columns):
