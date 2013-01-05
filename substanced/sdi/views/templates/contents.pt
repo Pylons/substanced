@@ -67,6 +67,13 @@
                     // I think it is better to submit the list as a
                     // concatenated value, instead of adding several inputs to the dom.
                     $hiddenInput.attr('value', selectedIds.join(','));
+
+                    // disable the buttons. This is important in case of the
+                    // static (non ajax) submit buttons.
+                    // (We need the timeout to allow the browser's submit trigger first.)
+                    setTimeout(function () {
+                        $form.find('.btn-sdi').attr('disabled', true);
+                    }, 0);
                 });
  
                 // ajaxify delete button
