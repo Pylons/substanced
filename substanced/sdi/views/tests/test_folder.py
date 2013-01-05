@@ -388,7 +388,6 @@ class TestFolderContentsViews(unittest.TestCase):
         self.assertTrue('a' in context)
         self.assertTrue('b' in context)
 
-
     def test__column_headers_for_non_sortable_columns(self):
         def sd_columns(folder, subobject, request, default_columns):
             self.assertEqual(len(default_columns), 1)
