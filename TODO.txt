@@ -4,12 +4,13 @@ Must-have pre-alpha-1
 Features
 --------
 
-- Allow reordering of resources in folder contents view when the folder is
-  ordered.
+- Change folder data structure such that _order is not (oid, name) but separate
+  oid and name datastructures are kept so we have a shot of making sort merging
+  faster.
 
 - Release deform2 (merge deform_bootstrap).
 
-- Ability to dump FileData in propertysheets.
+- Ability to dump and load blobs.
 
 - Remove interfaces index?
 
@@ -37,8 +38,6 @@ Features
 - Separate out reindexing from catalog autosync at startup.
 
 - Add an autoevolve setting.
-
-- Make folder contents view work with debugtoolbar.
 
 Docs
 ----
