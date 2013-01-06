@@ -176,7 +176,7 @@
                 if (args.textStatus == 'parsererror' &&
                         args.xhr.responseText.indexOf('Not logged in') != -1) {
                     // Suggest the user to reload the page which will enable her to login.
-                    if (confirm('It looks like your authentication session has required.\n' +
+                    if (confirm('It looks like your authentication session has expired.\n' +
                                 'Do you wish to leave the page, and log in again?')) {
                         document.location.reload();
                     }
