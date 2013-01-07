@@ -79,7 +79,7 @@ includes ``@@`` as  "goggles". For example,
 folder contents. The ``@@`` is a way to ensure that you point at the
 URL for a *view* and not get some resource with the ``__name__`` of
 ``contents``. You can still get to the folder contents management view
-using ``http://0.0.0.0:6541/manage/@@contents``...until that folder
+using ``http://0.0.0.0:6541/manage/contents``...until that folder
 contains something names ``contents``.
 
 ``mgmt_view`` View Predicates
