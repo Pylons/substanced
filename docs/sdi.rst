@@ -162,9 +162,10 @@ provides a global way to see recent transactions and perform an undo:
 
 .. image:: images/undo3.png
 
-Sometimes particular transactions cannot be undone. For example, if you make 3
-changes to a resource, the first two can't be undone without first undoing the
-last, as the resource will have been changed by a later transaction.
+Sometimes a particular transaction cannot be undone without undoing an earlier
+transaction. For example, if you make 3 changes to a resource, the first two
+can't be undone without first undoing the last, as the resource will have been
+changed by a later transaction.
 
 Catalog
 =======
