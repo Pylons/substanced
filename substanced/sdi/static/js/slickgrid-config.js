@@ -209,7 +209,8 @@
 
             var moveRowsPlugin = new Slick.RowMoveManager({
                 cancelEditOnDrag: true,
-                keepSelectionOnMove: true
+                keepSelectionOnMove: true,
+                singleStaysSelected: false
             });
             grid.registerPlugin(moveRowsPlugin);
 
