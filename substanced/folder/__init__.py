@@ -20,6 +20,7 @@ from persistent.interfaces import IPersistent
 import BTrees
 from BTrees.Length import Length
 
+from pyramid.compat import string_types
 from pyramid.location import (
     lineage,
     inside,
@@ -72,7 +73,8 @@ class Folder(Persistent):
     __parent__ = None
 
     # Default uses ordering of underlying BTree.
-    _order = None
+    _order = None # tuple of names
+    _order_oids = None # tuple of oids
     _reorderable = None
 
     def __init__(self, data=None, family=None):
@@ -85,15 +87,8 @@ class Folder(Persistent):
         self.data = self.family.OO.BTree(data)
         self._num_objects = Length(len(data))
 
-    def get_order(self):
-        """ If the folder is ordered, return the ids in order. If not just
-        return them in BTree order. """
-        if self._order is not None:
-            return tuple([item[0] for item in self._order])
-        return self.data.keys()
-
-    def set_order(self, value, reorderable=None):
-        """ Sets the folder order. ``value`` is a list of names for existing
+    def set_order(self, names, reorderable=None):
+        """ Sets the folder order. ``names`` is a list of names for existing
         folder items, in the desired order.
 
         If ``reorderable`` is passed, value, it must be ``None``, ``True`` or
@@ -112,11 +107,16 @@ class Folder(Persistent):
         otherwise it will raise a :exc:`ValueError` when called.
         """
         order = []
-        for name in value:
+        order_oids = []
+        for name in names:
+            assert(isinstance(name, string_types))
             name = unicode(name)
             oid = get_oid(self[name])
-            order.append((name, oid))
+            order.append(name)
+            order_oids.append(oid)
         self._order = tuple(order)
+        self._order_oids = tuple(order_oids)
+        assert(len(self._order) == len(self._order_oids))
         if reorderable is not None:
             self._reorderable = bool(reorderable)
 
@@ -125,40 +125,86 @@ class Folder(Persistent):
         non-reorderable."""
         if self._order is not None:
             del self._order
+        if self._order_oids is not None:
+            del self._order_oids
         if self._reorderable is not None:
             del self._reorderable
 
-    def reorder(self, items, before):
+    def reorder(self, names, before):
         """ Move one or more items from a folder into new positions inside that
-        folder. ``items`` is a list of ids of existing folder items, which will
-        be inserted in order before the item named ``before``. All other items
-        are left in the original order. If ``before`` is None, the items will
-        be appended after the last item in the current order. If this method is
-        called on a folder which does not have an order set, or which is not
-        reorderable, a :exc:`ValueError` will be raised. A :exc:`ValueError` is
-        also raised, if ``before`` does not correspond to any item, and
-        is not None."""
+        folder. ``names`` is a list of ids of existing folder subobject names,
+        which will be inserted in order before the item named ``before``. All
+        other items are left in the original order. If ``before`` is ``None``,
+        the items will be appended after the last item in the current order. If
+        this method is called on a folder which does not have an order set, or
+        which is not reorderable, a :exc:`ValueError` will be raised. A
+        :exc:`KeyError` is raised, if ``before`` does not correspond to any
+        item, and is not ``None``."""
         if not self._reorderable:
             raise ValueError('Folder is not reorderable')
-        insert_order = []
-        for item in items:
-            item = unicode(item)
-            item_oid = get_oid(self[item])
-            insert_order.append((item, item_oid))
-        order = []
-        inserted = False
-        for (name, oid) in self._order:
-            if name == before:
-                order.extend(insert_order)
-                inserted = True
-            if name not in items:
-                order.append((name, oid))
-        if not inserted:
-            if before is not None:
-                raise ValueError('Non-existent item name: %r' % (before, ))
-            # Appending after the last element.
-            order.extend(insert_order)
-        self._order = tuple(order)
+
+        before_idx = None
+
+        if len(set(names)) != len(names):
+            raise ValueError('No repeated values allowed in names')
+
+        if before is not None:
+            if not before in self._order:
+                raise FolderKeyError(before)
+            before_idx = self._order.index(before)
+
+        assert(len(self._order) == len(self._order_oids))
+
+        order_names = list(self._order)
+        order_oids = list(self._order_oids)
+
+        reorder_names = []
+        reorder_oids = []
+
+        for name in names:
+            assert(isinstance(name, string_types))
+            name = unicode(name)
+            if not name in order_names:
+                raise FolderKeyError(name)
+            idx = order_names.index(name)
+            oid = order_oids[idx]
+            order_names[idx] = None
+            order_oids[idx] = None
+            reorder_names.append(name)
+            reorder_oids.append(oid)
+
+        assert(len(reorder_names) == len(reorder_oids))
+
+        # NB: technically we could use filter(None, oids) and filter(None,
+        # names) because names cannot be empty string and oid 0 is disallowed,
+        # but just in case this becomes untrue later we define "filt" instead
+
+        def filt(L):
+            return [x for x in L if x is not None]
+
+        if before_idx is None:
+            order_names = filt(order_names)
+            order_names.extend(reorder_names)
+            order_oids = filt(order_oids)
+            order_oids.extend(reorder_oids)
+        else:
+            before_idx_names = filt(order_names[:before_idx])
+            after_idx_names = filt(order_names[before_idx:])
+            before_idx_oids = filt(order_oids[:before_idx])
+            after_idx_oids = filt(order_oids[before_idx:])
+            assert(
+                len(before_idx_names+after_idx_names) ==
+                len(before_idx_oids+after_idx_oids)
+                )
+            order_names =  before_idx_names + reorder_names + after_idx_names
+            order_oids = before_idx_oids + reorder_oids + after_idx_oids
+
+        for oid, name in zip(order_oids, order_names):
+            # belt and suspenders check
+            assert oid == get_oid(self[name])
+
+        self._order = tuple(order_names)
+        self._order_oids = tuple(order_oids)
 
     def is_ordered(self):
         """ Return true if the folder has a manually set ordering, false
@@ -172,7 +218,14 @@ class Folder(Persistent):
     def sort(self, oids, reverse=False, limit=None):
         # used by the hypatia resultset "sort" method when the folder contents
         # view uses us as a "sort index"
-        ids = [oid for oid in self.oids() if oid in oids]
+        if self._order_oids is not None:
+            ids = [oid for oid in self._order_oids if oid in oids]
+        else:
+            ids = []
+            for resource in self.values():
+                oid = get_oid(resource)
+                if oid in oids:
+                    ids.append(oid)
         if reverse:
             ids = ids[::-1]
         if limit is not None:
@@ -199,19 +252,14 @@ class Folder(Persistent):
         self.add(name, obj, **kw)
         obj.__is_service__ = True
 
-    def oids(self):
-        """ Returns a tuple with the oids of the objects inside this folder.
-        """
-        if self._order is not None:
-            return tuple([item[1] for item in self._order])
-        return tuple([get_oid(self[name], None) for name in self.get_order()])
-
     def keys(self):
         """ Return an iterable sequence of object names present in the folder.
 
-        Respect ``order``, if set.
+        Respect order, if set.
         """
-        return self.get_order()
+        if self._order is not None:
+            return self._order
+        return self.data.keys()
 
     def __iter__(self):
         """ An alias for ``keys``
@@ -436,7 +484,8 @@ class Folder(Persistent):
 
             if self._order is not None:
                 oid = get_oid(other)
-                self._order += ((name, oid),)
+                self._order += (name,)
+                self._order_oids += (oid,)
 
             if send_events:
                 event = ObjectAdded(
@@ -540,7 +589,14 @@ class Folder(Persistent):
             self._num_objects.change(-1)
 
             if self._order is not None:
-                self._order = tuple([x for x in self._order if x[0] != name])
+                assert(len(self._order) == len(self._order_oids))
+                idx = self._order.index(name)
+                order = list(self._order)
+                order.pop(idx)
+                order_oids = list(self._order_oids)
+                order_oids.pop(idx)
+                self._order = tuple(order)
+                self._order_oids = tuple(order_oids)
 
             objectmap = find_objectmap(self)
 

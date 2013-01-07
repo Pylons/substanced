@@ -794,8 +794,8 @@ class FolderContentsViews(object):
         context = self.context
         item_modify = request.params.get('item-modify').split('/')
         insert_before = request.params.get('insert-before')
-        if insert_before == '':
-            # None means appending after the last item.
+        if not insert_before:
+            # '' or None means appending after the last item.
             insert_before = None
         context.reorder(item_modify, insert_before)
         msg = '%i rows moved.' % (len(item_modify), )

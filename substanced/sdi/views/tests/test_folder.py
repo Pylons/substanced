@@ -1158,6 +1158,21 @@ class TestFolderContentsViews(unittest.TestCase):
         result = inst.reorder_rows()
         self.assertEqual(result, {'foo':'bar', 'flash':'2 rows moved.'})
         
+    def test_reorder_rows_after_last(self):
+        context = testing.DummyResource()
+        request = self._makeRequest()
+        request.params['item-modify'] = 'a/b'
+        request.params['insert-before'] = ''
+        def reorder(item_modify, insert_before):
+            self.assertEqual(item_modify, ['a', 'b'])
+            self.assertEqual(insert_before, None)
+        context.reorder = reorder
+        inst = self._makeOne(context, request)
+        def _get_json():
+            return {'foo':'bar'}
+        inst._get_json = _get_json
+        result = inst.reorder_rows()
+        self.assertEqual(result, {'foo':'bar', 'flash':'2 rows moved.'})
 
 
 

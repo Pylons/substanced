@@ -100,6 +100,16 @@ class TestFolder(unittest.TestCase):
         folder.set_order(['a', 'b'], reorderable=True)
         self.assertTrue(folder.is_reorderable())
 
+    def test_sort_with_explicit_folder_order(self):
+        model1 = DummyModel()
+        model1.__oid__ = 1
+        model2 = DummyModel()
+        model2.__oid__ = 2
+        folder = self._makeOne({'a': model1, 'b': model2})
+        folder.set_order(['a', 'b'])
+        result = folder.sort([1,2])
+        self.assertEqual(result, [1, 2])
+
     def test_sort_no_reverse_no_limit(self):
         model1 = DummyModel()
         model1.__oid__ = 1
@@ -303,13 +313,15 @@ class TestFolder(unittest.TestCase):
         self.assertEqual(len(events), 0)
         self.assertEqual(folder['a'], dummy)
 
-    def test_add_with_order_appends_name(self):
+    def test_add_with_order_appends_name_and_oid(self):
         folder = self._makeOne()
         folder.set_order([])
         folder.add('a', DummyModel())
-        self.assertEqual(folder.get_order(), ('a',))
+        self.assertEqual(folder._order, ('a',))
+        self.assertEqual(folder._order_oids, (1,))
         folder.add('b', DummyModel())
-        self.assertEqual(folder.get_order(), ('a', 'b'))
+        self.assertEqual(folder._order, ('a', 'b'))
+        self.assertEqual(folder._order_oids, (1, 1))
 
     def test_add_with_object_has_parent(self):
         folder = self._makeOne()
@@ -588,7 +600,8 @@ class TestFolder(unittest.TestCase):
         folder['b'] = DummyModel()
         folder.set_order(['a', 'b'])
         folder.remove('a')
-        self.assertEqual(folder.get_order(), ('b',))
+        self.assertEqual(folder._order, ('b',))
+        self.assertEqual(folder._order_oids, (1,))
 
     def test_replace_existing(self):
         folder = self._makeOne()
@@ -763,20 +776,13 @@ class TestFolder(unittest.TestCase):
         event.object = DummyModel()
         inst._notify(event)
 
-    def test_oids_unordered_folder(self):
-        model1 = DummyModel()
-        model2 = DummyModel()
-        model2.__oid__ = 2
-        folder = self._makeOne({'a': model1, 'b': model2})
-        self.assertEqual(list(folder.oids()), [1, 2])
-
-    def test_oids_ordered_folder(self):
+    def test_ordered_folder_oids(self):
         model1 = DummyModel()
         model2 = DummyModel()
         model2.__oid__ = 2
         folder = self._makeOne({'a': model1, 'b': model2})
         folder.set_order(['b', 'a'])
-        self.assertEqual(list(folder.oids()), [2, 1])
+        self.assertEqual(folder._order_oids, (2, 1))
 
     def test_reorder_folder(self):
         model1 = DummyModel()
@@ -787,6 +793,28 @@ class TestFolder(unittest.TestCase):
         folder.reorder(['b', 'c'], 'a')
         self.assertEqual(list(folder), ['b', 'c', 'a'])
 
+    def test_reorder_folder_item_before_itself(self):
+        model1 = DummyModel(1)
+        model2 = DummyModel(2)
+        model3 = DummyModel(3)
+        model4 = DummyModel(4)
+        folder = self._makeOne({'a': model1, 'b': model2, 'c': model3,
+                                'd':model4})
+        folder.set_order(['a', 'b', 'c', 'd'], reorderable=True)
+        folder.reorder(['d', 'a', 'b'], 'b')
+        self.assertEqual(list(folder), ['d', 'a', 'b', 'c'])
+
+    def test_reorder_folder_item_before_itself_2(self):
+        model1 = DummyModel(1)
+        model2 = DummyModel(2)
+        model3 = DummyModel(3)
+        model4 = DummyModel(4)
+        folder = self._makeOne({'a': model1, 'b': model2, 'c': model3,
+                                'd':model4})
+        folder.set_order(['a', 'b', 'c', 'd'], reorderable=True)
+        folder.reorder(['b', 'a', 'c'], 'a')
+        self.assertEqual(list(folder), ['b', 'a', 'c', 'd'])
+
     def test_reorder_folder_afterlast(self):
         model1 = DummyModel()
         model2 = DummyModel()
@@ -796,14 +824,33 @@ class TestFolder(unittest.TestCase):
         folder.reorder(['a', 'b'], None)
         self.assertEqual(list(folder), ['c', 'a', 'b'])
 
-    def test_reorder_folder_wrongid(self):
+    def test_reorder_folder_no_such_before(self):
         model1 = DummyModel()
         model2 = DummyModel()
         model3 = DummyModel()
         folder = self._makeOne({'a': model1, 'b': model2, 'c': model3})
         folder.set_order(['a', 'b', 'c'], reorderable=True)
-        self.assertRaises(ValueError,
+        self.assertRaises(KeyError,
                folder.reorder, ['a', 'b'], 'NOSUCH')
+
+    def test_reorder_folder_no_such_item(self):
+        model1 = DummyModel()
+        model2 = DummyModel()
+        model3 = DummyModel()
+        folder = self._makeOne({'a': model1, 'b': model2, 'c': model3})
+        folder.set_order(['a', 'b', 'c'], reorderable=True)
+        self.assertRaises(KeyError,
+               folder.reorder, ['a', 'z'], 'c')
+
+    def test_reorder_folder_repeated_name(self):
+        model1 = DummyModel(1)
+        model2 = DummyModel(2)
+        model3 = DummyModel(3)
+        model4 = DummyModel(4)
+        folder = self._makeOne({'a': model1, 'b': model2, 'c': model3,
+                                'd':model4})
+        folder.set_order(['a', 'b', 'c', 'd'], reorderable=True)
+        self.assertRaises(ValueError, folder.reorder, ['b', 'b'], 'a')
 
     def test_reorder_folder_non_reorderable(self):
         model1 = DummyModel()
@@ -925,7 +972,8 @@ class TestCopyHook(unittest.TestCase):
         self.assertRaises(ResumeCopy, inst, parent, None)
 
 class DummyModel(object):
-    __oid__ = 1
+    def __init__(self, oid=1):
+        self.__oid__ = oid
 
 class DummyObjectMap(object):
     def __init__(self):

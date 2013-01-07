@@ -166,10 +166,6 @@ class IFolder(Interface):
     name to either be Unicode or a byte string decodable using the
     default system encoding or the UTF-8 encoding."""
 
-    def get_order():
-        """Return an iterable sequence of name and oid tuples for each
-        object in the folder, respecting order if set."""
-
     def set_order(value, reorderable=None):
         """Makes the folder orderable and sets its order to the list of
         names provided in value. Names should be existing names for objects
@@ -215,11 +211,6 @@ class IFolder(Interface):
         oids passed in.  If ``reverse`` is True, reverse the result set.  If
         ``limit`` is an integer, return only that number of items (after
         reversing, if reverse is True)."""
-
-    def oids():
-        """ Returns a tuple with the oids of the objects inside this folder (in
-        the folder's order if set).
-        """
 
     def keys():
         """ Return an iterable sequence of object names present in the folder.
