@@ -348,7 +348,17 @@ class TestObjectMap(unittest.TestCase):
             inst.add(thing, thing.path_tuple)
         result = inst.get_extent('pyramid.testing.DummyResource')
         self.assertEqual(len(sorted(list(result))), 5)
-        
+
+    def test_get_extent_missing_default(self):
+        inst = self._makeOne()
+        result = inst.get_extent('pyramid.testing.DummyResource')
+        self.assertEqual(result, ())
+
+    def test_get_extent_missing_nondefault(self):
+        inst = self._makeOne()
+        result = inst.get_extent('pyramid.testing.DummyResource', None)
+        self.assertEqual(result, None)
+
     def test_functional(self):
 
         def l(path, depth=None, include_origin=True):
