@@ -103,6 +103,7 @@ class TestFolderContentsViews(unittest.TestCase):
         request = testing.DummyRequest()
         request.sdiapi = DummySDIAPI()
         request.sdiapi.flash_with_undo = request.session.flash
+
         request.registry.content = DummyContent(**kw)
         return request
 
@@ -1155,9 +1156,13 @@ class TestFolderContentsViews(unittest.TestCase):
         def _get_json():
             return {'foo':'bar'}
         inst._get_json = _get_json
+        mockundowrapper = request.sdiapi.get_flash_with_undo_snippet = mock.Mock(
+            return_value='STATUSMESSG<a>Undo</a>'
+            )
         result = inst.reorder_rows()
-        self.assertEqual(result, {'foo':'bar', 'flash':'2 rows moved.'})
-        
+        mockundowrapper.assert_called_once_with('2 rows moved.')
+        self.assertEqual(result, {'foo': 'bar', 'flash': 'STATUSMESSG<a>Undo</a>'})
+
     def test_reorder_rows_after_last(self):
         context = testing.DummyResource()
         request = self._makeRequest()
@@ -1171,9 +1176,12 @@ class TestFolderContentsViews(unittest.TestCase):
         def _get_json():
             return {'foo':'bar'}
         inst._get_json = _get_json
+        mockundowrapper = request.sdiapi.get_flash_with_undo_snippet = mock.Mock(
+            return_value='STATUSMESSG<a>Undo</a>'
+            )
         result = inst.reorder_rows()
-        self.assertEqual(result, {'foo':'bar', 'flash':'2 rows moved.'})
-
+        mockundowrapper.assert_called_once_with('2 rows moved.')
+        self.assertEqual(result, {'foo': 'bar', 'flash': 'STATUSMESSG<a>Undo</a>'})
 
 
 class DummyContainer(object):

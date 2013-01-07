@@ -799,6 +799,7 @@ class FolderContentsViews(object):
             insert_before = None
         context.reorder(item_modify, insert_before)
         msg = '%i rows moved.' % (len(item_modify), )
+        msg = request.sdiapi.get_flash_with_undo_snippet(msg)
         results = {
             'flash': msg,
             }
