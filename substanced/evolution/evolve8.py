@@ -1,3 +1,5 @@
+from pyramid.compat import string_types
+
 from substanced.util import (
     get_oid,
     is_folder,
@@ -34,15 +36,15 @@ def evolve(root):
                 oid_order = ()
                 name_order = ()
                 if order:
-                    if len(order[0]) == 2:
-                        # handle ree-ordering-clientside-foo-bar-baz branch
-                        name_order = tuple([x[0] for x in order])
-                        oid_order = tuple([x[1] for x in order])
-                    else:
+                    if isinstance(order[0], string_types):
                         # handle master branch
                         name_order = obj._order
                         oid_order = []
                         for name in name_order:
                             oid_order.append(get_oid(obj.data[name]))
-                obj._order = name_order
-                obj._order_oids = oid_order
+                    else:
+                        # handle ree-ordering-clientside-foo-bar-baz branch
+                        name_order = [x[0] for x in order]
+                        oid_order = [x[1] for x in order]
+                obj._order = tuple(name_order)
+                obj._order_oids = tuple(oid_order)

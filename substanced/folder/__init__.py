@@ -89,34 +89,45 @@ class Folder(Persistent):
 
     def set_order(self, names, reorderable=None):
         """ Sets the folder order. ``names`` is a list of names for existing
-        folder items, in the desired order.
+        folder items, in the desired order.  All names that currently exist in
+        the folder must be mentioned in ``names``, or a :exc:`ValueError` will
+        be raised.
 
         If ``reorderable`` is passed, value, it must be ``None``, ``True`` or
         ``False``.  If it is ``None``, the reorderable flag will not be reset
         from its current value.  If it is anything except ``None``, it will be
         treated as a boolean and the reorderable flag will be set to that
         value.  The ``reorderable`` value of a folder will be returned by that
-        folder's :meth:`~substanced.folder.Folder.is_reorderable` method.
-
-        The :meth:`~substanced.folder.Folder.is_reorderable` method is used by
-        the SDI folder contents view to indicate that the folder can or cannot
-        be reordered via the web UI.
+        folder's :meth:`~substanced.folder.Folder.is_reorderable` method.  The
+        :meth:`~substanced.folder.Folder.is_reorderable` method is used by the
+        SDI folder contents view to indicate that the folder can or cannot be
+        reordered via the web UI.
 
         If ``reorderable`` is set to ``True``, the
         :meth:`~substanced.folder.Folder.reorder` method will work properly,
         otherwise it will raise a :exc:`ValueError` when called.
         """
+        nameset = set(names)
+        if len(self) != len(nameset):
+            raise ValueError('Must specify all names when calling set_order')
+
+        if len(names) != len(nameset):
+            raise ValueError('No repeated items allowed in names')
+
         order = []
         order_oids = []
+
         for name in names:
             assert(isinstance(name, string_types))
             name = unicode(name)
             oid = get_oid(self[name])
             order.append(name)
             order_oids.append(oid)
+
         self._order = tuple(order)
         self._order_oids = tuple(order_oids)
         assert(len(self._order) == len(self._order_oids))
+
         if reorderable is not None:
             self._reorderable = bool(reorderable)
 
@@ -260,6 +271,8 @@ class Folder(Persistent):
         if self._order is not None:
             return self._order
         return self.data.keys()
+
+    order = property(keys, set_order, unset_order) # b/c
 
     def __iter__(self):
         """ An alias for ``keys``
