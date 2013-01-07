@@ -64,8 +64,6 @@ Misc
 
 - Explain the objectmap get_extents API.
 
-- Explain undo tab
-
 Can wait until after alpha 1
 ============================
 

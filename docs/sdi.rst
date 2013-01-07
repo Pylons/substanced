@@ -132,6 +132,40 @@ This dynamic grid features:
 The :doc:`folder_contents` chapter covers how Substance D developers
 can plug their custom content types into folder contents.
 
+Undo
+====
+
+In Substance D, many transactions can be undone and redone after
+commit. This "Undo" ability is one of the key features that people
+notice immediately and it has real, deep value to a developer's
+customers.
+
+Undo support is enabled by the developer in their management views that
+commit data. It isn't available on any kind of change. Instead
+developers need to wrap their commit with certain information used by
+the SDI's undo features.
+
+Many of the built-in operations support undo. For example,
+if we delete an item from a folder, we get a "flash" message telling us
+the deletion was performed, but with a button allowing us to undo if
+that was a mistake:
+
+.. image:: images/undo1.png
+
+Clicking "undo" restores the deleted item, with a flash message
+offering to redo the undo:
+
+.. image:: images/undo2.png
+
+These screenshots show an ``Undo`` tab on the site's root folder. This
+provides a global way to see recent transactions and perform an undo:
+
+.. image:: images/undo3.png
+
+Sometimes transactions cannot be undone. For example, if you
+make 3 changes to a resource, the first two can't be undone, as the
+resource was changed by a later transaction.
+
 Catalog
 =======
 
