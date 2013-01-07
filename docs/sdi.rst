@@ -140,15 +140,9 @@ commit. This "Undo" ability is one of the key features that people
 notice immediately and it has real, deep value to a developer's
 customers.
 
-Undo button support is enabled by the developer in their management views
-that commit data. It isn't available on every kind of change. Instead
-developers need to wrap their commit with certain information used by the SDI's
-undo features.
-
-Many of the built-in operations support undo. For example,
-if we delete an item from a folder, we get a "flash" message telling us
-the deletion was performed, but with a button allowing us to undo if
-that was a mistake:
+Many of the built-in operations dispay an undo button. For example, if we
+delete an item from a folder, we get a "flash" message telling us the deletion
+was performed, but with a button allowing us to undo if that was a mistake:
 
 .. image:: images/undo1.png
 
@@ -156,6 +150,11 @@ Clicking "undo" restores the deleted item, with a flash message
 offering to redo the undo:
 
 .. image:: images/undo2.png
+
+Undo button support is enabled by the developer in their management views
+that commit data. It isn't available on every kind of change. Instead
+developers need to wrap their commit with certain information used by the SDI's
+undo features.
 
 All actions that change data (even ones without undo button support) can be
 undone.  These screenshots show an ``Undo`` tab on the site's root folder. This
