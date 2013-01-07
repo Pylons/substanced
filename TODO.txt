@@ -39,20 +39,6 @@ Features
 
 - Add an autoevolve setting.
 
-Docs
-----
-
-Dump and Load
-+++++++++++++
-
-- Explain ``__dump__`` and ``__load__`` methods of resources.
-
-- Explain how to add a dumper.
-
-- Add API docs for dump/load, and dump contexts.
-
-- Document ``sd_dump`` console script.  Explain that there is no ``sd_load``,
-  as loading is more a development effort rather than an administrative one.
 
 Can wait until after alpha 1
 ============================
@@ -91,6 +77,11 @@ Misc
 ++++
 
 - Explain the objectmap get_extents API.
+
+Dump and Load
++++++++++++++
+
+- Add API docs for dump/load, and dump contexts.
 
 
 Can Wait Forever (Nice-to-Have)
