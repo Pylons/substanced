@@ -54,16 +54,6 @@ Dump and Load
 - Document ``sd_dump`` console script.  Explain that there is no ``sd_load``,
   as loading is more a development effort rather than an administrative one.
 
-Monitoring and Statistics
-+++++++++++++++++++++++++
-
-- Explain how to configure statsd client (e.g. ``substanced.statsd.enabled`` in
-  config file).
-
-- Explain how to send stats from your own application.
-
-- Explain how to send statsd stuff to Datadog.
-
 Cataloging
 ++++++++++
 
