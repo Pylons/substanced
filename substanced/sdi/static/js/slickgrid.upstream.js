@@ -7912,7 +7912,13 @@ if (typeof Slick === "undefined") {
       // By default, a single row is selected when it is dragged.
       // Setting singleStaysSelected to false, will cause a single dragged
       // element unchanged at the end of the operation.
-      singleStaysSelected: true
+      singleStaysSelected: true,
+      // If set to true, it prevents the drop before or after
+      // any element that is currently being moved. Although if we do
+      // not prevent it, it would work but would lead to a confusing
+      // result. - This is an extension to the previous version of
+      // this plugin, so the default is to follow the same behavior.
+      preventDroppingOnSelf: false
     };
 
     function init(grid) {
@@ -7924,6 +7930,9 @@ if (typeof Slick === "undefined") {
         .subscribe(_grid.onDragStart, handleDragStart)
         .subscribe(_grid.onDrag, handleDrag)
         .subscribe(_grid.onDragEnd, handleDragEnd);
+      if (options.preventDroppingOnSelf) {
+        _handler.subscribe(this.onBeforeMoveRows, handleBeforeMoveRows);
+      }
     }
 
     function destroy() {
@@ -8035,6 +8044,17 @@ if (typeof Slick === "undefined") {
       if (! options.singleStaysSelected && dd.noInitialSelection) {
         _grid.setSelectedRows([]);
       }
+    }
+
+    function handleBeforeMoveRows(e, data) {
+      for (var i = 0; i < data.rows.length; i++) {
+        // no point in moving before or after itself
+        if (data.rows[i] == data.insertBefore || data.rows[i] == data.insertBefore - 1) {
+          e.stopPropagation();
+          return false;
+        }
+      }
+      return true;
     }
 
     $.extend(this, {
