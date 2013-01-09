@@ -32,7 +32,6 @@ def evolve(root):
                 )
             order = getattr(obj, '_order', None)
             if order is not None:
-                import pdb; pdb.set_trace()
                 oid_order = ()
                 name_order = ()
                 if order:
