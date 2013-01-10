@@ -525,10 +525,12 @@ class sdiapi(object):
         return get_renderer(
             'substanced.sdi.views:templates/master.pt').implementation()
 
-    def get_flash_with_undo_snippet(self, msg):
+
+    def get_flash_with_undo_snippet(self, msg, queue='', allow_duplicate=True):
         request = self.request
         conn = self.get_connection(request)
         db = conn.db()
+        snippet = msg
         has_perm = has_permission('sdi.undo', request.context, request)
         can_undo = db.supportsUndo() and has_perm
         snippet = msg

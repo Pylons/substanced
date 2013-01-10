@@ -139,6 +139,10 @@ class FolderContentsViews(object):
             name = column['name']
             field = column['field']
             sortable = column.get('sortable', True)
+
+            if context.is_ordered():
+                sortable = False
+
             formatter = column.get('formatter', '')
 
             headers.append({
@@ -363,12 +367,18 @@ class FolderContentsViews(object):
             text = catalog['text']
             q = q & text.eq(filter_text)
 
+        if folder.is_ordered() and sort_index is None:
+            # hypatia resultset.sort will call IFolder.sort method
+            sort_index = folder
+
         if sort_index is None:
             sort_index = catalog['name']
 
         resultset = q.execute()
         folder_length = len(resultset)
+
         resultset = resultset.sort(sort_index, reverse=reverse, limit=end)
+        ids = resultset.ids
 
         can_manage = bool(has_permission('sdi.manage-contents', folder,request))
         custom_columns = request.registry.content.metadata(
@@ -376,7 +386,7 @@ class FolderContentsViews(object):
 
         records = []
 
-        for oid in itertools.islice(resultset.ids, start, end):
+        for oid in itertools.islice(ids, start, end):
             resource = objectmap.object_for(oid)
             name = getattr(resource, '__name__', '')
             deletable = getattr(resource, '__sdi_deletable__', None)
@@ -439,19 +449,26 @@ class FolderContentsViews(object):
 
         minimum_load = 40 # load at least this many records.
 
-        # The sorted column is always the first sortable column in the row.
-        # This gives the visual cue to the user who can see the sorted column
-        # and its direction.  It does _not_ affect the actual sorting, which is
-        # done on the server and not on the grid.
+        # Is the folder content ordered?
+        is_ordered = context.is_ordered()
+        is_reorderable = context.is_reorderable()
 
-        for col in columns:
-            if col.get('sortable', True):
-                # We found the first sortable column.
-                sortCol = col['field']
-                break
-        else:
-            # Nothing is sortable.
+        if is_ordered:
+            # Nothing is sortable if the content is ordered.
             sortCol = None
+        else:
+            # The sorted column is always the first sortable column in the row.
+            # This gives the visual cue to the user who can see the sorted
+            # column and its direction.  It does _not_ affect the actual
+            # sorting, which is done on the server and not on the grid.
+            for col in columns:
+                if col.get('sortable', True):
+                    # We found the first sortable column.
+                    sortCol = col['field']
+                    break
+            else:
+                # Nothing is sortable.
+                sortCol = None
 
         sortDir = True    # True ascending, or False descending.
         reverse = (not sortDir)
@@ -483,6 +500,8 @@ class FolderContentsViews(object):
             # column.)
             sortCol=sortCol,
             sortDir=sortDir,
+            # is the grid reorderable?
+            isReorderable=is_reorderable,
             #
             # Parameters for the remote data model
             url='',   # use same url for ajax
@@ -793,3 +812,29 @@ class FolderContentsViews(object):
 
         return HTTPFound(request.sdiapi.mgmt_path(context, '@@contents'))
 
+    @mgmt_view(
+        request_method='POST',
+        xhr=True,
+        renderer='json',
+        request_param="ajax.reorder",
+        permission='sdi.manage-contents',
+        tab_condition=False,
+        check_csrf=False
+        )
+    def reorder_rows(self):
+        request = self.request
+        context = self.context
+        item_modify = request.params.get('item-modify').split('/')
+        insert_before = request.params.get('insert-before')
+        if not insert_before:
+            # '' or None means appending after the last item.
+            insert_before = None
+        context.reorder(item_modify, insert_before)
+        msg = '%i rows moved.' % (len(item_modify), )
+        msg = request.sdiapi.get_flash_with_undo_snippet(msg)
+        results = {
+            'flash': msg,
+            }
+        # Generate content update as requested by the client.
+        results.update(self._get_json())
+        return results

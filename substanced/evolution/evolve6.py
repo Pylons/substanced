@@ -18,7 +18,8 @@ def evolve(root):
     objectmap = find_objectmap(root)
     if objectmap is not None:
         oids = objectmap.get_extent(get_dotted_name(File))
-        for oid in oids:
-            f = objectmap.object_for(oid)
-            if not type(f.mimetype) in string_types:
-                f.mimetype = 'application/octet-stream'
+        if oids is not None:
+            for oid in oids:
+                f = objectmap.object_for(oid)
+                if not type(f.mimetype) in string_types:
+                    f.mimetype = 'application/octet-stream'

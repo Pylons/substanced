@@ -69,9 +69,11 @@ Narrative Documentation
    cataloging
    references
    workflows
+   dump
    evolution
    folder_contents
    configuration
+   statistics
    retail
 
 API Documentation

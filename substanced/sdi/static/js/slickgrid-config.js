@@ -101,6 +101,21 @@
             var columns = this.columns;
             var wrapperOptions = this.wrapperOptions;
 
+            var isReorderable = this.wrapperOptions.isReorderable;
+
+            if (isReorderable) {
+                // move column: add it
+                columns.unshift({
+                    id: "#",
+                    name: "",
+                    width: 40,
+                    behavior: "selectAndMove",
+                    selectable: false,
+                    resizable: false,
+                    cssClass: "cell-reorder dnd"
+                });
+            }
+
             // checkbox column: add it
             var checkboxSelector = new Slick.CheckboxSelectColumn({});
             columns.unshift(checkboxSelector.getColumnDefinition());
@@ -182,7 +197,7 @@
                 if (args.textStatus == 'parsererror' &&
                         args.xhr.responseText.indexOf('Not logged in') != -1) {
                     // Suggest the user to reload the page which will enable her to login.
-                    if (confirm('It looks like your authentication session has required.\n' +
+                    if (confirm('It looks like your authentication session has expired.\n' +
                                 'Do you wish to leave the page, and log in again?')) {
                         document.location.reload();
                     }
@@ -198,7 +213,63 @@
                 ////dataView.sort(comparer, args.sortAsc);
             });
 
+            var moveRowsPlugin = new Slick.RowMoveManager({
+                cancelEditOnDrag: true,
+                keepSelectionOnMove: true,
+                singleStaysSelected: false,
+                preventDroppingOnSelf: true
+            });
+            grid.registerPlugin(moveRowsPlugin);
 
+
+            if (isReorderable) {
+
+                //moveRowsPlugin.onBeforeMoveRows.subscribe(function (e, data) {
+                //    log('onBeforeMoveRows', data);
+                //});
+
+                moveRowsPlugin.onMoveRows.subscribe(function (e, args) {
+                    var selRows = args.rows;
+                    var data = grid.getData();
+                    var selectedIds = $.map(selRows, function (value, index) {
+                        var row = data[value];
+                        return (row || {}).id;
+                    });
+                    var insertBeforeId;
+                    if (args.insertBefore < data.length) {
+                        insertBeforeId = data[args.insertBefore].id;
+                    } else {
+                        // inserting after the last element
+                        // an empty id will mean "after last" to the server
+                        insertBeforeId = '';
+                    }
+
+                    //log('onMoveRows, rows=', selectedIds, 'insertBefore=', insertBeforeId);
+
+                    sdiRemoteModelPlugin.ajax({
+                            type: 'POST',
+                            url: './@@contents',
+                            data: {
+                                'ajax.reorder': 'ajax.reorder',
+                                'item-modify': selectedIds.join('/'),
+                                'insert-before': insertBeforeId
+                            },
+                            dataType: 'json'
+                    });
+
+                });
+            }
+
+            // XXX This is just to help debugging, with no real function here.
+            grid.onSelectedRowsChanged.subscribe(function (evt) {
+                var selRows = grid.getSelectedRows();
+                var data = grid.getData();
+                var selectedIds = $.map(selRows, function (value, index) {
+                    var row = data[value];
+                    return row.id;
+                });
+                //log('onSelectedRowsChanged rows=', selectedIds);
+            });
 
             if (wrapperOptions.items) {
                 // load the items
@@ -222,4 +293,3 @@
 
     });
 })(window.jQuery);
-

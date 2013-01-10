@@ -4,12 +4,13 @@ Must-have pre-alpha-1
 Features
 --------
 
-- Allow reordering of resources in folder contents view when the folder is
-  ordered.
+- Change folder data structure such that _order is not (oid, name) but separate
+  oid and name datastructures are kept so we have a shot of making sort merging
+  faster.
 
 - Release deform2 (merge deform_bootstrap).
 
-- Ability to dump FileData in propertysheets.
+- Ability to dump and load blobs.
 
 - Remove interfaces index?
 
@@ -38,55 +39,6 @@ Features
 
 - Add an autoevolve setting.
 
-- Make folder contents view work with debugtoolbar.
-
-Docs
-----
-
-Dump and Load
-+++++++++++++
-
-- Explain ``__dump__`` and ``__load__`` methods of resources.
-
-- Explain how to add a dumper.
-
-- Add API docs for dump/load, and dump contexts.
-
-- Document ``sd_dump`` console script.  Explain that there is no ``sd_load``,
-  as loading is more a development effort rather than an administrative one.
-
-Monitoring and Statistics
-+++++++++++++++++++++++++
-
-- Explain how to configure statsd client (e.g. ``substanced.statsd.enabled`` in
-  config file).
-
-- Explain how to send stats from your own application.
-
-- Explain how to send statsd stuff to Datadog.
-
-Cataloging
-++++++++++
-
-- Explain index_resource/unindex_resource/reindex_resource mode parameters.
-
-- Explain default index modes.
-
-- Explain starting an indexer process.
-
-Integration
-+++++++++++
-
-- Explain how to set up with RelStorage.
-
-Misc
-++++
-
-- Explain the objectmap get_extents API.
-
-- Explain goggles ("@@")
-
-- Explain undo tab
 
 Can wait until after alpha 1
 ============================
@@ -117,6 +69,20 @@ Can wait until after alpha 1
 - Figure out if YAML dump and reload will work if we get to move to Python 3.
 
 - Work out OpenID/Twitter/whatever authentication.
+
+Docs
+----
+
+Misc
+++++
+
+- Explain the objectmap get_extents API.
+
+Dump and Load
++++++++++++++
+
+- Add API docs for dump/load, and dump contexts.
+
 
 Can Wait Forever (Nice-to-Have)
 ===============================

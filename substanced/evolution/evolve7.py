@@ -23,11 +23,12 @@ def evolve(root):
         objectmap = find_objectmap(root)
         if objectmap is not None:
             oids = objectmap.get_extent(get_dotted_name(File))
-            for oid in oids:
-                f = objectmap.object_for(oid)
-                if f.get_size():
-                    for chunk in chunks(f.blob.open('r')):
-                        m = magic.Magic(mime=True)
-                        mimetype = m.from_buffer(chunk)
-                        f.mimetype = mimetype
-                        break
+            if oids is not None:
+                for oid in oids:
+                    f = objectmap.object_for(oid)
+                    if f.get_size():
+                        for chunk in chunks(f.blob.open('r')):
+                            m = magic.Magic(mime=True)
+                            mimetype = m.from_buffer(chunk)
+                            f.mimetype = mimetype
+                            break
