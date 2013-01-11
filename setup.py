@@ -29,7 +29,7 @@ install_requires = [
     'hypatia>=0.1a3dev', # index-based querying
     'venusian',
     'deform',
-    'colander>=0.9.9.1dev', # subclassable schemanodes
+    'colander>=1.0a1', # subclassable schemanodes
     'deform_bootstrap',
     'repoze.evolution',
     'pyramid_zodbconn',
