@@ -139,6 +139,21 @@ body .slickgrid-wrapper .slick-header-columns .slick-header-column.ui-state-defa
 .slickgrid-wrapper .slick-header-columns .slick-header-column .slick-sort-indicator-desc {
   vertical-align: middle;
 }
+.slickgrid-wrapper .cell-reorder {
+  cursor: move;
+  background: url("images/drag-handle.png") no-repeat center center;
+}
+.slickgrid-wrapper .cell-selection {
+  border-right-color: silver;
+  border-right-style: solid;
+  background: #f5f5f5;
+  color: gray;
+  text-align: right;
+  font-size: 10px;
+}
+.slickgrid-wrapper .slick-row.selected .cell-selection {
+  background-color: transparent;
+}
 .sdi-contents-filter {
   margin-top: 5px;
 }

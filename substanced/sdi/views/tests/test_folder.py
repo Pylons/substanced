@@ -14,7 +14,7 @@ class Test_name_validator(unittest.TestCase):
 
     def _makeKw(self, exc=None):
         request = testing.DummyRequest()
-        request.context = DummyFolder(exc)
+        request.context = DummyContainer(exc)
         return dict(request=request)
 
     def test_it_exception(self):
@@ -103,6 +103,7 @@ class TestFolderContentsViews(unittest.TestCase):
         request = testing.DummyRequest()
         request.sdiapi = DummySDIAPI()
         request.sdiapi.flash_with_undo = request.session.flash
+
         request.registry.content = DummyContent(**kw)
         return request
 
@@ -116,6 +117,8 @@ class TestFolderContentsViews(unittest.TestCase):
             )
         inst._column_headers = mock.Mock(return_value=dummy_column_headers)
         inst.sdi_add_views = mock.Mock(return_value=('b',))
+        context.is_reorderable = mock.Mock(return_value=False)
+        context.is_ordered = mock.Mock(return_value=False)
         result = inst.show()
         self.assert_('slickgrid_wrapper_options' in result)
         slickgrid_wrapper_options = result['slickgrid_wrapper_options']
@@ -125,6 +128,7 @@ class TestFolderContentsViews(unittest.TestCase):
             'sdi-content-grid'
             )
         # None because it cannot be sorted.  
+        self.assertEqual(slickgrid_wrapper_options['isReorderable'], False)
         self.assertEqual(slickgrid_wrapper_options['sortCol'], None)   
         self.assertEqual(slickgrid_wrapper_options['sortDir'], True)
         self.assertEqual(slickgrid_wrapper_options['url'], '')
@@ -163,6 +167,8 @@ class TestFolderContentsViews(unittest.TestCase):
             )
         inst._column_headers = mock.Mock(return_value=dummy_column_headers)
         inst.sdi_add_views = mock.Mock(return_value=('b',))
+        context.is_reorderable = mock.Mock(return_value=False)
+        context.is_ordered = mock.Mock(return_value=False)
         result = inst.show()
         self.assert_('slickgrid_wrapper_options' in result)
         slickgrid_wrapper_options = result['slickgrid_wrapper_options']
@@ -170,6 +176,7 @@ class TestFolderContentsViews(unittest.TestCase):
         self.assertEqual(
             slickgrid_wrapper_options['configName'], 'sdi-content-grid'
             )
+        self.assertEqual(slickgrid_wrapper_options['isReorderable'], False)
         self.assertEqual(slickgrid_wrapper_options['sortCol'], 'col1')  
         self.assertEqual(slickgrid_wrapper_options['sortDir'], True)
         self.assertEqual(slickgrid_wrapper_options['url'], '')
@@ -211,6 +218,8 @@ class TestFolderContentsViews(unittest.TestCase):
             )
         inst._column_headers = mock.Mock(return_value=dummy_column_headers)
         inst.sdi_add_views = mock.Mock(return_value=('b',))
+        context.is_reorderable = mock.Mock(return_value=False)
+        context.is_ordered = mock.Mock(return_value=False)
         result = inst.show()
         self.assert_('slickgrid_wrapper_options' in result)
         slickgrid_wrapper_options = result['slickgrid_wrapper_options']
@@ -220,6 +229,7 @@ class TestFolderContentsViews(unittest.TestCase):
             'sdi-content-grid'
             )
 
+        self.assertEqual(slickgrid_wrapper_options['isReorderable'], False)
         # col2 here, as col1 was not sortable.
         self.assertEqual(slickgrid_wrapper_options['sortCol'], 'col2')  
         
@@ -264,6 +274,16 @@ class TestFolderContentsViews(unittest.TestCase):
             {'from':1, 'to':2, 'records':dummy_folder_contents_0[1], 'total':1}
             )
 
+    def test_show_json_no_from(self):
+        context = testing.DummyResource()
+        request = self._makeRequest()
+        inst = self._makeOne(context, request)
+        result = inst.show_json()
+        self.assertEqual(
+            result,
+            {}
+            )
+
     def test__column_headers_for_non_sortable_columns(self):
         def sd_columns(folder, subobject, request, default_columns):
             self.assertEqual(len(default_columns), 1)
@@ -272,7 +292,7 @@ class TestFolderContentsViews(unittest.TestCase):
                  'col1', 'sortable': False},
                 {'name': 'Col 2', 'field': 'col2', 'value': 'col2'}
                 ]
-        context = testing.DummyResource()
+        context = testing.DummyResource(is_ordered=lambda: False)
         request = self._makeRequest(columns=sd_columns)
         inst = self._makeOne(context, request)
         result = inst._column_headers()
@@ -299,8 +319,32 @@ class TestFolderContentsViews(unittest.TestCase):
         self.assertEqual(col['sortable'], True)
 
 
+    def test__column_headers_sortable_false_for_ordered_folder(self):
+        def sd_columns(folder, subobject, request, default_columns):
+            self.assertEqual(len(default_columns), 1)
+            return [
+                {'name': 'Col 1', 'field': 'col1', 'value':
+                 'col1', 'sortable': True},
+                {'name': 'Col 2', 'field': 'col2', 'value':
+                 'col2', 'sortable': True}
+                ]
+        context = testing.DummyResource(is_ordered=lambda: True)
+        request = self._makeRequest(columns=sd_columns)
+        inst = self._makeOne(context, request)
+        result = inst._column_headers()
+        self.assertEqual(len(result), 2)
+
+        col = result[0]
+        self.assertEqual(col['field'], 'col1')
+        self.assertEqual(col['sortable'], False)
+
+        col = result[1]
+        self.assertEqual(col['field'], 'col2')
+        self.assertEqual(col['sortable'], False)
+
+
     def test__column_headers_no_custom(self):
-        context = testing.DummyResource()
+        context = testing.DummyResource(is_ordered=lambda: False)
         request = self._makeRequest()
         inst = self._makeOne(context, request)
         result = inst._column_headers()
@@ -340,6 +384,8 @@ class TestFolderContentsViews(unittest.TestCase):
             )
         inst._column_headers = mock.Mock(return_value=dummy_column_headers)
         inst.sdi_add_views = mock.Mock(return_value=('b',))
+        context.is_reorderable = mock.Mock(return_value=False)
+        context.is_ordered = mock.Mock(return_value=False)
         result = inst.show()
         self.assert_('slickgrid_wrapper_options' in result)
         slickgrid_wrapper_options = result['slickgrid_wrapper_options']
@@ -375,6 +421,58 @@ class TestFolderContentsViews(unittest.TestCase):
         # the designated fields.
         # XXX Perhaps one egde case requires some extra attention:
         # when a grid has no filterable columns at all.
+
+
+    def test_show_ordered_columns(self):
+        dummy_column_headers = [{
+            'field': 'col1',
+            'sortable': True,   # Even if True, is_ordered it will make it False
+            }, {
+            'field': 'col2',
+            'sortable': False,
+            }]
+        context = testing.DummyResource()
+        request = self._makeRequest()
+        inst = self._makeOne(context, request)
+        inst._folder_contents = mock.Mock(
+            return_value=dummy_folder_contents_2
+            )
+        inst._column_headers = mock.Mock(return_value=dummy_column_headers)
+        inst.sdi_add_views = mock.Mock(return_value=('b',))
+        context.is_reorderable = mock.Mock(return_value=True)
+        context.is_ordered = mock.Mock(return_value=True)
+        result = inst.show()
+        self.assert_('slickgrid_wrapper_options' in result)
+        slickgrid_wrapper_options = result['slickgrid_wrapper_options']
+        self.assert_('slickgridOptions' in slickgrid_wrapper_options)
+        self.assertEqual(
+            slickgrid_wrapper_options['configName'], 'sdi-content-grid'
+            )
+        self.assertEqual(slickgrid_wrapper_options['isReorderable'], True)
+        self.assertEqual(slickgrid_wrapper_options['sortCol'], None)  
+        self.assertEqual(slickgrid_wrapper_options['sortDir'], True)
+        self.assertEqual(slickgrid_wrapper_options['url'], '')
+        self.assert_('items' in slickgrid_wrapper_options)
+        self.assertEqual(slickgrid_wrapper_options['items']['from'], 0)
+        self.assertEqual(slickgrid_wrapper_options['items']['to'], 40)
+        self.assertEqual(slickgrid_wrapper_options['items']['total'], 1)
+        self.assert_('records' in slickgrid_wrapper_options['items'])
+        records = slickgrid_wrapper_options['items']['records']
+        self.assertEqual(len(records), 1)
+        self.assertEqual(records[0], {
+            'name': 'the_name',
+            'col1': 'value4col1',
+            'col2': 'value4col2',
+            'deletable': True,
+            'name_url': 'http://foo.bar',
+            'id': 'the_name',
+            'name_icon': 'the_icon',
+            })
+
+        addables = result['addables']
+        self.assertEqual(addables, ('b',))
+        buttons = result['buttons']
+        self.assertEqual(len(buttons), 2)
 
 
     def test_delete_none_deleted(self):
@@ -875,7 +973,7 @@ class TestFolderContentsViews(unittest.TestCase):
 
     def test__folder_contents_computable_icon(self):
         from substanced.interfaces import IFolder
-        context = testing.DummyResource(__provides__=IFolder)
+        context = DummyFolder(__provides__=IFolder)
         request = self._makeRequest()
         context['catalogs'] = self._makeCatalogs(oids=[1])
         result = testing.DummyResource()
@@ -899,7 +997,7 @@ class TestFolderContentsViews(unittest.TestCase):
 
     def test__folder_contents_literal_icon(self):
         from substanced.interfaces import IFolder
-        context = testing.DummyResource(__provides__=IFolder)
+        context = DummyFolder(__provides__=IFolder)
         request = self._makeRequest()
         context['catalogs'] = self._makeCatalogs(oids=[1])
         result = testing.DummyResource()
@@ -919,7 +1017,7 @@ class TestFolderContentsViews(unittest.TestCase):
 
     def test__folder_contents_deletable_callable(self):
         from substanced.interfaces import IFolder
-        context = testing.DummyResource(__provides__=IFolder)
+        context = DummyFolder(__provides__=IFolder)
         request = self._makeRequest()
         context['catalogs'] = self._makeCatalogs(oids=[1])
         result = testing.DummyResource()
@@ -944,7 +1042,7 @@ class TestFolderContentsViews(unittest.TestCase):
 
     def test__folder_contents_deletable_boolean(self):
         from substanced.interfaces import IFolder
-        context = testing.DummyResource(__provides__=IFolder)
+        context = DummyFolder(__provides__=IFolder)
         request = self._makeRequest()
         context['catalogs'] = self._makeCatalogs(oids=[1])
         result = testing.DummyResource()
@@ -965,7 +1063,7 @@ class TestFolderContentsViews(unittest.TestCase):
 
     def test__folder_contents_columns_callable(self):
         from substanced.interfaces import IFolder
-        context = testing.DummyResource(__provides__=IFolder)
+        context = DummyFolder(__provides__=IFolder)
         request = self._makeRequest()
         context['catalogs'] = self._makeCatalogs(oids=[1])
         result = testing.DummyResource()
@@ -992,7 +1090,7 @@ class TestFolderContentsViews(unittest.TestCase):
 
     def test__folder_contents_columns_None(self):
         from substanced.interfaces import IFolder
-        context = testing.DummyResource(__provides__=IFolder)
+        context = DummyFolder(__provides__=IFolder)
         request = self._makeRequest()
         context['catalogs'] = self._makeCatalogs(oids=[1])
         result = testing.DummyResource()
@@ -1017,7 +1115,7 @@ class TestFolderContentsViews(unittest.TestCase):
 
     def test__folder_contents_with_filter_text(self):
         from substanced.interfaces import IFolder
-        context = testing.DummyResource(__provides__=IFolder)
+        context = DummyFolder(__provides__=IFolder)
         request = self._makeRequest()
         context['catalogs'] = self._makeCatalogs(oids=[1])
         result = testing.DummyResource()
@@ -1029,7 +1127,64 @@ class TestFolderContentsViews(unittest.TestCase):
         self.assertEqual(length, 1)
         self.assertEqual(len(results), 1)
 
-class DummyFolder(object):
+    def test__folder_contents_folder_is_ordered(self):
+        from substanced.interfaces import IFolder
+        context = DummyFolder(__provides__=IFolder)
+        request = self._makeRequest()
+        context['catalogs'] = self._makeCatalogs(oids=[1])
+        result = testing.DummyResource()
+        result.__name__ = 'fred'
+        context.__objectmap__ = DummyObjectMap(result)
+        inst = self._makeOne(context, request)
+        context.is_ordered = lambda *arg: True
+        context.oids = lambda *arg: [1, 2]
+        request.registry.content = DummyContent()
+        length, results = inst._folder_contents()
+        self.assertEqual(length, 1)
+        self.assertEqual(len(results), 1)
+
+    def test_reorder_rows(self):
+        context = testing.DummyResource()
+        request = self._makeRequest()
+        request.params['item-modify'] = 'a/b'
+        request.params['insert-before'] = 'c'
+        def reorder(item_modify, insert_before):
+            self.assertEqual(item_modify, ['a', 'b'])
+            self.assertEqual(insert_before, 'c')
+        context.reorder = reorder
+        inst = self._makeOne(context, request)
+        def _get_json():
+            return {'foo':'bar'}
+        inst._get_json = _get_json
+        mockundowrapper = request.sdiapi.get_flash_with_undo_snippet = mock.Mock(
+            return_value='STATUSMESSG<a>Undo</a>'
+            )
+        result = inst.reorder_rows()
+        mockundowrapper.assert_called_once_with('2 rows moved.')
+        self.assertEqual(result, {'foo': 'bar', 'flash': 'STATUSMESSG<a>Undo</a>'})
+
+    def test_reorder_rows_after_last(self):
+        context = testing.DummyResource()
+        request = self._makeRequest()
+        request.params['item-modify'] = 'a/b'
+        request.params['insert-before'] = ''
+        def reorder(item_modify, insert_before):
+            self.assertEqual(item_modify, ['a', 'b'])
+            self.assertEqual(insert_before, None)
+        context.reorder = reorder
+        inst = self._makeOne(context, request)
+        def _get_json():
+            return {'foo':'bar'}
+        inst._get_json = _get_json
+        mockundowrapper = request.sdiapi.get_flash_with_undo_snippet = mock.Mock(
+            return_value='STATUSMESSG<a>Undo</a>'
+            )
+        result = inst.reorder_rows()
+        mockundowrapper.assert_called_once_with('2 rows moved.')
+        self.assertEqual(result, {'foo': 'bar', 'flash': 'STATUSMESSG<a>Undo</a>'})
+
+
+class DummyContainer(object):
     oid_store = {}
 
     def __init__(self, exc=None):
@@ -1087,6 +1242,10 @@ dummy_folder_contents_2 = [1, [{
     'name_icon': 'the_icon',
     }] ]
 
+
+class DummyFolder(testing.DummyResource):
+    def is_ordered(self):
+        return False
 
 class DummyCatalogs(testing.DummyResource):
     __is_service__ = True

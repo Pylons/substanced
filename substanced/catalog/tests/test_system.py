@@ -5,6 +5,12 @@ from zope.interface import Interface
 from zope.interface import alsoProvides
 
 class TestSystemIndexViews(unittest.TestCase):
+    def setUp(self):
+        self.config = testing.setUp()
+
+    def tearDown(self):
+        testing.tearDown()
+        
     def _makeOne(self, resource):
         from ..system import SystemIndexViews
         return SystemIndexViews(resource)
@@ -70,3 +76,17 @@ class TestSystemIndexViews(unittest.TestCase):
         inst = self._makeOne(resource)
         result = inst.text(None)
         self.assertEqual(result, 'foo-bar_baz.pt,foz foo bar baz pt foz')
+
+    def test_content_type(self):
+        resource = testing.DummyResource()
+        content = testing.DummyResource()
+        def typeof(resrc):
+            self.assertEqual(resrc, resource)
+            return 'foo'
+        content.typeof = typeof
+        self.config.registry.content = content
+        inst = self._makeOne(resource)
+        result = inst.content_type(None)
+        self.assertEqual(result, 'foo')
+        
+        

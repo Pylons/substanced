@@ -20,8 +20,8 @@ class StatsdHelper(object):
     def timer(self, name, rate=1, registry=None):
         """ Return a context manager that can be used for statsd timing, e.g.::
 
-           with statsd_timer('addlotsofstuff'):
-               # add lots of stuff
+             with statsd_timer('addlotsofstuff'):
+                 # add lots of stuff
 
            ``name`` is the statsd stat name, ``rate`` is the sample rate (a
            float between 0 and 1), and ``registry`` can be passed to speed up
@@ -71,7 +71,6 @@ statsd_timer = helper.timer
 def includeme(config): # pragma: no cover
     settings = config.registry.settings
     statsd_enabled = asbool(settings.get('substanced.statsd.enabled', False))
-    statsd_enabled = False
     if statsd_enabled:
         host = settings.get('substanced.statsd.host', 'localhost')
         port = int(settings.get('substanced.statsd.port', 8125))

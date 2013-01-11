@@ -46,6 +46,7 @@ def include(config): # pragma: no cover
 def scan(config): # pragma: no cover
     """ Perform all ``config.scan`` tasks required for Substance D and the
     default aspects of the SDI to work."""
+    config.scan('.stats')
     config.scan('.catalog')
     config.scan('.file')
     config.scan('.folder')

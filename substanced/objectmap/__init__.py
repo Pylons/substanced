@@ -433,7 +433,7 @@ class ObjectMap(Persistent):
         """ Return a sequence of reference types known by this objectmap. """
         return self.referencemap.get_reftypes()
 
-    def get_extent(self, name, default=None):
+    def get_extent(self, name, default=()):
         """ Return the extent for ``name`` (typically a factory name, e.g. the
         dotted name of the content class).  It will be a TreeSet composed
         entirely of oids.  If no extent exist by this name, this will return

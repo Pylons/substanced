@@ -192,7 +192,7 @@ class TestIdSet(unittest.TestCase):
     def test_serialize_non_null(self):
         inst = self._makeOne()
         result = inst.serialize(None, [1,2,3])
-        self.assertEqual(result, [1,2,3])
+        self.assertEqual(result, ['1','2','3'])
 
     def test_deserialize_null(self):
         inst = self._makeOne()

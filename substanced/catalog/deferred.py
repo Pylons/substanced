@@ -1,4 +1,3 @@
-import functools
 import logging
 import persistent
 import threading
@@ -21,6 +20,7 @@ from substanced.interfaces import (
 from ..objectmap import find_objectmap
 from ..util import get_oid
 from ..stats import statsd_gauge
+from ..compat import total_ordering
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +38,7 @@ class ObjectMapNotFound(Exception):
 # functools.total_ordering allows us to define __eq__ and __lt__ and it takes
 # care of the rest of the rich comparison methods (2.7+ only)
 
-@functools.total_ordering
+@total_ordering
 class Action(object):
 
     oid = None
@@ -528,7 +528,11 @@ class BasicActionProcessor(object):
                 if commit:
                     self.logger.info('committing')
                     try:
-                        self.transaction.get().note('action processor executed')
+                        plural = 'action' if len(actions) == 1 else 'actions'
+                        self.transaction.get().note(
+                            'indexing action processor executed %s %s' %
+                              (len(actions), plural)
+                            )
                         self.transaction.commit()
                         self.logger.info('committed')
                     except ConflictError:

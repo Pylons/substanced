@@ -42,7 +42,7 @@ def login(context, request):
     if login_url in referrer: # pragma: no cover
         # never use the login form itself as came_from
         referrer = request.sdiapi.mgmt_path(request.root) 
-    came_from = request.session.setdefault('came_from', referrer)
+    came_from = request.session.setdefault('sdi.came_from', referrer)
     login = ''
     password = ''
     if 'form.submitted' in request.params:
@@ -57,6 +57,7 @@ def login(context, request):
             users = principals['users']
             user = users.get(login)
             if user is not None and user.check_password(password):
+                request.session.pop('sdi.came_from', None)
                 headers = remember(request, get_oid(user))
                 return HTTPFound(location = came_from, headers = headers)
             request.session.flash('Failed login', 'error')
@@ -68,7 +69,11 @@ def login(context, request):
         password = password,
         )
 
-@mgmt_view(name='logout', tab_condition=False)
+@mgmt_view(
+    name='logout',
+    tab_condition=False,
+    permission=NO_PERMISSION_REQUIRED
+    )
 def logout(request):
     headers = forget(request)
     return HTTPFound(location = request.sdiapi.mgmt_path(request.context),

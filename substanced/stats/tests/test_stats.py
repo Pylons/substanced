@@ -9,7 +9,7 @@ class TestStatsdHelper(unittest.TestCase):
         testing.tearDown()
         
     def _makeOne(self):
-        from . import StatsdHelper
+        from .. import StatsdHelper
         return StatsdHelper()
 
     def test_get_client_with_registry(self):

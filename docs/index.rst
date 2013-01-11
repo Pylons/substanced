@@ -11,7 +11,7 @@ other web app that requires both an administration and a retail interface.
 
 Substance D owes much of its spirit to the :term:`Zope` application server.
 
-It requires Python 2.7+.
+It requires Python 2.6 or 2.7.
 
 Installation
 ------------
@@ -69,8 +69,11 @@ Narrative Documentation
    cataloging
    references
    workflows
+   dump
    evolution
    folder_contents
+   configuration
+   statistics
    retail
 
 API Documentation
@@ -81,13 +84,17 @@ API Documentation
 
    api
 
-Reporting Bugs / Development Versions
--------------------------------------
+Support / Reporting Bugs / Development Versions
+-----------------------------------------------
 
 Visit http://github.com/Pylons/substanced to download development or tagged
 versions.
 
 Visit http://github.com/Pylons/substanced/issues to report bugs.
+
+The mailing list exists at https://groups.google.com/group/substanced-users
+
+The IRC channel is at irc://freenode.net/#substanced
 
 Indices and tables
 ------------------

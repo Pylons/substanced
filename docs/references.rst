@@ -1,5 +1,6 @@
+==========
 References
-----------
+==========
 
 Objects that live in the Substance D resource tree can be related to one
 another using references.
@@ -196,3 +197,14 @@ interact with it at all, just assign and ask for attributes of your object.
 The ``multireference_*`` variants are similar to the reference variants, but
 they allow for more than one object on the "other side".
 
+ACLs and Principal References
+=============================
+
+When an ACL is modified on a resource, a statement is being made about
+a relationship between that resource and a principal or group of
+principals. Wouldn't it be great if a reference was established,
+allowing you to then see such connections in the SDI?
+
+This is indeed exactly how Substance D behaves: a source-integral
+PrincipalToACLBearing reference is set up between an ACL-bearing
+resource and the principals referred to within the ACL.

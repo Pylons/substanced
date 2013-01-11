@@ -166,15 +166,51 @@ class IFolder(Interface):
     name to either be Unicode or a byte string decodable using the
     default system encoding or the UTF-8 encoding."""
 
-    order = Attribute("""Order of names of the item within the folder.  If an
-    order is unset, objects are iterated in an arbitrary order based on the
-    underlying data store, and in such a case, this attribute will return an
-    iterator of the names in that arbitrary order.  This attribute is gettable,
-    settable, and deletable.""")
+    def set_order(value, reorderable=None):
+        """Makes the folder orderable and sets its order to the list of
+        names provided in value. Names should be existing names for objects
+        contained in the folder at the time order is set.
+
+        If ``reorderable`` is passed, value, it must be ``None``, ``True`` or
+        ``False``.  If it is ``None``, the reorderable flag will not be reset
+        from its current value.  If it is anything except ``None``, it will be
+        treated as a boolean and the reorderable flag will be set to that
+        value.  The ``reorderable`` value of a folder will be returned by that
+        folder's :meth:`~substanced.folder.Folder.is_reorderable` method.
+
+        The :meth:`~substanced.folder.Folder.is_reorderable` method is used by
+        the SDI folder contents view to indicate that the folder can or cannot
+        be reordered via the web UI.
+
+        If ``reorderable`` is set to ``True``, the
+        :meth:`~substanced.folder.Folder.reorder` method will work properly,
+        otherwise it will raise a :exc:`ValueError` when called.
+        """
+
+    def unset_order():
+        """Removes the folder internal ordering, making it an unordered
+        folder."""
 
     def is_ordered():
         """ Return ``True`` if the folder has a manual ordering (e.g. its
         ``order`` attribute has been set), ``False`` otherwise."""
+
+    def is_reorderable():
+        """ Return true if the folder can be reordered, false otherwise."""
+
+    def reorder(items, before):
+        """ Move one or more items from a folder into new positions inside that
+        folder. ``items`` is a list of ids of existing folder items, which will
+        be inserted in order before the item named ``before``. All other items
+        are left in the original order.  If this method is called on a folder
+        which does not have an order set, or which is not reorderable, a
+        :exc:`ValueError` will be raised."""
+
+    def sort(oids, reverse=False, limit=None):
+        """ Return the intersection of the oids of the folder's order with the
+        oids passed in.  If ``reverse`` is True, reverse the result set.  If
+        ``limit`` is an integer, return only that number of items (after
+        reversing, if reverse is True)."""
 
     def keys():
         """ Return an iterable sequence of object names present in the folder.
@@ -534,7 +570,7 @@ class IFile(Interface):
         - A string containing a filename with an extension; the mimetype will
           be derived from the extension in the filename.
 
-        - The constant :ref:`pyramid.file.USE_MAGIC`, which will derive the
+        - The constant :attr:`substanced.file.USE_MAGIC`, which will derive the
           content type using the ``python-magic`` library based on the
           stream's actual content.
         """
@@ -681,17 +717,19 @@ class IIndexingActionProcessor(Interface):
     catalogs in the system"""
 
 # MODE_ sentinels are classes so that when one is pickled, then unpickled, the
-# result can be compared against an imported version using "is"
+# result can be compared against an imported version using "is".  They are
+# interfaces so they have a stable __hash__ (their __hash__ will be called as a
+# result of substanced.catalog.factory is_stale and other stuff in there).
 
-class MODE_IMMEDIATE(object):
+class MODE_IMMEDIATE(Interface):
     """ Sentinel indicating that an indexing action should take place as
     immediately as possible."""
 
-class MODE_ATCOMMIT(object):
+class MODE_ATCOMMIT(Interface):
     """ Sentinel indicating that an indexing action should take place at the
     successful end of the current transaction."""
 
-class MODE_DEFERRED(object):
+class MODE_DEFERRED(Interface):
     """ Sentinel indicating that an indexing action should be performed by an
     external indexing processor (e.g. ``drain_catalog_indexing``) if one is
     active at the successful end of the current transaction.  If an indexing

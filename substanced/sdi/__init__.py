@@ -525,24 +525,30 @@ class sdiapi(object):
         return get_renderer(
             'substanced.sdi.views:templates/master.pt').implementation()
 
-    def flash_with_undo(self, msg, queue='', allow_duplicate=True):
+    def get_flash_with_undo_snippet(self, msg, queue='', allow_duplicate=True):
         request = self.request
         conn = self.get_connection(request)
         db = conn.db()
+        snippet = msg
         has_perm = has_permission('sdi.undo', request.context, request)
         if db.supportsUndo() and has_perm:
             hsh = str(id(request)) + str(hash(msg))
             t = self.transaction.get()
             t.note(msg)
-            t.note('hash:'+hsh)
+            t.setExtendedInfo('undohash', hsh)
             csrf_token = request.session.get_csrf_token()
-            query = {'csrf_token':csrf_token, 'hash':hsh}
-            url = self.mgmt_path(request.context, '@@undo_one', _query=query)
-            vars = {'msg':msg, 'url':url}
-            button= render(
+            query = {'csrf_token': csrf_token, 'undohash': hsh}
+            url = self.mgmt_path(request.context, '@@undo_recent', _query=query)
+            vars = {'msg': msg, 'url': url}
+            button = render(
                 'views/templates/undobutton.pt', vars, request=request)
-            msg = button
-        request.session.flash(msg, queue, allow_duplicate=allow_duplicate)
+            snippet = button
+        return snippet
+
+    def flash_with_undo(self, msg, queue='', allow_duplicate=True):
+        request = self.request
+        snippet = self.get_flash_with_undo_snippet(msg)
+        request.session.flash(snippet, queue, allow_duplicate=allow_duplicate)
 
     def mgmt_path(self, obj, *arg, **kw):
         request = self.request
