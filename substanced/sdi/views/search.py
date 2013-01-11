@@ -30,7 +30,8 @@ class SearchViews(object):
         for res_id in resultset.ids:
             res = resultset.resolver(res_id)
             url = request.sdiapi.mgmt_path(res, '@@manage_main')
-            result = dict(label=res.title, url=url)
+            label = getattr(res, 'title', res.__name__)
+            result = dict(label=label, url=url)
             results.append(result)
 
         return results
