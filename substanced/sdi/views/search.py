@@ -1,4 +1,5 @@
 from ..import mgmt_view
+from ...util import find_catalog
 
 class SearchViews(object):
     def __init__(self, request):
@@ -12,14 +13,24 @@ class SearchViews(object):
     )
     def search(self):
         request = self.request
+        context = request.context
         query = request.params['query']
+        query = query + '*'
 
-        results = [
-            dict(label='Alabama', url='http://google.com/'),
-            dict(label='Arkansas', url='http://mozilla.org/'),
-            dict(label='Arizona', url='http://sun.com/'),
-            dict(label='Alaska', url='http://cnet.com/'),
-            dict(label='Kentucky', url='http://agendaless.com/'),
-            dict(label='Virginia', url='http://mercury.com/'),
-        ]
+        catalog = find_catalog(context, 'system')
+        allowed = catalog['allowed']
+        name = catalog['name']
+        text = catalog['text']
+
+        q = (allowed.allows(request, 'sdi.view') & text.eq(query))
+        resultset = q.execute()
+        resultset = resultset.sort(name, limit=10)
+
+        results = []
+        for res_id in resultset.ids:
+            res = resultset.resolver(res_id)
+            url = request.sdiapi.mgmt_path(res, '@@manage_main')
+            result = dict(label=res.title, url=url)
+            results.append(result)
+
         return results
