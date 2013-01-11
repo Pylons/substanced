@@ -28,7 +28,7 @@ install_requires = [
     'ZODB3', 
     'hypatia>=0.1a3', # index-based querying
     'venusian',
-    'deform',
+    'deform>=0.9.6', # retail form rendering capability (for documentability)
     'colander>=1.0a1', # subclassable schemanodes
     'deform_bootstrap',
     'repoze.evolution',
