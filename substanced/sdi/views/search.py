@@ -2,7 +2,8 @@ from ..import mgmt_view
 from ...util import find_catalog
 
 class SearchViews(object):
-    def __init__(self, request):
+    def __init__(self, context, request):
+        self.context = context
         self.request = request
 
     @mgmt_view(
@@ -13,7 +14,7 @@ class SearchViews(object):
     )
     def search(self):
         request = self.request
-        context = request.context
+        context = self.context
         query = request.params['query']
         query = query + '*'
 
