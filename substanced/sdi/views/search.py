@@ -6,16 +6,9 @@ class SearchViews(object):
         self.context = context
         self.request = request
 
-    @mgmt_view(
-        name='search',
-        permission='sdi.sdi.manage-contents',
-        tab_condition=False,
-        renderer='json'
-    )
-    def search(self):
+    def _query_results(self, query):
         request = self.request
         context = self.context
-        query = request.params['query']
         query = query + '*'
 
         catalog = find_catalog(context, 'system')
@@ -25,7 +18,7 @@ class SearchViews(object):
 
         q = (allowed.allows(request, 'sdi.view') & text.eq(query))
         resultset = q.execute()
-        resultset = resultset.sort(name, limit=10)
+        resultset = resultset.sort(name)
 
         results = []
         for res_id in resultset.ids:
@@ -36,3 +29,27 @@ class SearchViews(object):
             results.append(result)
 
         return results
+
+    @mgmt_view(
+        name='search',
+        permission='sdi.sdi.manage-contents',
+        tab_condition=False,
+        renderer='json'
+    )
+    def search(self):
+        request = self.request
+        query = request.params['query']
+        return self._query_results(query)
+
+    @mgmt_view(
+        name='search',
+        permission='sdi.sdi.manage-contents',
+        tab_condition=False,
+        request_param='results=1',
+        renderer='templates/search_results.pt'
+    )
+    def search_results(self):
+        request = self.request
+        query = request.params['query']
+        return {'results': self._query_results(query),
+                'query': query}

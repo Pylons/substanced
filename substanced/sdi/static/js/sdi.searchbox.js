@@ -67,6 +67,20 @@ $(document).ready(function () {
                 /* We have the URL as the data-value, get the label */
                 var label = server_data[item];
                 return $('<span>' + label + '</span>');
+            },
+            sorter:function (items) {
+                /*
+
+                First item is auto selected, which forces the search
+                to be exact. Adding the query at the top of the
+                results gets around this problem, so we can return a
+                result page when there's no exact match
+
+                */
+                item_url = sb_url + '?results=1&query=' + this.query;
+                server_data[item_url] = this.query;
+                items.unshift(sb_url + '?results=1&query=' + this.query);
+                return items;
             }
         });
 });

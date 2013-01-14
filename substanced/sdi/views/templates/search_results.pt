@@ -1,0 +1,23 @@
+<div metal:use-macro="request.sdiapi.main_template">
+
+  <div metal:fill-slot="main">
+
+    <h2>Search Results</h2>
+
+    <h4>Search term: ${query}</h4>
+
+    <ol tal:condition="results|None" class="table table-striped">
+
+      <li tal:repeat="result results">
+        <a href="${result['url']}">${result['label']}</a>
+      </li>
+
+    </ol>
+
+    <p tal:condition="not:results">
+      There were no results for this search term.
+    </p>
+
+  </div>
+
+</div>

@@ -30,7 +30,7 @@ class TestSearchViews(unittest.TestCase):
         results = inst.search()
         self.assertEqual(results, [])
 
-    def test_search_results_resource_with_title(self):
+    def test_search_resource_with_title(self):
         from substanced.interfaces import IFolder
         context = testing.DummyResource(__provides__=IFolder)
         request = self._makeRequest()
@@ -47,7 +47,7 @@ class TestSearchViews(unittest.TestCase):
         self.assertEqual(item['label'], 'Some Resource')
         self.assertEqual(item['url'], '/mgmt_path')
 
-    def test_search_results_resource_no_title(self):
+    def test_search_resource_no_title(self):
         from substanced.interfaces import IFolder
         context = testing.DummyResource(__provides__=IFolder)
         request = self._makeRequest()
@@ -63,6 +63,27 @@ class TestSearchViews(unittest.TestCase):
         item = results[0]
         self.assertEqual(item['label'], 'abcde')
         self.assertEqual(item['url'], '/mgmt_path')
+
+    def test_search_results(self):
+        from substanced.interfaces import IFolder
+        context = testing.DummyResource(__provides__=IFolder)
+        request = self._makeRequest()
+        request.params['query'] = 'abc'
+        request.params['results'] = '1'
+        result = testing.DummyResource()
+        result.__name__ = 'abcde'
+        context.__objectmap__ = DummyObjectMap(result)
+        context['catalogs'] = self._makeCatalogs(oids=[1],
+                                                 resources=(result,))
+        inst = self._makeOne(context, request)
+        response = inst.search_results()
+        results = response['results']
+        self.assertEqual(len(results), 1)
+        item = results[0]
+        self.assertEqual(item['label'], 'abcde')
+        self.assertEqual(item['url'], '/mgmt_path')
+        term = response['query']
+        self.assertEqual(term, 'abc')
 
 class DummyCatalogs(testing.DummyResource):
     __is_service__ = True
