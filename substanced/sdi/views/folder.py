@@ -508,10 +508,13 @@ class FolderContentsViews(object):
             minimumLoad=minimum_load,
             )
 
+        csrf_token = request.session.get_csrf_token()
+
         result = dict(
             addables=addables,
             buttons=buttons,
             slickgrid_wrapper_options=slickgrid_wrapper_options,
+            csrf_token=csrf_token,
             )
 
         return result

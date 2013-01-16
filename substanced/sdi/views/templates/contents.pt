@@ -85,7 +85,8 @@
                         url: './@@contents',
                         data: {
                             'item-modify': $hiddenInput.attr('value'),
-                            'form.delete': 'delete'
+                            'form.delete': 'delete',
+                            csrf_token: "${csrf_token}",
                         },
                         dataType: 'json'
                     })
