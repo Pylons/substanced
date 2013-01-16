@@ -7665,3 +7665,6 @@ a.site-title {
   vertical-align: top;
   display: inline-block;
 }
+textarea {
+  width: auto;
+}

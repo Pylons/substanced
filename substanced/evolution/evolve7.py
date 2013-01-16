@@ -9,6 +9,10 @@ from substanced.util import (
     )
 from substanced.file import magic
 
+from pyramid.traversal import resource_path
+
+from ZODB.POSException import POSKeyError
+from ZODB.blob import Blob
 
 _marker = object()
 
@@ -26,9 +30,19 @@ def evolve(root):
             if oids is not None:
                 for oid in oids:
                     f = objectmap.object_for(oid)
-                    if f.get_size():
-                        for chunk in chunks(f.blob.open('r')):
-                            m = magic.Magic(mime=True)
-                            mimetype = m.from_buffer(chunk)
-                            f.mimetype = mimetype
-                            break
+                    try:
+                        if f.get_size():
+                            blob = f.blob
+                            fp = blob.open('r')
+                            for chunk in chunks(fp):
+                                m = magic.Magic(mime=True)
+                                mimetype = m.from_buffer(chunk)
+                                f.mimetype = mimetype
+                                break
+                    except POSKeyError:
+                        logger.error(
+                            'Missing blob for file %s, overwriting with '
+                            'empty blob' % resource_path(f)
+                            )
+                        f.blob = Blob()
+                        f.mimetype = 'application/octet-stream'

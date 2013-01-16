@@ -26,10 +26,10 @@ except IOError:
 install_requires = [
     'pyramid>=1.4dev', # effective_principals predicate
     'ZODB3', 
-    'hypatia>=0.1a3dev', # index-based querying
+    'hypatia>=0.1a3', # index-based querying
     'venusian',
-    'deform',
-    'colander>=0.9.9.1dev', # subclassable schemanodes
+    'deform>=0.9.6', # retail form rendering capability (for documentability)
+    'colander>=1.0a1', # subclassable schemanodes
     'deform_bootstrap',
     'repoze.evolution',
     'pyramid_zodbconn',

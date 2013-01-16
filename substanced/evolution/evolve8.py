@@ -27,9 +27,6 @@ def evolve(root):
         )
     for obj in postorder(root):
         if is_folder(obj):
-            logger.info(
-                'Substanced evolve step 8: trying %s' % (obj,)
-                )
             order = getattr(obj, '_order', None)
             if order is not None:
                 oid_order = ()
