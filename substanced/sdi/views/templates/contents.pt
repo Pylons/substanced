@@ -187,7 +187,11 @@
                         .append(
                             $('<div class="alert"></div>')
                                 .append(args.flash)
-                        );
+                        )
+                        .height(0)
+                        .animate({
+                            height: '100%'
+                        });
                 }
                 // Also need to enable or disable the buttons.
                 enableDisableButtons();
