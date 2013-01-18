@@ -257,6 +257,9 @@
             };
             nextSerial += 1;
 
+            // must trigger loaded, even if no actual data
+            onDataLoading.notify({from: query.from, to: query.to});
+            
             // make the actual request
             jqXHR = $.ajax(ajaxOpts)
                 .done(dfd.resolve)
@@ -367,8 +370,6 @@
                 // Make the ajax request, without clearing the grid.
                 ajax(ajaxOptions);
 
-                // must trigger loaded, even if no actual data
-                onDataLoading.notify({from: query.from, to: query.to});
             }
         }
 

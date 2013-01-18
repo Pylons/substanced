@@ -8,13 +8,6 @@
         }
     };
 
-    var log = function () {
-        var c = window.console;
-        if (c && c.log) {
-            c.log(Array.prototype.slice.call(arguments));
-        }
-    };
-
     // our custom validator
     function requiredFieldValidator(value) {
         if (value === null || value === undefined || !value.length) {
