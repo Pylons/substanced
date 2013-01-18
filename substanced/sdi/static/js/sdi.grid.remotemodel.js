@@ -161,24 +161,21 @@
         }
 
         function handleAjaxSuccess(sgContext, xhr) {
+            // If this is the active request, we clear it.
+            activeRequest = null;
+
             // IE seems to dump us here
             // on abort(), with data=null.
             if (xhr === null) {
                 return;
             }
-
-            // If this is the active request, we clear it.
-
             if (sgContext.serial < firstSerial) {
                 // If the serial is too low, this response is
                 // invalidated. We did not want to abort it,
                 // but we ignore its response and do not load
                 // it into the grid.
-                activeRequest = null;
                 return;
             }
-
-            activeRequest = null;
 
             // load the data that arrived in the payload.
             loadData(xhr);
@@ -207,12 +204,25 @@
             }
         }
 
-        function ajax(ajaxOpts) {
-            // Make an ajax request by keeping our specific queue policy
+        function ajax(url, ajaxOpts) {
+            // Make an ajax request by keeping our specific queue policy.
+            // Call it as:
+            //
+            //    sdiRemoteModelPlugin.ajax(url, ajaxOpts);
+            //    sdiRemoteModelPlugin.ajax(ajaxOpts);
+            //
 
             var jqXHR,
                 dfd = $.Deferred(),
                 promise = dfd.promise();
+
+            if (typeof url !== 'string') {
+                // shift parameters
+                ajaxOpts = url;
+            } else {
+                // add url to the opts, because we will only pass opts
+                ajaxOpts.url = url;
+            }
 
             // If we have an active request: abort it.
             abortRequest();
@@ -350,9 +360,8 @@
                     dataType: 'json'
                 };
 
-                // Make the ajax request. 'true' means: do not add missing data again,
-                // as we have just provided it from above.
-                ajax(ajaxOptions, true);
+                // Make the ajax request, without clearing the grid.
+                ajax(ajaxOptions);
 
                 // must trigger loaded, even if no actual data
                 onDataLoading.notify({from: query.from, to: query.to});
