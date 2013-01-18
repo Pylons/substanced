@@ -186,7 +186,11 @@
             // must re-trigger loading rows,
             // as these events were prevented during the
             // outgoing request.
-            grid.onViewportChanged.notify();
+            if ((xhr.total || 0) > 0) {
+                // ... but, only if we have totals > 0, because that
+                // is a case that findMissingData considers to be a full update.
+                grid.onViewportChanged.notify();
+            }
         }
 
         function handleAjaxError(xhr, textStatus, errorThrown) {
