@@ -147,9 +147,8 @@
                 gridWrapper.setSearchString($filter.val());
             });
 
-            // Update the buttons if the selection has changed.
-            var grid = gridWrapper.grid;
-            grid.onSelectedRowsChanged.subscribe(function (evt) {
+            // Helper function to enable or disable the buttons.
+            function enableDisableButtons() {
                 var selRows = grid.getSelectedRows();
                 var data = grid.getData();
                 if (selRows.length) {
@@ -170,10 +169,15 @@
                     $('.btn-sdi-del').attr('disabled', true);
                     $('.btn-sdi-sel').attr('disabled', true);
                 }
-            });
+            }
+
+            // Update the buttons if the selection has changed.
+            var grid = gridWrapper.grid;
+            grid.onSelectedRowsChanged.subscribe(enableDisableButtons);
 
             // Inject flash messages that arrive from the server via ajax.
             gridWrapper.sdiRemoteModelPlugin.onDataLoaded.subscribe(function (evt, args) {
+                // handle flash message
                 if (args.flash) {
                     // Clear existing messages, and add this one.
                     $('#messages')
@@ -183,6 +187,8 @@
                                 .append(args.flash)
                         );
                 }
+                // Also need to enable or disable the buttons.
+                enableDisableButtons();
             });
 
         });
