@@ -51,6 +51,8 @@
      * - setSorting() or setFilterArgs() are called, causing the entire cached data
      *   to be invalidated
      *
+     * - clearData() is called
+     *
      * - an ajax response arrives to the client, and after having it processed,
      *   the viewport of the grid contains previously unloaded elements.
      *   (this is needed because any viewport change events during the
@@ -61,13 +63,38 @@
      * but is also implementing a queue policy. Our current policy is that there can
      * only be 1 outgoing request at all times, and if a next request is launched then
      * the previously active request will be cancelled and its payload will
-     * not be processed.
+     * not be processed. In case of GET requests this means physically aborting them,
+     * in case of POST requests the request will not get aborted, but its response
+     * will be ignored, instead.
      *
      * Any actions that change the content of the grid are advised to do their
      * ajax with SdiRemoteModel.ajax(...), to allow these requests also participate
      * in the queue management. The requests will, by default, deplete all cached data
-     * and add the query information that is needed to provid a refresh from
+     * and add the query information that is needed to provide a refresh from
      * the server side.
+     *
+     * There are two distinct use cases for calling SdiRemoteModel.ajax. In the first
+     * case, we have a POST request that will change the grid. So, before we send the
+     * request, we need to invalidate the grid::
+     *
+     *      gridWrapper.sdiRemoteModelPlugin.clearData();
+     *      gridWrapper.sdiRemoteModelPlugin.ajax(options);
+     *
+     * This will cause the grid's internal client row cache cleared, and query parameters
+     * will be injected to the request to query grid data from the server. When the
+     * respponse arrives, the row data (optionally) sent by the server will be automatically loaded
+     * to the grid. Thus the same request serves to carry out an action, and also return
+     * the refreshed data to the client.
+     *
+     * In the other use case (for example, Reindex button) the grid is not changed, so
+     * there is no need for clearing the current data:
+     *
+     *     gridWrapper.sdiRemoteModelPlugin.ajax(options);
+     *
+     * In this case, the main reason for using the customized ajax method is to allow
+     * the component to give visual cues to the user when the ajax starts and ends,
+     * and signal possible errors to the user in consistence with those actions that
+     * actually change the data.
      *
      */
 
@@ -95,8 +122,10 @@
             grid = _grid;
             $.extend(options, _options);
 
-            // ajax queue management
+            // ajax queue management.
             activeRequest = null;
+            nextSerial = 0;
+            firstSerial = 0;
 
             // Bind our data to the grid.
             data = {length: 0};
@@ -120,14 +149,32 @@
 
         function abortRequest() {
             if (hasActiveRequest()) {
-                activeRequest.abort();
+                // Our policy is that post requests are not abortable.
+                if (! activeRequest.xhrContext.isPOST) {
+                    activeRequest.abort();
+                }
+                // Serial makes sure that the data returned by the
+                // stale post requests is properly ignored, even if not aborted.
+                firstSerial = nextSerial;
+                activeRequest = null;
             }
         }
 
-        function handleAjaxSuccess(xhr) {
+        function handleAjaxSuccess(sgContext, xhr) {
             // IE seems to dump us here
             // on abort(), with data=null.
             if (xhr === null) {
+                return;
+            }
+
+            // If this is the active request, we clear it.
+
+            if (sgContext.serial < firstSerial) {
+                // If the serial is too low, this response is
+                // invalidated. We did not want to abort it,
+                // but we ignore its response and do not load
+                // it into the grid.
+                activeRequest = null;
                 return;
             }
 
@@ -160,14 +207,14 @@
             }
         }
 
-        function ajax(ajaxOpts, /*optional*/ ignoreMissing) {
+        function ajax(ajaxOpts) {
             // Make an ajax request by keeping our specific queue policy
 
             var jqXHR,
                 dfd = $.Deferred(),
                 promise = dfd.promise();
 
-            // If we have an active request: always abort it.
+            // If we have an active request: abort it.
             abortRequest();
 
             // add the abort method
@@ -183,23 +230,31 @@
 
             // the request automatically gets the to, from... parameters,
             // enabling to produce a refresh together with the required action.
-            if (! ignoreMissing) {
-                // Clear the data that we have. We assume that the
-                // request that came in, will change the data.
-                _clearData();
-                // Find out the data that we need to request
-                var query = getMissingRowsInViewportChanged(undefined);
-                // By default, we add the missing info to the query.
-                ajaxOpts.data = $.extend({}, ajaxOpts.data, query);
-            }
+            // If no rows are required, then ...
+            // Find out the data that we need to request
+            var query = getMissingRowsInViewportChanged(undefined);
+            // By default, we add the missing info to the query.
+            ajaxOpts.data = $.extend({}, ajaxOpts.data, query);
+            
+            // Store some data that we can check when the response arrives
+            var sgContext = {
+                isPOST: ajaxOpts.data.type == 'POST',
+                serial: nextSerial
+            };
+            nextSerial += 1;
+
             // make the actual request
             jqXHR = $.ajax(ajaxOpts)
                 .done(dfd.resolve)
                 .fail(dfd.reject)
-                .then(handleAjaxSuccess, handleAjaxError);
+                .then(
+                    $.proxy(handleAjaxSuccess, null, sgContext),
+                    handleAjaxError
+                );
 
             // Remember that this request is now the active one
-            activeRequest = jqXHR;
+            activeRequest = promise;
+
             return promise;
         }
 
@@ -231,7 +286,7 @@
             return query;
         }
 
-        function _clearData() {
+        function clearData() {
             // Delete the data
             $.each(data, function (key, value) {
                 delete data[key];
@@ -239,10 +294,14 @@
             data.length = 0;
         }
 
-        function clearData(/*optional*/ scrollToTop) {
+        function clearDataAndRefresh(/*optional*/ scrollToTop) {
              // Delete the data
-            _clearData();
-            abortRequest();
+            clearData();
+            // Refresh the grid
+            refresh(scrollToTop);
+        }
+
+        function refresh(/*optional*/ scrollToTop) {
             // let the viewport load records currently visible
             grid.invalidateAllRows();
             grid.updateRowCount();
@@ -397,7 +456,7 @@
                 options.sortCol = sortCol;
                 options.sortDir = sortDir;
                 // notify the grid
-                clearData();
+                clearDataAndRefresh();
             }
         }
 
@@ -411,7 +470,7 @@
             });
             // notify the grid if any of the filters changed
             if (changed) {
-                clearData(true);   // true will cause to scroll to the top.
+                clearDataAndRefresh(true);   // true will cause to scroll to the top.
             }
         }
 
@@ -486,6 +545,8 @@
             destroy: destroy,
 
             clearData: clearData,
+            refresh: refresh,
+            clearDataAndRefresh: clearDataAndRefresh,
             loadData: loadData,
             setSorting: setSorting,
             setFilterArgs: setFilterArgs,

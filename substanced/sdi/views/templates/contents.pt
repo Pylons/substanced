@@ -76,18 +76,24 @@
                     }, 0);
                 });
  
-                // ajaxify delete button
-                $form.find('button#delete').click(function (evt) {
+                // ajaxify delete and reindex button
+                $form.find('button#delete, button#reindex').click(function (evt) {
                     var gridWrapper = $('#sdi-contents-table-sg').data('slickgrid');
+                    var data = {
+                        'item-modify': $hiddenInput.attr('value'),
+                        csrf_token: "${csrf_token}"
+                        }
+                    var action = this.id;
+                    data['form.' + action] = action;
+                    // All action, except for 'reindex', is refreshing the grid.
+                    if (action != 'reindex') {
+                        gridWrapper.sdiRemoteModelPlugin.clearData();
+                    } 
                     gridWrapper.sdiRemoteModelPlugin.ajax({
                         url: '.',
                         type: 'POST',
                         url: './@@contents',
-                        data: {
-                            'item-modify': $hiddenInput.attr('value'),
-                            'form.delete': 'delete',
-                            csrf_token: "${csrf_token}",
-                        },
+                        data: data,
                         dataType: 'json'
                     })
                     return false;

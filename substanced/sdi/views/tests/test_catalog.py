@@ -208,6 +208,40 @@ class Test_reindex_indexes(unittest.TestCase):
             request.session['_f_error'],
             ['No indexes selected to reindex'])
 
+
+class Test_reindex_indexes_ajax(unittest.TestCase):
+    def setUp(self):
+        testing.setUp()
+
+    def tearDown(self):
+        testing.tearDown()
+
+    def _callFUT(self, context, request):
+        from ..catalog import reindex_indexes_ajax
+        return reindex_indexes_ajax(context, request)
+
+    def test_with_indexes(self):
+        context = DummyCatalog()
+        request = testing.DummyRequest()
+        request.sdiapi = DummySDIAPI()
+        request.POST = {'item-modify': 'a'}
+        result = self._callFUT(context, request)
+        self.assertEqual(result, {
+            'flash': 'Reindex of selected indexes a succeeded'
+            })
+
+    def test_without_indexes(self):
+        context = DummyCatalog()
+        request = testing.DummyRequest()
+        request.sdiapi = DummySDIAPI()
+        request.POST = testing.DummyResource()
+        request.POST.getall = {}.get
+        result = self._callFUT(context, request)
+        self.assertEqual(result, {
+            'flash': 'No indexes selected to reindex'
+            })
+
+
 class DummyContent(object):
     def __init__(self, result):
         self.result = result

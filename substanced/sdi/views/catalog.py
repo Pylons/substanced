@@ -149,6 +149,25 @@ class SearchCatalogView(FormView):
 
 # reindex button handler
 
+
+def _reindex_indexes(context, request):
+    toreindex_str = request.POST.get('item-modify', '')
+    toreindex = filter(None, toreindex_str.split(','))
+    toreindex_fmt = ', '.join(toreindex)
+    if toreindex:
+        context.reindex(indexes=toreindex, registry=request.registry)
+        result = {
+            'msg': 'Reindex of selected indexes %s succeeded' % (toreindex_fmt, ),
+            'queue': 'success',
+            }
+    else:
+        result = {
+            'msg': 'No indexes selected to reindex',
+            'queue': 'error',
+            }
+    return result
+
+
 @mgmt_view(
     context=IFolder,
     content_type='Catalog',
@@ -160,19 +179,27 @@ class SearchCatalogView(FormView):
     tab_condition=False,
     )
 def reindex_indexes(context, request):
-    toreindex_str = request.POST.get('item-modify', '')
-    toreindex = filter(None, toreindex_str.split(','))
-    toreindex_fmt = ', '.join(toreindex)
-    if toreindex:
-        context.reindex(indexes=toreindex, registry=request.registry)
-        request.session.flash(
-            'Reindex of selected indexes %s succeeded' % (toreindex_fmt,),
-            'success'
-            )
-    else:
-        request.session.flash(
-            'No indexes selected to reindex',
-            'error'
-            )
-        
+    info = _reindex_indexes(context, request)
+    request.session.flash(info['msg'], info['queue'])
     return HTTPFound(request.sdiapi.mgmt_path(context, '@@contents'))
+
+
+@mgmt_view(
+    context=IFolder,
+    content_type='Catalog',
+    name='contents',
+    request_method='POST',
+    xhr=True,
+    renderer='json',
+    request_param='form.reindex',
+    permission='sdi.manage-contents',
+    tab_condition=False,
+    check_csrf=False,           # XXX ???
+    )
+def reindex_indexes_ajax(context, request):
+    info = _reindex_indexes(context, request)
+    results = {
+        'flash': info['msg'],
+        # XXX We ignore queue parameter in the ajax operation, for now.
+        }
+    return results
