@@ -17,7 +17,7 @@ def _getentrybody(format, entry):
 
 @view_config(
     renderer='templates/frontpage.pt',
-    content_type='Blog',
+    content_type='Root',
     )
 def blogview(context, request):
     blogentries = []
@@ -125,7 +125,7 @@ class FeedViews(object):
         feed = {"rss_url": request.application_url + "/rss.xml",
                 "atom_url": request.application_url + "/index.atom",
                 "blog_url": request.application_url,
-                "title": context.title,
+                "title": context.sdi_title,
                 "description": context.description,
                 }
 

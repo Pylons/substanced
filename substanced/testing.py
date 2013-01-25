@@ -3,14 +3,12 @@ from .folder import Folder
 
 def make_site():
     context = Folder()
-    services = Folder()
+    ObjectMap(context)
     users = Folder()
     groups = Folder()
     principals = Folder()
     principals['groups'] = groups
     principals['users'] = users
-    services['principals'] = principals
-    services['objectmap'] = ObjectMap()
-    context.add('__services__', services, allow_services=True)
+    context.add_service('principals', principals)
     return context
 

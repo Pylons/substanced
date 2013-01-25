@@ -1,21 +1,6 @@
 import unittest
 from pyramid import testing
 
-class check_csrf_token(unittest.TestCase):
-    def _callFUT(self, request, token):
-        from .. import check_csrf_token
-        return check_csrf_token(request, token)
-
-    def test_success(self):
-        request = testing.DummyRequest()
-        request.params['csrf_token'] = request.session.get_csrf_token()
-        self.assertEqual(self._callFUT(request, 'csrf_token'), None)
-
-    def test_failure(self):
-        from pyramid.httpexceptions import HTTPBadRequest
-        request = testing.DummyRequest()
-        self.assertRaises(HTTPBadRequest, self._callFUT, request, 'csrf_token')
-
 class Test_add_mgmt_view(unittest.TestCase):
     def _callFUT(self, config, **kw):
         from .. import add_mgmt_view
@@ -25,24 +10,16 @@ class Test_add_mgmt_view(unittest.TestCase):
         config = DummyConfigurator()
         return config
 
+    def test_default_permission_is_sdi_view(self):
+        config = self._makeConfig()
+        self._callFUT(config)
+        self.assertEqual(config._added['permission'], 'sdi.view')
+
     def test_with_request_method(self):
         config = self._makeConfig()
         self._callFUT(config, request_method=('HEAD', 'GET'))
         self.assertEqual(config._added['request_method'], ('HEAD', 'GET'))
         self.assertTrue(config._actions)
-
-    def test_with_check_csrf(self):
-        from pyramid.httpexceptions import HTTPBadRequest
-        config = self._makeConfig()
-        self._callFUT(config, check_csrf=True)
-        preds = config._added['custom_predicates']
-        self.assertEqual(len(preds), 1)
-        self.assertTrue(config._actions)
-        request = testing.DummyRequest()
-        self.assertRaises(HTTPBadRequest, preds[0], None, request)
-        request = testing.DummyRequest()
-        request.params['csrf_token'] = request.session.get_csrf_token()
-        self.assertTrue(preds[0](None, request))
 
     def test_view_isclass_with_attr(self):
         class AView(object):
@@ -72,66 +49,83 @@ class Test_add_mgmt_view(unittest.TestCase):
     def test_intr_values(self):
         config = self._makeConfig()
         self._callFUT(
-            config, tab_title='tab_title', tab_condition='tab_condition',
-            check_csrf=True, csrf_token='csrf_token')
+            config,
+            tab_title='tab_title',
+            tab_condition='tab_condition',
+            check_csrf=True
+            )
         self.assertEqual(config._intr['tab_title'], 'tab_title')
         self.assertEqual(config._intr['tab_condition'], 'tab_condition')
-        self.assertEqual(config._intr['check_csrf'], True)
-        self.assertEqual(config._intr['csrf_token'], 'csrf_token')
         self.assertEqual(config._intr.related['views'].resolve(),
                          ('view', None, '', 'substanced_manage', 'hash'))
 
-class Test_mgmt_path(unittest.TestCase):
-    def _makeOne(self, request):
-        from .. import mgmt_path
-        return mgmt_path(request)
+    def test_with_tab_near_and_tab_before(self):
+        from pyramid.exceptions import ConfigurationError
+        from .. import MIDDLE
+        config = self._makeConfig()
+        self.assertRaises(
+            ConfigurationError,
+            self._callFUT,
+            config,
+            tab_near=MIDDLE,
+            tab_before='tab2',
+            )
 
-    def test_it(self):
-        from .. import MANAGE_ROUTE_NAME
-        request = testing.DummyRequest()
-        context = testing.DummyResource()
-        def route_path(route_name, *arg, **kw):
-            self.assertEqual(route_name, MANAGE_ROUTE_NAME)
-            self.assertEqual(arg, ('a',))
-            self.assertEqual(kw, {'b':1, 'traverse':('',)})
-            return '/path'
-        request.route_path = route_path
-        inst = self._makeOne(request)
-        result = inst(context, 'a', b=1)
-        self.assertEqual(result, '/path')
+    def test_with_tab_near_and_tab_after(self):
+        from pyramid.exceptions import ConfigurationError
+        from .. import MIDDLE
+        config = self._makeConfig()
+        self.assertRaises(
+            ConfigurationError,
+            self._callFUT,
+            config,
+            tab_near=MIDDLE,
+            tab_after='tab2',
+            )
 
-class Test_mgmt_url(unittest.TestCase):
-    def _makeOne(self, request):
-        from .. import mgmt_url
-        return mgmt_url(request)
+    def test_with_tab_near_left(self):
+        from .. import LEFT, FIRST, CENTER1
+        config = self._makeConfig()
+        self._callFUT(
+            config,
+            tab_near=LEFT,
+            )
+        self.assertEqual(config._intr['tab_before'], CENTER1)
+        self.assertEqual(config._intr['tab_after'], FIRST)
+        self.assertEqual(config._intr['tab_near'], LEFT)
 
-    def test_it(self):
-        from .. import MANAGE_ROUTE_NAME
-        request = testing.DummyRequest()
-        context = testing.DummyResource()
-        def route_url(route_name, *arg, **kw):
-            self.assertEqual(route_name, MANAGE_ROUTE_NAME)
-            self.assertEqual(arg, ('a',))
-            self.assertEqual(kw, {'b':1, 'traverse':('',)})
-            return 'http://example.com/path'
-        request.route_url = route_url
-        inst = self._makeOne(request)
-        result = inst(context, 'a', b=1)
-        self.assertEqual(result, 'http://example.com/path')
-
-
-class Test__default(unittest.TestCase):
-    def _makeOne(self):
-        from .. import _default
-        return _default()
-
-    def test__nonzero__(self):
-        self.assertFalse(self._makeOne())
-
-    def test___repr__(self):
-        inst = self._makeOne()
-        self.assertEqual(repr(inst), '(default)')
+    def test_with_tab_near_middle(self):
+        from .. import MIDDLE, CENTER1, CENTER2
+        config = self._makeConfig()
+        self._callFUT(
+            config,
+            tab_near=MIDDLE,
+            )
+        self.assertEqual(config._intr['tab_before'], CENTER2)
+        self.assertEqual(config._intr['tab_after'], CENTER1)
+        self.assertEqual(config._intr['tab_near'], MIDDLE)
         
+    def test_with_tab_near_right(self):
+        from .. import RIGHT, CENTER2, LAST
+        config = self._makeConfig()
+        self._callFUT(
+            config,
+            tab_near=RIGHT,
+            )
+        self.assertEqual(config._intr['tab_before'], LAST)
+        self.assertEqual(config._intr['tab_after'], CENTER2)
+        self.assertEqual(config._intr['tab_near'], RIGHT)
+
+    def test_with_tab_near_unknown(self):
+        from pyramid.exceptions import ConfigurationError
+        config = self._makeConfig()
+        self.assertRaises(
+            ConfigurationError,
+            self._callFUT,
+            config,
+            tab_near='wontwork',
+            )
+
 class Test_mgmt_view(unittest.TestCase):
     def setUp(self):
         testing.setUp()
@@ -204,23 +198,28 @@ class Test_mgmt_view(unittest.TestCase):
         venusian.callback(context, None, None)
         self.assertEqual(context.config.settings['attr'], 'bar')
 
-class Test_get_mgmt_views(unittest.TestCase):
+class Test_sdi_mgmt_views(unittest.TestCase):
     def setUp(self):
         testing.setUp()
 
     def tearDown(self):
         testing.tearDown()
         
-    def _callFUT(self, request, context=None, names=None):
-        from .. import get_mgmt_views
-        return get_mgmt_views(request, context, names)
+    def _callFUT(self, context, request, names=None):
+        from .. import sdi_mgmt_views
+        return sdi_mgmt_views(context, request, names)
+
+    def test_context_has_no_name(self):
+        result = self._callFUT(None, None)
+        self.assertEqual(result, [])
 
     def test_no_views_found(self):
         request = testing.DummyRequest()
         request.matched_route = None
         request.registry.content = DummyContent()
         request.registry.introspector = DummyIntrospector()
-        result = self._callFUT(request)
+        context = testing.DummyResource()
+        result = self._callFUT(context, request)
         self.assertEqual(result, [])
 
     def test_no_related_view(self):
@@ -230,15 +229,18 @@ class Test_get_mgmt_views(unittest.TestCase):
         intr = {}
         intr['tab_title'] = None
         intr['tab_condition'] = None
+        intr['tab_before'] = None
+        intr['tab_after'] = None
         intr = DummyIntrospectable(related=(), introspectable=intr)
         request.registry.introspector = DummyIntrospector([(intr,)])
-        result = self._callFUT(request)
+        context = testing.DummyResource()
+        result = self._callFUT(context, request)
         self.assertEqual(result, [])
 
     def test_one_related_view_gardenpath(self):
         request = testing.DummyRequest()
         request.matched_route = None
-        request.mgmt_path = lambda context, view_name: '/path/%s' % view_name
+        request.sdiapi = DummySDIAPI()
         request.registry.content = DummyContent()
         request.view_name = 'name'
         view_intr = DummyIntrospectable()
@@ -249,14 +251,17 @@ class Test_get_mgmt_views(unittest.TestCase):
         intr = {}
         intr['tab_title'] = None
         intr['tab_condition'] = None
+        intr['tab_before'] = None
+        intr['tab_after'] = None
         intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
         request.registry.introspector = DummyIntrospector([(intr,)])
-        result = self._callFUT(request)
+        context = testing.DummyResource()
+        result = self._callFUT(context, request)
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0]['view_name'], 'name')
         self.assertEqual(result[0]['title'], 'Name')
         self.assertEqual(result[0]['class'], 'active')
-        self.assertEqual(result[0]['url'], '/path/@@name')
+        self.assertEqual(result[0]['url'], '/mgmt_path')
 
     def test_one_related_view_somecontext_tabcondition_None(self):
         from zope.interface import Interface
@@ -264,7 +269,7 @@ class Test_get_mgmt_views(unittest.TestCase):
             pass
         request = testing.DummyRequest()
         request.matched_route = None
-        request.mgmt_path = lambda context, view_name: '/path/%s' % view_name
+        request.sdiapi = DummySDIAPI()
         request.registry.content = DummyContent()
         view_intr = DummyIntrospectable()
         view_intr.category_name = 'views'
@@ -274,9 +279,12 @@ class Test_get_mgmt_views(unittest.TestCase):
         intr = {}
         intr['tab_title'] = None
         intr['tab_condition'] = None
+        intr['tab_before'] = None
+        intr['tab_after'] = None
         intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
         request.registry.introspector = DummyIntrospector([(intr,)])
-        result = self._callFUT(request)
+        context = testing.DummyResource()
+        result = self._callFUT(context, request)
         self.assertEqual(result, [])
 
     def test_one_related_view_instcontext_tabcondition_None(self):
@@ -284,7 +292,7 @@ class Test_get_mgmt_views(unittest.TestCase):
             pass
         request = testing.DummyRequest()
         request.matched_route = None
-        request.mgmt_path = lambda context, view_name: '/path/%s' % view_name
+        request.sdiapi = DummySDIAPI()
         request.registry.content = DummyContent()
         view_intr = DummyIntrospectable()
         view_intr.category_name = 'views'
@@ -294,15 +302,18 @@ class Test_get_mgmt_views(unittest.TestCase):
         intr = {}
         intr['tab_title'] = None
         intr['tab_condition'] = None
+        intr['tab_before'] = None
+        intr['tab_after'] = None
         intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
         request.registry.introspector = DummyIntrospector([(intr,)])
-        result = self._callFUT(request)
+        context = testing.DummyResource()
+        result = self._callFUT(context, request)
         self.assertEqual(result, [])
 
     def test_one_related_view_anycontext_tabcondition_False(self):
         request = testing.DummyRequest()
         request.matched_route = None
-        request.mgmt_path = lambda context, view_name: '/path/%s' % view_name
+        request.sdiapi = DummySDIAPI()
         request.registry.content = DummyContent()
         view_intr = DummyIntrospectable()
         view_intr.category_name = 'views'
@@ -312,15 +323,39 @@ class Test_get_mgmt_views(unittest.TestCase):
         intr = {}
         intr['tab_title'] = None
         intr['tab_condition'] = False
+        intr['tab_before'] = None
+        intr['tab_after'] = None
         intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
         request.registry.introspector = DummyIntrospector([(intr,)])
-        result = self._callFUT(request)
+        context = testing.DummyResource()
+        result = self._callFUT(context, request)
         self.assertEqual(result, [])
+
+    def test_one_related_view_anycontext_tabcondition_True(self):
+        request = testing.DummyRequest()
+        request.matched_route = None
+        request.sdiapi = DummySDIAPI()
+        request.registry.content = DummyContent()
+        view_intr = DummyIntrospectable()
+        view_intr.category_name = 'views'
+        view_intr['name'] = 'name'
+        view_intr['context'] = None
+        view_intr['derived_callable'] = None
+        intr = {}
+        intr['tab_title'] = None
+        intr['tab_condition'] = True
+        intr['tab_before'] = None
+        intr['tab_after'] = None
+        intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
+        request.registry.introspector = DummyIntrospector([(intr,)])
+        context = testing.DummyResource()
+        result = self._callFUT(context, request)
+        self.assertEqual(len(result), 1)
 
     def test_one_related_view_anycontext_tabcondition_callable(self):
         request = testing.DummyRequest()
         request.matched_route = None
-        request.mgmt_path = lambda context, view_name: '/path/%s' % view_name
+        request.sdiapi = DummySDIAPI()
         request.registry.content = DummyContent()
         view_intr = DummyIntrospectable()
         view_intr.category_name = 'views'
@@ -332,15 +367,18 @@ class Test_get_mgmt_views(unittest.TestCase):
             return False
         intr['tab_title'] = None
         intr['tab_condition'] = tabcondition
+        intr['tab_before'] = None
+        intr['tab_after'] = None
         intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
         request.registry.introspector = DummyIntrospector([(intr,)])
-        result = self._callFUT(request)
+        context = testing.DummyResource()
+        result = self._callFUT(context, request)
         self.assertEqual(result, [])
 
     def test_one_related_view_anycontext_tabcondition_None_not_in_names(self):
         request = testing.DummyRequest()
         request.matched_route = None
-        request.mgmt_path = lambda context, view_name: '/path/%s' % view_name
+        request.sdiapi = DummySDIAPI()
         request.registry.content = DummyContent()
         view_intr = DummyIntrospectable()
         view_intr.category_name = 'views'
@@ -350,15 +388,18 @@ class Test_get_mgmt_views(unittest.TestCase):
         intr = {}
         intr['tab_title'] = None
         intr['tab_condition'] = None
+        intr['tab_before'] = None
+        intr['tab_after'] = None
         intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
         request.registry.introspector = DummyIntrospector([(intr,)])
-        result = self._callFUT(request, names=('fred',))
+        context = testing.DummyResource()
+        result = self._callFUT(context, request, names=('fred',))
         self.assertEqual(result, [])
 
     def test_one_related_view_anycontext_tabcondition_None_predicatefail(self):
         request = testing.DummyRequest()
         request.matched_route = None
-        request.mgmt_path = lambda context, view_name: '/path/%s' % view_name
+        request.sdiapi = DummySDIAPI()
         request.registry.content = DummyContent()
         view_intr = DummyIntrospectable()
         view_intr.category_name = 'views'
@@ -372,15 +413,18 @@ class Test_get_mgmt_views(unittest.TestCase):
         intr = {}
         intr['tab_title'] = None
         intr['tab_condition'] = None
+        intr['tab_before'] = None
+        intr['tab_after'] = None
         intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
         request.registry.introspector = DummyIntrospector([(intr,)])
-        result = self._callFUT(request)
+        context = testing.DummyResource()
+        result = self._callFUT(context, request)
         self.assertEqual(result, [])
 
     def test_one_related_view_anycontext_tabcondition_None_permissionfail(self):
         request = testing.DummyRequest()
         request.matched_route = None
-        request.mgmt_path = lambda context, view_name: '/path/%s' % view_name
+        request.sdiapi = DummySDIAPI()
         request.registry.content = DummyContent()
         view_intr = DummyIntrospectable()
         view_intr.category_name = 'views'
@@ -394,15 +438,18 @@ class Test_get_mgmt_views(unittest.TestCase):
         intr = {}
         intr['tab_title'] = None
         intr['tab_condition'] = None
+        intr['tab_before'] = None
+        intr['tab_after'] = None
         intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
         request.registry.introspector = DummyIntrospector([(intr,)])
-        result = self._callFUT(request)
+        context = testing.DummyResource()
+        result = self._callFUT(context, request)
         self.assertEqual(result, [])
 
-    def test_one_related_view_gardenpath_tab_title_sorting(self):
+    def test_one_related_view_two_tabs_gardenpath_tab_title_sorting(self):
         request = testing.DummyRequest()
         request.matched_route = None
-        request.mgmt_path = lambda context, view_name: '/path/%s' % view_name
+        request.sdiapi = DummySDIAPI()
         request.registry.content = DummyContent()
         view_intr = DummyIntrospectable()
         view_intr.category_name = 'views'
@@ -412,28 +459,31 @@ class Test_get_mgmt_views(unittest.TestCase):
         intr = {}
         intr['tab_title'] = 'b'
         intr['tab_condition'] = None
+        intr['tab_before'] = None
+        intr['tab_after'] = None
         intr2 = {}
         intr2['tab_title'] = 'a'
         intr2['tab_condition'] = None
+        intr2['tab_before'] = None
+        intr2['tab_after'] = None
         intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
         intr2 = DummyIntrospectable(related=(view_intr,), introspectable=intr2)
         request.registry.introspector = DummyIntrospector([(intr, intr2)])
-        result = self._callFUT(request)
-        self.assertEqual(len(result), 2)
+        context = testing.DummyResource()
+        result = self._callFUT(context, request)
+        self.assertEqual(len(result), 1)
         self.assertEqual(result[0]['view_name'], 'name')
         self.assertEqual(result[0]['title'], 'a')
         self.assertEqual(result[0]['class'], None)
-        self.assertEqual(result[0]['url'], '/path/@@name')
-        self.assertEqual(result[1]['view_name'], 'name')
-        self.assertEqual(result[1]['title'], 'b')
-        self.assertEqual(result[1]['class'], None)
-        self.assertEqual(result[1]['url'], '/path/@@name')
+        self.assertEqual(result[0]['url'], '/mgmt_path')
+        # "a" is gone because we use topological sorting and it conflates
+        # view data with the same view name
 
     def test_one_related_view_gardenpath_with_taborder(self):
         request = testing.DummyRequest()
         request.matched_route = None
-        request.mgmt_path = lambda context, view_name: '/path/%s' % view_name
-        request.registry.content = DummyContent(('b',))
+        request.sdiapi = DummySDIAPI()
+        request.registry.content = DummyContent(tab_order=('b',))
         request.view_name = 'b'
         view_intr1 = DummyIntrospectable()
         view_intr1.category_name = 'views'
@@ -448,27 +498,310 @@ class Test_get_mgmt_views(unittest.TestCase):
         intr = {}
         intr['tab_title'] = 'b'
         intr['tab_condition'] = None
+        intr['tab_before'] = None
+        intr['tab_after'] = None
         intr2 = {}
         intr2['tab_title'] = 'a'
         intr2['tab_condition'] = None
+        intr2['tab_before'] = None
+        intr2['tab_after'] = None
         intr = DummyIntrospectable(related=(view_intr1,), introspectable=intr)
         intr2 = DummyIntrospectable(related=(view_intr2,), introspectable=intr2)
         request.registry.introspector = DummyIntrospector([(intr, intr2)])
-        result = self._callFUT(request)
+        context = testing.DummyResource()
+        result = self._callFUT(context, request)
         self.assertEqual(len(result), 2)
         self.assertEqual(result[0]['view_name'], 'b')
         self.assertEqual(result[0]['title'], 'b')
         self.assertEqual(result[0]['class'], 'active')
-        self.assertEqual(result[0]['url'], '/path/@@b')
+        self.assertEqual(result[0]['url'], '/mgmt_path')
         self.assertEqual(result[1]['view_name'], 'a')
         self.assertEqual(result[1]['title'], 'a')
         self.assertEqual(result[1]['class'], None)
-        self.assertEqual(result[1]['url'], '/path/@@a')
+        self.assertEqual(result[1]['url'], '/mgmt_path')
 
-class Test_get_add_views(unittest.TestCase):
-    def _callFUT(self, request, context=None):
-        from .. import get_add_views
-        return get_add_views(request, context)
+    def test_one_related_view_gardenpath_with_tab_before(self):
+        request = testing.DummyRequest()
+        request.matched_route = None
+        request.sdiapi = DummySDIAPI()
+        request.registry.content = DummyContent()
+        request.view_name = 'b'
+        view_intr1 = DummyIntrospectable()
+        view_intr1.category_name = 'views'
+        view_intr1['name'] = 'b'
+        view_intr1['context'] = None
+        view_intr1['derived_callable'] = None
+        view_intr2 = DummyIntrospectable()
+        view_intr2.category_name = 'views'
+        view_intr2['name'] = 'a'
+        view_intr2['context'] = None
+        view_intr2['derived_callable'] = None
+        intr = {}
+        intr['tab_title'] = 'b'
+        intr['tab_condition'] = None
+        intr['tab_before'] = 'a'
+        intr['tab_after'] = None
+        intr2 = {}
+        intr2['tab_title'] = 'a'
+        intr2['tab_condition'] = None
+        intr2['tab_before'] = None
+        intr2['tab_after'] = None
+        intr = DummyIntrospectable(related=(view_intr1,), introspectable=intr)
+        intr2 = DummyIntrospectable(related=(view_intr2,), introspectable=intr2)
+        request.registry.introspector = DummyIntrospector([(intr, intr2)])
+        context = testing.DummyResource()
+        result = self._callFUT(context, request)
+        self.assertEqual(len(result), 2)
+        self.assertEqual(result[0]['view_name'], 'b')
+        self.assertEqual(result[0]['title'], 'b')
+        self.assertEqual(result[0]['class'], 'active')
+        self.assertEqual(result[0]['url'], '/mgmt_path')
+        self.assertEqual(result[1]['view_name'], 'a')
+        self.assertEqual(result[1]['title'], 'a')
+        self.assertEqual(result[1]['class'], None)
+        self.assertEqual(result[1]['url'], '/mgmt_path')
+
+    def test_gardenpath_with_tab_before_and_after(self):
+        from substanced.sdi import CENTER1, CENTER2, FIRST, LAST
+        request = testing.DummyRequest()
+        request.matched_route = None
+        request.sdiapi = DummySDIAPI()
+        request.registry.content = DummyContent()
+        request.view_name = 'b'
+        view_intr1 = DummyIntrospectable()
+        view_intr1.category_name = 'views'
+        view_intr1['name'] = 'c'
+        view_intr1['context'] = None
+        view_intr1['derived_callable'] = None
+        view_intr2 = DummyIntrospectable()
+        view_intr2.category_name = 'views'
+        view_intr2['name'] = 'a'
+        view_intr2['context'] = None
+        view_intr2['derived_callable'] = None
+        view_intr3 = DummyIntrospectable()
+        view_intr3.category_name = 'views'
+        view_intr3['name'] = 'b'
+        view_intr3['context'] = None
+        view_intr3['derived_callable'] = None
+        view_intr4 = DummyIntrospectable()
+        view_intr4.category_name = 'views'
+        view_intr4['name'] = 'd'
+        view_intr4['context'] = None
+        view_intr4['derived_callable'] = None
+        intr = {}
+        intr['tab_title'] = 'c'
+        intr['tab_condition'] = None
+        intr['tab_before'] = CENTER1
+        intr['tab_after'] = FIRST
+        intr2 = {}
+        intr2['tab_title'] = 'a'
+        intr2['tab_condition'] = None
+        intr2['tab_before'] = LAST
+        intr2['tab_after'] = CENTER2
+        intr3 = {}
+        intr3['tab_title'] = 'b'
+        intr3['tab_condition'] = None
+        intr3['tab_before'] = CENTER2
+        intr3['tab_after'] = CENTER1
+        intr4 = {}
+        intr4['tab_title'] = 'd'
+        intr4['tab_condition'] = None
+        intr4['tab_before'] = CENTER2
+        intr4['tab_after'] = CENTER1
+        
+        intr = DummyIntrospectable(related=(view_intr1,), introspectable=intr)
+        intr2 = DummyIntrospectable(related=(view_intr2,), introspectable=intr2)
+        intr3 = DummyIntrospectable(related=(view_intr3,), introspectable=intr3)
+        intr4 = DummyIntrospectable(related=(view_intr4,), introspectable=intr4)
+        request.registry.introspector = DummyIntrospector(
+            [(intr, intr2, intr3, intr4)]
+            )
+        context = testing.DummyResource()
+        result = self._callFUT(context, request)
+        self.assertEqual(len(result), 4)
+        self.assertEqual(result[0]['view_name'], 'c')
+        self.assertEqual(result[0]['title'], 'c')
+        self.assertEqual(result[0]['class'], None)
+        self.assertEqual(result[0]['url'], '/mgmt_path')
+        self.assertEqual(result[1]['view_name'], 'b')
+        self.assertEqual(result[1]['title'], 'b')
+        self.assertEqual(result[1]['class'], 'active')
+        self.assertEqual(result[1]['url'], '/mgmt_path')
+        self.assertEqual(result[2]['view_name'], 'd')
+        self.assertEqual(result[2]['title'], 'd')
+        self.assertEqual(result[2]['class'], None)
+        self.assertEqual(result[2]['url'], '/mgmt_path')
+        self.assertEqual(result[3]['view_name'], 'a')
+        self.assertEqual(result[3]['title'], 'a')
+        self.assertEqual(result[3]['class'], None)
+        self.assertEqual(result[3]['url'], '/mgmt_path')
+
+
+class Test_default_sdi_addable(unittest.TestCase):
+    def _callFUT(self, context, intr):
+        from .. import default_sdi_addable
+        return default_sdi_addable(context, intr)
+
+    def test_is_service_with_service_name_in_context(self):
+        context = {'catalog':True}
+        intr = {'meta':{'is_service':True, 'service_name':'catalog'}}
+        self.assertFalse(self._callFUT(context, intr))
+                         
+    def test_is_service_with_service_name_not_in_context(self):
+        context = {}
+        intr = {'meta':{'is_service':True, 'service_name':'catalog'}}
+        self.assertTrue(self._callFUT(context, intr))
+    
+    def test_is_service_without_service_name(self):
+        context = {'catalog':True}
+        intr = {'meta':{'is_service':True}}
+        self.assertTrue(self._callFUT(context, intr))
+
+    def test_is_not_service(self):
+        context = {'catalog':True}
+        intr = {'meta':{}}
+        self.assertTrue(self._callFUT(context, intr))
+
+class Test_default_sdi_columns(unittest.TestCase):
+    def _callFUT(self, folder, context, request):
+        from .. import default_sdi_columns
+        return default_sdi_columns(folder, context, request)
+    
+    def _makeRequest(self, icon):
+        request = testing.DummyResource()
+        registry = testing.DummyResource()
+        content = testing.DummyResource()
+        content.metadata = lambda *arg: icon
+        request.registry = registry
+        request.registry.content = content
+        request.sdiapi = DummySDIAPI()
+        return request
+
+    def test_it(self):
+        fred = testing.DummyResource()
+        fred.__name__ = 'fred'
+        request = self._makeRequest('icon')
+        result = self._callFUT(None, fred, request)
+        self.assertEqual(
+           result,
+           [{'sortable': True, 
+             'name': 'Name',
+             'field':'name',
+             'formatter':'icon_label_url',
+             'value': 'fred'}] 
+           )
+
+    def test_it_with_callable_icon(self):
+        fred = testing.DummyResource()
+        fred.__name__ = 'fred'
+        request = self._makeRequest(lambda *arg: 'icon')
+        result = self._callFUT(None, fred, request)
+        self.assertEqual(
+           result, 
+           [{'sortable': True, 
+             'name': 'Name',
+             'field':'name',
+             'formatter':'icon_label_url',
+             'value': 'fred'}] 
+           )
+
+class Test_default_sdi_buttons(unittest.TestCase):
+    def _callFUT(self, context, request):
+        from .. import default_sdi_buttons
+        return default_sdi_buttons(context, request)
+    
+    def test_it_novals(self):
+        request = testing.DummyRequest()
+        context = testing.DummyResource()
+        result = self._callFUT(context, request)
+        self.assertEqual(
+            result,
+            [{
+              'type': 'group', 
+              'buttons': 
+                  [{'text': 'Rename', 
+                    'class': 'btn-sdi-del', 
+                    'id': 'rename', 
+                    'value': 'rename', 
+                    'name': 'form.rename'}, 
+                   {'text': 'Copy',
+                    'class': 'btn-sdi-sel', 
+                    'id': 'copy', 
+                    'value': 'copy', 
+                    'name': 'form.copy'}, 
+                   {'text': 'Move', 
+                    'class': 'btn-sdi-del', 
+                    'id': 'move', 
+                    'value': 'move', 
+                    'name': 'form.move'}, 
+                   {'text': 'Duplicate', 
+                    'class': 'btn-sdi-sel', 
+                    'id': 'duplicate', 
+                    'value': 'duplicate', 
+                    'name': 'form.duplicate'}]
+                }, 
+             {
+              'type':'group',
+              'buttons': 
+                  [{'text': 'Delete', 
+                    'class': 'btn-danger btn-sdi-del', 
+                    'id': 'delete', 
+                    'value': 'delete', 
+                    'name': 'form.delete'}]
+               },
+            ])
+
+
+    def test_it_tocopy(self):
+        request = testing.DummyRequest()
+        context = testing.DummyResource()
+        request.session['tocopy'] = True
+        result = self._callFUT(context, request)
+        self.assertEqual(
+            result,
+            [
+              {'buttons': 
+                [{'text': 'Copy here', 
+                  'class': 'btn-primary btn-sdi-act', 
+                  'id': 'copy_finish', 
+                  'value': 'copy_finish', 
+                  'name': 'form.copy_finish'}, 
+                 {'text': 'Cancel', 
+                  'class': 'btn-danger btn-sdi-act', 
+                  'id': 'cancel', 
+                  'value': 'cancel', 
+                  'name': 'form.copy_finish'}],
+               'type': 'single'}
+               ]
+               )
+
+    def test_it_tomove(self):
+        request = testing.DummyRequest()
+        context = testing.DummyResource()
+        request.session['tomove'] = True
+        result = self._callFUT(context, request)
+        self.assertEqual(
+            result, [
+            {'buttons': [
+                {'text': 'Move here',
+                 'class': 'btn-primary btn-sdi-act',
+                 'id': 'move_finish',
+                 'value': 'move_finish',
+                 'name': 'form.move_finish'},
+                {'text': 'Cancel',
+                 'class': 'btn-danger btn-sdi-act',
+                 'id': 'cancel',
+                 'value': 'cancel',
+                 'name':'form.move_finish'}],
+             'type': 'single'}
+            ]            
+            )
+
+
+class Test_sdi_add_views(unittest.TestCase):
+    def _callFUT(self, context, request):
+        from .. import sdi_add_views
+        return sdi_add_views(context, request)
 
     def setUp(self):
         testing.setUp()
@@ -481,14 +814,14 @@ class Test_get_add_views(unittest.TestCase):
         request.matched_route = None
         request.registry.content = DummyContent()
         request.registry.introspector = DummyIntrospector()
-        result = self._callFUT(request)
+        result = self._callFUT(None, request)
         self.assertEqual(result, [])
 
     def test_one_content_type(self):
         request = testing.DummyRequest()
         request.matched_route = None
         request.registry.content = DummyContent()
-        request.mgmt_path = lambda *arg: '/path'
+        request.sdiapi = DummySDIAPI()
         ct_intr = {}
         ct_intr['meta'] = {'add_view':'abc'}
         ct_intr['content_type'] = 'Content'
@@ -501,20 +834,23 @@ class Test_get_add_views(unittest.TestCase):
         intr = {}
         intr['tab_title'] = 'abc'
         intr['tab_condition'] = None
+        intr['tab_before'] = None
+        intr['tab_after'] = None
         intr = DummyIntrospectable(related=(view_intr1,), introspectable=intr)
         request.registry.introspector = DummyIntrospector([(ct_intr,), (intr,)])
-        result = self._callFUT(request)
+        context = testing.DummyResource()
+        result = self._callFUT(context, request)
         self.assertEqual(
             result,
-            [{'url': '/path', 'type_name': 'Content', 'icon': ''}])
+            [{'url': '/mgmt_path', 'type_name': 'Content', 'icon': ''}])
 
     def test_one_content_type_not_addable(self):
         request = testing.DummyRequest()
         request.matched_route = None
         request.registry.content = DummyContent()
-        request.mgmt_path = lambda *arg: '/path'
+        request.sdiapi = DummySDIAPI()
         context = testing.DummyResource()
-        context.__addable__ = ('Not Content',)
+        context.__sdi_addable__ = ('Not Content',)
         ct_intr = {}
         ct_intr['meta'] = {'add_view':'abc'}
         ct_intr['content_type'] = 'Content'
@@ -527,16 +863,44 @@ class Test_get_add_views(unittest.TestCase):
         intr = {}
         intr['tab_title'] = 'abc'
         intr['tab_condition'] = None
+        intr['tab_before'] = None
+        intr['tab_after'] = None
         intr = DummyIntrospectable(related=(view_intr1,), introspectable=intr)
         request.registry.introspector = DummyIntrospector([(ct_intr,), (intr,)])
-        result = self._callFUT(request, context)
+        result = self._callFUT(context, request)
         self.assertEqual(result, [])
 
+    def test_one_content_type_not_addable_callable(self):
+        request = testing.DummyRequest()
+        request.matched_route = None
+        request.registry.content = DummyContent()
+        request.sdiapi = DummySDIAPI()
+        context = testing.DummyResource()
+        context.__sdi_addable__ = lambda *arg: False
+        ct_intr = {}
+        ct_intr['meta'] = {'add_view':'abc'}
+        ct_intr['content_type'] = 'Content'
+        ct_intr = DummyIntrospectable(introspectable=ct_intr)
+        view_intr1 = DummyIntrospectable()
+        view_intr1.category_name = 'views'
+        view_intr1['name'] = 'abc'
+        view_intr1['context'] = None
+        view_intr1['derived_callable'] = None
+        intr = {}
+        intr['tab_title'] = 'abc'
+        intr['tab_condition'] = None
+        intr['tab_before'] = None
+        intr['tab_after'] = None
+        intr = DummyIntrospectable(related=(view_intr1,), introspectable=intr)
+        request.registry.introspector = DummyIntrospector([(ct_intr,), (intr,)])
+        result = self._callFUT(context, request)
+        self.assertEqual(result, [])
+        
     def test_content_type_not_addable_to(self):
         request = testing.DummyRequest()
         request.matched_route = None
         request.registry.content = DummyContent()
-        request.mgmt_path = lambda *arg: '/path'
+        request.sdiapi = DummySDIAPI()
         context = testing.DummyResource()
         context.__content_type__ = 'Foo'
         ct_intr = {}
@@ -558,19 +922,21 @@ class Test_get_add_views(unittest.TestCase):
         intr = {}
         intr['tab_title'] = 'abc'
         intr['tab_condition'] = None
+        intr['tab_before'] = None
+        intr['tab_after'] = None
         intr = DummyIntrospectable(related=(view_intr1,), introspectable=intr)
         request.registry.introspector = DummyIntrospector(
             [(ct_intr, ct2_intr), (intr,)])
-        result = self._callFUT(request, context)
+        result = self._callFUT(context, request)
         self.assertEqual(checked, [True])
         self.assertEqual(
             result,
-            [{'url': '/path', 'type_name': 'Content', 'icon': ''}])
+            [{'url': '/mgmt_path', 'type_name': 'Content', 'icon': ''}])
 
-class Test_get_user(unittest.TestCase):
+class Test_user(unittest.TestCase):
     def _callFUT(self, request):
-        from .. import get_user
-        return get_user(request)
+        from .. import user
+        return user(request)
 
     def setUp(self):
         self.config = testing.setUp()
@@ -588,30 +954,184 @@ class Test_get_user(unittest.TestCase):
         self.config.testing_securitypolicy(permissive=True, userid='fred')
         request = testing.DummyRequest()
         context = testing.DummyResource(__provides__=IFolder)
-        services = testing.DummyResource()
         objectmap = testing.DummyResource()
         objectmap.object_for = lambda *arg: 'foo'
-        services['objectmap'] = objectmap
-        context['__services__'] = services
+        context.__objectmap__ = objectmap
         request.context = context
         self.assertEqual(self._callFUT(request), 'foo')
 
-class Test_add_permission(unittest.TestCase):
-    def _callFUT(self, config, permission_name):
-        from .. import add_permission
-        return add_permission(config, permission_name)
-    
+class Test_sdiapi(unittest.TestCase):
+    def setUp(self):
+        self.config = testing.setUp()
+
+    def tearDown(self):
+        testing.tearDown()
+        
+    def _makeOne(self, request):
+        from .. import sdiapi
+        return sdiapi(request)
+
+    def test_main_template(self):
+        self.config.testing_securitypolicy(permissive=False)
+        request = testing.DummyRequest()
+        inst = self._makeOne(request)
+        self.assertTrue(inst.main_template)
+
+    def test_flash_with_undo_no_permission(self):
+        self.config.testing_securitypolicy(permissive=False)
+        request = testing.DummyRequest()
+        inst = self._makeOne(request)
+        connection = DummyConnection()
+        inst.get_connection = lambda *arg: connection
+        inst.transaction = DummyTransaction()
+        inst.flash_with_undo('message')
+        self.assertEqual(request.session['_f_'], ['message'])
+        self.assertFalse(inst.transaction.notes)
+
+    def test_flash_with_undo_db_doesnt_support_undo(self):
+        self.config.testing_securitypolicy(permissive=True)
+        request = testing.DummyRequest()
+        inst = self._makeOne(request)
+        connection = DummyConnection(supports_undo=False)
+        inst.get_connection = lambda *arg: connection
+        inst.transaction = DummyTransaction()
+        inst.flash_with_undo('message')
+        self.assertEqual(request.session['_f_'], ['message'])
+        self.assertFalse(inst.transaction.notes)
+
+    def test_flash_with_undo_gardenpath(self):
+        self.config.testing_securitypolicy(permissive=True)
+        request = testing.DummyRequest()
+        inst = self._makeOne(request)
+        connection = DummyConnection()
+        inst.get_connection = lambda *arg: connection
+        inst.transaction = DummyTransaction()
+        inst.mgmt_path = lambda *arg, **kw: '/mg'
+        inst.flash_with_undo('message')
+        self.assertEqual(request.session['_f_'],
+                         [u'<span>message <a href="/mg" class="btn btn-mini '
+                          u'btn-info">Undo</a></span>\n'])
+        self.assertTrue(inst.transaction.notes)
+
+    def test_mgmt_path(self):
+        from .. import MANAGE_ROUTE_NAME
+        request = testing.DummyRequest()
+        context = testing.DummyResource()
+        def route_path(route_name, *arg, **kw):
+            self.assertEqual(route_name, MANAGE_ROUTE_NAME)
+            self.assertEqual(arg, ('a',))
+            self.assertEqual(kw, {'b':1, 'traverse':('',)})
+            return '/path'
+        request.route_path = route_path
+        inst = self._makeOne(request)
+        result = inst.mgmt_path(context, 'a', b=1)
+        self.assertEqual(result, '/path')
+
+    def test_mgmt_url(self):
+        from .. import MANAGE_ROUTE_NAME
+        request = testing.DummyRequest()
+        context = testing.DummyResource()
+        def route_url(route_name, *arg, **kw):
+            self.assertEqual(route_name, MANAGE_ROUTE_NAME)
+            self.assertEqual(arg, ('a',))
+            self.assertEqual(kw, {'b':1, 'traverse':('',)})
+            return 'http://example.com/path'
+        request.route_url = route_url
+        inst = self._makeOne(request)
+        result = inst.mgmt_url(context, 'a', b=1)
+        self.assertEqual(result, 'http://example.com/path')
+
+    def test_breadcrumbs_no_permissions(self):
+        self.config.testing_securitypolicy(permissive=False)
+        resource = testing.DummyResource()
+        request = testing.DummyRequest()
+        request.context = resource
+        inst = self._makeOne(request)
+        result = inst.breadcrumbs()
+        self.assertEqual(result, [])
+        
+    def test_breadcrumbs_with_permissions(self):
+        self.config.testing_securitypolicy(permissive=True)
+        resource = testing.DummyResource()
+        request = testing.DummyRequest()
+        request.sdiapi = DummySDIAPI()
+        request.context = resource
+        request.registry.content = DummyContent()
+        inst = self._makeOne(request)
+        result = inst.breadcrumbs()
+        self.assertEqual(
+            result,
+             [{'url': '/mgmt_path',
+               'active': 'active',
+               'name': 'Home',
+               'icon': None}]
+            )
+
+    def test_sdi_title_exists(self):
+        resource = testing.DummyResource()
+        resource.sdi_title = 'My Title'
+        request = testing.DummyRequest()
+        request.context = resource
+        inst = self._makeOne(request)
+        result = inst.sdi_title()
+        self.assertEqual(result, 'My Title')
+
+    def test_sdi_title_missing(self):
+        resource = testing.DummyResource()
+        request = testing.DummyRequest()
+        request.context = resource
+        inst = self._makeOne(request)
+        result = inst.sdi_title()
+        self.assertEqual(result, 'Substance D')
+
+    def test_mgmt_views(self):
+        resource = testing.DummyResource()
+        request = testing.DummyRequest()
+        request.context = resource
+        inst = self._makeOne(request)
+        inst.sdi_mgmt_views = lambda *arg, **kw: True
+        self.assertEqual(inst.mgmt_views(resource), True)
+
+
+class Test_mgmt_path(unittest.TestCase):
+    def _callFUT(self, *arg, **kw):
+        from .. import mgmt_path
+        return mgmt_path(*arg, **kw)
+
     def test_it(self):
-        config = DummyConfigurator()
-        self._callFUT(config, 'perm')
-        self.assertEqual(config._actions,  [(None, ({'value': 'perm'},))])
+        request = testing.DummyRequest()
+        request.sdiapi = DummySDIAPI()
+        result = self._callFUT(request, None)
+        self.assertEqual(result, '/mgmt_path')
+
+class Test_mgmt_url(unittest.TestCase):
+    def _callFUT(self, *arg, **kw):
+        from .. import mgmt_url
+        return mgmt_url(*arg, **kw)
+
+    def test_it(self):
+        request = testing.DummyRequest()
+        request.sdiapi = DummySDIAPI()
+        result = self._callFUT(request, None)
+        self.assertEqual(result, 'http://mgmt_url')
+
+class Test_flash_with_undo(unittest.TestCase):
+    def _callFUT(self, *arg, **kw):
+        from .. import flash_with_undo
+        return flash_with_undo(*arg, **kw)
+
+    def test_it(self):
+        request = testing.DummyRequest()
+        request.sdiapi = DummySDIAPI()
+        self._callFUT(request, 'a')
+        self.assertEqual(request.sdiapi.flashed, 'a')
 
 class DummyContent(object):
-    def __init__(self, result=None):
-        self.result = result
+    def __init__(self, **kw):
+        self.__dict__.update(kw)
         
-    def metadata(self, *arg, **kw):
-        return self.result
+    def metadata(self, context, name, default=None):
+        return getattr(self, name, default)
 
 class DummyIntrospector(object):
     def __init__(self, results=()):
@@ -651,7 +1171,7 @@ class DummyConfigurator(object):
         self._intr = DummyIntrospectable()
         self._actions = []
         self._added = None
-        self.view_predlist = DummyPredicateList()
+        self.get_predlist = lambda *arg: DummyPredicateList()
 
     def object_description(self, ob):
         return ob
@@ -683,4 +1203,50 @@ class DummyIntrospectable(dict):
         
     def relate(self, category, discrim):
         self.related[category] = discrim
+
+class Dummy(object):
+    pass
+
+class DummyDB(object):
+    def __init__(self, supports_undo, undo_info, undo_exc=None):
+        self.supports_undo = supports_undo
+        self.undo_info = undo_info
+        self.undone = []
+        self.undo_exc = undo_exc
+
+    def supportsUndo(self):
+        return self.supports_undo
+
+class DummyConnection(object):
+    def __init__(self, supports_undo=True, undo_info=(), undo_exc=None):
+        self._db = DummyDB(supports_undo, undo_info, undo_exc)
+
+    def db(self):
+        return self._db
+
+class DummyTransaction(object):
+    def __init__(self):
+        self.notes = []
         
+    def get(self):
+        return self
+
+    def note(self, note):
+        self.notes.append(note)
+
+    def setExtendedInfo(self, name, value):
+        self.extinfo = (name, value)
+
+class DummySDIAPI(object):
+    def __init__(self, result=None):
+        self.result = result
+        
+    def mgmt_path(self, obj, *arg, **kw):
+        return self.result or '/mgmt_path'
+
+    def mgmt_url(self, obj, *arg, **kw):
+        return self.result or 'http://mgmt_url'
+
+    def flash_with_undo(self, val):
+        self.flashed = val
+    

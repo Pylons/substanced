@@ -11,3 +11,9 @@ dist/
 nosetests.xml
 env*/
 Data.fs*
+*.sublime-project
+*.sublime-workspace
+.*.sw?
+.sw?
+.DS_Store
+

@@ -1,0 +1,39 @@
+<div metal:use-macro="request.sdiapi.main_template">
+
+  <div metal:fill-slot="main">
+    <form action="@@rename" method="POST">
+      <fieldset>
+        <input type="hidden"
+               name="csrf_token" 
+               value="${request.session.get_csrf_token()}"/>
+
+        <div tal:repeat="item torename">
+          <input type="hidden"
+                 name="item-rename"
+                 value="${item.__name__}" />
+          <input type="text"
+                 name="${item.__name__}"
+                 value="${item.__name__}" />
+        </div>
+
+        <div class="form-actions">
+            <button id="rename"
+                    name="form.rename_finish"
+                    type="submit"
+                    class="btn btn-primary"
+                    value="rename_finish">
+              Rename all
+            </button>
+            <button id="duplicate"
+                    name="form.rename_finish"
+                    type="submit"
+                    class="btn"
+                    value="cancel">
+              Cancel
+            </button>
+        </div>
+      </fieldset>
+    </form>
+  </div>
+
+</div>

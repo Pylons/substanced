@@ -5,7 +5,7 @@ from substanced.form import FormView
 from ..resources import BlogEntrySchema
 
 @mgmt_view(
-    content_type='Blog',
+    content_type='Root',
     name='add_blog_entry',
     permission='sdi.add-content', 
     renderer='substanced.sdi:templates/form.pt',

@@ -1,83 +1,91 @@
-UI-Only
--------
+Must-have pre-alpha-1
+=====================
 
-- Allow folder contents UI ("Contents" tab) sorting by name and by type.
+Features
+--------
 
-UI-Plus-Guts
-------------
+- Change folder data structure such that _order is not (oid, name) but separate
+  oid and name datastructures are kept so we have a shot of making sort merging
+  faster.
 
-- Create "addable here" API that manages the __addable__ attribute of a
-  folderish object.
+- Release deform2 (merge deform_bootstrap).
 
-- Create object map management UI (view relationships, view paths, view
-  objectids).
+- Ability to dump and load blobs.
 
-- Create workflow management UI.
+- Remove interfaces index?
 
-- import/export from contents view
+- Use hasattr(__is_folder__) instead of IFolder.providedBy in is_folder.
 
-- Add Undo tab to Site (or per folder?) which will allow admins to undo recent
-  transactions.  Implied: add transaction notes to all transactions.
+- How to prevent objects from being moved or duplicated into a place where
+  they're not addable?
+
+- Evolution execution needs to be sorted by package.
+
+- Evolution should show the derived versions after a ``--latest``, not the
+  versions that were current before.
+
+- Use is_folder view predicate instead of context=IFolder in folder views
+  (holdup is testing out folder button action overrides in the face of views
+  being registered against IFolder).
+
+- Change all mentions of ``context`` to ``resource``.
+
+- Text search view.
+
+- Show spinner when a button is pressed on the folder contents view that leads
+  to another page (e.g. reindex or duplicate).
+
+- Separate out reindexing from catalog autosync at startup.
+
+- Add an autoevolve setting.
+
+
+Can wait until after alpha 1
+============================
 
 - Stamp created objects with creator information?
 
-- Stamp created objects with created date info?
+- Allow second sort of a hypatia result set to specify that it wants a stable
+  sort.
 
-- Allow services to be added to services folder via add view UIs.
-
-- Allow reordering of resources in folder contents view when the folder is
-  ordered.
-
-Guts-Only
----------
-
-- Basic scaffold (``pcreate`` template).
-
-- Figure out how to let people override generic add view.
-
-- Substance D ACLs contain object identifiers which refer to principals.
-  Currently, when a principal is deleted, ACLs which refer to the principal
-  are not adjusted.  This is both a security issue and a sanity issue.  The
-  object id of a deleted principal is put back into the set of object ids
-  that are grantable to future objects.  As a result, some other principal
-  may wind up with an object id that used to belong to a deleted principal,
-  and he may inappropriately be granted access due to stale ACLs that
-  possesses that object id.  Or some other object that is not a principal
-  might wind up with that object id, and undefined things will happen.
-
-  Here's what would be nice: when an ACL is changed or added, using the
-  object map, form relationships between the principal objects it names and
-  the ACL-bearing object.  When a principal is deleted, change the ACL of all
-  such-related objects so that the deleted principal id in the ACL is
-  replaced by an unobtainable object id.
-
-  Note that a variant of this bug/feature has existed in Zope for 13 years,
-  and it hasn't seemed to have raised much ire, but it always bugged me.
-
-- Add a change_acl API that sends an event when an ACL is changed.
-
-- Decide whether to split "manage contents" permissions out for folders into
-  add, delete, rename.
-
-- ACL edit view currently retatalogs an object based on the presence or
-  absence of an "allowed" index.  This is wrong.
-
-- Emit an ObjectMoving event rather than removed event with a moving flag,
-  then an add event?
-
-- Get rid of ISite?  Use presence of __services__ to denote site?  Probably
-  not.  But make sure that you can host more than one site in the same
-  instance (virtual-hosting-wise).
-
-- Undo of catalog reindex doesnt?
-
-- Refactor ACL view.
+- Fix actions processor so it won't drop actions on the floor if
+  a keyboardinterrupt or another exception happens after a popall.
 
 - Add specific configurator directives for object event registrations
   (e.g. config.subscribe_modified).
 
-Nice-to-Have Features
----------------------
+- __viewable__, __renameable__, __deletable__, __copyable__, __duplicatable__
+  attributes of contained objects in folder contents view that controls
+  how contained object can be acted upon?  E.g.::
+
+    def __viewable__(self, context, request):
+        return has_permission('sdi.view', context, request)
+
+- Once we depend on Pyramid 1.4b1+, normalize subscriber predicate argument
+  lists.
+
+- Add a ``substanced.load_dump`` key for use by root factory.
+
+- Figure out if YAML dump and reload will work if we get to move to Python 3.
+
+- Work out OpenID/Twitter/whatever authentication.
+
+Docs
+----
+
+Misc
+++++
+
+- Explain the objectmap get_extents API.
+
+Dump and Load
++++++++++++++
+
+- Add API docs for dump/load, and dump contexts.
+
+
+Can Wait Forever (Nice-to-Have)
+===============================
 
 - XML-RPC.
 
@@ -85,12 +93,45 @@ Nice-to-Have Features
 
 - Ability to add and edit principals in existing ACEs in ACL edit view.
 
-Docs
-----
+- Add a redo button to undo flash messages.
 
-- Document that add_view arg to @content can be a callable (accepting
-  context/request).
+- Show a derivative of output status in flash message when update indexes /
+  reindex catalog is done to a catalog.
 
-- Document that icon to @content can be a callable (accepting context/request).
+Probably Bad Ideas
+==================
 
+- Create "addable here" API that manages the __sdi_addable__ attribute of a
+  folderish object.
+
+- Emit an ObjectMoving event rather than removed event with a moving flag,
+  then an add event?
+
+- Create object map management UI (view relationships, view paths, view
+  objectids).
+
+- Decide whether to split "manage contents" permissions out for folders into
+  add, delete, rename.
+
+- Import/export from folder contents view.
+
+- Specialize recatalog during a rename, so only indexes that are
+  context-sensitive are reindexed.
+
+- Catalog event subscriber currently does a hellishly expensive recatalog of
+  allowed indexes when an ACL is changed.  Not sure if there's even a general
+  way to make this do less work, but could be.
+
+Science Fiction
+===============
+
+- Play around with gevent and/or websockets.
+
+Made Irrelevant
+===============
+
+- Fix ``Batch`` such that seqlen is a maximum.  Rationale: the sequence that
+  the batch receives may be smaller than seqlen due to hidden objects in folder
+  contents view (irrelevant because folder contents view is now
+  catalog-driven).
 

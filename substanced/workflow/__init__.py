@@ -1,9 +1,9 @@
 from collections import defaultdict
 
+from persistent.mapping import PersistentMapping
+
 from pyramid.config import ConfigurationError
-from pyramid.events import subscriber
 from pyramid.security import has_permission
-from pyramid.threadlocal import get_current_registry
 from zope.interface import implementer
 
 from ..interfaces import (
@@ -11,10 +11,12 @@ from ..interfaces import (
     IWorkflowTransition,
     IWorkflow,
     IDefaultWorkflow,
-    IObjectAdded,
     )
-from ..content import get_content_type
-
+from ..event import subscribe_added
+from ..util import (
+    postorder,
+    get_content_type,
+    )
 
 STATE_ATTR = '__workflow_state__'
 
@@ -63,6 +65,7 @@ class Workflow(object):
     """
     _state_factory = dict       # overridable by instances / subclasses
     _transition_factory = dict  # overridable by instances / subclasses
+    _state_attr_factory = PersistentMapping
 
     def __init__(self, initial_state, type, name='', description=''):
         self._transitions = {}
@@ -111,7 +114,7 @@ class Workflow(object):
                          :meth:`Workflow.transition_to_state` will trigger
                          callback if this transition is executed.
         :type callback: callable
-        :param \*\*kw: Metadata assigned to this state.
+        :param \*\*kw: Metadata assigned to this transition.
 
         :raises: :exc:`WorkflowError` if transition already exists.
         :raises: :exc:`WorkflowError` if from_state or to_state don't exist.
@@ -154,10 +157,6 @@ class Workflow(object):
     def _set_state(self, content, state, request, transition=None):
         if transition is None:
             transition = {}
-        states = getattr(content, STATE_ATTR, None)
-        if not states:
-            states = {}
-            setattr(content, STATE_ATTR, states)
         msg = None
         new_state = self._states[state]
         callback = getattr(new_state, '__call__', None)
@@ -169,6 +168,10 @@ class Workflow(object):
                            transition=transition,
                            workflow=self,
                           )
+        states = getattr(content, STATE_ATTR, None)
+        if states is None:
+            states = self._state_attr_factory()
+            setattr(content, STATE_ATTR, states)
         states[self.type] = state
         return state, msg
 
@@ -273,7 +276,7 @@ class Workflow(object):
         if state is None:
             return self.initialize(content)
         try:
-            stateinfo = self._states[state]
+            self._states[state]
         except KeyError:
             raise WorkflowError('No such state %s for workflow %s' %
                                 (state, self.name))
@@ -298,7 +301,7 @@ class Workflow(object):
 
         if transition is None:
             raise WorkflowError(
-                'No transition from %r using transition name %r'
+                'No transition from state %r using transition name %r'
                 % (state, transition_name))
 
         permission = transition.get('permission')
@@ -309,14 +312,7 @@ class Workflow(object):
                     permission, self.name)
                     )
 
-        from_state = transition['from_state']
         to_state = transition['to_state']
-
-        info = {
-            'workflow': self,
-            'transition': transition,
-            'request': request,
-        }
 
         callback = getattr(transition, '__call__', None)
         if callback is None:
@@ -488,21 +484,23 @@ def add_workflow(config, workflow, content_types=(None,)):
                       order=9999,
                       args=(config, workflow, workflow.type, content_type))
 
-@subscriber(IObjectAdded)
+@subscribe_added()
 def init_workflows_for_object(event):
     """Initialize workflows when object is added to db.
     """
-    obj = event.object
-    content_type = get_content_type(obj)
-    registry = get_current_registry()
+    added = event.object
+    registry = event.registry
 
-    if content_type is None:
-        # maybe we should register workflows not relevant
-        # to specific content type?
-        return
-
-    for wf in registry.workflow.get_all_types(content_type):
-        wf.initialize(obj)
+    for obj in postorder(added):
+        content_type = get_content_type(obj)
+        if content_type is not None:
+            # XXX maybe we should register workflows not relevant
+            # to specific content type?
+            for wf in registry.workflow.get_all_types(content_type):
+                if not wf.has_state(obj):
+                    # it might be an add resulting from a move, and we
+                    # don't want to initialize it if so.
+                    wf.initialize(obj)
 
 class WorkflowRegistry(object):
 
@@ -524,6 +522,32 @@ class WorkflowRegistry(object):
         types.update(dict(self.content_types.get(content_type, {})))
         return types.values()
 
+def is_workflowed(context, registry):
+    workflow_reg = getattr(registry, 'workflow', None)
+    if workflow_reg is None:
+        return False
+    content_type = get_content_type(context, registry=registry)
+    if content_type is None:
+        return False
+    workflows = workflow_reg.get_all_types(content_type)
+    return bool(workflows)
+
+class _WorkflowedPredicate(object):
+    is_workflowed = staticmethod(is_workflowed) # for testing
+    
+    def __init__(self, val, config):
+        self.val = bool(val)
+        self.registry = config.registry
+
+    def text(self):
+        return 'workflowed = %s' % self.val
+
+    phash = text
+
+    def __call__(self, context, request):
+        return self.is_workflowed(context, self.registry) == self.val
+
 def includeme(config): # pragma: no cover
     config.add_directive('add_workflow', add_workflow)
+    config.add_view_predicate('workflowed', _WorkflowedPredicate)
     config.registry.workflow = WorkflowRegistry()

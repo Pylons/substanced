@@ -1,33 +1,56 @@
 import inspect
 import operator
+import transaction
+
+from pyramid_zodbconn import get_connection
 
 from zope.interface.interfaces import IInterface
-
-from pyramid.config.views import viewdefaults # XXX not an API
-from pyramid.config.util import action_method # XXX not an API
 
 import venusian
 
 from pyramid.authentication import SessionAuthenticationPolicy
 from pyramid.authorization import ACLAuthorizationPolicy
+from pyramid.decorator import reify
 from pyramid.exceptions import ConfigurationError
-from pyramid.httpexceptions import HTTPBadRequest
-from pyramid.request import Request
-from pyramid.security import authenticated_userid
-from pyramid.session import UnencryptedCookieSessionFactoryConfig
-from pyramid.traversal import resource_path_tuple
+from pyramid.location import lineage
 from pyramid.registry import (
     predvalseq,
     Deferred,
     )
+from pyramid.renderers import (
+    render,
+    get_renderer,
+    )
+from pyramid.request import Request
+from pyramid.security import (
+    authenticated_userid,
+    has_permission,
+    )
+from pyramid.session import UnencryptedCookieSessionFactoryConfig
+from pyramid.traversal import resource_path_tuple
 
-from ..service import find_service
+from pyramid.util import (
+    action_method,
+    viewdefaults,
+    TopologicalSorter,
+    FIRST,
+    LAST,
+    Sentinel,
+    )
+
+LEFT = 'LEFT'
+RIGHT = 'RIGHT'
+MIDDLE = 'MIDDLE'
+
+CENTER1 = Sentinel('CENTER1')
+CENTER2 = Sentinel('CENTER2')
+
+from ..objectmap import find_objectmap
+from ..util import acquire
 
 MANAGE_ROUTE_NAME = 'substanced_manage'
 
-def check_csrf_token(request, token='csrf_token'):
-    if request.params.get(token) != request.session.get_csrf_token():
-        raise HTTPBadRequest('incorrect CSRF token')
+_marker = object()
 
 @viewdefaults
 @action_method
@@ -35,7 +58,7 @@ def add_mgmt_view(
     config,
     view=None,
     name="",
-    permission=None,
+    permission='sdi.view',
     request_type=None,
     request_method=None,
     request_param=None,
@@ -55,8 +78,9 @@ def add_mgmt_view(
     match_param=None,
     tab_title=None,
     tab_condition=None,
-    check_csrf=False,
-    csrf_token='csrf_token',
+    tab_before=None,
+    tab_after=None,
+    tab_near=None,
     **predicates
     ):
     
@@ -66,12 +90,6 @@ def add_mgmt_view(
     mapper = config.maybe_dotted(mapper)
     decorator = config.maybe_dotted(decorator)
 
-    if check_csrf:
-        def _check_csrf_token(context, request):
-            check_csrf_token(request, csrf_token)
-            return True
-        custom_predicates = tuple(custom_predicates) + (_check_csrf_token,)
-    
     route_name = MANAGE_ROUTE_NAME
 
     pvals = predicates.copy()
@@ -90,7 +108,7 @@ def add_mgmt_view(
             )
         )
 
-    predlist = config.view_predlist
+    predlist = config.get_predlist('view')
     
     def view_discrim_func():
         # We need to defer the discriminator until we know what the phash
@@ -112,53 +130,61 @@ def add_mgmt_view(
         view_desc = config.object_description(view)
 
     config.add_view(
-        view=view, name=name, permission=permission, route_name=route_name,
-        request_method=request_method, request_param=request_param,
-        containment=containment, attr=attr, renderer=renderer, 
-        wrapper=wrapper, xhr=xhr, accept=accept, header=header, 
-        path_info=path_info, custom_predicates=custom_predicates, 
-        context=context, decorator=decorator, mapper=mapper, 
-        http_cache=http_cache, match_param=match_param, 
-        request_type=request_type, **predicates
+        view=view,
+        name=name,
+        permission=permission,
+        route_name=route_name,
+        request_method=request_method,
+        request_param=request_param,
+        containment=containment,
+        attr=attr,
+        renderer=renderer, 
+        wrapper=wrapper,
+        xhr=xhr,
+        accept=accept,
+        header=header, 
+        path_info=path_info,
+        custom_predicates=custom_predicates, 
+        context=context,
+        decorator=decorator,
+        mapper=mapper, 
+        http_cache=http_cache,
+        match_param=match_param, 
+        request_type=request_type,
+        **predicates
         )
     
     intr = config.introspectable(
-        'sdi views', discriminator, view_desc, 'sdi view')
+        'sdi views', discriminator, view_desc, 'sdi view'
+        )
+
+    if tab_near is not None:
+        if tab_before or tab_after:
+            raise ConfigurationError(
+                'You cannot use tab_near and tab_before/tab_after together'
+                )
+        if tab_near == LEFT:
+            tab_after = FIRST
+            tab_before = CENTER1
+        elif tab_near == MIDDLE:
+            tab_after = CENTER1
+            tab_before = CENTER2
+        elif tab_near == RIGHT:
+            tab_after = CENTER2
+            tab_before = LAST
+        else:
+            raise ConfigurationError(
+                'tab_near value must be one of LEFT, MIDDLE, RIGHT, or None'
+                )
+
     intr['tab_title'] = tab_title
     intr['tab_condition'] = tab_condition
-    intr['check_csrf'] = check_csrf
-    intr['csrf_token'] = csrf_token
+    intr['tab_before'] = tab_before
+    intr['tab_after'] = tab_after
+    intr['tab_near'] = tab_near
+
     intr.relate('views', view_discriminator)
     config.action(discriminator, introspectables=(intr,))
-
-class mgmt_path(object):
-    def __init__(self, request):
-        self.request = request
-
-    def __call__(self, obj, *arg, **kw):
-        traverse = resource_path_tuple(obj)
-        kw['traverse'] = traverse
-        return self.request.route_path(MANAGE_ROUTE_NAME, *arg, **kw)
-
-class mgmt_url(object):
-    def __init__(self, request):
-        self.request = request
-
-    def __call__(self, obj, *arg, **kw):
-        traverse = resource_path_tuple(obj)
-        kw['traverse'] = traverse
-        return self.request.route_url(MANAGE_ROUTE_NAME, *arg, **kw)
-
-class _default(object):
-    def __nonzero__(self):
-        return False
-
-    __bool__ = __nonzero__
-
-    def __repr__(self): # pragma: no cover
-        return '(default)'
-
-default = _default()
 
 class mgmt_view(object):
     """ A class :term:`decorator` which, when applied to a class, will
@@ -177,7 +203,10 @@ class mgmt_view(object):
 
         def callback(context, name, ob):
             config = context.config.with_package(info.module)
-            config.add_mgmt_view(view=ob, **settings)
+            # was "substanced.sdi" included?
+            add_mgmt_view = getattr(config, 'add_mgmt_view', None)
+            if add_mgmt_view is not None: 
+                add_mgmt_view(view=ob, **settings)
 
         info = self.venusian.attach(wrapped, callback, category='substanced')
 
@@ -191,12 +220,17 @@ class mgmt_view(object):
         settings['_info'] = info.codeinfo # fbo "action_method"
         return wrapped
 
-def get_mgmt_views(request, context=None, names=None):
+def sdi_mgmt_views(context, request, names=None):
+    if not hasattr(context, '__name__'):
+        # shortcut if the context doesn't have a name (usually happens if the
+        # context is an exception); we do this because mgmt_path uses Pyramid's
+        # resource_path_tuple, which wants every object in the lineage to have
+        # a __name__.
+        return []
+
     registry = request.registry
-    if context is None:
-        context = request.context
     introspector = registry.introspector
-    L = []
+    unordered = []
 
     # create a dummy request signaling our intent
     req = Request(request.environ.copy())
@@ -211,13 +245,15 @@ def get_mgmt_views(request, context=None, names=None):
         sdi_intr = data['introspectable']
         tab_title = sdi_intr['tab_title']
         tab_condition = sdi_intr['tab_condition']
+        tab_before = sdi_intr['tab_before']
+        tab_after = sdi_intr['tab_after']
         def is_view(intr):
             return intr.category_name == 'views'
         for view_intr in filter(is_view, related):
             # NB: in reality, the above loop will execute exactly once because
             # each "sdi view" is associated with exactly one pyramid view
             view_name = view_intr['name']
-            req.path_info = request.mgmt_path(context, view_name)
+            req.path_info = request.sdiapi.mgmt_path(context, view_name)
             if names is not None and not view_name in names:
                 continue
             # do a passable job at figuring out whether, if we visit the
@@ -230,8 +266,10 @@ def get_mgmt_views(request, context=None, names=None):
             elif intr_context and not isinstance(context, intr_context):
                 continue
             if tab_condition is not None and names is None:
-                if tab_condition is False or not tab_condition(
-                    context, request):
+                if callable(tab_condition):
+                    if not tab_condition(context, request):
+                        continue
+                elif not tab_condition:
                     continue
             derived = view_intr['derived_callable']
             if hasattr(derived, '__predicated__'):
@@ -244,32 +282,173 @@ def get_mgmt_views(request, context=None, names=None):
                 css_class = 'active'
             else:
                 css_class = None
-            L.append({'view_name': view_name,
-                      'title': tab_title or view_name.capitalize(),
-                      'class': css_class,
-                      'url': request.mgmt_path(request.context,
-                                               '@@%s' % view_name)
-                     })
+            unordered.append(
+                {'view_name': view_name,
+                 'tab_before':tab_before,
+                 'tab_after':tab_after,
+                 'title': tab_title or view_name.capitalize(),
+                 'class': css_class,
+                 'url': request.sdiapi.mgmt_path(
+                     request.context, '@@%s' % view_name)
+                 }
+                )
 
-    ordered = []
+    manually_ordered = []
 
     tab_order = request.registry.content.metadata(context, 'tab_order')
     
     if tab_order is not None:
-        ordered_names_available = [ y for y in tab_order if y in
-                                    [ x['view_name'] for x in L ] ]
-        for ordered_name in ordered_names_available:
-            for view_data in L:
+        ordered_names = [ y for y in tab_order if y in
+                          [ x['view_name'] for x in unordered ] ]
+        for ordered_name in ordered_names:
+            for view_data in unordered[:]:
                 if view_data['view_name'] == ordered_name:
-                    L.remove(view_data)
-                    ordered.append(view_data)
-                    
-    return ordered + sorted(L, key=operator.itemgetter('title'))
+                    unordered.remove(view_data)
+                    manually_ordered.append(view_data)
 
-def get_add_views(request, context=None):
+    # First sort non-manually-ordered views lexically by title. Reverse due to
+    # the behavior of the toposorter; we'd like groups of things that share the
+    # same before/after to be alpha sorted ascending relative to each other,
+    # and reversing lexical ordering here gets us that behavior down the line.
+    lexically_ordered = sorted(
+        unordered,
+        key=operator.itemgetter('title'),
+        reverse=True,
+        )
+
+    # Then sort the lexically-presorted unordered views topologically based on
+    # any tab_before and tab_after values in the view data.
+    tsorter = TopologicalSorter(default_after=CENTER1, default_before=CENTER2)
+
+    tsorter.add(
+        CENTER1,
+        None,
+        after=FIRST,
+        before=CENTER2,
+        )
+
+    tsorter.add(
+        CENTER2,
+        None,
+        after=CENTER1,
+        before=LAST,
+        )
+
+    for view_data in lexically_ordered:
+        before=view_data.get('tab_before', None)
+        after=view_data.get('tab_after', None)
+
+        tsorter.add(
+            view_data['view_name'],
+            view_data,
+            before=before,
+            after=after,
+            )
+
+    topo_ordered = [
+        x[1] for x in tsorter.sorted() if x[0] not in (CENTER1, CENTER2)
+        ]
+
+    return manually_ordered + topo_ordered
+
+def default_sdi_columns(folder, subobject, request):
+    """ The default columns content-type hook """
+    name = getattr(subobject, '__name__', '')
+    return [
+        {'name': 'Name',
+         'field': 'name',
+         'value': name,
+         'formatter': 'icon_label_url',
+         'sortable': True}
+        ]
+
+def default_sdi_buttons(folder, request):
+    """ The default buttons content-type hook """
+    buttons = []
+    finish_buttons = []
+
+    if 'tocopy' in request.session:
+        finish_buttons.extend(
+            [
+            {'id': 'copy_finish',
+              'name': 'form.copy_finish',
+              'class': 'btn-primary btn-sdi-act',
+              'value': 'copy_finish',
+              'text': 'Copy here'},
+            {'id': 'cancel',
+             'name': 'form.copy_finish',
+             'class': 'btn-danger btn-sdi-act',
+             'value': 'cancel',
+             'text': 'Cancel'},
+            ])
+
+    if 'tomove' in request.session:
+        finish_buttons.extend(
+            [{'id': 'move_finish',
+              'name': 'form.move_finish',
+              'class': 'btn-primary btn-sdi-act',
+              'value': 'move_finish',
+              'text': 'Move here'},
+             {'id': 'cancel',
+              'name': 'form.move_finish',
+              'class': 'btn-danger btn-sdi-act',
+              'value': 'cancel',
+              'text': 'Cancel'}])
+
+    if finish_buttons:
+        buttons.append(
+          {'type':'single', 'buttons':finish_buttons}
+          )
+
+    if not 'tomove' in request.session and not 'tocopy' in request.session:
+
+        main_buttons = [
+             {'id': 'rename',
+              'name': 'form.rename',
+              'class': 'btn-sdi-del',
+              'value': 'rename',
+              'text': 'Rename'},
+              {'id': 'copy',
+              'name': 'form.copy',
+              'class': 'btn-sdi-sel',
+              'value': 'copy',
+              'text': 'Copy'},
+              {'id': 'move',
+              'name': 'form.move',
+              'class': 'btn-sdi-del',
+              'value': 'move',
+              'text': 'Move'},
+              {'id': 'duplicate',
+              'name': 'form.duplicate',
+              'class': 'btn-sdi-sel',
+              'value': 'duplicate',
+              'text': 'Duplicate'}
+              ]
+
+        buttons.append({'type': 'group', 'buttons':main_buttons})
+
+        delete_buttons = [
+              {'id': 'delete',
+               'name': 'form.delete',
+               'class': 'btn-danger btn-sdi-del',
+               'value': 'delete',
+               'text': 'Delete'}
+               ]
+
+        buttons.append({'type': 'group', 'buttons':delete_buttons})
+
+    return buttons
+
+def default_sdi_addable(context, intr):
+    meta = intr['meta']
+    is_service = meta.get('is_service', False)
+    if is_service:
+        service_name = meta.get('service_name', None)
+        return not (service_name and service_name in context)
+    return True
+
+def sdi_add_views(context, request):
     registry = request.registry
-    if context is None:
-        context = request.context
     introspector = registry.introspector
 
     candidates = {}
@@ -284,23 +463,31 @@ def get_add_views(request, context=None):
                 viewname = viewname(context, request)
                 if not viewname:
                     continue
-            addable_here = getattr(context, '__addable__', None)
+            addable_here = getattr(
+                context,
+                '__sdi_addable__',
+                default_sdi_addable
+                )
             if addable_here is not None:
-                if not content_type in addable_here:
-                    continue
+                if callable(addable_here):
+                    if not addable_here(context, intr):
+                        continue
+                else:
+                    if not content_type in addable_here:
+                        continue
             type_name = meta.get('name', content_type)
             icon = meta.get('icon', '')
             data = dict(type_name=type_name, icon=icon)
             candidates[viewname] = data
 
     candidate_names = candidates.keys()
-    views = get_mgmt_views(request, context, names=candidate_names)
+    views = sdi_mgmt_views(context, request, names=candidate_names)
 
     L = []
 
     for view in views:
         view_name = view['view_name']
-        url = request.mgmt_path(context, '@@' + view_name)
+        url = request.sdiapi.mgmt_path(context, '@@' + view_name)
         data = candidates[view_name]
         data['url'] = url
         L.append(data)
@@ -309,42 +496,112 @@ def get_add_views(request, context=None):
 
     return L
 
-def get_user(request):
+def user(request):
     userid = authenticated_userid(request)
     if userid is None:
         return None
-    objectmap = find_service(request.context, 'objectmap')
+    objectmap = find_objectmap(request.context)
     return objectmap.object_for(userid)
 
-def add_permission(config, permission_name):
-    """ A configurator directive which registers a free-standing permission
-    (without associating it with a view), so it shows up in the Security tab
-    dropdown for permissions. Usage example::
+def mgmt_path(request, obj, *arg, **kw): # XXX deprecate
+    return request.sdiapi.mgmt_path(obj, *arg, **kw)
 
-      config = Configurator()
-      config.add_permission('view')
-    """
-    intr = config.introspectable('permissions', permission_name,
-                                 permission_name, 'permission')
-    intr['value'] = permission_name
-    config.action(None, introspectables=(intr,))
+def mgmt_url(request, obj, *arg, **kw): # XXX deprecate
+    return request.sdiapi.mgmt_url(obj, *arg, **kw)
+
+def flash_with_undo(request, *arg, **kw): # XXX deprecate
+    return request.sdiapi.flash_with_undo(*arg, **kw)
+
+class sdiapi(object):
+    get_connection = staticmethod(get_connection) # testing
+    transaction = transaction # testing
+    sdi_mgmt_views = staticmethod(sdi_mgmt_views) # testing
+    
+    def __init__(self, request):
+        self.request = request
+
+    @reify
+    def main_template(self):
+        return get_renderer(
+            'substanced.sdi.views:templates/master.pt').implementation()
+
+    def get_flash_with_undo_snippet(self, msg, queue='', allow_duplicate=True):
+        request = self.request
+        conn = self.get_connection(request)
+        db = conn.db()
+        snippet = msg
+        has_perm = has_permission('sdi.undo', request.context, request)
+        if db.supportsUndo() and has_perm:
+            hsh = str(id(request)) + str(hash(msg))
+            t = self.transaction.get()
+            t.note(msg)
+            t.setExtendedInfo('undohash', hsh)
+            csrf_token = request.session.get_csrf_token()
+            query = {'csrf_token': csrf_token, 'undohash': hsh}
+            url = self.mgmt_path(request.context, '@@undo_recent', _query=query)
+            vars = {'msg': msg, 'url': url}
+            button = render(
+                'views/templates/undobutton.pt', vars, request=request)
+            snippet = button
+        return snippet
+
+    def flash_with_undo(self, msg, queue='', allow_duplicate=True):
+        request = self.request
+        snippet = self.get_flash_with_undo_snippet(msg)
+        request.session.flash(snippet, queue, allow_duplicate=allow_duplicate)
+
+    def mgmt_path(self, obj, *arg, **kw):
+        request = self.request
+        traverse = resource_path_tuple(obj)
+        kw['traverse'] = traverse
+        return request.route_path(MANAGE_ROUTE_NAME, *arg, **kw)
+
+    def mgmt_url(self, obj, *arg, **kw):
+        request = self.request
+        traverse = resource_path_tuple(obj)
+        kw['traverse'] = traverse
+        return request.route_url(MANAGE_ROUTE_NAME, *arg, **kw)
+
+    def breadcrumbs(self):
+        request = self.request
+        breadcrumbs = []
+        for resource in reversed(list(lineage(request.context))):
+            if not has_permission('sdi.view', resource, request):
+                return []
+            url = request.sdiapi.mgmt_path(resource, '@@manage_main')
+            name = resource.__name__ or 'Home'
+            icon = request.registry.content.metadata(resource, 'icon')
+            active = resource is request.context and 'active' or None
+            breadcrumbs.append({'url':url, 'name':name, 'active':active,
+                                'icon':icon})
+        return breadcrumbs
+
+    def sdi_title(self):
+        return acquire(self.request.context, 'sdi_title', 'Substance D')
+
+    def mgmt_views(self, context):
+        return self.sdi_mgmt_views(context, self.request)
 
 def includeme(config): # pragma: no cover
-    config.add_directive('add_mgmt_view', add_mgmt_view, action_wrap=False)
-    config.add_directive('add_permission', add_permission)
+    settings = config.registry.settings
     YEAR = 86400 * 365
+    config.add_directive('add_mgmt_view', add_mgmt_view, action_wrap=False)
     config.add_static_view('deformstatic', 'deform:static', cache_max_age=YEAR)
     config.add_static_view('sdistatic', 'substanced.sdi:static',
                            cache_max_age=YEAR)
-    settings = config.registry.settings
+    # b/c alias for template lookups
+    config.override_asset(to_override='substanced.sdi:templates/',
+                          override_with='substanced.sdi.views:templates/')
     manage_prefix = settings.get('substanced.manage_prefix', '/manage')
     manage_pattern = manage_prefix + '*traverse'
     config.add_route(MANAGE_ROUTE_NAME, manage_pattern)
-    config.set_request_property(mgmt_path, reify=True)
-    config.set_request_property(mgmt_url, reify=True)
-    config.set_request_property(get_user, name='user', reify=True)
+    config.add_request_method(mgmt_path) # XXX deprecate
+    config.add_request_method(mgmt_url) # XXX deprecate
+    config.add_request_method(flash_with_undo) # XXX deprecate
+    config.add_request_method(user, reify=True)
+    config.add_request_method(sdiapi, reify=True)
     config.include('deform_bootstrap')
-    secret = config.registry.settings.get('substanced.secret')
+    secret = settings.get('substanced.secret')
     if secret is None:
         raise ConfigurationError(
             'You must set a substanced.secret key in your .ini file')
@@ -356,4 +613,3 @@ def includeme(config): # pragma: no cover
     config.set_authentication_policy(authn_policy)
     config.set_authorization_policy(authz_policy)
     config.add_permission('sdi.edit-properties') # used by property machinery
-    config.scan('.')

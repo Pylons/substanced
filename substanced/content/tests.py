@@ -4,9 +4,9 @@ import unittest
 from pyramid import testing
 
 class TestContentRegistry(unittest.TestCase):
-    def _makeOne(self):
+    def _makeOne(self, registry=None):
         from . import ContentRegistry
-        return ContentRegistry()
+        return ContentRegistry(registry)
 
     def test_add(self):
         inst = self._makeOne()
@@ -22,9 +22,72 @@ class TestContentRegistry(unittest.TestCase):
         self.assertEqual(inst.meta['ct'], {'icon':'fred'})
         
     def test_create(self):
-        inst = self._makeOne()
-        inst.content_types['dummy'] = lambda a: a
-        self.assertEqual(inst.create('dummy', 'a'), 'a')
+        registry = DummyRegistry()
+        inst = self._makeOne(registry)
+        inst._utcnow = lambda *a: 1
+        content = testing.DummyResource()
+        inst.content_types['dummy'] = lambda a: content
+        inst.meta['dummy'] = {}
+        self.assertEqual(inst.create('dummy', 'a'), content)
+        self.assertEqual(content.__created__, 1)
+        self.assertTrue(registry.notified)
+
+    def test_create_with_oid(self):
+        registry = DummyRegistry()
+        inst = self._makeOne(registry)
+        inst._utcnow = lambda *a: 1
+        content = testing.DummyResource()
+        inst.content_types['dummy'] = lambda a: content
+        inst.meta['dummy'] = {}
+        self.assertEqual(inst.create('dummy', 'a', __oid=2), content)
+        self.assertEqual(content.__oid__, 2)
+
+    def test_create_with_after_create_str(self):
+        registry = DummyRegistry()
+        inst = self._makeOne(registry)
+        class Dummy(object):
+            def after_create(self, inst, registry):
+                self.after_created = True
+        inst.content_types['dummy'] = Dummy
+        inst.meta['dummy'] = {'after_create':'after_create'}
+        ob = inst.create('dummy')
+        self.assertEqual(ob.__class__, Dummy)
+        self.assertTrue(ob.after_created)
+
+    def test_create_with_after_create_nonstr(self):
+        registry = DummyRegistry()
+        inst = self._makeOne(registry)
+        class Dummy(object):
+            pass
+        def after_create(ob, registry):
+            self.assertEqual(ob.__class__, Dummy)
+            ob.after_created = True
+        inst.content_types['dummy'] = Dummy
+        inst.meta['dummy'] = {'after_create':after_create}
+        ob = inst.create('dummy')
+        self.assertEqual(ob.__class__, Dummy)
+        self.assertTrue(ob.after_created)
+
+    def test_create_with_after_create_sequence(self):
+        registry = DummyRegistry()
+        inst = self._makeOne(registry)
+        class Dummy(object):
+            pass
+        def after_create1(ob, registry):
+            self.assertEqual(ob.__class__, Dummy)
+            L = getattr(ob, 'after', [])
+            L.append(1)
+            ob.after = L
+        def after_create2(ob, registry):
+            self.assertEqual(ob.__class__, Dummy)
+            L = getattr(ob, 'after', [])
+            L.append(2)
+            ob.after = L
+        inst.content_types['dummy'] = Dummy
+        inst.meta['dummy'] = {'after_create':(after_create1, after_create2)}
+        ob = inst.create('dummy')
+        self.assertEqual(ob.__class__, Dummy)
+        self.assertEqual(ob.after, [1,2])
 
     def test_typeof(self):
         inst = self._makeOne()
@@ -82,6 +145,16 @@ class TestContentRegistry(unittest.TestCase):
         inst.content_types['dummy'] = True
         inst.content_types['category'] = True
         self.assertEqual(sorted(inst.all()), ['category', 'dummy'])
+
+    def test_find(self):
+        root = Dummy()
+        root.__factory_type__ = 'dummy'
+        resource = Dummy()
+        resource.__factory_type__ = 'notdummy'
+        resource.__parent__ = root
+        inst = self._makeOne()
+        inst.factory_types['dummy'] = 'ContentType'
+        self.assertEqual(inst.find(resource, 'ContentType'), root)
         
 class Test_content(unittest.TestCase):
     def _makeOne(self, content_type):
@@ -112,6 +185,15 @@ class Test_content(unittest.TestCase):
         config = call_venusian(venusian)
         ct = config.content_types
         self.assertEqual(len(ct), 1)
+
+class Test_service(Test_content):
+    def _makeOne(self, content_type):
+        from ..content import service
+        return service(content_type)
+    
+    def test_is_service_in_meta(self):
+        inst = self._makeOne('Special')
+        self.assertTrue('is_service' in inst.meta)
 
 class Test_add_content_type(unittest.TestCase):
     def _callFUT(self, *arg, **kw):
@@ -176,10 +258,26 @@ class Test_add_content_type(unittest.TestCase):
         meta = config.actions[1][1]['introspectables'][0]['meta']
         self.assertEqual(meta['catalog'], True)
 
-class Test_wrap_factory(unittest.TestCase):
+class Test_add_service_type(Test_add_content_type):
+    def _callFUT(self, *arg, **kw):
+        from . import add_service_type
+        return add_service_type(*arg, **kw)
+
+    def test_is_service_in_meta(self):
+        config = DummyConfig()
+        config.registry.content = DummyContentRegistry()
+        class Foo(object):
+            pass
+        self._callFUT(config, 'foo', Foo)
+        self.assertEqual(len(config.actions), 2)
+        meta = config.actions[1][1]['introspectables'][0]['meta']
+        self.assertEqual(meta['is_service'], True)
+    
+
+class Test__wrap_factory(unittest.TestCase):
     def _callFUT(self, factory, factory_type):
-        from . import wrap_factory
-        return wrap_factory(factory, factory_type)
+        from . import _wrap_factory
+        return _wrap_factory(factory, factory_type)
 
     def test_content_factory_isclass_factory_type_is_not_supplied(self):
         class Foo(object):
@@ -225,32 +323,40 @@ class Test_wrap_factory(unittest.TestCase):
         self.assertTrue(ob is foo)
         self.assertEqual(ob.__factory_type__, 'dummy')
 
-class TestContentTypePredicate(unittest.TestCase):
+class Test_ContentTypePredicate(unittest.TestCase):
     def _makeOne(self, val, config):
-        from . import ContentTypePredicate
-        return ContentTypePredicate(val, config)
+        from . import _ContentTypePredicate
+        return _ContentTypePredicate(val, config)
 
     def _makeConfig(self, result):
         config = Dummy()
         config.registry = Dummy()
         config.registry.content = Dummy()
-        config.registry.content.typeof = lambda *x: result
+        config.registry.content.istype = lambda *x: result
         return config
     
     def test___call___true(self):
-        config = self._makeConfig('abc')
+        config = self._makeConfig(True)
         inst = self._makeOne('abc', config)
         context = Dummy()
         result = inst(context, None)
         self.assertTrue(result)
 
     def test___call___false(self):
-        config = self._makeConfig('notabc')
+        config = self._makeConfig(False)
         inst = self._makeOne('abc', config)
         context = Dummy()
         result = inst(context, None)
         self.assertFalse(result)
-        
+
+    def test___call___no_cregistry_False(self):
+        config = self._makeConfig(False)
+        del config.registry.content
+        inst = self._makeOne('abc', config)
+        context = Dummy()
+        result = inst(context, None)
+        self.assertFalse(result)
+
     def test_text(self):
         config = self._makeConfig(True)
         inst = self._makeOne('abc', config)
@@ -261,54 +367,12 @@ class TestContentTypePredicate(unittest.TestCase):
         inst = self._makeOne('abc', config)
         self.assertEqual(inst.phash(), 'content_type = abc')
 
-class Test_get_content_type(unittest.TestCase):
-    def setUp(self):
-        self.config = testing.setUp()
-
-    def tearDown(self):
-        testing.tearDown()
-
-    def _callFUT(self, resource, registry=None):
-        from . import get_content_type
-        return get_content_type(resource, registry)
-
-    def test_without_registry(self):
-        self.config.registry.content = DummyContentRegistry()
-        resource = Dummy()
-        resource.type = 'foo'
-        self.assertEqual(self._callFUT(resource), 'foo')
-        
-    def test_with_registry(self):
-        registry = Dummy()
-        registry.content = DummyContentRegistry()
-        resource = Dummy()
-        resource.type = 'bar'
-        self.assertEqual(self._callFUT(resource, registry), 'bar')
-
-class Test_get_factory_type(unittest.TestCase):
-    def _callFUT(self, resource):
-        from . import get_factory_type
-        return get_factory_type(resource)
-
-    def test_has_ft_attr(self):
-        resource = Dummy()
-        resource.__factory_type__ = 'abc'
-        self.assertEqual(self._callFUT(resource), 'abc')
-
-    def test_without_ft_attr(self):
-        resource = Dummy()
-        self.assertEqual(self._callFUT(resource),
-                         'substanced.content.tests.Dummy')
-
 class DummyContentRegistry(object):
     def __init__(self):
         self.added = []
 
     def add(self, *arg, **meta):
         self.added.append((arg, meta))
-
-    def typeof(self, resource):
-        return resource.type
 
 class Dummy(object):
     pass
@@ -357,3 +421,7 @@ class DummyVenusian(object):
         self.attachments.append((wrapped, callback, category))
         return self.info
 
+class DummyRegistry(object):
+    def subscribers(self, dumb, dumber):
+        self.notified = dumb
+        

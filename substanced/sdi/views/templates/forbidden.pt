@@ -1,0 +1,30 @@
+<div metal:use-macro="request.sdiapi.main_template">
+
+  <div metal:fill-slot="main">
+
+    <div class="alert alert-error">
+      Sorry, your account is not permitted to perform the requested action.  You can try to log in
+      using a different account below or you can <a onclick="javascript:history.go(-2)">return to where you
+      were</a>.
+    </div>
+
+    <form action="${url}" method="post">
+      <label> Username
+         <input type="text" name="login" value="${login}"/>
+      </label>
+      <label> Password
+         <input type="password" name="password" value="${password}"/>
+      </label>
+      <input type="submit" name="form.submitted" value="Log In" 
+             class="btn btn-primary"/>
+      <input type="hidden" name="csrf_token" 
+            value="${request.session.get_csrf_token()}"/>
+    </form>
+
+    <a href="${request.sdiapi.mgmt_path(request.root, '@@resetpassword')}">
+      Forgot your password?
+    </a>
+
+  </div>
+
+</div>

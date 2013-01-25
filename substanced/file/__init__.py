@@ -9,6 +9,8 @@ from zope.interface import implementer
 
 from pyramid.response import FileResponse
 
+from ..util import get_oid
+
 try:
     import magic
 except ImportError: # pragma: no cover
@@ -19,29 +21,30 @@ USE_MAGIC = object()
 import deform.widget
 import deform.schema
 
-from ..content import content
-from ..util import chunks
-from ..form import FileUploadTempStore
-from ..schema import Schema
-from ..property import PropertySheet
 from ..interfaces import IFile
-from ..util import _make_name_validator
 
-@colander.deferred
-def file_upload_widget(node, kw):
-    request = kw['request']
-    tmpstore = FileUploadTempStore(request)
-    widget = deform.widget.FileUploadWidget(tmpstore)
-    widget.template = 'substanced.file:templates/file_upload.pt'
-    return widget
+from ..content import content
+from ..form import FileUploadTempStore
+from ..property import PropertySheet
+from ..schema import (
+    Schema,
+    NameSchemaNode,
+    )
+from ..util import (
+    chunks,
+    renamer,
+    )
+
+def context_is_a_file(context, request):
+    return request.registry.content.istype(context, 'File')
+
+file_name_node = NameSchemaNode(editing=context_is_a_file)
 
 class FilePropertiesSchema(Schema):
-    name = colander.SchemaNode(
-        colander.String(),
-        validator = _make_name_validator('File'),
-        )
+    name = file_name_node.clone()
     title = colander.SchemaNode(
         colander.String(),
+        missing='',
         )
     mimetype = colander.SchemaNode(
         colander.String(),
@@ -50,32 +53,22 @@ class FilePropertiesSchema(Schema):
 class FilePropertySheet(PropertySheet):
     schema = FilePropertiesSchema()
 
-    def get(self):
-        context = self.context
-        return dict(
-            name=context.__name__,
-            mimetype=context.mimetype,
-            title=context.title,
-            )
+@colander.deferred
+def file_upload_widget(node, kw):
+    if kw.get('loading'):
+        return None
+    request = kw['request']
+    tmpstore = FileUploadTempStore(request)
+    widget = deform.widget.FileUploadWidget(tmpstore)
+    widget.template = 'substanced.sdi:templates/fileupload.pt'
+    return widget
 
-    def set(self, struct):
-        context = self.context
-        newname = struct['name']
-        mimetype = struct['mimetype']
-        title = struct['title']
-        context.mimetype = mimetype
-        context.title = title
-        oldname = context.__name__
-        if newname and newname != oldname:
-            context.__parent__.rename(oldname, newname)
-
-filenode = colander.SchemaNode(
-    deform.schema.FileData(),
-    widget = file_upload_widget,
-    )
+class FileNode(colander.SchemaNode):
+    schema_type = deform.schema.FileData
+    widget = file_upload_widget
 
 class FileUploadSchema(Schema):
-    file = filenode.clone()
+    file = FileNode()
 
 class FileUploadPropertySheet(PropertySheet):
     schema = FileUploadSchema()
@@ -83,15 +76,16 @@ class FileUploadPropertySheet(PropertySheet):
     def get(self):
         context = self.context
         request = self.request
-        uid = str(context.__objectid__)
+        uid = str(get_oid(context))
         filedata = dict(
-            fp=None,
+            fp=None, # this cant be the real fp or will be written to tmpstore
             uid=uid,
             filename='',
             size = context.get_size(),
             )
         if context.mimetype.startswith('image/'):
-            filedata['preview_url'] = request.mgmt_path(context)
+            # XXX should this really point at an SDI URL?
+            filedata['preview_url'] = request.sdiapi.mgmt_path(context)
         return dict(file=filedata)
     
     def set(self, struct):
@@ -126,6 +120,8 @@ class File(Persistent):
 
     title = u''
 
+    name = renamer()
+
     def __init__(self, stream=None, mimetype=None, title=u''):
         """ The constructor of a File object.
 
@@ -153,8 +149,14 @@ class File(Persistent):
              of additional dependencies.  See :ref:`optional_dependencies`.
         """
         self.blob = Blob()
-        self.mimetype = mimetype or 'application/octet-stream'
         self.title = title or u''
+
+        # mimetype will be overridden by upload if there's a stream
+        if mimetype is USE_MAGIC:
+            self.mimetype = 'application/octet-stream'
+        else:
+            self.mimetype = mimetype or 'application/octet-stream'
+
         if stream is not None:
             if mimetype is USE_MAGIC:
                 hint = USE_MAGIC
@@ -233,7 +235,7 @@ class File(Persistent):
         ``pyramid.response.FileResponse`` constructor as its keyword
         arguments."""
         if not 'content_type' in kw:
-            kw['content_type'] = self.mimetype
+            kw['content_type'] = str(self.mimetype)
         path = self.blob.committed()
         response = FileResponse(path, **kw)
         return response
@@ -243,5 +245,3 @@ class File(Persistent):
         the file"""
         return os.stat(self.blob.committed()).st_size
 
-def includeme(config): # pragma: no cover
-    config.scan('.')

@@ -8,12 +8,13 @@ from pyramid.paster import (
     bootstrap,
     )
 
-from pyramid.traversal import (
-    traverse,
-    resource_path,
-    )
+from pyramid.traversal import resource_path
 
-from substanced.service import find_service
+from substanced.objectmap import find_objectmap
+
+from substanced.catalog import Catalog
+
+from substanced.util import get_dotted_name
 
 def main():
     parser = OptionParser(description=__doc__)
@@ -28,8 +29,9 @@ def main():
         help="Reindex only objects whose path matches a regular expression")
     parser.add_option('-n', '--index', dest='indexes',
         action="append", help="Reindex only the given index (can be repeated)")
-    parser.add_option('-s', '--site', dest='site',
-        action="store", default=None, metavar='PATH')
+    parser.add_option('-c', '--catalog', dest='catalog_specs', action="append",
+        help=("Reindex only the catalog provided (may be a path or a name "
+              "and may be specified multiple times)"))
 
     options, args = parser.parse_args()
 
@@ -51,16 +53,28 @@ def main():
     setup_logging(config_uri)
     env = bootstrap(config_uri)
     site = env['root']
-    if options.site:
-        site = traverse(site, options.site)
+    registry = env['registry']
 
-    catalog = find_service(site, 'catalog')
+    kw['registry'] = registry
 
-    if catalog is None:
-        raise KeyError('No catalog service found at ' % resource_path(site))
+    objectmap = find_objectmap(site)
 
-    catalog.reindex(path_re=path_re, commit_interval=commit_interval,
-                    dry_run=options.dry_run, **kw)
+    catalog_oids = objectmap.get_extent(get_dotted_name(Catalog))
+
+    for oid in catalog_oids:
+
+        catalog = objectmap.object_for(oid)
+
+        path = resource_path(catalog)
+
+        if options.catalog_specs:
+
+            if ( (not path in options.catalog_specs) and 
+                 (not catalog.__name__ in options.catalog_specs) ):
+                    continue
+
+        catalog.reindex(path_re=path_re, commit_interval=commit_interval,
+                        dry_run=options.dry_run, **kw)
 
 if __name__ == '__main__':
     main()

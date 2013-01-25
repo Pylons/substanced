@@ -1,0 +1,167 @@
+<div metal:use-macro="request.sdiapi.main_template">
+
+  <div tal:omit-tag="" metal:fill-slot="head-more">
+    <!-- slickgrid -->
+    <script src="${request.static_url('substanced.sdi:static/js/slickgrid.upstream.js')}" type="text/javascript"></script>
+    <script src="${request.static_url('substanced.sdi:static/js/sdi.grid.remotemodel.js')}" type="text/javascript"></script>
+    <script src="${request.static_url('substanced.sdi:static/js/slickgrid-config.js')}" type="text/javascript"></script>
+    <link href="${request.static_url('substanced.sdi:static/css/slick.grid.upstream.css')}" rel="stylesheet" />
+    <link href="${request.static_url('substanced.sdi:static/css/sdi_slickgrid.css')}" rel="stylesheet" />
+  </div>
+
+  <div metal:fill-slot="main">
+    <div class="container-fluid"
+      tal:define="total slickgrid_wrapper_options['items']['total']">
+
+    <div class="navbar fb-toolbar">
+      <div class="navbar-inner">
+        <div class="span8 fb-toolbar-box">
+
+    <form action="@@contents" method="POST" class="sdi-contents-actions">
+      <fieldset>
+      <input type="hidden" name="csrf_token"
+             value="${request.session.get_csrf_token()}"/>
+
+        <div tal:repeat="group buttons"
+           class="${group['type']=='group' and 'btn-group' or 'btn-single'}">
+            <button tal:repeat="button group['buttons']"
+		    tal:attributes="disabled 'btn-sdi-act' not in button['class'] and 'true' or False"
+                    id="${button['id']}"
+                    name="${button['name']}"
+                    class="btn btn-sdi ${button['class']}"
+                    value="${button['value']}"
+                    type="submit"
+                    >
+            ${button['text']}
+            </button>
+        </div>
+        <input type="hidden" name="item-modify" value="" />
+        <script type="text/javascript">
+            jQuery(function ($) {
+                var $form =  $('form[action="@@contents"]');
+                var $hiddenInput =  $form.find('input[name="item-modify"]');
+
+                // If a button is clicked, get the selections out of the grid,
+                // and add it to a form as a hidden field.
+                $form.find('button').click(function (evt) {
+                    var gridWrapper = $('#sdi-contents-table-sg').data('slickgrid');
+                    var grid = gridWrapper.grid;
+                    var selRows = grid.getSelectedRows();
+                    if (selRows.length > 100) {
+                        // XXX XXX XXX This is a problem. We need to limit
+                        // the selection size, because of cookieval is limited
+                        // in 4096 bytes. An additional problem is we don't know
+                        // how to limit the selection size to assure that the submit
+                        // won't break, because the cookie size depends on the lengths
+                        // of the names, too, and not only on the size of the selection.
+                        // TODO this must be solved somehow!
+                        alert('We currently limit the selection size in maximum 100 items.\n' +
+                              'Please select less than 100 items!');
+                        return false;
+                    }
+                    var data = grid.getData();
+                    var selectedIds = $.map(selRows, function (value, index) {
+                        var row = data[value];
+                        return (row || {}).id;
+                    });
+                    // I think it is better to submit the list as a
+                    // concatenated value, instead of adding several inputs to the dom.
+                    $hiddenInput.attr('value', selectedIds.join(','));
+                });
+            });
+        </script>
+
+        <tal:block tal:condition="'tocopy' not in request.session and 'tomove' not in request.session">
+        <div class="btn-group pull-left sdi-add-button" tal:condition="addables">
+          <a class="btn btn-primary"
+             href="${request.sdiapi.mgmt_path(context, '@@add')}"><i
+             class="icon-plus-sign icon-white"></i> Add</a>
+          <a class="btn btn-primary dropdown-toggle"
+              data-toggle="dropdown" href="#"><span class="caret"></span></a>
+          <ul class="dropdown-menu">
+            <li tal:repeat="addable addables">
+               <a href="${addable['url']}"><i
+              class="${addable['icon']}"></i> ${addable['type_name']}</a></li>
+          </ul>
+        </div>
+        </tal:block>
+
+      </fieldset>
+    </form>
+        </div>
+        <div class="form-search pull-right sdi-contents-filter">
+          <div class="input-append">
+       	    <input type="text" class="input-medium search-query"
+	           placeholder="Type to filter…">
+       	    <button type="submit" class="btn"><i class="icon-search"> </i></button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div tal:condition="total" id="sdi-contents-table-sg" class="slickgrid-wrapper"></div>
+    <h3 tal:condition="not total">No Items</h3>
+
+    <script type="text/javascript">
+        jQuery(function ($) {
+            var $grid = $('#sdi-contents-table-sg');
+            var $filter = $('.sdi-contents-filter input');
+            // grid
+            $grid.slickgrid(${slickgrid_wrapper_options});
+            var gridWrapper = $grid.data('slickgrid');
+            // filter
+            gridWrapper.setSearchString($filter.val());
+            $filter.on('keyup', function (evt) {
+                gridWrapper.setSearchString($filter.val());
+            });
+
+            // Update the buttons if the selection has changed.
+            var grid = gridWrapper.grid;
+            grid.onSelectedRowsChanged.subscribe(function (evt) {
+                var selRows = grid.getSelectedRows();
+                var data = grid.getData();
+                if (selRows.length) {
+                    var disable_delete = false;
+                    var i;
+                    for (i = 0, l = selRows.length; i < l; i++) {
+                        var item = data[selRows[i]];
+                        // XXX bug: global selection will select all items that
+                        // are not present.
+                        if (!item.deletable) {
+                            disable_delete = true;
+                            break;
+                        }
+                    }
+                    $('.btn-sdi-del').attr('disabled', disable_delete);
+                    $('.btn-sdi-sel').attr('disabled', false);
+                } else {
+                    $('.btn-sdi-del').attr('disabled', true);
+                    $('.btn-sdi-sel').attr('disabled', true);
+                }
+            });
+
+            // Inject flash messages that arrive from the server via ajax.
+            gridWrapper.sdiRemoteModelPlugin.onDataLoaded.subscribe(function (evt, args) {
+                if (args.flash) {
+                    // Clear existing messages, and add this one.
+                    $('#messages')
+                        .empty()
+                        .append(
+                            $('<div class="alert"></div>')
+                                .append(args.flash)
+                        );
+                }
+            });
+
+        });
+    </script>
+
+    <div class="clearfix">
+    </div>
+
+
+    </div>
+  </div>
+</div>
+

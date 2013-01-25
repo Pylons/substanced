@@ -1,20 +1,41 @@
-import tempfile
+import random
+import string
 
-from zope.interface import implementer
-from pyramid.threadlocal import get_current_registry
+from zope.interface import (
+    implementer,
+    )
+from zope.copy.interfaces import (
+    ICopyHook,
+    ResumeCopy
+    )
 
-from persistent import Persistent
+from zope.copy import copy
+
+from persistent import (
+    Persistent,
+    )
+
+from persistent.interfaces import IPersistent
 
 import BTrees
 from BTrees.Length import Length
 
-from ..exceptions import FolderKeyError
+from pyramid.compat import string_types
+from pyramid.location import (
+    lineage,
+    inside,
+    )
+from pyramid.threadlocal import get_current_registry
+from pyramid.traversal import resource_path_tuple
 
 from ..interfaces import (
     IFolder,
+    IAutoNamingFolder,
     marker,
-    SERVICES_NAME,
     )
+
+from ..stats import statsd_timer
+from ..content import content
 
 from ..event import (
     ObjectAdded,
@@ -23,12 +44,17 @@ from ..event import (
     ObjectWillBeRemoved,
     )
 
-from ..content import content
-
-from ..service import (
+from ..util import (
+    get_oid,
+    postorder,
     find_service,
     find_services,
     )
+
+from ..objectmap import find_objectmap
+
+class FolderKeyError(KeyError):
+    pass
 
 @content(
     'Folder',
@@ -47,20 +73,9 @@ class Folder(Persistent):
     __parent__ = None
 
     # Default uses ordering of underlying BTree.
-    _order = None
-
-    def _get_order(self):
-        if self._order is not None:
-            return list(self._order)
-        return self.data.keys()
-
-    def _set_order(self, value):
-        # XXX:  should we test against self.data.keys()?
-        self._order = tuple([unicode(x) for x in value])
-
-    def _del_order(self):
-        del self._order
-    order = property(_get_order, _set_order, _del_order)
+    _order = None # tuple of names
+    _order_oids = None # tuple of oids
+    _reorderable = None
 
     def __init__(self, data=None, family=None):
         """ Constructor.  Data may be an initial dictionary mapping object
@@ -72,11 +87,166 @@ class Folder(Persistent):
         self.data = self.family.OO.BTree(data)
         self._num_objects = Length(len(data))
 
+    def set_order(self, names, reorderable=None):
+        """ Sets the folder order. ``names`` is a list of names for existing
+        folder items, in the desired order.  All names that currently exist in
+        the folder must be mentioned in ``names``, or a :exc:`ValueError` will
+        be raised.
+
+        If ``reorderable`` is passed, value, it must be ``None``, ``True`` or
+        ``False``.  If it is ``None``, the reorderable flag will not be reset
+        from its current value.  If it is anything except ``None``, it will be
+        treated as a boolean and the reorderable flag will be set to that
+        value.  The ``reorderable`` value of a folder will be returned by that
+        folder's :meth:`~substanced.folder.Folder.is_reorderable` method.  The
+        :meth:`~substanced.folder.Folder.is_reorderable` method is used by the
+        SDI folder contents view to indicate that the folder can or cannot be
+        reordered via the web UI.
+
+        If ``reorderable`` is set to ``True``, the
+        :meth:`~substanced.folder.Folder.reorder` method will work properly,
+        otherwise it will raise a :exc:`ValueError` when called.
+        """
+        nameset = set(names)
+        if len(self) != len(nameset):
+            raise ValueError('Must specify all names when calling set_order')
+
+        if len(names) != len(nameset):
+            raise ValueError('No repeated items allowed in names')
+
+        order = []
+        order_oids = []
+
+        for name in names:
+            assert(isinstance(name, string_types))
+            name = unicode(name)
+            oid = get_oid(self[name])
+            order.append(name)
+            order_oids.append(oid)
+
+        self._order = tuple(order)
+        self._order_oids = tuple(order_oids)
+        assert(len(self._order) == len(self._order_oids))
+
+        if reorderable is not None:
+            self._reorderable = bool(reorderable)
+
+    def unset_order(self):
+        """ Remove set order from a folder, making it unordered, and
+        non-reorderable."""
+        if self._order is not None:
+            del self._order
+        if self._order_oids is not None:
+            del self._order_oids
+        if self._reorderable is not None:
+            del self._reorderable
+
+    def reorder(self, names, before):
+        """ Move one or more items from a folder into new positions inside that
+        folder. ``names`` is a list of ids of existing folder subobject names,
+        which will be inserted in order before the item named ``before``. All
+        other items are left in the original order. If ``before`` is ``None``,
+        the items will be appended after the last item in the current order. If
+        this method is called on a folder which does not have an order set, or
+        which is not reorderable, a :exc:`ValueError` will be raised. A
+        :exc:`KeyError` is raised, if ``before`` does not correspond to any
+        item, and is not ``None``."""
+        if not self._reorderable:
+            raise ValueError('Folder is not reorderable')
+
+        before_idx = None
+
+        if len(set(names)) != len(names):
+            raise ValueError('No repeated values allowed in names')
+
+        if before is not None:
+            if not before in self._order:
+                raise FolderKeyError(before)
+            before_idx = self._order.index(before)
+
+        assert(len(self._order) == len(self._order_oids))
+
+        order_names = list(self._order)
+        order_oids = list(self._order_oids)
+
+        reorder_names = []
+        reorder_oids = []
+
+        for name in names:
+            assert(isinstance(name, string_types))
+            name = unicode(name)
+            if not name in order_names:
+                raise FolderKeyError(name)
+            idx = order_names.index(name)
+            oid = order_oids[idx]
+            order_names[idx] = None
+            order_oids[idx] = None
+            reorder_names.append(name)
+            reorder_oids.append(oid)
+
+        assert(len(reorder_names) == len(reorder_oids))
+
+        # NB: technically we could use filter(None, oids) and filter(None,
+        # names) because names cannot be empty string and oid 0 is disallowed,
+        # but just in case this becomes untrue later we define "filt" instead
+
+        def filt(L):
+            return [x for x in L if x is not None]
+
+        if before_idx is None:
+            order_names = filt(order_names)
+            order_names.extend(reorder_names)
+            order_oids = filt(order_oids)
+            order_oids.extend(reorder_oids)
+        else:
+            before_idx_names = filt(order_names[:before_idx])
+            after_idx_names = filt(order_names[before_idx:])
+            before_idx_oids = filt(order_oids[:before_idx])
+            after_idx_oids = filt(order_oids[before_idx:])
+            assert(
+                len(before_idx_names+after_idx_names) ==
+                len(before_idx_oids+after_idx_oids)
+                )
+            order_names =  before_idx_names + reorder_names + after_idx_names
+            order_oids = before_idx_oids + reorder_oids + after_idx_oids
+
+        for oid, name in zip(order_oids, order_names):
+            # belt and suspenders check
+            assert oid == get_oid(self[name])
+
+        self._order = tuple(order_names)
+        self._order_oids = tuple(order_oids)
+
+    def is_ordered(self):
+        """ Return true if the folder has a manually set ordering, false
+        otherwise."""
+        return self._order is not None
+
+    def is_reorderable(self):
+        """ Return true if the folder can be reordered, false otherwise."""
+        return self._reorderable
+
+    def sort(self, oids, reverse=False, limit=None):
+        # used by the hypatia resultset "sort" method when the folder contents
+        # view uses us as a "sort index"
+        if self._order_oids is not None:
+            ids = [oid for oid in self._order_oids if oid in oids]
+        else:
+            ids = []
+            for resource in self.values():
+                oid = get_oid(resource)
+                if oid in oids:
+                    ids.append(oid)
+        if reverse:
+            ids = ids[::-1]
+        if limit is not None:
+            ids = ids[:limit]
+        return ids
+
     def find_service(self, service_name):
-        """ Return a service named by ``service_name`` in this folder's
-        ``__services__`` folder *or any parent service folder* or ``None`` if
-        no such service exists.  A shortcut for
-        :func:`substanced.service.find_service`."""
+        """ Return a service named by ``service_name`` in this folder *or any
+        parent service folder* or ``None`` if no such service exists.  A
+        shortcut for :func:`substanced.service.find_service`."""
         return find_service(self, service_name)
 
     def find_services(self, service_name):
@@ -85,27 +255,29 @@ class Folder(Persistent):
         exists.  A shortcut for :func:`substanced.service.find_services`"""
         return find_services(self, service_name)
 
-    def add_service(self, name, obj):
-        """ Add a service to this folder's ``__services__`` folder named
-        ``name``."""
-        services = self.get(SERVICES_NAME)
-        if services is None:
-            services = Folder()
-            self.add(SERVICES_NAME, services, send_events=False,
-                     allow_services=True)
-        services.add(name, obj, send_events=False)
+    def add_service(self, name, obj, registry=None, **kw):
+        """ Add a service to this folder named ``name``."""
+        if registry is None:
+            registry = get_current_registry()
+        kw['registry'] = registry
+        self.add(name, obj, **kw)
+        obj.__is_service__ = True
 
     def keys(self):
         """ Return an iterable sequence of object names present in the folder.
 
-        Respect ``order``, if set.
+        Respect order, if set.
         """
-        return self.order
+        if self._order is not None:
+            return self._order
+        return self.data.keys()
+
+    order = property(keys, set_order, unset_order) # b/c
 
     def __iter__(self):
         """ An alias for ``keys``
         """
-        return iter(self.order)
+        return iter(self.keys())
 
     def values(self):
         """ Return an iterable sequence of the values present in the folder.
@@ -113,7 +285,7 @@ class Folder(Persistent):
         Respect ``order``, if set.
         """
         if self._order is not None:
-            return [self.data[name] for name in self.order]
+            return [self.data[name] for name in self.keys()]
         return self.data.values()
 
     def items(self):
@@ -122,7 +294,7 @@ class Folder(Persistent):
         Respect ``order``, if set.
         """
         if self._order is not None:
-            return [(name, self.data[name]) for name in self.order]
+            return [(name, self.data[name]) for name in self.keys()]
         return self.data.items()
 
     def __len__(self):
@@ -148,8 +320,9 @@ class Folder(Persistent):
         object or directly decodeable to Unicode using the system default
         encoding.
         """
-        name = unicode(name)
-        return self.data[name]
+        with statsd_timer('folder.get'):
+            name = unicode(name)
+            return self.data[name]
 
     def get(self, name, default=None):
         """ Return the object named by ``name`` or the default.
@@ -159,8 +332,9 @@ class Folder(Persistent):
         If ``name`` is a bytestring object, it must be decodable using the
         system default encoding.
         """
-        name = unicode(name)
-        return self.data.get(name, default)
+        with statsd_timer('folder.get'):
+            name = unicode(name)
+            return self.data.get(name, default)
 
     def __contains__(self, name):
         """ Does the container contains an object named by name?
@@ -183,30 +357,28 @@ class Folder(Persistent):
 
         ``name`` cannot be the empty string.
 
-        When ``other`` is seated into this folder, it will also be
-        decorated with a ``__parent__`` attribute (a reference to the
-        folder into which it is being seated) and ``__name__``
-        attribute (the name passed in to this function.
+        When ``other`` is seated into this folder, it will also be decorated
+        with a ``__parent__`` attribute (a reference to the folder into which
+        it is being seated) and ``__name__`` attribute (the name passed in to
+        this function.  It must not already have a ``__parent__`` attribute
+        before being seated into the folder, or an exception will be raised.
 
         If a value already exists in the foldr under the name ``name``, raise
         :exc:`KeyError`.
 
-        When this method is called, emit an
-        :class:`substanced.event.ObjectWillBeAdded` event before the
-        object obtains a ``__name__`` or ``__parent__`` value.  Emit an
-        :class:`substanced.event.ObjectAdded` after the object obtains a
-        ``__name__`` and ``__parent__`` value.
+        When this method is called, the object will be added to the objectmap,
+        an :class:`substanced.event.ObjectWillBeAdded` event will be emitted
+        before the object obtains a ``__name__`` or ``__parent__`` value, then
+        a :class:`substanced.event.ObjectAdded` will be emitted after the
+        object obtains a ``__name__`` and ``__parent__`` value.
         """
         return self.add(name, other)
 
-    def check_name(self, name, allow_services=False):
+    def validate_name(self, name, reserved_names=()):
         """
-
-        Check the ``name`` passed to ensure that it's addable to the folder.
+        Validate the ``name`` passed to ensure that it's addable to the folder.
         Returns the name decoded to Unicode if it passes all addable checks.
         It's not addable if:
-
-        -  an object by the name already exists in the folder
 
         - the name is not decodeable to Unicode.
 
@@ -217,8 +389,8 @@ class Folder(Persistent):
         - the name is empty.
 
         If any of these conditions are untrue, raise a :exc:`ValueError`.  If
-        the name passed is ``__services__``, and ``allow_services`` is not
-        ``True``, also raise a :exc:`ValueError`.
+        the name passed is in the list of ``reserved_names``, raise a
+        :exc:`ValueError`.
         """
         if not isinstance(name, basestring):
             raise ValueError("Name must be a string rather than a %s" %
@@ -231,8 +403,8 @@ class Folder(Persistent):
         except UnicodeDecodeError:
             raise ValueError('Name "%s" not decodeable to unicode' % name)
 
-        if name == SERVICES_NAME and not allow_services:
-            raise ValueError('%s is a reserved name' % SERVICES_NAME)
+        if name in reserved_names:
+            raise ValueError('%s is a reserved name' % name)
 
         if name.startswith('@@'):
             raise ValueError('Names which start with "@@" are not allowed')
@@ -241,40 +413,103 @@ class Folder(Persistent):
             raise ValueError('Names which contain a slash ("/") are not '
                              'allowed')
 
+        return name
+
+    def check_name(self, name, reserved_names=()):
+        """ Perform all the validation checks implied by
+        :meth:`~substanced.folder.Folder.validate_name` against the ``name``
+        supplied but also fail with a
+        :class:`~substanced.folder.FolderKeyError` if an object with the name
+        ``name`` already exists in the folder."""
+
+        name = self.validate_name(name, reserved_names=reserved_names)
+
         if name in self.data:
             raise FolderKeyError('An object named %s already exists' % name)
 
         return name
 
-    def add(self, name, other, send_events=True,
-            allow_services=False, duplicating=False):
+    def add(self, name, other, send_events=True, reserved_names=(),
+            duplicating=None, moving=None, loading=False, registry=None):
         """ Same as ``__setitem__``.
 
         If ``send_events`` is False, suppress the sending of folder events.
-        If ``allow_services`` is True, allow the name ``__services__`` to be
-        added. if ``duplicating`` is True, oids will be replaced in
-        objectmap.
+        Don't allow names in the ``reserved_names`` sequence to be added.
+
+        If ``duplicating`` not ``None``, it must be the object which is being
+        duplicated; a result of a non-``None`` duplicating means that oids will
+        be replaced in objectmap.  If ``moving`` is not ``None``, it must be
+        the folder from which the object is moving; this will be the ``moving``
+        attribute of events sent by this function too.  If ``loading`` is
+        ``True``, the ``loading`` attribute of events sent as a result of
+        calling this method will be ``True`` too.
+
+        This method returns the name used to place the subobject in the
+        folder (a derivation of ``name``, usually the result of
+        ``self.check_name(name)``).
         """
-        name = self.check_name(name, allow_services)
+        if registry is None:
+            registry = get_current_registry()
 
-        if send_events:
-            event = ObjectWillBeAdded(other, self, name, duplicating)
-            self._notify(event)
+        name = self.check_name(name, reserved_names)
 
-        other.__parent__ = self
-        other.__name__ = name
+        if getattr(other, '__parent__', None):
+            raise ValueError(
+                'obj %s added to folder %s already has a __parent__ attribute, '
+                'please remove it completely from its existing parent (%s) '
+                'before trying to readd it to this one' % (
+                    other, self, self.__parent__)
+                )
 
-        self.data[name] = other
-        self._num_objects.change(1)
+        with statsd_timer('folder.add'):
 
-        if self._order is not None:
-            self._order += (name,)
+            objectmap = find_objectmap(self)
 
-        if send_events:
-            event = ObjectAdded(other, self, name)
-            self._notify(event)
+            if objectmap is not None:
 
-    def pop(self, name, default=marker):
+                basepath = resource_path_tuple(self)
+
+                for node in postorder(other):
+                    node_path = node_path_tuple(node)
+                    path_tuple = basepath + (name,) + node_path[1:]
+                    # the below gives node an objectid; if the will-be-added
+                    # event is the result of a duplication, replace the oid of
+                    # the node with a new one
+                    objectmap.add(
+                        node,
+                        path_tuple,
+                        duplicating=duplicating is not None,
+                        moving=moving is not None,
+                        )
+
+            if send_events:
+                event = ObjectWillBeAdded(
+                    other, self, name, duplicating=duplicating, moving=moving,
+                    loading=loading,
+                    )
+                self._notify(event, registry)
+
+            other.__parent__ = self
+            other.__name__ = name
+
+            self.data[name] = other
+            self._num_objects.change(1)
+
+            if self._order is not None:
+                oid = get_oid(other)
+                self._order += (name,)
+                self._order_oids += (oid,)
+
+            if send_events:
+                event = ObjectAdded(
+                    other, self, name, duplicating=duplicating, moving=moving,
+                    loading=loading,
+                    )
+                self._notify(event, registry)
+
+            return name
+
+    def pop(self, name, default=marker, registry=None):
         """ Remove the item stored in the under ``name`` and return it.
 
         If ``name`` doesn't exist in the folder, and ``default`` **is not**
@@ -292,17 +527,20 @@ class Folder(Persistent):
         :class:`substanced.event.ObjectRemoved` after the object loses its
         ``__name__`` and ``__parent__`` value,
         """
+        if registry is None:
+            registry = get_current_registry()
         try:
-            result = self.remove(name)
+            result = self.remove(name, registry=registry)
         except KeyError:
             if default is marker:
                 raise
             return default
         return result
 
-    def _notify(self, event):
-        reg = get_current_registry()
-        reg.subscribers((event, event.object, self), None)
+    def _notify(self, event, registry=None):
+        if registry is None:
+            registry = get_current_registry()
+        registry.subscribers((event, event.object, self), None)
 
     def __delitem__(self, name):
         """ Remove the object from this folder stored under ``name``.
@@ -318,47 +556,76 @@ class Folder(Persistent):
         When the object stored under ``name`` is removed from this folder,
         remove its ``__parent__`` and ``__name__`` values.
 
-        When this method is called, emit an
-        :class:`substanced.event.ObjectWillBeRemoved` event before the
-        object loses its ``__name__`` or ``__parent__`` values.  Emit an
-        :class:`substanced.event.ObjectRemoved` after the object loses
-        its ``__name__`` and ``__parent__`` value,
+        When this method is called, the removed object will be removed from the
+        objectmap, a :class:`substanced.event.ObjectWillBeRemoved` event will
+        be emitted before the object loses its ``__name__`` or ``__parent__``
+        values and a :class:`substanced.event.ObjectRemoved` will be emitted
+        after the object loses its ``__name__`` and ``__parent__`` value,
         """
         return self.remove(name)
 
-    def remove(self, name, send_events=True, moving=False):
+    def remove(self, name, send_events=True, moving=None, loading=False,
+               registry=None):
         """ Same thing as ``__delitem__``.
 
         If ``send_events`` is false, suppress the sending of folder events.
-        If ``moving`` is True, the events sent will indicate that a move is
-        in process.
+
+        If ``moving`` is not ``None``, the ``moving`` argument must be the
+        folder to which the named object will be moving.  This value will be
+        passed along as the ``moving`` attribute of the events sent as the
+        result of this action.  If ``loading`` is ``True``, the ``loading``
+        attribute of events sent as a result of calling this method will be
+        ``True`` too.
         """
         name = unicode(name)
         other = self.data[name]
+        oid = get_oid(other, None)
 
-        if send_events:
-            event = ObjectWillBeRemoved(other, self, name, moving)
-            self._notify(event)
+        if registry is None:
+            registry = get_current_registry()
 
-        if hasattr(other, '__parent__'):
-            del other.__parent__
+        with statsd_timer('folder.remove'):
 
-        if hasattr(other, '__name__'):
-            del other.__name__
+            if send_events:
+                event = ObjectWillBeRemoved(
+                    other, self, name, moving=moving, loading=loading
+                    )
+                self._notify(event, registry)
 
-        del self.data[name]
-        self._num_objects.change(-1)
+            if hasattr(other, '__parent__'):
+                del other.__parent__
 
-        if self._order is not None:
-            self._order = tuple([x for x in self._order if x != name])
+            if hasattr(other, '__name__'):
+                del other.__name__
 
-        if send_events:
-            event = ObjectRemoved(other, self, name, moving)
-            self._notify(event)
+            del self.data[name]
+            self._num_objects.change(-1)
 
-        return other
+            if self._order is not None:
+                assert(len(self._order) == len(self._order_oids))
+                idx = self._order.index(name)
+                order = list(self._order)
+                order.pop(idx)
+                order_oids = list(self._order_oids)
+                order_oids.pop(idx)
+                self._order = tuple(order)
+                self._order_oids = tuple(order_oids)
 
-    def copy(self, name, other, newname=None):
+            objectmap = find_objectmap(self)
+
+            removed_oids = set([oid])
+
+            if objectmap is not None and oid is not None:
+                removed_oids = objectmap.remove(oid, moving=moving is not None)
+
+            if send_events:
+                event = ObjectRemoved(other, self, name, removed_oids,
+                                      moving=moving, loading=loading)
+                self._notify(event, registry)
+
+            return other
+
+    def copy(self, name, other, newname=None, registry=None):
         """
         Copy a subobject named ``name`` from this folder to the folder
         represented by ``other``.  If ``newname`` is not none, it is used as
@@ -368,16 +635,17 @@ class Folder(Persistent):
         if newname is None:
             newname = name
 
-        with tempfile.TemporaryFile() as f:
-            obj = self.get(name)
-            obj._p_jar.exportFile(obj._p_oid, f)
-            f.seek(0)
-            new_obj = obj._p_jar.importFile(f)
-            del new_obj.__parent__
-            obj = other.add(newname, new_obj, duplicating=True)
-            return obj
+        if registry is None:
+            registry = get_current_registry()
 
-    def move(self, name, other, newname=None):
+        with statsd_timer('folder.copy'):
+            obj = self[name]
+            newobj = copy(obj)
+            return other.add(
+                newname, newobj, duplicating=obj, registry=registry
+                )
+
+    def move(self, name, other, newname=None, registry=None):
         """
         Move a subobject named ``name`` from this folder to the folder
         represented by ``other``.  If ``newname`` is not none, it is used as
@@ -385,16 +653,27 @@ class Folder(Persistent):
         used.
 
         This operation is done in terms of a remove and an add.  The Removed
-        and WillBeRemoved events sent will indicate that the object is
-        moving.
+        and WillBeRemoved events as well as the Added and WillBeAdded events
+        sent will indicate that the object is moving.
         """
         if newname is None:
             newname = name
-        ob = self.remove(name, moving=True)
-        other.add(newname, ob)
+        if registry is None:
+            registry = get_current_registry()
+        ob = self.remove(
+            name,
+            moving=other,
+            registry=registry
+            )
+        other.add(
+            newname,
+            ob,
+            moving=self,
+            registry=registry
+            )
         return ob
 
-    def rename(self, oldname, newname):
+    def rename(self, oldname, newname, registry=None):
         """
         Rename a subobject from oldname to newname.
 
@@ -402,9 +681,11 @@ class Folder(Persistent):
         and WillBeRemoved events sent will indicate that the object is
         moving.
         """
-        return self.move(oldname, self, newname)
+        if registry is None:
+            registry = get_current_registry()
+        return self.move(oldname, self, newname, registry=registry)
 
-    def replace(self, name, newobject):
+    def replace(self, name, newobject, send_events=True, registry=None):
         """ Replace an existing object named ``name`` in this folder with a
         new object ``newobject``.  If there isn't an object named ``name`` in
         this folder, an exception will *not* be raised; instead, the new
@@ -412,12 +693,223 @@ class Folder(Persistent):
 
         This operation is done in terms of a remove and an add.  The Removed
         and WillBeRemoved events will be sent for the old object, and the
-        WillBeAdded and Add events will be sent for the new object.
+        WillBeAdded and Added events will be sent for the new object.
         """
+        if registry is None:
+            registry = get_current_registry()
         if name in self:
-            del self[name]
-        self[name] = newobject
+            self.remove(name, send_events=send_events)
+        self.add(name, newobject, send_events=send_events, registry=registry)
 
+    def load(self, name, newobject, registry=None):
+        """ A replace method used by the code that loads an existing dump.
+        Events sent during this replace will have a true ``loading`` flag."""
+        if registry is None:
+            registry = get_current_registry()
+        if name in self:
+            self.remove(name, loading=True)
+        self.add(name, newobject, loading=True, registry=registry)
+
+class _AutoNamingFolder(object):
+    def add_next(
+        self,
+        subobject,
+        send_events=True,
+        duplicating=None,
+        moving=None,
+        registry=None
+        ):
+        """Add a subobject, naming it automatically, giving it the name
+        returned by this folder's ``next_name`` method.  It has the same
+        effect as calling :meth:`substanced.folder.Folder.add`, but you
+        needn't provide a name argument.
+
+        This method returns the name of the subobject.
+        """
+
+        name = self.next_name(subobject)
+
+        return self.add(
+            name,
+            subobject,
+            send_events=send_events,
+            duplicating=duplicating,
+            moving=moving,
+            registry=registry
+            )
+
+@implementer(IAutoNamingFolder)
+class SequentialAutoNamingFolder(Folder, _AutoNamingFolder):
+    """ An auto-naming folder which autonames a subobject by sequentially
+    incrementing the maximum key of the folder.
+
+    Example names: ``0000001``, then ``0000002``, and so on.
+
+    This class implements the
+    :class:`substanced.interfaces.IAutoNamingFolder` interface and inherits
+    from :class:`substanced.folder.Folder`.
+
+    This class is typically used as a base class for a custom content type.
+    """
+
+    _autoname_length = 7
+    _autoname_start = -1
+
+    def __init__(
+        self,
+        data=None,
+        family=None,
+        autoname_length=None,
+        autoname_start=None
+        ):
+        """ Constructor.  Data may be an initial dictionary mapping object
+        name to object. Autoname length may be supplied.  If it is not, it
+        will default to 7.  Autoname start may be supplied.  If it is not, it
+        will default to -1."""
+        if autoname_length is not None:
+            self._autoname_length = autoname_length
+        if autoname_start is not None:
+            self._autoname_start = autoname_start
+
+        super(SequentialAutoNamingFolder, self).__init__(
+            data=data,
+            family=family,
+            )
+
+    def next_name(self, subobject):
+        """Return a name string based on:
+
+        - intifying the maximum key of this folder and adding one.
+
+        - zero-filling the left hand side of the result with as many zeroes
+          as are in the value of this folder's ``autoname_length``
+          constructor value.
+
+        If the folder has no items in it, the initial value used as a name
+        will be the value of this folder's ``autoname_start`` constructor
+        value.
+        """
+        try:
+            maxkey = self.data.maxKey()
+        except ValueError: # empty tree
+            maxkey = self._autoname_start
+        name = self._zfill(int(maxkey) + 1)
+        return name
+
+    def _zfill(self, name):
+        return str(int(name)).zfill(self._autoname_length)
+
+    def add(self, name, other, send_events=True, reserved_names=(),
+            duplicating=None, moving=None, loading=False, registry=None):
+        """ The ``add`` method of a SequentialAutoNamingFolder will raise a
+        :exc:`ValueError` if the ``name`` it is passed is not intifiable, as
+        its ``next_name`` method relies on controlling the types of names
+        that are added to it (they must be intifiable).  It will also
+        zero-fill the name passed based on this folder's ``autoname_length``
+        constructor value.  It otherwise just calls its superclass' ``add``
+        method and returns the result."""
+        try:
+            int(name)
+        except:
+            raise ValueError(
+                'You cannot call the add method of a %s with a name that '
+                'is not intifiable; you passed %r' % (
+                    self.__class__.__name__,
+                    name
+                    )
+            )
+        name = self._zfill(name)
+        return super(SequentialAutoNamingFolder, self).add(
+            name,
+            other,
+            send_events=send_events,
+            reserved_names=reserved_names,
+            duplicating=duplicating,
+            moving=moving,
+            loading=loading,
+            registry=registry,
+            )
+
+@implementer(IAutoNamingFolder)
+class RandomAutoNamingFolder(Folder, _AutoNamingFolder):
+    """An auto-naming folder which autonames a subobject using a random
+    string.
+
+    Example names: ``MXF937A``, ``FLTP2F9``.
+
+    This class implements the
+    :class:`substanced.interfaces.IAutoNamingFolder` interface and inherits
+    from :class:`substanced.folder.Folder`.
+
+    This class is typically used as a base class for a custom
+    content type.    
+    """
+
+    _randomchoice = staticmethod(random.choice) # for testing
+    _autoname_length = 7
+
+    def __init__(self, data=None, family=None, autoname_length=None):
+        """ Constructor.  Data may be an initial dictionary mapping object
+        name to object. Autoname length may be supplied.  If it is not, it
+        will default to 7."""
+        if autoname_length is not None:
+            self._autoname_length = autoname_length
+
+        super(RandomAutoNamingFolder, self).__init__(
+            data=data,
+            family=family,
+            )
+
+    def next_name(self, subobject):
+        """Return a name string based on generating a random string composed
+        of digits and uppercase letters of a length determined by this
+        folder's ``autoname_length`` constructor value.  It tries generatoing
+        values continuously until one that is unused is found.
+        """
+        def randchar():
+            return self._randomchoice(
+                string.ascii_uppercase + string.digits
+                )
+        while True:
+            name = ''.join([randchar() for x in range(self._autoname_length)])
+            if not name in self:
+                return name
+
+def node_path_tuple(resource):
+    # cant use resource_path_tuple from pyramid, it wants everything to 
+    # have a __name__
+    return tuple(reversed([getattr(loc, '__name__', '') for 
+                           loc in lineage(resource)]))
+
+class CopyHook(object):
+    def __init__(self, context):
+        self.context = context
+    
+    def __call__(self, toplevel, register):
+        context = self.context
+        # We can't register for a more specific interface than IPersistent so
+        # we have to check for __parent__ here (signifiying that the object is
+        # located) and do something special rather than just registering a copy
+        # hook for things that are guaranteed to have a __parent__ (such as
+        # Zope's ILocation)
+        if hasattr(context, '__parent__'):
+            if not inside(self.context, toplevel):
+                # Return the object if we *don't* want it copied.  I don't
+                # really quite understand why we return it instead of returning
+                # None, and why we raise an exception if we *do* want it copied
+                # but mine is not to wonder why.
+                return context
+        # Otherwise, it's a persistent object that does live inside the object
+        # we're copying or a nonpersistent object.  In such cases, we
+        # definitely want to copy them and we signify this desire by raising
+        # ResumeCopy.
+        raise ResumeCopy
 
 def includeme(config): # pragma: no cover
-    config.scan('.')
+    # The ICopyHook adapter avoids dumping referenced objects that are not
+    # located inside an object containment-wise when that object is copied.  If
+    # it is not registered, every copy winds up dumping all the objects in the
+    # database due to __parent__ pointers.
+    config.registry.registerAdapter(CopyHook, (IPersistent,), ICopyHook)
+    config.hook_zca() # required by zope.copy (it uses a global adapter lkup)
+    

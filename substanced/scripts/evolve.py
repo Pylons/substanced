@@ -8,12 +8,12 @@ from pyramid.paster import (
     bootstrap,
     )
 
-from repoze.evolution import IEvolutionManager
-from repoze.evolution import evolve_to_latest
+from substanced.evolution import evolve_packages
 
 def usage(e=None):
     if e is not None:
         print e
+        print ''
     print "sd_evolve [--latest] [--set-db-version=num] [--package=name] config_uri"
     print "  Evolves new database with changes from scripts in evolve packages"
     print "     - with no arguments, evolve just displays versions"
@@ -30,7 +30,7 @@ def usage(e=None):
 def main(argv=sys.argv):
     name, argv = argv[0], argv[1:]
     latest = False
-    set_version = None
+    set_db_version = None
     package = None
 
     try:
@@ -57,52 +57,34 @@ def main(argv=sys.argv):
             package = v
         if k in ('-s', '--set-db-version'):
             try:
-                set_version = int(v)
-                if set_version < 0:
+                set_db_version = int(v)
+                if set_db_version < 0:
                     raise Exception
             except:
                 usage('Bad version number %s' % v)
-
-    if latest and (set_version is not None):
-        usage('Cannot use both --latest and --set-version together')
-
-    if set_version and not package:
-        usage('Not setting db version to %s (specify --package to '
-              'specify which package to set the db version for)' % set_version)
 
     setup_logging(config_uri)
     env = bootstrap(config_uri)
     root = env['root']
     registry = env['registry']
-    managers = registry.getUtilitiesFor(IEvolutionManager)
 
-    if package and package not in [x[0] for x in managers]:
-        usage('No such package "%s"' % package)
+    try:
+        results = evolve_packages(
+            registry,
+            root,
+            package=package,
+            set_db_version=set_db_version,
+            latest=latest,
+            )
+    except Exception as e:
+        usage(repr(e))
 
-    for pkg_name, factory in managers:
-        if (package is None) or (pkg_name == package):
-            __import__(pkg_name)
-            pkg = sys.modules[pkg_name]
-            VERSION = pkg.VERSION
-            print 'Package %s' % pkg_name
-            manager = factory(root, pkg_name, VERSION, 0)
-            db_version = manager.get_db_version()
-            print 'Code at software version %s' % VERSION
-            print 'Database at version %s' % db_version
-            if set_version is not None:
-                manager._set_db_version(set_version)
-                manager.transaction.commit()
-                print 'Database version set to %s' % set_version
-            else:
-                if VERSION <= db_version:
-                    print 'Nothing to do'
-                elif latest:
-                    evolve_to_latest(manager)
-                    ver = manager.get_db_version()
-                    print 'Evolved %s to %s' % (pkg_name, ver)
-                else:
-                    print 'Not evolving (use --latest to do actual evolution)'
-            print ''
+    for result in results:
+        print 'Package %(package)s' % result
+        print 'Code at software version %(sw_version)s' % result
+        print 'Database at version %(db_version)s' % result
+        print result['message']
+        print ''
 
 if __name__ == '__main__':
     main()

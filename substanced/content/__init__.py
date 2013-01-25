@@ -1,69 +1,125 @@
+import datetime
 import inspect
 
-from pyramid.threadlocal import get_current_registry
+from pyramid.compat import is_nonstr_iter
+from pyramid.location import lineage
 
 import venusian
 
+from ..event import ContentCreated
+
+from ..util import (
+    get_dotted_name,
+    set_created,
+    set_oid,
+    get_factory_type,
+    )
+
 _marker = object()
 
-def get_content_type(resource, registry=None):
-    if registry is None:
-        registry = get_current_registry()
-    return registry.content.typeof(resource)
-
-def get_factory_type(resource):
-    """ If the resource has a __factory_type__ attribute, return it.
-    Otherwise return the full Python dotted name of the resource's class."""
-    factory_type = getattr(resource, '__factory_type__', None)
-    if factory_type is None:
-        factory_type = dotted_name_of(resource.__class__)
-    return factory_type
-
-def dotted_name_of(g):
-    name = g.__name__
-    module = g.__module__
-    return '.'.join((module, name))
-
 class ContentRegistry(object):
-    def __init__(self):
+    """ An object accessible as ``registry.content`` (aka
+    ``request.registry.content``, aka ``config.registry.content``) that
+    contains information about Substance D content types."""
+    def __init__(self, registry):
+        self.registry = registry
         self.factory_types = {}
         self.content_types = {}
         self.meta = {}
 
     def add(self, content_type, factory_type, factory, **meta):
+        """ Add a content type to this registry """
         self.factory_types[factory_type] = content_type
         self.content_types[content_type] = factory
         self.meta[content_type] = meta
 
     def all(self):
+        """ Return all content types known my this registry as a sequence."""
         return list(self.content_types.keys())
 
-    def create(self, content_type, *arg, **kw):
-        factory = self.content_types[content_type]
-        return factory(*arg, **kw)
+    def _utcnow(self): # broken out for testing
+        return datetime.datetime.utcnow()
 
-    def metadata(self, context, name, default=None):
-        content_type = self.typeof(context)
+    def create(self, content_type, *arg, **kw):
+        """ Create an instance of ``content_type`` by calling its factory
+        with ``*arg`` and ``**kw``.  If the meta of the content type has an
+        ``after_create`` value, call it (if it's a string, it's assumed to be
+        a method of the created object, and if it's a sequence, each value
+        should be a string or a callable, which will be called in turn); then
+        send a :class:`substanced.event.ContentCreatedEvent`.  Return the
+        created object.
+
+        If the key ``__oid`` is in the ``kw`` arguments, it will be used as
+        the created object's oid.
+        """
+        factory = self.content_types[content_type]
+        oid = kw.pop('__oid', None) # FBO dump system loader
+        inst = factory(*arg, **kw)
+        if oid is not None:
+            set_oid(inst, oid)
+        set_created(inst, self._utcnow())
+        meta = self.meta[content_type].copy()
+        aftercreate = meta.get('after_create')
+        if aftercreate is not None:
+            if not is_nonstr_iter(aftercreate):
+                aftercreate = [aftercreate]
+            for callback in aftercreate:
+                if isinstance(callback, basestring):
+                    callback = getattr(inst, callback)
+                callback(inst, self.registry)
+        self.registry.subscribers(
+            (ContentCreated(inst, content_type, meta), inst),
+            None
+            )
+        return inst
+
+    def metadata(self, resource, name, default=None):
+        """
+        Return a metadata value for the content type of ``resource`` based on
+        the ``**meta`` value passed to
+        :meth:`~substanced.content.ContentRegistry.add`.  If a value in that
+        content type's metadata was passed using ``name`` as its name, the
+        value will be returned, otherwise ``default`` will be returned.
+        """
+        content_type = self.typeof(resource)
         maybe = self.meta.get(content_type, {}).get(name)
         if maybe is not None:
             return maybe
         return default
 
-    def typeof(self, context):
-        factory_type = get_factory_type(context)
+    def typeof(self, resource):
+        """ Return the content type of ``resource`` """
+        factory_type = get_factory_type(resource)
         content_type = self.factory_types.get(factory_type)
         return content_type
 
-    def istype(self, context, content_type):
-        return content_type == self.typeof(context)
+    def istype(self, resource, content_type):
+        """ Return ``True`` if ``resource`` is of content type
+        ``content_type``, ``False`` otherwise."""
+        return content_type == self.typeof(resource)
 
     def exists(self, content_type):
+        """ Return ``True`` if ``content_type`` has been registered within
+        this content registry, ``False`` otherwise."""
         return content_type in self.content_types.keys()
 
-# venusian decorator that marks a class as a content class
+    def find(self, resource, content_type):
+        """ Return the first object in the :term:`lineage` of the
+        ``resource`` that supplies the ``content_type`` or ``None`` if no
+        such object can be found."""
+        for location in lineage(resource):
+            if self.typeof(location) == content_type:
+                return location
+
+# venusian decorator that marks a content factory
 class content(object):
     """ Use as a decorator for a content factory (usually a class).  Accepts
-    a content type, a factory type (optionally), and a set of meta keywords."""
+    a content type, a factory type (optionally), and a set of meta keywords.
+    These values mean the same thing as they mean for
+    :func:`substanced.content.add_content_type`.  This decorator attaches
+    information to the object it decorates which is used to call
+    :func:`~substanced.content.add_content_type` during a :term:`scan`.
+    """
     venusian = venusian
     def __init__(self, content_type, factory_type=None, **meta):
         self.content_type = content_type
@@ -73,18 +129,56 @@ class content(object):
     def __call__(self, wrapped):
         def callback(context, name, ob):
             config = context.config.with_package(info.module)
-            config.add_content_type(
-                self.content_type, wrapped, factory_type=self.factory_type,
-                **self.meta
-                )
+            add_content_type = getattr(config, 'add_content_type', None)
+            # might not have been included
+            if add_content_type is not None:
+                add_content_type(
+                    self.content_type,
+                    wrapped,
+                    factory_type=self.factory_type,
+                    **self.meta
+                    )
         info = self.venusian.attach(wrapped, callback, category='substanced')
         self.meta['_info'] = info.codeinfo # fbo "action_method"
         return wrapped
 
+# venusian decorator that marks a service factory
+class service(content):
+    """
+    This class is meant to be used as a decorator for a content factory that
+    creates a service object (aka a service factory).  A service object is an
+    instance of a content type that can be looked up by name and which
+    provides a service to application code.  Services have well-known names
+    within a folder.  For example, the ``principals`` service within a folder
+    is 'the principals service', the ``catalog`` object within a folder is
+    'the catalog service' and so on.
+
+    This decorator accepts a content type, a factory type (optionally), and a
+    set of meta keywords.  These values mean the same thing as they mean for
+    the :class:`substanced.content.content` decorator and
+    :func:`substanced.content.add_content_type`.  The decorator attaches
+    information to the object it decorates which is used to call
+    :func:`~substanced.content.add_content_type` during a :term:`scan`.
+
+    There is only one difference between using the
+    :class:`substanced.content.content` decorator and the
+    :class:`substanced.service.service` decorator.  The ``service`` decorator
+    honors a ``service_name`` keyword argument.  If this argument is passed,
+    and a service already exists in the folder by this name, the service will
+    not be shown as addable in the add-content dropdown in the SDI UI.
+    """
+
+    venusian = venusian
+    
+    def __init__(self, content_type, factory_type=None, **meta):
+        meta['is_service'] = True
+        content.__init__(self, content_type, factory_type=factory_type, **meta)
+
 def add_content_type(config, content_type, factory, factory_type=None, **meta):
     """
-    Configurator method which adds a content type.  Call via
-    ``config.add_content_type`` during Pyramid configuration phase.
+    Configurator directive method which register a content type factory with
+    the Substance D type system.  Call via ``config.add_content_type`` during
+    Pyramid configuration phase.
     
     ``content_type`` is a hashable object (usually a string) representing the
     content type.
@@ -111,7 +205,7 @@ def add_content_type(config, content_type, factory, factory_type=None, **meta):
 
     ``factory_type`` is an optional argument that can be used if the same
     factory must be used for two different content types; it is used during
-    content type lookup (e.g. :func:`substanced.content.get_content_type`) to
+    content type lookup (e.g. :func:`substanced.util.get_content_type`) to
     figure out which content type a constructed object is an instance of; it
     only needs to be used when the same factory is used for two different
     content types.  Note that two content types cannot have the same factory
@@ -151,7 +245,7 @@ def add_content_type(config, content_type, factory, factory_type=None, **meta):
     # convenient to be able to use the factory directly (via an import) in
     # user code.
     
-    factory_type, derived_factory = wrap_factory(factory, factory_type)
+    factory_type, derived_factory = _wrap_factory(factory, factory_type)
 
     def register_factory():
         config.registry.content.add(
@@ -177,7 +271,40 @@ def add_content_type(config, content_type, factory, factory_type=None, **meta):
     
     config.action(discrim, callable=register_factory, introspectables=(intr,))
 
-def wrap_factory(factory, factory_type):
+def add_service_type(config, content_type, factory, factory_type=None, **meta):
+    """
+    Configurator directive method which registers a service factory.  Call
+    via ``config.add_service_type`` during Pyramid configuration phase.  All
+    arguments mean the same thing as they mean for the
+    :class:`substanced.content.add_content_type`.
+    
+    A service factory is a special kind of content factory.  A service
+    factory creates a service object.  A service object is an instance of a
+    content type that can be looked up by name and which provides a service
+    to application code.  Services often have well-known names within the
+    services folder.  For example, the ``principals`` object within a
+    services folder is 'the principals service', the ``catalog`` object
+    within a services folder is 'the catalog service' and so on.
+
+    There is only one difference between using the
+    :class:`substanced.content.add_content_type` function and the
+    :class:`substanced.service.add_service_type` decorator. The
+    ``add_service_type`` function honors a ``service_name`` keyword argument
+    in its ``**meta``.  If this argument is passed, and a service already
+    exists in a folder by this name, the service will not
+    be shown as addable in the add-content dropdown in the SDI UI of the
+    folder.
+    """
+    meta['is_service'] = True
+    return add_content_type(
+        config,
+        content_type,
+        factory,
+        factory_type=factory_type,
+        **meta
+        )
+
+def _wrap_factory(factory, factory_type):
     """ Wrap a factory in something that applies a factory type marker
     attribute to an instance created by the factory if necessary.  It's
     necessary if any of the following are true:
@@ -191,10 +318,10 @@ def wrap_factory(factory, factory_type):
     """
  
     if inspect.isclass(factory) and factory_type is None:
-        return dotted_name_of(factory), factory
+        return get_dotted_name(factory), factory
 
     if factory_type is None:
-        factory_type = dotted_name_of(factory)
+        factory_type = get_dotted_name(factory)
 
     def factory_wrapper(*arg, **kw):
         inst = factory(*arg, **kw)
@@ -204,7 +331,7 @@ def wrap_factory(factory, factory_type):
     factory_wrapper.__factory__ = factory
     return factory_type, factory_wrapper
 
-class ContentTypePredicate(object):
+class _ContentTypePredicate(object):
     def __init__(self, val, config):
         self.val = val
         self.registry = config.registry
@@ -215,9 +342,14 @@ class ContentTypePredicate(object):
     phash = text
 
     def __call__(self, context, request):
-        return get_content_type(context, self.registry) == self.val
+        cregistry =  getattr(self.registry, 'content', None)
+        # include() might not have been called
+        if cregistry is not None:
+            return cregistry.istype(context, self.val)
+        return False
 
 def includeme(config): # pragma: no cover
-    config.registry.content = ContentRegistry()
+    config.registry.content = ContentRegistry(config.registry)
     config.add_directive('add_content_type', add_content_type)
-    config.add_view_predicate('content_type', ContentTypePredicate)
+    config.add_directive('add_service_type', add_service_type)
+    config.add_view_predicate('content_type', _ContentTypePredicate)

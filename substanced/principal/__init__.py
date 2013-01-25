@@ -4,21 +4,16 @@ import string
 from persistent import Persistent
 from cryptacular.bcrypt import BCRYPTPasswordManager
 
-from zope.interface import (
-    Interface,
-    implementer,
-    )
+from zope.interface import implementer
 
 import colander
-import deform
-import deform.widget
-import deform_bootstrap.widget
 
 from pyramid.renderers import render
 from pyramid.security import (
     Allow,
     Everyone,
     )
+from pyramid.threadlocal import get_current_registry
 
 from pyramid_mailer import get_mailer
 from pyramid_mailer.message import Message
@@ -31,35 +26,130 @@ from ..interfaces import (
     IPrincipals,
     IPasswordResets,
     IPasswordReset,
+    UserToGroup,
+    UserToPasswordReset,
     )
 
-from ..content import content
-from ..schema import Schema
-from ..service import find_service
+from ..content import (
+    content,
+    service,
+    )
 from ..folder import Folder
-from ..util import oid_of
+from ..objectmap import (
+    find_objectmap,
+    multireference_targetid_property,
+    multireference_target_property,
+    multireference_sourceid_property,
+    multireference_source_property,
+    )
 from ..property import PropertySheet
+from ..schema import (
+    MultireferenceIdSchemaNode,
+    Schema
+    )
+from ..util import (
+    get_oid,
+    renamer,
+    set_acl,
+    find_service,
+    )
+from ..stats import statsd_gauge
 
-class UserToGroup(Interface):
-    """ The reference type used to store users-to-groups references in the
-    object map"""
+def _gen_random_token():
+    length = random.choice(range(10, 16))
+    chars = string.letters + string.digits
+    return ''.join(random.choice(chars) for _ in range(length))
 
-@content(
+@service(
     'Principals',
-    icon='icon-lock'
+    service_name='principals',
+    icon='icon-lock',
+    after_create='after_create',
+    add_view='add_principals_service',
     )
 @implementer(IPrincipals)
 class Principals(Folder):
-    """ Object representing a collection of principals.  Inherits from
-    :class:`substanced.folder.Folder`.  Contains ``users``, an instance of
-    :class:`substanced.principal.Users`, ``groups``, an instance of
-    :class:`substanced.principal.Groups`, and ``resets`` an instance of
-    :class:`substanced.principal.PasswordResets`"""
-    def __init__(self):
-        Folder.__init__(self)
-        self['users'] = Users()
-        self['groups'] = Groups()
-        self['resets'] = PasswordResets()
+    """ Service object representing a collection of principals.  Inherits
+    from :class:`substanced.folder.Folder`.
+
+    If this object is created via
+    :meth:`substanced.content.ContentRegistry.create`, the instance will
+    contain three subobjects:
+
+      ``users``
+
+         an instance of the content type `Users``
+
+      ``groups``
+
+         an instance of the content type ``Groups``
+         
+      ``resets``
+
+         an instance of the content type ``Password Resets``
+
+    If however, an instance of this class is created directly (as opposed to
+    being created via the ``registry.content.create`` API), you'll need to
+    call its ``after_create`` method manually after you've created it
+    to cause the content subobjects described above to be added to it.
+    """
+    def __sdi_addable__(self, context, introspectable):
+        ct = introspectable.get('content_type')
+        if ct in ('Users', 'Groups', 'Password Resets'):
+            return True
+        return False
+        
+    def after_create(self, inst, registry):
+        users = registry.content.create('Users')
+        groups = registry.content.create('Groups')
+        resets = registry.content.create('Password Resets')
+        users.__sdi_deletable__ = False
+        groups.__sdi_deletable__ = False
+        resets.__sdi_deletable__ = False
+        self.add('users', users, registry=registry)
+        self.add('groups', groups, registry=registry)
+        self.add('resets', resets, registry=registry)
+
+    def add_user(self, login, *arg, **kw):
+        """ Add a user to this principal service using the login ``login``.
+        ``*arg`` and ``**kw`` are passed along to
+        ``registry.content.create('User')``"""
+        registry = kw.pop('registry', None)
+        if registry is None:
+            registry = get_current_registry()
+        user = registry.content.create('User', *arg, **kw)
+        self['users'][login] = user
+        return user
+
+    def add_group(self, name, *arg, **kw):
+        """ Add a group to this principal service using the name ``name``.
+        ``*arg`` and ``**kw`` are passed along to
+        ``registry.content.create('Group')``"""
+        registry = kw.pop('registry', None)
+        if registry is None:
+            registry = get_current_registry()
+        group = registry.content.create('Group', *arg, **kw)
+        self['groups'][name] = group
+        return group
+
+    def add_reset(self, user, *arg, **kw):
+        """ Add a password reset to this principal service for the user
+        ``user`` (either a user object or a user id).  ``name``.  ``*arg``
+        and ``**kw`` are passed along to ``registry.content.create('Password
+        Reset')``"""
+        registry = kw.pop('registry', None)
+        if registry is None:
+            registry = get_current_registry()
+        while 1:
+            token = _gen_random_token()
+            if not token in self:
+                break
+        reset = registry.content.create('Password Reset', *arg, **kw)
+        self['resets'][token] = reset
+        set_acl(reset, [(Allow, Everyone, ('sdi.view',))], registry=registry)
+        objectmap = find_objectmap(self)
+        objectmap.connect(user, reset, UserToPasswordReset)
+        return reset
 
 @content(
     'Users',
@@ -68,12 +158,10 @@ class Principals(Folder):
 @implementer(IUsers)
 class Users(Folder):
     """ Object representing a collection of users.  Inherits from
-    :class:`substanced.folder.Folder`.  Contains
-    :class:`substanced.principal.User` objects."""
-    def add_user(self, login, password, email=''):
-        user = User(password, email)
-        self[login] = user
-        return user
+    :class:`substanced.folder.Folder`.  Contains objects of content type
+    'User'."""
+    def __sdi_addable__(self, context, introspectable):
+        return introspectable.get('content_type') == 'User'
 
 @content(
     'Groups',
@@ -82,17 +170,16 @@ class Users(Folder):
 @implementer(IGroups)
 class Groups(Folder):
     """ Object representing a collection of groups.  Inherits from
-    :class:`substanced.folder.Folder`.  Contains
-    :class:`substanced.principal.Group` objects."""
-    def add_group(self, name):
-        group = Group()
-        self[name] = group
-        return group
+    :class:`substanced.folder.Folder`.  Contains objects of content type 'Group'
+    """
+    def __sdi_addable__(self, context, introspectable):
+        return introspectable.get('content_type') == 'Group'
 
 @colander.deferred
 def groupname_validator(node, kw):
-    context = kw['request'].context
-    adding = not IGroup.providedBy(context)
+    request = kw['request']
+    context = request.context
+    adding = not request.registry.content.istype(context, 'Group')
     def exists(node, value):
         principals = find_service(context, 'principals')
         if adding:
@@ -118,15 +205,14 @@ def groupname_validator(node, kw):
         exists,
         )
 
-@colander.deferred
-def members_widget(node, kw):
-    request = kw['request']
-    principals = find_service(request.context, 'principals')
-    values = [(str(oid_of(user)), name) for name, user in 
+def members_choices(context, request):
+    principals = find_service(context, 'principals')
+    if principals is None:
+        return () # fbo dump/load
+    values = [(get_oid(group), name) for name, group in 
               principals['users'].items()]
-    widget = deform_bootstrap.widget.ChosenMultipleWidget(values=values)
-    return widget
-    
+    return values
+
 class GroupSchema(Schema):
     """ The property schema for :class:`substanced.principal.Group`
     objects."""
@@ -139,36 +225,13 @@ class GroupSchema(Schema):
         validator=colander.Length(max=100),
         missing='',
         )
-    members = colander.SchemaNode(
-        deform.Set(allow_empty=True),
-        widget=members_widget,
-        missing=colander.null,
-        preparer=lambda users: set(map(int, users)),
+    memberids = MultireferenceIdSchemaNode(
+        choices_getter=members_choices,
+        title='Members',
         )
 
 class GroupPropertySheet(PropertySheet):
     schema = GroupSchema()
-    
-    def get(self):
-        context = self.context
-        props = {}
-        props['description'] = context.description
-        props['name'] = context.__name__
-        member_strs = map(str, context.get_memberids())
-        props['members'] = member_strs
-        return props
-
-    def set(self, struct):
-        context = self.context
-        if struct['description']:
-            context.description = struct['description']
-        newname = struct['name']
-        oldname = context.__name__
-        if newname != oldname:
-            parent = context.__parent__
-            parent.rename(oldname, newname)
-        context.disconnect()
-        context.connect(*struct['members'])
 
 @content(
     'Group',
@@ -186,50 +249,15 @@ class Group(Folder):
         Folder.__init__(self)
         self.description = description
 
-    def _resolve_member(self, member_or_memberid):
-        objectmap = self.find_service('objectmap')
-        if oid_of(member_or_memberid, None) is None:
-            # it's a group id
-            member = objectmap.object_for(member_or_memberid)
-        else:
-            member = member_or_memberid
-        return member
-
-    def get_memberids(self):
-        """ Returns a sequence of member ids which belong to this group. """
-        objectmap = self.find_service('objectmap')
-        return objectmap.sourceids(self, UserToGroup)
-
-    def get_members(self):
-        """ Returns a generator of member objects which belong to this group. 
-        """
-        objectmap = self.find_service('objectmap')
-        return objectmap.sources(self, UserToGroup)
-
-    def connect(self, *members):
-        """ Connect this group to one or more user objects or user 
-        objectids."""
-        objectmap = self.find_service('objectmap')
-        for memberid in members:
-            member = self._resolve_member(memberid)
-            if member is not None:
-                objectmap.connect(member, self, UserToGroup)
-
-    def disconnect(self, *members):
-        """ Disconnect this group from one or more user objects or user 
-        objectids."""
-        if not members:
-            members = self.get_memberids()
-        objectmap = self.find_service('objectmap')
-        for memberid in members:
-            member = self._resolve_member(memberid)
-            if member is not None:
-                objectmap.disconnect(member, self, UserToGroup)
+    memberids = multireference_targetid_property(UserToGroup)
+    members = multireference_target_property(UserToGroup)
+    name = renamer()
 
 @colander.deferred
 def login_validator(node, kw):
-    context = kw['request'].context
-    adding = not IUser.providedBy(context)
+    request = kw['request']
+    context = request.context
+    adding = not request.registry.content.istype(context, 'User')
     def exists(node, value):
         principals = find_service(context, 'principals')
         if adding:
@@ -255,54 +283,36 @@ def login_validator(node, kw):
         exists,
         )
 
-@colander.deferred
-def groups_widget(node, kw):
-    request = kw['request']
-    principals = find_service(request.context, 'principals')
-    values = [(str(oid_of(group)), name) for name, group in 
+def groups_choices(context, request):
+    principals = find_service(context, 'principals')
+    if principals is None:
+        return () # fbo dump/load
+    values = [(get_oid(group), name) for name, group in 
               principals['groups'].items()]
-    widget = deform_bootstrap.widget.ChosenMultipleWidget(values=values)
-    return widget
+    return values
 
 class UserSchema(Schema):
     """ The property schema for :class:`substanced.principal.User`
     objects."""
-    login = colander.SchemaNode(
+    name = colander.SchemaNode(
         colander.String(),
         validator=login_validator,
+        title='Login',
         )
     email = colander.SchemaNode(
         colander.String(),
-        validator=colander.All(colander.Email(), colander.Length(max=100)),
+        validator=colander.All(
+            colander.Email(),
+            colander.Length(max=100)
+            ),
         )
-    groups = colander.SchemaNode(
-        deform.Set(allow_empty=True),
-        widget=groups_widget,
-        missing=colander.null,
-        preparer=lambda groups: set(map(int, groups)),
+    groupids = MultireferenceIdSchemaNode(
+        choices_getter=groups_choices,
+        title='Groups',
         )
 
 class UserPropertySheet(PropertySheet):
     schema = UserSchema()
-    
-    def get(self):
-        context = self.context
-        props = {}
-        props['email'] = context.email
-        props['login'] = context.__name__
-        props['groups'] = map(str, context.get_groupids())
-        return props
-
-    def set(self, struct):
-        context = self.context
-        context.email = struct['email']
-        newname = struct['login']
-        oldname = context.__name__
-        if newname != oldname:
-            parent = context.__parent__
-            parent.rename(oldname, newname)
-        context.disconnect()
-        context.connect(*struct['groups'])
 
 @content(
     'User',
@@ -319,24 +329,25 @@ class User(Folder):
 
     pwd_manager = BCRYPTPasswordManager()
 
-    def __init__(self, password, email):
+    groupids = multireference_sourceid_property(UserToGroup)
+    groups = multireference_source_property(UserToGroup)
+    name = renamer()
+
+    def __init__(self, password=None, email=None):
         Folder.__init__(self)
-        self.password = self.pwd_manager.encode(password)
+        if password is not None:
+            password = self.pwd_manager.encode(password)
+        self.password = password
         self.email = email
 
-    def _resolve_group(self, group_or_groupid):
-        objectmap = self.find_service('objectmap')
-        if oid_of(group_or_groupid, None) is None:
-            # it's a group id
-            group = objectmap.object_for(group_or_groupid)
-        else:
-            group = group_or_groupid
-        return group
+    def __dump__(self):
+        return dict(password=self.password)
 
     def check_password(self, password):
         """ Checks if the plaintext password passed as ``password`` matches
-        this user's stored, encrypted passowrd.  Returns ``True`` or
+        this user's stored, encrypted password.  Returns ``True`` or
         ``False``."""
+        statsd_gauge('check_password', 1)
         return self.pwd_manager.check(self.password, password)
 
     def set_password(self, password):
@@ -347,9 +358,9 @@ class User(Folder):
         root = request.root
         sitename = getattr(root, 'title', None) or 'Substance D'
         principals = find_service(self, 'principals')
-        resets = principals['resets']
-        reset = resets.add_reset(self)
-        reseturl = request.application_url + request.mgmt_path(reset)
+        reset = principals.add_reset(self)
+        # XXX should this really point at an SDI URL?
+        reseturl = request.application_url + request.sdiapi.mgmt_path(reset)
         message = Message(
             subject = 'Account information for %s' % sitename,
             recipients = [self.email],
@@ -359,41 +370,6 @@ class User(Folder):
         mailer = get_mailer(request)
         mailer.send(message)
 
-    def get_groupids(self, objectmap=None):
-        """ Returns a sequence of group ids which this user is a member of. """
-        if objectmap is None:
-            objectmap = self.find_service('objectmap')
-        return objectmap.targetids(self, UserToGroup)
-
-    def get_groups(self):
-        """ Returns a generator of group objects which this user is a member
-        of."""
-        objectmap = self.find_service('objectmap')
-        return objectmap.targets(self, UserToGroup)
-
-    def connect(self, *groups):
-        """ Connect this user to one or more group objects or group 
-        objectids."""
-        objectmap = self.find_service('objectmap')
-        for groupid in groups:
-            group = self._resolve_group(groupid)
-            if group is not None:
-                objectmap.connect(self, group, UserToGroup)
-
-    def disconnect(self, *groups):
-        """ Disconnect this user from one or more group objects or group 
-        objectids."""
-        if not groups:
-            groups = self.get_groupids()
-        objectmap = self.find_service('objectmap')
-        for groupid in groups:
-            group = self._resolve_group(groupid)
-            if group is not None:
-                objectmap.disconnect(self, group, UserToGroup)
-
-class UserToPasswordReset(object):
-    pass
-
 @content(
     'Password Resets',
     icon='icon-tags'
@@ -401,24 +377,8 @@ class UserToPasswordReset(object):
 @implementer(IPasswordResets)
 class PasswordResets(Folder):
     """ Object representing the current set of password reset requests """
-    def _gen_random_token(self):
-        """ Generates a random token to be used by ``self.add_reset``.
-        """
-        length = random.choice(range(10, 16))
-        chars = string.letters + string.digits
-        return ''.join(random.choice(chars) for _ in range(length))
-
-    def add_reset(self, user):
-        while 1:
-            token = self._gen_random_token()
-            if not token in self:
-                break
-        reset = PasswordReset()
-        self[token] = reset
-        reset.__acl__ = [(Allow, Everyone, ('sdi.view',))]
-        objectmap = self.find_service('objectmap')
-        objectmap.connect(user, reset, UserToPasswordReset)
-        return reset
+    def __sdi_addable__(self, context, introspectable):
+        return introspectable.get('content_type') == 'Password Reset'
 
 @content(
     'Password Reset',
@@ -428,7 +388,7 @@ class PasswordResets(Folder):
 class PasswordReset(Persistent):
     """ Object representing the a single password reset request """
     def reset_password(self, password):
-        objectmap = find_service(self, 'objectmap')
+        objectmap = find_objectmap(self)
         sources = list(objectmap.sources(self, UserToPasswordReset))
         user = sources[0]
         user.set_password(password)
@@ -441,14 +401,11 @@ def groupfinder(userid, request):
     """ A Pyramid authentication policy groupfinder callback that uses the
     Substance D principal system to find groups."""
     context = request.context
-    objectmap = find_service(context, 'objectmap')
+    objectmap = find_objectmap(context)
     if objectmap is None:
         return None
     user = objectmap.object_for(userid)
     if user is None:
         return None
-    return user.get_groupids(objectmap)
+    return user.groupids
 
-def includeme(config): # pragma: no cover
-    config.scan('.')
-    

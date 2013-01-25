@@ -14,10 +14,12 @@ def _makeSite(**kw):
     from ...interfaces import IFolder
     site = testing.DummyResource(__provides__=kw.pop('__provides__', None))
     alsoProvides(site, IFolder)
-    services = testing.DummyResource()
+    objectmap = kw.pop('objectmap', None)
+    if objectmap is not None:
+        site.__objectmap__ = objectmap
     for k, v in kw.items():
-        services[k] = v
-    site['__services__'] = services
+        site[k] = v
+        v.__is_service__ = True
     return site
 
 class TestCatalog(unittest.TestCase):
@@ -25,9 +27,13 @@ class TestCatalog(unittest.TestCase):
     
     def setUp(self):
         self.config = testing.setUp()
+        from zope.deprecation import __show__
+        __show__.off()
 
     def tearDown(self):
         testing.tearDown()
+        from zope.deprecation import __show__
+        __show__.on()
 
     def _getTargetClass(self):
         from .. import Catalog
@@ -35,7 +41,19 @@ class TestCatalog(unittest.TestCase):
         
     def _makeOne(self, *arg, **kw):
         cls = self._getTargetClass()
-        return cls(*arg, **kw)
+        inst = cls(*arg, **kw)
+        inst.__name__ = 'catalog'
+        return inst
+
+    def test___sdi_addable__True(self):
+        inst = self._makeOne()
+        intr = {'meta':{'is_index':True}}
+        self.assertTrue(inst.__sdi_addable__(None, intr))
+
+    def test___sdi_addable__False(self):
+        inst = self._makeOne()
+        intr = {'meta':{}}
+        self.assertFalse(inst.__sdi_addable__(None, intr))
 
     def test_klass_provides_ICatalog(self):
         klass = self._getTargetClass()
@@ -48,6 +66,13 @@ class TestCatalog(unittest.TestCase):
         from ...interfaces import ICatalog
         inst = self._makeOne()
         verifyObject(ICatalog, inst)
+
+    def test_flush(self):
+        inst = self._makeOne()
+        idx = DummyIndex()
+        inst['name'] = idx
+        inst.flush()
+        self.assertEqual(idx.flushed, True)
 
     def test_reset(self):
         catalog = self._makeOne()
@@ -70,62 +95,113 @@ class TestCatalog(unittest.TestCase):
         catalog = self._makeOne(family=BTrees.family32)
         self.failUnless(catalog.family is BTrees.family32)
 
-    def test_index_doc_indexes(self):
+    def test_index_resource_indexes(self):
+        catalog = self._makeOne()
+        idx = DummyIndex()
+        catalog['name'] = idx
+        catalog.index_resource('value', 1)
+        self.assertEqual(idx.oid, 1)
+        self.assertEqual(idx.resource, 'value')
+
+    def test_index_resource_objectids(self):
+        inst = self._makeOne()
+        inst.index_resource(object(), 1)
+        self.assertEqual(list(inst.objectids), [1])
+
+    def test_index_resource_nonint_docid(self):
+        catalog = self._makeOne()
+        idx = DummyIndex()
+        catalog['name'] = idx
+        self.assertRaises(TypeError, catalog.index_resource, 'value', 'abc')
+
+    def test_index_resource_oid_is_None(self):
+        resource = testing.DummyResource()
+        resource.__oid__ = 1
+        catalog = self._makeOne()
+        idx = DummyIndex()
+        catalog['name'] = idx
+        catalog.index_resource(resource)
+        self.assertEqual(idx.oid, 1)
+        self.assertEqual(idx.resource, resource)
+
+    def test_index_doc(self):
         catalog = self._makeOne()
         idx = DummyIndex()
         catalog['name'] = idx
         catalog.index_doc(1, 'value')
-        self.assertEqual(idx.docid, 1)
-        self.assertEqual(idx.value, 'value')
+        self.assertEqual(idx.oid, 1)
+        self.assertEqual(idx.resource, 'value')
 
-    def test_index_doc_objectids(self):
-        inst = self._makeOne()
-        inst.index_doc(1, object())
-        self.assertEqual(list(inst.objectids), [1])
-
-    def test_index_doc_nonint_docid(self):
+    def test_unindex_resource_indexes(self):
         catalog = self._makeOne()
         idx = DummyIndex()
         catalog['name'] = idx
-        self.assertRaises(ValueError, catalog.index_doc, 'abc', 'value')
-
-    def test_unindex_doc_indexes(self):
-        catalog = self._makeOne()
-        idx = DummyIndex()
-        catalog['name'] = idx
-        catalog.unindex_doc(1)
+        catalog.unindex_resource(1)
         self.assertEqual(idx.unindexed, 1)
         
-    def test_unindex_doc_objectids_exists(self):
+    def test_unindex_resource_objectids_exists(self):
+        inst = self._makeOne()
+        inst.objectids.insert(1)
+        inst.unindex_resource(1)
+        self.assertEqual(list(inst.objectids), [])
+
+    def test_unindex_resource_objectids_notexists(self):
+        inst = self._makeOne()
+        inst.unindex_resource(1)
+        self.assertEqual(list(inst.objectids), [])
+
+    def test_index_resource_or_oid_is_resource_without_oid(self):
+        resource = testing.DummyResource()
+        catalog = self._makeOne()
+        self.assertRaises(ValueError, catalog.unindex_resource, resource)
+
+    def test_index_resource_or_oid_is_noninteger(self):
+        catalog = self._makeOne()
+        self.assertRaises(ValueError, catalog.unindex_resource, 'foo')
+
+    def test_unindex_doc(self):
         inst = self._makeOne()
         inst.objectids.insert(1)
         inst.unindex_doc(1)
         self.assertEqual(list(inst.objectids), [])
 
-    def test_unindex_doc_objectids_notexists(self):
-        inst = self._makeOne()
-        inst.unindex_doc(1)
-        self.assertEqual(list(inst.objectids), [])
+    def test_reindex_resource_indexes(self):
+        catalog = self._makeOne()
+        idx = DummyIndex()
+        catalog['name'] = idx
+        catalog.reindex_resource('value', 1)
+        self.assertEqual(idx.reindexed_oid, 1)
+        self.assertEqual(idx.reindexed_resource, 'value')
 
-    def test_reindex_doc_indexes(self):
+    def test_reindex_resource_objectids_exists(self):
+        inst = self._makeOne()
+        inst.objectids.insert(1)
+        inst.reindex_resource(object(), 1)
+        self.assertEqual(list(inst.objectids), [1])
+        
+    def test_reindex_resource_objectids_notexists(self):
+        inst = self._makeOne()
+        inst.reindex_resource(object(), 1)
+        self.assertEqual(list(inst.objectids), [1])
+        
+    def test_reindex_resource_oid_is_None(self):
+        resource = testing.DummyResource()
+        resource.__oid__ = 1
+        catalog = self._makeOne()
+        idx = DummyIndex()
+        catalog['name'] = idx
+        catalog.reindex_resource(resource)
+        self.assertEqual(idx.reindexed_oid, 1)
+        self.assertEqual(idx.reindexed_resource, resource)
+
+    def test_reindex_doc(self):
         catalog = self._makeOne()
         idx = DummyIndex()
         catalog['name'] = idx
         catalog.reindex_doc(1, 'value')
-        self.assertEqual(idx.reindexed_docid, 1)
-        self.assertEqual(idx.reindexed_ob, 'value')
+        self.assertEqual(idx.reindexed_oid, 1)
+        self.assertEqual(idx.reindexed_resource, 'value')
 
-    def test_reindex_doc_objectids_exists(self):
-        inst = self._makeOne()
-        inst.objectids.insert(1)
-        inst.reindex_doc(1, object())
-        self.assertEqual(list(inst.objectids), [1])
-        
-    def test_reindex_doc_objectids_notexists(self):
-        inst = self._makeOne()
-        inst.reindex_doc(1, object())
-        self.assertEqual(list(inst.objectids), [1])
-        
     def test_reindex(self):
         a = testing.DummyModel()
         L = []
@@ -136,12 +212,17 @@ class TestCatalog(unittest.TestCase):
         site = _makeSite(catalog=inst, objectmap=objectmap)
         site['a'] = a
         inst.objectids = [1]
-        inst.reindex_doc = lambda objectid, model: L.append((objectid, model))
+        def reindex_resource(resource, oid=None, action_mode=None):
+            L.append((oid, resource))
+        inst.reindex_resource = reindex_resource
+        inst.flush = lambda *arg, **kw: True
         out = []
         inst.reindex(output=out.append)
-        self.assertEqual(L, [(1, a)])
+        self.assertEqual(len(L), 1)
+        self.assertEqual(L[0][0], 1)
+        self.assertEqual(L[0][1], a)
         self.assertEqual(out,
-                          ["reindexing /a",
+                          ["catalog reindexing /a",
                           '*** committing ***'])
         self.assertEqual(transaction.committed, 1)
 
@@ -157,12 +238,16 @@ class TestCatalog(unittest.TestCase):
         site = _makeSite(catalog=inst, objectmap=objectmap)
         site['a'] = a
         inst.objectids = [1, 2]
-        inst.reindex_doc = lambda objectid, model: L.append((objectid, model))
+        def reindex_resource(resource, oid=None, action_mode=None):
+            L.append((oid, resource))
+        inst.reindex_resource = reindex_resource
+        inst.flush = lambda *arg, **kw: True
         out = []
         inst.reindex(output=out.append)
-        self.assertEqual(L, [(1, a)])
+        self.assertEqual(L[0][0], 1)
+        self.assertEqual(L[0][1], a)
         self.assertEqual(out,
-                          ["reindexing /a",
+                          ["catalog reindexing /a",
                           "error: object at path /b not found",
                           '*** committing ***'])
         self.assertEqual(transaction.committed, 1)
@@ -174,6 +259,7 @@ class TestCatalog(unittest.TestCase):
         objectmap = DummyObjectMap()
         inst = self._makeOne()
         inst.transaction = transaction
+        inst.flush = lambda *arg, **kw: True
         site = _makeSite(catalog=inst, objectmap=objectmap)
         site['a'] = a
         inst.objectids = [1]
@@ -194,19 +280,23 @@ class TestCatalog(unittest.TestCase):
         transaction = DummyTransaction()
         inst = self._makeOne()
         inst.transaction = transaction
+        inst.flush = lambda *arg, **kw: True
         site = _makeSite(catalog=inst, objectmap=objectmap)
         site['a'] = a
         site['b'] = b
         inst.objectids = [1, 2]
-        inst.reindex_doc = lambda objectid, model: L.append((objectid, model))
+        def reindex_resource(resource, oid=None, action_mode=None):
+            L.append((oid, resource))
+        inst.reindex_resource = reindex_resource
         out = []
         inst.reindex(
             path_re=re.compile('/a'), 
             output=out.append
             )
-        self.assertEqual(L, [(1, a)])
+        self.assertEqual(L[0][0], 1)
+        self.assertEqual(L[0][1], a)
         self.assertEqual(out,
-                          ['reindexing /a',
+                          ['catalog reindexing /a',
                           '*** committing ***'])
         self.assertEqual(transaction.committed, 1)
 
@@ -222,13 +312,21 @@ class TestCatalog(unittest.TestCase):
         site['a'] = a
         site['b'] = b
         inst.objectids = [1,2]
-        inst.reindex_doc = lambda objectid, model: L.append((objectid, model))
+        def reindex_resource(resource, oid, action_mode=None):
+            L.append((oid, resource))
+        inst.reindex_resource = reindex_resource
+        inst.flush = lambda *arg, **kw: True
         out = []
         inst.reindex(dry_run=True, output=out.append)
-        self.assertEqual(sorted(L), [(1, a), (2, b)])
+        self.assertEqual(len(L), 2)
+        L.sort()
+        self.assertEqual(L[0][0], 1)
+        self.assertEqual(L[0][1], a)
+        self.assertEqual(L[1][0], 2)
+        self.assertEqual(L[1][1], b)
         self.assertEqual(out,
-                         ['reindexing /a',
-                          'reindexing /b',
+                         ['catalog reindexing /a',
+                          'catalog reindexing /b',
                           '*** aborting ***'])
         self.assertEqual(transaction.aborted, 1)
         self.assertEqual(transaction.committed, 0)
@@ -246,533 +344,80 @@ class TestCatalog(unittest.TestCase):
         index = DummyIndex()
         inst['index'] = index
         self.config.registry._substanced_indexes = {'index':index}
-        index.reindex_doc = lambda objectid, model: L.append((objectid, model))
+        def reindex_resource(resource, oid=None, action_mode=None):
+            L.append((oid, resource))
+        index.reindex_resource = reindex_resource
+        inst.flush = lambda *arg, **kw: True
         out = []
         inst.reindex(indexes=('index',),  output=out.append)
         self.assertEqual(out,
-                          ["reindexing only indexes ('index',)",
-                          'reindexing /a',
+                          ["catalog reindexing only indexes ('index',)",
+                          'catalog reindexing /a',
                           '*** committing ***'])
         self.assertEqual(transaction.committed, 1)
-        self.assertEqual(L, [(1,a)])
-    
-class TestSearch(unittest.TestCase):
-    family = BTrees.family64
-    
-    def setUp(self):
-        self.config = testing.setUp()
+        self.assertEqual(len(L), 1)
+        self.assertEqual(L[0][0], 1)
+        self.assertEqual(L[0][1], a)
 
-    def tearDown(self):
-        testing.tearDown()
+    def _setup_factory(self, factory=None):
+        from substanced.interfaces import ICatalogFactory
+        registry = self.config.registry
+        if factory is None:
+            factory = DummyFactory(True)
+        registry.registerUtility(factory, ICatalogFactory, name='catalog')
 
-    def _getTargetClass(self):
-        from .. import Search
-        return Search
-
-    def _makeOne(self, context, permission_checker=None):
-        adapter = self._getTargetClass()(context, permission_checker)
-        return adapter
-
-    def test_query(self):
-        catalog = DummyCatalog()
-        site = _makeSite(catalog=catalog)
-        adapter = self._makeOne(site)
-        adapter.CatalogQuery = DummyCatalogQuery()
-        q = DummyQuery()
-        num, objectids, resolver = adapter.query(q)
-        self.assertEqual(num, 0)
-        self.assertEqual(list(objectids), [])
-
-    def test_search(self):
-        catalog = DummyCatalog()
-        site = _makeSite(catalog=catalog)
-        adapter = self._makeOne(site)
-        adapter.CatalogQuery = DummyCatalogQuery()
-        num, objectids, resolver = adapter.search()
-        self.assertEqual(num, 0)
-        self.assertEqual(list(objectids), [])
-        
-    def test_sort(self):
-        catalog = DummyCatalog()
-        site = _makeSite(catalog=catalog)
-        adapter = self._makeOne(site)
-        adapter.CatalogQuery = DummyCatalogQuery()
-        docids = self.family.IF.Set([1,2,3])
-        num, objectids, resolver = adapter.sort(docids, 'name')
-        self.assertEqual(num, 0)
-        self.assertEqual(list(objectids), [])
-        
-    def test_sort_with_permission_checker_returns_true(self):
-        ob = object()
-        objectmap = DummyObjectMap({1:[ob, (u'',)]})
-        catalog = DummyCatalog()
-        site = _makeSite(objectmap=objectmap, catalog=catalog)
-        def permitted(ob):
-            return True
-        adapter = self._makeOne(site, permitted)
-        docids = self.family.IF.Set([1])
-        adapter.CatalogQuery = DummyCatalogQuery((1, docids))
-        num, objectids, resolver = adapter.sort(docids, 'name')
-        self.assertEqual(num, 1)
-        self.assertEqual(list(objectids), [1])
-        self.assertEqual(resolver(1), ob)
-        
-    def test_query_peachy_keen(self):
-        ob = object()
-        objectmap = DummyObjectMap({1:[ob, (u'',)]})
-        catalog = DummyCatalog()
-        site = _makeSite(objectmap=objectmap, catalog=catalog)
-        adapter = self._makeOne(site)
-        adapter.CatalogQuery = DummyCatalogQuery((1, [1]))
-        q = DummyQuery()
-        num, objectids, resolver = adapter.query(q)
-        self.assertEqual(num, 1)
-        self.assertEqual(list(objectids), [1])
-        self.assertEqual(resolver(1), ob)
-
-    def test_query_unfound_model(self):
-        catalog = DummyCatalog()
-        objectmap = DummyObjectMap({1:[None, (u'', u'a')]})
-        site = _makeSite(catalog=catalog, objectmap=objectmap)
-        adapter = self._makeOne(site)
-        adapter.CatalogQuery = DummyCatalogQuery((1, [1]))
-        q = DummyQuery()
-        num, objectids, resolver = adapter.query(q)
-        self.assertEqual(num, 1)
-        self.assertEqual(list(objectids), [1])
-        results = map(resolver, objectids)
-        self.assertEqual(results, [None])
-
-    def test_query_unfound_objectid(self):
-        catalog = DummyCatalog()
-        objectmap = DummyObjectMap({})
-        site = _makeSite(catalog=catalog, objectmap=objectmap)
-        adapter = self._makeOne(site)
-        adapter.CatalogQuery = DummyCatalogQuery()
-        q = DummyQuery()
-        num, objectids, resolver = adapter.query(q)
-        self.assertEqual(resolver(123), None)
-
-    def test_query_with_permission_checker_returns_true(self):
-        ob = object()
-        objectmap = DummyObjectMap({1:[ob, (u'',)]})
-        catalog = DummyCatalog()
-        site = _makeSite(objectmap=objectmap, catalog=catalog)
-        def permitted(ob):
-            return True
-        adapter = self._makeOne(site, permitted)
-        adapter.CatalogQuery = DummyCatalogQuery((1, [1]))
-        q = DummyQuery()
-        num, objectids, resolver = adapter.query(q)
-        self.assertEqual(num, 1)
-        self.assertEqual(list(objectids), [1])
-        self.assertEqual(resolver(1), ob)
-
-    def test_query_with_permission_checker_returns_false(self):
-        ob = object()
-        objectmap = DummyObjectMap({1:[ob, (u'',)]})
-        catalog = DummyCatalog()
-        site = _makeSite(objectmap=objectmap, catalog=catalog)
-        def permitted(ob):
-            return False
-        adapter = self._makeOne(site, permitted)
-        adapter.CatalogQuery = DummyCatalogQuery((1, [1]))
-        q = DummyQuery()
-        num, objectids, resolver = adapter.query(q)
-        self.assertEqual(num, 0)
-        self.assertEqual(list(objectids), [])
-        
-    def test_query_with_permission_checker_unfound_model(self):
-        catalog = DummyCatalog()
-        objectmap = DummyObjectMap({1:[None, (u'', u'a')]})
-        site = _makeSite(catalog=catalog, objectmap=objectmap)
-        def permitted(ob): return True
-        adapter = self._makeOne(site, permitted)
-        adapter.CatalogQuery = DummyCatalogQuery((1, [1]))
-        q = DummyQuery()
-        num, objectids, resolver = adapter.query(q)
-        self.assertEqual(num, 0)
-        self.assertEqual(list(objectids), [])
-
-    def test_search_with_permission_checker_returns_true(self):
-        ob = object()
-        objectmap = DummyObjectMap({1:[ob, (u'',)]})
-        catalog = DummyCatalog()
-        site = _makeSite(objectmap=objectmap, catalog=catalog)
-        def permitted(ob):
-            return True
-        adapter = self._makeOne(site, permitted)
-        adapter.CatalogQuery = DummyCatalogQuery((1, [1]))
-        num, objectids, resolver = adapter.search()
-        self.assertEqual(num, 1)
-        self.assertEqual(list(objectids), [1])
-        self.assertEqual(resolver(1), ob)
-
-    def test_search_with_permission_checker_returns_false(self):
-        ob = object()
-        objectmap = DummyObjectMap({1:[ob, (u'',)]})
-        catalog = DummyCatalog()
-        site = _makeSite(objectmap=objectmap, catalog=catalog)
-        def permitted(ob):
-            return False
-        adapter = self._makeOne(site, permitted)
-        adapter.CatalogQuery = DummyCatalogQuery((1, [1]))
-        num, objectids, resolver = adapter.search()
-        self.assertEqual(num, 0)
-        self.assertEqual(list(objectids), [])
-        
-    def test_search_with_permission_checker_unfound_model(self):
-        catalog = DummyCatalog()
-        objectmap = DummyObjectMap({1:[None, (u'', u'a')]})
-        site = _makeSite(catalog=catalog, objectmap=objectmap)
-        def permitted(ob): return True
-        adapter = self._makeOne(site, permitted)
-        adapter.CatalogQuery = DummyCatalogQuery((1, [1]))
-        num, objectids, resolver = adapter.search()
-        self.assertEqual(num, 0)
-        self.assertEqual(list(objectids), [])
-
-class TestSearchFunctional(unittest.TestCase):
-    family = BTrees.family64
-    
-    def setUp(self):
-        self.config = testing.setUp()
-
-    def tearDown(self):
-        testing.tearDown()
-
-    def _getTargetClass(self):
-        from .. import Search
-        return Search
-    
-    def _makeOne(self, context, permission_checker=None, family=None):
-        adapter = self._getTargetClass()(context, permission_checker,
-                                         family=self.family)
-        return adapter
-    
-    def test_search(self):
-        objectmap = DummyObjectMap()
-        catalog = DummyCatalog()
-        site = _makeSite(objectmap=objectmap, catalog=catalog)
-        IFSet = self.family.IF.Set
-        adapter = self._makeOne(site)
-        c1 = IFSet([1, 2, 3])
-        idx1 = DummyIndex(c1)
-        catalog['name1'] = idx1
-        c2 = IFSet([3, 4, 5])
-        idx2 = DummyIndex(c2)
-        catalog['name2'] = idx2
-        numdocs, result, resolver = adapter.search(name1={}, name2={})
-        self.assertEqual(numdocs, 1)
-        self.assertEqual(list(result), [3])
-
-    def test_search_index_returns_empty(self):
-        IFSet = self.family.IF.Set
-        objectmap = DummyObjectMap()
-        catalog = DummyCatalog()
-        site = _makeSite(objectmap=objectmap, catalog=catalog)
-        adapter = self._makeOne(site)
-        c1 = IFSet([])
-        idx1 = DummyIndex(c1)
-        catalog['name1'] = idx1
-        c2 = IFSet([3, 4, 5])
-        idx2 = DummyIndex(c2)
-        catalog['name2'] = idx2
-        numdocs, result, resolver = adapter.search(name1={}, name2={})
-        self.assertEqual(numdocs, 0)
-        self.assertEqual(list(result), [])
-
-    def test_search_no_intersection(self):
-        IFSet = self.family.IF.Set
-        objectmap = DummyObjectMap()
-        catalog = DummyCatalog()
-        site = _makeSite(objectmap=objectmap, catalog=catalog)
-        adapter = self._makeOne(site)
-        c1 = IFSet([1, 2])
-        idx1 = DummyIndex(c1)
-        catalog['name1'] = idx1
-        c2 = IFSet([3, 4, 5])
-        idx2 = DummyIndex(c2)
-        catalog['name2'] = idx2
-        numdocs, result, resolver = adapter.search(name1={}, name2={})
-        self.assertEqual(numdocs, 0)
-        self.assertEqual(list(result), [])
-
-    def test_search_index_query_order_returns_empty(self):
-        IFSet = self.family.IF.Set
-        objectmap = DummyObjectMap()
-        catalog = DummyCatalog()
-        site = _makeSite(objectmap=objectmap, catalog=catalog)
-        adapter = self._makeOne(site)
-        c1 = IFSet([1, 2])
-        idx1 = DummyIndex(c1)
-        catalog['name1'] = idx1
-        c2 = IFSet([])
-        idx2 = DummyIndex(c2)
-        catalog['name2'] = idx2
-        numdocs, result, resolver = adapter.search(
-            name1={},
-            name2={},
-            index_query_order=['name2', 'name1']
+    def test_update_indexes_nothing_to_do(self):
+        self._setup_factory(DummyFactory(False))
+        registry = self.config.registry
+        out = []
+        inst = self._makeOne()
+        transaction = DummyTransaction()
+        inst.transaction = transaction
+        inst.update_indexes(registry=registry,  output=out.append)
+        self.assertEqual(
+            out,  
+            ['catalog update_indexes: no indexes added or removed'],
             )
-        self.assertEqual(numdocs, 0)
-        self.assertEqual(list(result), [])
+        self.assertEqual(transaction.committed, 0)
+        self.assertEqual(transaction.aborted, 0)
 
-    def test_search_no_indexes_in_search(self):
-        objectmap = DummyObjectMap()
-        catalog = DummyCatalog()
-        site = _makeSite(objectmap=objectmap, catalog=catalog)
-        adapter = self._makeOne(site)
-        numdocs, result, resolver = adapter.search()
-        self.assertEqual(numdocs, 0)
-        self.assertEqual(list(result), [])
+    def test_update_indexes_replace(self):
+        self._setup_factory()
+        registry = self.config.registry
+        out = []
+        inst = self._makeOne()
+        transaction = DummyTransaction()
+        inst.transaction = transaction
+        inst.update_indexes(registry=registry, output=out.append, replace=True)
+        self.assertEqual(out, ['*** committing ***'])
+        self.assertEqual(transaction.committed, 1)
+        self.assertEqual(transaction.aborted, 0)
+        self.assertTrue(inst.replaced)
 
-    def test_search_noindex(self):
-        objectmap = DummyObjectMap()
-        catalog = DummyCatalog()
-        site = _makeSite(objectmap=objectmap, catalog=catalog)
-        adapter = self._makeOne(site)
-        self.assertRaises(ValueError, adapter.search, name1={})
+    def test_update_indexes_noreplace(self):
+        self._setup_factory()
+        registry = self.config.registry
+        out = []
+        inst = self._makeOne()
+        transaction = DummyTransaction()
+        inst.transaction = transaction
+        inst.update_indexes(registry=registry, output=out.append)
+        self.assertEqual(out, ['*** committing ***'])
+        self.assertEqual(transaction.committed, 1)
+        self.assertEqual(transaction.aborted, 0)
+        self.assertTrue(inst.synced)
 
-    def test_search_noindex_ordered(self):
-        objectmap = DummyObjectMap()
-        catalog = DummyCatalog()
-        site = _makeSite(objectmap=objectmap, catalog=catalog)
-        adapter = self._makeOne(site)
-        self.assertRaises(ValueError, adapter.search, name1={},
-                          index_query_order=['name1'])
-
-    def test_search_with_sortindex_ascending(self):
-        IFSet = self.family.IF.Set
-        objectmap = DummyObjectMap()
-        catalog = DummyCatalog()
-        site = _makeSite(objectmap=objectmap, catalog=catalog)
-        adapter = self._makeOne(site)
-        c1 = IFSet([1, 2, 3, 4, 5])
-        idx1 = DummyIndex(c1)
-        catalog['name1'] = idx1
-        c2 = IFSet([3, 4, 5])
-        idx2 = DummyIndex(c2)
-        catalog['name2'] = idx2
-        numdocs, result, resolver = adapter.search(
-            name1={}, name2={}, sort_index='name1')
-        self.assertEqual(numdocs, 3)
-        self.assertEqual(list(result), ['sorted1', 'sorted2', 'sorted3'])
-
-    def test_search_with_sortindex_reverse(self):
-        IFSet = self.family.IF.Set
-        objectmap = DummyObjectMap()
-        catalog = DummyCatalog()
-        site = _makeSite(objectmap=objectmap, catalog=catalog)
-        adapter = self._makeOne(site)
-        c1 = IFSet([1, 2, 3, 4, 5])
-        idx1 = DummyIndex(c1)
-        catalog['name1'] = idx1
-        c2 = IFSet([3, 4, 5])
-        idx2 = DummyIndex(c2)
-        catalog['name2'] = idx2
-        numdocs, result, resolver = adapter.search(
-            name1={}, name2={}, sort_index='name1',
-            reverse=True)
-        self.assertEqual(numdocs, 3)
-        self.assertEqual(list(result), ['sorted3', 'sorted2', 'sorted1'])
-
-    def test_search_with_sort_type(self):
-        IFSet = self.family.IF.Set
-        objectmap = DummyObjectMap()
-        catalog = DummyCatalog()
-        site = _makeSite(objectmap=objectmap, catalog=catalog)
-        adapter = self._makeOne(site)
-        c1 = IFSet([1, 2, 3, 4, 5])
-        idx1 = DummyIndex(c1)
-        catalog['name1'] = idx1
-        fwscan = object()
-        numdocs, result, resolver = adapter.search(
-            name1={},
-            sort_index='name1',
-            limit=1,
-            sort_type=fwscan
-            )
-        self.assertEqual(idx1.sort_type, fwscan)
-
-    def test_search_limited(self):
-        IFSet = self.family.IF.Set
-        objectmap = DummyObjectMap()
-        catalog = DummyCatalog()
-        site = _makeSite(objectmap=objectmap, catalog=catalog)
-        adapter = self._makeOne(site)
-        c1 = IFSet([1, 2, 3, 4, 5])
-        idx1 = DummyIndex(c1)
-        catalog['name1'] = idx1
-        numdocs, result, resolver = adapter.search(
-            name1={}, sort_index='name1', limit=1
-            )
-        self.assertEqual(numdocs, 1)
-        self.assertEqual(idx1.limit, 1)
-
-    def _test_functional_merge(self, **extra):
-        objectmap = DummyObjectMap()
-        catalog = DummyCatalog()
-        site = _makeSite(objectmap=objectmap, catalog=catalog)
-        adapter = self._makeOne(site)
-        from ..indexes import FieldIndex
-        from ..indexes import KeywordIndex
-        from ..indexes import TextIndex
-        class Content(object):
-            def __init__(self, field, keyword, text):
-                self.field = field
-                self.keyword = keyword
-                self.text = text
-        field = FieldIndex('field')
-        keyword = KeywordIndex('keyword')
-        text = TextIndex('text')
-        catalog['field'] = field
-        catalog['keyword'] = keyword
-        catalog['text'] = text
-        map = {
-            1:Content('field1', ['keyword1', 'same'], 'text one'),
-            2:Content('field2', ['keyword2', 'same'], 'text two'),
-            3:Content('field3', ['keyword3', 'same'], 'text three'),
-            }
-        for num, doc in map.items():
-            for idx in catalog.values():
-                idx.index_doc(num, doc)
-        num, result, resolver = adapter.search(
-            field=('field1', 'field1'), **extra)
-        self.assertEqual(num, 1)
-        self.assertEqual(list(result), [1])
-        num, result, resolver = adapter.search(
-            field=('field2', 'field2'), **extra)
-        self.assertEqual(num, 1)
-        self.assertEqual(list(result), [2])
-        num, result, resolver = adapter.search(field=('field2', 'field2'),
-                                               keyword='keyword2', **extra)
-        self.assertEqual(num, 1)
-        self.assertEqual(list(result), [2])
-        num, result, resolver = adapter.search(
-            field=('field2', 'field2'), text='two',
-            **extra)
-        self.assertEqual(num, 1)
-        self.assertEqual(list(result), [2])
-        num, result, resolver = adapter.search(
-            text='text', keyword='same', **extra)
-        self.assertEqual(num, 3)
-        self.assertEqual(list(result), [1,2,3])
-
-    def test_functional_index_merge_unordered(self):
-        return self._test_functional_merge()
-
-    def test_functional_index_merge_ordered(self):
-        return self._test_functional_merge(
-            index_query_order=['field', 'keyword', 'text'])
-
-class Test_query_catalog(unittest.TestCase):
-    def setUp(self):
-        self.config = testing.setUp()
-
-    def tearDown(self):
-        testing.tearDown()
-
-    def _makeOne(self, request):
-        from .. import query_catalog
-        return query_catalog(request)
-
-    def test_it(self):
-        request = testing.DummyRequest()
-        request.context = testing.DummyResource()
-        inst = self._makeOne(request)
-        inst.Search = DummySearch(True)
-        result = inst('q', a=1)
-        self.assertEqual(result, True)
-
-    def test_it_with_permitted_no_auth_policy(self):
-        request = testing.DummyRequest()
-        request.context = testing.DummyResource()
-        inst = self._makeOne(request)
-        inst.Search = DummySearch(True)
-        inst('q', a=1, permitted='view')
-        self.assertFalse(inst.Search.checker)
-
-    def test_with_permitted_with_auth_policy(self):
-        self.config.testing_securitypolicy(permissive=True)
-        request = testing.DummyRequest()
-        request.context = testing.DummyResource()
-        inst = self._makeOne(request)
-        inst.Search = DummySearch(True)
-        inst('q', a=1, permitted='view')
-        self.assertTrue(inst.Search.checker(request.context))
-
-    def test_with_permitted_with_auth_policy_nonpermissive(self):
-        self.config.testing_securitypolicy(permissive=False)
-        request = testing.DummyRequest()
-        request.context = testing.DummyResource()
-        inst = self._makeOne(request)
-        inst.Search = DummySearch(True)
-        inst('q', a=1, permitted='view')
-        self.assertFalse(inst.Search.checker(request.context))
-        
-    def test_it_with_permitted_permitted_has_iter(self):
-        self.config.testing_securitypolicy(permissive=True)
-        request = testing.DummyRequest()
-        request.context = testing.DummyResource()
-        inst = self._makeOne(request)
-        inst.Search = DummySearch(True)
-        inst('q', a=1, permitted=(['bob'], 'view'))
-        self.assertTrue(inst.Search.checker(request.context))
-        
-class Test_search_catalog(unittest.TestCase):
-    def setUp(self):
-        self.config = testing.setUp()
-
-    def tearDown(self):
-        testing.tearDown()
-        
-    def _makeOne(self, request):
-        from .. import search_catalog
-        return search_catalog(request)
-
-    def test_it(self):
-        request = testing.DummyRequest()
-        request.context = testing.DummyResource()
-        inst = self._makeOne(request)
-        inst.Search = DummySearch(True)
-        result = inst(a=1)
-        self.assertEqual(result, True)
-
-    def test_it_with_permitted_no_auth_policy(self):
-        request = testing.DummyRequest()
-        request.context = testing.DummyResource()
-        inst = self._makeOne(request)
-        inst.Search = DummySearch(True)
-        inst(a=1, permitted='view')
-        self.assertFalse(inst.Search.checker)
-
-    def test_with_permitted_with_auth_policy(self):
-        self.config.testing_securitypolicy(permissive=True)
-        request = testing.DummyRequest()
-        request.context = testing.DummyResource()
-        inst = self._makeOne(request)
-        inst.Search = DummySearch(True)
-        inst(a=1, permitted='view')
-        self.assertTrue(inst.Search.checker(request.context))
-
-    def test_with_permitted_with_auth_policy_nonpermissive(self):
-        self.config.testing_securitypolicy(permissive=False)
-        request = testing.DummyRequest()
-        request.context = testing.DummyResource()
-        inst = self._makeOne(request)
-        inst.Search = DummySearch(True)
-        inst(a=1, permitted='view')
-        self.assertFalse(inst.Search.checker(request.context))
-        
-    def test_it_with_permitted_permitted_has_iter(self):
-        self.config.testing_securitypolicy(permissive=True)
-        request = testing.DummyRequest()
-        request.context = testing.DummyResource()
-        inst = self._makeOne(request)
-        inst.Search = DummySearch(True)
-        inst(a=1, permitted=(['bob'], 'view'))
-        self.assertTrue(inst.Search.checker(request.context))
+    def test_update_indexes_dryrun(self):
+        self._setup_factory()
+        registry = self.config.registry
+        out = []
+        inst = self._makeOne()
+        transaction = DummyTransaction()
+        inst.transaction = transaction
+        inst.update_indexes(registry=registry, output=out.append, dry_run=True)
+        self.assertEqual(out, ['*** aborting ***'])
+        self.assertEqual(transaction.committed, 0)
+        self.assertEqual(transaction.aborted, 1)
 
 class Test_is_catalogable(unittest.TestCase):
     def setUp(self):
@@ -785,30 +430,166 @@ class Test_is_catalogable(unittest.TestCase):
         from .. import is_catalogable
         return is_catalogable(resource, registry)
 
+    def _registerIndexView(self):
+        from zope.interface import Interface
+        from substanced.interfaces import IIndexView
+        self.config.registry.registerAdapter(True, (Interface,), IIndexView)
+
     def test_no_registry_passed(self):
         resource = Dummy()
-        resource.result = True
-        self.config.registry.content = DummyContent()
+        self._registerIndexView()
         self.assertTrue(self._callFUT(resource))
 
     def test_true(self):
         resource = Dummy()
-        resource.result = True
-        registry = Dummy()
-        registry.content = DummyContent()
+        self._registerIndexView()
+        registry = self.config.registry
         self.assertTrue(self._callFUT(resource, registry))
 
     def test_false(self):
         resource = Dummy()
-        resource.result = False
-        registry = Dummy()
-        registry.content = DummyContent()
+        registry = self.config.registry
         self.assertFalse(self._callFUT(resource, registry))
 
-class TestCatalogablePredicate(unittest.TestCase):
+class Test_add_catalog_factory(unittest.TestCase):
+    def setUp(self):
+        self.config = testing.setUp()
+
+    def tearDown(self):
+        testing.tearDown()
+        
+    def _callFUT(self, config, name, factory):
+        from .. import add_catalog_factory
+        return add_catalog_factory(config, name, factory)
+
+    def test_it(self):
+        from substanced.interfaces import ICatalogFactory
+        from substanced.catalog import Field
+        config = DummyConfigurator(registry=self.config.registry)
+        class Factory(object):
+            index = Field()
+        self._callFUT(config, 'name', Factory)
+        self.assertEqual(len(config.actions), 1)
+        action = config.actions[0]
+        self.assertEqual(
+            action['discriminator'],
+            ('sd-catalog-factory', 'name')
+            )
+        self.assertEqual(
+            action['introspectables'], (config.intr,)
+            )
+        self.assertEqual(config.intr['name'], 'name')
+        self.assertEqual(config.intr['factory'].__class__.__name__,
+                         'CatalogFactory')
+        callable = action['callable']
+        callable()
+        self.assertEqual(
+            self.config.registry.getUtility(ICatalogFactory, 'name'),
+            config.intr['factory']
+            )
+
+class Test_add_indexview(unittest.TestCase):
+    def setUp(self):
+        self.config = testing.setUp()
+
+    def tearDown(self):
+        testing.tearDown()
+        
+    def _callFUT(
+        self,
+        config,
+        view,
+        catalog_name,
+        index_name,
+        context=None,
+        attr=None,
+        ):
+        from .. import add_indexview
+        return add_indexview(
+            config, view, catalog_name, index_name, context=context, attr=attr
+            )
+
+    def test_it_func(self):
+        from zope.interface import Interface
+        from substanced.interfaces import IIndexView
+        config = DummyConfigurator(registry=self.config.registry)
+        def view(resource, default): return True
+        self._callFUT(config, view, 'catalog', 'index')
+        self.assertEqual(len(config.actions), 1)
+        action = config.actions[0]
+        self.assertEqual(
+            action['discriminator'],
+            ('sd-index-view', 'catalog', 'index', Interface)
+            )
+        self.assertEqual(
+            action['introspectables'], (config.intr,)
+            )
+        self.assertEqual(config.intr['catalog_name'], 'catalog')
+        self.assertEqual(config.intr['index_name'], 'index')
+        self.assertEqual(config.intr['name'], 'catalog|index')
+        self.assertEqual(config.intr['callable'], view)
+        self.assertEqual(config.intr['attr'], None)
+        callable = action['callable']
+        callable()
+        wrapper = self.config.registry.adapters.lookup(
+            (Interface,), IIndexView, name='catalog|index')
+        self.assertEqual(config.intr['derived_callable'], wrapper)
+
+    def test_it_cls_with_attr(self):
+        from zope.interface import Interface
+        from substanced.interfaces import IIndexView
+        config = DummyConfigurator(registry=self.config.registry)
+        class View(object):
+            def amethod(self, default): pass
+        self._callFUT(config, View, 'catalog', 'index', attr='amethod')
+        self.assertEqual(len(config.actions), 1)
+        action = config.actions[0]
+        self.assertEqual(
+            action['discriminator'],
+            ('sd-index-view', 'catalog', 'index', Interface)
+            )
+        self.assertEqual(
+            action['introspectables'], (config.intr,)
+            )
+        self.assertEqual(config.intr['catalog_name'], 'catalog')
+        self.assertEqual(config.intr['index_name'], 'index')
+        self.assertEqual(config.intr['name'], 'catalog|index')
+        self.assertEqual(config.intr['callable'], View)
+        self.assertEqual(config.intr['attr'], 'amethod')
+        callable = action['callable']
+        callable()
+        wrapper = self.config.registry.adapters.lookup(
+            (Interface,), IIndexView, name='catalog|index')
+        self.assertEqual(config.intr['derived_callable'], wrapper)
+
+class Test_catalog_factory(unittest.TestCase):
+    def setUp(self):
+        self.config = testing.setUp()
+
+    def tearDown(self):
+        testing.tearDown()
+        
+    def _makeOne(self, name):
+        from .. import catalog_factory
+        return catalog_factory(name)
+
+    def test_it(self):
+        class Foo(object):
+            pass
+        inst = self._makeOne('catalog')
+        venusian = DummyVenusian()
+        inst.venusian = venusian
+        context = testing.DummyResource()
+        context.config = DummyConfigurator(None)
+        result = inst(Foo)
+        self.assertEqual(result, Foo)
+        venusian.callback(context, None, 'abc')
+        self.assertEqual(context.config.catalog_factory, ('catalog', Foo))
+
+class Test_CatalogablePredicate(unittest.TestCase):
     def _makeOne(self, val, config):
-        from .. import CatalogablePredicate
-        return CatalogablePredicate(val, config)
+        from .. import _CatalogablePredicate
+        return _CatalogablePredicate(val, config)
 
     def test_text(self):
         config = Dummy()
@@ -833,22 +614,137 @@ class TestCatalogablePredicate(unittest.TestCase):
         inst.is_catalogable = is_catalogable
         self.assertEqual(inst(None, None), True)
 
-class DummySearch(object):
-    def __init__(self, result):
-        self.result = result
+class Test_catalog_buttons(unittest.TestCase):
+    def setUp(self):
+        testing.setUp()
 
-    def __call__(self, context, checker=None):
-        self.checker = checker
+    def tearDown(self):
+        testing.tearDown()
+
+    def test_it(self):
+        from .. import catalog_buttons
+        context = testing.DummyResource()
+        request = testing.DummyRequest()
+        default_buttons = [1]
+        buttons = catalog_buttons(context, request, default_buttons)
+        self.assertEqual(buttons,
+                         [
+                             {'buttons':
+                              [{'text': 'Reindex',
+                                'class': 'btn-primary btn-sdi-sel',
+                                'id': 'reindex',
+                                'value': 'reindex',
+                                'name': 'form.reindex'}],
+                              'type': 'single'},
+                             1])
+
+class Test_IndexViewMapper(unittest.TestCase):
+    def _makeOne(self, attr=None):
+        from .. import _IndexViewMapper
+        return _IndexViewMapper(attr=attr)
+
+    def test_call_class(self):
+        class Foo(object):
+            def __init__(self, resource):
+                self.resource = resource
+
+            def __call__(self, default):
+                return self.resource
+        inst = self._makeOne()
+        view = inst(Foo)
+        result = view('123', None)
+        self.assertEqual(result, '123')
+
+    def test_call_class_with_attr(self):
+        class Foo(object):
+            def __init__(self, resource):
+                self.resource = resource
+
+            def meth(self, default):
+                return self.resource
+        inst = self._makeOne(attr='meth')
+        view = inst(Foo)
+        result = view('123', None)
+        self.assertEqual(result, '123')
+
+    def test_call_function(self):
+        def foo(resource, default):
+            return resource
+        inst = self._makeOne()
+        view = inst(foo)
+        result = view('123', None)
+        self.assertEqual(result, '123')
+
+    def test_call_function_with_attr(self):
+        def foo(): pass
+        def bar(resource, default):
+            return resource
+        foo.bar = bar
+        inst = self._makeOne(attr='bar')
+        view = inst(foo)
+        result = view('123', None)
+        self.assertEqual(result, '123')
+
+class TestCatalogsService(unittest.TestCase):
+    def _makeOne(self, *arg, **kw):
+        from .. import CatalogsService
+        inst = CatalogsService(*arg, **kw)
+        return inst
+
+    def test_add_catalog_update_indexes_defaults_True(self):
+        inst = self._makeOne()
+        inst.Catalog = DummyCatalog
+        catalog = inst.add_catalog('foo')
+        self.assertTrue('foo' in inst)
+        self.assertTrue(catalog.updated)
+        self.assertEqual(catalog.indexed, [1])
+
+    def test_add_catalog_update_indexes_false(self):
+        inst = self._makeOne()
+        inst.Catalog = DummyCatalog
+        inst.add_catalog('foo', update_indexes=False)
+        catalog = inst['foo']
+        self.assertFalse(catalog.__sdi_deletable__)
+        self.assertEqual(catalog.indexed, [1])
+
+    def test_add_catalog_with_update_indexes(self):
+        inst = self._makeOne()
+        inst.Catalog = DummyCatalog
+        catalog = inst.add_catalog('foo', update_indexes=True)
+        self.assertTrue('foo' in inst)
+        self.assertTrue(catalog.updated)
+
+    def test___sdi_addable__(self):
+        inst = self._makeOne()
+        self.assertFalse(inst.__sdi_addable__(None, None))
+
+class DummyIntrospectable(dict):
+    pass
+
+class DummyConfigurator(object):
+    def __init__(self, registry):
+        self.actions = []
+        self.intr = DummyIntrospectable()
+        self.registry = registry
+        self.indexes = []
+
+    def action(self, discriminator, callable, order=None, introspectables=()):
+        self.actions.append(
+            {
+            'discriminator':discriminator,
+            'callable':callable,
+            'order':order,
+            'introspectables':introspectables,
+            })
+
+    def with_package(self, package):
         return self
 
-    def query(self, *arg, **kw):
-        return self.result
+    def introspectable(self, category, discriminator, name, single):
+        return self.intr
 
-    def search(self, **kw):
-        return self.result
-
-class DummyQuery(object):
-    pass    
+    def add_catalog_factory(self, name, cls, **extra):
+        self.catalog_factory = (name, cls)
 
 class DummyObjectMap(object):
     def __init__(self, objectid_to=None): 
@@ -866,28 +762,19 @@ class DummyObjectMap(object):
             return
         return data[0]
 
-class DummyCatalogQuery(object):
-    family = BTrees.family64
-    def __init__(self, result=(0, [])):
-        self.result = result
-
-    def query(self, q, **kw):
-        return self.result
-
-    def search(self, **kw):
-        return self.result
-
-    def sort(self, *arg, **kw):
-        return self.result
-
-    def __call__(self, catalog, family=None):
-        self.catalog = catalog
-        if family is not None:
-            self.family = family
-        return self
+    def add(self, node, path_tuple, duplicating=False, moving=False):
+        pass
 
 class DummyCatalog(dict):
-    pass
+    __oid__ = 1
+    def __init__(self):
+        self.indexed = []
+        
+    def update_indexes(self, *arg, **kw):
+        self.updated = True
+
+    def index_resource(self, resource, oid=None, action_mode=None):
+        self.indexed.append(oid)
 
 class DummyTransaction(object):
     def __init__(self):
@@ -904,8 +791,9 @@ class DummyTransaction(object):
 @implementer(IIndex)
 class DummyIndex(object):
 
-    value = None
-    docid = None
+    resource = None
+    oid = None
+    action_mode = None
     limit = None
     sort_type = None
 
@@ -913,23 +801,23 @@ class DummyIndex(object):
         self.arg = arg
         self.kw = kw
 
-    def index_doc(self, docid, value):
-        self.docid = docid
-        self.value = value
-        return value
+    def flush(self, all):
+        self.flushed = all
 
-    def unindex_doc(self, docid):
-        self.unindexed = docid
+    def index_resource(self, resource, oid=None, action_mode=None):
+        self.resource = resource
+        self.oid = oid
+        self.action_mode = action_mode
+
+    def unindex_resource(self, oid, action_mode=None):
+        self.unindexed = oid
+
+    def reindex_resource(self, resource, oid=None, action_mode=None):
+        self.reindexed_oid = oid
+        self.reindexed_resource = resource
 
     def reset(self):
         self.cleared = True
-
-    def reindex_doc(self, docid, object):
-        self.reindexed_docid = docid
-        self.reindexed_ob = object
-
-    def apply(self, query):
-        return self.arg[0]
 
     def apply_intersect(self, query, docids): # pragma: no cover
         if docids is None:
@@ -940,17 +828,36 @@ class DummyIndex(object):
                 L.append(docid)
         return L
 
-    def sort(self, results, reverse=False, limit=None, sort_type=None):
-        self.limit = limit
-        self.sort_type = sort_type
-        if reverse:
-            return ['sorted3', 'sorted2', 'sorted1']
-        return ['sorted1', 'sorted2', 'sorted3']
-
-class DummyContent(object):
-    def metadata(self, resource, name, default=None):
-        return getattr(resource, 'result', default)
-        
-
 class Dummy(object):
     pass
+
+class DummyFactory(object):
+    def __init__(self, result):
+        self.result = result
+        
+    def replace(self, catalog, **kw):
+        catalog.replaced = True
+        return self.result
+
+    def sync(self, catalog, **kw):
+        catalog.synced = True
+        return self.result
+
+class DummyVenusianInfo(object):
+    scope = None
+    codeinfo = None
+    module = None
+    def __init__(self, **kw):
+        self.__dict__.update(kw)
+    
+class DummyVenusian(object):
+    def __init__(self, info=None):
+        if info is None:
+            info = DummyVenusianInfo()
+        self.info = info
+        
+    def attach(self, wrapped, callback, category):
+        self.wrapped = wrapped
+        self.callback = callback
+        self.category = category
+        return self.info

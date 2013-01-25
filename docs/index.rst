@@ -4,14 +4,14 @@ Substance D
 Overview
 --------
 
-An application development environment built using the :term:`Pyramid` web
-application framework.  It is a package which provides integration between
-the Pyramid web application framework, :term:`ZODB`, the ``repoze.catalog``,
-``repoze.evolution``, ``deform`` and ``colander`` packages.
+Substance D is an application server built using the :term:`Pyramid` web
+framework. It can be used as a base to build a general-purpose web application
+like a blog, a shopping cart application, a scheduling application, or any
+other web app that requires both an administration and a retail interface.
 
-Substance D owes much of its spirit to the Zope 2 application server.
+Substance D owes much of its spirit to the :term:`Zope` application server.
 
-It will run under CPython 2.6, and 2.7.  
+It requires Python 2.6 or 2.7.
 
 Installation
 ------------
@@ -20,16 +20,23 @@ Install using setuptools, e.g. (within a virtualenv)::
 
   $ easy_install substanced
 
+.. warning:: 
+
+   During Substance D's pre-alpha period, it may be necessary to use a checkout
+   of Substance D as well as checkouts of the most recent versions of the
+   libraries upon which Substance D depends.
+
 .. _optional_dependencies:
 
 Optional Dependencies
 ---------------------
 
-Use of the :attr:`substanced.file.USE_MAGIC` constant for gessing file types
-from stream content requires the ``python-magic`` library, which works
-without extra help on Linux systems, but requires special dependency
-installations on Mac OS and Windows systems.  You'll need to follow these
-steps on those platforms to use this feature:
+Use of the :py:attr:`substanced.file.USE_MAGIC`
+constant for guessing file types
+from stream content requires the ``python-magic`` library, which works without
+extra help on Linux systems, but requires special dependency installations on
+Mac OS and Windows systems.  You'll need to follow these steps on those
+platforms to use this feature:
 
 Mac OS X
 
@@ -42,10 +49,10 @@ Windows
 Demonstration Application
 --------------------------
 
-See the application running at http://substanced.repoze.org for a
-demonstration of the Substance D management interface.  The package that
-contains the code for that demo is available at
-https://github.com/Pylons/substanced/tree/master/demo .
+See the application running at http://substanced.repoze.org for a demonstration
+of the Substance D management interface.  The package that contains the code
+for that demo is available by running ``pcreate -s substanced myproj`` with
+Substance D installed.
 
 Narrative Documentation
 -----------------------
@@ -53,12 +60,21 @@ Narrative Documentation
 .. toctree::
    :maxdepth: 1
 
-   intro.rst
-   content.rst
-   mgmtview.rst
-   services.rst
-   workflows.rst
-   retail.rst
+   intro
+   sdi
+   content
+   mgmtview
+   forms
+   services
+   cataloging
+   references
+   workflows
+   dump
+   evolution
+   folder_contents
+   configuration
+   statistics
+   retail
 
 API Documentation
 -----------------
@@ -66,23 +82,19 @@ API Documentation
 .. toctree::
    :maxdepth: 1
 
-   api.rst
+   api
 
-Tutorial Documentation
-----------------------
+Support / Reporting Bugs / Development Versions
+-----------------------------------------------
 
-.. toctree::
-   :maxdepth: 1
-
-   tutorial/index.rst
-
-Reporting Bugs / Development Versions
--------------------------------------
-
-Visit http://github.com/Pylons/substanced to download development or
-tagged versions.
+Visit http://github.com/Pylons/substanced to download development or tagged
+versions.
 
 Visit http://github.com/Pylons/substanced/issues to report bugs.
+
+The mailing list exists at https://groups.google.com/group/substanced-users
+
+The IRC channel is at irc://freenode.net/#substanced
 
 Indices and tables
 ------------------

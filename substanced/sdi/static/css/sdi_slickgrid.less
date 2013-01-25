@@ -1,0 +1,47 @@
+/** Build from https://github.com/Pylons/sdidev to rebuild this LESS file **/
+
+@import "../../../../../bootstrap/less/variables.less";
+@import "../../../../../slickgrid/bootstrap/slickgrid.less";
+.slickgrid-wrapper {
+    height: 380px;  // for 10 rows x 35px
+    width: 100%;
+    .slickGrid();
+    // Add a bottom border to the grid.
+    border-bottom: 1px solid @tableBorder;
+
+
+    .cell-reorder {
+        cursor: move;
+        background: url("images/drag-handle.png") no-repeat center center;
+    }
+
+    .cell-selection {
+        border-right-color: silver;
+        border-right-style: solid;
+        background: #f5f5f5;
+        color: gray;
+        text-align: right;
+        font-size: 10px;
+    }
+    .slick-row.selected .cell-selection {
+        background-color: transparent; // show default selected row background
+    }
+
+}
+
+// 
+// Styling of other elements on the same page with slickgrid
+//
+
+.sdi-contents-filter {
+    margin-top: 5px;
+}
+
+.sdi-contents-actions {
+    margin: 0;
+}
+
+.sdi-add-button {
+    margin-right: 10px;
+}
+

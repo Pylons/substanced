@@ -2,25 +2,26 @@ import random
 
 from persistent import Persistent
 
+import colander
+
 import BTrees
 
 from zope.interface import implementer
+from zope.interface.interfaces import IInterface
 
-from pyramid.location import lineage
+from pyramid.compat import is_nonstr_iter
 from pyramid.traversal import (
     resource_path_tuple,
     find_resource,
     )
 
-from ..content import content
-from ..service import find_service
-from ..event import (
-    subscribe_will_be_added,
-    subscribe_removed,
-    )
+from ..event import subscribe_will_be_removed
+
 from ..util import (
-    postorder,
-    oid_of,
+    get_oid,
+    get_factory_type,
+    acquire,
+    set_oid,
     )
 
 from ..interfaces import IObjectMap
@@ -86,10 +87,6 @@ references to the objectid represented by '/a' *and* any children
 
 _marker = object()
 
-@content(
-    'Object Map',
-    icon='icon-asterisk'
-    )
 @implementer(IObjectMap)
 class ObjectMap(Persistent):
     
@@ -98,13 +95,15 @@ class ObjectMap(Persistent):
 
     family = BTrees.family64
 
-    def __init__(self, family=None):
+    def __init__(self, root, family=None):
         if family is not None:
             self.family = family
         self.objectid_to_path = self.family.IO.BTree()
         self.path_to_objectid = self.family.OI.BTree()
         self.pathindex = self.family.OO.BTree()
         self.referencemap = ReferenceMap()
+        self.extentmap = ExtentMap()
+        self.root = root
 
     def new_objectid(self):
         """ Obtain an unused integer object identifier """
@@ -158,26 +157,42 @@ class ObjectMap(Persistent):
 
     def _find_resource(self, context, path_tuple): # replaced in tests
         if context is None:
-            context = self.__parent__
+            context = self.root
         return find_resource(context, path_tuple)
-            
-    def add(self, obj, path_tuple, replace_oid=False):
+
+    def add(self, obj, path_tuple, duplicating=False, moving=False):
         """ Add a new object to the object map at the location specified by
         ``path_tuple`` (must be the path of the object in the object graph as
-        a tuple, as returned by Pyramid's ``resource_path_tuple`` function)."""
+        a tuple, as returned by Pyramid's ``resource_path_tuple`` function).
+
+        If ``duplicating`` is ``True``, replace the oid of the added object
+        even if it already has one and adjust extents involving the new oid.
+
+        If ``moving`` is ``True``, don't add any extents.
+
+        It is an error to pass a true value for both ``duplicating`` and
+        ``moving``.
+        """
         if not isinstance(path_tuple, tuple):
             raise ValueError('path_tuple argument must be a tuple')
 
-        objectid = oid_of(obj, _marker)
+        if moving and duplicating:
+            raise ValueError('Cannot be both moving and duplicating')
 
-        if objectid is _marker or replace_oid:
+        objectid = get_oid(obj, _marker)
+
+        if objectid is _marker or duplicating:
             objectid = self.new_objectid()
-            obj.__objectid__ = objectid
+            set_oid(obj, objectid)
+
         elif objectid in self.objectid_to_path:
             raise ValueError('objectid %s already exists' % (objectid,))
 
         if path_tuple in self.path_to_objectid:
             raise ValueError('path %s already exists' % (path_tuple,))
+
+        if (not moving) or duplicating:
+            self.extentmap.add(obj, objectid)
 
         self.path_to_objectid[path_tuple] = objectid
         self.objectid_to_path[objectid] = path_tuple
@@ -193,11 +208,15 @@ class ObjectMap(Persistent):
 
         return objectid
 
-    def remove(self, obj_objectid_or_path_tuple, references=True):
+    def remove(self, obj_objectid_or_path_tuple, moving=False):
         """ Remove an object from the object map give an object, an object id
-        or a path tuple.  If ``references`` is True, also remove any
-        references added via ``connect``, otherwise leave them there
-        (e.g. when moving an object)."""
+        or a path tuple.  If ``moving`` is ``False``, also remove any
+        references added via ``connect`` and any extents related to the removed
+        objects.
+
+        Return a set of removed oids (including the oid related to the object
+        passed).
+        """
         if hasattr(obj_objectid_or_path_tuple, '__parent__'):
             path_tuple = resource_path_tuple(obj_objectid_or_path_tuple)
         elif isinstance(obj_objectid_or_path_tuple, (int, long)):
@@ -214,14 +233,15 @@ class ObjectMap(Persistent):
 
         omap = self.pathindex.get(path_tuple)
 
-        # rationale: if this key isn't present, no path added ever contained it
+        # rationale: if this key isn't present, no path added ever
+        # contained it
         if omap is None:
             return set()
 
-        removed = set()
+        removed = self.family.IF.Set()
         items = omap.items()
         removepaths = []
-        
+
         for k, dm in self.pathindex.items(min=path_tuple):
             if k[:pathlen] == path_tuple:
                 for oidset in dm.values():
@@ -252,18 +272,19 @@ class ObjectMap(Persistent):
                 for oid in oidset:
                     if oid in oidset2:
                         oidset2.remove(oid)
-                        # adding to removed and removing from objectid_to_path
-                        # and path_to_objectid should have been taken care of
-                        # above in the for k, dm in self.pathindex.items()
-                        # loop
+                        # adding to removed and removing from
+                        # objectid_to_path and path_to_objectid should have
+                        # been taken care of above in the for k, dm in
+                        # self.pathindex.items() loop
                         assert oid in removed, oid
                         assert not oid in self.objectid_to_path, oid
 
                 if not oidset2:
                     del omap2[i]
 
-        if references:
+        if not moving:
             self.referencemap.remove(removed)
+            self.extentmap.remove(removed)
 
         return removed
 
@@ -340,7 +361,7 @@ class ObjectMap(Persistent):
         return result
 
     def _refids_for(self, source, target):
-        sourceid, targetid = oid_of(source, source), oid_of(target, target)
+        sourceid, targetid = get_oid(source, source), get_oid(target, target)
         if not sourceid in self.objectid_to_path:
             raise ValueError('source %s is not in objectmap' % (source,))
         if not targetid in self.objectid_to_path:
@@ -348,7 +369,7 @@ class ObjectMap(Persistent):
         return sourceid, targetid
 
     def _refid_for(self, obj):
-        oid = oid_of(obj, obj)
+        oid = get_oid(obj, obj)
         if not oid in self.objectid_to_path:
             raise ValueError('oid %s is not in objectmap' % (obj,))
         return oid
@@ -380,13 +401,13 @@ class ObjectMap(Persistent):
     
     def sourceids(self, obj, reftype):
         """ Return a set of object identifiers of the objects connected to
-        ``obj`` a a source using reference type ``reftype``"""
+        ``obj`` a source using reference type ``reftype``"""
         oid = self._refid_for(obj)
         return self.family.IF.Set(self.referencemap.sourceids(oid, reftype))
 
     def targetids(self, obj, reftype):
         """ Return a set of object identifiers of the objects connected to
-        ``obj`` a a target using reference type ``reftype``"""
+        ``obj`` a target using reference type ``reftype``"""
         oid = self._refid_for(obj)
         return self.family.IF.Set(self.referencemap.targetids(oid, reftype))
 
@@ -401,6 +422,60 @@ class ObjectMap(Persistent):
         ``obj`` as a target using reference type ``reftype``"""
         for oid in self.targetids(obj, reftype):
             yield self.object_for(oid)
+
+    def has_references(self, obj, reftype=None):
+        """ Return true if the object participates in any reference as a source
+        or a target.  ``obj`` may be an object or an oid."""
+        oid = self._refid_for(obj)
+        return self.referencemap.has_references(oid, reftype)
+
+    def get_reftypes(self):
+        """ Return a sequence of reference types known by this objectmap. """
+        return self.referencemap.get_reftypes()
+
+    def get_extent(self, name, default=()):
+        """ Return the extent for ``name`` (typically a factory name, e.g. the
+        dotted name of the content class).  It will be a TreeSet composed
+        entirely of oids.  If no extent exist by this name, this will return
+        the value of ``default``."""
+        return self.extentmap.get(name, default)
+
+class ExtentMap(Persistent):
+
+    family = BTrees.family64
+
+    def __init__(self, family=None):
+        self.extent_to_oids = self.family.OO.BTree()
+        self.oid_to_extents = self.family.OO.BTree()
+
+    def add(self, obj, oid):
+        # NB: we currently treat only the factory type as an extent
+        factory_type = get_factory_type(obj)
+        extent = self.extent_to_oids.setdefault(
+            factory_type,
+            self.family.II.TreeSet()
+            )
+        extent.add(oid)
+        rextent = self.oid_to_extents.setdefault(
+            oid,
+            self.family.OO.TreeSet()
+            )
+        rextent.add(factory_type)
+
+    def remove(self, oids):
+        for oid in oids:
+            extent_names = self.oid_to_extents.get(oid)
+            if extent_names is not None:
+                del self.oid_to_extents[oid]
+                for extent_name in extent_names:
+                    eoids = self.extent_to_oids.get(extent_name, ())
+                    if oid in eoids:
+                        eoids.remove(oid)
+                        if not eoids:
+                            del self.extent_to_oids[extent_name]
+
+    def get(self, name, default=None):
+        return self.extent_to_oids.get(name, default)
 
 class ReferenceMap(Persistent):
     
@@ -436,6 +511,19 @@ class ReferenceMap(Persistent):
         for refset in self.refmap.values():
             refset.remove(oids)
 
+    def get_reftypes(self):
+        return self.refmap.keys()
+
+    def has_references(self, oid, reftype=None):
+        if reftype is None: # any reference type
+            for reftype, refset in self.refmap.items():
+                if refset.is_target(oid) or refset.is_source(oid):
+                    return True
+            return False
+        else:
+            refset = self.refmap[reftype]
+            return refset.is_target(oid) or refset.is_source(oid)
+
 class ReferenceSet(Persistent):
     
     family = BTrees.family64
@@ -468,8 +556,14 @@ class ReferenceSet(Persistent):
     def targetids(self, oid):
         return self.src2target.get(oid, self.family.IF.Set())
 
+    def is_target(self, oid):
+        return oid in self.target2src
+
     def sourceids(self, oid):
         return self.target2src.get(oid, self.family.IF.Set())
+
+    def is_source(self, oid):
+        return oid in self.src2target
 
     def remove(self, oidset):
         # XXX is there a way to make this less expensive?
@@ -492,53 +586,430 @@ class ReferenceSet(Persistent):
                     if not oidset:
                         del self.src2target[source]
         return removed
-    
-def node_path_tuple(resource):
-    # cant use resource_path_tuple from pyramid, it wants everything to 
-    # have a __name__
-    return tuple(reversed([getattr(loc, '__name__', '') for 
-                           loc in lineage(resource)]))
-    
-@subscribe_will_be_added()
-def object_will_be_added(event):
-    """ Objects added to folders must always have an __objectid__.  This must
-     be an :class:`substanced.event.ObjectWillBeAdded` event subscriber
-     so that a resulting object will have an __objectid__ within the (more
-     convenient) :class:`substanced.event.ObjectAdded` fired later."""
-    obj = event.object
-    parent = event.parent
-    objectmap = find_service(parent, 'objectmap')
-    if objectmap is None:
-        return
-    if getattr(obj, '__parent__', None):
-        raise ValueError(
-            'obj %s added to folder %s already has a __parent__ attribute, '
-            'please remove it completely from its existing parent (%s) before '
-            'trying to readd it to this one' % (obj, parent, obj.__parent__)
-            )
-    basepath = resource_path_tuple(event.parent)
-    name = event.name
-    for node in postorder(obj):
-        node_path = node_path_tuple(node)
-        path_tuple = basepath + (name,) + node_path[1:]
-        # the below gives node an objectid; if the will-be-added event is
-        # the result of a duplication, replace the oid of the node with a new
-        # one
-        objectmap.add(node, path_tuple, replace_oid=event.duplicating)
 
-@subscribe_removed()
-def object_removed(event):
-    """ :class:`substanced.event.ObjectRemoved` event subscriber.
+def _reference_property(reftype, resolve, orientation='source'):
+    def _get(self, resolve=resolve):
+        objectmap = find_objectmap(self)
+        if orientation == 'source':
+            oids = list(objectmap.targetids(self, reftype))
+        else:
+            oids = list(objectmap.sourceids(self, reftype))
+        if not oids:
+            return None
+        else:
+            assert(len(oids)==1)
+            oid = oids[0]
+        if resolve:
+            return objectmap.object_for(oid)
+        return oid
+
+    def _set(self, oid):
+        if oid == colander.null: # fbo dump/load
+            return
+        _del(self)
+        if oid is None:
+            return
+        objectmap = find_objectmap(self)
+        if orientation == 'source':
+            objectmap.connect(self, oid, reftype)
+        else:
+            objectmap.connect(oid, self, reftype)
+
+    def _del(self):
+        oid = _get(self, resolve=False)
+        if oid is None:
+            return
+        objectmap = find_objectmap(self)
+        if orientation == 'source':
+            objectmap.disconnect(self, oid, reftype)
+        else:
+            objectmap.disconnect(oid, self, reftype)
+
+    return property(_get, _set, _del)
+
+def reference_sourceid_property(reftype):
     """
+    Returns a property which, when set, establishes an :term:`object map
+    reference` between the property's instance (the source) and another
+    object in the objectmap (the target) based on the reference type
+    ``reftype``.  It is comparable to a Python 'weakref' between the
+    persistent object instance which the property is attached to and the
+    persistent target object id; when the target object or the object upon
+    which the property is defined is removed from the system, the reference
+    is destroyed.
+
+    The ``reftype`` argument is a :term:`reference type`, a hashable object
+    that describes the type of the relation.  See
+    :meth:`substanced.objectmap.ObjectMap.connect` for more information about
+    reference types.
+
+    You can set, get, and delete the value.  When you set the value, a
+    relation is formed between the object which houses the property and the
+    target object id.  When you get the value, the related value (or ``None``
+    if no relation exists) is returned, when you delete the value, the
+    relation is destroyed and the value will revert to ``None``.
+
+    For example:
+
+    .. code-block:: python
+       :linenos:
+
+       # definition
+
+       from substanced.content import content
+       from substanced.objectmap import reference_sourceid_property
+
+       @content('Profile')
+       class Profile(Persistent):
+           user_id = reference_sourceid_property('profile-to-userid')
+
+       # subsequent usage of the property in a view...
+
+       profile = registry.content.create('Profile')
+       somefolder['profile'] = profile
+       profile.user_id = get_oid(request.user)
+       print profile.user_id # will print the oid of the user
+
+       # if the user is later deleted by unrelated code...
+
+       print profile.user_id # will print None
+
+       # or if you delete the value explicitly...
+
+       del profile.user_id
+       print profile.user_id # will print None
+
+    """
+    return _reference_property(reftype, resolve=False)
+
+def reference_targetid_property(reftype):
+    """ Same as :func:`substanced.objectmap.reference_sourceid_property`,
+    except the object upon which the property is defined is the *source* of
+    the reference and any object assigned to the property is the target."""
+    return _reference_property(reftype, resolve=False, orientation='target')
+
+def reference_source_property(reftype):
+    """
+    Exactly like :func:`substanced.objectmap.reference_sourceid_property`,
+    except its getter returns the *instance* related to the target instead of
+    the target object id.  Likewise, its setter will accept another
+    persistent object instance that has an object id.
+
+    For example:
+
+    .. code-block:: python
+       :linenos:
+
+       # definition
+
+       from substanced.content import content
+       from substanced.objectmap import reference_property
+
+       @content('Profile')
+       class Profile(Persistent):
+           user = reference_property('profile-to-user')
+
+       # subsequent usage of the property in a view...
+
+       profile = registry.content.create('Profile')
+       somefolder['profile'] = profile
+       profile.user = request.user
+       print profile.user # will print the user object
+
+       # if the user is later deleted by unrelated code...
+
+       print profile.user # will print None
+
+       # or if you delete the value explicitly...
+
+       del profile.user
+       print profile.user # will print None
+    
+    """
+    return _reference_property(reftype, resolve=True)
+
+def reference_target_property(reftype):
+    """ Same as :func:`substanced.objectmap.reference_source_property`,
+    except the object upon which the property is defined is the *source* of
+    the reference and any object assigned to the property is the target."""
+    return _reference_property(reftype, resolve=True, orientation='target')
+
+def _multireference_property(
+    reftype,
+    ignore_missing,
+    resolve,
+    orientation,
+    ):
+
+    def _get(self, resolve=resolve):
+        objectmap = find_objectmap(self)
+        if orientation == 'source':
+            oids = objectmap.targetids(self, reftype)
+        else:
+            oids = objectmap.sourceids(self, reftype)
+        return Multireference(
+            self,
+            oids,
+            objectmap,
+            reftype,
+            ignore_missing,
+            resolve,
+            orientation,
+            )
+
+    def _set(self, oids):
+        if oids == colander.null: # fbo dump/load
+            return
+        if not is_nonstr_iter(oids):
+            raise ValueError('Must be a sequence')
+        iterable = _del(self)
+        iterable.connect(oids)
+
+    def _del(self):
+        iterable = _get(self, resolve=False)
+        iterable.clear()
+        return iterable
+
+    return property(_get, _set, _del)
+
+def multireference_sourceid_property(reftype, ignore_missing=False):
+    """ Like :func:`substanced.objectmap.reference_sourceid_property`, but
+    maintains a :class:`substanced.objectmap.Multireference` rather than an
+    object id."""
+    return _multireference_property(
+        reftype,
+        ignore_missing=ignore_missing,
+        resolve=False,
+        orientation='source'
+        )
+
+def multireference_source_property(reftype, ignore_missing=False):
+    """ Like :func:`substanced.objectmap.reference_source_property`, but
+    maintains a :class:`substanced.objectmap.Multireference` rather than a
+    single object reference."""
+    return _multireference_property(
+        reftype,
+        ignore_missing=ignore_missing,
+        resolve=True,
+        orientation='source'
+        )
+
+def multireference_targetid_property(reftype, ignore_missing=False):
+    """ Like :func:`substanced.objectmap.reference_targetid_property`, but
+    maintains a :class:`substanced.objectmap.Multireference` rather than an
+    object id."""
+    return _multireference_property(
+        reftype,
+        ignore_missing=ignore_missing,
+        resolve=False,
+        orientation='target'
+        )
+
+def multireference_target_property(reftype, ignore_missing=False):
+    """ Like :func:`substanced.objectmap.reference_target_property`, but
+    maintains a :class:`substanced.objectmap.Multireference` rather than a
+    single object reference."""
+    return _multireference_property(
+        reftype,
+        ignore_missing=ignore_missing,
+        resolve=True,
+        orientation='target'
+        )
+
+class Multireference(object):
+    """ An iterable of objects (if ``resolve`` is true) or oids (if
+    ``resolve`` is false).  Also supports the Python sequence protocol.
+
+    Additionally supports ``connect``, ``disconnect``, and ``clear`` methods
+    for mutating the relationships implied by the reference."""
+    def __init__(
+        self,
+        context,
+        oids,
+        objectmap,
+        reftype,
+        ignore_missing,
+        resolve,
+        orientation,
+        ):
+        self.context = context
+        self.oids = oids
+        self.objectmap = objectmap
+        self.reftype = reftype
+        self.ignore_missing = ignore_missing
+        self.resolve = resolve
+        self.orientation = orientation
+
+    def __nonzero__(self):
+        """ Returns ``True`` if there are oids associated with this
+        multireference, ``False`` if the oid list is empty. """
+        return bool(self.oids)
+
+    def __getitem__(self, i):
+        """ Return the i'th element from the sequence of objects or object
+        ids"""
+        oid = self.oids[i]
+        if self.resolve:
+            return self.objectmap.object_for(oid)
+        return oid
+
+    def __contains__(self, other):
+        """ Return ``True`` if ``other`` is a member of the sequence managed
+        by this multireference. """
+        if self.resolve:
+            object_for = self.objectmap.object_for
+            for oid in self.oids:
+                if object_for(oid) == other:
+                    return True
+            return False
+        return other in self.oids
+
+    def __iter__(self):
+        """ Return an iterable of object ids or objects. """
+        if self.resolve:
+            return iter((self.objectmap.object_for(oid) for oid in self.oids))
+        return iter(self.oids)
+
+    def __len__(self):
+        """ Return the length of the sequence of objects implied by this
+        multireference"""
+        return len(self.oids)
+
+    def connect(self, objects, ignore_missing=None):
+        """ Connect ``objects`` to this reference's relationship. ``objects``
+        should be a sequence of content objects or object identifiers."""
+        if ignore_missing is None:
+            ignore_missing = self.ignore_missing
+        ctx_oid = get_oid(self.context)
+        for obj in objects:
+            try:
+                if self.orientation == 'source':
+                    self.objectmap.connect(ctx_oid, obj, self.reftype)
+                else:
+                    self.objectmap.connect(obj, ctx_oid, self.reftype)
+            except ValueError:
+                if not ignore_missing:
+                    raise
+
+    def disconnect(self, objects, ignore_missing=None):
+        """ Disonnect ``objects`` to this reference's relationship. ``objects``
+        should be a sequence of content objects or object identifiers."""
+        if ignore_missing is None:
+            ignore_missing = self.ignore_missing
+        ctx_oid = get_oid(self.context)
+        for obj in objects:
+            try:
+                if self.orientation == 'source':
+                    self.objectmap.disconnect(ctx_oid, obj, self.reftype)
+                else:
+                    self.objectmap.disconnect(obj, ctx_oid, self.reftype)
+            except ValueError:
+                if not ignore_missing:
+                    raise
+
+    def clear(self):
+        """ Clear all references in this relationship. """
+        self.disconnect(self.oids)
+
+def find_objectmap(context):
+    """ Returns the object map for the root object in the lineage of the
+    ``context`` or ``None`` if no objectmap can be found."""
+    return acquire(context, '__objectmap__', None)
+
+def has_references(context):
+    objectmap = find_objectmap(context)
+    if objectmap is None:
+        return False
+    oid = get_oid(context, None)
+    if oid is None:
+        return False
+    return objectmap.has_references(oid)
+
+class _ReferencedPredicate(object):
+    has_references = staticmethod(has_references) # for testing
+    
+    def __init__(self, val, config):
+        self.val = bool(val)
+        self.registry = config.registry
+
+    def text(self):
+        return 'referenced = %s' % self.val
+
+    phash = text
+
+    def __call__(self, context, request):
+        return self.has_references(context) == self.val
+
+@subscribe_will_be_removed()
+def referential_integrity(event):
+    if event.moving is not None: # being moved
+        return
     obj = event.object
-    parent = event.parent
-    moving = event.moving
-    objectmap = find_service(parent, 'objectmap')
+    obj_oid = get_oid(obj, None)
+    objectmap = find_objectmap(obj)
     if objectmap is None:
         return
-    objectid = oid_of(obj)
-    objectmap.remove(objectid, references=not moving)
+    for reftype in objectmap.get_reftypes():
+
+        is_iface = IInterface.providedBy(reftype)
+
+        if is_iface and reftype.queryTaggedValue('source_integrity', False):
+            targetids = objectmap.targetids(obj, reftype)
+            if obj_oid in targetids:
+                targetids.remove(obj_oid) # self-referential
+            if targetids:
+                # object is a source
+                raise SourceIntegrityError(obj, reftype, targetids)
+
+        if is_iface and reftype.queryTaggedValue('target_integrity', False):
+            sourceids = objectmap.sourceids(obj, reftype)
+            if obj_oid in sourceids:
+                sourceids.remove(obj_oid) # self-referential
+            if sourceids:
+                # object is a target
+                raise TargetIntegrityError(obj, reftype, sourceids)
+
+class ReferentialIntegrityError(Exception):
+    """ Exception raised when a referential integrity constraint is violated.
+    Raised before an object involved in a relation with an integrity constraint
+    is removed from a folder.
+
+    Attributes::
+
+      obj: the object which would have been removed were its removal not
+           prevented by the raising of this exception
+
+      reftype: the reference type (usually a class)
+
+      oids: the oids that reference the to-be-removed object.
+    """
+#    __name__ = '' # fbo resource_path_tuple
+    def __init__(self, obj, reftype, oids):
+        self.obj = obj
+        self.reftype = reftype
+        self.oids = oids
+
+    def get_objects(self):
+        """ Return the objects which hold a reference to the object inovlved in
+        the integrity error. """
+        objectmap = find_objectmap(self.obj)
+        if objectmap is not None:
+            for oid in self.oids:
+                yield objectmap.object_for(oid)
+
+    def get_paths(self):
+        objectmap = find_objectmap(self.obj)
+        if objectmap is not None:
+            for oid in self.oids:
+                yield '/'.join(objectmap.path_for(oid))
+        
+
+class SourceIntegrityError(ReferentialIntegrityError):
+    pass
+
+class TargetIntegrityError(ReferentialIntegrityError):
+    pass
 
 def includeme(config): # pragma: no cover
-    config.scan('.')
-    
+    config.add_view_predicate('referenced', _ReferencedPredicate)
+

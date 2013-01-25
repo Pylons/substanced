@@ -32,14 +32,14 @@ Introduction
       -- Phillip K. Dick, A Scanner Darkly
 
 
-Substance D is an application development environment that provides the
-following features:
+Substance D is an application server.  It provides the following features:
 
-- Facilities that allow developers to define "content" (e.g. "a blog
-  entry", "a product", or "a news item", etc).
+- Facilities that allow developers to define "content" (e.g. "a blog   entry",
+  "a product", or "a news item", etc).
 
-- A management (aka "admin") web UI which allows nonexpert but privileged
-  users to create, edit, update, and delete developer-defined content.
+- A management (aka "admin") web UI which allows nonexpert but privileged users
+  to create, edit, update, and delete developer-defined content as well as
+  managing other aspects of the system such as users, groups, security, etc.
 
 - "Undo" capability for actions taken via the management UI.
 
@@ -49,11 +49,17 @@ following features:
 
 - Built-in users and groups management.
 
+- Built-in content workflow.
+
 - Indexing and searching of content (field, keyword, facet, and full-text).
 
-- A facility for relating content objects to each other.
+- A facility for relating content objects to each other (with optional
+  referential integrity).
 
 - An "evolve" mechanism for evolving content over time as it changes.
+
+- A mechanism to dump your site's content to the filesystem in a mostly
+  human-readable format, and a mechanism to reload a dump into the system.
 
 Substance D is built upon on the following technologies:
 
@@ -61,22 +67,8 @@ Substance D is built upon on the following technologies:
 
 - `Pyramid <http://pylonsproject.org>`_
 
-- `repoze.catalog <http://docs.repoze.org/catalog>`_
-
-- `repoze.evolution <http://docs.repoze.org/evolution>`_
+- `hypatia <https://github.com/Pylons/hypatia>`_
 
 - `colander <http://docs.pylonsproject.org/projects/colander/en/latest/>`_
 
 - `deform <http://docs.pylonsproject.org/projects/deform/en/latest/>`_
-
-The Management Interface
-------------------------
-
-The Substance D management interface (aka :term:`SDI`) is a set of
-:term:`view` registrations that are imposed upon the resource tree.  The SDI
-allows you to add, delete, change and otherwise manage resources.
-
-The SDI is extensible and allows you to plug your own views into it, so you
-can present nontechnical users with a way to manage arbitrary kinds of
-content.
-

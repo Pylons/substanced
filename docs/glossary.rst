@@ -53,7 +53,7 @@ Glossary
 
    Service
      A persistent object in the :term:`resource tree` that exposes an API to
-     application developers.  For example, the ``objectmap`` service.
+     application developers.  For example, the ``principals`` service.
 
    Deform
      A form library that draws and validates forms based on :term:`Colander`
@@ -77,3 +77,33 @@ Glossary
    State
    States
      TODO
+
+   Object Map Reference
+     A relationship kept in the :term:`object map` between two persistent
+     objects.  It is composed of a source, some number of targets, and a
+     :term:`reference type`.
+
+   Reference Type
+     A hashable object describing the type of relationship between two
+     objects in the :term:`object map`.  It's usually a string.
+
+   Object Map
+     A Substance D :term:`service` which maps the object ids of persistent
+     objects to paths and object ids to other object ids in the system.
+
+   Service
+     A substanced content object which provides a service to application code
+     (such as a catalog or a principals service).
+
+   Global Object
+     A Python object that can be obtained via an ``import`` statement.
+
+   Factory Wrapper
+     A function that wraps a content factory when the content factory is not
+     a class or when a ``factory_name`` is used within the content type
+     declaration.
+
+   Zope
+     An application server from which much of the spirit of Substance D is
+     derived.  See http://zope.org.
+

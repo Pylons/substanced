@@ -7,10 +7,28 @@
 
 .. autofunction:: includeme
 
+.. autofunction:: include
+
+.. autofunction:: scan
+
+.. autofunction:: root_factory
+
 :mod:`substanced.catalog` API
 -----------------------------
 
 .. automodule:: substanced.catalog
+
+.. autoclass:: Text
+
+.. autoclass:: Field
+
+.. autoclass:: Keyword
+
+.. autoclass:: Facet
+
+.. autoclass:: Allowed
+
+.. autoclass:: Path
 
 .. autoclass:: Catalog
    :members:
@@ -26,28 +44,42 @@
 
    Retrieve an index or return failobj.
 
+.. autoclass:: CatalogsService
+   :members:
+
+.. autofunction:: is_catalogable
+
+.. autofunction:: catalog_factory
+
 .. autofunction:: includeme
 
-XXX: request.search_catalog, request.query_catalog
+.. autofunction:: add_catalog_factory
 
-:mod:`substanced.catalog.discriminators` API
---------------------------------------------
+.. autofunction:: add_indexview
 
-.. automodule:: substanced.catalog.discriminators
+:mod:`substanced.catalog.indexes` API
+-------------------------------------
 
-.. autofunction:: get_title
+.. automodule:: substanced.catalog.indexes
 
-.. autofunction:: get_interfaces
+.. autoclass:: FieldIndex
+   :members:
 
-.. autofunction:: get_containment
+.. autoclass:: KeywordIndex
+   :members:
 
-.. autofunction:: get_textrepr
+.. autoclass:: TextIndex
+   :members:
 
-.. autofunction:: get_creation_date
+.. autoclass:: FacetIndex
+   :members:
 
-.. autofunction:: get_modified_date
+.. autoclass:: PathIndex
+   :members:
 
-.. autofunction:: get_allowed_to_view
+.. autoclass:: AllowedIndex
+   :members:
+
 
 :mod:`hypatia.query` API
 -------------------------------
@@ -73,7 +105,7 @@ Comparators
 
 .. autoclass:: Contains
 
-.. autoclass:: DoesNotContain
+.. autoclass:: NotContains
 
 .. autoclass:: Any
 
@@ -103,36 +135,13 @@ Other Helpers
 
 .. autofunction:: parse_query
 
-:mod:`substanced.catalog.indexes` API
--------------------------------------
+:mod:`hypatia.util` API
+-------------------------------
 
-.. automodule:: substanced.catalog.indexes
+.. module:: hypatia.util
 
-.. autoclass:: FieldIndex
+.. autoclass:: ResultSet
    :members:
-
-.. autoclass:: KeywordIndex
-   :members:
-
-.. autoclass:: TextIndex
-   :members:
-
-.. autoclass:: FacetIndex
-   :members:
-
-.. autoclass:: PathIndex
-   :members:
-
-:mod:`substanced.catalog.subscribers` API
------------------------------------------
-
-.. automodule:: substanced.catalog.subscribers
-
-.. autofunction:: object_added
-
-.. autofunction:: object_will_be_removed
-
-.. autofunction:: object_modified
 
 :mod:`substanced.content` API
 -----------------------------
@@ -142,7 +151,28 @@ Other Helpers
 .. autoclass:: content
    :members:
 
+.. autoclass:: service
+   :members:
+
 .. autofunction:: add_content_type
+
+.. autofunction:: add_service_type
+
+.. autoclass:: ContentRegistry
+   :members:
+
+.. autofunction:: includeme
+
+:mod:`substanced.dump` API
+-----------------------------
+
+.. automodule:: substanced.dump
+
+.. autofunction:: dump
+
+.. autofunction:: load
+
+.. autofunction:: add_dumper
 
 .. autofunction:: includeme
 
@@ -171,6 +201,10 @@ Other Helpers
    :members:
    :inherited-members:
 
+.. autoclass:: ACLModified
+   :members:
+   :inherited-members:
+
 .. autoclass:: subscribe_added
    :members:
    :inherited-members:
@@ -188,6 +222,10 @@ Other Helpers
    :inherited-members:
 
 .. autoclass:: subscribe_modified
+   :members:
+   :inherited-members:
+
+.. autoclass:: subscribe_acl_modified
    :members:
    :inherited-members:
 
@@ -223,12 +261,12 @@ Other Helpers
  
       The mimetype of this file object (a string).
 
-.. autofunction:: includeme
-
 :mod:`substanced.folder` API
 ----------------------------
 
 .. automodule:: substanced.folder
+
+.. autoclass:: FolderKeyError
 
 .. autoclass:: Folder
    :members:
@@ -241,7 +279,23 @@ Other Helpers
      be returned from ``__iter__()``, ``keys()``, ``values()``, and
      ``items()``.  If not set, use an effectively random order.
 
-.. autofunction:: includeme
+.. autoclass:: SequentialAutoNamingFolder
+
+   .. automethod:: __init__
+
+   .. automethod:: add_next
+
+   .. automethod:: next_name
+
+   .. automethod:: add
+
+.. autoclass:: RandomAutoNamingFolder
+
+   .. automethod:: __init__
+
+   .. automethod:: add_next
+
+   .. automethod:: next_name
 
 :mod:`substanced.form` API
 ----------------------------
@@ -263,19 +317,41 @@ Other Helpers
 
 .. automodule:: substanced.objectmap
 
+.. autofunction:: find_objectmap
+
 .. autoclass:: ObjectMap
    :members:
 
-.. autofunction:: includeme
+.. autoclass:: Multireference
+   :members:
 
+.. autofunction:: reference_sourceid_property
+
+.. autofunction:: reference_source_property
+
+.. autofunction:: reference_targetid_property
+
+.. autofunction:: reference_target_property
+
+.. autofunction:: multireference_sourceid_property
+
+.. autofunction:: multireference_source_property
+
+.. autofunction:: multireference_targetid_property
+
+.. autofunction:: multireference_target_property
+
+.. autoclass:: ReferentialIntegrityError
+   :members:
+
+.. autoclass:: SourceIntegrityError
+
+.. autoclass:: TargetIntegrityError
 
 :mod:`substanced.principal` API
 --------------------------------
 
 .. automodule:: substanced.principal
-
-.. autoclass:: UserToGroup
-   :members:
 
 .. autoclass:: Principals
    :members:
@@ -300,8 +376,6 @@ Other Helpers
 
 .. autofunction:: groupfinder
 
-.. autofunction:: includeme
-
 :mod:`substanced.property` API
 --------------------------------
 
@@ -317,6 +391,10 @@ Other Helpers
 .. autoclass:: Schema
    :members:
 
+.. autoclass:: NameSchemaNode
+
+.. autoclass:: PermissionsSchemaNode
+
 :mod:`substanced.sdi` API
 ----------------------------
 
@@ -324,45 +402,84 @@ Other Helpers
 
 .. autofunction:: add_mgmt_view
 
-.. autofunction:: add_permission
-
 .. autoclass:: mgmt_view
 
-:mod:`substanced.service` API
------------------------------
+.. attribute:: LEFT
 
-.. automodule:: substanced.service
+.. attribute:: MIDDLE
 
-.. autofunction:: find_service
-
-.. autofunction:: find_services
-
-:mod:`substanced.site` API
---------------------------
-
-.. automodule:: substanced.site
-
-.. autoclass:: Site
-   :members:
+.. attribute:: RIGHT
 
 .. autofunction:: includeme
+
+:mod:`substanced.root` API
+--------------------------
+
+.. automodule:: substanced.root
+
+.. autoclass:: Root
+   :members:
+
+:mod:`substanced.stats` API
+---------------------------
+
+.. automodule:: substanced.stats
+
+.. autofunction:: statsd_timer
+
+.. autofunction:: statsd_gauge
+
+.. autofunction:: statsd_incr
+
 
 :mod:`substanced.util` API
 --------------------------
 
 .. automodule:: substanced.util
 
+.. autofunction:: acquire
+
+.. autofunction:: get_oid
+
+.. autofunction:: set_oid
+
+.. autofunction:: get_acl
+
+.. autofunction:: set_acl
+
+.. autofunction:: get_created
+
+.. autofunction:: set_created
+
+.. autofunction:: get_interfaces
+
+.. autofunction:: get_content_type
+
+.. autofunction:: find_content
+
+.. autofunction:: find_service
+
+.. autofunction:: find_services
+
+.. autofunction:: is_folder
+
+.. autofunction:: is_service
+
+.. autofunction:: get_factory_type
+
 .. autofunction:: coarse_datetime_repr
 
 .. autofunction:: postorder
 
-.. autofunction:: oid_of
-
-.. autoclass:: Batch
-
 .. autofunction:: merge_url_qs
 
 .. autofunction:: chunks
+
+.. autofunction:: renamer
+
+.. autofunction:: get_dotted_name
+
+.. autoclass:: Batch
 
 :mod:`substanced.widget` API
 ----------------------------

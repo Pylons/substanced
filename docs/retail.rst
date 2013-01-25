@@ -1,7 +1,7 @@
 Building a Retail Application
 -----------------------------
 
-It's not the intent that normal unprivleged users of an application you build
+It's not the intent that normal unprivileged users of an application you build
 using Substance D ever see the :term:`SDI` management interface.  That
 interface is reserved for privileged users, like you and your staff.
 
@@ -9,19 +9,18 @@ To build a "retail" application, you just use normal Pyramid :term:`view
 configuration` to associate objects with view logic based on the content
 types provided to you by Substance D and the content types you've defined.
 
-For example, here's a view that will respond on the root Substance D "site"
-object and return its title:
+For example, here's a view that will respond on the root Substance D object
+and return its SDI title:
 
 .. code-block:: python
    :linenos:
 
    from pyramid.view import view_config
-   from substanced.interfaces import ISite
 
-   @view_config(context=ISite)
+   @view_config(content_type='Root')
    def hello(request):
        html = '<html><head></head><body>Hello from %s!</body></html>'
-       request.response.body = html % request.context.title
+       request.response.body = html % request.context.sdi_title
        return request.response
 
 Note that we did *not* use the :class:`substanced.sdi.mgmt_view` decorator.

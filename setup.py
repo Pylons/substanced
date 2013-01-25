@@ -24,18 +24,23 @@ except IOError:
     README = CHANGES = ''
 
 install_requires = [
-    'pyramid>=1.4dev',
-    'ZODB3',
-    'hypatia>=0.1a2',
+    'pyramid>=1.4dev', # effective_principals predicate
+    'ZODB3', 
+    'hypatia>=0.1a3', # index-based querying
     'venusian',
-    'deform',
-    'colander',
+    'deform>=0.9.6', # retail form rendering capability (for documentability)
+    'colander>=1.0a1', # subclassable schemanodes
     'deform_bootstrap',
     'repoze.evolution',
     'pyramid_zodbconn',
     'pyramid_mailer',
     'cryptacular',
     'python-magic',
+    'pyyaml',
+    'zope.copy',
+    'zope.component', # implictly depended upon by zope.copy
+    'zope.deprecation',
+    'statsd',
     ]
 
 docs_extras = ['Sphinx', 'repoze.sphinx.autointerface']
@@ -43,7 +48,7 @@ testing_extras = ['nose', 'coverage', 'mock', 'virtualenv']
 
 setup(name='substanced',
       version='0.0',
-      description='A Zope2-like framework built using Pyramid',
+      description='An application server built using Pyramid',
       long_description=README + '\n\n' + CHANGES,
       classifiers=[
         "Intended Audience :: Developers",
@@ -71,6 +76,8 @@ setup(name='substanced',
       [console_scripts]
       sd_evolve = substanced.scripts.evolve:main
       sd_reindex = substanced.scripts.reindex:main
+      sd_drain_indexing = substanced.scripts.drain_indexing:main
+      sd_dump = substanced.scripts.dump:main
       [pyramid.scaffold]
       substanced=substanced.scaffolds:SubstanceDProjectTemplate
       """,

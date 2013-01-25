@@ -117,9 +117,9 @@ class TestFileUploadTempStore(unittest.TestCase):
 
     def test_preview_url(self):
         request = self._makeRequest()
-        request.mgmt_path = lambda *arg: '/mgmt'
+        request.sdiapi = DummySDIAPI()
         inst = self._makeOne(request)
-        self.assertEqual(inst.preview_url(None), '/mgmt')
+        self.assertEqual(inst.preview_url(None), '/mgmt_path')
 
     def test_contains_true(self):
         request = self._makeRequest()
@@ -210,12 +210,22 @@ class TestFileUploadTempStore(unittest.TestCase):
         inst['a'] = {'randid':'abc'}
         inst.clear() # doesn't choke
 
+class DummyWidget(object):
+    pass
+
 class DummyForm(object):
-    def __init__(self, schema, buttons=None, use_ajax=False, ajax_options=''):
+    def __init__(self, schema, action=None, method=None, buttons=None,
+                 formid=None, use_ajax=False, ajax_options='',
+                 autocomplete=None):
         self.schema = schema
+        self.action = action
+        self.method = method
         self.buttons = buttons
+        self.formid = formid
         self.use_ajax = use_ajax
         self.ajax_options = ajax_options
+        self.autocomplete = autocomplete
+        self.widget = DummyWidget()
 
     def get_widget_resources(self):
         return {'js':(), 'css':()}
@@ -243,3 +253,6 @@ class DummyButton(object):
 class DummySession(dict):
     pass
 
+class DummySDIAPI(object):
+    def mgmt_path(self, *arg, **kw):
+        return '/mgmt_path'

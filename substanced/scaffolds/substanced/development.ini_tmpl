@@ -7,14 +7,19 @@ pyramid.debug_notfound = false
 pyramid.debug_routematch = false
 pyramid.default_locale_name = en
 pyramid.includes = 
-#    pyramid_debugtoolbar
+    pyramid_debugtoolbar
     pyramid_tm
 
-zodbconn.uri = file://%(here)s/Data.fs?connection_cache_size=20000&blobstorage_dir=%(here)s/blobs&blobstorage_layout=bushy
+debugtoolbar.exclude_prefixes = /manage
+
+zodbconn.uri = file://%(here)s/Data.fs?connection_cache_size=50000&blobstorage_dir=%(here)s/blobs&blobstorage_layout=bushy
+tm.attempts = 3
+
 substanced.secret = seekri1
 substanced.initial_login = admin
 substanced.initial_password = admin
 substanced.uploads_tempdir = %(here)s/tmp
+substanced.autosync_catalogs = true
 
 mail.default_sender = substanced_demo@pylonsproject.org
 
@@ -26,7 +31,7 @@ port = 6543
 # Begin logging configuration
 
 [loggers]
-keys = root, {{package_logger}}
+keys = root, {{package_logger}}, substanced
 
 [handlers]
 keys = console
@@ -42,6 +47,11 @@ handlers = console
 level = DEBUG
 handlers =
 qualname = {{package}}
+
+[logger_substanced]
+level = INFO
+handlers =
+qualname = substanced
 
 [handler_console]
 class = StreamHandler
