@@ -1,13 +1,13 @@
 <div metal:use-macro="request.sdiapi.main_template">
 
-  <div tal:omit-tag="" metal:fill-slot="head-more">
+  <metal:head-more fill-slot="head-more">
     <!-- slickgrid -->
     <script src="${request.static_url('substanced.sdi:static/js/slickgrid.upstream.js')}" type="text/javascript"></script>
     <script src="${request.static_url('substanced.sdi:static/js/sdi.grid.remotemodel.js')}" type="text/javascript"></script>
     <script src="${request.static_url('substanced.sdi:static/js/slickgrid-config.js')}" type="text/javascript"></script>
     <link href="${request.static_url('substanced.sdi:static/css/slick.grid.upstream.css')}" rel="stylesheet" />
     <link href="${request.static_url('substanced.sdi:static/css/sdi_slickgrid.css')}" rel="stylesheet" />
-  </div>
+  </metal:head-more>
 
   <div metal:fill-slot="main">
     <div class="container-fluid"
