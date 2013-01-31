@@ -249,24 +249,39 @@ class FolderContentsViews(object):
         Each button in a ``buttons`` dictionary is rendered using the button
         tag and requires five keys: ``id`` for the button's id attribute,
         ``name`` for the button's name attribute, ``class`` for any additional
-        css classes to be applied to it, ``value`` for the value that will be
-        passed as a request parameter when the form is submitted and ``text``
-        for the button's text.
+        css classes to be applied to it (see below), ``value`` for the value
+        that will be passed as a request parameter when the form is submitted
+        and ``text`` for the button's text.
+
+        The ``class`` value is special because it will define the button's
+        behavior. There are four mutually exclusive class names that can be
+        used. ``btn-sdi-act`` is for buttons that will always be enabled,
+        independently of any selected content items. ``btn-sdi-sel`` means
+        the button will start as disabled and will only be enabled once one
+        or more items are selected. ``btn-sdi-one`` means the button will
+        only be enabled if there's exactly one item selected. Finally,
+        ``btn-sdi-del`` means the button will stay disabled until one or
+        more *deletable* items are selected. You *must* use one of these
+        classes for the button to be enabled.
         
-        Most of the time, the best strategy will be to return a value
-        containing the default buttonspec sequence passed in to the function
-        (it will be a list).::
+        The ``class`` value can contain several classes separated by spaces.
+        In addition to the classes mentioned above, any custom css class or any
+        bootstrap button class can be used.
+        
+        Most of the time, the best strategy for using the buttons callable will
+        be to return a value containing the default buttonspec sequence passed
+        in to the function (it will be a list).::
 
           def custom_buttons(context, request, default_buttonspec):
               custom_buttonspec = [{'type': 'single',
                                    'buttons': [{'id': 'button1',
                                                 'name': 'button1',
-                                                'class': 'btn-primary',
+                                                'class': 'btn-sdi-sel',
                                                 'value': 'button1',
                                                 'text': 'Button 1'},
                                                {'id': 'button2',
                                                 'name': 'button2',
-                                                'class': 'btn-primary',
+                                                'class': 'btn-sdi-act',
                                                 'value': 'button2',
                                                 'text': 'Button 2'}]}]
               return default_buttonspec + custom_buttonspec
