@@ -123,6 +123,7 @@
                 var data = grid.getData();
                 if (selRows.length) {
                     var disable_delete = false;
+                    var disable_multiple = false;
                     var i;
                     for (i = 0, l = selRows.length; i < l; i++) {
                         var item = data[selRows[i]];
@@ -132,12 +133,17 @@
                             disable_delete = true;
                             break;
                         }
+			if (i == 1) {
+			    disable_multiple = true;
+			}
                     }
                     $('.btn-sdi-del').attr('disabled', disable_delete);
                     $('.btn-sdi-sel').attr('disabled', false);
+                    $('.btn-sdi-one').attr('disabled', disable_multiple);
                 } else {
                     $('.btn-sdi-del').attr('disabled', true);
                     $('.btn-sdi-sel').attr('disabled', true);
+                    $('.btn-sdi-one').attr('disabled', true);
                 }
             });
 
