@@ -92,6 +92,7 @@ class ObjectWillBeRemoved(object):
         self.parent = parent
         self.name = name
         self.moving = moving
+        self.loading = loading
 
 @implementer(IObjectModified)
 class ObjectModified(object): # pragma: no cover
