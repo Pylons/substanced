@@ -1,13 +1,13 @@
 <div metal:use-macro="request.sdiapi.main_template">
 
-  <div tal:omit-tag="" metal:fill-slot="head-more">
+  <metal:head-more fill-slot="head-more">
     <!-- slickgrid -->
     <script src="${request.static_url('substanced.sdi:static/js/slickgrid.upstream.js')}" type="text/javascript"></script>
     <script src="${request.static_url('substanced.sdi:static/js/sdi.grid.remotemodel.js')}" type="text/javascript"></script>
     <script src="${request.static_url('substanced.sdi:static/js/slickgrid-config.js')}" type="text/javascript"></script>
     <link href="${request.static_url('substanced.sdi:static/css/slick.grid.upstream.css')}" rel="stylesheet" />
     <link href="${request.static_url('substanced.sdi:static/css/sdi_slickgrid.css')}" rel="stylesheet" />
-  </div>
+  </metal:head-more>
 
   <div metal:fill-slot="main">
     <div class="container-fluid"
@@ -123,6 +123,7 @@
                 var data = grid.getData();
                 if (selRows.length) {
                     var disable_delete = false;
+                    var disable_multiple = false;
                     var i;
                     for (i = 0, l = selRows.length; i < l; i++) {
                         var item = data[selRows[i]];
@@ -132,12 +133,17 @@
                             disable_delete = true;
                             break;
                         }
+			if (i == 1) {
+			    disable_multiple = true;
+			}
                     }
                     $('.btn-sdi-del').attr('disabled', disable_delete);
                     $('.btn-sdi-sel').attr('disabled', false);
+                    $('.btn-sdi-one').attr('disabled', disable_multiple);
                 } else {
                     $('.btn-sdi-del').attr('disabled', true);
                     $('.btn-sdi-sel').attr('disabled', true);
+                    $('.btn-sdi-one').attr('disabled', true);
                 }
             });
 

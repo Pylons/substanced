@@ -144,6 +144,8 @@ The ``class`` on your buttons affect behavior in the datagrid:
 - ``btn-sdi-sel`` disables the button until one or more items are
   selected
 
+- ``btn-sdi-one`` disables the button until exactly one item is selected
+
 - ``btn-sdi-del`` disables the button if any of the selected resources
   is marked as "non-deletable" (discussed below)
 
