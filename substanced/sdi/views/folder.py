@@ -144,14 +144,15 @@ class FolderContentsViews(object):
                 sortable = False
 
             formatter = column.get('formatter', '')
-            
+            cssClass = column.get('cssClass', '')
+
             headers.append({
-                "id": field, 
+                "id": field,
                 "name": name,
                 "field": field,
                 "width": 120,
                 "minWidth": 120,
-                "cssClass": "cell-%s" % field,
+                "cssClass": "cell-%s" % field + ((' ' + cssClass) if cssClass else ''),
                 "sortable": sortable,
                 "formatterName": formatter,
                 })

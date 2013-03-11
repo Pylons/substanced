@@ -368,6 +368,27 @@ class TestFolderContentsViews(unittest.TestCase):
         result = inst._column_headers()
         self.assertEqual(len(result), 0)
 
+    def test__column_headers_cssClass(self):
+        def sd_columns(folder, subobject, request, default_columns):
+            self.assertEqual(len(default_columns), 1)
+            return [
+                {'name': 'Col 1', 'field': 'col1', 'value':
+                 'col1', 'sortable': True, 'cssClass': 'customClass'},
+                {'name': 'Col 2', 'field': 'col2', 'value': 'col2',
+                 'sortable': True},
+                {'name': 'Col 3', 'field': 'col3', 'value': 'col3',
+                 'sortable': True, 'cssClass': 'customClass1 customClass2'},
+                ]
+        context = testing.DummyResource(is_ordered=lambda: False)
+        request = self._makeRequest(columns=sd_columns)
+
+        inst = self._makeOne(context, request)
+        result = inst._column_headers()
+        self.assertEqual(len(result), 3)
+        self.assertEqual(result[0]['cssClass'], 'cell-col1 customClass')
+        self.assertEqual(result[1]['cssClass'], 'cell-col2')
+        self.assertEqual(result[2]['cssClass'], 'cell-col3 customClass1 customClass2')
+
     def test_show_non_filterable_columns(self):
         dummy_column_headers = [{
             'field': 'col1',
