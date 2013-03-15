@@ -387,6 +387,8 @@ class FolderContentsViews(object):
                                   columns=custom_user_columns)
               config.scan()
 
+        XXX TODO Document ``sort_index``, ``reverse``, ``filter_text``.
+        sort_index now also takes a string which lookes up the catalog index.
         """
         folder = self.context
         request = self.request
@@ -410,6 +412,17 @@ class FolderContentsViews(object):
                 filter_text = filter_text + '*' # glob (prefix) search
             text = catalog['text']
             q = q & text.eq(filter_text)
+
+        # sort_index can be a string with the name of the catalog index,
+        # or, the index object itself. If it is a name, it is looked up.
+        # XXX Untested!!! XXX TODO!!!
+        if isinstance(sort_index, basestring):
+            try:
+                sort_index = catalog[sort_index]
+            except KeyError:
+                raise KeyError(('Index %r is missing from the catalog. ' +
+                    'If sort_index is a string, then it must match the name of a catalog index. %r')
+                    % (sort_index, tuple(catalog.keys())))
 
         if folder.is_ordered() and sort_index is None:
             # hypatia resultset.sort will call IFolder.sort method
@@ -517,9 +530,8 @@ class FolderContentsViews(object):
         sortDir = True    # True ascending, or False descending.
         reverse = (not sortDir)
 
-        # XXX sortCol not implemented
         folder_length, records = self._folder_contents(
-            0, minimum_load, reverse=reverse
+            0, minimum_load, reverse=reverse, sort_index=sortCol
             )
 
         items  = {
@@ -571,19 +583,19 @@ class FolderContentsViews(object):
 
     def _get_json(self):
         request = self.request
-
         if 'from' in request.params:
             start = int(request.params.get('from'))
             end = int(request.params.get('to'))
-            # sort_col = request.params.get('sortCol')  # XXX ignored
+            sort_col = request.params.get('sortCol')
             sort_dir = request.params.get('sortDir') in ('true', 'True')
             filter_text = request.params.get('filter', '').strip()
 
             reverse = (not sort_dir)
 
-            # XXX sortCol not implemented
+
             folder_length, records = self._folder_contents(
-                start, end, reverse=reverse, filter_text=filter_text
+                start, end, reverse=reverse, filter_text=filter_text,
+                sort_index=sort_col,
                 )
 
             items = {
