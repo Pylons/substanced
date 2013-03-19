@@ -27,7 +27,7 @@ install_requires = [
     'pyramid>=1.4dev', # effective_principals predicate
     'ZODB3', 
     'hypatia>=0.1a3', # index-based querying
-    'venusian',
+    'venusian>=1.0a3',  # pyramid wants this too (prefer_finals...)
     'deform>=0.9.6', # retail form rendering capability (for documentability)
     'colander>=1.0a1', # subclassable schemanodes
     'deform_bootstrap',
