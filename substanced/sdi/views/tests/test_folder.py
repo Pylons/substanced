@@ -986,6 +986,60 @@ class TestFolderContentsViews(unittest.TestCase):
         result = inst._buttons()
         self.assertEqual(result, 'abc')
 
+    def test_buttons_enabled_for_true(self):
+        from substanced.interfaces import IFolder
+        context = DummyFolder(__provides__=IFolder)
+        request = self._makeRequest()
+        context['catalogs'] = self._makeCatalogs(oids=[1])
+        result = testing.DummyResource()
+        result.__name__ = 'fred'
+        context.__objectmap__ = DummyObjectMap(result)
+        inst = self._makeOne(context, request)
+        def sdi_buttons(contexr, request, default_buttons):
+            return [{'type': 'single',
+                     'buttons': [{'enabled_for': lambda x,y,z: True,
+                                  'id': 'Button'}]}]
+        request.registry.content = DummyContent(buttons=sdi_buttons)
+        length, rows = inst._folder_contents()
+        self.assertEqual(length, 1)
+        self.assertEqual(rows[0]['disable'], [])
+
+    def test_buttons_enabled_for_false(self):
+        from substanced.interfaces import IFolder
+        context = DummyFolder(__provides__=IFolder)
+        request = self._makeRequest()
+        context['catalogs'] = self._makeCatalogs(oids=[1])
+        result = testing.DummyResource()
+        result.__name__ = 'fred'
+        context.__objectmap__ = DummyObjectMap(result)
+        inst = self._makeOne(context, request)
+        def sdi_buttons(contexr, request, default_buttons):
+            return [{'type': 'single',
+                     'buttons': [{'enabled_for': lambda x,y,z: False,
+                                  'id': 'Button'}]}]
+        request.registry.content = DummyContent(buttons=sdi_buttons)
+        length, rows = inst._folder_contents()
+        self.assertEqual(length, 1)
+        self.assertEqual(rows[0]['disable'], ['Button'])
+
+    def test_buttons_enabled_for_non_callable(self):
+        from substanced.interfaces import IFolder
+        context = DummyFolder(__provides__=IFolder)
+        request = self._makeRequest()
+        context['catalogs'] = self._makeCatalogs(oids=[1])
+        result = testing.DummyResource()
+        result.__name__ = 'fred'
+        context.__objectmap__ = DummyObjectMap(result)
+        inst = self._makeOne(context, request)
+        def sdi_buttons(contexr, request, default_buttons):
+            return [{'type': 'single',
+                     'buttons': [{'enabled_for': 'not callable',
+                                  'id': 'Button'}]}]
+        request.registry.content = DummyContent(buttons=sdi_buttons)
+        length, rows = inst._folder_contents()
+        self.assertEqual(length, 1)
+        self.assertEqual(rows[0]['disable'], [])
+
     def _makeCatalogs(self, oids=()):
         catalogs = DummyCatalogs()
         catalog = DummyCatalog(oids)
@@ -1131,6 +1185,7 @@ class TestFolderContentsViews(unittest.TestCase):
              'name_url': '/mgmt_path',
              'deletable': True,
              'name': 'fred',
+             'disable': [],
              'id': 'fred'}
             )
 
