@@ -4,7 +4,9 @@ from pkg_resources import resource_filename
 from deform.template import ZPTTemplateLoader
 from translationstring import ChameleonTranslate
 
+from pyramid.i18n import get_localizer
 from pyramid.renderers import get_renderer
+from pyramid.threadlocal import get_current_request
 
 class WidgetRendererFactory(object):
     """
@@ -69,6 +71,9 @@ class WidgetRendererFactory(object):
         else:
             return self.loader.load(template_name + '.pt')
 
+def translator(term): # pragma: no cover
+    return get_localizer(get_current_request()).translate(term)
+
 def includeme(config): # pragma: no cover
     # specify both deform and deform_bootstrap templates as "fallback"
     # locations; assume user-supplied templates will be specified using asset
@@ -76,5 +81,5 @@ def includeme(config): # pragma: no cover
     deform_dir = resource_filename('deform', 'templates/')
     deform_bootstrap_dir = resource_filename('deform_bootstrap', 'templates/')
     search_path = (deform_bootstrap_dir, deform_dir)
-    renderer = WidgetRendererFactory(search_path)
+    renderer = WidgetRendererFactory(search_path, translator=translator)
     deform.Form.set_default_renderer(renderer)

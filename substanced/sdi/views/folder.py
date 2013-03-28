@@ -144,14 +144,15 @@ class FolderContentsViews(object):
                 sortable = False
 
             formatter = column.get('formatter', '')
-            
+            cssClass = column.get('cssClass', '')
+
             headers.append({
-                "id": field, 
+                "id": field,
                 "name": name,
                 "field": field,
                 "width": 120,
                 "minWidth": 120,
-                "cssClass": "cell-%s" % field,
+                "cssClass": "cell-%s" % field + ((' ' + cssClass) if cssClass else ''),
                 "sortable": sortable,
                 "formatterName": formatter,
                 })
@@ -268,15 +269,24 @@ class FolderContentsViews(object):
         In addition to the classes mentioned above, any custom css class or any
         bootstrap button class can be used.
         
+        Finally, each button can optionally include an ``enabled_for`` key,
+        which will point to a callable that will be passed a subobject from the
+        current folder and must return True if the button should be enabled for
+        that subobect or False if not.
+
         Most of the time, the best strategy for using the buttons callable will
         be to return a value containing the default buttonspec sequence passed
         in to the function (it will be a list).::
 
           def custom_buttons(context, request, default_buttonspec):
+              def some_condition(folder, subobject, request):
+                  return getattr(context, 'can_use_button1', False)
+
               custom_buttonspec = [{'type': 'single',
                                    'buttons': [{'id': 'button1',
                                                 'name': 'button1',
                                                 'class': 'btn-sdi-sel',
+                                                'enabled_for': some_condition,
                                                 'value': 'button1',
                                                 'text': 'Button 1'},
                                                {'id': 'button2',
@@ -427,6 +437,8 @@ class FolderContentsViews(object):
         custom_columns = request.registry.content.metadata(
             folder, 'columns', _marker)
 
+        buttons = self._buttons()
+
         records = []
 
         for oid in itertools.islice(ids, start, end):
@@ -461,6 +473,17 @@ class FolderContentsViews(object):
             for column in columns:
                 field = column['field']
                 record[field] = column['value']
+            disable = []
+            for button_group in buttons:
+                for button in button_group['buttons']:
+                    if 'enabled_for' not in button:
+                        continue
+                    condition = button['enabled_for']
+                    if not callable(condition):
+                        continue
+                    if not condition(folder, resource, request):
+                        disable.append(button['id'])
+            record['disable'] = disable
             records.append(record)
 
         return folder_length, records
