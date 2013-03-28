@@ -938,6 +938,19 @@ class TestSequentialAutoNamingFolder(unittest.TestCase):
         inst = self._makeOne(autoname_start=0)
         self.assertEqual(inst.next_name(None), '1'.zfill(7))
 
+    def test_next_name_empty_autoname_reset(self):
+        inst = self._makeOne()
+        inst._autoname_reset = True
+        self.assertEqual(inst.next_name(None), '0'.zfill(7))
+        self.assertFalse(inst._autoname_reset)
+
+    def test_next_name_nonempty_autoname_reset(self):
+        ob = DummyModel()
+        inst = self._makeOne({'0000005':ob})
+        inst._autoname_reset = True
+        self.assertEqual(inst.next_name(None), '0'.zfill(7))
+        self.assertFalse(inst._autoname_reset)
+
     def test_add_not_intifiable(self):
         ob = DummyModel()
         inst = self._makeOne()
