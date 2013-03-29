@@ -1,6 +1,6 @@
 <div metal:use-macro="request.sdiapi.main_template">
 
-  <div metal:fill-slot="head-more">
+  <metal:head-more fill-slot="head-more">
 
     <style type="text/css">
       .blockquote {
@@ -16,7 +16,7 @@
      }
     </style>
 
-  </div>
+  </metal:head-more>
 
   <div metal:fill-slot="main">
     <h1>Substance D management interface demo</h1>

@@ -754,6 +754,7 @@ class SequentialAutoNamingFolder(Folder, _AutoNamingFolder):
 
     _autoname_length = 7
     _autoname_start = -1
+    _autoname_reset = False
 
     def __init__(
         self,
@@ -789,10 +790,14 @@ class SequentialAutoNamingFolder(Folder, _AutoNamingFolder):
         will be the value of this folder's ``autoname_start`` constructor
         value.
         """
-        try:
-            maxkey = self.data.maxKey()
-        except ValueError: # empty tree
+        if self._autoname_reset:
             maxkey = self._autoname_start
+            self._autoname_reset = False
+        else:
+            try:
+                maxkey = self.data.maxKey()
+            except ValueError: # empty tree
+                maxkey = self._autoname_start
         name = self._zfill(int(maxkey) + 1)
         return name
 

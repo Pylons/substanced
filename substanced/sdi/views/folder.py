@@ -144,14 +144,15 @@ class FolderContentsViews(object):
                 sortable = False
 
             formatter = column.get('formatter', '')
-            
+            cssClass = column.get('cssClass', '')
+
             headers.append({
-                "id": field, 
+                "id": field,
                 "name": name,
                 "field": field,
                 "width": 120,
                 "minWidth": 120,
-                "cssClass": "cell-%s" % field,
+                "cssClass": "cell-%s" % field + ((' ' + cssClass) if cssClass else ''),
                 "sortable": sortable,
                 "formatterName": formatter,
                 })
@@ -249,24 +250,48 @@ class FolderContentsViews(object):
         Each button in a ``buttons`` dictionary is rendered using the button
         tag and requires five keys: ``id`` for the button's id attribute,
         ``name`` for the button's name attribute, ``class`` for any additional
-        css classes to be applied to it, ``value`` for the value that will be
-        passed as a request parameter when the form is submitted and ``text``
-        for the button's text.
+        css classes to be applied to it (see below), ``value`` for the value
+        that will be passed as a request parameter when the form is submitted
+        and ``text`` for the button's text.
+
+        The ``class`` value is special because it will define the button's
+        behavior. There are four mutually exclusive class names that can be
+        used. ``btn-sdi-act`` is for buttons that will always be enabled,
+        independently of any selected content items. ``btn-sdi-sel`` means
+        the button will start as disabled and will only be enabled once one
+        or more items are selected. ``btn-sdi-one`` means the button will
+        only be enabled if there's exactly one item selected. Finally,
+        ``btn-sdi-del`` means the button will stay disabled until one or
+        more *deletable* items are selected. You *must* use one of these
+        classes for the button to be enabled.
         
-        Most of the time, the best strategy will be to return a value
-        containing the default buttonspec sequence passed in to the function
-        (it will be a list).::
+        The ``class`` value can contain several classes separated by spaces.
+        In addition to the classes mentioned above, any custom css class or any
+        bootstrap button class can be used.
+        
+        Finally, each button can optionally include an ``enabled_for`` key,
+        which will point to a callable that will be passed a subobject from the
+        current folder and must return True if the button should be enabled for
+        that subobect or False if not.
+
+        Most of the time, the best strategy for using the buttons callable will
+        be to return a value containing the default buttonspec sequence passed
+        in to the function (it will be a list).::
 
           def custom_buttons(context, request, default_buttonspec):
+              def some_condition(folder, subobject, request):
+                  return getattr(context, 'can_use_button1', False)
+
               custom_buttonspec = [{'type': 'single',
                                    'buttons': [{'id': 'button1',
                                                 'name': 'button1',
-                                                'class': 'btn-primary',
+                                                'class': 'btn-sdi-sel',
+                                                'enabled_for': some_condition,
                                                 'value': 'button1',
                                                 'text': 'Button 1'},
                                                {'id': 'button2',
                                                 'name': 'button2',
-                                                'class': 'btn-primary',
+                                                'class': 'btn-sdi-act',
                                                 'value': 'button2',
                                                 'text': 'Button 2'}]}]
               return default_buttonspec + custom_buttonspec
@@ -307,33 +332,41 @@ class FolderContentsViews(object):
         contents using a table with any given subobject attributes, a callable
         named ``columns`` can be passed to a content type as metadata.  When
         the folder contents SDI view is invoked against an object of the type,
-        the ``columns`` callable s.will be passed the folder, a subobject the
-        ``request``, and a set of default column specification It will be
+        the ``columns`` callable will be passed the folder, a subobject, the
+        ``request``, and a default column specification. It will be
         called once for every object in the folder to obtain column
         representations for each of its subobjects.  It must return a list of
-        dictionaries with at least a ``name`` key for the column header and a
-        ``value`` key with the correct column value given the subobject. The
+        dictionaries with at least a ``name`` key for the column header, a
+        ``field`` key for the field name to use in javascript manipulations,
+        and a ``value`` key with the correct column value given the subobject. The
         callable **must** be prepared to receive subobjects that will *not*
         have the desired attributes (the subobject passed will be ``None`` at
         least once in order for the system to compute headers).
 
-        In addition to ``name`` and ``value``, the column dictionary can
-        contain the keys ``sortable`` and ``filterable``, which specify
-        respectively whether the column will have buttons for sorting the rows
-        and whether a row can be filtered using a simple text search. The
-        default value for both of those parameters is ``True``.
+        In addition to ``name``, ``field`` and ``value``, the column dictionary can
+        contain the keys ``sortable`` and ``formatter``. The first one specifies
+        whether the column will have buttons for sorting the rows. The default value
+        is ``True``. The last key, ``formatter``, can give the name of a javascript
+        method for formatting the ``value``. Currently, available formatters are
+        ``icon_label_url`` and ``date``. 
+        
+        The ``icon_label_url`` formatter gets the URL and icon (if any) of the
+        subobject and creates a link using ``value`` as link text. The ``date``
+        formatter expects that ``value`` is an ISO date and returns a text date in
+        the format "<month name> <day>, <year>".
 
         Here's an example of using the ``columns`` content type hook::
 
           def custom_columns(folder, subobject, request, default_columnspec):
               return default_columnspec + [
                   {'name': 'Review date',
+                   'field': 'date',
                    'value': getattr(subobject, 'review_date', ''),
                    'sortable': True,
-                   'filterable': False},
+                   'formatter': 'date'},
                   {'name': 'Rating',
+                   'field': 'rating',
                    'value': getattr(subobject, 'rating', ''),
-                   'filterable': False,
                    'sortable': True}
                   ]
 
@@ -343,6 +376,28 @@ class FolderContentsViews(object):
               )
           class MyCustomFolder(Persistent):
               pass
+              
+        In some cases, it might be needed to override the custom columns defined for
+        an already existing content type. This can be accomplished by registering the
+        content type a second time, but passing the columns then. For example, to add
+        columns to the user folder content listing from substanced::
+        
+          from substanced import root_factory
+          from substanced.interfaces import IUsers
+          from substanced.principal import Users
+          from myapp import custom_user_columns
+          
+          def main(global_config, **settings):
+              config = Configurator(root_factory=root_factory, settings=settings)
+              config.include('substanced')
+              config.add_content_type(IUsers,
+                                  factory=Users,
+                                  icon='icon-list-alt',
+                                  columns=custom_user_columns)
+              config.scan()
+
+        XXX TODO Document ``sort_index``, ``reverse``, ``filter_text``.
+        sort_index now also takes a string which looks up the catalog index.
         """
         folder = self.context
         request = self.request
@@ -367,6 +422,28 @@ class FolderContentsViews(object):
             text = catalog['text']
             q = q & text.eq(filter_text)
 
+        # BR: sort_index can be a string with the name of the catalog index,
+        # or, the index object itself. If it is a name, it is looked up.  XXX
+        # Untested!!! XXX TODO!!!
+        #
+        # CM: this should be a tuple of (catalog_name, index_name) at least,
+        # and optionally a callback that accepts the folder, and which returns
+        # the index object.  This logic should not be done here; it should
+        # be done in views that call this method instead.
+            
+        if isinstance(sort_index, basestring):
+            try:
+                sort_index = catalog[sort_index]
+            except KeyError:
+                keys = tuple(catalog.keys())
+                raise KeyError(
+                    (
+                        'Index %r is missing from the catalog. '
+                        'If sort_index is a string, then it must match the '
+                        'name of a catalog index. %r' % (sort_index, keys)
+                     )
+                    )
+
         if folder.is_ordered() and sort_index is None:
             # hypatia resultset.sort will call IFolder.sort method
             sort_index = folder
@@ -383,6 +460,8 @@ class FolderContentsViews(object):
         can_manage = bool(has_permission('sdi.manage-contents', folder,request))
         custom_columns = request.registry.content.metadata(
             folder, 'columns', _marker)
+
+        buttons = self._buttons()
 
         records = []
 
@@ -418,6 +497,17 @@ class FolderContentsViews(object):
             for column in columns:
                 field = column['field']
                 record[field] = column['value']
+            disable = []
+            for button_group in buttons:
+                for button in button_group['buttons']:
+                    if 'enabled_for' not in button:
+                        continue
+                    condition = button['enabled_for']
+                    if not callable(condition):
+                        continue
+                    if not condition(folder, resource, request):
+                        disable.append(button['id'])
+            record['disable'] = disable
             records.append(record)
 
         return folder_length, records
@@ -473,9 +563,8 @@ class FolderContentsViews(object):
         sortDir = True    # True ascending, or False descending.
         reverse = (not sortDir)
 
-        # XXX sortCol not implemented
         folder_length, records = self._folder_contents(
-            0, minimum_load, reverse=reverse
+            0, minimum_load, reverse=reverse, sort_index=sortCol
             )
 
         items  = {
@@ -527,19 +616,19 @@ class FolderContentsViews(object):
 
     def _get_json(self):
         request = self.request
-
         if 'from' in request.params:
             start = int(request.params.get('from'))
             end = int(request.params.get('to'))
-            # sort_col = request.params.get('sortCol')  # XXX ignored
+            sort_col = request.params.get('sortCol')
             sort_dir = request.params.get('sortDir') in ('true', 'True')
             filter_text = request.params.get('filter', '').strip()
 
             reverse = (not sort_dir)
 
-            # XXX sortCol not implemented
+
             folder_length, records = self._folder_contents(
-                start, end, reverse=reverse, filter_text=filter_text
+                start, end, reverse=reverse, filter_text=filter_text,
+                sort_index=sort_col,
                 )
 
             items = {

@@ -144,6 +144,8 @@ The ``class`` on your buttons affect behavior in the datagrid:
 - ``btn-sdi-sel`` disables the button until one or more items are
   selected
 
+- ``btn-sdi-one`` disables the button until exactly one item is selected
+
 - ``btn-sdi-del`` disables the button if any of the selected resources
   is marked as "non-deletable" (discussed below)
 
@@ -192,6 +194,39 @@ How does that get signified? An item is 'deletable' if the user has
 the ``sdi.manage-contents`` permission on ``folder`` *and* if the
 subobject has a ``__sdi_deletable__`` attribute which resolves to a
 boolean ``True`` value.
+
+It is also possible to make button enabling and disabling depend on some
+application-specific condition. To do this, assign a callable to the
+``enabled_for`` key in the button spec. For example:
+
+.. code-block:: python
+
+    def catalog_buttons(context, request, default_buttons):
+        def is_indexable(folder, subobject, request):
+            """ only enable the button if subobject is indexable """
+            return subobject.is_indexable()
+
+        buttons = [
+            {'type':'single',
+             'buttons':
+             [
+                 {'id':'reindex',
+                  'name':'form.reindex',
+                  'class':'btn-primary btn-sdi-sel',
+                  'value':'reindex',
+                  'enabled_for': is_indexable,
+                  'text':'Reindex'}
+                 ]
+             }
+            ] + default_buttons
+        return buttons
+
+In the example above, we define a button similar to our previous reindex
+button, except this time we have an ``enabled_for`` key that is assigned
+the ``is_indexable`` function. When the buttons are rendered, each element
+is passed to this function, along with the folder and request. If *any one*
+of the folder subobjects returns ``False`` for this call, the button will
+not be enabled.
 
 Filtering What Can Be Added
 ===========================

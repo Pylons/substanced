@@ -1,13 +1,13 @@
 <div metal:use-macro="request.sdiapi.main_template">
 
-  <div tal:omit-tag="" metal:fill-slot="head-more">
+  <metal:head-more fill-slot="head-more">
     <!-- slickgrid -->
     <script src="${request.static_url('substanced.sdi:static/js/slickgrid.upstream.js')}" type="text/javascript"></script>
     <script src="${request.static_url('substanced.sdi:static/js/sdi.grid.remotemodel.js')}" type="text/javascript"></script>
     <script src="${request.static_url('substanced.sdi:static/js/slickgrid-config.js')}" type="text/javascript"></script>
     <link href="${request.static_url('substanced.sdi:static/css/slick.grid.upstream.css')}" rel="stylesheet" />
     <link href="${request.static_url('substanced.sdi:static/css/sdi_slickgrid.css')}" rel="stylesheet" />
-  </div>
+  </metal:head-more>
 
   <div metal:fill-slot="main">
     <div class="container-fluid"
@@ -121,13 +121,19 @@
             grid.onSelectedRowsChanged.subscribe(function (evt) {
                 var selRows = grid.getSelectedRows();
                 var data = grid.getData();
+                var disabled = [];
                 if (selRows.length) {
                     var disable_delete = false;
+                    var disable_multiple = false;
                     var i;
-                    for (i = 0, l = selRows.length; i < l; i++) {
+                    for (var i = 0, l = selRows.length; i < l; i++) {
                         var item = data[selRows[i]];
                         // XXX bug: global selection will select all items that
                         // are not present.
+                        disabled[i] = item.disable;
+			if (i == 1) {
+			    disable_multiple = true;
+			}
                         if (!item.deletable) {
                             disable_delete = true;
                             break;
@@ -135,9 +141,18 @@
                     }
                     $('.btn-sdi-del').attr('disabled', disable_delete);
                     $('.btn-sdi-sel').attr('disabled', false);
+                    $('.btn-sdi-one').attr('disabled', disable_multiple);
+                    for (var i = 0, l = selRows.length; i < l; i++) {
+                        if (disabled[i]) {
+                            for (var j = 0, k = disabled[i].length; j < k; j++) {
+                                $('#' + disabled[i][j]).attr('disabled', true)
+                            }
+                        }
+                    }
                 } else {
                     $('.btn-sdi-del').attr('disabled', true);
                     $('.btn-sdi-sel').attr('disabled', true);
+                    $('.btn-sdi-one').attr('disabled', true);
                 }
             });
 
