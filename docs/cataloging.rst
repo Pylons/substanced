@@ -129,13 +129,14 @@ name.
 
 Once you've done this, you can then add the catalog to the database in any bit
 of code that has access to the database.  For example, in an event handler when
-the system starts up:
+the root object is created for the first time.
 
 .. code-block:: python
 
-    from pyramid.events import ApplicationCreated, subscriber
+    from substanced.root import Root
+    from substanced.event import subscribe_created
 
-    @subscriber(ApplicationCreated)
+    @subscribe_created(Root)
     def created(event):
         root = event.object
         service = root['catalogs']
