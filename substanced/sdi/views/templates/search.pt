@@ -13,7 +13,7 @@
               src="${request.static_url(reqt)}"
        ></script>
     </tal:block>
-  </metal>
+  </metal:head-more>
 
   <div metal:fill-slot="main">
     <h1>${view.title|None}</h1>
