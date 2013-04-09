@@ -2,15 +2,15 @@
 var config = module.exports;
 
 config["sdi.grid.remotemodel"] = {
-    rootPath: "../",
+    rootPath: "../../",
     environment: "browser",
     libs: [
-        "buster-test/testlib/jquery-1.7.2.min.js"
+        "dist/jquery.js"
     ],
     sources: [
-        "sdi.grid.remotemodel.js"
+        "js/sdi.grid.remotemodel.js"
     ],
     tests: [
-        "buster-test/sdi.grid.remotemodel-test.js"
+        "js/buster-test/sdi.grid.remotemodel-test.js"
     ]
 };

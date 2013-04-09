@@ -6,7 +6,6 @@
 .coverage
 substanced/coverage.xml
 build/
-dist/
 .tox/
 nosetests.xml
 env*/
