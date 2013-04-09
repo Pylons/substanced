@@ -275,7 +275,10 @@
             // Disable the global selection checkbox, as it does not work well yet.
             this.element.find('.slick-column-name input[type="checkbox"]')
                 .remove();
-            grid.onHeaderCellRendered.subscribe(function (e, args) {
+            // Most disturbing: changed onHeaderRendered in 2.0.2, then
+            // changed back again to onHeaderCellRendered on master.
+            // To make sure it works, we try both versions.
+            (grid.onHeaderCellRendered || grid.onHeaderRendered).subscribe(function (e, args) {
                 if (args.column.field == 'sel') {
                     $(args.node).find('.slick-column-name input[type="checkbox"]')
                         .remove();
