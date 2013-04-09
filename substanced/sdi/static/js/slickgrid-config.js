@@ -89,11 +89,10 @@
             //
             // this:                  will equal to the SlickGrid wrapper object instance
             // this.element:          the element to bind the grid to
-            // this.columns:          column definitions (pre-processed)
             // this.wrapperOptions:   options passed to this object at creation
             //
-            var columns = this.columns;
             var wrapperOptions = this.wrapperOptions;
+            var columns = wrapperOptions.columns;
 
             var isReorderable = this.wrapperOptions.isReorderable;
 
