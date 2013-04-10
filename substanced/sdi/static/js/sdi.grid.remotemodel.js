@@ -383,8 +383,8 @@
             var results = $.extend({
                     from: from,
                     to: to,
-                    sortCol: options.sortCol,
-                    sortDir: options.sortDir
+                    sortCol: options.sortCol || '',
+                    sortDir: options.sortDir || ''
                 }, (options.extraQuery || {}));
 
             //log('Will load:', from, to, direction);

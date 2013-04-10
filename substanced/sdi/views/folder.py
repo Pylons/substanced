@@ -433,7 +433,11 @@ class FolderContentsViews(object):
         # and optionally a callback that accepts the folder, and which returns
         # the index object.  This logic should not be done here; it should
         # be done in views that call this method instead.
-            
+        
+        if not sort_index:
+            # An empty sort index means no sorting.
+            sort_index = None
+
         if isinstance(sort_index, basestring):
             try:
                 sort_index = catalog[sort_index]
