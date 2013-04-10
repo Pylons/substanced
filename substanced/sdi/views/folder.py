@@ -145,6 +145,7 @@ class FolderContentsViews(object):
 
             formatter = column.get('formatter', '')
             cssClass = column.get('cssClass', '')
+            cssClass= "cell-%s" % field + ((' ' + cssClass) if cssClass else '')
 
             headers.append({
                 "id": field,
@@ -152,7 +153,7 @@ class FolderContentsViews(object):
                 "field": field,
                 "width": 120,
                 "minWidth": 120,
-                "cssClass": "cell-%s" % field + ((' ' + cssClass) if cssClass else ''),
+                "cssClass": cssClass,
                 "sortable": sortable,
                 "formatterName": formatter,
                 })
@@ -333,27 +334,28 @@ class FolderContentsViews(object):
         named ``columns`` can be passed to a content type as metadata.  When
         the folder contents SDI view is invoked against an object of the type,
         the ``columns`` callable will be passed the folder, a subobject, the
-        ``request``, and a default column specification. It will be
-        called once for every object in the folder to obtain column
-        representations for each of its subobjects.  It must return a list of
-        dictionaries with at least a ``name`` key for the column header, a
-        ``field`` key for the field name to use in javascript manipulations,
-        and a ``value`` key with the correct column value given the subobject. The
-        callable **must** be prepared to receive subobjects that will *not*
-        have the desired attributes (the subobject passed will be ``None`` at
-        least once in order for the system to compute headers).
+        ``request``, and a default column specification. It will be called once
+        for every object in the folder to obtain column representations for
+        each of its subobjects.  It must return a list of dictionaries with at
+        least a ``name`` key for the column header, a ``field`` key for the
+        field name to use in javascript manipulations, and a ``value`` key with
+        the correct column value given the subobject. The callable **must** be
+        prepared to receive subobjects that will *not* have the desired
+        attributes (the subobject passed will be ``None`` at least once in
+        order for the system to compute headers).
 
-        In addition to ``name``, ``field`` and ``value``, the column dictionary can
-        contain the keys ``sortable`` and ``formatter``. The first one specifies
-        whether the column will have buttons for sorting the rows. The default value
-        is ``True``. The last key, ``formatter``, can give the name of a javascript
-        method for formatting the ``value``. Currently, available formatters are
-        ``icon_label_url`` and ``date``. 
+        In addition to ``name``, ``field`` and ``value``, the column dictionary
+        can contain the keys ``sortable`` and ``formatter``. The first one
+        specifies whether the column will have buttons for sorting the
+        rows. The default value is ``True``. The last key, ``formatter``, can
+        give the name of a javascript method for formatting the
+        ``value``. Currently, available formatters are ``icon_label_url`` and
+        ``date``.
         
         The ``icon_label_url`` formatter gets the URL and icon (if any) of the
         subobject and creates a link using ``value`` as link text. The ``date``
-        formatter expects that ``value`` is an ISO date and returns a text date in
-        the format "<month name> <day>, <year>".
+        formatter expects that ``value`` is an ISO date and returns a text date
+        in the format "<month name> <day>, <year>".
 
         Here's an example of using the ``columns`` content type hook::
 
@@ -377,10 +379,11 @@ class FolderContentsViews(object):
           class MyCustomFolder(Persistent):
               pass
               
-        In some cases, it might be needed to override the custom columns defined for
-        an already existing content type. This can be accomplished by registering the
-        content type a second time, but passing the columns then. For example, to add
-        columns to the user folder content listing from substanced::
+        In some cases, it might be needed to override the custom columns
+        defined for an already existing content type. This can be accomplished
+        by registering the content type a second time, but passing the columns
+        then. For example, to add columns to the user folder content listing
+        from substanced::
         
           from substanced import root_factory
           from substanced.interfaces import IUsers
@@ -430,7 +433,11 @@ class FolderContentsViews(object):
         # and optionally a callback that accepts the folder, and which returns
         # the index object.  This logic should not be done here; it should
         # be done in views that call this method instead.
-            
+        
+        if not sort_index:
+            # An empty sort index means no sorting.
+            sort_index = None
+
         if isinstance(sort_index, basestring):
             try:
                 sort_index = catalog[sort_index]
