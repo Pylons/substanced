@@ -9,7 +9,8 @@ node_js:
   - "0.10"
 notifications:
   irc: irc.freenode.org#greenfinity
-install: 
+install:
+  - pip install . --use-mirrors
   - pip install -r requirements.txt --use-mirrors
   - npm install buster
   - export PATH="$PWD/node_modules/.bin:$PATH"
