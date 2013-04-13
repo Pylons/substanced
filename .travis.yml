@@ -31,5 +31,5 @@ before_script:
   - sleep 8
   - echo 'Done.' 
 script:
-  - nosetests --with-coverage --cover-package=substanced
+  - nosetests --with-coverage --cover-package=substanced cover-min-percentage=100
   - buster test
