@@ -159,7 +159,23 @@ class FolderContentsViews(object):
                 })
 
         return headers
-   
+
+    def _sort_index_from_index_name(self, index_name):
+        if index_name is None:
+            return None
+        catalog = find_catalog(self.context, 'system')
+        try:
+            return catalog[index_name]
+        except KeyError:
+            keys = tuple(catalog.keys())
+            raise KeyError(
+                (
+                    'Index %r is missing from the system catalog. '
+                    'The name of the sorting column must match the '
+                    'name of a catalog index. %r' % (index_name, keys)
+                )
+            )
+
     def _folder_contents(
         self,
         start=None,
@@ -400,7 +416,6 @@ class FolderContentsViews(object):
               config.scan()
 
         XXX TODO Document ``sort_index``, ``reverse``, ``filter_text``.
-        sort_index now also takes a string which looks up the catalog index.
         """
         folder = self.context
         request = self.request
@@ -425,31 +440,9 @@ class FolderContentsViews(object):
             text = catalog['text']
             q = q & text.eq(filter_text)
 
-        # BR: sort_index can be a string with the name of the catalog index,
-        # or, the index object itself. If it is a name, it is looked up.  XXX
-        # Untested!!! XXX TODO!!!
-        #
-        # CM: this should be a tuple of (catalog_name, index_name) at least,
-        # and optionally a callback that accepts the folder, and which returns
-        # the index object.  This logic should not be done here; it should
-        # be done in views that call this method instead.
-        
         if not sort_index:
             # An empty sort index means no sorting.
             sort_index = None
-
-        if isinstance(sort_index, basestring):
-            try:
-                sort_index = catalog[sort_index]
-            except KeyError:
-                keys = tuple(catalog.keys())
-                raise KeyError(
-                    (
-                        'Index %r is missing from the catalog. '
-                        'If sort_index is a string, then it must match the '
-                        'name of a catalog index. %r' % (sort_index, keys)
-                     )
-                    )
 
         if folder.is_ordered() and sort_index is None:
             # hypatia resultset.sort will call IFolder.sort method
@@ -571,7 +564,8 @@ class FolderContentsViews(object):
         reverse = (not sortDir)
 
         folder_length, records = self._folder_contents(
-            0, minimum_load, reverse=reverse, sort_index=sortCol
+            0, minimum_load, reverse=reverse,
+            sort_index=self._sort_index_from_index_name(sortCol),
             )
 
         items  = {
@@ -632,10 +626,9 @@ class FolderContentsViews(object):
 
             reverse = (not sort_dir)
 
-
             folder_length, records = self._folder_contents(
                 start, end, reverse=reverse, filter_text=filter_text,
-                sort_index=sort_col,
+                sort_index=self._sort_index_from_index_name(sort_col),
                 )
 
             items = {
