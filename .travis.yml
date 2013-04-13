@@ -1,12 +1,20 @@
-language: node_js
+language:
+  - python
+  - node_js
+python:
+  - 2.6
+  - 2.7
+  - 3.2
 node_js:
   - 0.10
 notifications:
   irc: irc.freenode.org#greenfinity
-before_script:
+install: 
+  - pip install -r requirements.txt --use-mirrors
   - npm install buster
   - export PATH="$PWD/node_modules/.bin:$PATH"
   - export DISPLAY=:99.0
+before_script:
   - echo 'Starting buster server...'
   - buster server &
   - echo 'Done.'
@@ -23,4 +31,5 @@ before_script:
   - sleep 8
   - echo 'Done.' 
 script:
+  - nosetest
   - buster test
