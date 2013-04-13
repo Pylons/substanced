@@ -263,6 +263,28 @@ class TestFolderContentsViews(unittest.TestCase):
         # this information is in the columns metadata. So, we test this
         # in test_metadata_for_non_sortable_columns.
 
+    def test_wrong_index(self):
+        dummy_column_headers = [{
+            'field': 'col1',
+            'sortable': False,
+        }, {
+            'field': 'colNOSUCH',
+            'sortable': True,
+        }]
+        context = testing.DummyResource()
+        request = self._makeRequest()
+        inst = self._makeOne(context, request)
+        inst._folder_contents = mock.Mock(
+            return_value=dummy_folder_contents_2
+        )
+        inst._column_headers = mock.Mock(return_value=dummy_column_headers)
+        inst.sdi_add_views = mock.Mock(return_value=('b',))
+        context.is_reorderable = mock.Mock(return_value=False)
+        context.is_ordered = mock.Mock(return_value=False)
+        with mock.patch('substanced.sdi.views.folder.find_catalog') as find_catalog:
+            find_catalog.return_value = {'col1': 'COL1', 'col2': 'COL2'}
+            self.assertRaises(KeyError, inst.show)
+
     def test_show_json(self):
         context = testing.DummyResource()
         request = self._makeRequest()
