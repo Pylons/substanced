@@ -11,7 +11,6 @@ notifications:
   irc: irc.freenode.org#greenfinity
 install:
   - pip install . --use-mirrors
-  - pip install -r requirements.txt --use-mirrors
   - npm install buster
   - export PATH="$PWD/node_modules/.bin:$PATH"
   - export DISPLAY=:99.0
