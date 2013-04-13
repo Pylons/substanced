@@ -10,7 +10,7 @@ node_js:
 notifications:
   irc: irc.freenode.org#greenfinity
 install:
-  - pip install . --use-mirrors
+  - pip install -e '.[testing]' --use-mirrors
   - npm install buster
   - export PATH="$PWD/node_modules/.bin:$PATH"
   - export DISPLAY=:99.0
@@ -31,5 +31,5 @@ before_script:
   - sleep 8
   - echo 'Done.' 
 script:
-  - nosetest
+  - nosetests --with-coverage --cover-package=substanced
   - buster test
