@@ -2,7 +2,7 @@
 var config = module.exports;
 
 config["sdi.grid.remotemodel"] = {
-    rootPath: "../../",
+    rootPath: "./substanced/sdi/static/",
     environment: "browser",
     libs: [
         "dist/jquery.js"
