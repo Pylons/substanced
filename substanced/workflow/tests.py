@@ -6,7 +6,7 @@ from pyramid import testing
 class WorkflowStateTests(unittest.TestCase):
 
     def _getTargetClass(self):
-        from .. import WorkflowState
+        from . import WorkflowState
         return WorkflowState
 
     def _makeOne(self, **kw):
@@ -32,7 +32,7 @@ class WorkflowStateTests(unittest.TestCase):
 class WorkflowTransitionTests(unittest.TestCase):
 
     def _getTargetClass(self):
-        from .. import WorkflowTransition
+        from . import WorkflowTransition
         return WorkflowTransition
 
     def _makeOne(self, **kw):
