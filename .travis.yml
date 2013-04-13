@@ -6,7 +6,7 @@ python:
   - 2.7
   - 3.2
 node_js:
-  - 0.10
+  - "0.10"
 notifications:
   irc: irc.freenode.org#greenfinity
 install: 
