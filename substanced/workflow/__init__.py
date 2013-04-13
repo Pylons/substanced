@@ -7,6 +7,8 @@ from pyramid.security import has_permission
 from zope.interface import implementer
 
 from ..interfaces import (
+    IWorkflowState,
+    IWorkflowTransition,
     IWorkflow,
     IDefaultWorkflow,
     )
@@ -21,6 +23,26 @@ STATE_ATTR = '__workflow_state__'
 class WorkflowError(Exception):
     """Exception raised for anything related to :mod:`substanced.workflow`.
     """
+
+@implementer(IWorkflowState)
+class WorkflowState(object):
+
+    name = title = ''
+    _callback = None
+
+    def __call__(self, content, request, transition, workflow):
+        """ Callback when content enters the state.
+        """
+
+@implementer(IWorkflowTransition)
+class WorkflowTransition(object):
+
+    name = title = ''
+    _callback = from_state = to_state = permission = None
+
+    def __call__(self, content, request, transition, workflow):
+        """ Callback when content begins the transition.
+        """
 
 @implementer(IWorkflow)
 class Workflow(object):
