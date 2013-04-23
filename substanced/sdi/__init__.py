@@ -46,7 +46,10 @@ CENTER1 = Sentinel('CENTER1')
 CENTER2 = Sentinel('CENTER2')
 
 from ..objectmap import find_objectmap
-from ..util import acquire
+from ..util import (
+    acquire,
+    find_index,
+    )
 
 MANAGE_ROUTE_NAME = 'substanced_manage'
 
@@ -356,10 +359,9 @@ def default_sdi_columns(folder, subobject, request):
     name = getattr(subobject, '__name__', '')
     return [
         {'name': 'Name',
-         'field': 'name',
          'value': name,
          'formatter': 'icon_label_url',
-         'sortable': True}
+         'sorter': lambda context: find_index(context, 'system', 'name')}
         ]
 
 def default_sdi_buttons(folder, request):

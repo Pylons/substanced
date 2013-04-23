@@ -129,7 +129,7 @@ class FolderContentsViews(object):
             columns = custom_columns(context, None, request, columns)
         return columns
 
-    def _sort_info(self, columns, system_catalog, sort_column_name=None):
+    def _sort_info(self, columns, sort_column_name=None):
         context = self.context
 
         sort_column = None
@@ -140,7 +140,8 @@ class FolderContentsViews(object):
 
         if is_ordered:
             # If the folder is ordered, use the folder itself as the sort
-            # index.
+            # index; ordered folders cannot currently be viewed reordered
+            # by anything except their explicit ordering.
             sort_index = context
 
         elif sort_column_name is None:
@@ -162,9 +163,6 @@ class FolderContentsViews(object):
             sorter = sort_column['sorter']
             sort_index = sorter(context)
             
-        if sort_index is None:
-            sort_index = system_catalog['name']
-
         return {
             'column':sort_column,
             'column_name':sort_column_name,
@@ -348,20 +346,19 @@ class FolderContentsViews(object):
         ``request``, and a default column specification. It will be called once
         for every object in the folder to obtain column representations for
         each of its subobjects.  It must return a list of dictionaries with at
-        least a ``name`` key for the column header, a ``field`` key for the
-        field name to use in javascript manipulations, and a ``value`` key with
+        least a ``name`` key for the column header and a ``value`` key with
         the correct column value given the subobject. The callable **must** be
         prepared to receive subobjects that will *not* have the desired
         attributes (the subobject passed will be ``None`` at least once in
         order for the system to compute headers).
 
-        In addition to ``name``, ``field`` and ``value``, the column dictionary
-        can contain the keys ``sorter`` and ``formatter``. The first one will
+        In addition to ``name`` and ``value``, the column dictionary may
+        contain the keys ``sorter`` and ``formatter``. The ``sorter`` will
         either be ``None`` if the column is not sortable, or a callback which
-        accepts a context and returns a sort index.  The default value is
-        ``None``. The last key, ``formatter``, can give the name of a
-        javascript method for formatting the ``value``. Currently, available
-        formatters are ``icon_label_url`` and ``date``.
+        accepts a resource (the folder) and which must return a sort index.
+        The default ``sorter`` value is ``None``. The last key, ``formatter``,
+        can give the name of a javascript method for formatting the ``value``.
+        Currently, available formatters are ``icon_label_url`` and ``date``.
         
         The ``icon_label_url`` formatter gets the URL and icon (if any) of the
         subobject and creates a link using ``value`` as link text. The ``date``
@@ -370,15 +367,16 @@ class FolderContentsViews(object):
 
         Here's an example of using the ``columns`` content type hook::
 
+          from substanced.util import find_index
+
           def custom_columns(folder, subobject, request, default_columnspec):
               return default_columnspec + [
-                  {'name': 'Review date',
-                   'field': 'date',
+                  {'name': 'Review Date',
                    'value': getattr(subobject, 'review_date', ''),
-                   'sorter': some_sorter,
+                   'sorter': lambda context: find_index(
+                                          context, 'mycatalog', 'date'),
                    'formatter': 'date'},
                   {'name': 'Rating',
-                   'field': 'rating',
                    'value': getattr(subobject, 'rating', '')}
                   ]
 
@@ -443,12 +441,11 @@ class FolderContentsViews(object):
         
         sort_info = self._sort_info(
             columns,
-            system_catalog,
             sort_column_name=sort_column_name,
             )
 
         sort_index = sort_info['index']
-        sort_column_name = sort_info['sort_column_name']
+        sort_column_name = sort_info['column_name']
 
         resultset = q.execute()
         folder_length = len(resultset)
@@ -495,8 +492,10 @@ class FolderContentsViews(object):
             elif custom_columns is not _marker:
                 columns = custom_columns(folder, resource, request, columns)
             for column in columns:
-                field = column['field']
-                record[field] = column['value']
+                # XXX CM: bad idea, can't guarantee a column name won't override
+                # the "reserved" names above.  Ree?
+                cname = column['name']
+                record[cname] = column['value']
             disable = []
             for button_group in buttons:
                 for button in button_group['buttons']:
@@ -525,23 +524,26 @@ class FolderContentsViews(object):
 
         for order, column in enumerate(columns):
             name = column['name']
-            field = column['field']
             sortable = column.get('sorter', None) is not None
 
             if is_ordered:
                 sortable = False
 
             formatter = column.get('formatter', '')
-            cssClass = column.get('cssClass', '')
-            cssClass= "cell-%s" % field + ((' ' + cssClass) if cssClass else '')
+            css_class = column.get('css_class', '')
+            css_name = name.replace(' ', '-')
+            css_class = ("cell-%s %s" % (css_name, css_class)).strip()
+
+            # XXX CM: Do we really need all of "id", "name", and "field" below?
+            # Ree?
 
             headers.append({
-                "id": field,
+                "id": name,
                 "name": name,
-                "field": field,
+                "field": name,
                 "width": 120,
                 "minWidth": 120,
-                "cssClass": cssClass,
+                "cssClass": css_class,
                 "sortable": sortable,
                 "formatterName": formatter,
                 })
