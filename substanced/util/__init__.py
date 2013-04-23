@@ -526,3 +526,12 @@ def find_catalog(resource, name):
             if name == cname:
                 return catalog
 
+def find_index(resource, catalog_name, index_name):
+    """ Find the first catalog named ``catalog_name`` in the lineage of the
+    resource, and ask it for its ``index_name`` index; return the resulting
+    index."""
+    catalog = find_catalog(resource, catalog_name)
+    index = catalog[index_name]
+    return index
+
+            

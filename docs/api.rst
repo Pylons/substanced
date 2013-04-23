@@ -461,6 +461,12 @@ Other Helpers
 
 .. autofunction:: find_services
 
+.. autofunction:: find_catalogs
+
+.. autofunction:: find_catalog
+
+.. autofunction:: find_index
+
 .. autofunction:: is_folder
 
 .. autofunction:: is_service
