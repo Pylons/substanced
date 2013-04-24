@@ -487,6 +487,7 @@ class FolderContentsViews(object):
             q = q & text.eq(filter_text)
 
         resultset = q.execute()
+        folder_length = len(resultset)
 
         columns = self._columns()
         
@@ -568,8 +569,6 @@ class FolderContentsViews(object):
                         disable.append(button['id'])
             record['disable'] = disable
             records.append(record)
-
-        folder_length = len(resultset)
 
         return {
             'length':folder_length,
