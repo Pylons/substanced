@@ -520,6 +520,9 @@ class FolderContentsViews(object):
         for oid in itertools.islice(ids, start, end):
             resource = objectmap.object_for(oid)
             name = getattr(resource, '__name__', '')
+            # XXX CM: computation of deletable here should probably attached to
+            # the delete button as an ``enabled_for`` instead of being treated
+            # specially.
             deletable = getattr(resource, '__sdi_deletable__', None)
             if deletable is not None:
                 if callable(deletable):
