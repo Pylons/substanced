@@ -408,7 +408,10 @@ class FolderContentsViews(object):
 
           def sorter(folder, resultset, reverse=False, limit=None):
               index = find_index(folder, 'mycatalog', 'date')
-              return index.sort(resultset, reverse=reverse, limit=limit)
+              if index is not None:
+                  resultset = resultset.sort(
+                                       index, reverse=reverse, limit=limit)
+              return resultset
 
           def custom_columns(folder, subobject, request, default_columnspec):
               return default_columnspec + [
