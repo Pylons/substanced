@@ -821,6 +821,42 @@ class Test_find_catalog(unittest.TestCase):
             None,
             )
 
+class Test_find_index(unittest.TestCase):
+    def _callFUT(self, resource, catalog_name, index_name):
+        from . import find_index
+        return find_index(resource, catalog_name, index_name)
+
+    def _makeTree(self):
+        from substanced.interfaces import IFolder
+        root = testing.DummyResource(__provides__=IFolder)
+        catalogs1 = root['catalogs'] = testing.DummyResource(
+            __is_service__=True)
+        catalog1 = testing.DummyResource()
+        catalogs1['catalog1'] = catalog1
+        sub = testing.DummyResource(__provides__=IFolder)
+        root['sub'] = sub
+        catalogs2 = sub['catalogs'] = testing.DummyResource(__is_service__=True)
+        catalog2 = testing.DummyResource()
+        catalog1_2 = testing.DummyResource()
+        sub['catalogs'] = catalogs2
+        catalogs2['catalog2'] = catalog2
+        catalogs2['catalog1'] = catalog1_2
+        return root
+
+    def test_no_such_catalog(self):
+        resource = testing.DummyResource()
+        self.assertEqual(self._callFUT(resource, 'catalog1', 'index'), None)
+
+    def test_no_such_index(self):
+        resource = self._makeTree()
+        self.assertEqual(self._callFUT(resource, 'catalog1', 'index'), None)
+
+    def test_index_found(self):
+        resource = self._makeTree()
+        index = testing.DummyResource()
+        resource['catalogs']['catalog1']['index'] = index
+        self.assertEqual(self._callFUT(resource, 'catalog1', 'index'), index)
+        
 class TestJsonDict(unittest.TestCase):
     def test_it(self):
         from . import JsonDict

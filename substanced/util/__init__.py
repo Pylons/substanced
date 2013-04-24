@@ -529,9 +529,12 @@ def find_catalog(resource, name):
 def find_index(resource, catalog_name, index_name):
     """ Find the first catalog named ``catalog_name`` in the lineage of the
     resource, and ask it for its ``index_name`` index; return the resulting
-    index."""
+    index.  If either a catalog of the provided name or an index of the
+    provided name does not exist, this function will return ``None``."""
     catalog = find_catalog(resource, catalog_name)
-    index = catalog[index_name]
+    if catalog is None:
+        return None
+    index = catalog.get(index_name)
     return index
 
             
