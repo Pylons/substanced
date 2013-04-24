@@ -3,7 +3,6 @@ import re
 
 import colander
 
-
 from pyramid.httpexceptions import HTTPFound
 from pyramid.view import view_defaults
 from pyramid.security import has_permission
@@ -183,8 +182,8 @@ class FolderContentsViews(object):
             # If the folder is ordered, use the folder itself as the sort
             # index; ordered folders cannot currently be viewed reordered
             # by anything except their explicit ordering.
-            def sorter(folder, resultset, reverse, limit):
-                return folder.sort(resultset, reverse=reverse, limit=limit)
+            def sorter(folder, resultset, reverse=False, limit=None):
+                return resultset.sort(folder, limit=limit, reverse=reverse)
 
         elif sort_column_name is None:
             # The default sort always uses the first column with a sorter.

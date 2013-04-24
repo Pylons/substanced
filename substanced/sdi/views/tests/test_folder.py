@@ -329,7 +329,11 @@ class TestFolderContentsViews(unittest.TestCase):
         result = inst._sort_info([])
         self.assertEqual(result['column'], None)
         sorter = result['sorter']
-        self.assertEqual(sorter(context, [1], reverse=True, limit=1), [1])
+        resultset = DummyResultSet([1])
+        self.assertEqual(
+            sorter(context, resultset, reverse=True, limit=1),
+            resultset
+            )
         self.assertEqual(result['column_name'], None)
 
     def test__sort_info_context_unordered_default_sort_column(self):
