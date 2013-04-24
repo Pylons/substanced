@@ -129,11 +129,46 @@ class FolderContentsViews(object):
             columns = custom_columns(context, None, request, columns)
         return columns
 
+    def _column_headers(self, columns):
+        is_ordered = self.context.is_ordered()
+
+        headers = []
+
+        for order, column in enumerate(columns):
+            name = column['name']
+            sortable = column.get('sorter', None) is not None
+
+            if is_ordered:
+                # We don't currently allow ordered folders to be resorted by
+                # columns
+                sortable = False
+
+            formatter = column.get('formatter', '')
+            css_class = column.get('css_class', '')
+            css_name = name.replace(' ', '-')
+            css_class = ("cell-%s %s" % (css_name, css_class)).strip()
+
+            # XXX CM: Do we really need all of "id", "name", and "field" below?
+            # Ree?
+
+            headers.append({
+                "id": name,
+                "name": name,
+                "field": name,
+                "width": 120,
+                "minWidth": 120,
+                "cssClass": css_class,
+                "sortable": sortable,
+                "formatterName": formatter,
+                })
+
+        return headers
+
     def _sort_info(self, columns, sort_column_name=None):
         context = self.context
 
         sort_column = None
-        sort_index = None
+        sorter = None
         
         # Is the folder content ordered?
         is_ordered = context.is_ordered()
@@ -142,18 +177,19 @@ class FolderContentsViews(object):
             # If the folder is ordered, use the folder itself as the sort
             # index; ordered folders cannot currently be viewed reordered
             # by anything except their explicit ordering.
-            sort_index = context
+            def sorter(folder, resultset, reverse, limit):
+                return folder.sort(resultset, reverse=reverse, limit=limit)
 
         elif sort_column_name is None:
             # The default sort always uses the first column with a sorter.
             for col in columns:
                 if col.get('sorter'):
-                    sort_column = col
                     sort_column_name = col['name']
+                    sort_column = col
                     break
 
         else:
-            # A nondefault sort column name was passed
+            # Nondefault sort column
             for col in columns:
                 if col.get('name') == sort_column_name:
                     sort_column = col
@@ -161,12 +197,11 @@ class FolderContentsViews(object):
 
         if sort_column is not None:
             sorter = sort_column['sorter']
-            sort_index = sorter(context)
             
         return {
             'column':sort_column,
             'column_name':sort_column_name,
-            'index':sort_index,
+            'sorter':sorter,
             }
    
     def _folder_contents(
@@ -355,10 +390,12 @@ class FolderContentsViews(object):
         In addition to ``name`` and ``value``, the column dictionary may
         contain the keys ``sorter`` and ``formatter``. The ``sorter`` will
         either be ``None`` if the column is not sortable, or a callback which
-        accepts a resource (the folder) and which must return a sort index.
-        The default ``sorter`` value is ``None``. The last key, ``formatter``,
-        can give the name of a javascript method for formatting the ``value``.
-        Currently, available formatters are ``icon_label_url`` and ``date``.
+        accepts a resource (the folder), a resultset, a ``limit`` keyword
+        argument, and a ``reverse`` keyword argument and which must return a
+        sorted result set.  The default ``sorter`` value is ``None``. The last
+        key, ``formatter``, can give the name of a javascript method for
+        formatting the ``value``.  Currently, available formatters are
+        ``icon_label_url`` and ``date``.
         
         The ``icon_label_url`` formatter gets the URL and icon (if any) of the
         subobject and creates a link using ``value`` as link text. The ``date``
@@ -369,12 +406,15 @@ class FolderContentsViews(object):
 
           from substanced.util import find_index
 
+          def sorter(folder, resultset, reverse=False, limit=None):
+              index = find_index(folder, 'mycatalog', 'date')
+              return index.sort(resultset, reverse=reverse, limit=limit)
+
           def custom_columns(folder, subobject, request, default_columnspec):
               return default_columnspec + [
                   {'name': 'Review Date',
                    'value': getattr(subobject, 'review_date', ''),
-                   'sorter': lambda context: find_index(
-                                          context, 'mycatalog', 'date'),
+                   'sorter': sorter,
                    'formatter': 'date'},
                   {'name': 'Rating',
                    'value': getattr(subobject, 'rating', '')}
@@ -437,6 +477,8 @@ class FolderContentsViews(object):
             text = system_catalog['text']
             q = q & text.eq(filter_text)
 
+        resultset = q.execute()
+
         columns = self._columns()
         
         sort_info = self._sort_info(
@@ -444,14 +486,12 @@ class FolderContentsViews(object):
             sort_column_name=sort_column_name,
             )
 
-        sort_index = sort_info['index']
+        sorter = sort_info['sorter']
         sort_column_name = sort_info['column_name']
 
-        resultset = q.execute()
-        folder_length = len(resultset)
+        if sorter is not None:
+            resultset = sorter(folder, resultset, reverse=reverse, limit=end)
 
-        if sort_index is not None:
-            resultset = resultset.sort(sort_index, reverse=reverse, limit=end)
         ids = resultset.ids
 
         can_manage = bool(has_permission('sdi.manage-contents', folder,request))
@@ -509,46 +549,14 @@ class FolderContentsViews(object):
             record['disable'] = disable
             records.append(record)
 
+        folder_length = len(resultset)
+
         return {
             'length':folder_length,
             'records':records,
             'sort_column_name':sort_column_name,
-            'sort_index':sort_index,
             'columns':columns,
             }
-
-    def _column_headers(self, columns):
-        is_ordered = self.context.is_ordered()
-
-        headers = []
-
-        for order, column in enumerate(columns):
-            name = column['name']
-            sortable = column.get('sorter', None) is not None
-
-            if is_ordered:
-                sortable = False
-
-            formatter = column.get('formatter', '')
-            css_class = column.get('css_class', '')
-            css_name = name.replace(' ', '-')
-            css_class = ("cell-%s %s" % (css_name, css_class)).strip()
-
-            # XXX CM: Do we really need all of "id", "name", and "field" below?
-            # Ree?
-
-            headers.append({
-                "id": name,
-                "name": name,
-                "field": name,
-                "width": 120,
-                "minWidth": 120,
-                "cssClass": css_class,
-                "sortable": sortable,
-                "formatterName": formatter,
-                })
-
-        return headers
 
     @mgmt_view(
         request_method='GET',

@@ -354,6 +354,12 @@ def sdi_mgmt_views(context, request, names=None):
 
     return manually_ordered + topo_ordered
 
+def name_sorter(resource, resultset, limit=None, reverse=False):
+    index = find_index(resource, 'system', 'name')
+    if index is not None:
+        resultset = resultset.sort(index, limit=limit, reverse=reverse)
+    return resultset
+
 def default_sdi_columns(folder, subobject, request):
     """ The default columns content-type hook """
     name = getattr(subobject, '__name__', '')
@@ -361,7 +367,7 @@ def default_sdi_columns(folder, subobject, request):
         {'name': 'Name',
          'value': name,
          'formatter': 'icon_label_url',
-         'sorter': lambda context: find_index(context, 'system', 'name')}
+         'sorter': name_sorter}
         ]
 
 def default_sdi_buttons(folder, request):

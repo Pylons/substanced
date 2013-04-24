@@ -103,19 +103,470 @@ class TestFolderContentsViews(unittest.TestCase):
         request = testing.DummyRequest()
         request.sdiapi = DummySDIAPI()
         request.sdiapi.flash_with_undo = request.session.flash
-
         request.registry.content = DummyContent(**kw)
         return request
 
+    def _makeCatalogs(self, oids=()):
+        catalogs = DummyCatalogs()
+        catalog = DummyCatalog(oids)
+        catalogs['system'] = catalog
+        return catalogs
+
+    def test__buttons_is_None(self):
+        context = testing.DummyResource()
+        request = self._makeRequest(buttons=None)
+        inst = self._makeOne(context, request)
+        result = inst._buttons()
+        self.assertEqual(result, [])
+
+    def test__buttons_is_clbl(self):
+        context = testing.DummyResource()
+        def sdi_buttons(context, request, default_buttons):
+            return 'abc'
+        request = self._makeRequest(buttons=sdi_buttons)
+        inst = self._makeOne(context, request)
+        result = inst._buttons()
+        self.assertEqual(result, 'abc')
+
+    def test__buttons_enabled_for_true(self):
+        from substanced.interfaces import IFolder
+        context = DummyFolder(__provides__=IFolder)
+        context['catalogs'] = self._makeCatalogs(oids=[1])
+        result = testing.DummyResource()
+        result.__name__ = 'fred'
+        context.__objectmap__ = DummyObjectMap(result)
+        def sdi_buttons(contexr, request, default_buttons):
+            return [{'type': 'single',
+                     'buttons': [{'enabled_for': lambda x,y,z: True,
+                                  'id': 'Button'}]}]
+        request = self._makeRequest(buttons=sdi_buttons)
+        inst = self._makeOne(context, request)
+        folder_contents = inst._folder_contents()
+        length, records = folder_contents['length'], folder_contents['records']
+        self.assertEqual(length, 1)
+        self.assertEqual(records[0]['disable'], [])
+
+    def test__buttons_enabled_for_false(self):
+        from substanced.interfaces import IFolder
+        context = DummyFolder(__provides__=IFolder)
+        context['catalogs'] = self._makeCatalogs(oids=[1])
+        result = testing.DummyResource()
+        result.__name__ = 'fred'
+        context.__objectmap__ = DummyObjectMap(result)
+        def sdi_buttons(context, request, default_buttons):
+            return [{'type': 'single',
+                     'buttons': [{'enabled_for': lambda x,y,z: False,
+                                  'id': 'Button'}]}]
+        request = self._makeRequest(buttons=sdi_buttons)
+        inst = self._makeOne(context, request)
+        folder_contents = inst._folder_contents()
+        length, records = folder_contents['length'], folder_contents['records']
+        self.assertEqual(length, 1)
+        self.assertEqual(records[0]['disable'], ['Button'])
+
+    def test__buttons_enabled_for_non_callable(self):
+        from substanced.interfaces import IFolder
+        context = DummyFolder(__provides__=IFolder)
+        context['catalogs'] = self._makeCatalogs(oids=[1])
+        result = testing.DummyResource()
+        result.__name__ = 'fred'
+        context.__objectmap__ = DummyObjectMap(result)
+        def sdi_buttons(contexr, request, default_buttons):
+            return [{'type': 'single',
+                     'buttons': [{'enabled_for': 'not callable',
+                                  'id': 'Button'}]}]
+        request = self._makeRequest(buttons=sdi_buttons)
+        inst = self._makeOne(context, request)
+        folder_contents = inst._folder_contents()
+        length, records = folder_contents['length'], folder_contents['records']
+        self.assertEqual(length, 1)
+        self.assertEqual(records[0]['disable'], [])
+
+    def test__columns_custom_columns_is_None(self):
+        context = testing.DummyResource()
+        request = self._makeRequest(columns=None)
+        inst = self._makeOne(context, request)
+        result = inst._columns()
+        self.assertEqual(result, [])
+
+    def test__columns_custom_columns_doesnt_exist(self):
+        context = testing.DummyResource()
+        request = self._makeRequest()
+        inst = self._makeOne(context, request)
+        result = inst._columns()
+        self.assertEqual(len(result), 1)
+        
+    def test__columns_custom_columns_exists(self):
+        context = testing.DummyResource()
+        def columns(context, subobject, request, columns):
+            self.assertEqual(len(columns), 1)
+            return ['abc', '123']
+        request = self._makeRequest(columns=columns)
+        inst = self._makeOne(context, request)
+        result = inst._columns()
+        self.assertEqual(len(result), 2)
+
+    def test__column_headers_for_non_sortable_columns(self):
+        context = testing.DummyResource(is_ordered=lambda: False)
+        request = self._makeRequest()
+        inst = self._makeOne(context, request)
+        columns = [
+            {'name': 'Col 1',
+             'value': 'col1',
+             'sorter':True},
+            {'name': 'Col 2',
+             'value': 'col2'}
+            ]
+        result = inst._column_headers(columns)
+        self.assertEqual(len(result), 2)
+
+        col = result[0]
+        self.assertEqual(col['id'], 'Col 1')
+        self.assertEqual(col['field'], 'Col 1')
+        self.assertEqual(col['name'], 'Col 1')
+        self.assertEqual(col['width'], 120)
+        self.assertEqual(col['formatterName'], '')
+        self.assertEqual(col['cssClass'], 'cell-Col-1')
+        self.assertEqual(col['sortable'], True)
+
+        col = result[1]
+        self.assertEqual(col['id'], 'Col 2')
+        self.assertEqual(col['field'], 'Col 2')
+        self.assertEqual(col['name'], 'Col 2')
+        self.assertEqual(col['width'], 120)
+        self.assertEqual(col['formatterName'], '')
+        self.assertEqual(col['cssClass'], 'cell-Col-2')
+        self.assertEqual(col['sortable'], False)
+
+    def test__column_headers_sortable_false_for_ordered_folder(self):
+        context = testing.DummyResource(is_ordered=lambda: True)
+        request = self._makeRequest()
+        inst = self._makeOne(context, request)
+        columns = [
+                {'name': 'Col 1',
+                 'value': 'col1',
+                 'sorter': True},
+                {'name': 'Col 2',
+                 'value': 'col2',
+                 'sorter': True}
+                ]
+        result = inst._column_headers(columns)
+        self.assertEqual(len(result), 2)
+
+        col = result[0]
+        self.assertEqual(col['field'], 'Col 1')
+        self.assertEqual(col['sortable'], False)
+
+        col = result[1]
+        self.assertEqual(col['field'], 'Col 2')
+        self.assertEqual(col['sortable'], False)
+
+
+    def test__column_headers_no_custom(self):
+        context = testing.DummyResource(is_ordered=lambda: False)
+        request = self._makeRequest()
+        inst = self._makeOne(context, request)
+        default_columns =  [
+            {'name': 'Name',
+             'value': 'myname',
+             'formatter': 'icon_label_url',
+             'sorter': True}
+            ]
+        result = inst._column_headers(default_columns)
+        self.assertEqual(len(result), 1)
+        self.assertEqual(
+            result[0],
+            {'minWidth': 120,
+             'field': 'Name',
+             'sortable': True,
+             'name': 'Name',
+             'width': 120,
+             'formatterName': 'icon_label_url',
+             'cssClass': 'cell-Name',
+             'id': 'Name'}
+        )
+
+    def test__column_headers_None(self):
+        context = testing.DummyResource()
+        context.is_ordered = lambda: False
+        request = self._makeRequest()
+        inst = self._makeOne(context, request)
+        result = inst._column_headers([])
+        self.assertEqual(len(result), 0)
+
+    def test__column_headers_cssClass(self):
+        context = testing.DummyResource(is_ordered=lambda: False)
+        request = self._makeRequest()
+
+        inst = self._makeOne(context, request)
+        columns = [
+            {'name': 'Col 1',
+             'value': 'col1',
+             'sorter': True,
+             'css_class': 'customClass'},
+            {'name': 'Col 2',
+             'value': 'col2',
+             'sorter': True},
+            {'name': 'Col 3',
+             'value': 'col3',
+             'sorter': True,
+             'css_class': 'customClass1 customClass2'},
+            ]
+        result = inst._column_headers(columns)
+        self.assertEqual(len(result), 3)
+        self.assertEqual(result[0]['cssClass'], 'cell-Col-1 customClass')
+        self.assertEqual(result[1]['cssClass'], 'cell-Col-2')
+        self.assertEqual(
+            result[2]['cssClass'], 'cell-Col-3 customClass1 customClass2')
+
+    def test__sort_info_context_is_ordered(self):
+        context = testing.DummyResource(
+            is_ordered=lambda: True,
+            sort=lambda resultset, **kw: resultset
+            )
+        request = self._makeRequest()
+        inst = self._makeOne(context, request)
+        result = inst._sort_info([])
+        self.assertEqual(result['column'], None)
+        sorter = result['sorter']
+        self.assertEqual(sorter(context, [1], reverse=True, limit=1), [1])
+        self.assertEqual(result['column_name'], None)
+
+    def test__sort_info_context_unordered_default_sort_column(self):
+        context = testing.DummyResource(
+            is_ordered=lambda: False,
+            )
+        request = self._makeRequest()
+        inst = self._makeOne(context, request)
+        columns = [{'name':'col1'}, {'name':'col2', 'sorter':True}]
+        result = inst._sort_info(columns)
+        self.assertEqual(result['column'], columns[1])
+        self.assertEqual(result['sorter'], True)
+        self.assertEqual(result['column_name'], 'col2')
+
+    def test__sort_info_context_unordered_nondefault_sort_column_exists(self):
+        context = testing.DummyResource(
+            is_ordered=lambda: False,
+            )
+        request = self._makeRequest()
+        inst = self._makeOne(context, request)
+        columns = [{'name':'col1', 'sorter':'a'}, {'name':'col2', 'sorter':'b'}]
+        result = inst._sort_info(columns, sort_column_name='col2')
+        self.assertEqual(result['column'], columns[1])
+        self.assertEqual(result['sorter'], 'b')
+        self.assertEqual(result['column_name'], 'col2')
+
+    def test__sort_info_context_unordered_nondefault_sort_column_notexist(self):
+        context = testing.DummyResource(
+            is_ordered=lambda: False,
+            )
+        request = self._makeRequest()
+        inst = self._makeOne(context, request)
+        columns = [{'name':'col1', 'sorter':'a'}, {'name':'col2', 'sorter':'b'}]
+        result = inst._sort_info(columns, sort_column_name='col3')
+        self.assertEqual(result['column'], None)
+        self.assertEqual(result['sorter'], None)
+        self.assertEqual(result['column_name'], 'col3')
+        
+    def test__folder_contents_computable_icon(self):
+        from substanced.interfaces import IFolder
+        context = DummyFolder(__provides__=IFolder)
+        request = self._makeRequest()
+        context['catalogs'] = self._makeCatalogs(oids=[1])
+        result = testing.DummyResource()
+        result.__name__ = 'fred'
+        context.__objectmap__ = DummyObjectMap(result)
+        inst = self._makeOne(context, request)
+        def icon(subobject, _request):
+            self.assertEqual(subobject, result)
+            self.assertEqual(_request, request)
+            return 'anicon'
+        request.registry.content = DummyContent(icon=icon)
+        info = inst._folder_contents()
+        length, records = info['length'], info['records']
+        self.assertEqual(length, 1)
+        self.assertEqual(len(records), 1)
+        item = records[0]
+        self.assertEqual(item['name_url'], '/mgmt_path')
+        self.assertTrue(item['deletable'])
+        self.assertEqual(item['name_icon'], 'anicon')
+        self.assertEqual(item['name'], 'fred')
+        self.assertEqual(item['id'], 'fred')
+
+    def test__folder_contents_literal_icon(self):
+        from substanced.interfaces import IFolder
+        context = DummyFolder(__provides__=IFolder)
+        request = self._makeRequest()
+        context['catalogs'] = self._makeCatalogs(oids=[1])
+        result = testing.DummyResource()
+        result.__name__ = 'fred'
+        context.__objectmap__ = DummyObjectMap(result)
+        inst = self._makeOne(context, request)
+        request.registry.content = DummyContent(icon='anicon')
+        info = inst._folder_contents()
+        length, records = info['length'], info['records']
+        self.assertEqual(length, 1)
+        self.assertEqual(len(records), 1)
+        item = records[0]
+        self.assertEqual(item['name_url'], '/mgmt_path')
+        self.assertTrue(item['deletable'])
+        self.assertEqual(item['name_icon'], 'anicon')
+        self.assertEqual(item['name'], 'fred')
+        self.assertEqual(item['id'], 'fred')
+
+    def test__folder_contents_deletable_callable(self):
+        from substanced.interfaces import IFolder
+        context = DummyFolder(__provides__=IFolder)
+        request = self._makeRequest()
+        context['catalogs'] = self._makeCatalogs(oids=[1])
+        result = testing.DummyResource()
+        result.__name__ = 'fred'
+        context.__objectmap__ = DummyObjectMap(result)
+        inst = self._makeOne(context, request)
+        def deletable(subobject, _request):
+            self.assertEqual(subobject, result)
+            self.assertEqual(_request, request)
+            return False
+        result.__sdi_deletable__ = deletable
+        request.registry.content = DummyContent()
+        info = inst._folder_contents()
+        length, records = info['length'], info['records']
+        self.assertEqual(length, 1)
+        self.assertEqual(len(records), 1)
+        item = records[0]
+        self.assertEqual(item['name_url'], '/mgmt_path')
+        self.assertFalse(item['deletable'])
+        self.assertEqual(item['name_icon'], None)
+        self.assertEqual(item['name'], 'fred')
+        self.assertEqual(item['id'], 'fred')
+
+    def test__folder_contents_deletable_boolean(self):
+        from substanced.interfaces import IFolder
+        context = DummyFolder(__provides__=IFolder)
+        request = self._makeRequest()
+        context['catalogs'] = self._makeCatalogs(oids=[1])
+        result = testing.DummyResource()
+        result.__name__ = 'fred'
+        context.__objectmap__ = DummyObjectMap(result)
+        inst = self._makeOne(context, request)
+        result.__sdi_deletable__ = False
+        request.registry.content = DummyContent()
+        info = inst._folder_contents()
+        length, records = info['length'], info['records']
+        self.assertEqual(length, 1)
+        self.assertEqual(len(records), 1)
+        item = records[0]
+        self.assertEqual(item['name_url'], '/mgmt_path')
+        self.assertFalse(item['deletable'])
+        self.assertEqual(item['name_icon'], None)
+        self.assertEqual(item['name'], 'fred')
+        self.assertEqual(item['id'], 'fred')
+
+    def test__folder_contents_columns_callable(self):
+        from substanced.interfaces import IFolder
+        context = DummyFolder(__provides__=IFolder)
+        request = self._makeRequest()
+        context['catalogs'] = self._makeCatalogs(oids=[1])
+        result = testing.DummyResource()
+        result.col1 = 'val1'
+        result.col2 = 'val2'
+        result.__name__ = 'fred'
+        context.__objectmap__ = DummyObjectMap(result)
+        def get_columns(folder, subobject, request, default_columns):
+            self.assertEqual(len(default_columns), 1)
+            return [{'name': 'Col 1',
+                     'value': getattr(subobject, 'col1', None)},
+                    {'name': 'Col 2',
+                     'value': getattr(subobject, 'col2', None)}]
+        inst = self._makeOne(context, request)
+        request.registry.content = DummyContent(columns=get_columns)
+        info = inst._folder_contents()
+        length, records = info['length'], info['records']
+        self.assertEqual(length, 1)
+        self.assertEqual(len(records), 1)
+        item = records[0]
+        self.assertEqual(item['Col 1'], 'val1')
+        self.assertEqual(item['Col 2'], 'val2')
+
+    def test__folder_contents_columns_None(self):
+        from substanced.interfaces import IFolder
+        context = DummyFolder(__provides__=IFolder)
+        request = self._makeRequest()
+        context['catalogs'] = self._makeCatalogs(oids=[1])
+        result = testing.DummyResource()
+        result.col1 = 'val1'
+        result.col2 = 'val2'
+        result.__name__ = 'fred'
+        context.__objectmap__ = DummyObjectMap(result)
+        inst = self._makeOne(context, request)
+        request.registry.content = DummyContent(columns=None)
+        info = inst._folder_contents()
+        length, records = info['length'], info['records']
+        self.assertEqual(length, 1)
+        self.assertEqual(len(records), 1)
+        item = records[0]
+        self.assertEqual(
+            item,
+            {'name_icon': None,
+             'name_url': '/mgmt_path',
+             'deletable': True,
+             'name': 'fred',
+             'disable': [],
+             'id': 'fred'}
+            )
+
+    def test__folder_contents_with_filter_text(self):
+        from substanced.interfaces import IFolder
+        context = DummyFolder(__provides__=IFolder)
+        request = self._makeRequest()
+        context['catalogs'] = self._makeCatalogs(oids=[1])
+        result = testing.DummyResource()
+        result.__name__ = 'fred'
+        context.__objectmap__ = DummyObjectMap(result)
+        inst = self._makeOne(context, request)
+        request.registry.content = DummyContent()
+        info = inst._folder_contents(filter_text='abc')
+        length, records = info['length'], info['records']
+        self.assertEqual(length, 1)
+        self.assertEqual(len(records), 1)
+
+    def test__folder_contents_folder_is_ordered(self):
+        from substanced.interfaces import IFolder
+        context = DummyFolder(__provides__=IFolder)
+        context.sort = lambda resultset, **kw: resultset
+        request = self._makeRequest()
+        context['catalogs'] = self._makeCatalogs(oids=[1])
+        result = testing.DummyResource()
+        result.__name__ = 'fred'
+        context.__objectmap__ = DummyObjectMap(result)
+        inst = self._makeOne(context, request)
+        context.is_ordered = lambda *arg: True
+        context.oids = lambda *arg: [1, 2]
+        request.registry.content = DummyContent()
+        info = inst._folder_contents()
+        length, records = info['length'], info['records']
+        self.assertEqual(length, 1)
+        self.assertEqual(len(records), 1)
+
     def test_show_no_columns(self):
-        dummy_column_headers = []
+        folder_contents = {
+            'length':1,
+            'sort_column_name':None,
+            'columns':[],
+            'records': [{
+                    'name': 'the_name',
+                    'deletable': True,
+                    'name_url': 'http://foo.bar',
+                    'id': 'the_name',
+                    'name_icon': 'the_icon',
+                    }]
+            }
         context = testing.DummyResource()
         request = self._makeRequest(columns=None)
         inst = self._makeOne(context, request)
         inst._folder_contents = mock.Mock(
-            return_value=dummy_folder_contents_0
+            return_value=folder_contents
             )
-        inst._column_headers = mock.Mock(return_value=dummy_column_headers)
         inst.sdi_add_views = mock.Mock(return_value=('b',))
         context.is_reorderable = mock.Mock(return_value=False)
         context.is_ordered = mock.Mock(return_value=False)
@@ -152,24 +603,40 @@ class TestFolderContentsViews(unittest.TestCase):
         self.assertEqual(len(buttons), 2)
 
     def test_show_with_columns(self):
-        dummy_column_headers = [{
-            'field': 'col1',
-            'sortable': True,
-            }, {
-            'field': 'col2',
-            'sortable': True,
-            }]
+        columns = [
+            {
+            'name': 'col1',
+            'sorter':True,
+            },
+            {
+            'name': 'col2',
+            }
+            ]
+        folder_contents = {
+            'length':1,
+            'sort_column_name':'col1',
+            'columns': columns,
+            'records':[{
+                    'name': 'the_name',
+                    'col1': 'value4col1',
+                    'col2': 'value4col2',
+                    'deletable': True,
+                    'name_url': 'http://foo.bar',
+                    'id': 'the_name',
+                    'name_icon': 'the_icon',
+                    }]
+            }
         context = testing.DummyResource()
         request = self._makeRequest()
         inst = self._makeOne(context, request)
         inst._folder_contents = mock.Mock(
-            return_value=dummy_folder_contents_2
+            return_value=folder_contents
             )
-        inst._column_headers = mock.Mock(return_value=dummy_column_headers)
         inst.sdi_add_views = mock.Mock(return_value=('b',))
         context.is_reorderable = mock.Mock(return_value=False)
         context.is_ordered = mock.Mock(return_value=False)
-        with mock.patch('substanced.sdi.views.folder.find_catalog') as find_catalog:
+        with mock.patch(
+            'substanced.sdi.views.folder.find_catalog') as find_catalog:
             find_catalog.return_value = {'col1': 'COL1', 'col2': 'COL2'}
             result = inst.show()
         self.assert_('slickgrid_wrapper_options' in result)
@@ -204,100 +671,31 @@ class TestFolderContentsViews(unittest.TestCase):
         buttons = result['buttons']
         self.assertEqual(len(buttons), 2)
 
-    def test_show_non_sortable_columns(self):
-        dummy_column_headers = [{
-            'field': 'col1',
-            'sortable': False,
-            }, {
-            'field': 'col2',
-            'sortable': True,
-            }]
-        context = testing.DummyResource()
-        request = self._makeRequest()
-        inst = self._makeOne(context, request)
-        inst._folder_contents = mock.Mock(
-            return_value=dummy_folder_contents_2
-            )
-        inst._column_headers = mock.Mock(return_value=dummy_column_headers)
-        inst.sdi_add_views = mock.Mock(return_value=('b',))
-        context.is_reorderable = mock.Mock(return_value=False)
-        context.is_ordered = mock.Mock(return_value=False)
-        with mock.patch('substanced.sdi.views.folder.find_catalog') as find_catalog:
-            find_catalog.return_value = {'col1': 'COL1', 'col2': 'COL2'}
-            result = inst.show()
-        self.assert_('slickgrid_wrapper_options' in result)
-        slickgrid_wrapper_options = result['slickgrid_wrapper_options']
-        self.assert_('slickgridOptions' in slickgrid_wrapper_options)
-        self.assertEqual(
-            slickgrid_wrapper_options['configName'],
-            'sdi-content-grid'
-            )
-
-        self.assertEqual(slickgrid_wrapper_options['isReorderable'], False)
-        # col2 here, as col1 was not sortable.
-        self.assertEqual(slickgrid_wrapper_options['sortCol'], 'col2')  
-        
-        self.assertEqual(slickgrid_wrapper_options['sortDir'], True)
-        self.assertEqual(slickgrid_wrapper_options['url'], '')
-        self.assert_('items' in slickgrid_wrapper_options)
-        self.assertEqual(slickgrid_wrapper_options['items']['from'], 0)
-        self.assertEqual(slickgrid_wrapper_options['items']['to'], 40)
-        self.assertEqual(slickgrid_wrapper_options['items']['total'], 1)
-        self.assert_('records' in slickgrid_wrapper_options['items'])
-        records = slickgrid_wrapper_options['items']['records']
-        self.assertEqual(len(records), 1)
-        self.assertEqual(records[0], {
-            'name': 'the_name',
-            'col1': 'value4col1',
-            'col2': 'value4col2',
-            'deletable': True,
-            'name_url': 'http://foo.bar',
-            'id': 'the_name',
-            'name_icon': 'the_icon',
-            })
-        addables = result['addables']
-        self.assertEqual(addables, ('b',))
-        buttons = result['buttons']
-        self.assertEqual(len(buttons), 2)
-        # We don't actually see the sortability in the records, because
-        # this information is in the columns metadata. So, we test this
-        # in test_metadata_for_non_sortable_columns.
-
-    def test_wrong_index(self):
-        dummy_column_headers = [{
-            'field': 'col1',
-            'sortable': False,
-        }, {
-            'field': 'colNOSUCH',
-            'sortable': True,
-        }]
-        context = testing.DummyResource()
-        request = self._makeRequest()
-        inst = self._makeOne(context, request)
-        inst._folder_contents = mock.Mock(
-            return_value=dummy_folder_contents_2
-        )
-        inst._column_headers = mock.Mock(return_value=dummy_column_headers)
-        inst.sdi_add_views = mock.Mock(return_value=('b',))
-        context.is_reorderable = mock.Mock(return_value=False)
-        context.is_ordered = mock.Mock(return_value=False)
-        with mock.patch('substanced.sdi.views.folder.find_catalog') as find_catalog:
-            find_catalog.return_value = {'col1': 'COL1', 'col2': 'COL2'}
-            self.assertRaises(KeyError, inst.show)
-
     def test_show_json(self):
+        folder_contents = {
+            'length':1,
+            'sort_column_name':None,
+            'records': [{
+                    'name': 'the_name',
+                    'deletable': True,
+                    'name_url': 'http://foo.bar',
+                    'id': 'the_name',
+                    'name_icon': 'the_icon',
+                    }]
+            }
+
         context = testing.DummyResource()
         request = self._makeRequest()
         request.params['from'] = '1'
         request.params['to'] = '2'
         inst = self._makeOne(context, request)
         inst._folder_contents = mock.Mock(
-            return_value=dummy_folder_contents_0
+            return_value=folder_contents
             )
         result = inst.show_json()
         self.assertEqual(
             result,
-            {'from':1, 'to':2, 'records':dummy_folder_contents_0[1], 'total':1}
+            {'from':1, 'to':2, 'records':folder_contents['records'], 'total':1}
             )
 
     def test_show_json_no_from(self):
@@ -309,222 +707,6 @@ class TestFolderContentsViews(unittest.TestCase):
             result,
             {}
             )
-
-    def test__column_headers_for_non_sortable_columns(self):
-        def sd_columns(folder, subobject, request, default_columns):
-            self.assertEqual(len(default_columns), 1)
-            return [
-                {'name': 'Col 1', 'field': 'col1', 'value':
-                 'col1', 'sortable': False},
-                {'name': 'Col 2', 'field': 'col2', 'value': 'col2'}
-                ]
-        context = testing.DummyResource(is_ordered=lambda: False)
-        request = self._makeRequest(columns=sd_columns)
-        inst = self._makeOne(context, request)
-        result = inst._column_headers()
-        self.assertEqual(len(result), 2)
-
-        col = result[0]
-        self.assertEqual(col['field'], 'col1')
-        self.assertEqual(col['id'], 'col1')
-        self.assertEqual(col['name'], 'Col 1')
-        self.assertEqual(col['width'], 120)
-        self.assertEqual(col['formatterName'], '')
-        self.assertEqual(col['cssClass'], 'cell-col1')
-
-        self.assertEqual(col['sortable'], False)
-
-        col = result[1]
-        self.assertEqual(col['field'], 'col2')
-        self.assertEqual(col['id'], 'col2')
-        self.assertEqual(col['name'], 'Col 2')
-        self.assertEqual(col['width'], 120)
-        self.assertEqual(col['formatterName'], '')
-        self.assertEqual(col['cssClass'], 'cell-col2')
-
-        self.assertEqual(col['sortable'], True)
-
-
-    def test__column_headers_sortable_false_for_ordered_folder(self):
-        def sd_columns(folder, subobject, request, default_columns):
-            self.assertEqual(len(default_columns), 1)
-            return [
-                {'name': 'Col 1', 'field': 'col1', 'value':
-                 'col1', 'sortable': True},
-                {'name': 'Col 2', 'field': 'col2', 'value':
-                 'col2', 'sortable': True}
-                ]
-        context = testing.DummyResource(is_ordered=lambda: True)
-        request = self._makeRequest(columns=sd_columns)
-        inst = self._makeOne(context, request)
-        result = inst._column_headers()
-        self.assertEqual(len(result), 2)
-
-        col = result[0]
-        self.assertEqual(col['field'], 'col1')
-        self.assertEqual(col['sortable'], False)
-
-        col = result[1]
-        self.assertEqual(col['field'], 'col2')
-        self.assertEqual(col['sortable'], False)
-
-
-    def test__column_headers_no_custom(self):
-        context = testing.DummyResource(is_ordered=lambda: False)
-        request = self._makeRequest()
-        inst = self._makeOne(context, request)
-        result = inst._column_headers()
-        self.assertEqual(len(result), 1)
-        self.assertEqual(
-            result[0],
-            {'minWidth': 120,
-             'field': 'name',
-             'sortable': True,
-             'name': 'Name',
-             'width': 120,
-             'formatterName': 'icon_label_url',
-             'cssClass': 'cell-name',
-             'id': 'name'}
-        )
-
-    def test__column_headers_None(self):
-        context = testing.DummyResource()
-        request = self._makeRequest(columns=None)
-        inst = self._makeOne(context, request)
-        result = inst._column_headers()
-        self.assertEqual(len(result), 0)
-
-    def test__column_headers_cssClass(self):
-        def sd_columns(folder, subobject, request, default_columns):
-            self.assertEqual(len(default_columns), 1)
-            return [
-                {'name': 'Col 1', 'field': 'col1', 'value':
-                 'col1', 'sortable': True, 'cssClass': 'customClass'},
-                {'name': 'Col 2', 'field': 'col2', 'value': 'col2',
-                 'sortable': True},
-                {'name': 'Col 3', 'field': 'col3', 'value': 'col3',
-                 'sortable': True, 'cssClass': 'customClass1 customClass2'},
-                ]
-        context = testing.DummyResource(is_ordered=lambda: False)
-        request = self._makeRequest(columns=sd_columns)
-
-        inst = self._makeOne(context, request)
-        result = inst._column_headers()
-        self.assertEqual(len(result), 3)
-        self.assertEqual(result[0]['cssClass'], 'cell-col1 customClass')
-        self.assertEqual(result[1]['cssClass'], 'cell-col2')
-        self.assertEqual(result[2]['cssClass'], 'cell-col3 customClass1 customClass2')
-
-    def test_show_non_filterable_columns(self):
-        dummy_column_headers = [{
-            'field': 'col1',
-            'sortable': True,
-            }, {
-            'field': 'col2',
-            'sortable': True,
-            }]
-        context = testing.DummyResource()
-        request = self._makeRequest()
-        inst = self._makeOne(context, request)
-        inst._folder_contents = mock.Mock(
-            return_value=dummy_folder_contents_2
-        )
-        inst._column_headers = mock.Mock(return_value=dummy_column_headers)
-        inst.sdi_add_views = mock.Mock(return_value=('b',))
-        context.is_reorderable = mock.Mock(return_value=False)
-        context.is_ordered = mock.Mock(return_value=False)
-        with mock.patch('substanced.sdi.views.folder.find_catalog') as find_catalog:
-            find_catalog.return_value = {'col1': 'COL1', 'col2': 'COL2'}
-            result = inst.show()
-        self.assert_('slickgrid_wrapper_options' in result)
-        slickgrid_wrapper_options = result['slickgrid_wrapper_options']
-        self.assert_('slickgridOptions' in slickgrid_wrapper_options)
-        self.assertEqual(slickgrid_wrapper_options['configName'],
-                         'sdi-content-grid')
-        self.assertEqual(slickgrid_wrapper_options['sortDir'], True)
-        self.assertEqual(slickgrid_wrapper_options['url'], '')
-        self.assert_('items' in slickgrid_wrapper_options)
-        self.assertEqual(slickgrid_wrapper_options['items']['from'], 0)
-        self.assertEqual(slickgrid_wrapper_options['items']['to'], 40)
-        self.assertEqual(slickgrid_wrapper_options['items']['total'], 1)
-        self.assert_('records' in slickgrid_wrapper_options['items'])
-        records = slickgrid_wrapper_options['items']['records']
-        self.assertEqual(len(records), 1)
-        self.assertEqual(records[0], {
-            'name': 'the_name',
-            'col1': 'value4col1',
-            'col2': 'value4col2',
-            'deletable': True,
-            'name_url': 'http://foo.bar',
-            'id': 'the_name',
-            'name_icon': 'the_icon',
-            })
-        addables = result['addables']
-        self.assertEqual(addables, ('b',))
-        buttons = result['buttons']
-        self.assertEqual(len(buttons), 2)
-
-        # We don't actually see the sortability in the records, because
-        # the client need not know about it. It's in
-        # the server's discretion to apply the fulltext filtering in
-        # the designated fields.
-        # XXX Perhaps one egde case requires some extra attention:
-        # when a grid has no filterable columns at all.
-
-
-    def test_show_ordered_columns(self):
-        dummy_column_headers = [{
-            'field': 'col1',
-            'sortable': True,   # Even if True, is_ordered it will make it False
-            }, {
-            'field': 'col2',
-            'sortable': False,
-            }]
-        context = testing.DummyResource()
-        request = self._makeRequest()
-        inst = self._makeOne(context, request)
-        inst._folder_contents = mock.Mock(
-            return_value=dummy_folder_contents_2
-            )
-        inst._column_headers = mock.Mock(return_value=dummy_column_headers)
-        inst.sdi_add_views = mock.Mock(return_value=('b',))
-        context.is_reorderable = mock.Mock(return_value=True)
-        context.is_ordered = mock.Mock(return_value=True)
-        with mock.patch('substanced.sdi.views.folder.find_catalog') as find_catalog:
-            find_catalog.return_value = {'col1': 'COL1', 'col2': 'COL2'}
-            result = inst.show()
-        self.assert_('slickgrid_wrapper_options' in result)
-        slickgrid_wrapper_options = result['slickgrid_wrapper_options']
-        self.assert_('slickgridOptions' in slickgrid_wrapper_options)
-        self.assertEqual(
-            slickgrid_wrapper_options['configName'], 'sdi-content-grid'
-            )
-        self.assertEqual(slickgrid_wrapper_options['isReorderable'], True)
-        self.assertEqual(slickgrid_wrapper_options['sortCol'], None)  
-        self.assertEqual(slickgrid_wrapper_options['sortDir'], True)
-        self.assertEqual(slickgrid_wrapper_options['url'], '')
-        self.assert_('items' in slickgrid_wrapper_options)
-        self.assertEqual(slickgrid_wrapper_options['items']['from'], 0)
-        self.assertEqual(slickgrid_wrapper_options['items']['to'], 40)
-        self.assertEqual(slickgrid_wrapper_options['items']['total'], 1)
-        self.assert_('records' in slickgrid_wrapper_options['items'])
-        records = slickgrid_wrapper_options['items']['records']
-        self.assertEqual(len(records), 1)
-        self.assertEqual(records[0], {
-            'name': 'the_name',
-            'col1': 'value4col1',
-            'col2': 'value4col2',
-            'deletable': True,
-            'name_url': 'http://foo.bar',
-            'id': 'the_name',
-            'name_icon': 'the_icon',
-            })
-
-        addables = result['addables']
-        self.assertEqual(addables, ('b',))
-        buttons = result['buttons']
-        self.assertEqual(len(buttons), 2)
-
 
     def test_delete_none_deleted(self):
         context = testing.DummyResource()
@@ -998,257 +1180,6 @@ class TestFolderContentsViews(unittest.TestCase):
         self.assertRaises(HTTPFound, inst.move_finish)
         request.session.flash.assert_called_once_with(u'foobar', 'error')
 
-    def test_buttons_is_None(self):
-        context = testing.DummyResource()
-        request = testing.DummyRequest()
-        inst = self._makeOne(context, request)
-        request.registry.content = DummyContent(buttons=None)
-        result = inst._buttons()
-        self.assertEqual(result, [])
-
-    def test_buttons_is_clbl(self):
-        context = testing.DummyResource()
-        request = testing.DummyRequest()
-        def sdi_buttons(contexr, request, default_buttons):
-            return 'abc'
-        inst = self._makeOne(context, request)
-        request.registry.content = DummyContent(buttons=sdi_buttons)
-        result = inst._buttons()
-        self.assertEqual(result, 'abc')
-
-    def test_buttons_enabled_for_true(self):
-        from substanced.interfaces import IFolder
-        context = DummyFolder(__provides__=IFolder)
-        request = self._makeRequest()
-        context['catalogs'] = self._makeCatalogs(oids=[1])
-        result = testing.DummyResource()
-        result.__name__ = 'fred'
-        context.__objectmap__ = DummyObjectMap(result)
-        inst = self._makeOne(context, request)
-        def sdi_buttons(contexr, request, default_buttons):
-            return [{'type': 'single',
-                     'buttons': [{'enabled_for': lambda x,y,z: True,
-                                  'id': 'Button'}]}]
-        request.registry.content = DummyContent(buttons=sdi_buttons)
-        length, rows = inst._folder_contents()
-        self.assertEqual(length, 1)
-        self.assertEqual(rows[0]['disable'], [])
-
-    def test_buttons_enabled_for_false(self):
-        from substanced.interfaces import IFolder
-        context = DummyFolder(__provides__=IFolder)
-        request = self._makeRequest()
-        context['catalogs'] = self._makeCatalogs(oids=[1])
-        result = testing.DummyResource()
-        result.__name__ = 'fred'
-        context.__objectmap__ = DummyObjectMap(result)
-        inst = self._makeOne(context, request)
-        def sdi_buttons(contexr, request, default_buttons):
-            return [{'type': 'single',
-                     'buttons': [{'enabled_for': lambda x,y,z: False,
-                                  'id': 'Button'}]}]
-        request.registry.content = DummyContent(buttons=sdi_buttons)
-        length, rows = inst._folder_contents()
-        self.assertEqual(length, 1)
-        self.assertEqual(rows[0]['disable'], ['Button'])
-
-    def test_buttons_enabled_for_non_callable(self):
-        from substanced.interfaces import IFolder
-        context = DummyFolder(__provides__=IFolder)
-        request = self._makeRequest()
-        context['catalogs'] = self._makeCatalogs(oids=[1])
-        result = testing.DummyResource()
-        result.__name__ = 'fred'
-        context.__objectmap__ = DummyObjectMap(result)
-        inst = self._makeOne(context, request)
-        def sdi_buttons(contexr, request, default_buttons):
-            return [{'type': 'single',
-                     'buttons': [{'enabled_for': 'not callable',
-                                  'id': 'Button'}]}]
-        request.registry.content = DummyContent(buttons=sdi_buttons)
-        length, rows = inst._folder_contents()
-        self.assertEqual(length, 1)
-        self.assertEqual(rows[0]['disable'], [])
-
-    def _makeCatalogs(self, oids=()):
-        catalogs = DummyCatalogs()
-        catalog = DummyCatalog(oids)
-        catalogs['system'] = catalog
-        return catalogs
-
-    def test__folder_contents_computable_icon(self):
-        from substanced.interfaces import IFolder
-        context = DummyFolder(__provides__=IFolder)
-        request = self._makeRequest()
-        context['catalogs'] = self._makeCatalogs(oids=[1])
-        result = testing.DummyResource()
-        result.__name__ = 'fred'
-        context.__objectmap__ = DummyObjectMap(result)
-        inst = self._makeOne(context, request)
-        def icon(subobject, _request):
-            self.assertEqual(subobject, result)
-            self.assertEqual(_request, request)
-            return 'anicon'
-        request.registry.content = DummyContent(icon=icon)
-        length, results = inst._folder_contents()
-        self.assertEqual(length, 1)
-        self.assertEqual(len(results), 1)
-        item = results[0]
-        self.assertEqual(item['name_url'], '/mgmt_path')
-        self.assertTrue(item['deletable'])
-        self.assertEqual(item['name_icon'], 'anicon')
-        self.assertEqual(item['name'], 'fred')
-        self.assertEqual(item['id'], 'fred')
-
-    def test__folder_contents_literal_icon(self):
-        from substanced.interfaces import IFolder
-        context = DummyFolder(__provides__=IFolder)
-        request = self._makeRequest()
-        context['catalogs'] = self._makeCatalogs(oids=[1])
-        result = testing.DummyResource()
-        result.__name__ = 'fred'
-        context.__objectmap__ = DummyObjectMap(result)
-        inst = self._makeOne(context, request)
-        request.registry.content = DummyContent(icon='anicon')
-        length, results = inst._folder_contents()
-        self.assertEqual(length, 1)
-        self.assertEqual(len(results), 1)
-        item = results[0]
-        self.assertEqual(item['name_url'], '/mgmt_path')
-        self.assertTrue(item['deletable'])
-        self.assertEqual(item['name_icon'], 'anicon')
-        self.assertEqual(item['name'], 'fred')
-        self.assertEqual(item['id'], 'fred')
-
-    def test__folder_contents_deletable_callable(self):
-        from substanced.interfaces import IFolder
-        context = DummyFolder(__provides__=IFolder)
-        request = self._makeRequest()
-        context['catalogs'] = self._makeCatalogs(oids=[1])
-        result = testing.DummyResource()
-        result.__name__ = 'fred'
-        context.__objectmap__ = DummyObjectMap(result)
-        inst = self._makeOne(context, request)
-        def deletable(subobject, _request):
-            self.assertEqual(subobject, result)
-            self.assertEqual(_request, request)
-            return False
-        result.__sdi_deletable__ = deletable
-        request.registry.content = DummyContent()
-        length, results = inst._folder_contents()
-        self.assertEqual(length, 1)
-        self.assertEqual(len(results), 1)
-        item = results[0]
-        self.assertEqual(item['name_url'], '/mgmt_path')
-        self.assertFalse(item['deletable'])
-        self.assertEqual(item['name_icon'], None)
-        self.assertEqual(item['name'], 'fred')
-        self.assertEqual(item['id'], 'fred')
-
-    def test__folder_contents_deletable_boolean(self):
-        from substanced.interfaces import IFolder
-        context = DummyFolder(__provides__=IFolder)
-        request = self._makeRequest()
-        context['catalogs'] = self._makeCatalogs(oids=[1])
-        result = testing.DummyResource()
-        result.__name__ = 'fred'
-        context.__objectmap__ = DummyObjectMap(result)
-        inst = self._makeOne(context, request)
-        result.__sdi_deletable__ = False
-        request.registry.content = DummyContent()
-        length, results = inst._folder_contents()
-        self.assertEqual(length, 1)
-        self.assertEqual(len(results), 1)
-        item = results[0]
-        self.assertEqual(item['name_url'], '/mgmt_path')
-        self.assertFalse(item['deletable'])
-        self.assertEqual(item['name_icon'], None)
-        self.assertEqual(item['name'], 'fred')
-        self.assertEqual(item['id'], 'fred')
-
-    def test__folder_contents_columns_callable(self):
-        from substanced.interfaces import IFolder
-        context = DummyFolder(__provides__=IFolder)
-        request = self._makeRequest()
-        context['catalogs'] = self._makeCatalogs(oids=[1])
-        result = testing.DummyResource()
-        result.col1 = 'val1'
-        result.col2 = 'val2'
-        result.__name__ = 'fred'
-        context.__objectmap__ = DummyObjectMap(result)
-        def get_columns(folder, subobject, request, default_columns):
-            self.assertEqual(len(default_columns), 1)
-            return [{'name': 'Col 1',
-                     'value': getattr(subobject, 'col1'),
-                     'field':'col1'},
-                    {'name': 'Col 2',
-                     'value': getattr(subobject, 'col2'),
-                     'field':'col2'}]
-        inst = self._makeOne(context, request)
-        request.registry.content = DummyContent(columns=get_columns)
-        length, results = inst._folder_contents()
-        self.assertEqual(length, 1)
-        self.assertEqual(len(results), 1)
-        item = results[0]
-        self.assertEqual(item['col1'], 'val1')
-        self.assertEqual(item['col2'], 'val2')
-
-    def test__folder_contents_columns_None(self):
-        from substanced.interfaces import IFolder
-        context = DummyFolder(__provides__=IFolder)
-        request = self._makeRequest()
-        context['catalogs'] = self._makeCatalogs(oids=[1])
-        result = testing.DummyResource()
-        result.col1 = 'val1'
-        result.col2 = 'val2'
-        result.__name__ = 'fred'
-        context.__objectmap__ = DummyObjectMap(result)
-        inst = self._makeOne(context, request)
-        request.registry.content = DummyContent(columns=None)
-        length, results = inst._folder_contents()
-        self.assertEqual(length, 1)
-        self.assertEqual(len(results), 1)
-        item = results[0]
-        self.assertEqual(
-            item,
-            {'name_icon': None,
-             'name_url': '/mgmt_path',
-             'deletable': True,
-             'name': 'fred',
-             'disable': [],
-             'id': 'fred'}
-            )
-
-    def test__folder_contents_with_filter_text(self):
-        from substanced.interfaces import IFolder
-        context = DummyFolder(__provides__=IFolder)
-        request = self._makeRequest()
-        context['catalogs'] = self._makeCatalogs(oids=[1])
-        result = testing.DummyResource()
-        result.__name__ = 'fred'
-        context.__objectmap__ = DummyObjectMap(result)
-        inst = self._makeOne(context, request)
-        request.registry.content = DummyContent()
-        length, results = inst._folder_contents(filter_text='abc')
-        self.assertEqual(length, 1)
-        self.assertEqual(len(results), 1)
-
-    def test__folder_contents_folder_is_ordered(self):
-        from substanced.interfaces import IFolder
-        context = DummyFolder(__provides__=IFolder)
-        request = self._makeRequest()
-        context['catalogs'] = self._makeCatalogs(oids=[1])
-        result = testing.DummyResource()
-        result.__name__ = 'fred'
-        context.__objectmap__ = DummyObjectMap(result)
-        inst = self._makeOne(context, request)
-        context.is_ordered = lambda *arg: True
-        context.oids = lambda *arg: [1, 2]
-        request.registry.content = DummyContent()
-        length, results = inst._folder_contents()
-        self.assertEqual(length, 1)
-        self.assertEqual(len(results), 1)
-
     def test_reorder_rows(self):
         context = testing.DummyResource()
         request = self._makeRequest()
@@ -1262,12 +1193,16 @@ class TestFolderContentsViews(unittest.TestCase):
         def _get_json():
             return {'foo':'bar'}
         inst._get_json = _get_json
-        mockundowrapper = request.sdiapi.get_flash_with_undo_snippet = mock.Mock(
+        mockundowrapper = mock.Mock(
             return_value='STATUSMESSG<a>Undo</a>'
             )
+        request.sdiapi.get_flash_with_undo_snippet = mockundowrapper
         result = inst.reorder_rows()
         mockundowrapper.assert_called_once_with('2 rows moved.')
-        self.assertEqual(result, {'foo': 'bar', 'flash': 'STATUSMESSG<a>Undo</a>'})
+        self.assertEqual(
+            result,
+            {'foo': 'bar', 'flash': 'STATUSMESSG<a>Undo</a>'}
+            )
 
     def test_reorder_rows_after_last(self):
         context = testing.DummyResource()
@@ -1282,12 +1217,16 @@ class TestFolderContentsViews(unittest.TestCase):
         def _get_json():
             return {'foo':'bar'}
         inst._get_json = _get_json
-        mockundowrapper = request.sdiapi.get_flash_with_undo_snippet = mock.Mock(
+        mockundowrapper = mock.Mock(
             return_value='STATUSMESSG<a>Undo</a>'
             )
+        request.sdiapi.get_flash_with_undo_snippet = mockundowrapper
         result = inst.reorder_rows()
         mockundowrapper.assert_called_once_with('2 rows moved.')
-        self.assertEqual(result, {'foo': 'bar', 'flash': 'STATUSMESSG<a>Undo</a>'})
+        self.assertEqual(
+            result,
+            {'foo': 'bar', 'flash': 'STATUSMESSG<a>Undo</a>'}
+            )
 
 
 class DummyContainer(object):
@@ -1329,26 +1268,6 @@ class DummySDIAPI(object):
     def mgmt_path(self, *arg, **kw):
         return '/mgmt_path'
 
-
-dummy_folder_contents_0 = [1, [{
-    'name': 'the_name',
-    'deletable': True,
-    'name_url': 'http://foo.bar',
-    'id': 'the_name',
-    'name_icon': 'the_icon',
-    }] ]
-
-dummy_folder_contents_2 = [1, [{
-    'name': 'the_name',
-    'col1': 'value4col1',
-    'col2': 'value4col2',
-    'deletable': True,
-    'name_url': 'http://foo.bar',
-    'id': 'the_name',
-    'name_icon': 'the_icon',
-    }] ]
-
-
 class DummyFolder(testing.DummyResource):
     def is_ordered(self):
         return False
@@ -1358,10 +1277,18 @@ class DummyCatalogs(testing.DummyResource):
 
 class DummyCatalog(object):
     def __init__(self, result=()):
-        self.result = DummyResultSet(result)
+        if result is not None:
+            result = DummyResultSet(result)
+        self.result = result
 
     def __getitem__(self, name):
-        return DummyIndex(self.result)
+        result = self.result
+        if result is not None:
+            result = DummyIndex(self.result)
+        return result
+
+    def get(self, name, default=None):
+        return self[name]
 
 class DummyResultSet(object):
     def __init__(self, result):
