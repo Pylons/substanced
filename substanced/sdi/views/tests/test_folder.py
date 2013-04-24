@@ -387,11 +387,11 @@ class TestFolderContentsViews(unittest.TestCase):
         self.assertEqual(length, 1)
         self.assertEqual(len(records), 1)
         item = records[0]
-        self.assertEqual(item['name_url'], '/mgmt_path')
         self.assertTrue(item['deletable'])
-        self.assertEqual(item['name_icon'], 'anicon')
         self.assertEqual(item['name'], 'fred')
         self.assertEqual(item['id'], 'fred')
+        self.assertEqual(item['Name_url'], '/mgmt_path')
+        self.assertEqual(item['Name_icon'], 'anicon')
 
     def test__folder_contents_literal_icon(self):
         from substanced.interfaces import IFolder
@@ -408,11 +408,11 @@ class TestFolderContentsViews(unittest.TestCase):
         self.assertEqual(length, 1)
         self.assertEqual(len(records), 1)
         item = records[0]
-        self.assertEqual(item['name_url'], '/mgmt_path')
         self.assertTrue(item['deletable'])
-        self.assertEqual(item['name_icon'], 'anicon')
         self.assertEqual(item['name'], 'fred')
         self.assertEqual(item['id'], 'fred')
+        self.assertEqual(item['Name_url'], '/mgmt_path')
+        self.assertEqual(item['Name_icon'], 'anicon')
 
     def test__folder_contents_deletable_callable(self):
         from substanced.interfaces import IFolder
@@ -434,11 +434,11 @@ class TestFolderContentsViews(unittest.TestCase):
         self.assertEqual(length, 1)
         self.assertEqual(len(records), 1)
         item = records[0]
-        self.assertEqual(item['name_url'], '/mgmt_path')
         self.assertFalse(item['deletable'])
-        self.assertEqual(item['name_icon'], None)
         self.assertEqual(item['name'], 'fred')
         self.assertEqual(item['id'], 'fred')
+        self.assertEqual(item['Name_url'], '/mgmt_path')
+        self.assertEqual(item['Name_icon'], None)
 
     def test__folder_contents_deletable_boolean(self):
         from substanced.interfaces import IFolder
@@ -456,11 +456,11 @@ class TestFolderContentsViews(unittest.TestCase):
         self.assertEqual(length, 1)
         self.assertEqual(len(records), 1)
         item = records[0]
-        self.assertEqual(item['name_url'], '/mgmt_path')
         self.assertFalse(item['deletable'])
-        self.assertEqual(item['name_icon'], None)
         self.assertEqual(item['name'], 'fred')
         self.assertEqual(item['id'], 'fred')
+        self.assertEqual(item['Name_url'], '/mgmt_path')
+        self.assertEqual(item['Name_icon'], None)
 
     def test__folder_contents_columns_callable(self):
         from substanced.interfaces import IFolder
@@ -507,9 +507,7 @@ class TestFolderContentsViews(unittest.TestCase):
         item = records[0]
         self.assertEqual(
             item,
-            {'name_icon': None,
-             'name_url': '/mgmt_path',
-             'deletable': True,
+            {'deletable': True,
              'name': 'fred',
              'disable': [],
              'id': 'fred'}

@@ -110,7 +110,10 @@ class FolderContentsViews(object):
         request = self.request
         buttons = default_sdi_buttons(context, request)
         custom_buttons = request.registry.content.metadata(
-            context, 'buttons', _marker)
+            context,
+            'buttons',
+            _marker
+            )
         if custom_buttons is None:
             return []
         if custom_buttons is not _marker:
@@ -122,7 +125,10 @@ class FolderContentsViews(object):
         request = self.request
         columns = default_sdi_columns(self, None, request)
         custom_columns = request.registry.content.metadata(
-            context, 'columns', _marker)
+            context,
+            'columns',
+            _marker
+            )
         if custom_columns is None:
             return []
         if custom_columns is not _marker:
@@ -498,8 +504,12 @@ class FolderContentsViews(object):
         ids = resultset.ids
 
         can_manage = bool(has_permission('sdi.manage-contents', folder,request))
+
         custom_columns = request.registry.content.metadata(
-            folder, 'columns', _marker)
+            folder,
+            'columns',
+            _marker
+            )
 
         buttons = self._buttons()
 
@@ -526,8 +536,6 @@ class FolderContentsViews(object):
                 # from the client, when a row is selected for an operation.)
                 deletable=deletable,
                 name=name,
-                name_icon=icon,
-                name_url=url,
             )
             columns = default_sdi_columns(folder, resource, request)
             if custom_columns is None:
@@ -535,10 +543,19 @@ class FolderContentsViews(object):
             elif custom_columns is not _marker:
                 columns = custom_columns(folder, resource, request, columns)
             for column in columns:
-                # XXX CM: bad idea, can't guarantee a column name won't override
-                # the "reserved" names above.  Ree?
+                # XXX CM: adding arbitrary keys to the record based on
+                # configuration input is a bad idea here because we can't
+                # guarantee a column name won't override the "reserved" names
+                # (name, deletable, id) added to the record above.  Ree?
                 cname = column['name']
                 record[cname] = column['value']
+                # XXX CM: we should document the fact that each column can have
+                # its own URL/icon if we keep this; although we should probably
+                # not send them if the formatter doesn't want them.  Need a
+                # better formatter abstraction here, I think;
+                # maybe server-side?  Opinions, Ree?
+                record[cname+'_icon'] = column.get('icon', icon)
+                record[cname+'_url'] = column.get('url', url)
             disable = []
             for button_group in buttons:
                 for button in button_group['buttons']:
@@ -608,28 +625,28 @@ class FolderContentsViews(object):
 
         slickgrid_wrapper_options = JsonDict(
             # below line refers to slickgrid-config.js
-            configName='sdi-content-grid',
-            columns=column_headers,
-            slickgridOptions=slickgrid_options,
-            items=items,
+            configName = 'sdi-content-grid',
+            columns = column_headers,
+            slickgridOptions = slickgrid_options,
+            items = items,
             # initial sorting (The grid will really not sort the initial data,
             # just display it in the order we provide it. It will use the
             # information to just visually show in the headers the sorted
             # column.)
-            sortCol=sort_column_name,
-            sortDir=True,
+            sortCol = sort_column_name,
+            sortDir = True,
             # is the grid reorderable?
-            isReorderable=is_reorderable,
+            isReorderable = is_reorderable,
             #
             # Parameters for the remote data model
-            url='',   # use same url for ajax
-            minimumLoad=end,
+            url = '',   # use same url for ajax
+            minimumLoad = end,
             )
 
         result = dict(
-            addables=addables,
-            buttons=buttons,
-            slickgrid_wrapper_options=slickgrid_wrapper_options,
+            addables = addables,
+            buttons = buttons,
+            slickgrid_wrapper_options = slickgrid_wrapper_options,
             )
 
         return result
@@ -655,7 +672,10 @@ class FolderContentsViews(object):
             reverse = (not sort_dir)
 
             folder_contents = self._folder_contents(
-                start, end, reverse=reverse, filter_text=filter_text,
+                start,
+                end,
+                reverse=reverse,
+                filter_text=filter_text,
                 sort_column_name=sort_column_name,
                 )
 
