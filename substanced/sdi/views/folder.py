@@ -487,6 +487,8 @@ class FolderContentsViews(object):
             q = q & text.eq(filter_text)
 
         resultset = q.execute()
+        # NB: must take snapshot of folder_length *before* limiting the length
+        # of the resultset via any search
         folder_length = len(resultset)
 
         columns = self._columns()
