@@ -480,10 +480,13 @@ class FolderContentsViews(object):
               allowed.allows(request, 'sdi.view') )
 
         if filter_text:
-            if not filter_text.endswith('*'):
-                filter_text = filter_text + '*' # glob (prefix) search
-            text = system_catalog['text']
-            q = q & text.eq(filter_text)
+            filter_text_globs = filter(None, filter_text.split())
+            if filter_text_globs:
+                text = system_catalog['text']
+                for filter_glob in filter_text_globs:
+                    if not filter_glob.endswith('*'):
+                        filter_glob = filter_glob + '*' # glob (prefix) search
+                    q = q & text.eq(filter_glob)
 
         resultset = q.execute()
         # NB: must take snapshot of folder_length *before* limiting the length

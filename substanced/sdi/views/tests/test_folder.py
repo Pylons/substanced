@@ -532,6 +532,21 @@ class TestFolderContentsViews(unittest.TestCase):
         self.assertEqual(length, 1)
         self.assertEqual(len(records), 1)
 
+    def test__folder_contents_with_filter_text_multiple_words(self):
+        from substanced.interfaces import IFolder
+        context = DummyFolder(__provides__=IFolder)
+        request = self._makeRequest()
+        context['catalogs'] = self._makeCatalogs(oids=[1])
+        result = testing.DummyResource()
+        result.__name__ = 'fred'
+        context.__objectmap__ = DummyObjectMap(result)
+        inst = self._makeOne(context, request)
+        request.registry.content = DummyContent()
+        info = inst._folder_contents(filter_text='abc def')
+        length, records = info['length'], info['records']
+        self.assertEqual(length, 1)
+        self.assertEqual(len(records), 1)
+        
     def test__folder_contents_folder_is_ordered(self):
         from substanced.interfaces import IFolder
         context = DummyFolder(__provides__=IFolder)
