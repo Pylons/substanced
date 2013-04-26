@@ -165,7 +165,7 @@ class Catalog(Folder):
         which explicitly indicates that you'd like to use the index's
         action_mode value."""
         oid = get_oid(resource_or_oid, resource_or_oid)
-        if not isinstance(oid, int):
+        if not isinstance(oid, (int, long)):
             raise ValueError(
                 'resource_or_oid must be a resource object with an __oid__ '
                 'attribute or an integer oid'
