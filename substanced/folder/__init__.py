@@ -226,7 +226,7 @@ class Folder(Persistent):
         """ Return true if the folder can be reordered, false otherwise."""
         return self._reorderable
 
-    def sort(self, oids, reverse=False, limit=None):
+    def sort(self, oids, reverse=False, limit=None, **kw):
         # used by the hypatia resultset "sort" method when the folder contents
         # view uses us as a "sort index"
         if self._order_oids is not None:
