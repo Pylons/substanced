@@ -14,15 +14,17 @@ class TestZPTRendererFactory(unittest.TestCase):
 
     def test_functional_using_searchpath(self):
         from pkg_resources import resource_filename
+        from .._compat import u
         default_dir = resource_filename('substanced.widget', 'tests/fixtures/')
         renderer = self._makeOne((default_dir,))
         result = renderer('test')
-        self.assertEqual(result.strip(), unicode('<div>Test</div>'))
+        self.assertEqual(result.strip(), u('<div>Test</div>'))
 
     def test_functional_using_assetspec(self):
+        from .._compat import u
         renderer = self._makeOne(())
         result = renderer('substanced.widget.tests:fixtures/test.pt')
-        self.assertEqual(result.strip(), unicode('<div>Test</div>'))
+        self.assertEqual(result.strip(), u('<div>Test</div>'))
 
     def test_it(self):
         import os

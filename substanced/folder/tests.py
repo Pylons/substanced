@@ -747,7 +747,8 @@ class TestFolder(unittest.TestCase):
         self.assertTrue(r.endswith('>'))
 
     def test_unresolveable_unicode_setitem(self):
-        name = unicode('La Pe\xc3\xb1a', 'utf-8').encode('latin-1')
+        from .._compat import u
+        name = u('La Pe\xc3\xb1a', 'utf-8').encode('latin-1')
         folder = self._makeOne()
         self.assertRaises(ValueError,
                           folder.__setitem__, name, DummyModel())
@@ -759,7 +760,8 @@ class TestFolder(unittest.TestCase):
         self.failUnless(folder.get(name))
 
     def test_unresolveable_unicode_getitem(self):
-        name = unicode('La Pe\xc3\xb1a', 'utf-8').encode('latin-1')
+        from .._compat import u
+        name = u('La Pe\xc3\xb1a', 'utf-8').encode('latin-1')
         folder = self._makeOne()
         self.assertRaises(UnicodeDecodeError, folder.__getitem__, name)
 

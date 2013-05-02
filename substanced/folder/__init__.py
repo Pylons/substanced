@@ -44,6 +44,7 @@ from ..util import (
     find_services,
     )
 from .._compat import STRING_TYPES
+from .._compat import u
 
 
 class FolderKeyError(KeyError):
@@ -112,7 +113,7 @@ class Folder(Persistent):
 
         for name in names:
             assert(isinstance(name, string_types))
-            name = unicode(name)
+            name = u(name)
             oid = get_oid(self[name])
             order.append(name)
             order_oids.append(oid)
@@ -167,7 +168,7 @@ class Folder(Persistent):
 
         for name in names:
             assert(isinstance(name, string_types))
-            name = unicode(name)
+            name = u(name)
             if not name in order_names:
                 raise FolderKeyError(name)
             idx = order_names.index(name)
@@ -314,7 +315,7 @@ class Folder(Persistent):
         encoding.
         """
         with statsd_timer('folder.get'):
-            name = unicode(name)
+            name = u(name)
             return self.data[name]
 
     def get(self, name, default=None):
@@ -326,7 +327,7 @@ class Folder(Persistent):
         system default encoding.
         """
         with statsd_timer('folder.get'):
-            name = unicode(name)
+            name = u(name)
             return self.data.get(name, default)
 
     def __contains__(self, name):
@@ -337,7 +338,7 @@ class Folder(Persistent):
         If ``name`` is a bytestring object, it must be decodable using the
         system default encoding.
         """
-        name = unicode(name)
+        name = u(name)
         return name in self.data
 
     def __setitem__(self, name, other):
@@ -392,7 +393,7 @@ class Folder(Persistent):
             raise ValueError("Name must not be empty")
 
         try:
-            name = unicode(name)
+            name = u(name)
         except UnicodeDecodeError:
             raise ValueError('Name "%s" not decodeable to unicode' % name)
 
@@ -570,7 +571,7 @@ class Folder(Persistent):
         attribute of events sent as a result of calling this method will be
         ``True`` too.
         """
-        name = unicode(name)
+        name = u(name)
         other = self.data[name]
         oid = get_oid(other, None)
 
