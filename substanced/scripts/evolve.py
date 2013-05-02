@@ -10,21 +10,25 @@ from pyramid.paster import (
 
 from substanced.evolution import evolve_packages
 
+def _print(msg):
+    sys.stdout.write('%s\n' % msg)
+
 def usage(e=None):
     if e is not None:
-        print e
-        print ''
-    print "sd_evolve [--latest] [--set-db-version=num] [--package=name] config_uri"
-    print "  Evolves new database with changes from scripts in evolve packages"
-    print "     - with no arguments, evolve just displays versions"
-    print "     - with the --latest argument, evolve runs scripts as necessary"
-    print "     - if --package is specified, only operate against the specified"
-    print "       package name."
-    print "     - with the --set-db-version argument, evolve runs no scripts"
-    print "       but just sets the database 'version number' for a package "
-    print "       to an arbitrary integer number.  Requires --package."
-    print
-    print "e.g. sd_evolve --latest etc/development.ini"
+        _print(e)
+        _print('')
+    _print("""\
+sd_evolve [--latest] [--set-db-version=num] [--package=name] config_uri
+  Evolves new database with changes from scripts in evolve packages
+     - with no arguments, evolve just displays versions
+     - with the --latest argument, evolve runs scripts as necessary
+     - if --package is specified, only operate against the specified
+       package name.
+     - with the --set-db-version argument, evolve runs no scripts
+       but just sets the database 'version number' for a package
+       to an arbitrary integer number.  Requires --package.
+
+e.g. sd_evolve --latest etc/development.ini""")
     sys.exit(2)
 
 def main(argv=sys.argv):
@@ -80,11 +84,11 @@ def main(argv=sys.argv):
         usage(repr(e))
 
     for result in results:
-        print 'Package %(package)s' % result
-        print 'Code at software version %(sw_version)s' % result
-        print 'Database at version %(db_version)s' % result
-        print result['message']
-        print ''
+        _print('Package %(package)s' % result)
+        _print('Code at software version %(sw_version)s' % result)
+        _print('Database at version %(db_version)s' % result)
+        _print(result['message'])
+        _print('')
 
 if __name__ == '__main__':
     main()

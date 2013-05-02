@@ -20,10 +20,13 @@ from pyramid.traversal import traverse
 
 from substanced.dump import dump
 
+def _print(msg):
+    sys.stdout.write('%s\n' % msg)
+
 def usage(e=None):
     if e is not None:
-        print e
-        print ''
+        _print(e)
+        _print('')
     sys.exit(2)
 
 def main():
