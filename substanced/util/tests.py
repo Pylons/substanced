@@ -876,9 +876,8 @@ class DummyContent(object):
         self.renamed_to = new
 
 class DummyRegistry(object):
-    def subscribers(self, (event, context), whatever):
-        self.event = event
-        self.context = context
+    def subscribers(self, event_context, whatever):
+        self.event, self.context = event_context
         self.whatever = whatever
 
 class DummyContentRegistry(object):
