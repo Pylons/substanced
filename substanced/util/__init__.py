@@ -1,7 +1,6 @@
 import calendar
 import itertools
 import math
-import urlparse
 import json
 import types
 
@@ -13,6 +12,9 @@ from pyramid.threadlocal import get_current_registry
 
 from ..event import ACLModified
 from ..interfaces import IFolder
+from .._compat import parse_qsl
+from .._compat import urlsplit
+from .._compat import urlunsplit
 
 _marker = object()
 
@@ -61,9 +63,9 @@ def merge_url_qs(url, **kw):
     """ Merge the query string elements of a URL with the ones in ``kw``.
     If any query string element exists in ``url`` that also exists in
     ``kw``, replace it."""
-    segments = urlparse.urlsplit(url)
+    segments = urlsplit(url)
     extra_qs = [ '%s=%s' % (k, v) for (k, v) in 
-                 urlparse.parse_qsl(segments.query, keep_blank_values=1) 
+                 parse_qsl(segments.query, keep_blank_values=1) 
                  if k not in kw ]
     qs = ''
     for k, v in sorted(kw.items()):
@@ -72,7 +74,7 @@ def merge_url_qs(url, **kw):
         qs += '&'.join(extra_qs)
     else:
         qs = qs[:-1]
-    return urlparse.urlunsplit(
+    return urlunsplit(
         (segments.scheme, segments.netloc, segments.path, qs, segments.fragment)
         )
 
