@@ -1,13 +1,13 @@
 import os
-import warnings
 import colander
-import StringIO
+import io
 import mimetypes
+import warnings
+
 from persistent import Persistent
+from pyramid.response import FileResponse
 from ZODB.blob import Blob
 from zope.interface import implementer
-
-from pyramid.response import FileResponse
 
 from ..util import get_oid
 
@@ -195,7 +195,7 @@ class File(Persistent):
           
         """
         if not stream:
-            stream = StringIO.StringIO()
+            stream = io.StringIO()
         fp = self.blob.open('w')
         first = True
         use_magic = False
