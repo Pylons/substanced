@@ -40,7 +40,7 @@ def main(argv=sys.argv):
                                           'set-db-version=',
                                           'help',
                                          ])
-    except getopt.GetoptError, e:
+    except getopt.GetoptError as e:
         usage(e)
 
     if args:

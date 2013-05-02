@@ -332,7 +332,7 @@ class Workflow(object):
                             return self._transition(
                                 content, transition['name'],
                                 context, request)
-                        except WorkflowError, e:
+                        except WorkflowError as e:
                             exc = e
                     raise exc
         raise WorkflowError(
@@ -442,7 +442,7 @@ def add_workflow(config, workflow, content_types=(None,)):
 
     try:
         workflow.check()
-    except WorkflowError, why:
+    except WorkflowError as why:
         raise ConfigurationError(str(why))
 
     intr = config.introspectable(

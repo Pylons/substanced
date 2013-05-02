@@ -122,7 +122,7 @@ class FormView(object):
                     controls = self.request.POST.items()
                     validated = form.validate(controls)
                     result = success_method(validated)
-                except deform.exception.ValidationFailure, e:
+                except deform.exception.ValidationFailure as e:
                     fail = getattr(self, '%s_failure' % button.name, None)
                     if fail is None:
                         fail = self.failure
