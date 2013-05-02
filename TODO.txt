@@ -97,7 +97,7 @@ Misc
 Dump and Load
 +++++++++++++
 
-- Add API docs for dump/load, and dump contexts.
+- Add API and narrative docs for dump/load, and dump contexts.
 
 
 Can Wait Forever (Nice-to-Have)
