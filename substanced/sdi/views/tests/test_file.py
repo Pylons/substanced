@@ -1,7 +1,8 @@
+import io
 import os
-import StringIO
-import colander
 import unittest
+
+import colander
 import pkg_resources
 from pyramid import testing
 
@@ -99,7 +100,7 @@ class TestAddFileView(unittest.TestCase):
         request = testing.DummyRequest()
         request.sdiapi = DummySDIAPI()
         request.registry.content = DummyContent(created)
-        fp = StringIO.StringIO('abc')
+        fp = io.StringIO('abc')
         appstruct = {
             'name':None,
             'title':None,
@@ -117,7 +118,7 @@ class TestAddFileView(unittest.TestCase):
         request = testing.DummyRequest()
         request.sdiapi = DummySDIAPI()
         request.registry.content = DummyContent(created)
-        fp = StringIO.StringIO('abc')
+        fp = io.StringIO('abc')
         appstruct = {
             'name':'abc',
             'file':{'fp':fp, 'filename':'filename'},
@@ -196,7 +197,7 @@ class Test_preview_image_upload(unittest.TestCase):
         request = testing.DummyRequest()
         request.subpath = ('abc',)
         request.registry.settings['substanced.uploads_tempdir'] = here
-        fp = StringIO.StringIO('abc')
+        fp = io.StringIO('abc')
         request.session['substanced.tempstore'] = {
             'abc':{'fp':fp, 'filename':'foo.jpg'}}
         response = self._callFUT(request)
