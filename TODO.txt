@@ -45,9 +45,6 @@ Can wait until after alpha 1
 
 - Stamp created objects with creator information?
 
-- Allow second sort of a hypatia result set to specify that it wants a stable
-  sort.
-
 - Fix actions processor so it won't drop actions on the floor if
   a keyboardinterrupt or another exception happens after a popall.
 
@@ -72,6 +69,25 @@ Can wait until after alpha 1
 
 Docs
 ----
+
+Statsd
+++++++
+
+- Improve narrative documentation about how to view statistics from ``statsd``.
+
+Folder Contents
++++++++++++++++
+
+- Improve narrative documentation about column specifications (including
+  sorter).
+
+- Improve narrative documentation about custom buttons and associated views.
+
+Cataloging
+++++++++++
+
+- Improve current catalog docs with more info about: catalog index creation,
+  content indexing, query API
 
 Misc
 ++++
