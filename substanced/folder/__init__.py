@@ -1,25 +1,12 @@
 import random
 import string
 
-from zope.interface import (
-    implementer,
-    )
-from zope.copy.interfaces import (
-    ICopyHook,
-    ResumeCopy
-    )
-
-from zope.copy import copy
-
+import BTrees
+from BTrees.Length import Length
 from persistent import (
     Persistent,
     )
-
 from persistent.interfaces import IPersistent
-
-import BTrees
-from BTrees.Length import Length
-
 from pyramid.compat import string_types
 from pyramid.location import (
     lineage,
@@ -27,31 +14,37 @@ from pyramid.location import (
     )
 from pyramid.threadlocal import get_current_registry
 from pyramid.traversal import resource_path_tuple
-
-from ..interfaces import (
-    IFolder,
-    IAutoNamingFolder,
-    marker,
+from zope.copy.interfaces import (
+    ICopyHook,
+    ResumeCopy
+    )
+from zope.copy import copy
+from zope.interface import (
+    implementer,
     )
 
-from ..stats import statsd_timer
 from ..content import content
-
 from ..event import (
     ObjectAdded,
     ObjectWillBeAdded,
     ObjectRemoved,
     ObjectWillBeRemoved,
     )
-
+from ..interfaces import (
+    IFolder,
+    IAutoNamingFolder,
+    marker,
+    )
+from ..objectmap import find_objectmap
+from ..stats import statsd_timer
 from ..util import (
     get_oid,
     postorder,
     find_service,
     find_services,
     )
+from .._compat import STRING_TYPES
 
-from ..objectmap import find_objectmap
 
 class FolderKeyError(KeyError):
     pass
@@ -392,7 +385,7 @@ class Folder(Persistent):
         the name passed is in the list of ``reserved_names``, raise a
         :exc:`ValueError`.
         """
-        if not isinstance(name, basestring):
+        if not isinstance(name, STRING_TYPES):
             raise ValueError("Name must be a string rather than a %s" %
                              name.__class__.__name__)
         if not name:

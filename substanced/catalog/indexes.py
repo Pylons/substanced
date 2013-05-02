@@ -41,6 +41,7 @@ from ..interfaces import (
     MODE_IMMEDIATE,
     MODE_ATCOMMIT,
     )
+from .._compat import STRING_TYPES
 
 PATH_WITH_OPTIONS = re.compile(r'\[(.+?)\](.+?)$')
 
@@ -227,7 +228,7 @@ class PathIndex(SDIndex, hypatia.util.BaseIndexMixin, Persistent):
         path_tuple = obj_or_path
         if hasattr(obj_or_path, '__parent__'):
             path_tuple = resource_path_tuple(obj_or_path)
-        elif isinstance(obj_or_path, basestring):
+        elif isinstance(obj_or_path, STRING_TYPES):
             path_tuple, depth, include_origin = self._parse_path_str(
                 obj_or_path)
         elif not isinstance(obj_or_path, tuple):

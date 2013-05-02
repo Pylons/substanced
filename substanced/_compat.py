@@ -1,4 +1,9 @@
 try:
+    STRING_TYPES = (str, unicode)
+except NameError: #pragma NO COVER Python >= 3.0
+    STRING_TYPES = (str,)
+
+try:
     from urllib.parse import parse_qsl
 except ImportError: #pragma NO COVER
     from cgi import parse_qsl
