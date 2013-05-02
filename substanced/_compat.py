@@ -12,6 +12,13 @@ else: #pragma NO COVER Python < 3.0
     b = str
 
 try:
+    long
+except NameError: #pragma NO COVER Python >= 3.0
+    INT_TYPES = (int,)
+else:
+    INT_TYPES = (int, long)
+
+try:
     from urllib.parse import parse_qsl
 except ImportError: #pragma NO COVER
     from cgi import parse_qsl

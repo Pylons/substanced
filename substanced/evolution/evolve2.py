@@ -1,17 +1,21 @@
+import logging
+
 from substanced.util import postorder
 from substanced.interfaces import PrincipalToACLBearing
 from substanced.objectmap import find_objectmap
-import logging
+from substanced._compat import INT_TYPES
 
 _marker = object()
 
 logger = logging.getLogger('evolution')
 
+_TO_APPEND = INT_TYPES + (tuple,)
+
 def _referenceable_principals(acl):
     result = set()
     for ace in (acl or ()):
         principal_id = ace[1]
-        if isinstance(principal_id, (int, long, tuple)):
+        if isinstance(principal_id, _TO_APPEND):
             result.add(principal_id)
     return result
 

@@ -5,12 +5,12 @@ from ..event import (
     subscribe_will_be_removed,
     subscribe_acl_modified,
     )
-
 from ..interfaces import (
     IUser,
     IPrincipal,
-)
-
+    UserToPasswordReset,
+    PrincipalToACLBearing,
+    )
 from ..objectmap import find_objectmap
 from ..util import (
     get_oid,
@@ -18,11 +18,7 @@ from ..util import (
     set_acl,
     find_service,
     )
-
-from ..interfaces import (
-    UserToPasswordReset,
-    PrincipalToACLBearing,
-    )
+from .._compat import INT_TYPES
 
 @subscribe_added(IUser)
 def user_added(event):
@@ -82,11 +78,12 @@ def principal_added(event):
                 'user with the login name %s' % principal_name
             )
 
+_TO_APPEND = INT_TYPES + (tuple,)
 def _referenceable_principals(acl):
     result = set()
     for ace in (acl or ()):
         principal_id = ace[1]
-        if isinstance(principal_id, (int, long, tuple)):
+        if isinstance(principal_id, _TO_APPEND):
             result.add(principal_id)
     return result
 
