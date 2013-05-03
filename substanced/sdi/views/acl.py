@@ -18,6 +18,7 @@ from ...util import (
     set_acl,
     find_service,
     )
+from ..._compat import STRING_TYPES
 
 from .. import mgmt_view
 
@@ -177,7 +178,8 @@ class ACLEditViews(object):
                 break
             if permissions == ALL_PERMISSIONS:
                 permissions = ('-- ALL --',)
-            if not hasattr(permissions, '__iter__'):
+            if (isinstance(permissions, STRING_TYPES) or
+                not hasattr(permissions, '__iter__')):
                 permissions = (permissions,)
             pname = self.get_principal_name(principal_id)
             new_ace = (l_ace[0], pname, permissions)

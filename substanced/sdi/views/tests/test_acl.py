@@ -469,7 +469,9 @@ class TestOther(unittest.TestCase):
         self.assertEqual(
             result,
             ('enabled',
-             [('Allow', 'fred', ('-- ALL --',)), ('Allow', 'fred', ('view',))])
+             [('Allow', 'fred', ('-- ALL --',)),
+              ('Allow', 'fred', ('view',)),
+             ])
             )
 
     def test_get_parent_acl_with_no_inherit(self):
