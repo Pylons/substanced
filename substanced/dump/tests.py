@@ -16,7 +16,7 @@ class Test_set_yaml(unittest.TestCase):
         registry = DummyRegistry(None)
         self._callFUT(registry)
         import io
-        io = io.StringIO()
+        io = io.BytesIO()
         import yaml
         yaml.dump(DummyInterface, io, Dumper=registry['yaml_dumper'])
         self.assertEqual(
@@ -28,7 +28,7 @@ class Test_set_yaml(unittest.TestCase):
         registry = DummyRegistry(None)
         self._callFUT(registry)
         import io
-        io = io.StringIO(
+        io = io.BytesIO(
             "!interface 'substanced.dump.tests.DummyInterface'\n"
             )
         import yaml
@@ -40,7 +40,7 @@ class Test_set_yaml(unittest.TestCase):
         registry = DummyRegistry(None)
         self._callFUT(registry)
         import io
-        io = io.StringIO()
+        io = io.BytesIO()
         import yaml
         blob = Blob(b'abc')
         yaml.dump(blob, io, Dumper=registry['yaml_dumper'])
@@ -53,7 +53,7 @@ class Test_set_yaml(unittest.TestCase):
         registry = DummyRegistry(None)
         self._callFUT(registry)
         import io
-        io = io.StringIO(
+        io = io.BytesIO(
             "!blob 'YWJj\n\n  '\n" 
             )
         import yaml
@@ -284,7 +284,7 @@ class Test_YAMLOperations(unittest.TestCase):
         import contextlib
         inst = self._makeOne()
         import io
-        io = io.StringIO('foo 1')
+        io = io.BytesIO('foo 1')
         @contextlib.contextmanager
         def openfile(fn):
             self.assertEqual(fn, 'fn')
@@ -299,7 +299,7 @@ class Test_YAMLOperations(unittest.TestCase):
         import contextlib
         inst = self._makeOne()
         import io
-        io = io.StringIO()
+        io = io.BytesIO()
         @contextlib.contextmanager
         def openfile(fn):
             self.assertEqual(fn, 'fn')

@@ -100,7 +100,7 @@ class TestAddFileView(unittest.TestCase):
         request = testing.DummyRequest()
         request.sdiapi = DummySDIAPI()
         request.registry.content = DummyContent(created)
-        fp = io.StringIO('abc')
+        fp = io.BytesIO(b'abc')
         appstruct = {
             'name':None,
             'title':None,
@@ -118,7 +118,7 @@ class TestAddFileView(unittest.TestCase):
         request = testing.DummyRequest()
         request.sdiapi = DummySDIAPI()
         request.registry.content = DummyContent(created)
-        fp = io.StringIO('abc')
+        fp = io.BytesIO(b'abc')
         appstruct = {
             'name':'abc',
             'file':{'fp':fp, 'filename':'filename'},
@@ -197,7 +197,7 @@ class Test_preview_image_upload(unittest.TestCase):
         request = testing.DummyRequest()
         request.subpath = ('abc',)
         request.registry.settings['substanced.uploads_tempdir'] = here
-        fp = io.StringIO('abc')
+        fp = io.BytesIO(b'abc')
         request.session['substanced.tempstore'] = {
             'abc':{'fp':fp, 'filename':'foo.jpg'}}
         response = self._callFUT(request)
