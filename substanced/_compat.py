@@ -1,3 +1,4 @@
+
 try:
     STRING_TYPES = (str, unicode)
 except NameError: #pragma NO COVER Python >= 3.0
@@ -33,3 +34,10 @@ try:
 except ImportError: #pragma NO COVER
     from urlparse import urlsplit
     from urlparse import urlunsplit
+
+import string
+try:
+    _LETTERS = string.letters
+except AttributeError: #pragma NO COVER
+    _LETTERS = string.ascii_letters
+del string

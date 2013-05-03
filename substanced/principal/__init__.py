@@ -54,11 +54,7 @@ from ..util import (
     find_service,
     )
 from ..stats import statsd_gauge
-
-try:
-    _LETTERS = string.letters
-except AttributeError: #pragma NO COVER
-    _LETTERS = string.ascii_letters
+from .._compat import _LETTERS
 
 def _gen_random_token():
     length = random.choice(range(10, 16))
