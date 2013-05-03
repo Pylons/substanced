@@ -35,7 +35,7 @@ def postorder(startnode):
     """ Walks over nodes in a folder recursively. Yields deepest nodes first."""
     def visit(node):
         if is_folder(node):
-            for child in node.values():
+            for name, child in sorted(node.items()):
                 for result in visit(child):
                     yield result
         yield node

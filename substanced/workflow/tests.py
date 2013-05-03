@@ -1119,7 +1119,7 @@ class init_workflows_for_objectTests(unittest.TestCase):
         workflow.add(wf, 'Folder')
         obj = DummyContent()
         obj2 = mock.Mock()
-        obj.values = lambda *arg: [obj2]
+        obj.items = lambda *arg: [('obj2', obj2)]
         directlyProvides(obj, IFolder)
         event = mock.Mock()
         event.registry = mock.Mock()

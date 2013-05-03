@@ -33,7 +33,7 @@ class Test__postorder(unittest.TestCase):
         model['one'] = one
         model['two'] = two
         result = list(self._callFUT(model))
-        self.assertEqual(result, [two, one, model])
+        self.assertEqual(result, [one, two, model])
 
     def test_IFolder_node_folder_children(self):
         from ..interfaces import IFolder
@@ -47,7 +47,7 @@ class Test__postorder(unittest.TestCase):
         two['three'] = three
         two['four'] = four
         result = list(self._callFUT(model))
-        self.assertEqual(result, [four, three, two, one, model])
+        self.assertEqual(result, [one, four, three, two, model])
 
 class Test_get_oid(unittest.TestCase):
     def _callFUT(self, obj, default=_marker):
@@ -747,11 +747,11 @@ class Test_find_catalogs(unittest.TestCase):
         catalog2 = sub['catalogs']['catalog2']
         catalog1_2 = sub['catalogs']['catalog1']
         catalog1 = root['catalogs']['catalog1']
-        result = list(enumerate(self._callFUT(sub)))
-        self.assertEqual(
-            result,
-            [ (0, catalog2), (1, catalog1_2), (2, catalog1) ],
-            )
+        result = set(self._callFUT(sub))
+        self.assertEqual(len(result), 3)
+        self.assertTrue(catalog1 in result)
+        self.assertTrue(catalog2 in result)
+        self.assertTrue(catalog1_2 in result)
 
     def test_with_multiple_catalogs_and_name(self):
         root = self._makeTree()
