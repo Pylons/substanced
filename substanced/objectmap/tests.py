@@ -838,7 +838,7 @@ class TestReferenceMap(unittest.TestCase):
     def test_get_reftypes(self):
         map = {'reftype':None}
         refs = self._makeOne(map)
-        self.assertEqual(refs.get_reftypes(), ['reftype'])
+        self.assertEqual(list(refs.get_reftypes()), ['reftype'])
 
 class TestExtentMap(unittest.TestCase):
     def _makeOne(self):
