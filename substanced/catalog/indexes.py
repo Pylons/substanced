@@ -33,6 +33,7 @@ from ..schema import Schema
 from ..stats import statsd_timer
 from .._compat import STRING_TYPES
 from .._compat import INT_TYPES
+from .._compat import u
 
 from .discriminators import dummy_discriminator
 from .util import oid_from_resource
@@ -40,6 +41,8 @@ from .util import oid_from_resource
 from . import deferred
 
 PATH_WITH_OPTIONS = re.compile(r'\[(.+?)\](.+?)$')
+_BLANK = u('')
+_SLASH = u('/')
 
 _marker = object()
 
@@ -214,8 +217,8 @@ class PathIndex(SDIndex, hypatia.util.BaseIndexMixin, Persistent):
         if not path.startswith('/'):
             raise ValueError('Path must start with a slash')
         
-        tmp = filter(None, url_unquote_text(path).split(u'/'))
-        path_tuple = (u'',) + tuple(tmp)
+        tmp = filter(None, url_unquote_text(path).split(_SLASH))
+        path_tuple = (_BLANK,) + tuple(tmp)
         return path_tuple, depth, include_origin
 
     def _parse_path(self, obj_or_path):

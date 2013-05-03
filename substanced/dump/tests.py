@@ -46,7 +46,7 @@ class Test_set_yaml(unittest.TestCase):
         yaml.dump(blob, io, Dumper=registry['yaml_dumper'])
         self.assertEqual(
             io.getvalue(),
-            "!blob 'YWJj\n\n  '\n" 
+            "!blob 'YWJj\n\n  '\n"
             )
 
     def test_blob_constructor(self):
@@ -54,7 +54,7 @@ class Test_set_yaml(unittest.TestCase):
         self._callFUT(registry)
         import io
         io = io.BytesIO(
-            "!blob 'YWJj\n\n  '\n" 
+            "!blob 'YWJj\n\n  '\n"
             )
         import yaml
         result = yaml.load(io, Loader=registry['yaml_loader'])
@@ -91,7 +91,7 @@ class Test_DumpAndLoad(unittest.TestCase):
 
     def tearDown(self):
         testing.tearDown()
-        
+
     def _makeOne(self):
         from . import _DumpAndLoad
         return _DumpAndLoad()
@@ -204,7 +204,7 @@ class Test_FileOperations(unittest.TestCase):
         inst = self._makeOne()
         with inst._open(foo, 'rb') as fp:
             self.assertEqual(fp.read(), 'Foo.\n')
-            
+
     def test__exists(self):
         import os
         foo = os.path.join(
@@ -386,7 +386,7 @@ class Test_ResourceLoadContext(unittest.TestCase):
 
     def tearDown(self):
         testing.tearDown()
-        
+
     def _makeOne(self, directory, registry, dumpers, verbose, dry_run):
         from . import _ResourceLoadContext
         return _ResourceLoadContext(
@@ -473,6 +473,7 @@ class TestACLDumper(unittest.TestCase):
 
     def test_init_adds_yaml_stuff(self):
         from pyramid.security import ALL_PERMISSIONS
+        from .._compat import u
         yamlthing = DummyYAMLDumperLoader()
         registry = {'yaml_loader':yamlthing, 'yaml_dumper':yamlthing}
         self._makeOne('name', registry)
@@ -483,11 +484,11 @@ class TestACLDumper(unittest.TestCase):
             )
         dumper = testing.DummyResource()
         def represent_scalar(one, two):
-            self.assertEqual(one, u'!all_permissions')
+            self.assertEqual(one, u('!all_permissions'))
         dumper.represent_scalar = represent_scalar
         yamlthing.representers[0][1](dumper, None)
 
-    def test_dump_no_acl(self): 
+    def test_dump_no_acl(self):
         yamlthing = DummyYAMLDumperLoader()
         registry = {'yaml_loader':yamlthing, 'yaml_dumper':yamlthing}
         inst = self._makeOne('name', registry)
@@ -497,7 +498,7 @@ class TestACLDumper(unittest.TestCase):
         result = inst.dump(context)
         self.assertEqual(result, None)
 
-    def test_dump_with_acl(self): 
+    def test_dump_with_acl(self):
         yamlthing = DummyYAMLDumperLoader()
         registry = {'yaml_loader':yamlthing, 'yaml_dumper':yamlthing}
         inst = self._makeOne('name', registry)
@@ -536,7 +537,7 @@ class TestWorkflowDumper(unittest.TestCase):
         setattr(resource, STATE_ATTR, True)
         inst = self._makeOne('name', None)
         inst.dump(context)
-        
+
     def test_load(self):
         from . import STATE_ATTR
         def load_yaml(fn):
@@ -722,6 +723,7 @@ class TestPropertySheetDumper(unittest.TestCase):
 
     def test_init_adds_yaml_stuff(self):
         import colander
+        from .._compat import u
         yamlthing = DummyYAMLDumperLoader()
         registry = {'yaml_loader':yamlthing, 'yaml_dumper':yamlthing}
         self._makeOne('name', registry)
@@ -732,7 +734,7 @@ class TestPropertySheetDumper(unittest.TestCase):
             )
         dumper = testing.DummyResource()
         def represent_scalar(one, two):
-            self.assertEqual(one, u'!colander_null')
+            self.assertEqual(one, u('!colander_null'))
         dumper.represent_scalar = represent_scalar
         yamlthing.representers[0][1](dumper, None)
 
@@ -818,7 +820,7 @@ class TestAdhocAttrDumper(unittest.TestCase):
         resource.__dump__ = dump
         inst = self._makeOne('name', None)
         inst.dump(context)
-        
+
     def test_load(self):
         def load_yaml(fn):
             self.assertEqual(fn, 'name.yaml')
@@ -833,7 +835,7 @@ class TestAdhocAttrDumper(unittest.TestCase):
         resource.__load__ = load
         inst = self._makeOne('name', None)
         inst.load(context)
-        
+
     def test_load_without_underunder_load(self):
         def load_yaml(fn):
             self.assertEqual(fn, 'name.yaml')
@@ -895,7 +897,7 @@ class DummySheet(object):
 
     def __delitem__(self, val):
         self.deleted = val
-        
+
     def bind(self, request=None, context=None, loading=None):
         self.request = request
         self.context = context
@@ -989,10 +991,10 @@ class DummyResourceDumpContext(object):
 
     def exists(self, fn):
         return True
-        
+
 class DummyInterface(Interface):
     pass
-        
+
 class DummyRegistry(dict):
     def __init__(self, result):
         self.result = result

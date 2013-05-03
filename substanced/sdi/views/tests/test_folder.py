@@ -2,10 +2,11 @@ import colander
 import unittest
 
 from pyramid import testing
-
 from pyramid.httpexceptions import HTTPFound
-
 import mock
+
+from ...._compat import u
+_FOOBAR = u('foobar')
 
 class Test_name_validator(unittest.TestCase):
     def _callFUT(self, node, kw):
@@ -902,7 +903,7 @@ class TestFolderContentsViews(unittest.TestCase):
     def test_rename_finish_already_exists(self):
         from ....folder import FolderKeyError
         context = mock.MagicMock()
-        context.rename.side_effect = FolderKeyError(u'foobar')
+        context.rename.side_effect = FolderKeyError(_FOOBAR)
         request = mock.Mock()
         request.POST.getall.return_value = ('foobar',)
         request.POST.get.side_effect = lambda x: {
@@ -913,7 +914,7 @@ class TestFolderContentsViews(unittest.TestCase):
 
         self.assertRaises(HTTPFound, inst.rename_finish)
         context.rename.assert_any_call('foobar', 'foobar0')
-        request.session.flash.assert_called_once_with(u'foobar', 'error')
+        request.session.flash.assert_called_once_with(_FOOBAR, 'error')
 
     @mock.patch('substanced.sdi.views.folder.get_oid')
     def test_copy_one(self, mock_get_oid):
@@ -1043,7 +1044,7 @@ class TestFolderContentsViews(unittest.TestCase):
         context = mock.MagicMock()
         mock_folder = mock_find_objectmap().object_for()
         mock_folder.__parent__ = mock.MagicMock()
-        mock_folder.__parent__.copy.side_effect = FolderKeyError(u'foobar')
+        mock_folder.__parent__.copy.side_effect = FolderKeyError(_FOOBAR)
         mock_folder.__name__ = mock.sentinel.name
         request = mock.MagicMock()
         request.session.__getitem__.return_value = [123]
@@ -1052,7 +1053,7 @@ class TestFolderContentsViews(unittest.TestCase):
 
         inst = self._makeOne(context, request)
         self.assertRaises(HTTPFound, inst.copy_finish)
-        request.session.flash.assert_called_once_with(u'foobar', 'error')
+        request.session.flash.assert_called_once_with(_FOOBAR, 'error')
 
     @mock.patch('substanced.sdi.views.folder.get_oid')
     def test_move_one(self, mock_get_oid):
@@ -1186,7 +1187,7 @@ class TestFolderContentsViews(unittest.TestCase):
         context = mock.MagicMock()
         mock_folder = mock_find_objectmap().object_for()
         mock_folder.__parent__ = mock.MagicMock()
-        mock_folder.__parent__.move.side_effect = FolderKeyError(u'foobar')
+        mock_folder.__parent__.move.side_effect = FolderKeyError(_FOOBAR)
         mock_folder.__name__ = mock.sentinel.name
         request = mock.MagicMock()
         request.session.__getitem__.return_value = [123]
@@ -1195,7 +1196,7 @@ class TestFolderContentsViews(unittest.TestCase):
 
         inst = self._makeOne(context, request)
         self.assertRaises(HTTPFound, inst.move_finish)
-        request.session.flash.assert_called_once_with(u'foobar', 'error')
+        request.session.flash.assert_called_once_with(_FOOBAR, 'error')
 
     def test_reorder_rows(self):
         context = testing.DummyResource()

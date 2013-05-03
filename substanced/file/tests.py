@@ -135,12 +135,14 @@ class TestFile(unittest.TestCase):
         self.assertEqual(inst.mimetype, 'application/octet-stream')
 
     def test_ctor_no_title(self):
+        from .._compat import u
         inst = self._makeOne(None, None)
-        self.assertEqual(inst.title, u'')
+        self.assertEqual(inst.title, u(''))
 
     def test_ctor_with_None_title(self):
+        from .._compat import u
         inst = self._makeOne(None, None, None)
-        self.assertEqual(inst.title, u'')
+        self.assertEqual(inst.title, u(''))
 
     def test_ctor_with_with_title(self):
         inst = self._makeOne(None, None, 'abc')

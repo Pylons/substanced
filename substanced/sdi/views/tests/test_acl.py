@@ -2,6 +2,10 @@ import unittest
 
 from pyramid import testing
 
+from ...._compat import u
+_JOHN = u('john')
+_MARY = u('mary')
+
 class TestACLView(unittest.TestCase):
     def setUp(self):
         self.config = testing.setUp()
@@ -19,18 +23,18 @@ class TestACLView(unittest.TestCase):
         site = make_site()
         site['page'] = context = testing.DummyResource()
         site.__acl__ = context.__acl__ = [(None, 1, (None,))]
-        user = DummyUser(1, u'john')
+        user = DummyUser(1, _JOHN)
         site['principals']['users']['john'] = user
         site.__objectmap__ = DummyObjectMap({1:user})
         inst = self._makeOne(context, request)
         resp = inst()
-        self.assertEqual(resp['parent_acl'], [(None, u'john', (None,))])
-        self.assertEqual(resp['users'], [(1, u'john')])
+        self.assertEqual(resp['parent_acl'], [(None, _JOHN, (None,))])
+        self.assertEqual(resp['users'], [(1, _JOHN)])
         self.assertEqual(resp['groups'], [('system.Everyone',
                                           'system.Everyone'),
                                           ('system.Authenticated',
                                           'system.Authenticated')])
-        self.assertEqual(resp['local_acl'], [(None, u'john', (None,))])
+        self.assertEqual(resp['local_acl'], [(None, _JOHN, (None,))])
         self.assertEqual(resp['permissions'], ['-- ALL --'])
         self.assertEqual(resp['inheriting'], 'enabled')
 
@@ -57,20 +61,20 @@ class TestMoveUp(unittest.TestCase):
         site.__acl__ = [(None, 1, (None,))]
         context.__acl__ = [(None, 1, (None,)),
                            (None, 2, (None,))]
-        user = DummyUser(1, u'john')
-        user2 = DummyUser(2, u'mary')
+        user = DummyUser(1, _JOHN)
+        user2 = DummyUser(2, _MARY)
         site['principals']['users']['john'] = user
         site.__objectmap__ = DummyObjectMap({1:user, 2:user2})
         inst = self._makeOne(context, request)
         resp = inst()
-        self.assertEqual(resp['parent_acl'], [(None, u'john', (None,))])
-        self.assertEqual(resp['users'], [(1, u'john')])
+        self.assertEqual(resp['parent_acl'], [(None, _JOHN, (None,))])
+        self.assertEqual(resp['users'], [(1, _JOHN)])
         self.assertEqual(resp['groups'], [('system.Everyone',
                                           'system.Everyone'),
                                           ('system.Authenticated',
                                           'system.Authenticated')])
-        self.assertEqual(resp['local_acl'], [(None, u'mary', (None,)),
-                                             (None, u'john', (None,))])
+        self.assertEqual(resp['local_acl'], [(None, _MARY, (None,)),
+                                             (None, _JOHN, (None,))])
         self.assertEqual(resp['permissions'], ['-- ALL --'])
         self.assertEqual(resp['inheriting'], 'enabled')
         self.assertEqual(request.sdiapi.flashed, 'ACE moved up')
@@ -98,20 +102,20 @@ class TestMoveDown(unittest.TestCase):
         site.__acl__ = [(None, 1, (None,))]
         context.__acl__ = [(None, 1, (None,)),
                            (None, 2, (None,))]
-        user = DummyUser(1, u'john')
-        user2 = DummyUser(2, u'mary')
+        user = DummyUser(1, _JOHN)
+        user2 = DummyUser(2, _MARY)
         site['principals']['users']['john'] = user
         site.__objectmap__ = DummyObjectMap({1:user, 2:user2})
         inst = self._makeOne(context, request)
         resp = inst()
-        self.assertEqual(resp['parent_acl'], [(None, u'john', (None,))])
-        self.assertEqual(resp['users'], [(1, u'john')])
+        self.assertEqual(resp['parent_acl'], [(None, _JOHN, (None,))])
+        self.assertEqual(resp['users'], [(1, _JOHN)])
         self.assertEqual(resp['groups'], [('system.Everyone',
                                           'system.Everyone'),
                                           ('system.Authenticated',
                                           'system.Authenticated')])
-        self.assertEqual(resp['local_acl'], [(None, u'mary', (None,)),
-                                             (None, u'john', (None,))])
+        self.assertEqual(resp['local_acl'], [(None, _MARY, (None,)),
+                                             (None, _JOHN, (None,))])
         self.assertEqual(resp['permissions'], ['-- ALL --'])
         self.assertEqual(resp['inheriting'], 'enabled')
         self.assertEqual(request.sdiapi.flashed, 'ACE moved down')
@@ -139,19 +143,19 @@ class TestRemove(unittest.TestCase):
         site.__acl__ = [(None, 1, (None,))]
         context.__acl__ = [(None, 1, (None,)),
                            (None, 2, (None,))]
-        user = DummyUser(1, u'john')
-        user2 = DummyUser(2, u'mary')
+        user = DummyUser(1, _JOHN)
+        user2 = DummyUser(2, _MARY)
         site['principals']['users']['john'] = user
         site.__objectmap__ = DummyObjectMap({1:user, 2:user2})
         inst = self._makeOne(context, request)
         resp = inst()
-        self.assertEqual(resp['parent_acl'], [(None, u'john', (None,))])
-        self.assertEqual(resp['users'], [(1, u'john')])
+        self.assertEqual(resp['parent_acl'], [(None, _JOHN, (None,))])
+        self.assertEqual(resp['users'], [(1, _JOHN)])
         self.assertEqual(resp['groups'], [('system.Everyone',
                                           'system.Everyone'),
                                           ('system.Authenticated',
                                           'system.Authenticated')])
-        self.assertEqual(resp['local_acl'], [(None, u'mary', (None,))])
+        self.assertEqual(resp['local_acl'], [(None, _MARY, (None,))])
         self.assertEqual(resp['permissions'], ['-- ALL --'])
         self.assertEqual(resp['inheriting'], 'enabled')
         self.assertEqual(request.sdiapi.flashed, 'ACE removed')
@@ -182,21 +186,21 @@ class TestAdd(unittest.TestCase):
         site.__acl__ = [(None, 1, (None,))]
         context.__acl__ = [(None, 1, (None,)),
                            (None, 2, (None,))]
-        user = DummyUser(1, u'john')
-        user2 = DummyUser(2, u'mary')
+        user = DummyUser(1, _JOHN)
+        user2 = DummyUser(2, _MARY)
         site['principals']['users']['john'] = user
         site.__objectmap__ = DummyObjectMap({1:user, 2:user2})
         inst = self._makeOne(context, request)
         resp = inst()
-        self.assertEqual(resp['parent_acl'], [(None, u'john', (None,))])
-        self.assertEqual(resp['users'], [(1, u'john')])
+        self.assertEqual(resp['parent_acl'], [(None, _JOHN, (None,))])
+        self.assertEqual(resp['users'], [(1, _JOHN)])
         self.assertEqual(resp['groups'], [('system.Everyone',
                                           'system.Everyone'),
                                           ('system.Authenticated',
                                           'system.Authenticated')])
-        self.assertEqual(resp['local_acl'], [(None, u'john', (None,)),
-                                             (None, u'mary', (None,)),
-                                             ('allow', u'john', ('test',))])
+        self.assertEqual(resp['local_acl'], [(None, _JOHN, (None,)),
+                                             (None, _MARY, (None,)),
+                                             ('allow', _JOHN, ('test',))])
         self.assertEqual(resp['permissions'], ['-- ALL --'])
         self.assertEqual(resp['inheriting'], 'enabled')
         self.assertEqual(request.sdiapi.flashed, 'New ACE added')
@@ -216,20 +220,20 @@ class TestAdd(unittest.TestCase):
         site.__acl__ = [(None, 1, (None,))]
         context.__acl__ = [(None, 1, (None,)),
                            (None, 2, (None,))]
-        user = DummyUser(1, u'john')
-        user2 = DummyUser(2, u'mary')
+        user = DummyUser(1, _JOHN)
+        user2 = DummyUser(2, _MARY)
         site['principals']['users']['john'] = user
         site.__objectmap__ = DummyObjectMap({1:user, 2:user2})
         inst = self._makeOne(context, request)
         resp = inst()
-        self.assertEqual(resp['parent_acl'], [(None, u'john', (None,))])
-        self.assertEqual(resp['users'], [(1, u'john')])
+        self.assertEqual(resp['parent_acl'], [(None, _JOHN, (None,))])
+        self.assertEqual(resp['users'], [(1, _JOHN)])
         self.assertEqual(resp['groups'], [('system.Everyone',
                                           'system.Everyone'),
                                           ('system.Authenticated',
                                           'system.Authenticated')])
-        self.assertEqual(resp['local_acl'], [(None, u'john', (None,)),
-                                             (None, u'mary', (None,))])
+        self.assertEqual(resp['local_acl'], [(None, _JOHN, (None,)),
+                                             (None, _MARY, (None,))])
         self.assertEqual(resp['permissions'], ['-- ALL --'])
         self.assertEqual(resp['inheriting'], 'enabled')
         self.assertEqual(request.session['_f_error'],
@@ -250,20 +254,20 @@ class TestAdd(unittest.TestCase):
         site.__acl__ = [(None, 1, (None,))]
         context.__acl__ = [(None, 1, (None,)),
                            (None, 2, (None,))]
-        user = DummyUser(1, u'john')
-        user2 = DummyUser(2, u'mary')
+        user = DummyUser(1, _JOHN)
+        user2 = DummyUser(2, _MARY)
         site['principals']['users']['john'] = user
         site.__objectmap__ = DummyObjectMap({1:user, 2:user2})
         inst = self._makeOne(context, request)
         resp = inst()
-        self.assertEqual(resp['parent_acl'], [(None, u'john', (None,))])
-        self.assertEqual(resp['users'], [(1, u'john')])
+        self.assertEqual(resp['parent_acl'], [(None, _JOHN, (None,))])
+        self.assertEqual(resp['users'], [(1, _JOHN)])
         self.assertEqual(resp['groups'], [('system.Everyone',
                                           'system.Everyone'),
                                           ('system.Authenticated',
                                           'system.Authenticated')])
-        self.assertEqual(resp['local_acl'], [(None, u'john', (None,)),
-                                             (None, u'mary', (None,))])
+        self.assertEqual(resp['local_acl'], [(None, _JOHN, (None,)),
+                                             (None, _MARY, (None,))])
         self.assertEqual(resp['permissions'], ['-- ALL --'])
         self.assertEqual(resp['inheriting'], 'enabled')
         self.assertEqual(request.session['_f_error'],
@@ -284,7 +288,7 @@ class TestAdd(unittest.TestCase):
         site.__acl__ = [(None, 1, (None,))]
         context.__acl__ = [(None, 1, (None,)),
                            (None, 2, (None,))]
-        user = DummyUser(1, u'john')
+        user = DummyUser(1, _JOHN)
         site['principals']['users']['john'] = user
         site.__objectmap__ = DummyObjectMap({1:user})
         inst = self._makeOne(context, request)
@@ -309,7 +313,7 @@ class TestAdd(unittest.TestCase):
         site.__acl__ = [(None, 1, (None,))]
         context.__acl__ = [(None, 1, (None,)),
                            (None, 2, (None,))]
-        user = DummyUser(1, u'john')
+        user = DummyUser(1, _JOHN)
         site['principals']['users']['john'] = user
         site.__objectmap__ = DummyObjectMap({1:user})
         inst = self._makeOne(context, request)
@@ -361,20 +365,20 @@ class TestInherit(unittest.TestCase):
         site.__acl__ = [(None, 1, (None,))]
         context.__acl__ = [(None, 1, (None,)),
                            (None, 2, (None,))]
-        user = DummyUser(1, u'john')
-        user2 = DummyUser(2, u'mary')
+        user = DummyUser(1, _JOHN)
+        user2 = DummyUser(2, _MARY)
         site['principals']['users']['john'] = user
         site.__objectmap__ = DummyObjectMap({1:user, 2:user2})
         inst = self._makeOne(context, request)
         resp = inst()
-        self.assertEqual(resp['parent_acl'], [(None, u'john', (None,))])
-        self.assertEqual(resp['users'], [(1, u'john')])
+        self.assertEqual(resp['parent_acl'], [(None, _JOHN, (None,))])
+        self.assertEqual(resp['users'], [(1, _JOHN)])
         self.assertEqual(resp['groups'], [('system.Everyone',
                                           'system.Everyone'),
                                           ('system.Authenticated',
                                           'system.Authenticated')])
-        self.assertEqual(resp['local_acl'], [(None, u'john', (None,)),
-                                             (None, u'mary', (None,))])
+        self.assertEqual(resp['local_acl'], [(None, _JOHN, (None,)),
+                                             (None, _MARY, (None,))])
         self.assertEqual(resp['permissions'], ['-- ALL --'])
         self.assertEqual(resp['inheriting'], 'enabled')
         self.assertEqual(request.sdiapi.flashed,
@@ -392,20 +396,20 @@ class TestInherit(unittest.TestCase):
         site.__acl__ = [(None, 1, (None,))]
         context.__acl__ = [(None, 1, (None,)),
                            (None, 2, (None,))]
-        user = DummyUser(1, u'john')
-        user2 = DummyUser(2, u'mary')
+        user = DummyUser(1, _JOHN)
+        user2 = DummyUser(2, _MARY)
         site['principals']['users']['john'] = user
         site.__objectmap__ = DummyObjectMap({1:user, 2:user2})
         inst = self._makeOne(context, request)
         resp = inst()
-        self.assertEqual(resp['parent_acl'], [(None, u'john', (None,))])
-        self.assertEqual(resp['users'], [(1, u'john')])
+        self.assertEqual(resp['parent_acl'], [(None, _JOHN, (None,))])
+        self.assertEqual(resp['users'], [(1, _JOHN)])
         self.assertEqual(resp['groups'], [('system.Everyone',
                                           'system.Everyone'),
                                           ('system.Authenticated',
                                           'system.Authenticated')])
-        self.assertEqual(resp['local_acl'], [(None, u'john', (None,)),
-                                             (None, u'mary', (None,))])
+        self.assertEqual(resp['local_acl'], [(None, _JOHN, (None,)),
+                                             (None, _MARY, (None,))])
         self.assertEqual(resp['permissions'], ['-- ALL --'])
         self.assertEqual(resp['inheriting'], 'disabled')
         self.assertEqual(request.sdiapi.flashed,

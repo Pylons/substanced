@@ -17,6 +17,7 @@ from ...util import (
     get_oid,
     find_catalog,
     )
+from ..._compat import u
 
 from .. import (
     mgmt_view,
@@ -37,9 +38,9 @@ def rename_duplicated_resource(context, name):
     m = re.search(r'-(\d+)$', name)
     if m:
         new_id = int(m.groups()[0]) + 1
-        new_name = name.rsplit('-', 1)[0] + u'-%d' % new_id
+        new_name = name.rsplit('-', 1)[0] + u('-%d') % new_id
     else:
-        new_name = name + u'-1'
+        new_name = name + u('-1')
 
     if new_name in context:
         return rename_duplicated_resource(context, new_name)

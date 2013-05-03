@@ -1000,6 +1000,7 @@ class Test_sdiapi(unittest.TestCase):
         self.assertFalse(inst.transaction.notes)
 
     def test_flash_with_undo_gardenpath(self):
+        from ..._compat import u
         self.config.testing_securitypolicy(permissive=True)
         request = testing.DummyRequest()
         inst = self._makeOne(request)
@@ -1009,8 +1010,8 @@ class Test_sdiapi(unittest.TestCase):
         inst.mgmt_path = lambda *arg, **kw: '/mg'
         inst.flash_with_undo('message')
         self.assertEqual(request.session['_f_'],
-                         [u'<span>message <a href="/mg" class="btn btn-mini '
-                          u'btn-info">Undo</a></span>\n'])
+                         [u('<span>message <a href="/mg" class="btn btn-mini '
+                            'btn-info">Undo</a></span>\n')])
         self.assertTrue(inst.transaction.notes)
 
     def test_mgmt_path(self):

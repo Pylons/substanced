@@ -3,6 +3,11 @@ from pyramid import testing
 
 import BTrees
 
+from ..._compat import u
+_BLANK = u('')
+_A = u('a')
+_ABC = u('abc')
+
 def _makeSite(**kw):
     from ...interfaces import IFolder
     from zope.interface import alsoProvides
@@ -229,9 +234,9 @@ class TestPathIndex(unittest.TestCase):
         inst = self._makeOne()
         obj = testing.DummyResource()
         objectmap = self._acquire(inst, '__objectmap__')
-        objectmap.add(obj, (u'',))
+        objectmap.add(obj, (_BLANK,))
         result = inst.document_repr(get_oid(obj))
-        self.assertEqual(result, (u'',))
+        self.assertEqual(result, (_BLANK,))
 
     def test_document_repr_missing(self):
         inst = self._makeOne()
@@ -272,8 +277,8 @@ class TestPathIndex(unittest.TestCase):
         obj = testing.DummyResource()
         objectmap = self._acquire(inst, '__objectmap__')
         objectmap._v_nextid = 1
-        objectmap.add(obj, (u'',))
-        result = inst.search((u'',))
+        objectmap.add(obj, (_BLANK,))
+        result = inst.search((_BLANK,))
         self.assertEqual(list(result),  [1])
 
     def test_apply_obj(self):
@@ -281,7 +286,7 @@ class TestPathIndex(unittest.TestCase):
         obj = testing.DummyResource()
         objectmap = self._acquire(inst, '__objectmap__')
         objectmap._v_nextid = 1
-        objectmap.add(obj, (u'',))
+        objectmap.add(obj, (_BLANK,))
         result = inst.apply(obj)
         self.assertEqual(list(result),  [1])
 
@@ -296,8 +301,8 @@ class TestPathIndex(unittest.TestCase):
         obj = testing.DummyResource()
         objectmap = self._acquire(inst, '__objectmap__')
         objectmap._v_nextid = 1
-        objectmap.add(obj, (u'',))
-        result = inst.apply((u'',))
+        objectmap.add(obj, (_BLANK,))
+        result = inst.apply((_BLANK,))
         self.assertEqual(list(result),  [1])
 
     def test_apply_dict(self):
@@ -305,10 +310,10 @@ class TestPathIndex(unittest.TestCase):
         obj = testing.DummyResource()
         objectmap = self._acquire(inst, '__objectmap__')
         objectmap._v_nextid = 1
-        objectmap.add(obj, (u'',))
+        objectmap.add(obj, (_BLANK,))
         obj2 = testing.DummyResource(__name__='a')
         obj2.__parent__ = obj
-        objectmap.add(obj2, (u'', u'a'))
+        objectmap.add(obj2, (_BLANK, _A))
         result = inst.apply({'path':obj})
         self.assertEqual(list(result),  [1, 2])
 
@@ -317,10 +322,10 @@ class TestPathIndex(unittest.TestCase):
         obj = testing.DummyResource()
         objectmap = self._acquire(inst, '__objectmap__')
         objectmap._v_nextid = 1
-        objectmap.add(obj, (u'',))
+        objectmap.add(obj, (_BLANK,))
         obj2 = testing.DummyResource(__name__='a')
         obj2.__parent__ = obj
-        objectmap.add(obj2, (u'', u'a'))
+        objectmap.add(obj2, (_BLANK, _A))
         result = inst.apply({'path':obj, 'depth':0})
         self.assertEqual(list(result),  [1])
 
@@ -329,10 +334,10 @@ class TestPathIndex(unittest.TestCase):
         obj = testing.DummyResource()
         objectmap = self._acquire(inst, '__objectmap__')
         objectmap._v_nextid = 1
-        objectmap.add(obj, (u'',))
+        objectmap.add(obj, (_BLANK,))
         obj2 = testing.DummyResource(__name__='a')
         obj2.__parent__ = obj
-        objectmap.add(obj2, (u'', u'a'))
+        objectmap.add(obj2, (_BLANK, _A))
         result = inst.apply({'path':obj, 'include_origin':False})
         self.assertEqual(list(result),  [2])
         
@@ -340,37 +345,37 @@ class TestPathIndex(unittest.TestCase):
         inst = self._makeOne()
         obj = testing.DummyResource()
         result = inst._parse_path(obj)
-        self.assertEqual(result, ((u'',), None, True))
+        self.assertEqual(result, ((_BLANK,), None, True))
         
     def test__parse_path_path_tuple(self):
         inst = self._makeOne()
-        result = inst._parse_path((u'',))
-        self.assertEqual(result, ((u'',), None, True))
+        result = inst._parse_path((_BLANK,))
+        self.assertEqual(result, ((_BLANK,), None, True))
 
     def test__parse_path_path_str(self):
         inst = self._makeOne()
         result = inst._parse_path('/')
-        self.assertEqual(result, ((u'',), None, True))
+        self.assertEqual(result, ((_BLANK,), None, True))
 
     def test__parse_path_path_str_with_depth(self):
         inst = self._makeOne()
         result = inst._parse_path('[depth=2]/abc')
-        self.assertEqual(result, ((u'', u'abc'), 2, True))
+        self.assertEqual(result, ((_BLANK, _ABC), 2, True))
 
     def test__parse_path_path_str_with_origin_false(self):
         inst = self._makeOne()
         result = inst._parse_path('[include_origin=false]/abc')
-        self.assertEqual(result, ((u'', u'abc'), None, False))
+        self.assertEqual(result, ((_BLANK, _ABC), None, False))
         
     def test__parse_path_path_str_with_depth_and_origin(self):
         inst = self._makeOne()
         result = inst._parse_path('[depth=2,include_origin=false]/abc')
-        self.assertEqual(result, ((u'', u'abc'), 2, False))
+        self.assertEqual(result, ((_BLANK, _ABC), 2, False))
 
     def test__parse_path_path_str_with_depth_and_origin_no_val(self):
         inst = self._makeOne()
         result = inst._parse_path('[depth=2,include_origin]/abc')
-        self.assertEqual(result, ((u'', u'abc'), 2, True))
+        self.assertEqual(result, ((_BLANK, _ABC), 2, True))
 
     def test__parse_path_path_invalid(self):
         inst = self._makeOne()
@@ -386,7 +391,7 @@ class TestPathIndex(unittest.TestCase):
         obj = testing.DummyResource()
         objectmap = self._acquire(inst, '__objectmap__')
         objectmap._v_nextid = 1
-        objectmap.add(obj, (u'',))
+        objectmap.add(obj, (_BLANK,))
         result = inst.apply_intersect(obj, objectmap.family.IF.Set([1]))
         self.assertEqual(list(result),  [1])
 

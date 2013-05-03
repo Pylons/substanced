@@ -943,37 +943,40 @@ class register_workflowTests(unittest.TestCase):
 
     def test_register_workflow_global(self):
         from ..interfaces import IDefaultWorkflow
+        from .._compat import u
         wf = mock.Mock()
         self._callFUT(self.config, wf, 'basic')
 
         self.assertEqual({'basic': {IDefaultWorkflow: wf}},
                          self.config.registry.workflow.types)
-        self.assertEqual({IDefaultWorkflow: {u'basic': wf}},
+        self.assertEqual({IDefaultWorkflow: {u('basic'): wf}},
                          self.config.registry.workflow.content_types)
 
     def test_register_workflow_global_skip_if_exists(self):
         from ..interfaces import IDefaultWorkflow
+        from .._compat import u
         wf = mock.Mock()
         self._callFUT(self.config, wf, 'basic')
         self.assertEqual({'basic': {IDefaultWorkflow: wf}},
                          self.config.registry.workflow.types)
-        self.assertEqual({IDefaultWorkflow: {u'basic': wf}},
+        self.assertEqual({IDefaultWorkflow: {u('basic'): wf}},
                          self.config.registry.workflow.content_types)
 
         self._callFUT(self.config, wf, 'basic')
         self.assertEqual({'basic': {IDefaultWorkflow: wf}},
                          self.config.registry.workflow.types)
-        self.assertEqual({IDefaultWorkflow: {u'basic': wf}},
+        self.assertEqual({IDefaultWorkflow: {u('basic'): wf}},
                          self.config.registry.workflow.content_types)
 
     def test_register_workflow_two_types(self):
+        from .._compat import u
         wf = mock.Mock()
         self._callFUT(self.config, wf, 'basic', 'File')
         self._callFUT(self.config, wf, 'basic', 'Folder')
 
         self.assertEqual({'basic': {'File': wf, 'Folder': wf}},
                          self.config.registry.workflow.types)
-        self.assertEqual({'File': {u'basic': wf}, 'Folder': {u'basic': wf}},
+        self.assertEqual({'File': {u('basic'): wf}, 'Folder': {u('basic'): wf}},
                          self.config.registry.workflow.content_types)
         self.config.registry.content.exists.assert_any_call('File')
         self.config.registry.content.exists.assert_any_call('Folder')

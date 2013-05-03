@@ -35,6 +35,7 @@ from ..objectmap import find_objectmap
 from ..stats import statsd_timer
 from ..util import get_oid
 from .._compat import INT_TYPES
+from .._compat import u
 
 from .factories import (
     IndexFactory,
@@ -59,6 +60,8 @@ Allowed = Allowed # API
 Path = Path # API
 
 logger = logging.getLogger(__name__) # API
+
+_SLASH = u('/')
 
 _marker = object()
 
@@ -292,7 +295,7 @@ class Catalog(Folder):
                         'error: no path for objectid %s in object map' % 
                         oid)
                     continue
-                upath = u'/'.join(path)
+                upath = _SLASH.join(path)
                 output and output('error: object at path %s not found' % upath)
                 continue
             path = resource_path(resource)
