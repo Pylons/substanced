@@ -9,7 +9,7 @@ class Test_file_upload_widget(unittest.TestCase):
 
     def tearDown(self):
         testing.tearDown()
-        
+
     def _callFUT(self, node, kw):
         from . import file_upload_widget
         return file_upload_widget(node, kw)
@@ -17,7 +17,7 @@ class Test_file_upload_widget(unittest.TestCase):
     def test_loading(self):
         kw = {'loading':True}
         self.assertEqual(self._callFUT(None, kw), None)
-    
+
     def test_it(self):
         here = os.path.dirname(__file__)
         request = testing.DummyRequest()
@@ -26,18 +26,18 @@ class Test_file_upload_widget(unittest.TestCase):
         kw['request'] = request
         widget = self._callFUT(None, kw)
         self.assertEqual(widget.__class__.__name__, 'FileUploadWidget')
-        
+
 class TestFileUploadPropertySheet(unittest.TestCase):
     def setUp(self):
         testing.setUp()
 
     def tearDown(self):
         testing.tearDown()
-        
+
     def _makeOne(self, context, request):
         from . import FileUploadPropertySheet
         return FileUploadPropertySheet(context, request)
-    
+
     def test_get_not_an_image(self):
         context = testing.DummyResource()
         context.__oid__ = 'oid'
@@ -69,7 +69,7 @@ class TestFileUploadPropertySheet(unittest.TestCase):
             inst.get(),
             {'file':file}
             )
-        
+
     def test_set_no_fp(self):
         context = testing.DummyResource()
         request = testing.DummyRequest()
@@ -125,7 +125,7 @@ class TestFile(unittest.TestCase):
 
     def tearDown(self):
         testing.tearDown()
-        
+
     def _makeOne(self, stream, mimetype, title=None):
         from . import File
         return File(stream, mimetype, title)
@@ -154,7 +154,7 @@ class TestFile(unittest.TestCase):
         self.assertEqual(inst.mimetype, 'application/octet-stream')
         fp = inst.blob.open('r')
         fp.seek(0)
-        self.assertEqual(fp.read(), 'abc')
+        self.assertEqual(fp.read(), b'abc')
 
     def test_ctor_with_stream_mimetype_USE_MAGIC(self):
         from . import USE_MAGIC
@@ -163,8 +163,8 @@ class TestFile(unittest.TestCase):
         self.assertEqual(inst.mimetype, 'text/plain')
         fp = inst.blob.open('r')
         fp.seek(0)
-        self.assertEqual(fp.read(), 'abc')
-        
+        self.assertEqual(fp.read(), b'abc')
+
     def test_ctor_with_mimetype_no_stream(self):
         inst = self._makeOne(None, 'text/plain')
         self.assertEqual(inst.mimetype, 'text/plain')
@@ -175,7 +175,7 @@ class TestFile(unittest.TestCase):
         self.assertEqual(inst.mimetype, 'text/foo')
         fp = inst.blob.open('r')
         fp.seek(0)
-        self.assertEqual(fp.read(), 'abc')
+        self.assertEqual(fp.read(), b'abc')
 
     def test_ctor_mimetype_is_USE_MAGIC_no_stream(self):
         from . import USE_MAGIC
@@ -185,14 +185,16 @@ class TestFile(unittest.TestCase):
     def test_upload_stream_is_None(self):
         inst = self._makeOne(None, None)
         inst.upload(None)
-        self.assertEqual(inst.blob.open('r').read(), '')
-        
+        with inst.blob.open('r') as f:
+            self.assertEqual(f.read(), b'')
+
     def test_upload_stream_is_not_None(self):
         stream = io.BytesIO(b'abc')
         inst = self._makeOne(None, None)
         inst.upload(stream)
-        self.assertEqual(inst.blob.open('r').read(), 'abc')
-        
+        with inst.blob.open('r') as f:
+            self.assertEqual(f.read(), b'abc')
+
     def test_upload_stream_mimetype_hint_USE_MAGIC(self):
         from . import USE_MAGIC
         stream = io.BytesIO(b'abc')
@@ -200,7 +202,7 @@ class TestFile(unittest.TestCase):
         self.assertEqual(inst.mimetype, 'application/octet-stream')
         inst.upload(stream, mimetype_hint=USE_MAGIC)
         self.assertEqual(inst.mimetype, 'text/plain')
-        
+
     def test_upload_stream_mimetype_hint_filename(self):
         stream = io.BytesIO(b'abc')
         inst = self._makeOne(None, None)
@@ -246,7 +248,7 @@ class Test_context_is_a_file(unittest.TestCase):
     def _callFUT(self, context, request):
         from . import context_is_a_file
         return context_is_a_file(context, request)
-    
+
     def test_it_true(self):
         registry = DummyRegistry(True)
         request = testing.DummyRequest()
@@ -258,7 +260,7 @@ class Test_context_is_a_file(unittest.TestCase):
         request = testing.DummyRequest()
         request.registry = registry
         self.assertFalse(self._callFUT(None, request))
-        
+
 class DummyContent(object):
     def __init__(self, result):
         self.result = result
@@ -268,7 +270,7 @@ class DummyContent(object):
 class DummyRegistry(object):
     def __init__(self, result):
         self.content = DummyContent(result)
-            
+
 class DummyBlob(object):
     def committed(self):
         return os.path.abspath(__file__)
