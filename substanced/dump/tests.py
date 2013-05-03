@@ -13,51 +13,51 @@ class Test_set_yaml(unittest.TestCase):
         self.assertEqual(registry['yaml_dumper'].__name__, 'SDumper')
 
     def test_iface_representer(self):
+        import io
+        import yaml
         registry = DummyRegistry(None)
         self._callFUT(registry)
-        import io
-        io = io.BytesIO()
-        import yaml
-        yaml.dump(DummyInterface, io, Dumper=registry['yaml_dumper'])
+        stream = io.BytesIO()
+        yaml.dump(DummyInterface, stream, Dumper=registry['yaml_dumper'])
         self.assertEqual(
-            io.getvalue(),
+            stream.getvalue(),
             "!interface 'substanced.dump.tests.DummyInterface'\n"
             )
 
     def test_iface_constructor(self):
+        import io
+        import yaml
         registry = DummyRegistry(None)
         self._callFUT(registry)
-        import io
-        io = io.BytesIO(
-            "!interface 'substanced.dump.tests.DummyInterface'\n"
+        stream = io.BytesIO(
+            b"!interface 'substanced.dump.tests.DummyInterface'\n"
             )
-        import yaml
-        result = yaml.load(io, Loader=registry['yaml_loader'])
+        result = yaml.load(stream, Loader=registry['yaml_loader'])
         self.assertEqual(result, DummyInterface)
 
     def test_blob_representer(self):
+        import io
+        import yaml
         from ZODB.blob import Blob
         registry = DummyRegistry(None)
         self._callFUT(registry)
-        import io
-        io = io.BytesIO()
-        import yaml
+        stream = io.BytesIO()
         blob = Blob(b'abc')
-        yaml.dump(blob, io, Dumper=registry['yaml_dumper'])
+        yaml.dump(blob, stream, Dumper=registry['yaml_dumper'])
         self.assertEqual(
-            io.getvalue(),
-            "!blob 'YWJj\n\n  '\n"
+            stream.getvalue(),
+            b"!blob 'YWJj\n\n  '\n"
             )
 
     def test_blob_constructor(self):
+        import io
+        import yaml
         registry = DummyRegistry(None)
         self._callFUT(registry)
-        import io
-        io = io.BytesIO(
-            "!blob 'YWJj\n\n  '\n"
+        stream = io.BytesIO(
+            b"!blob 'YWJj\n\n  '\n"
             )
-        import yaml
-        result = yaml.load(io, Loader=registry['yaml_loader'])
+        result = yaml.load(stream, Loader=registry['yaml_loader'])
         self.assertEqual(result.open('r').read(), 'abc')
 
 class Test_get_dumpers(unittest.TestCase):
@@ -282,34 +282,34 @@ class Test_YAMLOperations(unittest.TestCase):
 
     def test_load_yaml(self):
         import contextlib
-        inst = self._makeOne()
         import io
-        io = io.BytesIO('foo 1')
+        from yaml.loader import Loader
+        inst = self._makeOne()
+        stream = io.BytesIO(b'foo 1')
         @contextlib.contextmanager
         def openfile(fn):
             self.assertEqual(fn, 'fn')
-            yield io
+            yield stream
         inst.openfile_r = openfile
-        from yaml.loader import Loader
         inst.registry = {'yaml_loader':Loader}
         result = inst.load_yaml('fn')
         self.assertEqual(result, 'foo 1')
 
     def test_dump_yaml(self):
         import contextlib
-        inst = self._makeOne()
         import io
-        io = io.BytesIO()
+        from yaml.dumper import Dumper
+        inst = self._makeOne()
+        stream = io.BytesIO()
         @contextlib.contextmanager
         def openfile(fn):
             self.assertEqual(fn, 'fn')
-            yield io
+            yield stream
         inst.openfile_w = openfile
-        from yaml.dumper import Dumper
         inst.registry = {'yaml_dumper':Dumper}
         result = inst.dump_yaml('abc', 'fn')
         self.assertEqual(result, None)
-        self.assertEqual(io.getvalue(), 'abc\n...\n')
+        self.assertEqual(stream.getvalue(), b'abc\n...\n')
 
 class Test_ResourceContext(unittest.TestCase):
     def _makeOne(self):
