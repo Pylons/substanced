@@ -193,7 +193,7 @@ class FileUploadTempStore(object):
 
         if stream is not None:
             while True:
-                randid = binascii.hexlify(os.urandom(20))
+                randid = binascii.hexlify(os.urandom(20)).decode('ascii')
                 fn = os.path.join(self.tempdir, randid)
                 if not os.path.exists(fn):
                     # XXX race condition
