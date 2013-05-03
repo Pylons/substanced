@@ -177,7 +177,7 @@ class Test_has_permission_to_view_any_propertysheet(unittest.TestCase):
 
     def test_no_view_permission_required_allowed(self):
         request = testing.DummyRequest()
-        sheet_factory = DummySheetFactory([('view', 'sdi.view')])
+        sheet_factory = DummySheetFactory([('edit', 'sdi.edit')])
         request.registry.content = DummyContent([('sheet', sheet_factory)])
         context = testing.DummyResource()
         self.assertTrue(self._callFUT(context, request))
