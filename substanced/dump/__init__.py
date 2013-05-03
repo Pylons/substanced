@@ -296,12 +296,13 @@ class _FileOperations(object):
 class _YAMLOperations(_FileOperations):
 
     def load_yaml(self, filename):
-        with self.openfile_r(filename) as fp:
+        with self.openfile_r(filename, 'rb') as fp:
             return yaml.load(fp, Loader=self.registry['yaml_loader'])
 
     def dump_yaml(self, obj, filename):
-        with self.openfile_w(filename) as fp:
-            return yaml.dump(obj, fp, Dumper=self.registry['yaml_dumper'])
+        with self.openfile_w(filename, 'wb') as fp:
+            return yaml.dump(obj, fp, Dumper=self.registry['yaml_dumper'],
+                             encoding='utf-8')
 
 class _ResourceContext(_YAMLOperations):
     dotted_name_resolver = dotted_name_resolver

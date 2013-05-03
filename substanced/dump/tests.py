@@ -18,10 +18,11 @@ class Test_set_yaml(unittest.TestCase):
         registry = DummyRegistry(None)
         self._callFUT(registry)
         stream = io.BytesIO()
-        yaml.dump(DummyInterface, stream, Dumper=registry['yaml_dumper'])
+        yaml.dump(DummyInterface, stream, Dumper=registry['yaml_dumper'],
+                  encoding='utf-8')
         self.assertEqual(
             stream.getvalue(),
-            "!interface 'substanced.dump.tests.DummyInterface'\n"
+            b"!interface 'substanced.dump.tests.DummyInterface'\n"
             )
 
     def test_iface_constructor(self):
@@ -43,7 +44,8 @@ class Test_set_yaml(unittest.TestCase):
         self._callFUT(registry)
         stream = io.BytesIO()
         blob = Blob(b'abc')
-        yaml.dump(blob, stream, Dumper=registry['yaml_dumper'])
+        yaml.dump(blob, stream, Dumper=registry['yaml_dumper'],
+                  encoding='utf-8')
         self.assertEqual(
             stream.getvalue(),
             b"!blob 'YWJj\n\n  '\n"
@@ -287,8 +289,9 @@ class Test_YAMLOperations(unittest.TestCase):
         inst = self._makeOne()
         stream = io.BytesIO(b'foo 1')
         @contextlib.contextmanager
-        def openfile(fn):
+        def openfile(fn, mode):
             self.assertEqual(fn, 'fn')
+            self.assertEqual(mode, 'rb')
             yield stream
         inst.openfile_r = openfile
         inst.registry = {'yaml_loader':Loader}
@@ -302,8 +305,9 @@ class Test_YAMLOperations(unittest.TestCase):
         inst = self._makeOne()
         stream = io.BytesIO()
         @contextlib.contextmanager
-        def openfile(fn):
+        def openfile(fn, mode):
             self.assertEqual(fn, 'fn')
+            self.assertEqual(mode, 'wb')
             yield stream
         inst.openfile_w = openfile
         inst.registry = {'yaml_dumper':Dumper}
