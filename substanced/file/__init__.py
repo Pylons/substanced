@@ -227,7 +227,7 @@ class File(Persistent):
                 first = False
                 m = magic.Magic(mime=True)
                 mimetype = m.from_buffer(chunk)
-                self.mimetype = mimetype
+                self.mimetype = u(mimetype)
             fp.write(chunk)
         fp.close()
 
