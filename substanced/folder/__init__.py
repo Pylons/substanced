@@ -300,6 +300,7 @@ class Folder(Persistent):
         """ Return ``True`` unconditionally.
         """
         return True
+    __bool__ = __nonzero__
 
     def __repr__(self):
         klass = self.__class__
