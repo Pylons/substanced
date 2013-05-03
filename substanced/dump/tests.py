@@ -203,7 +203,7 @@ class Test_FileOperations(unittest.TestCase):
             )
         inst = self._makeOne()
         with inst._open(foo, 'rb') as fp:
-            self.assertEqual(fp.read(), 'Foo.\n')
+            self.assertEqual(fp.read(), b'Foo.\n')
 
     def test__exists(self):
         import os
