@@ -30,8 +30,8 @@ class JsonDict(dict):
 def coarse_datetime_repr(date):
     """Convert a datetime to an integer with 100 second granularity.
 
-    The granularity reduces the number of index entries in the
-    catalog.
+    The granularity reduces the number of index entries in a fieldindex when
+    it's used in an indexview to convert a datetime value to an integer.
     """
     timetime = calendar.timegm(date.timetuple())
     return int(timetime) // 100
