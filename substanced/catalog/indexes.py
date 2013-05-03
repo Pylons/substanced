@@ -217,7 +217,7 @@ class PathIndex(SDIndex, hypatia.util.BaseIndexMixin, Persistent):
         if not path.startswith('/'):
             raise ValueError('Path must start with a slash')
         
-        tmp = filter(None, url_unquote_text(path).split(_SLASH))
+        tmp = [x for x in url_unquote_text(path).split(_SLASH) if x]
         path_tuple = (_BLANK,) + tuple(tmp)
         return path_tuple, depth, include_origin
 

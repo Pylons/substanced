@@ -102,7 +102,7 @@ class FolderContentsViews(object):
 
     def _modified_items(self):
         items = self.request.POST.get('item-modify', '').split(',')
-        modified = filter(None, items) # remove empty
+        modified = [x for x in  items if x] # remove empty
         return modified
 
     def _buttons(self):
@@ -481,7 +481,7 @@ class FolderContentsViews(object):
               allowed.allows(request, 'sdi.view') )
 
         if filter_text:
-            filter_text_globs = filter(None, filter_text.split())
+            filter_text_globs = [x for x in filter_text.split() if x]
             if filter_text_globs:
                 text = system_catalog['text']
                 for filter_glob in filter_text_globs:

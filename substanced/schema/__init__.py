@@ -167,20 +167,21 @@ class IdSet(object):
         if not hasattr(value, '__iter__'):
             raise colander.Invalid(
                 node,
-                deform_i18n('${value} is not iterable', mapping={'value':value})
+                deform_i18n('${value} is not iterable',
+                            mapping={'value':value})
                 )
         
     def serialize(self, node, value):
         if value is colander.null:
             return value
         self._check_iterable(node, value)
-        return map(str, value)
+        return [str(x) for x in value]
 
     def deserialize(self, node, value):
         if value is colander.null:
             return value
         self._check_iterable(node, value)
-        return map(int, value)
+        return [int(x) for x in value]
 
     def cstruct_children(self, node, cstruct):
         return []
