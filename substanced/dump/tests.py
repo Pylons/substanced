@@ -15,8 +15,8 @@ class Test_set_yaml(unittest.TestCase):
     def test_iface_representer(self):
         registry = DummyRegistry(None)
         self._callFUT(registry)
-        import StringIO
-        io = StringIO.StringIO()
+        import io
+        io = io.StringIO()
         import yaml
         yaml.dump(DummyInterface, io, Dumper=registry['yaml_dumper'])
         self.assertEqual(
@@ -27,8 +27,8 @@ class Test_set_yaml(unittest.TestCase):
     def test_iface_constructor(self):
         registry = DummyRegistry(None)
         self._callFUT(registry)
-        import StringIO
-        io = StringIO.StringIO(
+        import io
+        io = io.StringIO(
             "!interface 'substanced.dump.tests.DummyInterface'\n"
             )
         import yaml
@@ -39,10 +39,10 @@ class Test_set_yaml(unittest.TestCase):
         from ZODB.blob import Blob
         registry = DummyRegistry(None)
         self._callFUT(registry)
-        import StringIO
-        io = StringIO.StringIO()
+        import io
+        io = io.StringIO()
         import yaml
-        blob = Blob('abc')
+        blob = Blob(b'abc')
         yaml.dump(blob, io, Dumper=registry['yaml_dumper'])
         self.assertEqual(
             io.getvalue(),
@@ -52,8 +52,8 @@ class Test_set_yaml(unittest.TestCase):
     def test_blob_constructor(self):
         registry = DummyRegistry(None)
         self._callFUT(registry)
-        import StringIO
-        io = StringIO.StringIO(
+        import io
+        io = io.StringIO(
             "!blob 'YWJj\n\n  '\n" 
             )
         import yaml
@@ -283,8 +283,8 @@ class Test_YAMLOperations(unittest.TestCase):
     def test_load_yaml(self):
         import contextlib
         inst = self._makeOne()
-        import StringIO
-        io = StringIO.StringIO('foo 1')
+        import io
+        io = io.StringIO('foo 1')
         @contextlib.contextmanager
         def openfile(fn):
             self.assertEqual(fn, 'fn')
@@ -298,8 +298,8 @@ class Test_YAMLOperations(unittest.TestCase):
     def test_dump_yaml(self):
         import contextlib
         inst = self._makeOne()
-        import StringIO
-        io = StringIO.StringIO()
+        import io
+        io = io.StringIO()
         @contextlib.contextmanager
         def openfile(fn):
             self.assertEqual(fn, 'fn')
