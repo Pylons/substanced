@@ -366,9 +366,8 @@ class TestFolder(unittest.TestCase):
         folder = self._makeOne()
         objectmap = DummyObjectMap()
         folder.__objectmap__ = objectmap
-        a = DummyModel()
         site = self._makeSite()
-        a.__parent__ = site
+        a = site['a'] = DummyModel()
         self.assertRaises(ValueError, folder.add, 'a', a)
 
     def test_add_with_objectmap(self):
