@@ -110,27 +110,27 @@ class TestUndoViews(unittest.TestCase):
         now_ctime = time.ctime(now)[4:][:-5]
         record1 = dict(
             time=now,
-            description='abc',
-            user_name='1',
-            id='0',
+            description=b'abc',
+            user_name=b'1',
+            id=b'0',
             )
         record2 = dict(
             time=now,
-            description='abc',
-            user_name='cantintify',
-            id='1',
+            description=b'abc',
+            user_name=b'cantintify',
+            id=b'1',
             )
         record3 = dict(
             time=now,
-            description='',
-            user_name='cantintify',
-            id='1',
+            description=b'',
+            user_name=b'cantintify',
+            id=b'1',
             )
         record4 = dict(
             time=now,
-            description='a'*81,
-            user_name='1',
-            id='1',
+            description=b'a'*81,
+            user_name=b'1',
+            id=b'1',
             )
         records = [record1, record2, record3, record4]
         db = DummyDB(True, records)
@@ -150,21 +150,21 @@ class TestUndoViews(unittest.TestCase):
         self.assertEqual(
             result,
             [
-                {'description': 'abc',
-                 'user_name': 'fred',
-                 'id': 'MA==\n abc',
+                {'description': b'abc',
+                 'user_name': b'fred',
+                 'id': b'MA==\n abc',
                  'time': now_ctime},
-                {'description': 'abc',
-                 'user_name': 'cantintify',
-                 'id': 'MQ==\n abc',
+                {'description': b'abc',
+                 'user_name': b'cantintify',
+                 'id': b'MQ==\n abc',
                  'time': now_ctime},
-                {'description': '',
-                 'user_name': 'cantintify',
-                 'id': 'MQ==\n ',
+                {'description': b'',
+                 'user_name': b'cantintify',
+                 'id': b'MQ==\n ',
                  'time': now_ctime},
-                {'description': ('a'*81),
-                 'user_name': 'fred',
-                 'id': 'MQ==\n ' + ('a' * 76) + ' ...',
+                {'description': (b'a'*81),
+                 'user_name': b'fred',
+                 'id': b'MQ==\n ' + (b'a' * 76) + b' ...',
                  'time': now_ctime}
                 ]
             )
@@ -183,9 +183,9 @@ class TestUndoViews(unittest.TestCase):
             self.assertEqual(req, request)
             return 1
         post = testing.DummyResource()
-        enca = binascii.b2a_base64('a')
-        encb = binascii.b2a_base64('b')
-        info = [enca + ' b', encb + ' f']
+        enca = binascii.b2a_base64(b'a')
+        encb = binascii.b2a_base64(b'b')
+        info = [enca + b' b', encb + b' f']
         def getall(n):
             self.assertEqual(n, 'transaction')
             return info
@@ -197,7 +197,7 @@ class TestUndoViews(unittest.TestCase):
         inst.transaction = txn
         result = inst.undo_multiple()
         self.assertEqual(result.location, '/mgmt_path')
-        self.assertEqual(conn._db.tids, ['a', 'b'])
+        self.assertEqual(conn._db.tids, [b'a', b'b'])
         self.assertTrue(txn.committed)
         self.assertEqual(txn.user, 1)
 
@@ -217,9 +217,9 @@ class TestUndoViews(unittest.TestCase):
             self.assertEqual(req, request)
             return 1
         post = testing.DummyResource()
-        enca = binascii.b2a_base64('a')
-        encb = binascii.b2a_base64('b')
-        info = [enca + ' b', encb + ' f']
+        enca = binascii.b2a_base64(b'a')
+        encb = binascii.b2a_base64(b'b')
+        info = [enca + b' b', encb + b' f']
         def getall(n):
             self.assertEqual(n, 'transaction')
             return info
@@ -294,13 +294,13 @@ class Test_encode64(unittest.TestCase):
     
     def test_it_len_lt_58(self):
         import binascii
-        result = self._callFUT('a')
-        self.assertEqual(result, binascii.b2a_base64('a'))
+        result = self._callFUT(b'a')
+        self.assertEqual(result, binascii.b2a_base64(b'a'))
         
     def test_it_len_gt_58(self):
         import binascii
-        result = self._callFUT('a'*80)
-        self.assertEqual(result, binascii.b2a_base64('a'*80)[:-1])
+        result = self._callFUT(b'a'*80)
+        self.assertEqual(result, binascii.b2a_base64(b'a'*80)[:-1])
 
 class Test_decode64(unittest.TestCase):
     def _callFUT(self, v):
@@ -309,9 +309,9 @@ class Test_decode64(unittest.TestCase):
     
     def test_it_len_lt_58(self):
         import binascii
-        send = binascii.b2a_base64('a')
+        send = binascii.b2a_base64(b'a')
         result = self._callFUT(send)
-        self.assertEqual(result, 'a')
+        self.assertEqual(result, b'a')
     
 
 class DummyDB(object):
