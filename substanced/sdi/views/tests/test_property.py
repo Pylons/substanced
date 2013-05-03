@@ -65,10 +65,7 @@ class TestPropertySheetsView(unittest.TestCase):
         from pyramid.httpexceptions import HTTPForbidden
         request = testing.DummyRequest()
         request.sdiapi = DummySDIAPI()
-        sheet_factory = testing.DummyResource()
-        sheet_factory.__call__ = lambda *arg: sheet_factory
-        sheet_factory.permissions = [('change', 'sdi.change')]
-        sheet_factory.schema = None
+        sheet_factory = DummySheetFactory([('change', 'sdi.change')])
         request.registry.content = DummyContent(
             [('name', sheet_factory)])
         resource = testing.DummyResource()
@@ -104,10 +101,7 @@ class TestPropertySheetsView(unittest.TestCase):
     def test_has_permission_to_no_specific_permission(self):
         request = testing.DummyRequest()
         request.registry = testing.DummyResource()
-        sheet_factory = testing.DummyResource()
-        sheet_factory.__call__ = lambda *arg: sheet_factory
-        sheet_factory.permissions = [('edit', 'sdi.edit')]
-        sheet_factory.schema = None
+        sheet_factory = DummySheetFactory([('edit', 'sdi.edit')])
         request.registry.content = DummyContent(
             [('name', sheet_factory)])
         resource = testing.DummyResource()
@@ -119,10 +113,7 @@ class TestPropertySheetsView(unittest.TestCase):
     def test_has_permission_to_denied(self):
         request = testing.DummyRequest()
         request.registry = self.config.registry
-        sheet_factory = testing.DummyResource()
-        sheet_factory.schema = None
-        sheet_factory.__call__ = lambda *arg: sheet_factory
-        sheet_factory.permissions = [('view', 'sdi.view')]
+        sheet_factory = DummySheetFactory([('view', 'sdi.view')])
         request.registry.content = DummyContent(
             [('name', sheet_factory)])
         resource = testing.DummyResource()
@@ -133,10 +124,7 @@ class TestPropertySheetsView(unittest.TestCase):
         self.assertFalse(result)
 
     def test_viewable_sheet_factories_no_permission(self):
-        sheet_factory = testing.DummyResource()
-        sheet_factory.__call__ = lambda *arg: sheet_factory
-        sheet_factory.permissions = [('view', 'sdi.view')]
-        sheet_factory.schema = None
+        sheet_factory = DummySheetFactory([('view', 'sdi.view')])
         request = testing.DummyRequest()
         request.registry.content = DummyContent(
             [('name', sheet_factory)])
@@ -174,8 +162,7 @@ class Test_has_permission_to_view_any_propertysheet(unittest.TestCase):
     def test_permission_required_denied(self):
         self.config.testing_securitypolicy(permissive=False)
         request = testing.DummyRequest()
-        sheet_factory = testing.DummyResource()
-        sheet_factory.permissions = [('view', 'sdi.view')]
+        sheet_factory = DummySheetFactory([('view', 'sdi.view')])
         request.registry.content = DummyContent([('sheet', sheet_factory)])
         context = testing.DummyResource()
         self.assertFalse(self._callFUT(context, request))
@@ -183,19 +170,27 @@ class Test_has_permission_to_view_any_propertysheet(unittest.TestCase):
     def test_permission_required_allowed(self):
         self.config.testing_securitypolicy(permissive=True)
         request = testing.DummyRequest()
-        sheet_factory = testing.DummyResource()
-        sheet_factory.permissions = [('view', 'sdi.view')]
+        sheet_factory = DummySheetFactory([('view', 'sdi.view')])
         request.registry.content = DummyContent([('sheet', sheet_factory)])
         context = testing.DummyResource()
         self.assertTrue(self._callFUT(context, request))
 
     def test_no_view_permission_required_allowed(self):
         request = testing.DummyRequest()
-        sheet_factory = testing.DummyResource()
-        sheet_factory.permissions = [('edit', 'sdi.edit')]
+        sheet_factory = DummySheetFactory([('view', 'sdi.view')])
         request.registry.content = DummyContent([('sheet', sheet_factory)])
         context = testing.DummyResource()
         self.assertTrue(self._callFUT(context, request))
+
+
+class DummySheetFactory(object):
+
+    def __init__(self, permissions, schema=None):
+        self.permissions = permissions
+        self.schema = schema
+
+    def __call__(self, *args):
+        return self
 
 class DummyForm(object):
     def __init__(self):
