@@ -248,10 +248,12 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(sm.check(), None)
 
     def test__get_transitions_default_from_state(self):
+        import operator
         sm = self._makePopulated()
         ob = DummyContent()
         ob.__workflow_state__ = {'basic': 'pending'}
-        result = sm._get_transitions(ob)
+        result = sorted(sm._get_transitions(ob),
+                        key=operator.itemgetter('name'))
         self.assertEqual(len(result), 2)
         self.assertEqual(result[0]['name'], 'publish')
         self.assertEqual(result[1]['name'], 'reject')
