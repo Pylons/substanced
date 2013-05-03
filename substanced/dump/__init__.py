@@ -32,6 +32,7 @@ from substanced.util import (
     get_content_type,
     is_folder,
     )
+from .._compat import TEXT
 from .._compat import u
 
 
@@ -73,7 +74,7 @@ def set_yaml(registry):
         return dumper.represent_scalar(u('!blob'), u_encoded)
     def blob_constructor(loader, node):
         value = node.value
-        if isinstance(value, u):
+        if isinstance(value, TEXT):
             value = value.encode('ascii')
         return Blob(base64.decodestring(value))
 
