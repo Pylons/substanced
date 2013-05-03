@@ -6,7 +6,11 @@ except NameError: #pragma NO COVER Python >= 3.0
 try:
     u = unicode
 except NameError: #pragma NO COVER Python >= 3.0
-    u = str
+    def u(x, encoding='ascii'):
+        if isinstance(x, str):
+            return x
+        if isinstance(x, bytes):
+            return x.decode(encoding)
     b = bytes
 else: #pragma NO COVER Python < 3.0
     b = str
