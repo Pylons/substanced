@@ -259,7 +259,7 @@ class TestFolder(unittest.TestCase):
 
     def test___setitem__8bitstring(self):
         folder = self._makeOne()
-        self.assertRaises(ValueError, folder.__setitem__, '\xff', None)
+        self.assertRaises(ValueError, folder.__setitem__, b'\xff', None)
 
     def test___setitem__empty(self):
         folder = self._makeOne()
