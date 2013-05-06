@@ -2026,20 +2026,6 @@ class TestMultireference(unittest.TestCase):
             [(-1, 1, 'reftype'), (-1, 2, 'reftype')]
             )
 
-class Test_find_objectmap(unittest.TestCase):
-    def _callFUT(self, context):
-        from . import find_objectmap
-        return find_objectmap(context)
-
-    def test_found(self):
-        inst = Dummy()
-        inst.__objectmap__ = '123'
-        self.assertEqual(self._callFUT(inst), '123')
-
-    def test_unfound(self):
-        inst = Dummy()
-        self.assertEqual(self._callFUT(inst), None)
-
 class Test_ReferencedPredicate(unittest.TestCase):
     def _makeOne(self, val, config):
         from . import _ReferencedPredicate

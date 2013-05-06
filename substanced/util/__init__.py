@@ -570,3 +570,8 @@ def get_principal_repr(principal_or_id):
     if oid is not None:
         return str(oid)
     raise ValueError(principal_or_id)
+            
+def find_objectmap(context):
+    """ Returns the object map for the root object in the lineage of the
+    ``context`` or ``None`` if no objectmap can be found."""
+    return acquire(context, '__objectmap__', None)
