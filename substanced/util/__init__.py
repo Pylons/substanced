@@ -538,3 +538,8 @@ def find_index(resource, catalog_name, index_name):
     return index
 
             
+def find_objectmap(context):
+    """ Returns the object map for the root object in the lineage of the
+    ``context`` or ``None`` if no objectmap can be found."""
+    return acquire(context, '__objectmap__', None)
+
