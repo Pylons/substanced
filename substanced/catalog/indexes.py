@@ -34,6 +34,7 @@ from ..stats import statsd_timer
 from .._compat import STRING_TYPES
 from .._compat import INT_TYPES
 from .._compat import u
+from ..util import get_principal_repr
 
 from .discriminators import dummy_discriminator
 from .util import oid_from_resource
@@ -398,6 +399,7 @@ class AllowedIndex(KeywordIndex):
             principals = effective_principals(principals)
         elif not is_nonstr_iter(principals):
             principals = (principals,)
+        principals = [ get_principal_repr(p) for p in principals ]
         values = [(principal, permission) for principal in principals]
         return hypatia.query.Any(self, values)
 

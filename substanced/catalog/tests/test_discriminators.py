@@ -21,7 +21,6 @@ class TestAllowedIndexDiscriminator(unittest.TestCase):
     def test_it_namedpermission_notpermitted(self):
         from pyramid.interfaces import IAuthenticationPolicy
         self.config.testing_securitypolicy(permissive=False)
-        from ..discriminators import NoWay
         pol = self.config.registry.getUtility(IAuthenticationPolicy)
         def noprincipals(context, permission):
             return []
@@ -29,14 +28,13 @@ class TestAllowedIndexDiscriminator(unittest.TestCase):
         resource = testing.DummyResource()
         inst = self._makeOne('view')
         result = inst(resource, None)
-        self.assertEqual(result, [(NoWay, NoWay)])
+        self.assertEqual(result, None)
 
     def test_it_unnamedpermission_no_permissions_registered(self):
-        from ..discriminators import NoWay
         inst = self._makeOne()
         resource = testing.DummyResource()
         result = inst(resource, None)
-        self.assertEqual(result, [(NoWay, NoWay)])
+        self.assertEqual(result, None)
 
     def test_it_unnamedpermission_two_permissions_registered(self):
         self.config.add_permission('view')

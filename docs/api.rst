@@ -467,6 +467,8 @@ Other Helpers
 
 .. autofunction:: find_index
 
+.. autofunction:: get_principal_repr
+
 .. autofunction:: is_folder
 
 .. autofunction:: is_service

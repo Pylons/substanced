@@ -12,9 +12,13 @@ from pyramid.threadlocal import get_current_registry
 
 from ..event import ACLModified
 from ..interfaces import IFolder
-from .._compat import parse_qsl
-from .._compat import urlsplit
-from .._compat import urlunsplit
+
+from .._compat import (
+    parse_qsl,
+    urlsplit,
+    urlunsplit,
+    STRING_TYPES,
+    )
 
 _marker = object()
 
@@ -539,4 +543,29 @@ def find_index(resource, catalog_name, index_name):
     index = catalog.get(index_name)
     return index
 
-            
+def get_principal_repr(principal_or_id):
+    """
+    Given as ``principal_or_id`` a resource object that has a
+    ``__principal_repr__`` method, return the result of calling that method; it
+    must be a string that uniquely identifies the principal amongst all
+    principals in the system.
+    
+    Given as ``principal_or_id`` a resource object that does **not**
+    have a ``__principal_repr__`` method, return the result of the
+    stringification of the ``__oid__`` attribute of the resource object.
+
+    Given an integer as ``principal_or_id``, return a stringification
+    of the integer.
+
+    Given any other string value, return it.
+    """
+    base_types = (int, long) + STRING_TYPES
+    if isinstance(principal_or_id, base_types):
+        return str(principal_or_id)
+    prepr = getattr(principal_or_id, '__principal_repr__', None)
+    if prepr is not None:
+        return prepr()
+    oid = get_oid(principal_or_id, None)
+    if oid is not None:
+        return str(oid)
+    raise ValueError(principal_or_id)
