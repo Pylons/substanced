@@ -865,6 +865,48 @@ class TestJsonDict(unittest.TestCase):
         d = JsonDict(val)
         self.assertEqual(str(d), json.dumps(val))
 
+class Test_get_principal_repr(unittest.TestCase):
+    def _callFUT(self, princ):
+        from . import get_principal_repr
+        return get_principal_repr(princ)
+
+    def test_int(self):
+        result = self._callFUT(1)
+        self.assertEqual(result, '1')
+
+    def test_largeint(self):
+        result = self._callFUT(2 << 64)
+        self.assertEqual(result, '36893488147419103232')
+
+    def test_str(self):
+        result = self._callFUT('foo')
+        self.assertEqual(result, 'foo')
+
+    def test_inst_with_principal_repr(self):
+        class Principal(object):
+            __oid__ = 1
+            def __principal_repr__(self):
+                return 'me'
+
+        inst = Principal()
+        result = self._callFUT(inst)
+        self.assertEqual(result, 'me')
+
+    def test_inst_with_oid(self):
+        class Principal(object):
+            __oid__ = 1
+
+        inst = Principal()
+        result = self._callFUT(inst)
+        self.assertEqual(result, '1')
+
+    def test_inst_without_principal_repr_or_oid(self):
+        class Principal(object):
+            pass
+
+        inst = Principal()
+        self.assertRaises(ValueError, self._callFUT, inst)
+
 class DummyContent(object):
     renamed_from = None
     renamed_to = None

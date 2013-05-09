@@ -18,6 +18,7 @@ from .._compat import (
     urlsplit,
     urlunsplit,
     STRING_TYPES,
+    INT_TYPES,
     )
 
 _marker = object()
@@ -546,9 +547,9 @@ def find_index(resource, catalog_name, index_name):
 def get_principal_repr(principal_or_id):
     """
     Given as ``principal_or_id`` a resource object that has a
-    ``__principal_repr__`` method, return the result of calling that method; it
-    must be a string that uniquely identifies the principal amongst all
-    principals in the system.
+    ``__principal_repr__`` method, return the result of calling that method
+    (without arguments); it must be a string that uniquely identifies the
+    principal amongst all principals in the system.
     
     Given as ``principal_or_id`` a resource object that does **not**
     have a ``__principal_repr__`` method, return the result of the
@@ -559,7 +560,7 @@ def get_principal_repr(principal_or_id):
 
     Given any other string value, return it.
     """
-    base_types = (int, long) + STRING_TYPES
+    base_types = STRING_TYPES + INT_TYPES
     if isinstance(principal_or_id, base_types):
         return str(principal_or_id)
     prepr = getattr(principal_or_id, '__principal_repr__', None)
