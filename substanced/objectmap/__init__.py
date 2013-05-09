@@ -146,6 +146,8 @@ class ObjectMap(Persistent):
             path_tuple = objectid_or_path_tuple
         else:
             raise ValueError('Unknown input %s' % (objectid_or_path_tuple,))
+        if path_tuple is None:
+            return None
         try:
             return self._find_resource(context, path_tuple)
         except KeyError:
