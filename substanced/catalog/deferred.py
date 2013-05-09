@@ -607,7 +607,7 @@ class IndexActionTM(threading.local):
     tpc_abort = abort = tpc_finish
 
     def sortKey(self):
-        return self.oid
+        return 'IndexActionTM: %s' % self.oid
 
     def add(self, action):
         self.actions.append(action)
