@@ -23,8 +23,8 @@ class JsonDict(dict):
 def coarse_datetime_repr(date):
     """Convert a datetime to an integer with 100 second granularity.
 
-    The granularity reduces the number of index entries in the
-    catalog.
+    The granularity reduces the number of index entries in a fieldindex when
+    it's used in an indexview to convert a datetime value to an integer.
     """
     timetime = calendar.timegm(date.timetuple())
     return int(timetime) // 100
@@ -525,4 +525,21 @@ def find_catalog(resource, name):
         for cname, catalog in catalog_container.items():
             if name == cname:
                 return catalog
+
+def find_index(resource, catalog_name, index_name):
+    """ Find the first catalog named ``catalog_name`` in the lineage of the
+    resource, and ask it for its ``index_name`` index; return the resulting
+    index.  If either a catalog of the provided name or an index of the
+    provided name does not exist, this function will return ``None``."""
+    catalog = find_catalog(resource, catalog_name)
+    if catalog is None:
+        return None
+    index = catalog.get(index_name)
+    return index
+
+            
+def find_objectmap(context):
+    """ Returns the object map for the root object in the lineage of the
+    ``context`` or ``None`` if no objectmap can be found."""
+    return acquire(context, '__objectmap__', None)
 

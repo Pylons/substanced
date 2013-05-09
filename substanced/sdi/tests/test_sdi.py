@@ -678,29 +678,29 @@ class Test_default_sdi_columns(unittest.TestCase):
         return request
 
     def test_it(self):
+        from substanced.sdi import name_sorter
         fred = testing.DummyResource()
         fred.__name__ = 'fred'
         request = self._makeRequest('icon')
         result = self._callFUT(None, fred, request)
         self.assertEqual(
            result,
-           [{'sortable': True, 
+           [{'sorter': name_sorter, 
              'name': 'Name',
-             'field':'name',
              'formatter':'icon_label_url',
              'value': 'fred'}] 
            )
 
     def test_it_with_callable_icon(self):
+        from substanced.sdi import name_sorter
         fred = testing.DummyResource()
         fred.__name__ = 'fred'
         request = self._makeRequest(lambda *arg: 'icon')
         result = self._callFUT(None, fred, request)
         self.assertEqual(
            result, 
-           [{'sortable': True, 
+           [{'sorter': name_sorter, 
              'name': 'Name',
-             'field':'name',
              'formatter':'icon_label_url',
              'value': 'fred'}] 
            )

@@ -586,27 +586,6 @@ class IFile(Interface):
         """ Return the size in bytes of the data in the blob associated with
         the file"""
 
-class IWorkflowState(Interface):
-    """Represent a single logical state in the workflow state machine.
-    """
-    name = Attribute("Identifier (unique within a workflow)")
-    title = Attribute("Display title")
-
-    def __call__(content, request, transition, workflow):
-        """ Callback when content enters the state.
-        """
-
-class IWorkflowTransition(Interface):
-    name = Attribute("Identifier (unique within a workflow)")
-    title = Attribute("Display title")
-    from_state = Attribute("Beginning state for the transition")
-    to_state = Attribute("Ending state for the transition")
-    permission = Attribute("Permission protecteing the transition")
-
-    def __call__(content, request, transition, workflow):
-        """ Callback when content begins a transition.
-        """
-
 class IWorkflow(Interface):
     """"""
 

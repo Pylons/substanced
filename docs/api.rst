@@ -317,8 +317,6 @@ Other Helpers
 
 .. automodule:: substanced.objectmap
 
-.. autofunction:: find_objectmap
-
 .. autoclass:: ObjectMap
    :members:
 
@@ -460,6 +458,14 @@ Other Helpers
 .. autofunction:: find_service
 
 .. autofunction:: find_services
+
+.. autofunction:: find_objectmap
+
+.. autofunction:: find_catalogs
+
+.. autofunction:: find_catalog
+
+.. autofunction:: find_index
 
 .. autofunction:: is_folder
 

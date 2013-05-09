@@ -46,7 +46,10 @@ CENTER1 = Sentinel('CENTER1')
 CENTER2 = Sentinel('CENTER2')
 
 from ..objectmap import find_objectmap
-from ..util import acquire
+from ..util import (
+    acquire,
+    find_index,
+    )
 
 MANAGE_ROUTE_NAME = 'substanced_manage'
 
@@ -351,15 +354,20 @@ def sdi_mgmt_views(context, request, names=None):
 
     return manually_ordered + topo_ordered
 
+def name_sorter(resource, resultset, limit=None, reverse=False):
+    index = find_index(resource, 'system', 'name')
+    if index is not None:
+        resultset = resultset.sort(index, limit=limit, reverse=reverse)
+    return resultset
+
 def default_sdi_columns(folder, subobject, request):
     """ The default columns content-type hook """
     name = getattr(subobject, '__name__', '')
     return [
         {'name': 'Name',
-         'field': 'name',
          'value': name,
          'formatter': 'icon_label_url',
-         'sortable': True}
+         'sorter': name_sorter}
         ]
 
 def default_sdi_buttons(folder, request):

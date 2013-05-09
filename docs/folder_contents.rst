@@ -36,27 +36,18 @@ mappings conforming to the datagrid's contract. For example:
             modified = modified.isoformat()
         return default_columnspec + [
             {'name': 'Title',
-            'field': 'title',
             'value': getattr(subobject, 'title', subobject_name),
-            'sortable': True,
-            'formatter': 'icon_label_url',
             },
             {'name': 'Created',
-            'field': 'created',
             'value': created,
-            'sortable': True,
             'formatter': 'date',
             },
             {'name': 'Last edited',
-            'field': 'modified',
             'value': modified,
-            'sortable': True,
             'formatter': 'date',
             },
             {'name': 'Creator',
-            'field': 'creator',
             'value': user_name,
-            'sortable': True,
             }
             ]
 
@@ -77,10 +68,33 @@ column headers, your callable is invoked on the first resource.
 Later, this callable is used to get the value for the fields of each
 column for each resource in a request's batch.
 
-The mappings returned can indicate whether a particular column should
-be sortable. In general, it is better if your sortable columns are
-hooked up to a catalog index, in case the folder contains a large set
-of resources.
+The mappings returned can indicate whether a particular column should be
+sorted.  If you want your column to be sortable, you must provide a ``sorter``
+key in the mapping.  If supplied, the ``sorter`` value must either be ``None``
+if the column is not sortable, or a function which accepts a resource (the
+folder), a "resultset", a ``limit`` keyword argument, and a ``reverse`` keyword
+argument and which must return a sorted result set.  Here's an example sorter:
+
+.. code-block:: python
+
+    from substanced.util import find_index
+
+    def sorter(folder, resultset, reverse=False, limit=None):
+        index = find_index(folder, 'mycatalog', 'date')
+        if index is not None:
+            resultset = resultset.sort(index, reverse=reverse, limit=limit)
+        return resultset
+
+    def my_columns(folder, subobject, request, default_columnspec):
+        return default_columnspec + [
+            {'name': 'Date',
+            'value': getattr(subobject, 'title', subobject_name),
+            'sorter': 'sorter',
+            },
+
+Most often, sorting is done by passing a catalog index into the resultset.sort
+method as above (resultset.sort returns another resultset), but sorting can be
+performed manually, as long as the sorter returns a resultset.
 
 Buttons
 =======
@@ -306,7 +320,7 @@ The ``binder_columns`` points to a callable where we perform the work
 to both add the column to the list of columns, but also specify how to
 get the row data for that column:
 
-.. code-block: python
+.. code-block:: python
 
     def binder_columns(folder, subobject, request, default_columnspec):
         subobject_name = getattr(subobject, '__name__', str(subobject))
@@ -325,27 +339,18 @@ get the row data for that column:
             modified = modified.isoformat()
         return default_columnspec + [
             {'name': 'Title',
-            'field': 'title',
             'value': getattr(subobject, 'title', subobject_name),
-            'sortable': True,
-            'formatter': 'icon_label_url',
             },
             {'name': 'Created',
-            'field': 'created',
             'value': created,
-            'sortable': True,
             'formatter': 'date',
             },
             {'name': 'Last edited',
-            'field': 'modified',
             'value': modified,
-            'sortable': True,
             'formatter': 'date',
             },
             {'name': 'Creator',
-            'field': 'creator',
             'value': user_name,
-            'sortable': True,
             }
             ]
 

@@ -110,7 +110,7 @@ class SDIndex(object):
             self.add_action(action)
 
     def unindex_resource(self, resource_or_oid, action_mode=None):
-        if isinstance(resource_or_oid, int):
+        if isinstance(resource_or_oid, (int, long)):
             oid = resource_or_oid
         else:
             oid = oid_from_resource(resource_or_oid)
