@@ -13,9 +13,6 @@ from ..util import (
 
 _marker = object()
 
-class NoWay(object):
-    pass
-
 class AllowedIndexDiscriminator(object):
     def __init__(self, permissions=None):
         if permissions is not None and not is_nonstr_iter(permissions):
