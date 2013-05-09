@@ -936,7 +936,7 @@ class TestIndexActionTM(unittest.TestCase):
     def test_sortKey(self):
         index = DummyIndex()
         inst = self._makeOne(index)
-        self.assertEqual(inst.sortKey(), 1)
+        self.assertEqual(inst.sortKey(), 'IndexActionTM: 1')
 
     def test_add(self):
         index = DummyIndex()
