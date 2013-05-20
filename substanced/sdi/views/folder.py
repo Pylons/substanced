@@ -6,6 +6,10 @@ import colander
 from pyramid.httpexceptions import HTTPFound
 from pyramid.view import view_defaults
 from pyramid.security import has_permission
+from pyramid.view import (
+    render_view,
+    view_config,
+)
 
 from ...folder import FolderKeyError
 from ...form import FormView
@@ -26,6 +30,19 @@ from .. import (
     )
 
 _marker = object()
+
+
+@view_config(
+    #request_method='GET',
+    #permission='sdi.view',
+    name='head_snippet',
+    renderer='templates/contentsheadsnippet.pt',
+    #tab_condition=False,
+    )
+def head_snippet(self):
+    return {
+    }
+
 
 def rename_duplicated_resource(context, name):
     """Finds next available name inside container by appending
@@ -322,7 +339,7 @@ class FolderContentsViews(object):
         Finally, each button can optionally include an ``enabled_for`` key,
         which will point to a callable that will be passed a subobject from the
         current folder and must return True if the button should be enabled for
-        that subobect or False if not.
+        that subobject or False if not.
 
         Most of the time, the best strategy for using the buttons callable will
         be to return a value containing the default buttonspec sequence passed
@@ -584,6 +601,8 @@ class FolderContentsViews(object):
             'columns':columns,
             }
 
+ 
+
     @mgmt_view(
         request_method='GET',
         permission='sdi.view',
@@ -596,6 +615,9 @@ class FolderContentsViews(object):
         buttons = self._buttons()
 
         addables = self.sdi_add_views(context, request)
+
+        # header snippet for slickgrid configuration
+        head_snippet = render_view(context, request, name='head_snippet')
 
         # construct the default slickgrid widget options
         slickgrid_options = dict(
@@ -653,6 +675,7 @@ class FolderContentsViews(object):
             addables = addables,
             buttons = buttons,
             slickgrid_wrapper_options = slickgrid_wrapper_options,
+            head_snippet=head_snippet,
             )
 
         return result
