@@ -166,22 +166,32 @@ class FolderContentsViews(object):
                 sortable = False
 
             formatter = column.get('formatter', '')
+            editor = column.get('editor', '')
+            validator = column.get('validator', '')
+            width = int(column.get('width', 120))
+            minWidth = int(column.get('minWidth', 120))
+
             css_class = column.get('css_class', '')
             css_name = name.replace(' ', '-')
             css_class = ("cell-%s %s" % (css_name, css_class)).strip()
 
             # XXX CM: Do we really need all of "id", "name", and "field" below?
-            # Ree?
+            # Ree
+            # XXX RB The names are a bit messed up, the way slickgrid defines them.
+            # We probably only need 2 of id, name, field (the field identifier called 'field', and the
+            # field label that is called 'name') and could generate the third one on the client.
 
             headers.append({
                 "id": name,
                 "name": name,
                 "field": name,
-                "width": 120,
-                "minWidth": 120,
+                "width": width,
+                "minWidth": minWidth,
                 "cssClass": css_class,
                 "sortable": sortable,
                 "formatterName": formatter,
+                "editorName": editor,
+                "validatorName": validator,
                 })
 
         return headers
@@ -600,8 +610,6 @@ class FolderContentsViews(object):
             'sort_column_name':sort_column_name,
             'columns':columns,
             }
-
- 
 
     @mgmt_view(
         request_method='GET',
