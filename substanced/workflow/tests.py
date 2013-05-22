@@ -1195,7 +1195,36 @@ class Test_is_workflowed(unittest.TestCase):
         registry.workflow = DummyWorkflowRegistry(workflow)
         registry.content = DummyContentRegistry('abc')
         self.assertEqual(self._callFUT(content, registry), True)
-        
+
+
+class ACLStateTests(unittest.TestCase):
+
+    def _getTargetClass(self):
+        from . import ACLState
+        return ACLState
+
+    def _makeOne(self, acl=None):
+        klass = self._getTargetClass()
+        return klass(acl)
+
+    def test___call___wo_acl(self):
+        state = self._makeOne()
+        # no raise, no mutation
+        state(object(), request={}, transition='dummy', workflow=object())
+
+    def test___call___w_acl(self):
+        from pyramid.security import Allow
+        from pyramid.security import Deny
+        from pyramid.security import Everyone
+        from pyramid.security import ALL_PERMISSIONS
+        class _Content(object):
+            pass
+        content = _Content()
+        BEFORE = content.__acl__ = [(Deny, Everyone, ALL_PERMISSIONS)]
+        AFTER = [(Allow, Everyone, ALL_PERMISSIONS)]
+        state = self._makeOne(AFTER)
+        state(content, request={}, transition='dummy', workflow=object())
+        self.assertEqual(content.__acl__, AFTER)
 
 class DummyContent:
     pass

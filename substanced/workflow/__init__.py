@@ -3,6 +3,11 @@ from collections import defaultdict
 from persistent.mapping import PersistentMapping
 
 from pyramid.config import ConfigurationError
+from pyramid.security import ALL_PERMISSIONS
+from pyramid.security import Allow
+from pyramid.security import Authenticated
+from pyramid.security import DENY_ALL
+from pyramid.security import Everyone
 from pyramid.security import has_permission
 from zope.interface import implementer
 
@@ -14,6 +19,7 @@ from ..event import subscribe_added
 from ..util import (
     postorder,
     get_content_type,
+    set_acl,
     )
 
 STATE_ATTR = '__workflow_state__'
@@ -524,6 +530,44 @@ class _WorkflowedPredicate(object):
 
     def __call__(self, context, request):
         return self.is_workflowed(context, self.registry) == self.val
+
+#==============================================================================
+#   Example workflow:  sets simple ACL based on state.
+#
+#   +-----+                 +---------+
+#   |     |<-- retract -----|         |
+#   |draft|                 |published|
+#   |     |--- publish ---->|         |
+#   +-----+                 +---------+
+#==============================================================================
+
+_DRAFT_ACL = [
+    (Allow, Authenticated, ALL_PERMISSIONS),
+    DENY_ALL,
+]
+
+_PUBLISHED_ACL = [
+    (Allow, Authenticated, ALL_PERMISSIONS),
+    (Allow, Everyone, ('view',)),
+]
+
+class ACLState(dict):
+
+    def __init__(self, acl=None, **kw):
+        self.acl = acl
+
+    def __call__(self, content, request, transition, workflow):
+        if self.acl is not None:
+            set_acl(content, self.acl)
+
+class ACLWorkflow(Workflow):
+    _state_factory = ACLState
+
+pub_workflow = ACLWorkflow(initial_state="draft", type="publication")
+pub_workflow.add_state("draft", acl=_DRAFT_ACL)
+pub_workflow.add_state("published", acl=_PUBLISHED_ACL)
+pub_workflow.add_transition('publish', from_state='draft', to_state='published')
+pub_workflow.add_transition('retract', from_state='published', to_state='draft')
 
 def includeme(config): # pragma: no cover
     config.add_directive('add_workflow', add_workflow)
