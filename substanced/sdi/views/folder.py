@@ -33,13 +33,12 @@ _marker = object()
 
 
 @view_config(
-    #request_method='GET',
-    #permission='sdi.view',
+    request_method='GET',
+    permission='sdi.view',
     name='head_snippet',
     renderer='templates/contentsheadsnippet.pt',
-    #tab_condition=False,
-    )
-def head_snippet(self):
+)
+def head_snippet(context, request):
     return {
     }
 
@@ -192,7 +191,7 @@ class FolderContentsViews(object):
                 "formatterName": formatter,
                 "editorName": editor,
                 "validatorName": validator,
-                })
+            })
 
         return headers
 
