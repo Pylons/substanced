@@ -168,7 +168,7 @@ class TestFileUploadTempStore(unittest.TestCase):
         inst = self._makeOne(request)
         fn = os.path.join(self.tempdir, '1234')
         with open(fn, 'wb') as f:
-            f.write('abc')
+            f.write(b'abc')
         inst.session['substanced.tempstore'] = {}
         inst.session['substanced.tempstore']['a'] = {'randid':'1234'}
         self.assertEqual(inst.get('a')['fp'].read(),
@@ -197,9 +197,8 @@ class TestFileUploadTempStore(unittest.TestCase):
         request = self._makeRequest()
         inst = self._makeOne(request)
         tmpfile = os.path.join(self.tempdir, 'abc')
-        f = open(tmpfile, 'wb')
-        f.write('foo')
-        f.close()
+        with open(tmpfile, 'wb') as f:
+            f.write(b'foo')
         inst['a'] = {'randid':'abc'}
         inst.clear()
         self.failIf(os.path.exists(tmpfile))

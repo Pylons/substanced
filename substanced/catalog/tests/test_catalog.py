@@ -10,6 +10,11 @@ from zope.interface import (
 
 from hypatia.interfaces import IIndex
 
+from ..._compat import u
+_BLANK = u('')
+_A = u('a')
+_B = u('b')
+
 def _makeSite(**kw):
     from ...interfaces import IFolder
     site = testing.DummyResource(__provides__=kw.pop('__provides__', None))
@@ -208,7 +213,7 @@ class TestCatalog(unittest.TestCase):
         transaction = DummyTransaction()
         inst = self._makeOne()
         inst.transaction = transaction
-        objectmap = DummyObjectMap({1:[a, (u'', u'a')]})
+        objectmap = DummyObjectMap({1:[a, (_BLANK, _A)]})
         site = _makeSite(catalog=inst, objectmap=objectmap)
         site['a'] = a
         inst.objectids = [1]
@@ -231,7 +236,7 @@ class TestCatalog(unittest.TestCase):
         L = []
         transaction = DummyTransaction()
         objectmap = DummyObjectMap(
-            {1: [a, (u'', u'a')], 2:[None, (u'', u'b')]}
+            {1: [a, (_BLANK, _A)], 2:[None, (_BLANK, _B)]}
             )
         inst = self._makeOne()
         inst.transaction = transaction
@@ -276,7 +281,8 @@ class TestCatalog(unittest.TestCase):
         a = testing.DummyModel()
         b = testing.DummyModel()
         L = []
-        objectmap = DummyObjectMap({1: [a, (u'', u'a')], 2: [b, (u'', u'b')]})
+        objectmap = DummyObjectMap({1: [a, (_BLANK, _A)],
+                                    2: [b, (_BLANK, _B)]})
         transaction = DummyTransaction()
         inst = self._makeOne()
         inst.transaction = transaction
@@ -304,7 +310,7 @@ class TestCatalog(unittest.TestCase):
         a = testing.DummyModel()
         b = testing.DummyModel()
         L = []
-        objectmap = DummyObjectMap({1: [a, (u'', u'a')], 2: [b, (u'', u'b')]})
+        objectmap = DummyObjectMap({1: [a, (_BLANK, _A)], 2: [b, (_BLANK, _B)]})
         transaction = DummyTransaction()
         inst = self._makeOne()
         inst.transaction = transaction
@@ -334,7 +340,7 @@ class TestCatalog(unittest.TestCase):
     def test_reindex_with_indexes(self):
         a = testing.DummyModel()
         L = []
-        objectmap = DummyObjectMap({1: [a, (u'', u'a')]})
+        objectmap = DummyObjectMap({1: [a, (_BLANK, _A)]})
         transaction = DummyTransaction()
         inst = self._makeOne()
         inst.transaction = transaction

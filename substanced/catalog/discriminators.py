@@ -6,12 +6,12 @@ from pyramid.threadlocal import get_current_registry
 
 from ..interfaces import IIndexView
 
-from ..util import get_all_permissions
+from ..util import (
+    get_all_permissions,
+    get_principal_repr,
+    )
 
 _marker = object()
-
-class NoWay(object):
-    pass
 
 class AllowedIndexDiscriminator(object):
     def __init__(self, permissions=None):
@@ -31,14 +31,16 @@ class AllowedIndexDiscriminator(object):
         values = []
 
         for permission in permissions:
-            principals = principals_allowed_by_permission(resource, permission)
-            values.extend([(principal, permission) for principal in principals])
+            principal_ids = principals_allowed_by_permission(
+                resource,
+                permission
+                )
+            for principal_id in principal_ids:
+                principal_repr = get_principal_repr(principal_id)
+                values.append((principal_repr, permission))
 
         if not values:
-            # An empty value tells the catalog to match anything, whereas
-            # when there are no principals with permission to view we
-            # want for there to be no matches.
-            values = [(NoWay, NoWay)]
+            return default
             
         return values
 

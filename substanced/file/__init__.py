@@ -1,15 +1,18 @@
 import os
-import warnings
 import colander
-import StringIO
+import io
 import mimetypes
+import warnings
+
 from persistent import Persistent
+from pyramid.response import FileResponse
 from ZODB.blob import Blob
 from zope.interface import implementer
 
-from pyramid.response import FileResponse
-
 from ..util import get_oid
+from .._compat import u
+
+_BLANK = u('')
 
 try:
     import magic
@@ -118,11 +121,11 @@ class FileUploadPropertySheet(PropertySheet):
 @implementer(IFile)
 class File(Persistent):
 
-    title = u''
+    title = _BLANK
 
     name = renamer()
 
-    def __init__(self, stream=None, mimetype=None, title=u''):
+    def __init__(self, stream=None, mimetype=None, title=_BLANK):
         """ The constructor of a File object.
 
         ``stream`` should be a filelike object (an object with a ``read``
@@ -149,7 +152,7 @@ class File(Persistent):
              of additional dependencies.  See :ref:`optional_dependencies`.
         """
         self.blob = Blob()
-        self.title = title or u''
+        self.title = title or _BLANK
 
         # mimetype will be overridden by upload if there's a stream
         if mimetype is USE_MAGIC:
@@ -195,7 +198,7 @@ class File(Persistent):
           
         """
         if not stream:
-            stream = StringIO.StringIO()
+            stream = io.StringIO()
         fp = self.blob.open('w')
         first = True
         use_magic = False
@@ -224,7 +227,7 @@ class File(Persistent):
                 first = False
                 m = magic.Magic(mime=True)
                 mimetype = m.from_buffer(chunk)
-                self.mimetype = mimetype
+                self.mimetype = u(mimetype)
             fp.write(chunk)
         fp.close()
 

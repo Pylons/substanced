@@ -1,7 +1,6 @@
 import calendar
 import itertools
 import math
-import urlparse
 import json
 import types
 
@@ -13,6 +12,14 @@ from pyramid.threadlocal import get_current_registry
 
 from ..event import ACLModified
 from ..interfaces import IFolder
+
+from .._compat import (
+    parse_qsl,
+    urlsplit,
+    urlunsplit,
+    STRING_TYPES,
+    INT_TYPES,
+    )
 
 _marker = object()
 
@@ -33,7 +40,7 @@ def postorder(startnode):
     """ Walks over nodes in a folder recursively. Yields deepest nodes first."""
     def visit(node):
         if is_folder(node):
-            for child in node.values():
+            for name, child in sorted(node.items()):
                 for result in visit(child):
                     yield result
         yield node
@@ -61,9 +68,9 @@ def merge_url_qs(url, **kw):
     """ Merge the query string elements of a URL with the ones in ``kw``.
     If any query string element exists in ``url`` that also exists in
     ``kw``, replace it."""
-    segments = urlparse.urlsplit(url)
+    segments = urlsplit(url)
     extra_qs = [ '%s=%s' % (k, v) for (k, v) in 
-                 urlparse.parse_qsl(segments.query, keep_blank_values=1) 
+                 parse_qsl(segments.query, keep_blank_values=1) 
                  if k not in kw ]
     qs = ''
     for k, v in sorted(kw.items()):
@@ -72,7 +79,7 @@ def merge_url_qs(url, **kw):
         qs += '&'.join(extra_qs)
     else:
         qs = qs[:-1]
-    return urlparse.urlunsplit(
+    return urlunsplit(
         (segments.scheme, segments.netloc, segments.path, qs, segments.fragment)
         )
 
@@ -537,9 +544,34 @@ def find_index(resource, catalog_name, index_name):
     index = catalog.get(index_name)
     return index
 
+def get_principal_repr(principal_or_id):
+    """
+    Given as ``principal_or_id`` a resource object that has a
+    ``__principal_repr__`` method, return the result of calling that method
+    (without arguments); it must be a string that uniquely identifies the
+    principal amongst all principals in the system.
+    
+    Given as ``principal_or_id`` a resource object that does **not**
+    have a ``__principal_repr__`` method, return the result of the
+    stringification of the ``__oid__`` attribute of the resource object.
+
+    Given an integer as ``principal_or_id``, return a stringification
+    of the integer.
+
+    Given any other string value, return it.
+    """
+    base_types = STRING_TYPES + INT_TYPES
+    if isinstance(principal_or_id, base_types):
+        return str(principal_or_id)
+    prepr = getattr(principal_or_id, '__principal_repr__', None)
+    if prepr is not None:
+        return prepr()
+    oid = get_oid(principal_or_id, None)
+    if oid is not None:
+        return str(oid)
+    raise ValueError(principal_or_id)
             
 def find_objectmap(context):
     """ Returns the object map for the root object in the lineage of the
     ``context`` or ``None`` if no objectmap can be found."""
     return acquire(context, '__objectmap__', None)
-

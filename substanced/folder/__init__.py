@@ -1,25 +1,12 @@
 import random
 import string
 
-from zope.interface import (
-    implementer,
-    )
-from zope.copy.interfaces import (
-    ICopyHook,
-    ResumeCopy
-    )
-
-from zope.copy import copy
-
+import BTrees
+from BTrees.Length import Length
 from persistent import (
     Persistent,
     )
-
 from persistent.interfaces import IPersistent
-
-import BTrees
-from BTrees.Length import Length
-
 from pyramid.compat import string_types
 from pyramid.location import (
     lineage,
@@ -27,31 +14,38 @@ from pyramid.location import (
     )
 from pyramid.threadlocal import get_current_registry
 from pyramid.traversal import resource_path_tuple
-
-from ..interfaces import (
-    IFolder,
-    IAutoNamingFolder,
-    marker,
+from zope.copy.interfaces import (
+    ICopyHook,
+    ResumeCopy
+    )
+from zope.copy import copy
+from zope.interface import (
+    implementer,
     )
 
-from ..stats import statsd_timer
 from ..content import content
-
 from ..event import (
     ObjectAdded,
     ObjectWillBeAdded,
     ObjectRemoved,
     ObjectWillBeRemoved,
     )
-
+from ..interfaces import (
+    IFolder,
+    IAutoNamingFolder,
+    marker,
+    )
+from ..objectmap import find_objectmap
+from ..stats import statsd_timer
 from ..util import (
     get_oid,
     postorder,
     find_service,
     find_services,
     )
+from .._compat import STRING_TYPES
+from .._compat import u
 
-from ..objectmap import find_objectmap
 
 class FolderKeyError(KeyError):
     pass
@@ -119,7 +113,7 @@ class Folder(Persistent):
 
         for name in names:
             assert(isinstance(name, string_types))
-            name = unicode(name)
+            name = u(name)
             oid = get_oid(self[name])
             order.append(name)
             order_oids.append(oid)
@@ -174,7 +168,7 @@ class Folder(Persistent):
 
         for name in names:
             assert(isinstance(name, string_types))
-            name = unicode(name)
+            name = u(name)
             if not name in order_names:
                 raise FolderKeyError(name)
             idx = order_names.index(name)
@@ -306,6 +300,7 @@ class Folder(Persistent):
         """ Return ``True`` unconditionally.
         """
         return True
+    __bool__ = __nonzero__
 
     def __repr__(self):
         klass = self.__class__
@@ -321,7 +316,7 @@ class Folder(Persistent):
         encoding.
         """
         with statsd_timer('folder.get'):
-            name = unicode(name)
+            name = u(name)
             return self.data[name]
 
     def get(self, name, default=None):
@@ -333,7 +328,7 @@ class Folder(Persistent):
         system default encoding.
         """
         with statsd_timer('folder.get'):
-            name = unicode(name)
+            name = u(name)
             return self.data.get(name, default)
 
     def __contains__(self, name):
@@ -344,7 +339,7 @@ class Folder(Persistent):
         If ``name`` is a bytestring object, it must be decodable using the
         system default encoding.
         """
-        name = unicode(name)
+        name = u(name)
         return name in self.data
 
     def __setitem__(self, name, other):
@@ -392,14 +387,14 @@ class Folder(Persistent):
         the name passed is in the list of ``reserved_names``, raise a
         :exc:`ValueError`.
         """
-        if not isinstance(name, basestring):
+        if not isinstance(name, STRING_TYPES):
             raise ValueError("Name must be a string rather than a %s" %
                              name.__class__.__name__)
         if not name:
             raise ValueError("Name must not be empty")
 
         try:
-            name = unicode(name)
+            name = u(name)
         except UnicodeDecodeError:
             raise ValueError('Name "%s" not decodeable to unicode' % name)
 
@@ -577,7 +572,7 @@ class Folder(Persistent):
         attribute of events sent as a result of calling this method will be
         ``True`` too.
         """
-        name = unicode(name)
+        name = u(name)
         other = self.data[name]
         oid = get_oid(other, None)
 

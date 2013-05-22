@@ -33,7 +33,7 @@ class Test__postorder(unittest.TestCase):
         model['one'] = one
         model['two'] = two
         result = list(self._callFUT(model))
-        self.assertEqual(result, [two, one, model])
+        self.assertEqual(result, [one, two, model])
 
     def test_IFolder_node_folder_children(self):
         from ..interfaces import IFolder
@@ -47,7 +47,7 @@ class Test__postorder(unittest.TestCase):
         two['three'] = three
         two['four'] = four
         result = list(self._callFUT(model))
-        self.assertEqual(result, [four, three, two, one, model])
+        self.assertEqual(result, [one, four, three, two, model])
 
 class Test_get_oid(unittest.TestCase):
     def _callFUT(self, obj, default=_marker):
@@ -747,11 +747,11 @@ class Test_find_catalogs(unittest.TestCase):
         catalog2 = sub['catalogs']['catalog2']
         catalog1_2 = sub['catalogs']['catalog1']
         catalog1 = root['catalogs']['catalog1']
-        result = list(enumerate(self._callFUT(sub)))
-        self.assertEqual(
-            result,
-            [ (0, catalog2), (1, catalog1_2), (2, catalog1) ],
-            )
+        result = set(self._callFUT(sub))
+        self.assertEqual(len(result), 3)
+        self.assertTrue(catalog1 in result)
+        self.assertTrue(catalog2 in result)
+        self.assertTrue(catalog1_2 in result)
 
     def test_with_multiple_catalogs_and_name(self):
         root = self._makeTree()
@@ -865,6 +865,48 @@ class TestJsonDict(unittest.TestCase):
         d = JsonDict(val)
         self.assertEqual(str(d), json.dumps(val))
 
+class Test_get_principal_repr(unittest.TestCase):
+    def _callFUT(self, princ):
+        from . import get_principal_repr
+        return get_principal_repr(princ)
+
+    def test_int(self):
+        result = self._callFUT(1)
+        self.assertEqual(result, '1')
+
+    def test_largeint(self):
+        result = self._callFUT(2 << 64)
+        self.assertEqual(result, '36893488147419103232')
+
+    def test_str(self):
+        result = self._callFUT('foo')
+        self.assertEqual(result, 'foo')
+
+    def test_inst_with_principal_repr(self):
+        class Principal(object):
+            __oid__ = 1
+            def __principal_repr__(self):
+                return 'me'
+
+        inst = Principal()
+        result = self._callFUT(inst)
+        self.assertEqual(result, 'me')
+
+    def test_inst_with_oid(self):
+        class Principal(object):
+            __oid__ = 1
+
+        inst = Principal()
+        result = self._callFUT(inst)
+        self.assertEqual(result, '1')
+
+    def test_inst_without_principal_repr_or_oid(self):
+        class Principal(object):
+            pass
+
+        inst = Principal()
+        self.assertRaises(ValueError, self._callFUT, inst)
+
 class Test_find_objectmap(unittest.TestCase):
     def _callFUT(self, context):
         from . import find_objectmap
@@ -879,7 +921,6 @@ class Test_find_objectmap(unittest.TestCase):
         inst = Dummy()
         self.assertEqual(self._callFUT(inst), None)
 
-
 class DummyContent(object):
     renamed_from = None
     renamed_to = None
@@ -891,9 +932,8 @@ class DummyContent(object):
         self.renamed_to = new
 
 class DummyRegistry(object):
-    def subscribers(self, (event, context), whatever):
-        self.event = event
-        self.context = context
+    def subscribers(self, event_context, whatever):
+        self.event, self.context = event_context
         self.whatever = whatever
 
 class DummyContentRegistry(object):

@@ -1,7 +1,8 @@
+import io
 import os
-import StringIO
-import colander
 import unittest
+
+import colander
 import pkg_resources
 from pyramid import testing
 
@@ -38,7 +39,7 @@ class Test_name_or_file(unittest.TestCase):
 
     def tearDown(self):
         testing.tearDown()
-        
+
     def _makeOne(self, node, kw):
         from ..file import name_or_file
         return name_or_file(node, kw)
@@ -99,7 +100,7 @@ class TestAddFileView(unittest.TestCase):
         request = testing.DummyRequest()
         request.sdiapi = DummySDIAPI()
         request.registry.content = DummyContent(created)
-        fp = StringIO.StringIO('abc')
+        fp = io.BytesIO(b'abc')
         appstruct = {
             'name':None,
             'title':None,
@@ -117,7 +118,7 @@ class TestAddFileView(unittest.TestCase):
         request = testing.DummyRequest()
         request.sdiapi = DummySDIAPI()
         request.registry.content = DummyContent(created)
-        fp = StringIO.StringIO('abc')
+        fp = io.BytesIO(b'abc')
         appstruct = {
             'name':'abc',
             'file':{'fp':fp, 'filename':'filename'},
@@ -196,13 +197,13 @@ class Test_preview_image_upload(unittest.TestCase):
         request = testing.DummyRequest()
         request.subpath = ('abc',)
         request.registry.settings['substanced.uploads_tempdir'] = here
-        fp = StringIO.StringIO('abc')
+        fp = io.BytesIO(b'abc')
         request.session['substanced.tempstore'] = {
             'abc':{'fp':fp, 'filename':'foo.jpg'}}
         response = self._callFUT(request)
         self.assertEqual(response.content_type, 'image/jpeg')
-        self.assertEqual(response.body, 'abc')
-        
+        self.assertEqual(response.body, b'abc')
+
 class DummyContent(object):
     def __init__(self, result):
         self.result = result
@@ -213,7 +214,7 @@ class DummyContent(object):
     def create(self, *arg, **kw):
         self.created_args = (arg, kw)
         return self.result
-    
+
 class DummySDIAPI(object):
     def mgmt_path(self, *arg, **kw):
         return '/mgmt_path'

@@ -59,3 +59,7 @@ sdi.view
 
   Protects whether a user can view the SDI management pages associated with a
   resource.
+
+sdi.edit-properties
+
+  Allows for the editing of the properties of a property sheet for an object.

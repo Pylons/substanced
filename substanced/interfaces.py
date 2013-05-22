@@ -7,6 +7,11 @@ from zope.interface import (
 
 from zope.interface.interface import InterfaceClass
 
+from pyramid.security import (
+    Authenticated,
+    Everyone,
+    )
+
 class IPropertySheet(Interface):
     """ Interface for objects with a set of properties defined by a Colander
     schema.  The class :class:`substanced.property.PropertySheet` (which is
@@ -736,4 +741,3 @@ class MODE_DEFERRED(Interface):
     processor is unavailable at the successful end of the current transaction,
     this mode will be taken to imply the same thing as
     :attr:`~substanced.interfaces.MODE_ATCOMMIT`."""
-

@@ -122,7 +122,7 @@ class FormView(object):
                     controls = self.request.POST.items()
                     validated = form.validate(controls)
                     result = success_method(validated)
-                except deform.exception.ValidationFailure, e:
+                except deform.exception.ValidationFailure as e:
                     fail = getattr(self, '%s_failure' % button.name, None)
                     if fail is None:
                         fail = self.failure
@@ -193,7 +193,7 @@ class FileUploadTempStore(object):
 
         if stream is not None:
             while True:
-                randid = binascii.hexlify(os.urandom(20))
+                randid = binascii.hexlify(os.urandom(20)).decode('ascii')
                 fn = os.path.join(self.tempdir, randid)
                 if not os.path.exists(fn):
                     # XXX race condition

@@ -6,13 +6,21 @@ from pyramid import testing
 
 IS_32_BIT = sys.maxsize == 2**32
 
+from .._compat import u
+_BLANK = u('')
+_SLASH = u('/')
+_A = u('a')
+_B = u('b')
+_C = u('c')
+_Z = u('z')
+
 class TestObjectMap(unittest.TestCase):
     def setUp(self):
         self.config = testing.setUp()
 
     def tearDown(self):
         testing.tearDown()
-        
+
     def _makeOne(self, root=None, family=None):
         from . import ObjectMap
         if root is None:
@@ -62,13 +70,13 @@ class TestObjectMap(unittest.TestCase):
     def test_objectid_for_object(self):
         obj = testing.DummyResource()
         inst = self._makeOne()
-        inst.path_to_objectid[(u'',)] = 1
+        inst.path_to_objectid[(_BLANK,)] = 1
         self.assertEqual(inst.objectid_for(obj), 1)
 
     def test_objectid_for_path_tuple(self):
         inst = self._makeOne()
-        inst.path_to_objectid[(u'',)] = 1
-        self.assertEqual(inst.objectid_for((u'',)), 1)
+        inst.path_to_objectid[(_BLANK,)] = 1
+        self.assertEqual(inst.objectid_for((_BLANK,)), 1)
 
     def test_objectid_for_nonsense(self):
         inst = self._makeOne()
@@ -100,7 +108,7 @@ class TestObjectMap(unittest.TestCase):
         inst = self._makeOne()
         inst.objectid_to_path[1] = 'abc'
         inst._find_resource = lambda *arg: a
-        self.assertEqual(inst.object_for((u'',)), a)
+        self.assertEqual(inst.object_for((_BLANK,)), a)
 
     def test_object_for_unknown(self):
         inst = self._makeOne()
@@ -123,7 +131,7 @@ class TestObjectMap(unittest.TestCase):
             L.append(context)
             return a
         inst._find_resource = find_resource
-        self.assertEqual(inst.object_for((u'',), 'a'), a)
+        self.assertEqual(inst.object_for((_BLANK,), 'a'), a)
         self.assertEqual(L, ['a'])
 
     def test__find_resource_no_context(self):
@@ -141,28 +149,29 @@ class TestObjectMap(unittest.TestCase):
     def test_add_moving_and_duplicating(self):
         inst = self._makeOne()
         obj = testing.DummyResource()
-        self.assertRaises(ValueError, inst.add, obj, (u'',), True, True)
+        self.assertRaises(ValueError, inst.add,
+                          obj, (_BLANK,), True, True)
         
     def test_add_already_in_path_to_objectid(self):
         inst = self._makeOne()
         obj = testing.DummyResource()
         obj.__oid__ = 1
-        inst.path_to_objectid[(u'',)] = 1
-        self.assertRaises(ValueError, inst.add, obj, (u'',))
+        inst.path_to_objectid[(_BLANK,)] = 1
+        self.assertRaises(ValueError, inst.add, obj, (_BLANK,))
 
     def test_add_duplicating(self):
         inst = self._makeOne()
         obj = testing.DummyResource()
         obj.__oid__ = 1
-        inst.path_to_objectid[(u'',)] = 1
-        self.assertRaises(ValueError, inst.add, obj, (u'',), True)
+        inst.path_to_objectid[(_BLANK,)] = 1
+        self.assertRaises(ValueError, inst.add, obj, (_BLANK,), True)
 
     def test_add_already_in_objectid_to_path(self):
         inst = self._makeOne()
         obj = testing.DummyResource()
         obj.__oid__ = 1
         inst.objectid_to_path[1] = True
-        self.assertRaises(ValueError, inst.add, obj, (u'',))
+        self.assertRaises(ValueError, inst.add, obj, (_BLANK,))
 
     def test_add_not_a_path_tuple(self):
         inst = self._makeOne()
@@ -172,13 +181,13 @@ class TestObjectMap(unittest.TestCase):
         inst = self._makeOne()
         inst._v_nextid = 1
         obj = testing.DummyResource()
-        inst.add(obj, (u'',))
-        self.assertEqual(inst.objectid_to_path[1], (u'',))
+        inst.add(obj, (_BLANK,))
+        self.assertEqual(inst.objectid_to_path[1], (_BLANK,))
         self.assertEqual(obj.__oid__, 1)
         
     def test_add_not_valid(self):
         inst = self._makeOne()
-        self.assertRaises(AttributeError, inst.add, 'a', (u'',))
+        self.assertRaises(AttributeError, inst.add, 'a', (_BLANK,))
 
     def test_remove_not_an_int_or_tuple(self):
         inst = self._makeOne()
@@ -186,9 +195,9 @@ class TestObjectMap(unittest.TestCase):
 
     def test_remove_int(self):
         inst = self._makeOne()
-        inst.objectid_to_path[1] = (u'',)
-        inst.path_to_objectid[(u'',)] = 1
-        inst.pathindex[(u'',)] = {0:[1]}
+        inst.objectid_to_path[1] = (_BLANK,)
+        inst.path_to_objectid[(_BLANK,)] = 1
+        inst.pathindex[(_BLANK,)] = {0:[1]}
         inst.remove(1)
         self.assertEqual(dict(inst.objectid_to_path), {})
 
@@ -196,25 +205,25 @@ class TestObjectMap(unittest.TestCase):
         def test_remove_long(self):
             inst = self._makeOne()
             oid = sys.maxint + 1
-            inst.objectid_to_path[oid] = (u'',)
-            inst.path_to_objectid[(u'',)] = oid
-            inst.pathindex[(u'',)] = {0:[oid]}
+            inst.objectid_to_path[oid] = (_BLANK,)
+            inst.path_to_objectid[(_BLANK,)] = oid
+            inst.pathindex[(_BLANK,)] = {0:[oid]}
             inst.remove(oid)
             self.assertEqual(dict(inst.objectid_to_path), {})
         
     def test_remove_traversable_object(self):
         inst = self._makeOne()
-        inst.objectid_to_path[1] = (u'',)
-        inst.path_to_objectid[(u'',)] = 1
-        inst.pathindex[(u'',)] = {0:[1]}
+        inst.objectid_to_path[1] = (_BLANK,)
+        inst.path_to_objectid[(_BLANK,)] = 1
+        inst.pathindex[(_BLANK,)] = {0:[1]}
         obj = testing.DummyResource()
         inst.remove(obj)
         self.assertEqual(dict(inst.objectid_to_path), {})
         
     def test_remove_no_omap(self):
         inst = self._makeOne()
-        inst.objectid_to_path[1] = (u'',)
-        result = inst.remove((u'',))
+        inst.objectid_to_path[1] = (_BLANK,)
+        result = inst.remove((_BLANK,))
         self.assertEqual(list(result), [])
 
     def test_pathlookup_not_valid(self):
@@ -230,7 +239,7 @@ class TestObjectMap(unittest.TestCase):
 
     def test_navgen_notexist(self):
         inst = self._makeOne()
-        result = inst.navgen((u'',), 99)
+        result = inst.navgen((_BLANK,), 99)
         self.assertEqual(result, [])
 
     def test_navgen_bigdepth(self):
@@ -245,15 +254,15 @@ class TestObjectMap(unittest.TestCase):
         result = inst.navgen(root, 99)
         self.assertEqual(
             result, 
-            [{'path': ('', u'a'), 
-              'name':u'a',
-              'children': [{'path': ('', u'a', u'b'), 
-                            'name':u'b',
-                            'children': [{'path': ('', u'a', u'b', u'c'), 
-                                          'name':u'c',
+            [{'path': ('', _A), 
+              'name':_A,
+              'children': [{'path': ('', _A, _B), 
+                            'name':_B,
+                            'children': [{'path': ('', _A, _B, _C), 
+                                          'name':_C,
                                           'children': []}]}]}, 
-             {'path': ('', u'z'), 
-              'name':u'z',
+             {'path': ('', _Z), 
+              'name':_Z,
               'children': []}]
             )
 
@@ -269,10 +278,10 @@ class TestObjectMap(unittest.TestCase):
         result = inst.navgen(a, 99)
         self.assertEqual(
             result,
-            [{'path': ('', u'a', u'b'), 
-              'name':u'b',
-              'children': [{'path': ('', u'a', u'b', u'c'), 
-                            'name':u'c',
+            [{'path': ('', _A, _B), 
+              'name':_B,
+              'children': [{'path': ('', _A, _B, _C), 
+                            'name':_C,
                             'children': []}]}]
             )
         
@@ -288,11 +297,11 @@ class TestObjectMap(unittest.TestCase):
         result = inst.navgen(root, 1)
         self.assertEqual(
             result,
-            [{'path': ('', u'a'), 
+            [{'path': ('', _A), 
               'name':'a',
               'children': []},
-             {'path': ('', u'z'), 
-              'name':u'z',
+             {'path': ('', _Z), 
+              'name':_Z,
               'children': []}]
             )
 
@@ -308,8 +317,8 @@ class TestObjectMap(unittest.TestCase):
         result = inst.navgen(a, 1)
         self.assertEqual(
             result,
-            [{'path': ('', u'a', u'b'), 
-              'name':u'b',
+            [{'path': ('', _A, _B), 
+              'name':_B,
               'children': []}]
             )
         
@@ -475,31 +484,31 @@ class TestObjectMap(unittest.TestCase):
 
         self.assertEqual(
             keys,
-            [(u'',), (u'', u'a'), (u'', u'z')]
+            [(_BLANK,), (_BLANK, _A), (_BLANK, _Z)]
         )
 
-        root = pathindex[(u'',)]
+        root = pathindex[(_BLANK,)]
         self.assertEqual(len(root), 2)
         self.assertEqual(set(root[0]), set([4]))
         self.assertEqual(set(root[1]), set([3,5]))
 
-        a = pathindex[(u'', u'a')]
+        a = pathindex[(_BLANK, _A)]
         self.assertEqual(len(a), 1)
         self.assertEqual(set(a[0]), set([3]))
 
-        z = pathindex[(u'', u'z')]
+        z = pathindex[(_BLANK, _Z)]
         self.assertEqual(len(z), 1)
         self.assertEqual(set(z[0]), set([5]))
         
         self.assertEqual(
             dict(objmap.objectid_to_path),
-            {3: (u'', u'a'), 4: (u'',), 5: (u'', u'z')})
+            {3: (_BLANK, _A), 4: (_BLANK,), 5: (_BLANK, _Z)})
         self.assertEqual(
             dict(objmap.path_to_objectid),
-            {(u'', u'z'): 5, (u'', u'a'): 3, (u'',): 4})
+            {(_BLANK, _Z): 5, (_BLANK, _A): 3, (_BLANK,): 4})
 
         # remove '/'
-        removed = objmap.remove((u'',))
+        removed = objmap.remove((_BLANK,))
         self.assertEqual(set(removed), set([3,4,5]))
 
         assert dict(objmap.pathindex) == {}
@@ -512,13 +521,13 @@ class TestObjectMap(unittest.TestCase):
         
     def test__refids_for_target_missing(self):
         inst = self._makeOne()
-        inst.objectid_to_path[1] = (u'',)
+        inst.objectid_to_path[1] = (_BLANK,)
         self.assertRaises(ValueError, inst._refids_for, 1, 2)
 
     def test__refids_for_success_oids(self):
         inst = self._makeOne()
-        inst.objectid_to_path[1] = (u'',)
-        inst.objectid_to_path[2] = (u'',)
+        inst.objectid_to_path[1] = (_BLANK,)
+        inst.objectid_to_path[2] = (_BLANK,)
         s, t = inst._refids_for(1, 2)
         self.assertEqual(s, 1)
         self.assertEqual(t, 2)
@@ -529,8 +538,8 @@ class TestObjectMap(unittest.TestCase):
         one.__oid__ = 1
         two = testing.DummyResource()
         two.__oid__ = 2
-        inst.objectid_to_path[1] = (u'',)
-        inst.objectid_to_path[2] = (u'',)
+        inst.objectid_to_path[1] = (_BLANK,)
+        inst.objectid_to_path[2] = (_BLANK,)
         s, t = inst._refids_for(one, two)
         self.assertEqual(s, 1)
         self.assertEqual(t, 2)
@@ -541,7 +550,7 @@ class TestObjectMap(unittest.TestCase):
         
     def test__refid_for_success_oid(self):
         inst = self._makeOne()
-        inst.objectid_to_path[1] = (u'',)
+        inst.objectid_to_path[1] = (_BLANK,)
         oid = inst._refid_for(1)
         self.assertEqual(oid, 1)
 
@@ -549,22 +558,22 @@ class TestObjectMap(unittest.TestCase):
         inst = self._makeOne()
         obj = testing.DummyResource()
         obj.__oid__ = 1
-        inst.objectid_to_path[1] = (u'',)
+        inst.objectid_to_path[1] = (_BLANK,)
         oid = inst._refid_for(obj)
         self.assertEqual(oid, 1)
 
     def test_connect(self):
         inst = self._makeOne()
-        inst.objectid_to_path[1] = (u'',)
-        inst.objectid_to_path[2] = (u'', u'a')
+        inst.objectid_to_path[1] = (_BLANK,)
+        inst.objectid_to_path[2] = (_BLANK, _A)
         inst.referencemap = DummyReferenceMap()
         inst.connect(1, 2, 'ref')
         self.assertEqual(inst.referencemap['ref'], (1, 2))
 
     def test_disconnect(self):
         inst = self._makeOne()
-        inst.objectid_to_path[1] = (u'',)
-        inst.objectid_to_path[2] = (u'', u'a')
+        inst.objectid_to_path[1] = (_BLANK,)
+        inst.objectid_to_path[2] = (_BLANK, _A)
         inst.referencemap = DummyReferenceMap()
         inst.referencemap['ref'] = True
         inst.disconnect(1, 2, 'ref')
@@ -574,8 +583,8 @@ class TestObjectMap(unittest.TestCase):
         one = testing.DummyResource(__oid__=1)
         two = testing.DummyResource(__oid__=2)
         inst = self._makeOne()
-        inst.objectid_to_path[1] = (u'',)
-        inst.objectid_to_path[2] = (u'', u'a')
+        inst.objectid_to_path[1] = (_BLANK,)
+        inst.objectid_to_path[2] = (_BLANK, _A)
         inst.referencemap = DummyReferenceMap()
         inst.referencemap['ref'] = True
         inst.disconnect(one, two, 'ref')
@@ -583,21 +592,21 @@ class TestObjectMap(unittest.TestCase):
         
     def test_sourceids(self):
         inst = self._makeOne()
-        inst.objectid_to_path[1] = (u'',)
+        inst.objectid_to_path[1] = (_BLANK,)
         inst.referencemap = DummyReferenceMap(sourceids=[2])
         self.assertEqual(list(inst.sourceids(1, 'ref')), [2])
         
     def test_targetids(self):
         inst = self._makeOne()
-        inst.objectid_to_path[1] = (u'',)
+        inst.objectid_to_path[1] = (_BLANK,)
         inst.referencemap = DummyReferenceMap(targetids=[2])
         self.assertEqual(list(inst.targetids(1, 'ref')), [2])
 
     def test_sources(self):
         inst = self._makeOne()
-        inst.objectid_to_path[1] = (u'',)
-        inst.objectid_to_path[2] = (u'', u'a')
-        inst.objectid_to_path[3] = (u'', u'b')
+        inst.objectid_to_path[1] = (_BLANK,)
+        inst.objectid_to_path[2] = (_BLANK, _A)
+        inst.objectid_to_path[3] = (_BLANK, _B)
         inst.referencemap = DummyReferenceMap(sourceids=[2, 3])
         obj = object()
         inst._find_resource = lambda *arg: obj
@@ -605,9 +614,9 @@ class TestObjectMap(unittest.TestCase):
         
     def test_targets(self):
         inst = self._makeOne()
-        inst.objectid_to_path[1] = (u'',)
-        inst.objectid_to_path[2] = (u'', u'a')
-        inst.objectid_to_path[3] = (u'', u'b')
+        inst.objectid_to_path[1] = (_BLANK,)
+        inst.objectid_to_path[2] = (_BLANK, _A)
+        inst.objectid_to_path[3] = (_BLANK, _B)
         inst.referencemap = DummyReferenceMap(targetids=[2, 3])
         obj = object()
         inst._find_resource = lambda *arg: obj
@@ -616,7 +625,7 @@ class TestObjectMap(unittest.TestCase):
     def test_has_references_obj(self):
         inst = self._makeOne()
         inst.referencemap = DummyReferenceMap(has_references=True)
-        inst.objectid_to_path[1] = (u'',)
+        inst.objectid_to_path[1] = (_BLANK,)
         obj = testing.DummyResource()
         obj.__oid__ = 1
         self.assertTrue(inst.has_references(obj))
@@ -626,7 +635,7 @@ class TestObjectMap(unittest.TestCase):
     def test_has_references_oid(self):
         inst = self._makeOne()
         inst.referencemap = DummyReferenceMap(has_references=True)
-        inst.objectid_to_path[1] = (u'',)
+        inst.objectid_to_path[1] = (_BLANK,)
         self.assertTrue(inst.has_references(1))
         self.assertEqual(inst.referencemap.oid_arg, 1)
         self.assertEqual(inst.referencemap.reftype_arg, None)
@@ -634,7 +643,7 @@ class TestObjectMap(unittest.TestCase):
     def test_has_references_with_reftype(self):
         inst = self._makeOne()
         inst.referencemap = DummyReferenceMap(has_references=True)
-        inst.objectid_to_path[1] = (u'',)
+        inst.objectid_to_path[1] = (_BLANK,)
         self.assertTrue(inst.has_references(1, 'abc'))
         self.assertEqual(inst.referencemap.oid_arg, 1)
         self.assertEqual(inst.referencemap.reftype_arg, 'abc')
@@ -829,7 +838,7 @@ class TestReferenceMap(unittest.TestCase):
     def test_get_reftypes(self):
         map = {'reftype':None}
         refs = self._makeOne(map)
-        self.assertEqual(refs.get_reftypes(), ['reftype'])
+        self.assertEqual(list(refs.get_reftypes()), ['reftype'])
 
 class TestExtentMap(unittest.TestCase):
     def _makeOne(self):
@@ -2198,7 +2207,7 @@ def resource(path):
                 
         
 def split(s):
-    return (u'',) + tuple(filter(None, s.split(u'/')))
+    return (_BLANK,) + tuple(filter(None, s.split(_SLASH)))
 
 class DummyObjectMap(object):
     def __init__(self, targetids=(), sourceids=(), result=None, toraise=None,

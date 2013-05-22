@@ -19,6 +19,11 @@ from pyramid.util import (
     object_description,
     )
 
+from ..content import (
+    content,
+    service,
+    )
+from ..folder import Folder
 from ..interfaces import (
     ICatalog,
     ICatalogFactory,
@@ -26,15 +31,11 @@ from ..interfaces import (
     IIndexingActionProcessor,
     MODE_IMMEDIATE,
     )
-
-from ..content import (
-    content,
-    service,
-    )
-from ..folder import Folder
 from ..objectmap import find_objectmap
 from ..stats import statsd_timer
 from ..util import get_oid
+from .._compat import INT_TYPES
+from .._compat import u
 
 from .factories import (
     IndexFactory,
@@ -59,6 +60,8 @@ Allowed = Allowed # API
 Path = Path # API
 
 logger = logging.getLogger(__name__) # API
+
+_SLASH = u('/')
 
 _marker = object()
 
@@ -165,7 +168,7 @@ class Catalog(Folder):
         which explicitly indicates that you'd like to use the index's
         action_mode value."""
         oid = get_oid(resource_or_oid, resource_or_oid)
-        if not isinstance(oid, (int, long)):
+        if not isinstance(oid, INT_TYPES):
             raise ValueError(
                 'resource_or_oid must be a resource object with an __oid__ '
                 'attribute or an integer oid'
@@ -292,7 +295,7 @@ class Catalog(Folder):
                         'error: no path for objectid %s in object map' % 
                         oid)
                     continue
-                upath = u'/'.join(path)
+                upath = _SLASH.join(path)
                 output and output('error: object at path %s not found' % upath)
                 continue
             path = resource_path(resource)

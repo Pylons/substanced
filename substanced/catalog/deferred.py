@@ -4,23 +4,19 @@ import threading
 import time
 import transaction
 
+from pyramid.threadlocal import get_current_registry
 from transaction.interfaces import ISavepointDataManager
-
 from zope.interface import implementer
-
 from ZODB.POSException import ConflictError
 
-from pyramid.threadlocal import get_current_registry
-
-from substanced.interfaces import (
+from ..compat import total_ordering
+from ..interfaces import (
     IIndexingActionProcessor,
     MODE_DEFERRED,
     )
-
 from ..objectmap import find_objectmap
-from ..util import get_oid
 from ..stats import statsd_gauge
-from ..compat import total_ordering
+from ..util import get_oid
 
 logger = logging.getLogger(__name__)
 
@@ -611,7 +607,7 @@ class IndexActionTM(threading.local):
     tpc_abort = abort = tpc_finish
 
     def sortKey(self):
-        return self.oid
+        return 'IndexActionTM: %s' % self.oid
 
     def add(self, action):
         self.actions.append(action)

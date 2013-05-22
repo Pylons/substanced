@@ -117,7 +117,7 @@ class CatalogFactory(object):
     def _remove_stale(self, catalog, output=None):
         catalog_path = resource_path(catalog)
         result = False
-        for index_name, index in catalog.items():
+        for index_name, index in list(catalog.items()):
             if not index_name in self.index_factories:
                 output and output(
                     '%s: removing stale index named %r' % (

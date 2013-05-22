@@ -19,6 +19,7 @@ from ...util import (
     get_oid,
     find_catalog,
     )
+from ..._compat import u
 
 from .. import (
     mgmt_view,
@@ -51,9 +52,9 @@ def rename_duplicated_resource(context, name):
     m = re.search(r'-(\d+)$', name)
     if m:
         new_id = int(m.groups()[0]) + 1
-        new_name = name.rsplit('-', 1)[0] + u'-%d' % new_id
+        new_name = name.rsplit('-', 1)[0] + u('-%d') % new_id
     else:
-        new_name = name + u'-1'
+        new_name = name + u('-1')
 
     if new_name in context:
         return rename_duplicated_resource(context, new_name)
@@ -115,7 +116,7 @@ class FolderContentsViews(object):
 
     def _modified_items(self):
         items = self.request.POST.get('item-modify', '').split(',')
-        modified = filter(None, items) # remove empty
+        modified = [x for x in  items if x] # remove empty
         return modified
 
     def _buttons(self):
@@ -504,7 +505,7 @@ class FolderContentsViews(object):
               allowed.allows(request, 'sdi.view') )
 
         if filter_text:
-            filter_text_globs = filter(None, filter_text.split())
+            filter_text_globs = [x for x in filter_text.split() if x]
             if filter_text_globs:
                 text = system_catalog['text']
                 for filter_glob in filter_text_globs:

@@ -1,7 +1,6 @@
 import base64
 import logging
 import os
-import yaml
 
 from zope.interface import (
     Interface,
@@ -9,7 +8,6 @@ from zope.interface import (
     alsoProvides,
     )
 from zope.interface.interface import InterfaceClass
-
 from pyramid.request import Request
 from pyramid.security import AllPermissionsList, ALL_PERMISSIONS
 from pyramid.threadlocal import get_current_registry
@@ -18,6 +16,8 @@ from pyramid.util import (
     DottedNameResolver,
     TopologicalSorter,
     )
+from ZODB.blob import Blob
+import yaml
 
 from substanced.workflow import STATE_ATTR
 from substanced.objectmap import find_objectmap
@@ -32,8 +32,9 @@ from substanced.util import (
     get_content_type,
     is_folder,
     )
+from .._compat import TEXT
+from .._compat import u
 
-from ZODB.blob import Blob
 
 logger = logging.getLogger(__name__)
 
@@ -59,22 +60,26 @@ def set_yaml(registry):
     registry['yaml_dumper'] = SDumper
 
     def iface_representer(dumper, data):
-        return dumper.represent_scalar(u'!interface', get_dotted_name(data))
+        return dumper.represent_scalar(u('!interface'), get_dotted_name(data))
     def iface_constructor(loader, node):
         return dotted_name_resolver.resolve(node.value)
 
     SDumper.add_multi_representer(InterfaceClass, iface_representer)
-    SLoader.add_constructor(u'!interface', iface_constructor)
+    SLoader.add_constructor(u('!interface'), iface_constructor)
 
     def blob_representer(dumper, data):
-        return dumper.represent_scalar(
-            u'!blob', base64.encodestring(data.open('r').read())
-            )
+        data = data.open('r').read()
+        encoded = base64.encodestring(data)
+        u_encoded = encoded.decode('ascii')
+        return dumper.represent_scalar(u('!blob'), u_encoded)
     def blob_constructor(loader, node):
-        return Blob(base64.decodestring(node.value))
+        value = node.value
+        if isinstance(value, TEXT):
+            value = value.encode('ascii')
+        return Blob(base64.decodestring(value))
 
     SDumper.add_representer(Blob, blob_representer)
-    SLoader.add_constructor(u'!blob', blob_constructor)
+    SLoader.add_constructor(u('!blob'), blob_constructor)
 
 
 def get_dumpers(registry):
@@ -291,12 +296,13 @@ class _FileOperations(object):
 class _YAMLOperations(_FileOperations):
 
     def load_yaml(self, filename):
-        with self.openfile_r(filename) as fp:
+        with self.openfile_r(filename, 'rb') as fp:
             return yaml.load(fp, Loader=self.registry['yaml_loader'])
 
     def dump_yaml(self, obj, filename):
-        with self.openfile_w(filename) as fp:
-            return yaml.dump(obj, fp, Dumper=self.registry['yaml_dumper'])
+        with self.openfile_w(filename, 'wb') as fp:
+            return yaml.dump(obj, fp, Dumper=self.registry['yaml_dumper'],
+                             encoding='utf-8')
 
 class _ResourceContext(_YAMLOperations):
     dotted_name_resolver = dotted_name_resolver
@@ -401,9 +407,9 @@ class ACLDumper(object):
         def ap_constructor(loader, node):
             return ALL_PERMISSIONS
         def ap_representer(dumper, data):
-            return dumper.represent_scalar(u'!all_permissions', '')
+            return dumper.represent_scalar(u('!all_permissions'), '')
         registry['yaml_loader'].add_constructor(
-            u'!all_permissions',
+            u('!all_permissions'),
             ap_constructor,
             )
         registry['yaml_dumper'].add_representer(
@@ -561,9 +567,9 @@ class PropertySheetDumper(object):
         def cn_constructor(loader, node):
             return colander.null
         def cn_representer(dumper, data):
-            return dumper.represent_scalar(u'!colander_null', '')
+            return dumper.represent_scalar(u('!colander_null'), '')
         registry['yaml_loader'].add_constructor(
-            u'!colander_null',
+            u('!colander_null'),
             cn_constructor,
             )
         registry['yaml_dumper'].add_representer(

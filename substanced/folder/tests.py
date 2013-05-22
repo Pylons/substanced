@@ -259,7 +259,7 @@ class TestFolder(unittest.TestCase):
 
     def test___setitem__8bitstring(self):
         folder = self._makeOne()
-        self.assertRaises(ValueError, folder.__setitem__, '\xff', None)
+        self.assertRaises(ValueError, folder.__setitem__, b'\xff', None)
 
     def test___setitem__empty(self):
         folder = self._makeOne()
@@ -366,9 +366,8 @@ class TestFolder(unittest.TestCase):
         folder = self._makeOne()
         objectmap = DummyObjectMap()
         folder.__objectmap__ = objectmap
-        a = DummyModel()
         site = self._makeSite()
-        a.__parent__ = site
+        a = site['a'] = DummyModel()
         self.assertRaises(ValueError, folder.add, 'a', a)
 
     def test_add_with_objectmap(self):
@@ -747,7 +746,8 @@ class TestFolder(unittest.TestCase):
         self.assertTrue(r.endswith('>'))
 
     def test_unresolveable_unicode_setitem(self):
-        name = unicode('La Pe\xc3\xb1a', 'utf-8').encode('latin-1')
+        from .._compat import u
+        name = u(b'La Pe\xc3\xb1a', 'utf-8').encode('latin-1')
         folder = self._makeOne()
         self.assertRaises(ValueError,
                           folder.__setitem__, name, DummyModel())
@@ -759,7 +759,8 @@ class TestFolder(unittest.TestCase):
         self.failUnless(folder.get(name))
 
     def test_unresolveable_unicode_getitem(self):
-        name = unicode('La Pe\xc3\xb1a', 'utf-8').encode('latin-1')
+        from .._compat import u
+        name = u(b'La Pe\xc3\xb1a', 'utf-8').encode('latin-1')
         folder = self._makeOne()
         self.assertRaises(UnicodeDecodeError, folder.__getitem__, name)
 

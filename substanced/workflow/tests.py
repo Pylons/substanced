@@ -248,10 +248,12 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(sm.check(), None)
 
     def test__get_transitions_default_from_state(self):
+        import operator
         sm = self._makePopulated()
         ob = DummyContent()
         ob.__workflow_state__ = {'basic': 'pending'}
-        result = sm._get_transitions(ob)
+        result = sorted(sm._get_transitions(ob),
+                        key=operator.itemgetter('name'))
         self.assertEqual(len(result), 2)
         self.assertEqual(result[0]['name'], 'publish')
         self.assertEqual(result[1]['name'], 'reject')
@@ -943,37 +945,40 @@ class register_workflowTests(unittest.TestCase):
 
     def test_register_workflow_global(self):
         from ..interfaces import IDefaultWorkflow
+        from .._compat import u
         wf = mock.Mock()
         self._callFUT(self.config, wf, 'basic')
 
         self.assertEqual({'basic': {IDefaultWorkflow: wf}},
                          self.config.registry.workflow.types)
-        self.assertEqual({IDefaultWorkflow: {u'basic': wf}},
+        self.assertEqual({IDefaultWorkflow: {u('basic'): wf}},
                          self.config.registry.workflow.content_types)
 
     def test_register_workflow_global_skip_if_exists(self):
         from ..interfaces import IDefaultWorkflow
+        from .._compat import u
         wf = mock.Mock()
         self._callFUT(self.config, wf, 'basic')
         self.assertEqual({'basic': {IDefaultWorkflow: wf}},
                          self.config.registry.workflow.types)
-        self.assertEqual({IDefaultWorkflow: {u'basic': wf}},
+        self.assertEqual({IDefaultWorkflow: {u('basic'): wf}},
                          self.config.registry.workflow.content_types)
 
         self._callFUT(self.config, wf, 'basic')
         self.assertEqual({'basic': {IDefaultWorkflow: wf}},
                          self.config.registry.workflow.types)
-        self.assertEqual({IDefaultWorkflow: {u'basic': wf}},
+        self.assertEqual({IDefaultWorkflow: {u('basic'): wf}},
                          self.config.registry.workflow.content_types)
 
     def test_register_workflow_two_types(self):
+        from .._compat import u
         wf = mock.Mock()
         self._callFUT(self.config, wf, 'basic', 'File')
         self._callFUT(self.config, wf, 'basic', 'Folder')
 
         self.assertEqual({'basic': {'File': wf, 'Folder': wf}},
                          self.config.registry.workflow.types)
-        self.assertEqual({'File': {u'basic': wf}, 'Folder': {u'basic': wf}},
+        self.assertEqual({'File': {u('basic'): wf}, 'Folder': {u('basic'): wf}},
                          self.config.registry.workflow.content_types)
         self.config.registry.content.exists.assert_any_call('File')
         self.config.registry.content.exists.assert_any_call('Folder')
@@ -1114,7 +1119,7 @@ class init_workflows_for_objectTests(unittest.TestCase):
         workflow.add(wf, 'Folder')
         obj = DummyContent()
         obj2 = mock.Mock()
-        obj.values = lambda *arg: [obj2]
+        obj.items = lambda *arg: [('obj2', obj2)]
         directlyProvides(obj, IFolder)
         event = mock.Mock()
         event.registry = mock.Mock()
@@ -1190,7 +1195,36 @@ class Test_is_workflowed(unittest.TestCase):
         registry.workflow = DummyWorkflowRegistry(workflow)
         registry.content = DummyContentRegistry('abc')
         self.assertEqual(self._callFUT(content, registry), True)
-        
+
+
+class ACLStateTests(unittest.TestCase):
+
+    def _getTargetClass(self):
+        from . import ACLState
+        return ACLState
+
+    def _makeOne(self, acl=None):
+        klass = self._getTargetClass()
+        return klass(acl)
+
+    def test___call___wo_acl(self):
+        state = self._makeOne()
+        # no raise, no mutation
+        state(object(), request={}, transition='dummy', workflow=object())
+
+    def test___call___w_acl(self):
+        from pyramid.security import Allow
+        from pyramid.security import Deny
+        from pyramid.security import Everyone
+        from pyramid.security import ALL_PERMISSIONS
+        class _Content(object):
+            pass
+        content = _Content()
+        BEFORE = content.__acl__ = [(Deny, Everyone, ALL_PERMISSIONS)]
+        AFTER = [(Allow, Everyone, ALL_PERMISSIONS)]
+        state = self._makeOne(AFTER)
+        state(content, request={}, transition='dummy', workflow=object())
+        self.assertEqual(content.__acl__, AFTER)
 
 class DummyContent:
     pass

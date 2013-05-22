@@ -93,10 +93,10 @@ class UndoViews(object):
         uid = self.unauthenticated_userid(request)
 
         for tid in transaction_info:
-            tid = tid.split(' ', 1)
+            tid = tid.split(b' ', 1)
             if tid:
                 tids.append(decode64(tid[0]))
-                descriptions.append(tid[1])
+                descriptions.append(tid[1].decode('ascii', 'surrogateescape'))
 
         if tids:
             undid = "Undid: %s" % ' '.join(descriptions)
@@ -124,17 +124,17 @@ class UndoViews(object):
 
         for d in r:
             d['time'] = time.ctime(d['time'])[4:][:-5]
-            desc = d['description'] or ''
+            desc = d['description'] or b''
             tid = d['id']
             un = d['user_name']
             try:
                 un = objectmap.object_for(int(un.split()[-1].strip()))
-                d['user_name'] = un.__name__
+                d['user_name'] = un.__name__.encode('ascii', 'surrogateescape')
             except: # use original username if any trouble
                 pass
             if len(desc) > 80:
-                desc = desc[:76] + ' ...'
-            tid = "%s %s" % (encode64(tid), desc)
+                desc = desc[:76] + b' ...'
+            tid = encode64(tid) + b' ' + desc
             d['id'] = tid
 
         return r
@@ -187,10 +187,10 @@ def encode64(s, b2a=binascii.b2a_base64):
     a = r.append
     for i in range(0, len(s), 57):
         a(b2a(s[i:i+57])[:-1])
-    return ''.join(r)
+    return b''.join(r)
 
 
 def decode64(s, a2b=binascii.a2b_base64):
-    return a2b(s+'\n')
+    return a2b(s + b'\n')
 
 del binascii

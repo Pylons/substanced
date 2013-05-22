@@ -1,30 +1,26 @@
 import random
 
-from persistent import Persistent
-
-import colander
-
 import BTrees
-
-from zope.interface import implementer
-from zope.interface.interfaces import IInterface
-
+import colander
+from persistent import Persistent
 from pyramid.compat import is_nonstr_iter
 from pyramid.traversal import (
     resource_path_tuple,
     find_resource,
     )
+from zope.interface import implementer
+from zope.interface.interfaces import IInterface
 
 from ..event import subscribe_will_be_removed
-
+from ..interfaces import IObjectMap
 from ..util import (
     get_oid,
     get_factory_type,
     set_oid,
     find_objectmap,
     )
+from .._compat import INT_TYPES
 
-from ..interfaces import IObjectMap
 
 """
 Pathindex data structure of object map:
@@ -144,12 +140,14 @@ class ObjectMap(Persistent):
 
     def object_for(self, objectid_or_path_tuple, context=None):
         """ Returns an object or ``None`` given an object id or a path tuple"""
-        if isinstance(objectid_or_path_tuple, (int, long)):
+        if isinstance(objectid_or_path_tuple, INT_TYPES):
             path_tuple = self.objectid_to_path.get(objectid_or_path_tuple)
         elif isinstance(objectid_or_path_tuple, tuple):
             path_tuple = objectid_or_path_tuple
         else:
             raise ValueError('Unknown input %s' % (objectid_or_path_tuple,))
+        if path_tuple is None:
+            return None
         try:
             return self._find_resource(context, path_tuple)
         except KeyError:
@@ -219,7 +217,7 @@ class ObjectMap(Persistent):
         """
         if hasattr(obj_objectid_or_path_tuple, '__parent__'):
             path_tuple = resource_path_tuple(obj_objectid_or_path_tuple)
-        elif isinstance(obj_objectid_or_path_tuple, (int, long)):
+        elif isinstance(obj_objectid_or_path_tuple, INT_TYPES):
             path_tuple = self.objectid_to_path[obj_objectid_or_path_tuple]
         elif isinstance(obj_objectid_or_path_tuple, tuple):
             path_tuple = obj_objectid_or_path_tuple

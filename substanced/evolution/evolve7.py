@@ -1,7 +1,10 @@
-from substanced.objectmap import (
-    find_objectmap,
-    )
 import logging
+
+from pyramid.traversal import resource_path
+from ZODB.POSException import POSKeyError
+from ZODB.blob import Blob
+
+from substanced.objectmap import find_objectmap
 from substanced.file import File
 from substanced.util import (
     get_dotted_name,
@@ -9,10 +12,6 @@ from substanced.util import (
     )
 from substanced.file import magic
 
-from pyramid.traversal import resource_path
-
-from ZODB.POSException import POSKeyError
-from ZODB.blob import Blob
 
 _marker = object()
 

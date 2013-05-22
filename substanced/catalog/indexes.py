@@ -3,10 +3,6 @@ import deform.widget
 import re
 
 import BTrees
-from persistent import Persistent
-
-from zope.interface import implementer
-
 import hypatia.query
 import hypatia.interfaces
 import hypatia.field
@@ -14,7 +10,7 @@ import hypatia.facet
 import hypatia.keyword
 import hypatia.text
 import hypatia.util
-
+from persistent import Persistent
 from pyramid.compat import (
     url_unquote_text,
     is_nonstr_iter,
@@ -23,26 +19,31 @@ from pyramid.settings import asbool
 from pyramid.security import effective_principals
 from pyramid.traversal import resource_path_tuple
 from pyramid.interfaces import IRequest
+from zope.interface import implementer
 
 from ..content import content
+from .. import interfaces as sd_interfaces
+from ..interfaces import (
+    MODE_IMMEDIATE,
+    MODE_ATCOMMIT,
+    )
 from ..objectmap import find_objectmap
-from ..schema import Schema
 from ..property import PropertySheet
+from ..schema import Schema
 from ..stats import statsd_timer
+from .._compat import STRING_TYPES
+from .._compat import INT_TYPES
+from .._compat import u
+from ..util import get_principal_repr
 
 from .discriminators import dummy_discriminator
 from .util import oid_from_resource
 
 from . import deferred
 
-from .. import interfaces as sd_interfaces
-
-from ..interfaces import (
-    MODE_IMMEDIATE,
-    MODE_ATCOMMIT,
-    )
-
 PATH_WITH_OPTIONS = re.compile(r'\[(.+?)\](.+?)$')
+_BLANK = u('')
+_SLASH = u('/')
 
 _marker = object()
 
@@ -110,7 +111,7 @@ class SDIndex(object):
             self.add_action(action)
 
     def unindex_resource(self, resource_or_oid, action_mode=None):
-        if isinstance(resource_or_oid, (int, long)):
+        if isinstance(resource_or_oid, INT_TYPES):
             oid = resource_or_oid
         else:
             oid = oid_from_resource(resource_or_oid)
@@ -217,8 +218,8 @@ class PathIndex(SDIndex, hypatia.util.BaseIndexMixin, Persistent):
         if not path.startswith('/'):
             raise ValueError('Path must start with a slash')
         
-        tmp = filter(None, url_unquote_text(path).split(u'/'))
-        path_tuple = (u'',) + tuple(tmp)
+        tmp = [x for x in url_unquote_text(path).split(_SLASH) if x]
+        path_tuple = (_BLANK,) + tuple(tmp)
         return path_tuple, depth, include_origin
 
     def _parse_path(self, obj_or_path):
@@ -227,7 +228,7 @@ class PathIndex(SDIndex, hypatia.util.BaseIndexMixin, Persistent):
         path_tuple = obj_or_path
         if hasattr(obj_or_path, '__parent__'):
             path_tuple = resource_path_tuple(obj_or_path)
-        elif isinstance(obj_or_path, basestring):
+        elif isinstance(obj_or_path, STRING_TYPES):
             path_tuple, depth, include_origin = self._parse_path_str(
                 obj_or_path)
         elif not isinstance(obj_or_path, tuple):
@@ -398,6 +399,7 @@ class AllowedIndex(KeywordIndex):
             principals = effective_principals(principals)
         elif not is_nonstr_iter(principals):
             principals = (principals,)
+        principals = [ get_principal_repr(p) for p in principals ]
         values = [(principal, permission) for principal in principals]
         return hypatia.query.Any(self, values)
 
