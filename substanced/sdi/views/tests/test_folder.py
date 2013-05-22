@@ -283,7 +283,10 @@ class TestFolderContentsViews(unittest.TestCase):
              'width': 120,
              'formatterName': 'icon_label_url',
              'cssClass': 'cell-Name',
-             'id': 'Name'}
+             'id': 'Name',
+             'validatorName':'',
+             'editorName':'',
+             }
         )
 
     def test__column_headers_None(self):
@@ -1244,6 +1247,15 @@ class TestFolderContentsViews(unittest.TestCase):
             result,
             {'foo': 'bar', 'flash': 'STATUSMESSG<a>Undo</a>'}
             )
+
+class Test_slickgrid_config_js(unittest.TestCase):
+    def _callFUT(self, request):
+        from ..folder import slickgrid_config_js
+        return slickgrid_config_js(request)
+
+    def test_it(self):
+        response = self._callFUT(None)
+        self.assertEqual(response.content_type, 'application/javascript')
 
 
 class DummyContainer(object):

@@ -4,12 +4,10 @@ import re
 import colander
 
 from pyramid.httpexceptions import HTTPFound
+from pyramid.path import AssetResolver
+from pyramid.response import Response
 from pyramid.view import view_defaults
 from pyramid.security import has_permission
-from pyramid.view import (
-    render_view,
-    view_config,
-)
 
 from ...folder import FolderKeyError
 from ...form import FormView
@@ -30,18 +28,18 @@ from .. import (
     )
 
 _marker = object()
+resolver = AssetResolver()
 
-
-@view_config(
-    request_method='GET',
+@mgmt_view(
     permission='sdi.view',
-    name='head_snippet',
-    renderer='templates/contentsheadsnippet.pt',
-)
-def head_snippet(context, request):
-    return {
-    }
-
+    name='slickgrid-config.js',
+    )
+def slickgrid_config_js(request):
+    dscrptr = resolver.resolve('substanced.sdi:static/js/slickgrid-config.js')
+    return Response(
+        app_iter=dscrptr.stream(),
+        content_type='application/javascript'
+        )
 
 def rename_duplicated_resource(context, name):
     """Finds next available name inside container by appending
@@ -168,7 +166,7 @@ class FolderContentsViews(object):
             editor = column.get('editor', '')
             validator = column.get('validator', '')
             width = int(column.get('width', 120))
-            minWidth = int(column.get('minWidth', 120))
+            min_width = int(column.get('min_width', 120))
 
             css_class = column.get('css_class', '')
             css_name = name.replace(' ', '-')
@@ -185,7 +183,7 @@ class FolderContentsViews(object):
                 "name": name,
                 "field": name,
                 "width": width,
-                "minWidth": minWidth,
+                "minWidth": min_width,
                 "cssClass": css_class,
                 "sortable": sortable,
                 "formatterName": formatter,
@@ -623,9 +621,6 @@ class FolderContentsViews(object):
 
         addables = self.sdi_add_views(context, request)
 
-        # header snippet for slickgrid configuration
-        head_snippet = render_view(context, request, name='head_snippet')
-
         # construct the default slickgrid widget options
         slickgrid_options = dict(
             editable = False,
@@ -682,7 +677,6 @@ class FolderContentsViews(object):
             addables = addables,
             buttons = buttons,
             slickgrid_wrapper_options = slickgrid_wrapper_options,
-            head_snippet=head_snippet,
             )
 
         return result
