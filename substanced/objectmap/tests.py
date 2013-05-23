@@ -134,6 +134,10 @@ class TestObjectMap(unittest.TestCase):
         self.assertEqual(inst.object_for((_BLANK,), 'a'), a)
         self.assertEqual(L, ['a'])
 
+    def test_object_for_path_not_in_objectid_to_path(self):
+        inst = self._makeOne()
+        self.assertEqual(inst.object_for(1), None)
+
     def test__find_resource_no_context(self):
         self.config.testing_resources({'/a':1})
         inst = self._makeOne()
