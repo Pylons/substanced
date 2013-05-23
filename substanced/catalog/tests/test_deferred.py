@@ -1,4 +1,3 @@
-import functools
 import unittest
 from pyramid import testing
 
@@ -1179,7 +1178,7 @@ class DummyTransaction(object):
         self.beforecommit_fn = fn
         self.beforecommit_args = args
 
-from substanced.compat import total_ordering
+from substanced._compat import total_ordering
 
 @total_ordering
 class DummyAction(object):
