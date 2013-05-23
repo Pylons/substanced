@@ -530,8 +530,13 @@ class sdiapi(object):
 
     @reify
     def main_template(self):
-        return get_renderer(
-            'substanced.sdi.views:templates/master.pt').implementation()
+        return self.get_macro('substanced.sdi.views:templates/master.pt')
+
+    def get_macro(self, template, name=None):
+        impl = get_renderer(template).implementation()
+        if name is None:
+            return impl
+        return impl.macros[name]
 
     def get_flash_with_undo_snippet(self, msg, queue='', allow_duplicate=True):
         request = self.request

@@ -1093,6 +1093,20 @@ class Test_sdiapi(unittest.TestCase):
         inst.sdi_mgmt_views = lambda *arg, **kw: True
         self.assertEqual(inst.mgmt_views(resource), True)
 
+    def test_get_macro_without_name(self):
+        request = testing.DummyRequest()
+        inst = self._makeOne(request)
+        macro = inst.get_macro('substanced.sdi.views:templates/master.pt')
+        self.assertTrue(macro.macros)
+        
+    def test_get_macro_with_name(self):
+        request = testing.DummyRequest()
+        inst = self._makeOne(request)
+        macro = inst.get_macro(
+            'substanced.sdi.views:templates/master.pt', 'main')
+        self.assertTrue(macro.include)
+        
+
 
 class Test_mgmt_path(unittest.TestCase):
     def _callFUT(self, *arg, **kw):
