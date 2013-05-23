@@ -1323,16 +1323,6 @@ class TestFolderContentsViews(unittest.TestCase):
             {'foo': 'bar', 'flash': 'STATUSMESSG<a>Undo</a>'}
             )
 
-class Test_slickgrid_config_js(unittest.TestCase):
-    def _callFUT(self, request):
-        from ..folder import slickgrid_config_js
-        return slickgrid_config_js(request)
-
-    def test_it(self):
-        response = self._callFUT(None)
-        self.assertEqual(response.content_type, 'application/javascript')
-
-
 class DummyContainer(object):
     oid_store = {}
 

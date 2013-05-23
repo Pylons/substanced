@@ -4,8 +4,6 @@ import re
 import colander
 
 from pyramid.httpexceptions import HTTPFound
-from pyramid.path import AssetResolver
-from pyramid.response import Response
 from pyramid.view import view_defaults
 from pyramid.security import has_permission
 
@@ -29,19 +27,6 @@ from .. import (
     )
 
 _marker = object()
-resolver = AssetResolver()
-
-@mgmt_view(
-    permission='sdi.view',
-    name='slickgrid-config.js',
-    tab_condition=False,
-    )
-def slickgrid_config_js(request):
-    dscrptr = resolver.resolve('substanced.sdi:static/js/slickgrid-config.js')
-    return Response(
-        app_iter=dscrptr.stream(),
-        content_type='application/javascript'
-        )
 
 def rename_duplicated_resource(context, name):
     """Finds next available name inside container by appending
