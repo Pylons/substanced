@@ -611,12 +611,12 @@ class TestFolderContentsViews(unittest.TestCase):
         from substanced.interfaces import IFolder
         context = DummyFolder(__provides__=IFolder)
         request = self._makeRequest()
-        import collections
-        request.params = collections.OrderedDict([
+        request.params = DummyContent()
+        request.params.items = lambda *arg: [
                 ('filter', 'abc'),
                 ('filter.foo', 'def'),
                 ('filter.bar', 'ghi'),
-                ])
+                ]
         inst = self._makeOne(context, request)
         result = inst._filter_values()
         self.assertEqual(result, [
