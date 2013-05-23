@@ -521,7 +521,7 @@ class TestFolderContentsViews(unittest.TestCase):
              'id': 'fred'}
             )
 
-    def test__folder_contents_with_filter_text(self):
+    def test__folder_contents_with_global_filter_value(self):
         from substanced.interfaces import IFolder
         context = DummyFolder(__provides__=IFolder)
         request = self._makeRequest()
@@ -531,12 +531,12 @@ class TestFolderContentsViews(unittest.TestCase):
         context.__objectmap__ = DummyObjectMap(result)
         inst = self._makeOne(context, request)
         request.registry.content = DummyContent()
-        info = inst._folder_contents(filter_text='abc')
+        info = inst._folder_contents(filter_values=[('', 'abc')])
         length, records = info['length'], info['records']
         self.assertEqual(length, 1)
         self.assertEqual(len(records), 1)
 
-    def test__folder_contents_with_filter_text_multiple_words(self):
+    def test__folder_contents_with_global_filter_value_multiple_words(self):
         from substanced.interfaces import IFolder
         context = DummyFolder(__provides__=IFolder)
         request = self._makeRequest()
@@ -546,10 +546,84 @@ class TestFolderContentsViews(unittest.TestCase):
         context.__objectmap__ = DummyObjectMap(result)
         inst = self._makeOne(context, request)
         request.registry.content = DummyContent()
-        info = inst._folder_contents(filter_text='abc def')
+        info = inst._folder_contents(filter_values=[('', 'abc def')])
         length, records = info['length'], info['records']
         self.assertEqual(length, 1)
         self.assertEqual(len(records), 1)
+
+    def test__folder_contents_with_nonglobal_filter_value(self):
+        from substanced.interfaces import IFolder
+        context = DummyFolder(__provides__=IFolder)
+        request = self._makeRequest()
+        context['catalogs'] = self._makeCatalogs(oids=[1])
+        result = testing.DummyResource()
+        result.__name__ = 'fred'
+        context.__objectmap__ = DummyObjectMap(result)
+        inst = self._makeOne(context, request)
+        content = DummyContent()
+        def filt(ctx, val, q):
+            self.assertEqual(ctx, context)
+            self.assertEqual(val, 'woo')
+            self.assertEqual(q.__class__, DummyIndex)
+            return q
+        def cols(*arg):
+            return [{'name':'colname', 'filter':filt, 'value':'val'}]
+        content.columns = cols
+        request.registry.content = content
+        info = inst._folder_contents(filter_values=[('colname', 'woo')])
+        length, records = info['length'], info['records']
+        self.assertEqual(length, 1)
+        self.assertEqual(len(records), 1)
+        
+    def test__folder_contents_with_nonglobal__and_global_filter_values(self):
+        from substanced.interfaces import IFolder
+        context = DummyFolder(__provides__=IFolder)
+        request = self._makeRequest()
+        context['catalogs'] = self._makeCatalogs(oids=[1])
+        result = testing.DummyResource()
+        result.__name__ = 'fred'
+        context.__objectmap__ = DummyObjectMap(result)
+        inst = self._makeOne(context, request)
+        def gtf(ctx, val, q, sys):
+            self.assertEqual(val, 'boo')
+            q.gtf_called = True
+            return q
+        inst._global_text_filter = gtf
+        content = DummyContent()
+        def filt(ctx, val, q):
+            self.assertTrue(q.gtf_called)
+            self.assertEqual(ctx, context)
+            self.assertEqual(val, 'woo')
+            self.assertEqual(q.__class__, DummyIndex)
+            return q
+        def cols(*arg):
+            return [{'name':'colname', 'filter':filt, 'value':'val'}]
+        content.columns = cols
+        request.registry.content = content
+        info = inst._folder_contents(
+            filter_values=[('', 'boo'), ('colname', 'woo')]
+            )
+        length, records = info['length'], info['records']
+        self.assertEqual(length, 1)
+        self.assertEqual(len(records), 1)
+
+    def test__filter_values(self):
+        from substanced.interfaces import IFolder
+        context = DummyFolder(__provides__=IFolder)
+        request = self._makeRequest()
+        import collections
+        request.params = collections.OrderedDict([
+                ('filter', 'abc'),
+                ('filter.foo', 'def'),
+                ('filter.bar', 'ghi'),
+                ])
+        inst = self._makeOne(context, request)
+        result = inst._filter_values()
+        self.assertEqual(result, [
+                ('', 'abc'),
+                ('foo', 'def'),
+                ('bar', 'ghi'),
+                ])
         
     def test__folder_contents_folder_is_ordered(self):
         from substanced.interfaces import IFolder

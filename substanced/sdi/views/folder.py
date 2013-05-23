@@ -174,10 +174,10 @@ class FolderContentsViews(object):
             css_class = ("cell-%s %s" % (css_name, css_class)).strip()
 
             # XXX CM: Do we really need all of "id", "name", and "field" below?
-            # Ree
-            # XXX RB The names are a bit messed up, the way slickgrid defines them.
-            # We probably only need 2 of id, name, field (the field identifier called 'field', and the
-            # field label that is called 'name') and could generate the third one on the client.
+            # Ree XXX RB The names are a bit messed up, the way slickgrid
+            # defines them.  We probably only need 2 of id, name, field (the
+            # field identifier called 'field', and the field label that is
+            # called 'name') and could generate the third one on the client.
 
             headers.append({
                 "id": name,
@@ -234,13 +234,34 @@ class FolderContentsViews(object):
             'sorter':sorter,
             }
    
+    def _global_text_filter(self, context, filter_text, q, system_catalog):
+        filter_text_globs = [x for x in filter_text.split() if x]
+        if filter_text_globs:
+            text = system_catalog['text']
+            for filter_glob in filter_text_globs:
+                if not filter_glob.endswith('*'):
+                    filter_glob = filter_glob + '*' # glob (prefix) search
+                q = q & text.eq(filter_glob)
+        return q
+    
+    def _filter_values(self):
+        request = self.request
+        filter_values = []
+        for k, v in request.params.items():
+            if k.startswith('filter'):
+                name = k[6:]
+                if name.startswith('.'):
+                    name = name[1:]
+                filter_values.append((name, v))
+        return filter_values
+    
     def _folder_contents(
         self,
         start=None,
         end=None,
         reverse=False,
         sort_column_name=None,
-        filter_text=None,
+        filter_values=(),
         ):
 
         """
@@ -485,7 +506,7 @@ class FolderContentsViews(object):
                   )
               config.scan()
 
-        XXX TODO Document ``sort_column_name``, ``reverse``, ``filter_text``.
+        XXX TODO Document ``sort_column_name``, ``reverse``, ``filter_values``
         """
         folder = self.context
         request = self.request
@@ -504,22 +525,23 @@ class FolderContentsViews(object):
         q = ( path.eq(folder, depth=1, include_origin=False) &
               allowed.allows(request, 'sdi.view') )
 
-        if filter_text:
-            filter_text_globs = [x for x in filter_text.split() if x]
-            if filter_text_globs:
-                text = system_catalog['text']
-                for filter_glob in filter_text_globs:
-                    if not filter_glob.endswith('*'):
-                        filter_glob = filter_glob + '*' # glob (prefix) search
-                    q = q & text.eq(filter_glob)
+        columns = self._columns()
+        
+        for name, value in filter_values:
+            if name:
+                for col in columns:
+                    if col['name'] == name:
+                        filt = col.get('filter')
+                        if filt is not None:
+                            q = filt(folder, value, q)
+            else:
+                q = self._global_text_filter(folder, value, q, system_catalog)
 
         resultset = q.execute()
         # NB: must take snapshot of folder_length *before* limiting the length
         # of the resultset via any search
         folder_length = len(resultset)
 
-        columns = self._columns()
-        
         sort_info = self._sort_info(
             columns,
             sort_column_name=sort_column_name,
@@ -698,7 +720,7 @@ class FolderContentsViews(object):
             end = int(request.params.get('to'))
             sort_column_name = request.params.get('sortCol')
             sort_dir = request.params.get('sortDir') in ('true', 'True')
-            filter_text = request.params.get('filter', '').strip()
+            filter_values = self._filter_values()
 
             reverse = (not sort_dir)
 
@@ -706,7 +728,7 @@ class FolderContentsViews(object):
                 start,
                 end,
                 reverse=reverse,
-                filter_text=filter_text,
+                filter_values=filter_values,
                 sort_column_name=sort_column_name,
                 )
 
@@ -977,3 +999,4 @@ class FolderContentsViews(object):
         # Generate content update as requested by the client.
         results.update(self._get_json())
         return results
+
