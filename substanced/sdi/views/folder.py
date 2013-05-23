@@ -34,6 +34,7 @@ resolver = AssetResolver()
 @mgmt_view(
     permission='sdi.view',
     name='slickgrid-config.js',
+    tab_condition=False,
     )
 def slickgrid_config_js(request):
     dscrptr = resolver.resolve('substanced.sdi:static/js/slickgrid-config.js')
