@@ -1,13 +1,25 @@
-<div metal:use-macro="request.sdiapi.main_template">
+<div metal:define-macro="main"
+     metal:extend-macro="request.sdiapi.main_template">
 
-  <metal:head-more fill-slot="head-more">
-    <!-- slickgrid -->
-    <script src="${request.static_url('substanced.sdi:static/js/slickgrid.upstream.js')}" type="text/javascript"></script>
-    <script src="${request.static_url('substanced.sdi:static/js/sdi.grid.remotemodel.js')}" type="text/javascript"></script>
-    <script src="${request.mgmt_url(context, 'slickgrid-config.js')}" type="text/javascript"></script>
-    <link href="${request.static_url('substanced.sdi:static/css/slick.grid.upstream.css')}" rel="stylesheet" />
-    <link href="${request.static_url('substanced.sdi:static/css/sdi_slickgrid.css')}" rel="stylesheet" />
-  </metal:head-more>
+  <metal:slot fill-slot="head-more">
+    <metal:slot define-slot="head-more">
+      <!-- slickgrid -->
+      <script src="${request.static_url('substanced.sdi:static/js/slickgrid.upstream.js')}" type="text/javascript"></script>
+      <script src="${request.static_url('substanced.sdi:static/js/sdi.grid.remotemodel.js')}" type="text/javascript"></script>
+      <script src="${request.static_url('substanced.sdi:static/js/slickgrid-config.js')}" type="text/javascript"></script>
+      <link href="${request.static_url('substanced.sdi:static/css/slick.grid.upstream.css')}" rel="stylesheet" />
+      <link href="${request.static_url('substanced.sdi:static/css/sdi_slickgrid.css')}" rel="stylesheet" />
+    </metal:slot>
+  </metal:slot>
+
+  <!--!
+      you can use this template as a macro to replace slickgrid config, e.g.
+      <div metal:use-macro="request.sdiapi.get_macro('substanced.sdi.views:templates/contents.pt', 'main')">
+        <div metal:fill-slot="head-more">
+          ... replace slickgrid css and js ...
+        </div>
+      </div>
+   -->
 
   <div metal:fill-slot="main">
     <div class="container-fluid"
