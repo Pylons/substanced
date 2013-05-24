@@ -584,7 +584,7 @@ class TestFolderContentsViews(unittest.TestCase):
         result.__name__ = 'fred'
         context.__objectmap__ = DummyObjectMap(result)
         inst = self._makeOne(context, request)
-        def gtf(ctx, val, q, sys):
+        def gtf(ctx, val, q):
             self.assertEqual(val, 'boo')
             q.gtf_called = True
             return q

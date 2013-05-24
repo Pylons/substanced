@@ -3,6 +3,7 @@ import re
 
 import colander
 
+from pyramid.decorator import reify
 from pyramid.httpexceptions import HTTPFound
 from pyramid.path import AssetResolver
 from pyramid.response import Response
@@ -235,7 +236,8 @@ class FolderContentsViews(object):
             'sorter':sorter,
             }
    
-    def _global_text_filter(self, context, filter_text, q, system_catalog):
+    def _global_text_filter(self, context, filter_text, q):
+        system_catalog = self.system_catalog
         filter_text_globs = [x for x in filter_text.split() if x]
         if filter_text_globs:
             text = system_catalog['text']
@@ -255,6 +257,18 @@ class FolderContentsViews(object):
                     name = name[1:]
                 filter_values.append((name, v))
         return filter_values
+
+    @reify
+    def system_catalog(self):
+        return find_catalog(self.context, 'system')
+
+    def get_catalog_query(self):
+        system_catalog = self.system_catalog
+        path = system_catalog['path']
+        allowed = system_catalog['allowed']
+        q = ( path.eq(self.context, depth=1, include_origin=False) &
+              allowed.allows(self.request, 'sdi.view') )
+        return q
     
     def _folder_contents(
         self,
@@ -511,11 +525,7 @@ class FolderContentsViews(object):
         """
         folder = self.context
         request = self.request
-        system_catalog = find_catalog(folder, 'system')
         objectmap = find_objectmap(folder)
-
-        path = system_catalog['path']
-        allowed = system_catalog['allowed']
 
         if start is None:
             start = 0
@@ -523,8 +533,7 @@ class FolderContentsViews(object):
         if end is None:
             end = start + 40
 
-        q = ( path.eq(folder, depth=1, include_origin=False) &
-              allowed.allows(request, 'sdi.view') )
+        q = self.get_catalog_query()
 
         columns = self._columns()
         
@@ -536,7 +545,7 @@ class FolderContentsViews(object):
                         if filt is not None:
                             q = filt(folder, value, q)
             else:
-                q = self._global_text_filter(folder, value, q, system_catalog)
+                q = self._global_text_filter(folder, value, q)
 
         resultset = q.execute()
         # NB: must take snapshot of folder_length *before* limiting the length
