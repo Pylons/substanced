@@ -143,9 +143,9 @@
                         // XXX bug: global selection will select all items that
                         // are not present.
                         disabled[i] = item.disable;
-			if (i == 1) {
-			    disable_multiple = true;
-			}
+                        if (i == 1) {
+                           disable_multiple = true;
+                        }
                         if (!item.deletable) {
                             disable_delete = true;
                             break;
