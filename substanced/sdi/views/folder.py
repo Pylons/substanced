@@ -783,7 +783,6 @@ class FolderContentsViews(object):
     @mgmt_view(
         request_method='POST',
         request_param="form.rename_finish",
-        name="rename",
         permission='sdi.manage-contents',
         tab_condition=False,
         check_csrf=True
