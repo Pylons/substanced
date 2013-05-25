@@ -6,7 +6,6 @@ import colander
 from pyramid.decorator import reify
 from pyramid.httpexceptions import HTTPFound
 from pyramid.view import view_defaults
-from pyramid.security import has_permission
 
 from ...folder import FolderKeyError
 from ...form import FormView
