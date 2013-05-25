@@ -135,7 +135,6 @@
                 var data = grid.getData();
                 var disabled = [];
                 if (selRows.length) {
-                    var disable_delete = false;
                     var disable_multiple = false;
                     var i;
                     for (var i = 0, l = selRows.length; i < l; i++) {
@@ -146,12 +145,7 @@
                         if (i == 1) {
                            disable_multiple = true;
                         }
-                        if (!item.deletable) {
-                            disable_delete = true;
-                            break;
-                        }
                     }
-                    $('.btn-sdi-del').attr('disabled', disable_delete);
                     $('.btn-sdi-sel').attr('disabled', false);
                     $('.btn-sdi-one').attr('disabled', disable_multiple);
                     for (var i = 0, l = selRows.length; i < l; i++) {
@@ -162,7 +156,6 @@
                         }
                     }
                 } else {
-                    $('.btn-sdi-del').attr('disabled', true);
                     $('.btn-sdi-sel').attr('disabled', true);
                     $('.btn-sdi-one').attr('disabled', true);
                 }
@@ -191,4 +184,3 @@
     </div>
   </div>
 </div>
-

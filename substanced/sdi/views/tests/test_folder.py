@@ -395,7 +395,6 @@ class TestFolderContentsViews(unittest.TestCase):
         self.assertEqual(length, 1)
         self.assertEqual(len(records), 1)
         item = records[0]
-        self.assertTrue(item['deletable'])
         self.assertEqual(item['name'], 'fred')
         self.assertEqual(item['id'], 'fred')
         self.assertEqual(item['Name_url'], '/mgmt_path')
@@ -416,59 +415,10 @@ class TestFolderContentsViews(unittest.TestCase):
         self.assertEqual(length, 1)
         self.assertEqual(len(records), 1)
         item = records[0]
-        self.assertTrue(item['deletable'])
         self.assertEqual(item['name'], 'fred')
         self.assertEqual(item['id'], 'fred')
         self.assertEqual(item['Name_url'], '/mgmt_path')
         self.assertEqual(item['Name_icon'], 'anicon')
-
-    def test__folder_contents_deletable_callable(self):
-        from substanced.interfaces import IFolder
-        context = DummyFolder(__provides__=IFolder)
-        request = self._makeRequest()
-        context['catalogs'] = self._makeCatalogs(oids=[1])
-        result = testing.DummyResource()
-        result.__name__ = 'fred'
-        context.__objectmap__ = DummyObjectMap(result)
-        inst = self._makeOne(context, request)
-        def deletable(subobject, _request):
-            self.assertEqual(subobject, result)
-            self.assertEqual(_request, request)
-            return False
-        result.__sdi_deletable__ = deletable
-        request.registry.content = DummyContent()
-        info = inst._folder_contents()
-        length, records = info['length'], info['records']
-        self.assertEqual(length, 1)
-        self.assertEqual(len(records), 1)
-        item = records[0]
-        self.assertFalse(item['deletable'])
-        self.assertEqual(item['name'], 'fred')
-        self.assertEqual(item['id'], 'fred')
-        self.assertEqual(item['Name_url'], '/mgmt_path')
-        self.assertEqual(item['Name_icon'], None)
-
-    def test__folder_contents_deletable_boolean(self):
-        from substanced.interfaces import IFolder
-        context = DummyFolder(__provides__=IFolder)
-        request = self._makeRequest()
-        context['catalogs'] = self._makeCatalogs(oids=[1])
-        result = testing.DummyResource()
-        result.__name__ = 'fred'
-        context.__objectmap__ = DummyObjectMap(result)
-        inst = self._makeOne(context, request)
-        result.__sdi_deletable__ = False
-        request.registry.content = DummyContent()
-        info = inst._folder_contents()
-        length, records = info['length'], info['records']
-        self.assertEqual(length, 1)
-        self.assertEqual(len(records), 1)
-        item = records[0]
-        self.assertFalse(item['deletable'])
-        self.assertEqual(item['name'], 'fred')
-        self.assertEqual(item['id'], 'fred')
-        self.assertEqual(item['Name_url'], '/mgmt_path')
-        self.assertEqual(item['Name_icon'], None)
 
     def test__folder_contents_columns_callable(self):
         from substanced.interfaces import IFolder
@@ -515,8 +465,7 @@ class TestFolderContentsViews(unittest.TestCase):
         item = records[0]
         self.assertEqual(
             item,
-            {'deletable': True,
-             'name': 'fred',
+            {'name': 'fred',
              'disable': [],
              'id': 'fred'}
             )
@@ -650,7 +599,6 @@ class TestFolderContentsViews(unittest.TestCase):
             'columns':[],
             'records': [{
                     'name': 'the_name',
-                    'deletable': True,
                     'name_url': 'http://foo.bar',
                     'id': 'the_name',
                     'name_icon': 'the_icon',
@@ -687,7 +635,6 @@ class TestFolderContentsViews(unittest.TestCase):
         self.assertEqual(len(records), 1)
         self.assertEqual(records[0], {
             'name': 'the_name',
-            'deletable': True,
             'name_url': 'http://foo.bar',
             'id': 'the_name',
             'name_icon': 'the_icon',
@@ -715,7 +662,6 @@ class TestFolderContentsViews(unittest.TestCase):
                     'name': 'the_name',
                     'col1': 'value4col1',
                     'col2': 'value4col2',
-                    'deletable': True,
                     'name_url': 'http://foo.bar',
                     'id': 'the_name',
                     'name_icon': 'the_icon',
@@ -755,7 +701,6 @@ class TestFolderContentsViews(unittest.TestCase):
             'name': 'the_name',
             'col1': 'value4col1',
             'col2': 'value4col2',
-            'deletable': True,
             'name_url': 'http://foo.bar',
             'id': 'the_name',
             'name_icon': 'the_icon',
@@ -772,7 +717,6 @@ class TestFolderContentsViews(unittest.TestCase):
             'sort_column_name':None,
             'records': [{
                     'name': 'the_name',
-                    'deletable': True,
                     'name_url': 'http://foo.bar',
                     'id': 'the_name',
                     'name_icon': 'the_icon',

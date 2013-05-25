@@ -706,6 +706,13 @@ class Test_default_sdi_columns(unittest.TestCase):
            )
 
 class Test_default_sdi_buttons(unittest.TestCase):
+    def setUp(self):
+        self.config = testing.setUp()
+        self.config.testing_securitypolicy(permissive=True)
+
+    def tearDown(self):
+        testing.tearDown()
+        
     def _callFUT(self, context, request):
         from .. import default_sdi_buttons
         return default_sdi_buttons(context, request)
@@ -715,8 +722,8 @@ class Test_default_sdi_buttons(unittest.TestCase):
         context = testing.DummyResource()
         result = self._callFUT(context, request)
         self.assertEqual(
-            result,
-            [{
+            result[0],
+            {
               'type': 'group', 
               'buttons': 
                   [{'text': 'Rename', 
@@ -739,19 +746,64 @@ class Test_default_sdi_buttons(unittest.TestCase):
                     'id': 'duplicate', 
                     'value': 'duplicate', 
                     'name': 'form.duplicate'}]
-                }, 
-             {
-              'type':'group',
-              'buttons': 
-                  [{'text': 'Delete', 
-                    'class': 'btn-danger btn-sdi-del', 
-                    'id': 'delete', 
-                    'value': 'delete', 
-                    'name': 'form.delete'}]
-               },
-            ])
+              }
+            )
+        self.assertEqual(result[1]['type'], 'group')
+        buttons = result[1]['buttons']
+        self.assertEqual(len(buttons), 1)
+        delete_button = buttons[0]
+        self.assertEqual(delete_button['text'], 'Delete')
+        self.assertEqual(delete_button['class'], 'btn-danger btn-sdi-sel')
+        self.assertEqual(delete_button['name'], 'form.delete')
+        self.assertEqual(delete_button['value'], 'delete')
+        self.assertEqual(delete_button['id'], 'delete')
+        self.assertTrue(delete_button['enabled_for'])
 
+    def test_delete_enabled_for_no_sdi_deletable_attr_can_manage(self):
+        request = testing.DummyRequest()
+        context = testing.DummyResource()
+        result = self._callFUT(context, request)
+        delete_button = result[1]['buttons'][0]
+        delete_enabled_for = delete_button['enabled_for']
+        result = delete_enabled_for(context, context, request)
+        self.assertTrue(result)
 
+    def test_delete_enabled_for_no_sdi_deletable_attr_cannot_manage(self):
+        self.config.testing_securitypolicy(permissive=False)
+        request = testing.DummyRequest()
+        context = testing.DummyResource()
+        result = self._callFUT(context, request)
+        delete_button = result[1]['buttons'][0]
+        delete_enabled_for = delete_button['enabled_for']
+        result = delete_enabled_for(context, context, request)
+        self.assertFalse(result)
+        
+    def test_delete_enabled_for_callable_sdi_deletable_attr(self):
+        request = testing.DummyRequest()
+        context = testing.DummyResource()
+        subobject = testing.DummyResource()
+        def deletable(_subobject, _request):
+            self.assertEqual(_subobject, subobject)
+            self.assertEqual(_request, request)
+            return False
+        subobject.__sdi_deletable__ = deletable
+        result = self._callFUT(context, request)
+        delete_button = result[1]['buttons'][0]
+        delete_enabled_for = delete_button['enabled_for']
+        result = delete_enabled_for(context, subobject, request)
+        self.assertFalse(result)
+
+    def test_delete_enabled_for_boolean_sdi_deletable_attr(self):
+        request = testing.DummyRequest()
+        context = testing.DummyResource()
+        subobject = testing.DummyResource()
+        subobject.__sdi_deletable__ = False
+        result = self._callFUT(context, request)
+        delete_button = result[1]['buttons'][0]
+        delete_enabled_for = delete_button['enabled_for']
+        result = delete_enabled_for(context, subobject, request)
+        self.assertFalse(result)
+        
     def test_it_tocopy(self):
         request = testing.DummyRequest()
         context = testing.DummyResource()

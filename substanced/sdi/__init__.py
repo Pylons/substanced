@@ -435,12 +435,45 @@ def default_sdi_buttons(folder, request):
 
         buttons.append({'type': 'group', 'buttons':main_buttons})
 
+        can_manage = bool(has_permission('sdi.manage-contents', folder,request))
+        
+        def delete_enabled_for(folder, resource, request):
+            """
+            This function considers a subobject 'deletable' if the user has the
+            ``sdi.manage-contents`` permission on ``folder`` or if the
+            subobject has a ``__sdi_deletable__`` attribute which resolves to a
+            boolean ``True`` value.
+
+            This function honors one subobject hook:: ``__sdi_deletable__``.
+            If a subobject has an attribute named ``__sdi_deletable__``, it is
+            expected to be either a boolean or a callable.  If
+            ``__sdi_deletable__`` is a boolean, the value is used verbatim.  If
+            ``__sdi_deletable__`` is a callable, the callable is called with
+            two positional arguments: the subobject and the request; the result
+            is expected to be a boolean.  If a subobject has an
+            ``__sdi_deletable__`` attribute, and its resolved value is not
+            ``None``, the delete button will be off if it's a boolean False.
+            If ``__sdi_deletable__`` does not exist on a subobject or resolves
+            to ``None``, the delete button will be turned off if current user
+            does not have the ``sdi.manage-contents`` permission on the
+            ``folder``.
+            """
+            deletable = getattr(resource, '__sdi_deletable__', None)
+            if deletable is not None:
+                if callable(deletable):
+                    deletable = deletable(resource, request)
+            if deletable is None:
+                deletable = can_manage
+            deletable = bool(deletable) # cast return/attr value to bool
+            return deletable
+
         delete_buttons = [
               {'id': 'delete',
                'name': 'form.delete',
-               'class': 'btn-danger btn-sdi-del',
+               'class': 'btn-danger btn-sdi-sel',
+               'enabled_for':delete_enabled_for,
                'value': 'delete',
-               'text': 'Delete'}
+               'text': 'Delete'},
                ]
 
         buttons.append({'type': 'group', 'buttons':delete_buttons})

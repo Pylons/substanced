@@ -279,10 +279,6 @@ class FolderContentsViews(object):
 
           The name of the subobject.
 
-        ``deletable``
-
-          A boolean indicating whether or not this subobject is deletable.
-
         ``url``
 
           The URL to the subobject.  This will be
@@ -293,26 +289,6 @@ class FolderContentsViews(object):
           The column values obtained from this subobject's attributes, as
           defined by the ``columns`` content-type hook (or the default columns,
           if no hook was supplied).
-
-        This function considers a subobject:
-
-        - 'deletable' if the user has the ``sdi.manage-contents`` permission on
-          ``folder`` or if the subobject has a ``__sdi_deletable__`` attribute
-          which resolves to a boolean ``True`` value.
-
-        This function honors one subobject hook:: ``__sdi_deletable__``.  If a
-        subobject has an attribute named ``__sdi_deletable__``, it is expected
-        to be either a boolean or a callable.  If ``__sdi_deletable__`` is a
-        boolean, the value is used verbatim.  If ``__sdi_deletable__`` is a
-        callable, the callable is called with two positional arguments: the
-        subobject and the request; the result is expected to be a boolean.  If
-        a subobject has an ``__sdi_deletable__`` attribute, and its resolved
-        value is not ``None``, the value will used as the ``deletable`` value
-        returned in the dictionary for the subobject.  If ``__sdi_deletable__``
-        does not exist on a subobject or resolves to ``None``, the
-        ``deletable`` value will be the default: a boolean indicating whether
-        the current user has the ``sdi.manage-contents`` permission on the
-        ``folder``.
 
         This function honors three content type hooks: ``icon``, ``buttons``,
         and ``columns``.
@@ -550,8 +526,6 @@ class FolderContentsViews(object):
 
         ids = resultset.ids
 
-        can_manage = bool(has_permission('sdi.manage-contents', folder,request))
-
         custom_columns = request.registry.content.metadata(
             folder,
             'columns',
@@ -565,26 +539,15 @@ class FolderContentsViews(object):
         for oid in itertools.islice(ids, start, end):
             resource = objectmap.object_for(oid)
             name = getattr(resource, '__name__', '')
-            # XXX CM: computation of deletable here should probably attached to
-            # the delete button as an ``enabled_for`` instead of being treated
-            # specially.
-            deletable = getattr(resource, '__sdi_deletable__', None)
-            if deletable is not None:
-                if callable(deletable):
-                    deletable = deletable(resource, request)
-            if deletable is None:
-                deletable = can_manage
-            deletable = bool(deletable) # cast return/attr value to bool
             icon = request.registry.content.metadata(resource, 'icon')
             if callable(icon):
                 icon = icon(resource, request)
             url = request.sdiapi.mgmt_path(resource, '@@manage_main')
             record = dict(
-                id=name,
-                # Use the unique name, as an id.  (A unique row id is needed
+                # Use the unique name as an id.  (A unique row id is needed
                 # for slickgrid.  In addition, we will pass back this same id
                 # from the client, when a row is selected for an operation.)
-                deletable=deletable,
+                id=name,
                 name=name,
             )
             columns = default_sdi_columns(folder, resource, request)
