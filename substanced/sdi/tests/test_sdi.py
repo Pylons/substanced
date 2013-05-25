@@ -721,34 +721,17 @@ class Test_default_sdi_buttons(unittest.TestCase):
         request = testing.DummyRequest()
         context = testing.DummyResource()
         result = self._callFUT(context, request)
-        self.assertEqual(
-            result[0],
-            {
-              'type': 'group', 
-              'buttons': 
-                  [{'text': 'Rename', 
-                    'class': 'btn-sdi-del', 
-                    'id': 'rename', 
-                    'value': 'rename', 
-                    'name': 'form.rename'}, 
-                   {'text': 'Copy',
-                    'class': 'btn-sdi-sel', 
-                    'id': 'copy', 
-                    'value': 'copy', 
-                    'name': 'form.copy'}, 
-                   {'text': 'Move', 
-                    'class': 'btn-sdi-del', 
-                    'id': 'move', 
-                    'value': 'move', 
-                    'name': 'form.move'}, 
-                   {'text': 'Duplicate', 
-                    'class': 'btn-sdi-sel', 
-                    'id': 'duplicate', 
-                    'value': 'duplicate', 
-                    'name': 'form.duplicate'}]
-              }
-            )
+        self.assertEqual(len(result), 2)
+        main_buttons = result[0]
+        self.assertEqual(main_buttons['type'], 'group')
+        buttons = main_buttons['buttons']
+        self.assertEqual(len(buttons), 4)
+        self.assertEqual(buttons[0]['text'], 'Rename')
+        self.assertEqual(buttons[1]['text'], 'Copy')
+        self.assertEqual(buttons[2]['text'], 'Move')
+        self.assertEqual(buttons[3]['text'], 'Duplicate')
         self.assertEqual(result[1]['type'], 'group')
+
         buttons = result[1]['buttons']
         self.assertEqual(len(buttons), 1)
         delete_button = buttons[0]

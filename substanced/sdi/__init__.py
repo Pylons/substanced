@@ -410,31 +410,6 @@ def default_sdi_buttons(folder, request):
 
     if not 'tomove' in request.session and not 'tocopy' in request.session:
 
-        main_buttons = [
-             {'id': 'rename',
-              'name': 'form.rename',
-              'class': 'btn-sdi-del',
-              'value': 'rename',
-              'text': 'Rename'},
-              {'id': 'copy',
-              'name': 'form.copy',
-              'class': 'btn-sdi-sel',
-              'value': 'copy',
-              'text': 'Copy'},
-              {'id': 'move',
-              'name': 'form.move',
-              'class': 'btn-sdi-del',
-              'value': 'move',
-              'text': 'Move'},
-              {'id': 'duplicate',
-              'name': 'form.duplicate',
-              'class': 'btn-sdi-sel',
-              'value': 'duplicate',
-              'text': 'Duplicate'}
-              ]
-
-        buttons.append({'type': 'group', 'buttons':main_buttons})
-
         can_manage = bool(has_permission('sdi.manage-contents', folder,request))
         
         def delete_enabled_for(folder, resource, request):
@@ -466,6 +441,33 @@ def default_sdi_buttons(folder, request):
                 deletable = can_manage
             deletable = bool(deletable) # cast return/attr value to bool
             return deletable
+
+        main_buttons = [
+             {'id': 'rename',
+              'name': 'form.rename',
+              'class': 'btn-sdi-sel',
+              'enabled_for':delete_enabled_for,
+              'value': 'rename',
+              'text': 'Rename'},
+              {'id': 'copy',
+              'name': 'form.copy',
+              'class': 'btn-sdi-sel',
+              'value': 'copy',
+              'text': 'Copy'},
+              {'id': 'move',
+              'name': 'form.move',
+              'class': 'btn-sdi-sel',
+              'enabled_for':delete_enabled_for,
+              'value': 'move',
+              'text': 'Move'},
+              {'id': 'duplicate',
+              'name': 'form.duplicate',
+              'class': 'btn-sdi-sel',
+              'value': 'duplicate',
+              'text': 'Duplicate'}
+              ]
+
+        buttons.append({'type': 'group', 'buttons':main_buttons})
 
         delete_buttons = [
               {'id': 'delete',
