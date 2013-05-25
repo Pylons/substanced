@@ -543,6 +543,9 @@ class FolderContentsViews(object):
             if callable(icon):
                 icon = icon(resource, request)
             url = request.sdiapi.mgmt_path(resource, '@@manage_main')
+            # XXX once we're able to insert raw html, we should have the "name"
+            # column compute its own icon and url instead of computing both
+            # here and injecting them into the record specially
             record = dict(
                 # Use the unique name as an id.  (A unique row id is needed
                 # for slickgrid.  In addition, we will pass back this same id
@@ -559,7 +562,7 @@ class FolderContentsViews(object):
                 # XXX CM: adding arbitrary keys to the record based on
                 # configuration input is a bad idea here because we can't
                 # guarantee a column name won't override the "reserved" names
-                # (name, deletable, id) added to the record above.  Ree?
+                # (name, id) added to the record above.  Ree?
                 cname = column['name']
                 record[cname] = column['value']
                 # XXX CM: we should document the fact that each column can have
