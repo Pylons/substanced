@@ -53,11 +53,12 @@
             icon_label_url: function (row, cell, value, columnDef, dataContext) {
                 // an icon and a label. If the url is specified, the label will be a link.
                 var fieldName = columnDef.field;
-                var iconName = dataContext[fieldName + '_icon'] || '';
-                var labelUrl = dataContext[fieldName + '_url'];
+                var iconName = value.icon || '';
+                var labelUrl = value.url;
+                var label = value.name;
                 var result = '<i class="' + iconName + '"> </i> ';
                 if (labelUrl) {
-                    result += '<a href="' + labelUrl + '">' + value + '</a>';
+                    result += '<a href="' + labelUrl + '">' + label + '</a>';
                 } else {
                     result += value;
                 }
