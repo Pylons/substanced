@@ -538,13 +538,6 @@ class FolderContentsViews(object):
         for oid in itertools.islice(ids, start, end):
             resource = objectmap.object_for(oid)
             name = getattr(resource, '__name__', '')
-            icon = request.registry.content.metadata(resource, 'icon')
-            if callable(icon):
-                icon = icon(resource, request)
-            url = request.sdiapi.mgmt_path(resource, '@@manage_main')
-            # XXX once we're able to insert raw html, we should have the "name"
-            # column compute its own icon and url instead of computing both
-            # here and injecting them into the record specially
             record = dict(
                 # Use the unique name as an id.  (A unique row id is needed
                 # for slickgrid.  In addition, we will pass back this same id
@@ -564,13 +557,6 @@ class FolderContentsViews(object):
                 # (name, id) added to the record above.  Ree?
                 cname = column['name']
                 record[cname] = column['value']
-                # XXX CM: we should document the fact that each column can have
-                # its own URL/icon if we keep this; although we should probably
-                # not send them if the formatter doesn't want them.  Need a
-                # better formatter abstraction here, I think;
-                # maybe server-side?  Opinions, Ree?
-                record[cname+'_icon'] = column.get('icon', icon)
-                record[cname+'_url'] = column.get('url', url)
             disable = []
             for button_group in buttons:
                 for button in button_group['buttons']:

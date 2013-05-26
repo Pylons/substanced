@@ -195,17 +195,17 @@ class TestFolderContentsViews(unittest.TestCase):
         request = self._makeRequest()
         inst = self._makeOne(context, request)
         result = inst._columns()
-        self.assertEqual(len(result), 1)
+        self.assertEqual(len(result), 2)
         
     def test__columns_custom_columns_exists(self):
         context = testing.DummyResource()
         def columns(context, subobject, request, columns):
-            self.assertEqual(len(columns), 1)
-            return ['abc', '123']
+            self.assertEqual(len(columns), 2)
+            return ['abc', '123', 'def']
         request = self._makeRequest(columns=columns)
         inst = self._makeOne(context, request)
         result = inst._columns()
-        self.assertEqual(len(result), 2)
+        self.assertEqual(len(result), 3)
 
     def test__column_headers_for_non_sortable_columns(self):
         context = testing.DummyResource(is_ordered=lambda: False)
@@ -376,50 +376,6 @@ class TestFolderContentsViews(unittest.TestCase):
         self.assertEqual(result['sorter'], None)
         self.assertEqual(result['column_name'], 'col3')
         
-    def test__folder_contents_computable_icon(self):
-        from substanced.interfaces import IFolder
-        context = DummyFolder(__provides__=IFolder)
-        request = self._makeRequest()
-        context['catalogs'] = self._makeCatalogs(oids=[1])
-        result = testing.DummyResource()
-        result.__name__ = 'fred'
-        context.__objectmap__ = DummyObjectMap(result)
-        inst = self._makeOne(context, request)
-        def icon(subobject, _request):
-            self.assertEqual(subobject, result)
-            self.assertEqual(_request, request)
-            return 'anicon'
-        request.registry.content = DummyContent(icon=icon)
-        info = inst._folder_contents()
-        length, records = info['length'], info['records']
-        self.assertEqual(length, 1)
-        self.assertEqual(len(records), 1)
-        item = records[0]
-        self.assertEqual(item['name'], 'fred')
-        self.assertEqual(item['id'], 'fred')
-        self.assertEqual(item['Name_url'], '/mgmt_path')
-        self.assertEqual(item['Name_icon'], 'anicon')
-
-    def test__folder_contents_literal_icon(self):
-        from substanced.interfaces import IFolder
-        context = DummyFolder(__provides__=IFolder)
-        request = self._makeRequest()
-        context['catalogs'] = self._makeCatalogs(oids=[1])
-        result = testing.DummyResource()
-        result.__name__ = 'fred'
-        context.__objectmap__ = DummyObjectMap(result)
-        inst = self._makeOne(context, request)
-        request.registry.content = DummyContent(icon='anicon')
-        info = inst._folder_contents()
-        length, records = info['length'], info['records']
-        self.assertEqual(length, 1)
-        self.assertEqual(len(records), 1)
-        item = records[0]
-        self.assertEqual(item['name'], 'fred')
-        self.assertEqual(item['id'], 'fred')
-        self.assertEqual(item['Name_url'], '/mgmt_path')
-        self.assertEqual(item['Name_icon'], 'anicon')
-
     def test__folder_contents_columns_callable(self):
         from substanced.interfaces import IFolder
         context = DummyFolder(__provides__=IFolder)
@@ -431,7 +387,7 @@ class TestFolderContentsViews(unittest.TestCase):
         result.__name__ = 'fred'
         context.__objectmap__ = DummyObjectMap(result)
         def get_columns(folder, subobject, request, default_columns):
-            self.assertEqual(len(default_columns), 1)
+            self.assertEqual(len(default_columns), 2)
             return [{'name': 'Col 1',
                      'value': getattr(subobject, 'col1', None)},
                     {'name': 'Col 2',

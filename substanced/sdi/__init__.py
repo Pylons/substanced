@@ -38,18 +38,19 @@ from pyramid.util import (
     Sentinel,
     )
 
+from ..objectmap import find_objectmap
+from ..util import (
+    acquire,
+    find_index,
+    )
+from ..interfaces import EARLIEST_DATE
+
 LEFT = 'LEFT'
 RIGHT = 'RIGHT'
 MIDDLE = 'MIDDLE'
 
 CENTER1 = Sentinel('CENTER1')
 CENTER2 = Sentinel('CENTER2')
-
-from ..objectmap import find_objectmap
-from ..util import (
-    acquire,
-    find_index,
-    )
 
 MANAGE_ROUTE_NAME = 'substanced_manage'
 
@@ -360,15 +361,36 @@ def name_sorter(resource, resultset, limit=None, reverse=False):
         resultset = resultset.sort(index, limit=limit, reverse=reverse)
     return resultset
 
+def created_sorter(resource, resultset, limit=None, reverse=False):
+    index = find_index(resource, 'system', 'created')
+    if index is not None:
+        resultset = resultset.sort(index, limit=limit, reverse=reverse)
+    return resultset
+
 def default_sdi_columns(folder, subobject, request):
     """ The default columns content-type hook """
     name = getattr(subobject, '__name__', '')
-    return [
+    icon = request.registry.content.metadata(subobject, 'icon')
+    url = request.sdiapi.mgmt_path(subobject, '@@manage_main')
+    if callable(icon):
+        icon = icon(subobject, request)
+    icon = icon or ''
+    value = '<i class="%s"> </i> <a href="%s">%s</a>' % (icon, url, name)
+    columns = [
         {'name': 'Name',
-         'value': name,
-         'formatter': 'icon_label_url',
+         'value': value,
+         'formatter': 'html',
          'sorter': name_sorter}
         ]
+    created = getattr(subobject, '__created__', EARLIEST_DATE)
+    columns.append(
+        {'name': 'Created',
+         'value':created.isoformat(),
+         'formatter':'date',
+         'sorter':created_sorter,
+         }
+        )
+    return columns
 
 def default_sdi_buttons(folder, request):
     """ The default buttons content-type hook """

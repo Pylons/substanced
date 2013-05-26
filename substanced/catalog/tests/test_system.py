@@ -88,5 +88,23 @@ class TestSystemIndexViews(unittest.TestCase):
         inst = self._makeOne(resource)
         result = inst.content_type(None)
         self.assertEqual(result, 'foo')
+
+    def test_created_default(self):
+        from substanced.util import coarse_datetime_repr
+        from substanced.interfaces import EARLIEST_DATE
+        resource = testing.DummyResource()
+        inst = self._makeOne(resource)
+        result = inst.created(None)
+        self.assertEqual(result, coarse_datetime_repr(EARLIEST_DATE))
+        
+    def test_created_nondefault(self):
+        import datetime
+        from substanced.util import coarse_datetime_repr
+        resource = testing.DummyResource()
+        created = datetime.datetime(1980, 1, 1)
+        resource.__created__ = created
+        inst = self._makeOne(resource)
+        result = inst.created(None)
+        self.assertEqual(result, coarse_datetime_repr(created))
         
         

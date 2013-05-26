@@ -41,10 +41,15 @@
     //
     $(document).data('sdi-content-grid', {
         editors: {
+
             //text: Slick.Editors.Text,
             //date: Slick.Editors.Date
         },
         formatters: {
+            html: function (row, cell, value, columnDef, dataContext) {
+                if ( value === null ) return '';
+                return value.toString();
+            },
             icon_label_url: function (row, cell, value, columnDef, dataContext) {
                 // an icon and a label. If the url is specified, the label will be a link.
                 var fieldName = columnDef.field;

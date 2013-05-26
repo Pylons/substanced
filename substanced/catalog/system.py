@@ -1,5 +1,7 @@
 from ..util import (
     get_interfaces,
+    coarse_datetime_repr,
+    get_created,
     )
 
 from .factories import (
@@ -12,7 +14,10 @@ from .factories import (
 
 from . import catalog_factory
 
-from ..interfaces import MODE_DEFERRED
+from ..interfaces import (
+    MODE_DEFERRED,
+    EARLIEST_DATE,
+    )
 from ..util import get_content_type
 
 class SystemIndexViews(object):
@@ -57,6 +62,10 @@ class SystemIndexViews(object):
         if val != name:
             return name + ' ' + val
         return name
+
+    def created(self, default):
+        created = get_created(self.resource, EARLIEST_DATE)
+        return coarse_datetime_repr(created)
 
 @catalog_factory('system')
 class SystemCatalogFactory(object):
@@ -104,8 +113,10 @@ class SystemCatalogFactory(object):
 
     content_type = Field(action_mode=MODE_DEFERRED)
 
+    created = Field(action_mode=MODE_DEFERRED)
+
 def includeme(config): # pragma: no cover
-    for name in ('interfaces', 'content_type', 'name', 'text'):
+    for name in ('interfaces', 'content_type', 'name', 'text', 'created'):
         config.add_indexview(
             SystemIndexViews,
             catalog_name='system',

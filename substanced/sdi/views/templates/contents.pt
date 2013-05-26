@@ -120,7 +120,7 @@
             var $grid = $('#sdi-contents-table-sg');
             var $filter = $('.sdi-contents-filter input');
             // grid
-            $grid.slickgrid(${slickgrid_wrapper_options});
+            $grid.slickgrid(${structure:slickgrid_wrapper_options});
             var gridWrapper = $grid.data('slickgrid');
             // filter
             gridWrapper.setSearchString($filter.val());

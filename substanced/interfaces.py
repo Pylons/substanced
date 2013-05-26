@@ -1,3 +1,5 @@
+import datetime
+
 from zope.interface.interfaces import IObjectEvent
 
 from zope.interface import (
@@ -6,11 +8,6 @@ from zope.interface import (
     )
 
 from zope.interface.interface import InterfaceClass
-
-from pyramid.security import (
-    Authenticated,
-    Everyone,
-    )
 
 class IPropertySheet(Interface):
     """ Interface for objects with a set of properties defined by a Colander
@@ -592,40 +589,40 @@ class IFile(Interface):
         the file"""
 
 class IWorkflow(Interface):
-    """"""
+    """ """
 
     def add_state(name, callback=None, **kw):
-        """"""
+        """ """
 
     def add_transition(name, from_state, to_state, callback=None, **kw):
-        """"""
+        """ """
 
     def check():
-        """"""
+        """ """
 
     def state_of(content):
-        """"""
+        """ """
 
     def has_state(content):
-        """"""
+        """ """
 
     def get_states(content, request, from_state=None):
-        """"""
+        """ """
 
     def initialize(content, request=None):
-        """"""
+        """ """
 
     def reset(content, request=None):
-        """"""
+        """ """
 
     def transition(content, request, transition_name):
-        """"""
+        """ """
     def transition_to_state(content, request, to_state,
                             skip_same=True):
-        """"""
+        """ """
 
     def get_transitions(content, request, from_state=None):
-        """"""
+        """ """
 
 class IDefaultWorkflow(Interface):
     """ Marker interface used internally for workflows that aren't
@@ -686,6 +683,12 @@ class ISDIAPI(Interface):
     be used in view templates with
     ``metal:use-macro="request.sdiapi.main_template"``.""")
 
+    def get_macro(asset_spec, name=None):
+        """ Return a Chameleon template macro based on the asset spec
+        (e.g. ``somepackage:templates/foo.pt``) and the name.  If the name is
+        None, the bare template implementation is returned, otherwise the named
+        macro from within the template is returned. """
+
     def flash_with_undo(msg, queue='', allow_duplicate=True):
         """Display a Pyramid ``flash message`` to the appropriate
         queue with a button to allow an undo of the commit."""
@@ -741,3 +744,5 @@ class MODE_DEFERRED(Interface):
     processor is unavailable at the successful end of the current transaction,
     this mode will be taken to imply the same thing as
     :attr:`~substanced.interfaces.MODE_ATCOMMIT`."""
+
+EARLIEST_DATE = datetime.datetime(1970, 1, 1)
