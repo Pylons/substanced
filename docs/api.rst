@@ -487,6 +487,8 @@ Other Helpers
 
 .. autofunction:: get_dotted_name
 
+.. autofunction:: get_icon_name
+
 .. autoclass:: Batch
 
 :mod:`substanced.widget` API

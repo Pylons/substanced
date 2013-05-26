@@ -575,3 +575,13 @@ def find_objectmap(context):
     """ Returns the object map for the root object in the lineage of the
     ``context`` or ``None`` if no objectmap can be found."""
     return acquire(context, '__objectmap__', None)
+
+def get_icon_name(resource, request):
+    """ Returns the content registry icon name of the resource or ``None`` if
+    the resource type has no icon in the content registry."""
+    icon = request.registry.content.metadata(resource, 'icon')
+    if callable(icon):
+        icon = icon(resource, request)
+    return icon
+
+    
