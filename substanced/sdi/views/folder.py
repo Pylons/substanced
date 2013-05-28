@@ -235,7 +235,7 @@ class FolderContentsViews(object):
         request = self.request
         filter_values = []
         for k, v in request.params.items():
-            if k.startswith('filter'):
+            if v and k.startswith('filter'):
                 name = k[6:]
                 if name.startswith('.'):
                     name = name[1:]
