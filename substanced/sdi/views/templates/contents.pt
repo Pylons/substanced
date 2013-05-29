@@ -112,6 +112,8 @@
       </div>
     </div>
 
+    <metal:slot define-slot="above-grid" />
+
     <div tal:condition="total" id="sdi-contents-table-sg" class="slickgrid-wrapper"></div>
     <h3 tal:condition="not total">No Items</h3>
 

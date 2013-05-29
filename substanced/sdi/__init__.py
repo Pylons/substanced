@@ -42,6 +42,7 @@ from ..objectmap import find_objectmap
 from ..util import (
     acquire,
     find_index,
+    get_icon_name,
     )
 from ..interfaces import EARLIEST_DATE
 
@@ -364,11 +365,8 @@ def name_sorter(resource, resultset, limit=None, reverse=False):
 def default_sdi_columns(folder, subobject, request):
     """ The default columns content-type hook """
     name = getattr(subobject, '__name__', '')
-    icon = request.registry.content.metadata(subobject, 'icon')
+    icon = get_icon_name(subobject, request) or ''
     url = request.sdiapi.mgmt_path(subobject, '@@manage_main')
-    if callable(icon):
-        icon = icon(subobject, request)
-    icon = icon or ''
     value = '<i class="%s"> </i> <a href="%s">%s</a>' % (icon, url, name)
     columns = [
         {'name': 'Name',

@@ -921,6 +921,31 @@ class Test_find_objectmap(unittest.TestCase):
         inst = Dummy()
         self.assertEqual(self._callFUT(inst), None)
 
+class Test_get_icon_name(unittest.TestCase):
+    def _callFUT(self, resource, request):
+        from . import get_icon_name
+        return get_icon_name(resource, request)
+    
+    def test_callable(self):
+        registry = Dummy()
+        request = testing.DummyRequest()
+        def icon(_resource, _request):
+            self.assertEqual(_resource, resource)
+            self.assertEqual(_request, request)
+            return 'icon'
+        registry.content = DummyContentRegistry(icon)
+        request.registry = registry
+        resource = Dummy()
+        self.assertEqual(self._callFUT(resource, request), 'icon')
+
+    def test_noncallable(self):
+        registry = Dummy()
+        request = testing.DummyRequest()
+        registry.content = DummyContentRegistry('icon')
+        request.registry = registry
+        resource = Dummy()
+        self.assertEqual(self._callFUT(resource, request), 'icon')
+        
 class DummyContent(object):
     renamed_from = None
     renamed_to = None
@@ -937,6 +962,12 @@ class DummyRegistry(object):
         self.whatever = whatever
 
 class DummyContentRegistry(object):
+    def __init__(self, result=None):
+        self.result = result
+    
+    def metadata(self, resource, name, default=None):
+        return self.result
+    
     def typeof(self, resource):
         return resource.type
 
