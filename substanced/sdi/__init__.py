@@ -361,12 +361,6 @@ def name_sorter(resource, resultset, limit=None, reverse=False):
         resultset = resultset.sort(index, limit=limit, reverse=reverse)
     return resultset
 
-def created_sorter(resource, resultset, limit=None, reverse=False):
-    index = find_index(resource, 'system', 'created')
-    if index is not None:
-        resultset = resultset.sort(index, limit=limit, reverse=reverse)
-    return resultset
-
 def default_sdi_columns(folder, subobject, request):
     """ The default columns content-type hook """
     name = getattr(subobject, '__name__', '')
@@ -382,14 +376,6 @@ def default_sdi_columns(folder, subobject, request):
          'formatter': 'html',
          'sorter': name_sorter}
         ]
-    created = getattr(subobject, '__created__', EARLIEST_DATE)
-    columns.append(
-        {'name': 'Created',
-         'value':created.isoformat(),
-         'formatter':'date',
-         'sorter':created_sorter,
-         }
-        )
     return columns
 
 def default_sdi_buttons(folder, request):

@@ -195,12 +195,12 @@ class TestFolderContentsViews(unittest.TestCase):
         request = self._makeRequest()
         inst = self._makeOne(context, request)
         result = inst._columns()
-        self.assertEqual(len(result), 2)
+        self.assertEqual(len(result), 1)
         
     def test__columns_custom_columns_exists(self):
         context = testing.DummyResource()
         def columns(context, subobject, request, columns):
-            self.assertEqual(len(columns), 2)
+            self.assertEqual(len(columns), 1)
             return ['abc', '123', 'def']
         request = self._makeRequest(columns=columns)
         inst = self._makeOne(context, request)
@@ -387,7 +387,7 @@ class TestFolderContentsViews(unittest.TestCase):
         result.__name__ = 'fred'
         context.__objectmap__ = DummyObjectMap(result)
         def get_columns(folder, subobject, request, default_columns):
-            self.assertEqual(len(default_columns), 2)
+            self.assertEqual(len(default_columns), 1)
             return [{'name': 'Col 1',
                      'value': getattr(subobject, 'col1', None)},
                     {'name': 'Col 2',

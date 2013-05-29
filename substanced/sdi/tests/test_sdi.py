@@ -678,9 +678,7 @@ class Test_default_sdi_columns(unittest.TestCase):
         return request
 
     def test_it_no_icon(self):
-        from substanced.interfaces import EARLIEST_DATE
         from substanced.sdi import name_sorter
-        from substanced.sdi import created_sorter
         fred = testing.DummyResource()
         fred.__name__ = 'fred'
         request = self._makeRequest(None)
@@ -692,18 +690,11 @@ class Test_default_sdi_columns(unittest.TestCase):
                  'name': 'Name',
                  'formatter':'html',
                  'value':'<i class=""> </i> <a href="/mgmt_path">fred</a>'},
-                {'sorter': created_sorter, 
-                 'name': 'Created',
-                 'formatter':'date',
-                 'value': EARLIEST_DATE.isoformat()},
-                
                 ]
            )
 
     def test_it_named_icon(self):
-        from substanced.interfaces import EARLIEST_DATE
         from substanced.sdi import name_sorter
-        from substanced.sdi import created_sorter
         fred = testing.DummyResource()
         fred.__name__ = 'fred'
         request = self._makeRequest('icon')
@@ -715,18 +706,11 @@ class Test_default_sdi_columns(unittest.TestCase):
                  'name': 'Name',
                  'formatter':'html',
                  'value':'<i class="icon"> </i> <a href="/mgmt_path">fred</a>'},
-                {'sorter': created_sorter, 
-                 'name': 'Created',
-                 'formatter':'date',
-                 'value': EARLIEST_DATE.isoformat()},
-                
                 ]
            )
 
     def test_it_with_callable_icon(self):
-        from substanced.interfaces import EARLIEST_DATE
         from substanced.sdi import name_sorter
-        from substanced.sdi import created_sorter
         fred = testing.DummyResource()
         fred.__name__ = 'fred'
         request = self._makeRequest(lambda *arg: 'icon')
@@ -738,40 +722,9 @@ class Test_default_sdi_columns(unittest.TestCase):
                  'name': 'Name',
                  'formatter':'html',
                  'value':'<i class="icon"> </i> <a href="/mgmt_path">fred</a>'},
-                {'sorter': created_sorter, 
-                 'name': 'Created',
-                 'formatter':'date',
-                 'value': EARLIEST_DATE.isoformat()},
-                
                 ]
            )
 
-    def test_it_with_created(self):
-        import datetime
-        from substanced.sdi import name_sorter
-        from substanced.sdi import created_sorter
-        fred = testing.DummyResource()
-        fred.__name__ = 'fred'
-        created = datetime.datetime(1980, 1, 1)
-        fred.__created__ = created
-        request = self._makeRequest(None)
-        result = self._callFUT(None, fred, request)
-        self.assertEqual(
-           result,
-           [
-                {'sorter': name_sorter, 
-                 'name': 'Name',
-                 'formatter':'html',
-                 'value':'<i class=""> </i> <a href="/mgmt_path">fred</a>'},
-                {'sorter': created_sorter, 
-                 'name': 'Created',
-                 'formatter':'date',
-                 'value': created.isoformat()},
-                
-                ]
-           )
-
-        
 
 class Test_default_sdi_buttons(unittest.TestCase):
     def setUp(self):
@@ -1268,32 +1221,6 @@ class Test_name_sorter(unittest.TestCase):
         result = self._callFUT(resource, resultset, 1, True)
         self.assertEqual(result, resultset)
 
-class Test_created_sorter(unittest.TestCase):
-    def _callFUT(self, resource, resultset, limit, reverse):
-        from .. import created_sorter
-        return created_sorter(resource, resultset, limit, reverse)
-
-    def test_index_is_None(self):
-        resource = testing.DummyResource()
-        resultset = 123
-        result = self._callFUT(resource, resultset, 1, True)
-        self.assertEqual(result, resultset)
-        
-    def test_index_is_not_None(self):
-        from substanced.interfaces import IFolder
-        resource = testing.DummyResource(__provides__=IFolder)
-        resource['catalogs'] = DummyCatalogs()
-        resource['catalogs']['system'] = DummyCatalog()
-        class ResultSet(object):
-            def sort(innerself, index, limit=None, reverse=None):
-                self.assertEqual(index.__class__.__name__, 'DummyIndex')
-                self.assertEqual(limit, 1)
-                self.assertEqual(reverse, True)
-                return innerself
-        resultset = ResultSet()
-        result = self._callFUT(resource, resultset, 1, True)
-        self.assertEqual(result, resultset)
-        
 class DummyCatalogs(testing.DummyResource):
     __is_service__ = True
 
