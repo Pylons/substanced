@@ -154,6 +154,9 @@ body .slickgrid-wrapper .slick-header-columns .slick-header-column.ui-state-defa
 .slickgrid-wrapper .slick-row.selected .cell-selection {
   background-color: transparent;
 }
+.slickgrid-wrapper .cell-multiline {
+  white-space: normal;
+}
 .sdi-contents-filter {
   margin-top: 5px;
 }
