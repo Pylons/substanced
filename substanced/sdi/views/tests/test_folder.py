@@ -1248,6 +1248,224 @@ class TestFolderContentsViews(unittest.TestCase):
             {'foo': 'bar', 'flash': 'STATUSMESSG<a>Undo</a>'}
             )
 
+class Test_default_sdi_columns(unittest.TestCase):
+    def _callFUT(self, folder, context, request):
+        from ..folder import default_sdi_columns
+        return default_sdi_columns(folder, context, request)
+    
+    def _makeRequest(self, icon):
+        request = testing.DummyResource()
+        registry = testing.DummyResource()
+        content = testing.DummyResource()
+        content.metadata = lambda *arg: icon
+        request.registry = registry
+        request.registry.content = content
+        request.sdiapi = DummySDIAPI()
+        return request
+
+    def test_it_no_icon(self):
+        from ..folder import name_sorter
+        fred = testing.DummyResource()
+        fred.__name__ = 'fred'
+        request = self._makeRequest(None)
+        result = self._callFUT(None, fred, request)
+        self.assertEqual(
+           result,
+           [
+                {'sorter': name_sorter, 
+                 'name': 'Name',
+                 'formatter':'html',
+                 'value':'<i class=""> </i> <a href="/mgmt_path">fred</a>'},
+                ]
+           )
+
+    def test_it_named_icon(self):
+        from ..folder import name_sorter
+        fred = testing.DummyResource()
+        fred.__name__ = 'fred'
+        request = self._makeRequest('icon')
+        result = self._callFUT(None, fred, request)
+        self.assertEqual(
+           result,
+           [
+                {'sorter': name_sorter, 
+                 'name': 'Name',
+                 'formatter':'html',
+                 'value':'<i class="icon"> </i> <a href="/mgmt_path">fred</a>'},
+                ]
+           )
+
+    def test_it_with_callable_icon(self):
+        from ..folder import name_sorter
+        fred = testing.DummyResource()
+        fred.__name__ = 'fred'
+        request = self._makeRequest(lambda *arg: 'icon')
+        result = self._callFUT(None, fred, request)
+        self.assertEqual(
+           result,
+           [
+                {'sorter': name_sorter, 
+                 'name': 'Name',
+                 'formatter':'html',
+                 'value':'<i class="icon"> </i> <a href="/mgmt_path">fred</a>'},
+                ]
+           )
+
+
+class Test_default_sdi_buttons(unittest.TestCase):
+    def setUp(self):
+        self.config = testing.setUp()
+        self.config.testing_securitypolicy(permissive=True)
+
+    def tearDown(self):
+        testing.tearDown()
+        
+    def _callFUT(self, context, request):
+        from ..folder import default_sdi_buttons
+        return default_sdi_buttons(context, request)
+    
+    def test_it_novals(self):
+        request = testing.DummyRequest()
+        context = testing.DummyResource()
+        result = self._callFUT(context, request)
+        self.assertEqual(len(result), 2)
+        main_buttons = result[0]
+        self.assertEqual(main_buttons['type'], 'group')
+        buttons = main_buttons['buttons']
+        self.assertEqual(len(buttons), 4)
+        self.assertEqual(buttons[0]['text'], 'Rename')
+        self.assertEqual(buttons[1]['text'], 'Copy')
+        self.assertEqual(buttons[2]['text'], 'Move')
+        self.assertEqual(buttons[3]['text'], 'Duplicate')
+        self.assertEqual(result[1]['type'], 'group')
+
+        buttons = result[1]['buttons']
+        self.assertEqual(len(buttons), 1)
+        delete_button = buttons[0]
+        self.assertEqual(delete_button['text'], 'Delete')
+        self.assertEqual(delete_button['class'], 'btn-danger btn-sdi-sel')
+        self.assertEqual(delete_button['name'], 'form.delete')
+        self.assertEqual(delete_button['value'], 'delete')
+        self.assertEqual(delete_button['id'], 'delete')
+        self.assertTrue(delete_button['enabled_for'])
+
+    def test_delete_enabled_for_no_sdi_deletable_attr_can_manage(self):
+        request = testing.DummyRequest()
+        context = testing.DummyResource()
+        result = self._callFUT(context, request)
+        delete_button = result[1]['buttons'][0]
+        delete_enabled_for = delete_button['enabled_for']
+        result = delete_enabled_for(context, context, request)
+        self.assertTrue(result)
+
+    def test_delete_enabled_for_no_sdi_deletable_attr_cannot_manage(self):
+        self.config.testing_securitypolicy(permissive=False)
+        request = testing.DummyRequest()
+        context = testing.DummyResource()
+        result = self._callFUT(context, request)
+        delete_button = result[1]['buttons'][0]
+        delete_enabled_for = delete_button['enabled_for']
+        result = delete_enabled_for(context, context, request)
+        self.assertFalse(result)
+        
+    def test_delete_enabled_for_callable_sdi_deletable_attr(self):
+        request = testing.DummyRequest()
+        context = testing.DummyResource()
+        subobject = testing.DummyResource()
+        def deletable(_subobject, _request):
+            self.assertEqual(_subobject, subobject)
+            self.assertEqual(_request, request)
+            return False
+        subobject.__sdi_deletable__ = deletable
+        result = self._callFUT(context, request)
+        delete_button = result[1]['buttons'][0]
+        delete_enabled_for = delete_button['enabled_for']
+        result = delete_enabled_for(context, subobject, request)
+        self.assertFalse(result)
+
+    def test_delete_enabled_for_boolean_sdi_deletable_attr(self):
+        request = testing.DummyRequest()
+        context = testing.DummyResource()
+        subobject = testing.DummyResource()
+        subobject.__sdi_deletable__ = False
+        result = self._callFUT(context, request)
+        delete_button = result[1]['buttons'][0]
+        delete_enabled_for = delete_button['enabled_for']
+        result = delete_enabled_for(context, subobject, request)
+        self.assertFalse(result)
+        
+    def test_it_tocopy(self):
+        request = testing.DummyRequest()
+        context = testing.DummyResource()
+        request.session['tocopy'] = True
+        result = self._callFUT(context, request)
+        self.assertEqual(
+            result,
+            [
+              {'buttons': 
+                [{'text': 'Copy here', 
+                  'class': 'btn-primary btn-sdi-act', 
+                  'id': 'copy_finish', 
+                  'value': 'copy_finish', 
+                  'name': 'form.copy_finish'}, 
+                 {'text': 'Cancel', 
+                  'class': 'btn-danger btn-sdi-act', 
+                  'id': 'cancel', 
+                  'value': 'cancel', 
+                  'name': 'form.copy_finish'}],
+               'type': 'single'}
+               ]
+               )
+
+    def test_it_tomove(self):
+        request = testing.DummyRequest()
+        context = testing.DummyResource()
+        request.session['tomove'] = True
+        result = self._callFUT(context, request)
+        self.assertEqual(
+            result, [
+            {'buttons': [
+                {'text': 'Move here',
+                 'class': 'btn-primary btn-sdi-act',
+                 'id': 'move_finish',
+                 'value': 'move_finish',
+                 'name': 'form.move_finish'},
+                {'text': 'Cancel',
+                 'class': 'btn-danger btn-sdi-act',
+                 'id': 'cancel',
+                 'value': 'cancel',
+                 'name':'form.move_finish'}],
+             'type': 'single'}
+            ]            
+            )
+
+
+class Test_name_sorter(unittest.TestCase):
+    def _callFUT(self, resource, resultset, limit, reverse):
+        from ..folder import name_sorter
+        return name_sorter(resource, resultset, limit, reverse)
+
+    def test_index_is_None(self):
+        resource = testing.DummyResource()
+        resultset = 123
+        result = self._callFUT(resource, resultset, 1, True)
+        self.assertEqual(result, resultset)
+        
+    def test_index_is_not_None(self):
+        from substanced.interfaces import IFolder
+        resource = testing.DummyResource(__provides__=IFolder)
+        resource['catalogs'] = DummyCatalogs()
+        resource['catalogs']['system'] = DummyCatalog()
+        class ResultSet(object):
+            def sort(innerself, index, limit=None, reverse=None):
+                self.assertEqual(index.__class__.__name__, 'DummyIndex')
+                self.assertEqual(limit, 1)
+                self.assertEqual(reverse, True)
+                return innerself
+        resultset = ResultSet()
+        result = self._callFUT(resource, resultset, 1, True)
+        self.assertEqual(result, resultset)
+
 class DummyContainer(object):
     oid_store = {}
 
