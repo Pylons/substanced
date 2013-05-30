@@ -575,6 +575,7 @@ class TestFolderContentsViews(unittest.TestCase):
         folder_contents = {
             'length':1,
             'sort_column_name':None,
+            'sort_reverse':True,
             'columns':[],
             'records': [{
                     'name': 'the_name',
@@ -603,7 +604,7 @@ class TestFolderContentsViews(unittest.TestCase):
         # None because it cannot be sorted.  
         self.assertEqual(slickgrid_wrapper_options['isReorderable'], False)
         self.assertEqual(slickgrid_wrapper_options['sortCol'], None)   
-        self.assertEqual(slickgrid_wrapper_options['sortDir'], True)
+        self.assertEqual(slickgrid_wrapper_options['sortDir'], False)
         self.assertEqual(slickgrid_wrapper_options['url'], '')
         self.assert_('items' in slickgrid_wrapper_options)
         self.assertEqual(slickgrid_wrapper_options['items']['from'], 0)
@@ -636,6 +637,7 @@ class TestFolderContentsViews(unittest.TestCase):
         folder_contents = {
             'length':1,
             'sort_column_name':'col1',
+            'sort_reverse':False,
             'columns': columns,
             'records':[{
                     'name': 'the_name',

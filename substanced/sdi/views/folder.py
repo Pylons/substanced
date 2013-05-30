@@ -584,6 +584,7 @@ class FolderContentsViews(object):
             'length':folder_length,
             'records':records,
             'sort_column_name':sort_column_name,
+            'sort_reverse':reverse,
             'columns':columns,
             }
 
@@ -620,6 +621,7 @@ class FolderContentsViews(object):
         records = folder_contents['records']
         folder_length = folder_contents['length']
         sort_column_name = folder_contents['sort_column_name']
+        sort_reverse = folder_contents['sort_reverse']
         column_headers = self._column_headers(folder_contents['columns'])
 
         items  = {
@@ -643,7 +645,7 @@ class FolderContentsViews(object):
             # information to just visually show in the headers the sorted
             # column.)
             sortCol = sort_column_name,
-            sortDir = True,
+            sortDir = (not sort_reverse),
             # is the grid reorderable?
             isReorderable = is_reorderable,
             #
