@@ -259,7 +259,7 @@ class FolderContentsViews(object):
         self,
         start=None,
         end=None,
-        reverse=False,
+        reverse=None,
         sort_column_name=None,
         filter_values=(),
         ):
@@ -415,14 +415,16 @@ class FolderContentsViews(object):
         order for the system to compute headers).
 
         In addition to ``name`` and ``value``, the column dictionary may
-        contain the keys ``sorter`` and ``formatter``. The ``sorter`` will
-        either be ``None`` if the column is not sortable, or a callback which
-        accepts a resource (the folder), a resultset, a ``limit`` keyword
-        argument, and a ``reverse`` keyword argument and which must return a
-        sorted result set.  The default ``sorter`` value is ``None``. The last
-        key, ``formatter``, can give the name of a javascript method for
-        formatting the ``value``.  Currently, available formatters are
-        ``icon_label_url`` and ``date``.
+        contain the keys ``sorter``, ``initial_sort_reverse``, and
+        ``formatter``. The ``sorter`` will either be ``None`` if the column is
+        not sortable, or a callback which accepts a resource (the folder), a
+        resultset, a ``limit`` keyword argument, and a ``reverse`` keyword
+        argument and which must return a sorted result set.  The default
+        ``sorter`` value is ``None``. The ``initial_sort_reverse`` key can be
+        ``True`` or ``False`` if you want the initial rendering to be sorted
+        reverse or not.  The last key, ``formatter``, can give the name of a
+        javascript method for formatting the ``value``.  Currently, available
+        formatters are ``icon_label_url`` and ``date``.
         
         The ``icon_label_url`` formatter gets the URL and icon (if any) of the
         subobject and creates a link using ``value`` as link text. The ``date``
@@ -519,10 +521,17 @@ class FolderContentsViews(object):
             )
 
         sorter = sort_info['sorter']
+        if reverse is None:
+            reverse = False
+            column = sort_info['column']
+            if column:
+                reverse = column.get('initial_sort_reverse', False)
         sort_column_name = sort_info['column_name']
 
         if sorter is not None:
-            resultset = sorter(folder, resultset, reverse=reverse, limit=end)
+            resultset = sorter(
+                folder, resultset, reverse=reverse, limit=end
+                )
 
         ids = resultset.ids
 

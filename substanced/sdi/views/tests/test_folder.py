@@ -512,6 +512,29 @@ class TestFolderContentsViews(unittest.TestCase):
         self.assertEqual(length, 1)
         self.assertEqual(len(records), 1)
 
+    def test__folder_contents_columns_initial_sort_reverse(self):
+        from substanced.interfaces import IFolder
+        context = DummyFolder(__provides__=IFolder)
+        request = self._makeRequest()
+        context['catalogs'] = self._makeCatalogs(oids=[1])
+        result = testing.DummyResource()
+        result.col1 = 'val1'
+        result.col2 = 'val2'
+        result.__name__ = 'fred'
+        context.__objectmap__ = DummyObjectMap(result)
+        inst = self._makeOne(context, request)
+        def sorter(context, resultset, reverse, limit):
+            self.assertTrue(reverse)
+            return resultset
+        def get_columns(folder, subobject, request, default_columns):
+            self.assertEqual(len(default_columns), 1)
+            return [{'name': 'Col 1',
+                     'value': getattr(subobject, 'col1', None),
+                     'sorter':sorter,
+                     'initial_sort_reverse':True,}]
+        request.registry.content = DummyContent(columns=get_columns)
+        inst._folder_contents()
+        
     def test__filter_values(self):
         from substanced.interfaces import IFolder
         context = DummyFolder(__provides__=IFolder)
