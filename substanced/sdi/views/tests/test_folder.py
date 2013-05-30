@@ -1309,6 +1309,9 @@ class DummyIndex(object):
 
     def __and__(self, other):
         return self
+
+    def check_query(self, querytext):
+        return True
     
 class DummyObjectMap(object):
     def __init__(self, result):

@@ -228,7 +228,8 @@ class FolderContentsViews(object):
             for filter_glob in filter_text_globs:
                 if not filter_glob.endswith('*'):
                     filter_glob = filter_glob + '*' # glob (prefix) search
-                q = q & text.eq(filter_glob)
+                if text.check_query(filter_glob):
+                    q = q & text.eq(filter_glob)
         return q
     
     def _filter_values(self):
