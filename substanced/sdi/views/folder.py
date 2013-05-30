@@ -198,12 +198,16 @@ class FolderContentsViews(object):
                 return resultset.sort(folder, limit=limit, reverse=reverse)
 
         elif sort_column_name is None:
-            # The default sort always uses the first column with a sorter.
+            # The default sort always uses the intitial_sort_column, defaulting
+            # to the first column with a sorter if no initial_sort_colun is
+            # found
+            first = True
             for col in columns:
                 if col.get('sorter'):
-                    sort_column_name = col['name']
-                    sort_column = col
-                    break
+                    if first is True or col.get('initial_sort_column'):
+                        sort_column_name = col['name']
+                        sort_column = col
+                        first = False
 
         else:
             # Nondefault sort column
@@ -416,16 +420,21 @@ class FolderContentsViews(object):
         order for the system to compute headers).
 
         In addition to ``name`` and ``value``, the column dictionary may
-        contain the keys ``sorter``, ``initial_sort_reverse``, and
-        ``formatter``. The ``sorter`` will either be ``None`` if the column is
-        not sortable, or a callback which accepts a resource (the folder), a
-        resultset, a ``limit`` keyword argument, and a ``reverse`` keyword
-        argument and which must return a sorted result set.  The default
-        ``sorter`` value is ``None``. The ``initial_sort_reverse`` key can be
-        ``True`` or ``False`` if you want the initial rendering to be sorted
-        reverse or not.  The last key, ``formatter``, can give the name of a
-        javascript method for formatting the ``value``.  Currently, available
-        formatters are ``icon_label_url`` and ``date``.
+        contain the keys ``sorter``, ``initial_sort_column``,
+        ``initial_sort_reverse``, and ``formatter``. The ``sorter`` will either
+        be ``None`` if the column is not sortable, or a callback which accepts
+        a resource (the folder), a resultset, a ``limit`` keyword argument, and
+        a ``reverse`` keyword argument and which must return a sorted result
+        set.  The default ``sorter`` value is ``None``. The
+        ``initial_sort_column`` should be the ``True`` if this column should
+        be the initial sort column (it must also have a ``sorter``).  If no
+        column is marked as the initial sort column, the first column with a
+        ``sorter`` will be used as the initial sort column.  The
+        ``initial_sort_reverse`` key can be ``True`` or ``False`` if you want
+        the initial rendering to be sorted reverse or not.  The last key,
+        ``formatter``, can give the name of a javascript method for formatting
+        the ``value``.  Currently, available formatters are ``icon_label_url``
+        and ``date``.
         
         The ``icon_label_url`` formatter gets the URL and icon (if any) of the
         subobject and creates a link using ``value`` as link text. The ``date``

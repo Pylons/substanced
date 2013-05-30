@@ -376,6 +376,20 @@ class TestFolderContentsViews(unittest.TestCase):
         self.assertEqual(result['sorter'], None)
         self.assertEqual(result['column_name'], 'col3')
         
+    def test__sort_info_context_unordered_default_sort_column_via_initial(self):
+        context = testing.DummyResource(
+            is_ordered=lambda: False,
+            )
+        request = self._makeRequest()
+        inst = self._makeOne(context, request)
+        columns = [{'name':'col1', 'sorter':True},
+                   {'name':'col2', 'sorter':True,
+                    'initial_sort_column':True}]
+        result = inst._sort_info(columns)
+        self.assertEqual(result['column'], columns[1])
+        self.assertEqual(result['sorter'], True)
+        self.assertEqual(result['column_name'], 'col2')
+        
     def test__folder_contents_columns_callable(self):
         from substanced.interfaces import IFolder
         context = DummyFolder(__provides__=IFolder)
