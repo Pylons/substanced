@@ -78,7 +78,7 @@
                     });
                     // I think it is better to submit the list as a
                     // concatenated value, instead of adding several inputs to the dom.
-                    $hiddenInput.attr('value', selectedIds.join(','));
+                    $hiddenInput.attr('value', selectedIds.join('/'));
                 });
             });
         </script>

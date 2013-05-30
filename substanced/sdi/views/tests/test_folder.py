@@ -753,7 +753,7 @@ class TestFolderContentsViews(unittest.TestCase):
         context['a'] = testing.DummyResource()
         context['b'] = testing.DummyResource()
         request = self._makeRequest()
-        request.POST = DummyPost(None, 'a,b')
+        request.POST = DummyPost(None, 'a/b')
         inst = self._makeOne(context, request)
         result = inst.delete()
         self.assertEqual(request.session['_f_'], ['Deleted 2 items'])
@@ -765,7 +765,7 @@ class TestFolderContentsViews(unittest.TestCase):
         context = testing.DummyResource()
         context['a'] = testing.DummyResource()
         request = self._makeRequest()
-        request.POST = DummyPost(None, 'a,b')
+        request.POST = DummyPost(None, 'a/b')
         inst = self._makeOne(context, request)
         result = inst.delete()
         self.assertEqual(request.session['_f_'], ['Deleted 1 item'])
@@ -776,7 +776,7 @@ class TestFolderContentsViews(unittest.TestCase):
     def test_duplicate_multiple(self, mock_rename_duplicated_resource):
         context = mock.Mock()
         request = mock.Mock()
-        request.POST.get.return_value = 'a,b'
+        request.POST.get.return_value = 'a/b'
         mock_rename_duplicated_resource.side_effect = ['a-1', 'b-1']
 
         inst = self._makeOne(context, request)
@@ -829,7 +829,7 @@ class TestFolderContentsViews(unittest.TestCase):
         context = testing.DummyResource()
         context['foobar'] = testing.DummyResource()
         request = self._makeRequest()
-        request.POST = DummyPost(None, 'foobar,foobar1')
+        request.POST = DummyPost(None, 'foobar/foobar1')
         inst = self._makeOne(context, request)
         result = inst.rename()
         self.assertEqual(result, {'torename': [context['foobar']]})
@@ -840,7 +840,7 @@ class TestFolderContentsViews(unittest.TestCase):
         context['foobar2'] = testing.DummyResource()
         context['foobar3'] = testing.DummyResource()
         request = self._makeRequest()
-        request.POST = DummyPost(None, 'foobar,foobar3')
+        request.POST = DummyPost(None, 'foobar/foobar3')
         inst = self._makeOne(context, request)
         result = inst.rename()
         self.assertEqual(result, {'torename': [context['foobar'],
@@ -942,7 +942,7 @@ class TestFolderContentsViews(unittest.TestCase):
                                              'foobar1': 'foobar1',
                                              'foobar2': 'foobar2'}[x]
         request = mock.MagicMock()
-        request.POST.get.return_value = 'foobar,foobar1'
+        request.POST.get.return_value = 'foobar/foobar1'
 
         inst = self._makeOne(context, request)
         inst.copy()
@@ -960,7 +960,7 @@ class TestFolderContentsViews(unittest.TestCase):
             'foobar': 'foobar',
             'foobar2': 'foobar2'}.get(x, None)
         request = mock.MagicMock()
-        request.POST.get.return_value = 'foobar,foobar1'
+        request.POST.get.return_value = 'foobar/foobar1'
 
         inst = self._makeOne(context, request)
         inst.copy()
@@ -1081,7 +1081,7 @@ class TestFolderContentsViews(unittest.TestCase):
         context.get.side_effect = lambda x: {'foobar': 'foobar',
                                              'foobar1': 'foobar1'}[x]
         request = mock.MagicMock()
-        request.POST.get.return_value = 'foobar,foobar1'
+        request.POST.get.return_value = 'foobar/foobar1'
 
         inst = self._makeOne(context, request)
         inst.move()
@@ -1099,7 +1099,7 @@ class TestFolderContentsViews(unittest.TestCase):
         context.get.side_effect = lambda x: {'foobar': 'foobar',
                                              'foobar1': 'foobar1'}.get(x, None)
         request = mock.MagicMock()
-        request.POST.get.return_value = 'foobar,foobar2'
+        request.POST.get.return_value = 'foobar/foobar2'
 
         inst = self._makeOne(context, request)
         inst.move()

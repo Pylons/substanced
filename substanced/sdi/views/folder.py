@@ -101,7 +101,7 @@ class FolderContentsViews(object):
         self.request = request
 
     def _modified_items(self):
-        items = self.request.POST.get('item-modify', '').split(',')
+        items = self.request.POST.get('item-modify', '').split('/')
         modified = [x for x in  items if x] # remove empty
         return modified
 
@@ -942,7 +942,7 @@ class FolderContentsViews(object):
     def reorder_rows(self):
         request = self.request
         context = self.context
-        item_modify = request.params.get('item-modify').split('/')
+        item_modify = self._modified_items()
         insert_before = request.params.get('insert-before')
         if not insert_before:
             # '' or None means appending after the last item.
