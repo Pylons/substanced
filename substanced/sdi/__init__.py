@@ -44,7 +44,6 @@ from ..util import (
     find_index,
     get_icon_name,
     )
-from ..interfaces import EARLIEST_DATE
 
 LEFT = 'LEFT'
 RIGHT = 'RIGHT'
