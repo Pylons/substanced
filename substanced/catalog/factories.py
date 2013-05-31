@@ -1,3 +1,6 @@
+import pickle
+import zlib
+
 import BTrees
 from zope.interface import implementer
 
@@ -52,8 +55,8 @@ class IndexFactory(object):
         return values
 
     def __hash__(self):
-        values = tuple(sorted(self.hashvalues().items()))
-        return hash(values)
+        data = pickle.dumps(tuple(sorted(self.hashvalues().items())))
+        return zlib.crc32(data) & 0xffffffff
 
     def is_stale(self, index):
         index_hash = getattr(index, '__factory_hash__', None)
