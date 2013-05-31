@@ -226,10 +226,9 @@ class FolderContentsViews(object):
             }
    
     def _global_text_filter(self, context, filter_text, q):
-        system_catalog = self.system_catalog
         filter_text_globs = [x for x in filter_text.split() if x]
         if filter_text_globs:
-            text = system_catalog['text']
+            text = self.system_catalog['text']
             for filter_glob in filter_text_globs:
                 if not filter_glob.endswith('*'):
                     filter_glob = filter_glob + '*' # glob (prefix) search
