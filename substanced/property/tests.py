@@ -81,18 +81,27 @@ class TestPropertySheet(unittest.TestCase):
         self.assertEqual(context.title, 'title')
         self.assertEqual(context.description, 'd')
 
-    def test_after_set(self):
+    def test_after_set_changed_True(self):
         from substanced.event import ObjectModified
         request = testing.DummyRequest()
         request.registry = DummyRegistry()
         context = testing.DummyResource()
         inst = self._makeOne(context, request)
-        inst.after_set()
+        inst.after_set(True)
         subscribed = request.registry.subscribed[0]
         self.assertEqual(subscribed[1], None)
         self.assertEqual(subscribed[0][0].__class__, ObjectModified)
         self.assertEqual(subscribed[0][1], context)
 
+    def test_after_set_changed_False(self):
+        request = testing.DummyRequest()
+        request.registry = DummyRegistry()
+        context = testing.DummyResource()
+        inst = self._makeOne(context, request)
+        inst.after_set(False)
+        subscribed = request.registry.subscribed
+        self.assertEqual(len(subscribed), 0)
+        
 class Test_is_propertied(unittest.TestCase):
     def setUp(self):
         self.config = testing.setUp()

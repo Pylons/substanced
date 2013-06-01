@@ -211,7 +211,8 @@ class DummyPropertySheet(object):
     def set(self, struct):
         self.struct = struct
 
-    def after_set(self):
+    def after_set(self, changed):
+        self.changed = changed
         self.after = True
 
 class DummyContent(object):
