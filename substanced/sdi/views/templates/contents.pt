@@ -112,7 +112,7 @@
       </div>
     </div>
 
-    <!-- <img id="loading-img" src="${request.static_url('substanced.sdi:static/img/progress_bar.gif')}"/> -->
+    <img id="loading-img" src="${request.static_url('substanced.sdi:static/img/progress_bar.gif')}"/>
 
     <metal:slot define-slot="above-grid" />
 
@@ -120,14 +120,14 @@
     <h3 tal:condition="not total">No Items</h3>
 
     <script type="text/javascript">
-        <!-- $('#loading-img') -->
-        <!--     .hide()  // hide it initially -->
-        <!--     .ajaxStart(function() { -->
-        <!--         $(this).show(); -->
-        <!--     }) -->
-        <!--     .ajaxStop(function() { -->
-        <!--         $(this).hide(); -->
-        <!--     }); -->
+        $('#loading-img')
+            .hide()  // hide it initially
+            .ajaxStart(function() {
+                $(this).show();
+            })
+            .ajaxStop(function() {
+                $(this).hide();
+            });
         jQuery(function ($) {
             var $grid = $('#sdi-contents-table-sg');
             var $filter = $('.sdi-contents-filter input');
