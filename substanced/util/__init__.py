@@ -376,24 +376,6 @@ def get_acl(resource, default=_marker):
             raise
         return default
 
-def get_created(resource, default=_marker):
-    """ Return a datetime object (typically in UTC, but represented as a naive
-    datetime) that represents the creation time of the resource.  If the
-    resource has no creation time, if ``default`` is passed it will be
-    returned.  Otherwise an :exc:`AttributeError` will be thrown."""
-    try:
-        return resource.__created__
-    except AttributeError:
-        if default is _marker:
-            raise
-        return default
-
-def set_created(resource, created):
-    """ Set the creation date/time of the resource.  It must be a datetime
-    object (which should be without a timezeone (aka 'naive'), representing the
-    UTC date and time."""
-    resource.__created__ = created
-
 def get_dotted_name(g):
     """ Return the dotted name of a global object. """
     name = g.__name__

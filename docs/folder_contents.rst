@@ -22,9 +22,9 @@ mappings conforming to the datagrid's contract. For example:
     def binder_columns(folder, subobject, request, default_columnspec):
         subobject_name = getattr(subobject, '__name__', str(subobject))
         objectmap = find_objectmap(folder)
-        user_oid = getattr(subobject, '__creator__', None)
-        created = getattr(subobject, '__created__', None)
-        modified = getattr(subobject, '__modified__', None)
+        user_oid = getattr(subobject, 'creator', None)
+        created = getattr(subobject, 'created', None)
+        modified = getattr(subobject, 'modified', None)
         if user_oid is not None:
             user = objectmap.object_for(user_oid)
             user_name = getattr(user, '__name__', 'anonymous')
@@ -325,9 +325,9 @@ get the row data for that column:
     def binder_columns(folder, subobject, request, default_columnspec):
         subobject_name = getattr(subobject, '__name__', str(subobject))
         objectmap = find_objectmap(folder)
-        user_oid = getattr(subobject, '__creator__', None)
-        created = getattr(subobject, '__created__', None)
-        modified = getattr(subobject, '__modified__', None)
+        user_oid = getattr(subobject, 'creator', None)
+        created = getattr(subobject, 'created', None)
+        modified = getattr(subobject, 'modified', None)
         if user_oid is not None:
             user = objectmap.object_for(user_oid)
             user_name = getattr(user, '__name__', 'anonymous')

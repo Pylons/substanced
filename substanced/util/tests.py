@@ -453,24 +453,6 @@ class Test_set_acl(unittest.TestCase):
         self.assertEqual(context.__acl__, 1)
         self.assertEqual(L[0][1], None)
 
-class Test_get_created(unittest.TestCase):
-    def _callFUT(self, obj, default=_marker):
-        from . import get_created
-        return get_created(obj, default)
-
-    def test_gardenpath(self):
-        obj = testing.DummyResource()
-        obj.__created__ = 1
-        self.assertEqual(self._callFUT(obj), 1)
-
-    def test_no_objectid_no_default(self):
-        obj = testing.DummyResource()
-        self.assertRaises(AttributeError, self._callFUT, obj)
-
-    def test_no_objectid_with_default(self):
-        obj = testing.DummyResource()
-        self.assertEqual(self._callFUT(obj, 1), 1)
-
 class Test_get_dotted_name(unittest.TestCase):
     def _callFUT(self, obj):
         from . import get_dotted_name
@@ -485,16 +467,6 @@ class Test_get_dotted_name(unittest.TestCase):
         result = self._callFUT(self.__class__)
         self.assertEqual(result, 'substanced.util.tests.Test_get_dotted_name')
 
-class Test_set_created(unittest.TestCase):
-    def _callFUT(self, obj, val):
-        from . import set_created
-        return set_created(obj, val)
-
-    def test_gardenpath(self):
-        obj = testing.DummyResource()
-        self._callFUT(obj, 1)
-        self.assertEqual(obj.__created__, 1)
-    
 class Test_get_content_type(unittest.TestCase):
     def setUp(self):
         self.config = testing.setUp()

@@ -8,7 +8,6 @@ import venusian
 from ..event import ContentCreated
 from ..util import (
     get_dotted_name,
-    set_created,
     set_oid,
     get_factory_type,
     )
@@ -56,7 +55,6 @@ class ContentRegistry(object):
         inst = factory(*arg, **kw)
         if oid is not None:
             set_oid(inst, oid)
-        set_created(inst, self._utcnow())
         meta = self.meta[content_type].copy()
         aftercreate = meta.get('after_create')
         if aftercreate is not None:

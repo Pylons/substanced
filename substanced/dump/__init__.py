@@ -23,8 +23,6 @@ from substanced.workflow import STATE_ATTR
 from substanced.objectmap import find_objectmap
 from substanced.sdi import sdiapi
 from substanced.util import (
-    get_created,
-    set_created,
     get_oid,
     set_oid,
     get_acl,
@@ -316,7 +314,6 @@ class _ResourceContext(_YAMLOperations):
 class _ResourceDumpContext(_ResourceContext):
 
     get_content_type = staticmethod(get_content_type) # testing
-    get_created = staticmethod(get_created) # testing
     get_oid = staticmethod(get_oid) # testing
 
     def __init__(self, directory, registry, dumpers, verbose, dry_run):
@@ -329,12 +326,10 @@ class _ResourceDumpContext(_ResourceContext):
     def dump_resource(self, resource):
         registry = self.registry
         ct = self.get_content_type(resource, registry)
-        created = self.get_created(resource, None)
         data = {
             'content_type':ct,
             'name':resource.__name__,
             'oid':self.get_oid(resource),
-            'created':created,
             'is_service':bool(getattr(resource, '__is_service__', False)),
             }
         return self.dump_yaml(data, RESOURCE_FILENAME)
@@ -365,7 +360,6 @@ class _ResourceLoadContext(_ResourceContext):
         data = self.load_yaml(RESOURCE_FILENAME)
         name = data['name']
         oid = data['oid']
-        created = data['created']
         is_service = data['is_service']
         try:
             resource = registry.content.create(data['content_type'], __oid=oid)
@@ -376,8 +370,6 @@ class _ResourceLoadContext(_ResourceContext):
             raise
         resource.__name__ = name
         set_oid(resource, oid)
-        if created is not None:
-            set_created(resource, created)
         if is_service:
             resource.__is_service__ = True
         return name, resource

@@ -445,10 +445,6 @@ Other Helpers
 
 .. autofunction:: set_acl
 
-.. autofunction:: get_created
-
-.. autofunction:: set_created
-
 .. autofunction:: get_interfaces
 
 .. autofunction:: get_content_type
