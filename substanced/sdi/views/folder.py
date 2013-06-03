@@ -524,7 +524,7 @@ class FolderContents(object):
                 q = self._global_text_filter(folder, value, q)
 
         resultset = q.execute()
-        # NB: must take snapshot of folder_length *before* limiting the length
+        # NB: must take snapshot of folder_length before limiting the length
         # of the resultset via any sort
         folder_length = len(resultset)
 
@@ -561,7 +561,7 @@ class FolderContents(object):
                 # from the client, when a row is selected for an operation.)
                 id=name,
                 name=name,
-            )
+                )
             columns = self.get_columns(resource)
             for column in columns:
                 # XXX CM: adding arbitrary keys to the record based on
@@ -1104,10 +1104,13 @@ def add_folder_contents_views(
           config.scan()
 
     """
+
     if cls is None:
         cls = FolderContents
+
     if context is None:
         context = IFolder
+        
     add_fc_view = functools.partial(
         config.add_mgmt_view,
         view=cls,
