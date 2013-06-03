@@ -35,23 +35,23 @@ class folder_contents_views(object):
     """ Decorator which causes a set of custom folder contents views to be
     added to the system; declarative variant of
     ``config.add_folder_contents_views``. Accepts the same arguments as
-    ``add_folder_contents_views`` in its constructor, e.g.
+    ``add_folder_contents_views`` in its constructor, e.g.::
 
-    from substanced.sdi,folder import (
-        FolderContents,
-        folder_contents_views,
-        )
-
-    @folder_contents_views(name='mycontents')
-    class MyFolderContents(FolderContents):
-        pass
+      from substanced.sdi,folder import (
+          FolderContents,
+          folder_contents_views,
+          )
+      
+      @folder_contents_views(name='mycontents')
+      class MyFolderContents(FolderContents):
+          pass
 
     This is equivalent to imperatively registering new folder contents views
-    like so:
+    like so::
 
-    config.add_folder_contents_views(
-        cls=MyFolderContents, name='mycontents'
-        )
+      config.add_folder_contents_views(
+          cls=MyFolderContents, name='mycontents'
+          )
 
     Like ``view_config``, and ``mgmt_view``, the decorator must be found via a
     scan to have any effect.

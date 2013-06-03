@@ -410,6 +410,17 @@ Other Helpers
 
 .. autofunction:: includeme
 
+:mod:`substanced.sdi.views.folder` API
+--------------------------------------
+
+.. automodule:: substanced.sdi.views.folder
+
+.. autofunction:: add_folder_contents_views
+
+.. autoclass:: folder_contents_views
+
+.. autoclass:: FolderContents
+
 :mod:`substanced.root` API
 --------------------------
 
