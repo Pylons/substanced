@@ -1,4 +1,3 @@
-import datetime
 import inspect
 
 from pyramid.compat import is_nonstr_iter
@@ -34,9 +33,6 @@ class ContentRegistry(object):
     def all(self):
         """ Return all content types known my this registry as a sequence."""
         return list(self.content_types.keys())
-
-    def _utcnow(self): # broken out for testing
-        return datetime.datetime.utcnow()
 
     def create(self, content_type, *arg, **kw):
         """ Create an instance of ``content_type`` by calling its factory
