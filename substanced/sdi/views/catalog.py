@@ -161,7 +161,7 @@ class SearchCatalogView(FormView):
     )
 def reindex_indexes(context, request):
     toreindex_str = request.POST.get('item-modify', '')
-    toreindex = [x for x in toreindex_str.split(',') if x]
+    toreindex = [x for x in toreindex_str.split('/') if x]
     toreindex_fmt = ', '.join(toreindex)
     if toreindex:
         context.reindex(indexes=toreindex, registry=request.registry)
