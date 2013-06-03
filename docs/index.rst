@@ -83,6 +83,7 @@ API Documentation
    :maxdepth: 1
 
    api
+   permissions
 
 Support / Reporting Bugs / Development Versions
 -----------------------------------------------

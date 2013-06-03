@@ -1,3 +1,4 @@
+import sys
 import colander
 import unittest
 
@@ -89,7 +90,7 @@ class TestAddFolderView(unittest.TestCase):
         self.assertEqual(context['name'], resource)
         self.assertEqual(resp.location, '/mgmt_path')
 
-class TestFolderContentsViews(unittest.TestCase):
+class TestFolderContents(unittest.TestCase):
     def setUp(self):
         self.config = testing.setUp()
 
@@ -97,8 +98,8 @@ class TestFolderContentsViews(unittest.TestCase):
         testing.tearDown()
 
     def _makeOne(self, context, request):
-        from ..folder import FolderContentsViews
-        return FolderContentsViews(context, request)
+        from ..folder import FolderContents
+        return FolderContents(context, request)
 
     def _makeRequest(self, **kw):
         request = testing.DummyRequest()
@@ -113,98 +114,44 @@ class TestFolderContentsViews(unittest.TestCase):
         catalogs['system'] = catalog
         return catalogs
 
-    def test__buttons_is_None(self):
+    def test_get_buttons_is_None(self):
         context = testing.DummyResource()
         request = self._makeRequest(buttons=None)
         inst = self._makeOne(context, request)
-        result = inst._buttons()
+        result = inst.get_buttons()
         self.assertEqual(result, [])
 
-    def test__buttons_is_clbl(self):
+    def test_get_buttons_is_clbl(self):
         context = testing.DummyResource()
         def sdi_buttons(context, request, default_buttons):
             return 'abc'
         request = self._makeRequest(buttons=sdi_buttons)
         inst = self._makeOne(context, request)
-        result = inst._buttons()
+        result = inst.get_buttons()
         self.assertEqual(result, 'abc')
 
-    def test__buttons_enabled_for_true(self):
-        from substanced.interfaces import IFolder
-        context = DummyFolder(__provides__=IFolder)
-        context['catalogs'] = self._makeCatalogs(oids=[1])
-        result = testing.DummyResource()
-        result.__name__ = 'fred'
-        context.__objectmap__ = DummyObjectMap(result)
-        def sdi_buttons(contexr, request, default_buttons):
-            return [{'type': 'single',
-                     'buttons': [{'enabled_for': lambda x,y,z: True,
-                                  'id': 'Button'}]}]
-        request = self._makeRequest(buttons=sdi_buttons)
-        inst = self._makeOne(context, request)
-        folder_contents = inst._folder_contents()
-        length, records = folder_contents['length'], folder_contents['records']
-        self.assertEqual(length, 1)
-        self.assertEqual(records[0]['disable'], [])
-
-    def test__buttons_enabled_for_false(self):
-        from substanced.interfaces import IFolder
-        context = DummyFolder(__provides__=IFolder)
-        context['catalogs'] = self._makeCatalogs(oids=[1])
-        result = testing.DummyResource()
-        result.__name__ = 'fred'
-        context.__objectmap__ = DummyObjectMap(result)
-        def sdi_buttons(context, request, default_buttons):
-            return [{'type': 'single',
-                     'buttons': [{'enabled_for': lambda x,y,z: False,
-                                  'id': 'Button'}]}]
-        request = self._makeRequest(buttons=sdi_buttons)
-        inst = self._makeOne(context, request)
-        folder_contents = inst._folder_contents()
-        length, records = folder_contents['length'], folder_contents['records']
-        self.assertEqual(length, 1)
-        self.assertEqual(records[0]['disable'], ['Button'])
-
-    def test__buttons_enabled_for_non_callable(self):
-        from substanced.interfaces import IFolder
-        context = DummyFolder(__provides__=IFolder)
-        context['catalogs'] = self._makeCatalogs(oids=[1])
-        result = testing.DummyResource()
-        result.__name__ = 'fred'
-        context.__objectmap__ = DummyObjectMap(result)
-        def sdi_buttons(contexr, request, default_buttons):
-            return [{'type': 'single',
-                     'buttons': [{'enabled_for': 'not callable',
-                                  'id': 'Button'}]}]
-        request = self._makeRequest(buttons=sdi_buttons)
-        inst = self._makeOne(context, request)
-        folder_contents = inst._folder_contents()
-        length, records = folder_contents['length'], folder_contents['records']
-        self.assertEqual(length, 1)
-        self.assertEqual(records[0]['disable'], [])
-
-    def test__columns_custom_columns_is_None(self):
+    def test_get_columns_custom_columns_is_None(self):
         context = testing.DummyResource()
         request = self._makeRequest(columns=None)
         inst = self._makeOne(context, request)
-        result = inst._columns()
+        result = inst.get_columns(None)
         self.assertEqual(result, [])
 
-    def test__columns_custom_columns_doesnt_exist(self):
+    def test_get_columns_custom_columns_doesnt_exist(self):
         context = testing.DummyResource()
         request = self._makeRequest()
         inst = self._makeOne(context, request)
-        result = inst._columns()
+        result = inst.get_columns(None)
         self.assertEqual(len(result), 1)
         
-    def test__columns_custom_columns_exists(self):
+    def test_get_columns_custom_columns_exists(self):
         context = testing.DummyResource()
         def columns(context, subobject, request, columns):
             self.assertEqual(len(columns), 1)
             return ['abc', '123', 'def']
         request = self._makeRequest(columns=columns)
         inst = self._makeOne(context, request)
-        result = inst._columns()
+        result = inst.get_columns(None)
         self.assertEqual(len(result), 3)
 
     def test__column_headers_for_non_sortable_columns(self):
@@ -549,6 +496,60 @@ class TestFolderContentsViews(unittest.TestCase):
         request.registry.content = DummyContent(columns=get_columns)
         inst._folder_contents()
         
+    def test__folder_contents_button_enabled_for_true(self):
+        from substanced.interfaces import IFolder
+        context = DummyFolder(__provides__=IFolder)
+        context['catalogs'] = self._makeCatalogs(oids=[1])
+        result = testing.DummyResource()
+        result.__name__ = 'fred'
+        context.__objectmap__ = DummyObjectMap(result)
+        def sdi_buttons(contexr, request, default_buttons):
+            return [{'type': 'single',
+                     'buttons': [{'enabled_for': lambda x,y,z: True,
+                                  'id': 'Button'}]}]
+        request = self._makeRequest(buttons=sdi_buttons)
+        inst = self._makeOne(context, request)
+        folder_contents = inst._folder_contents()
+        length, records = folder_contents['length'], folder_contents['records']
+        self.assertEqual(length, 1)
+        self.assertEqual(records[0]['disable'], [])
+
+    def test__folder_contents_button_enabled_for_false(self):
+        from substanced.interfaces import IFolder
+        context = DummyFolder(__provides__=IFolder)
+        context['catalogs'] = self._makeCatalogs(oids=[1])
+        result = testing.DummyResource()
+        result.__name__ = 'fred'
+        context.__objectmap__ = DummyObjectMap(result)
+        def sdi_buttons(context, request, default_buttons):
+            return [{'type': 'single',
+                     'buttons': [{'enabled_for': lambda x,y,z: False,
+                                  'id': 'Button'}]}]
+        request = self._makeRequest(buttons=sdi_buttons)
+        inst = self._makeOne(context, request)
+        folder_contents = inst._folder_contents()
+        length, records = folder_contents['length'], folder_contents['records']
+        self.assertEqual(length, 1)
+        self.assertEqual(records[0]['disable'], ['Button'])
+
+    def test__folder_contents_button_enabled_for_non_callable(self):
+        from substanced.interfaces import IFolder
+        context = DummyFolder(__provides__=IFolder)
+        context['catalogs'] = self._makeCatalogs(oids=[1])
+        result = testing.DummyResource()
+        result.__name__ = 'fred'
+        context.__objectmap__ = DummyObjectMap(result)
+        def sdi_buttons(contexr, request, default_buttons):
+            return [{'type': 'single',
+                     'buttons': [{'enabled_for': 'not callable',
+                                  'id': 'Button'}]}]
+        request = self._makeRequest(buttons=sdi_buttons)
+        inst = self._makeOne(context, request)
+        folder_contents = inst._folder_contents()
+        length, records = folder_contents['length'], folder_contents['records']
+        self.assertEqual(length, 1)
+        self.assertEqual(records[0]['disable'], [])
+
     def test__filter_values(self):
         from substanced.interfaces import IFolder
         context = DummyFolder(__provides__=IFolder)
@@ -1262,86 +1263,90 @@ class TestFolderContentsViews(unittest.TestCase):
             {'foo': 'bar', 'flash': 'STATUSMESSG<a>Undo</a>'}
             )
 
-class Test_default_sdi_columns(unittest.TestCase):
-    def _callFUT(self, folder, context, request):
-        from ..folder import default_sdi_columns
-        return default_sdi_columns(folder, context, request)
-    
-    def _makeRequest(self, icon):
-        request = testing.DummyResource()
-        registry = testing.DummyResource()
-        content = testing.DummyResource()
-        content.metadata = lambda *arg: icon
-        request.registry = registry
-        request.registry.content = content
-        request.sdiapi = DummySDIAPI()
-        return request
+    def test__name_sorter_index_is_None(self):
+        context = testing.DummyResource()
+        request = self._makeRequest()
+        inst = self._makeOne(context, request)
+        resource = testing.DummyResource()
+        resultset = 123
+        inst.system_catalog = {}
+        result = inst._name_sorter(resource, resultset, 1, True)
+        self.assertEqual(result, resultset)
+        
+    def test__name_sorter_index_is_not_None(self):
+        context = testing.DummyResource()
+        request = self._makeRequest()
+        resource = testing.DummyResource()
+        catalog = DummyCatalog()
+        class ResultSet(object):
+            def sort(innerself, index, limit=None, reverse=None):
+                self.assertEqual(index.__class__.__name__, 'DummyIndex')
+                self.assertEqual(limit, 1)
+                self.assertEqual(reverse, True)
+                return innerself
+        resultset = ResultSet()
+        inst = self._makeOne(context, request)
+        inst.system_catalog = catalog
+        result = inst._name_sorter(resource, resultset, 1, True)
+        self.assertEqual(result, resultset)
 
-    def test_it_no_icon(self):
-        from ..folder import name_sorter
+    def test_get_columns_no_icon(self):
         fred = testing.DummyResource()
         fred.__name__ = 'fred'
-        request = self._makeRequest(None)
-        result = self._callFUT(None, fred, request)
+        request = self._makeRequest(icon=None)
+        context = testing.DummyResource()
+        inst = self._makeOne(context, request)
+        result = inst.get_columns(fred)
         self.assertEqual(
            result,
            [
-                {'sorter': name_sorter, 
+                {'sorter': inst._name_sorter, 
                  'name': 'Name',
                  'formatter':'html',
                  'value':'<i class=""> </i> <a href="/mgmt_path">fred</a>'},
                 ]
            )
 
-    def test_it_named_icon(self):
-        from ..folder import name_sorter
+    def test_get_columns_named_icon(self):
         fred = testing.DummyResource()
         fred.__name__ = 'fred'
-        request = self._makeRequest('icon')
-        result = self._callFUT(None, fred, request)
-        self.assertEqual(
-           result,
-           [
-                {'sorter': name_sorter, 
-                 'name': 'Name',
-                 'formatter':'html',
-                 'value':'<i class="icon"> </i> <a href="/mgmt_path">fred</a>'},
-                ]
-           )
-
-    def test_it_with_callable_icon(self):
-        from ..folder import name_sorter
-        fred = testing.DummyResource()
-        fred.__name__ = 'fred'
-        request = self._makeRequest(lambda *arg: 'icon')
-        result = self._callFUT(None, fred, request)
-        self.assertEqual(
-           result,
-           [
-                {'sorter': name_sorter, 
-                 'name': 'Name',
-                 'formatter':'html',
-                 'value':'<i class="icon"> </i> <a href="/mgmt_path">fred</a>'},
-                ]
-           )
-
-
-class Test_default_sdi_buttons(unittest.TestCase):
-    def setUp(self):
-        self.config = testing.setUp()
-        self.config.testing_securitypolicy(permissive=True)
-
-    def tearDown(self):
-        testing.tearDown()
-        
-    def _callFUT(self, context, request):
-        from ..folder import default_sdi_buttons
-        return default_sdi_buttons(context, request)
-    
-    def test_it_novals(self):
-        request = testing.DummyRequest()
+        request = self._makeRequest(icon='icon')
         context = testing.DummyResource()
-        result = self._callFUT(context, request)
+        inst = self._makeOne(context, request)
+        result = inst.get_columns(fred)
+        self.assertEqual(
+           result,
+           [
+                {'sorter': inst._name_sorter, 
+                 'name': 'Name',
+                 'formatter':'html',
+                 'value':'<i class="icon"> </i> <a href="/mgmt_path">fred</a>'},
+                ]
+           )
+
+    def test_get_columns_with_callable_icon(self):
+        fred = testing.DummyResource()
+        fred.__name__ = 'fred'
+        request = self._makeRequest(icon=lambda *arg: 'icon')
+        context = testing.DummyResource()
+        inst = self._makeOne(context, request)
+        result = inst.get_columns(fred)
+        self.assertEqual(
+           result,
+           [
+                {'sorter': inst._name_sorter, 
+                 'name': 'Name',
+                 'formatter':'html',
+                 'value':'<i class="icon"> </i> <a href="/mgmt_path">fred</a>'},
+                ]
+           )
+        
+    def test_get_buttons_novals(self):
+        self.config.testing_securitypolicy(permissive=True)
+        request = self._makeRequest()
+        context = testing.DummyResource()
+        inst = self._makeOne(context, request)
+        result = inst.get_buttons()
         self.assertEqual(len(result), 2)
         main_buttons = result[0]
         self.assertEqual(main_buttons['type'], 'group')
@@ -1363,27 +1368,31 @@ class Test_default_sdi_buttons(unittest.TestCase):
         self.assertEqual(delete_button['id'], 'delete')
         self.assertTrue(delete_button['enabled_for'])
 
-    def test_delete_enabled_for_no_sdi_deletable_attr_can_manage(self):
-        request = testing.DummyRequest()
+    def test_get_buttons_delete_enabled_for_no_sdi_deletable_attr_can_mg(self):
+        self.config.testing_securitypolicy(permissive=True)
+        request = self._makeRequest()
         context = testing.DummyResource()
-        result = self._callFUT(context, request)
+        inst = self._makeOne(context, request)
+        result = inst.get_buttons()
         delete_button = result[1]['buttons'][0]
         delete_enabled_for = delete_button['enabled_for']
         result = delete_enabled_for(context, context, request)
         self.assertTrue(result)
 
-    def test_delete_enabled_for_no_sdi_deletable_attr_cannot_manage(self):
+    def test_get_buttons_delete_enabled_for_no_sdi_deletable_attr_cant_mg(self):
         self.config.testing_securitypolicy(permissive=False)
-        request = testing.DummyRequest()
+        request = self._makeRequest()
         context = testing.DummyResource()
-        result = self._callFUT(context, request)
+        inst = self._makeOne(context, request)
+        result = inst.get_buttons()
         delete_button = result[1]['buttons'][0]
         delete_enabled_for = delete_button['enabled_for']
         result = delete_enabled_for(context, context, request)
         self.assertFalse(result)
         
-    def test_delete_enabled_for_callable_sdi_deletable_attr(self):
-        request = testing.DummyRequest()
+    def test_get_buttons_delete_enabled_for_callable_sdi_deletable_attr(self):
+        self.config.testing_securitypolicy(permissive=True)
+        request = self._makeRequest()
         context = testing.DummyResource()
         subobject = testing.DummyResource()
         def deletable(_subobject, _request):
@@ -1391,28 +1400,33 @@ class Test_default_sdi_buttons(unittest.TestCase):
             self.assertEqual(_request, request)
             return False
         subobject.__sdi_deletable__ = deletable
-        result = self._callFUT(context, request)
+        inst = self._makeOne(context, request)
+        result = inst.get_buttons()
         delete_button = result[1]['buttons'][0]
         delete_enabled_for = delete_button['enabled_for']
         result = delete_enabled_for(context, subobject, request)
         self.assertFalse(result)
 
-    def test_delete_enabled_for_boolean_sdi_deletable_attr(self):
-        request = testing.DummyRequest()
+    def test_get_buttons_delete_enabled_for_boolean_sdi_deletable_attr(self):
+        self.config.testing_securitypolicy(permissive=True)
+        request = self._makeRequest()
         context = testing.DummyResource()
         subobject = testing.DummyResource()
         subobject.__sdi_deletable__ = False
-        result = self._callFUT(context, request)
+        inst = self._makeOne(context, request)
+        result = inst.get_buttons()
         delete_button = result[1]['buttons'][0]
         delete_enabled_for = delete_button['enabled_for']
         result = delete_enabled_for(context, subobject, request)
         self.assertFalse(result)
         
-    def test_it_tocopy(self):
-        request = testing.DummyRequest()
+    def test_get_buttons_tocopy(self):
+        self.config.testing_securitypolicy(permissive=True)
+        request = self._makeRequest()
         context = testing.DummyResource()
         request.session['tocopy'] = True
-        result = self._callFUT(context, request)
+        inst = self._makeOne(context, request)
+        result = inst.get_buttons()
         self.assertEqual(
             result,
             [
@@ -1431,11 +1445,13 @@ class Test_default_sdi_buttons(unittest.TestCase):
                ]
                )
 
-    def test_it_tomove(self):
-        request = testing.DummyRequest()
+    def test_get_buttons_tomove(self):
+        self.config.testing_securitypolicy(permissive=True)
+        request = self._makeRequest()
         context = testing.DummyResource()
         request.session['tomove'] = True
-        result = self._callFUT(context, request)
+        inst = self._makeOne(context, request)
+        result = inst.get_buttons()
         self.assertEqual(
             result, [
             {'buttons': [
@@ -1453,33 +1469,111 @@ class Test_default_sdi_buttons(unittest.TestCase):
             ]            
             )
 
+class Test_folder_contents_views_decorator(unittest.TestCase):
+    def setUp(self):
+        testing.setUp()
 
-class Test_name_sorter(unittest.TestCase):
-    def _callFUT(self, resource, resultset, limit, reverse):
-        from ..folder import name_sorter
-        return name_sorter(resource, resultset, limit, reverse)
+    def tearDown(self):
+        testing.tearDown()
 
-    def test_index_is_None(self):
-        resource = testing.DummyResource()
-        resultset = 123
-        result = self._callFUT(resource, resultset, 1, True)
-        self.assertEqual(result, resultset)
-        
-    def test_index_is_not_None(self):
+    def _getTargetClass(self):
+        from ..folder import folder_contents_views
+        return folder_contents_views
+
+    def _makeOne(self, *arg, **kw):
+        return self._getTargetClass()(*arg, **kw)
+
+    def test_create_defaults(self):
+        decorator = self._makeOne()
+        self.assertEqual(decorator.settings, {})
+
+    def test_create_nondefaults(self):
+        decorator = self._makeOne(
+            name='frank',
+            match_param='match_param',
+            )
+        self.assertEqual(decorator.settings['name'], 'frank')
+        self.assertEqual(decorator.settings['match_param'], 'match_param')
+
+    def test_call_class(self):
+        decorator = self._makeOne()
+        venusian = DummyVenusian()
+        decorator.venusian = venusian
+        class foo(object): pass
+        wrapped = decorator(foo)
+        self.assertTrue(wrapped is foo)
+        config = call_venusian(venusian)
+        settings = config.settings
+        self.assertEqual(len(settings), 1)
+        self.assertEqual(len(settings[0]), 2)
+        self.assertEqual(settings[0]['cls'], None) # comes from call_venusian
+        self.assertEqual(settings[0]['_info'], 'codeinfo')
+
+    def test_stacking(self):
+        decorator1 = self._makeOne(name='1')
+        venusian1 = DummyVenusian()
+        decorator1.venusian = venusian1
+        venusian2 = DummyVenusian()
+        decorator2 = self._makeOne(name='2')
+        decorator2.venusian = venusian2
+        def foo(): pass
+        wrapped1 = decorator1(foo)
+        wrapped2 = decorator2(wrapped1)
+        self.assertTrue(wrapped1 is foo)
+        self.assertTrue(wrapped2 is foo)
+        config1 = call_venusian(venusian1)
+        self.assertEqual(len(config1.settings), 1)
+        self.assertEqual(config1.settings[0]['name'], '1')
+        config2 = call_venusian(venusian2)
+        self.assertEqual(len(config2.settings), 1)
+        self.assertEqual(config2.settings[0]['name'], '2')
+
+    def test_with_custom_predicates(self):
+        decorator = self._makeOne(custom_predicates=(1,))
+        venusian = DummyVenusian()
+        decorator.venusian = venusian
+        def foo(context, request): pass
+        decorated = decorator(foo)
+        self.assertTrue(decorated is foo)
+        config = call_venusian(venusian)
+        settings = config.settings
+        self.assertEqual(settings[0]['custom_predicates'], (1,))
+
+    def test_call_withdepth(self):
+        decorator = self._makeOne(_depth=1)
+        venusian = DummyVenusian()
+        decorator.venusian = venusian
+        def foo(): pass
+        decorator(foo)
+        self.assertEqual(venusian.depth, 2)
+
+class Test_add_folder_contents_views(unittest.TestCase):
+    def _callFUT(self, config, **kw):
+        from ..folder import add_folder_contents_views
+        return add_folder_contents_views(config, **kw)
+    
+    def test_it_gardenpath(self):
+        from ..folder import FolderContents
         from substanced.interfaces import IFolder
-        resource = testing.DummyResource(__provides__=IFolder)
-        resource['catalogs'] = DummyCatalogs()
-        resource['catalogs']['system'] = DummyCatalog()
-        class ResultSet(object):
-            def sort(innerself, index, limit=None, reverse=None):
-                self.assertEqual(index.__class__.__name__, 'DummyIndex')
-                self.assertEqual(limit, 1)
-                self.assertEqual(reverse, True)
-                return innerself
-        resultset = ResultSet()
-        result = self._callFUT(resource, resultset, 1, True)
-        self.assertEqual(result, resultset)
+        config = DummyConfig()
+        self._callFUT(config)
+        self.assertEqual(len(config.settings), 11)
+        self.assertEqual(config.settings[0]['view'], FolderContents)
+        self.assertEqual(config.settings[0]['context'], IFolder)
 
+    def test_it_override_context_and_cls(self):
+        config = DummyConfig()
+        class Foo(object): pass
+        self._callFUT(config, cls=Foo, context=Foo)
+        self.assertEqual(config.settings[0]['view'], Foo)
+        self.assertEqual(config.settings[0]['context'], Foo)
+
+    def test_it_with_extra_predicates(self):
+        config = DummyConfig()
+        class Foo(object): pass
+        self._callFUT(config, slamdunk=1)
+        self.assertEqual(config.settings[0]['slamdunk'], 1)
+        
 class DummyContainer(object):
     oid_store = {}
 
@@ -1575,3 +1669,49 @@ class DummyObjectMap(object):
         self.result = result
     def object_for(self, oid):
         return self.result
+
+class DummyVenusianInfo(object):
+    scope = 'notaclass'
+    module = sys.modules['substanced.sdi.views.tests.test_folder']
+    codeinfo = 'codeinfo'
+
+class DummyVenusian(object):
+    def __init__(self, info=None):
+        if info is None:
+            info = DummyVenusianInfo()
+        self.info = info
+        self.attachments = []
+
+    def attach(self, wrapped, callback, category=None, depth=1):
+        self.attachments.append((wrapped, callback, category))
+        self.depth = depth
+        return self.info
+
+class DummyRegistry(object):
+    pass
+
+class DummyConfig(object):
+    _ainfo = None
+    def __init__(self):
+        self.settings = []
+        self.registry = DummyRegistry()
+
+    def add_folder_contents_views(self, **kw):
+        self.settings.append(kw)
+
+    add_mgmt_view = add_folder_contents_views
+
+    def with_package(self, pkg):
+        self.pkg = pkg
+        return self
+
+class DummyVenusianContext(object):
+    def __init__(self):
+        self.config = DummyConfig()
+    
+def call_venusian(venusian, context=None):
+    if context is None:
+        context = DummyVenusianContext()
+    for wrapped, callback, category in venusian.attachments:
+        callback(context, None, None)
+    return context.config

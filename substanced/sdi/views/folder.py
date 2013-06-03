@@ -1,12 +1,14 @@
+import functools
 import itertools
 import re
 
 import colander
+import venusian
 
 from pyramid.decorator import reify
 from pyramid.httpexceptions import HTTPFound
-from pyramid.view import view_defaults
 from pyramid.security import has_permission
+from pyramid.util import action_method
 
 from ...folder import FolderKeyError
 from ...form import FormView
@@ -17,7 +19,6 @@ from ...util import (
     JsonDict,
     get_oid,
     find_catalog,
-    find_index,
     get_icon_name,
     )
 from ..._compat import u
@@ -28,6 +29,55 @@ from .. import (
     )
 
 _marker = object()
+
+
+class folder_contents_views(object):
+    """ Decorator which causes a set of custom folder contents views to be
+    added to the system; declarative variant of
+    ``config.add_folder_contents_views``. Accepts the same arguments as
+    ``add_folder_contents_views`` in its constructor, e.g.::
+
+      from substanced.sdi,folder import (
+          FolderContents,
+          folder_contents_views,
+          )
+      
+      @folder_contents_views(name='mycontents')
+      class MyFolderContents(FolderContents):
+          pass
+
+    This is equivalent to imperatively registering new folder contents views
+    like so::
+
+      config.add_folder_contents_views(
+          cls=MyFolderContents, name='mycontents'
+          )
+
+    Like ``view_config``, and ``mgmt_view``, the decorator must be found via a
+    scan to have any effect.
+    
+    """
+    venusian = venusian # for testing injection
+    def __init__(self, **settings):
+        self.settings = settings
+
+    def __call__(self, wrapped):
+        settings = self.settings.copy()
+        depth = settings.pop('_depth', 0)
+        
+        def callback(context, name, ob):
+            config = context.config.with_package(info.module)
+            config.add_folder_contents_views(cls=ob, **settings)
+
+        info = self.venusian.attach(
+            wrapped,
+            callback,
+            category='substanced',
+            depth=depth+1
+            )
+
+        settings['_info'] = info.codeinfo # fbo "action_method"
+        return wrapped
 
 def rename_duplicated_resource(context, name):
     """Finds next available name inside container by appending
@@ -88,53 +138,206 @@ class AddFolderView(FormView):
         self.context[name] = folder
         return HTTPFound(location=self.request.sdiapi.mgmt_path(self.context))
 
-@view_defaults(
-    context=IFolder,
-    name='contents',
-    renderer='templates/contents.pt'
-    )
-class FolderContentsViews(object):
+@folder_contents_views()
+class FolderContents(object):
+    """ The default folder contents views class """
 
     sdi_add_views = staticmethod(sdi_add_views) # for testing
 
     def __init__(self, context, request):
         self.context = context
         self.request = request
+        
+    def get_default_buttons(self):
+        """ The default buttons content-type hook """
+        context = self.context
+        request = self.request
+        
+        buttons = []
+        finish_buttons = []
+
+        if 'tocopy' in request.session:
+            finish_buttons.extend(
+                [
+                {'id': 'copy_finish',
+                  'name': 'form.copy_finish',
+                  'class': 'btn-primary btn-sdi-act',
+                  'value': 'copy_finish',
+                  'text': 'Copy here'},
+                {'id': 'cancel',
+                 'name': 'form.copy_finish',
+                 'class': 'btn-danger btn-sdi-act',
+                 'value': 'cancel',
+                 'text': 'Cancel'},
+                ])
+
+        if 'tomove' in request.session:
+            finish_buttons.extend(
+                [{'id': 'move_finish',
+                  'name': 'form.move_finish',
+                  'class': 'btn-primary btn-sdi-act',
+                  'value': 'move_finish',
+                  'text': 'Move here'},
+                 {'id': 'cancel',
+                  'name': 'form.move_finish',
+                  'class': 'btn-danger btn-sdi-act',
+                  'value': 'cancel',
+                  'text': 'Cancel'}])
+
+        if finish_buttons:
+            buttons.append(
+              {'type':'single', 'buttons':finish_buttons}
+              )
+
+        if not 'tomove' in request.session and not 'tocopy' in request.session:
+
+            can_manage = bool(
+                has_permission('sdi.manage-contents', context, request)
+                )
+
+            def delete_enabled_for(folder, resource, request):
+                """
+                This function considers a subobject 'deletable' if the user has
+                the ``sdi.manage-contents`` permission on ``folder`` or if the
+                subobject has a ``__sdi_deletable__`` attribute which resolves
+                to a boolean ``True`` value.
+
+                This function honors one subobject hook::
+                ``__sdi_deletable__``.  If a subobject has an attribute named
+                ``__sdi_deletable__``, it is expected to be either a boolean or
+                a callable.  If ``__sdi_deletable__`` is a boolean, the value
+                is used verbatim.  If ``__sdi_deletable__`` is a callable, the
+                callable is called with two positional arguments: the subobject
+                and the request; the result is expected to be a boolean.  If a
+                subobject has an ``__sdi_deletable__`` attribute, and its
+                resolved value is not ``None``, the delete button will be off
+                if it's a boolean False.  If ``__sdi_deletable__`` does not
+                exist on a subobject or resolves to ``None``, the delete button
+                will be turned off if current user does not have the
+                ``sdi.manage-contents`` permission on the ``folder``.
+                """
+                deletable = getattr(resource, '__sdi_deletable__', None)
+                if deletable is not None:
+                    if callable(deletable):
+                        deletable = deletable(resource, request)
+                if deletable is None:
+                    deletable = can_manage
+                deletable = bool(deletable) # cast return/attr value to bool
+                return deletable
+
+            main_buttons = [
+                 {'id': 'rename',
+                  'name': 'form.rename',
+                  'class': 'btn-sdi-sel',
+                  'enabled_for':delete_enabled_for,
+                  'value': 'rename',
+                  'text': 'Rename'},
+                  {'id': 'copy',
+                  'name': 'form.copy',
+                  'class': 'btn-sdi-sel',
+                  'value': 'copy',
+                  'text': 'Copy'},
+                  {'id': 'move',
+                  'name': 'form.move',
+                  'class': 'btn-sdi-sel',
+                  'enabled_for':delete_enabled_for,
+                  'value': 'move',
+                  'text': 'Move'},
+                  {'id': 'duplicate',
+                  'name': 'form.duplicate',
+                  'class': 'btn-sdi-sel',
+                  'value': 'duplicate',
+                  'text': 'Duplicate'}
+                  ]
+
+            buttons.append({'type': 'group', 'buttons':main_buttons})
+
+            delete_buttons = [
+                  {'id': 'delete',
+                   'name': 'form.delete',
+                   'class': 'btn-danger btn-sdi-sel',
+                   'enabled_for':delete_enabled_for,
+                   'value': 'delete',
+                   'text': 'Delete'},
+                   ]
+
+            buttons.append({'type': 'group', 'buttons':delete_buttons})
+
+        return buttons
+
+    def get_buttons(self):
+        context = self.context
+        request = self.request
+        defaults = self.get_default_buttons()
+        buttonsfn = request.registry.content.metadata(
+            context,
+            'buttons',
+            _marker
+            )
+        if buttonsfn is None:
+            return []
+        if buttonsfn is _marker:
+            return defaults
+        else:
+            return buttonsfn(context, request, defaults)
+
+    def get_default_columns(self, resource):
+        request = self.request
+        name = getattr(resource, '__name__', '')
+        icon = get_icon_name(resource, request) or ''
+        url = request.sdiapi.mgmt_path(resource, '@@manage_main')
+        value = '<i class="%s"> </i> <a href="%s">%s</a>' % (icon, url, name)
+        columns = [
+            {'name': 'Name',
+             'value': value,
+             'formatter': 'html',
+             'sorter': self._name_sorter}
+            ]
+        return columns
+
+    def get_columns(self, resource):
+        context = self.context
+        request = self.request
+        defaults = self.get_default_columns(resource)
+        columnsfn = request.registry.content.metadata(
+            context,
+            'columns',
+            _marker
+            )
+        if columnsfn is None:
+            return []
+        if columnsfn is _marker:
+            return defaults
+        else:
+            return columnsfn(context, resource, request, defaults)
+
+    def get_default_query(self):
+        """ The default query function for a folder """
+        system_catalog = self.system_catalog
+        folder = self.context
+        request = self.request
+        path = system_catalog['path']
+        allowed = system_catalog['allowed']
+        q = ( path.eq(folder, depth=1, include_origin=False) &
+              allowed.allows(request, 'sdi.view') )
+        return q
+
+    get_query = get_default_query
+
+    @reify
+    def system_catalog(self):
+        return find_catalog(self.context, 'system')
+
+    def _name_sorter(self, resource, resultset, limit=None, reverse=False):
+        index = self.system_catalog.get('name')
+        if index is not None:
+            resultset = resultset.sort(index, limit=limit, reverse=reverse)
+        return resultset
 
     def _modified_items(self):
         items = self.request.POST.get('item-modify', '').split('/')
         modified = [x for x in  items if x] # remove empty
         return modified
-
-    def _buttons(self):
-        context = self.context
-        request = self.request
-        buttons = default_sdi_buttons(context, request)
-        custom_buttons = request.registry.content.metadata(
-            context,
-            'buttons',
-            _marker
-            )
-        if custom_buttons is None:
-            return []
-        if custom_buttons is not _marker:
-            buttons = custom_buttons(context, request, buttons)
-        return buttons
-
-    def _columns(self):
-        context = self.context
-        request = self.request
-        columns = default_sdi_columns(self, None, request)
-        custom_columns = request.registry.content.metadata(
-            context,
-            'columns',
-            _marker
-            )
-        if custom_columns is None:
-            return []
-        if custom_columns is not _marker:
-            columns = custom_columns(context, None, request, columns)
-        return columns
 
     def _column_headers(self, columns):
         is_ordered = self.context.is_ordered()
@@ -247,18 +450,6 @@ class FolderContentsViews(object):
                 filter_values.append((name, v))
         return filter_values
 
-    @reify
-    def system_catalog(self):
-        return find_catalog(self.context, 'system')
-
-    def get_catalog_query(self):
-        system_catalog = self.system_catalog
-        path = system_catalog['path']
-        allowed = system_catalog['allowed']
-        q = ( path.eq(self.context, depth=1, include_origin=False) &
-              allowed.allows(self.request, 'sdi.view') )
-        return q
-    
     def _folder_contents(
         self,
         start=None,
@@ -269,231 +460,48 @@ class FolderContentsViews(object):
         ):
 
         """
-        Returns a sequence of dictionaries that can be used by a 'folder
-        contents' view.  The sequence is implemented as a generator.  The
-        ``folder`` object passed must implement the methods of the
-        :class:`substanced.interfaces.IFolder` interface, and the ``request``
-        object passed must be a Pyramid request.
+        Returns a dictionary containing:
 
-        Each dictionary in the sequence reflects information about a single
-        subobject in the folder.  Each dictionary in the sequence returned will
-        have the following keys:
+        ``length``
 
-        ``name``
+          The folder's length (ie. `len(folder)`)
+          
+        ``records``
 
-          The name of the subobject.
+          A sequence of dictionaries that represent the folder's subobjects.
+          The sequence is implemented as a generator.  Each dictionary in the
+          ``records`` sequence reflects information about a single subobject in
+          the folder, and will have the following keys:
 
-        ``url``
+          ``name``
 
-          The URL to the subobject.  This will be
-          ``/path/to/subob/@@manage_main``.
+            The name of the subobject.
+
+          ``url``
+
+            The URL to the subobject.  This will be
+            ``/path/to/subob/@@manage_main``.
+
+          ``columns``
+
+            The column values obtained from this subobject's attributes, as
+            defined by the ``columns`` content-type hook (or the default
+            columns, if no hook was supplied).
+          
+        ``sort_column_name``
+
+          The crrent sort_column_name
+
+        ``sort_reverse``
+
+          True if the current sort should be reversed.
 
         ``columns``
 
-          The column values obtained from this subobject's attributes, as
-          defined by the ``columns`` content-type hook (or the default columns,
-          if no hook was supplied).
-
-        This function honors three content type hooks: ``icon``, ``buttons``,
-        and ``columns``.
-
-        The first content type hook is named ``icon``.  If the ``icon``
-        supplied to the content type configuration of a subobject is a
-        callable, the callable will be passed the subobject and the
-        ``request``; it is expected to return an icon name or ``None``.
-        ``icon`` may alternately be either ``None`` or a string representing a
-        icon name instead of a callable.
-
-        The second content type hook is named ``buttons``.  The folder contents
-        view is a good place to wire up application specific functionality that
-        depends on content selection, so the button toolbar that shows up at
-        the bottom of the page is customizable. The default buttons can be
-        overridden by supplying a ``buttons`` keyword argument to the content
-        type argument list.  It must be a callable object which accepts
-        ``context, request, default_buttonspec`` and which returns a list of
-        dictionaries; each dictionary represents a button or a button group.
-
-        The ``buttons`` callable you supply will be passed the ``context`` and
-        the ``request`` and ``buttonspec`` (a sequence of default button
-        specifications). It must return a list of dictionaries representing
-        button specifications with at least a ``type`` key for the button
-        specification type and a ``buttons`` key with a list of dictionaries
-        representing the buttons. The ``type`` should be one of the string
-        values ``group`` or ``single``. A group will display its buttons side
-        by side, with no margin, while the single type will display each button
-        separately.
-
-        Each button in a ``buttons`` dictionary is rendered using the button
-        tag and requires five keys: ``id`` for the button's id attribute,
-        ``name`` for the button's name attribute, ``class`` for any additional
-        css classes to be applied to it (see below), ``value`` for the value
-        that will be passed as a request parameter when the form is submitted
-        and ``text`` for the button's text.
-
-        The ``class`` value is special because it will define the button's
-        behavior. There are four mutually exclusive class names that can be
-        used. ``btn-sdi-act`` is for buttons that will always be enabled,
-        independently of any selected content items. ``btn-sdi-sel`` means
-        the button will start as disabled and will only be enabled once one
-        or more items are selected. ``btn-sdi-one`` means the button will
-        only be enabled if there's exactly one item selected. Finally,
-        ``btn-sdi-del`` means the button will stay disabled until one or
-        more *deletable* items are selected. You *must* use one of these
-        classes for the button to be enabled.
+          A sequence of column header values.
         
-        The ``class`` value can contain several classes separated by spaces.
-        In addition to the classes mentioned above, any custom css class or any
-        bootstrap button class can be used.
-        
-        Finally, each button can optionally include an ``enabled_for`` key,
-        which will point to a callable that will be passed a subobject from the
-        current folder and must return True if the button should be enabled for
-        that subobject or False if not.
-
-        Most of the time, the best strategy for using the buttons callable will
-        be to return a value containing the default buttonspec sequence passed
-        in to the function (it will be a list).::
-
-          def custom_buttons(context, request, default_buttonspec):
-              def some_condition(folder, subobject, request):
-                  return getattr(context, 'can_use_button1', False)
-
-              custom_buttonspec = [{'type': 'single',
-                                   'buttons': [{'id': 'button1',
-                                                'name': 'button1',
-                                                'class': 'btn-sdi-sel',
-                                                'enabled_for': some_condition,
-                                                'value': 'button1',
-                                                'text': 'Button 1'},
-                                               {'id': 'button2',
-                                                'name': 'button2',
-                                                'class': 'btn-sdi-act',
-                                                'value': 'button2',
-                                                'text': 'Button 2'}]}]
-              return default_buttonspec + custom_buttonspec
-
-          @content(
-              'My Custom Folder',
-              buttons=custom_buttons,
-              )
-          class MyCustomFolder(Persistent):
-              pass
-
-        Once the buttons are defined, a view needs to be registered to handle
-        the new buttons. The view configuration has to set Folder as a context
-        and include a ``request_param`` predicate with the same name as the
-        ``value`` defined for the corresponding button. The following template
-        can be used to register such views, changing only the ``request_param``
-        value::
-
-          @mgmt_view(
-          context=IFolder,
-          name='contents',
-          renderer='substanced.sdi:templates/contents.pt',
-          permission='sdi.manage-contents',
-          request_method='POST',
-          request_param='button1',
-          tab_condition=False,
-          )
-          def button1(context, request):
-              # add button functionality here, then go back to contents
-              request.session.flash('Just did what button1 does')
-              return HTTPFound(request.sdiapi.mgmt_path(context, '@@contents'))
-
-        Note that context has to be IFolder for this to work. If you need to
-        restrict a button to some specific list of content types, the Pyramid
-        ``content_type`` predicate can be used.
-
-        The third content-type hook is named ``columns``.  To display the
-        contents using a table with any given subobject attributes, a callable
-        named ``columns`` can be passed to a content type as metadata.  When
-        the folder contents SDI view is invoked against an object of the type,
-        the ``columns`` callable will be passed the folder, a subobject, the
-        ``request``, and a default column specification. It will be called once
-        for every object in the folder to obtain column representations for
-        each of its subobjects.  It must return a list of dictionaries with at
-        least a ``name`` key for the column header and a ``value`` key with
-        the correct column value given the subobject. The callable **must** be
-        prepared to receive subobjects that will *not* have the desired
-        attributes (the subobject passed will be ``None`` at least once in
-        order for the system to compute headers).
-
-        In addition to ``name`` and ``value``, the column dictionary may
-        contain the keys ``sorter``, ``initial_sort_column``,
-        ``initial_sort_reverse``, and ``formatter``. The ``sorter`` will either
-        be ``None`` if the column is not sortable, or a callback which accepts
-        a resource (the folder), a resultset, a ``limit`` keyword argument, and
-        a ``reverse`` keyword argument and which must return a sorted result
-        set.  The default ``sorter`` value is ``None``. The
-        ``initial_sort_column`` should be the ``True`` if this column should
-        be the initial sort column (it must also have a ``sorter``).  If no
-        column is marked as the initial sort column, the first column with a
-        ``sorter`` will be used as the initial sort column.  The
-        ``initial_sort_reverse`` key can be ``True`` or ``False`` if you want
-        the initial rendering to be sorted reverse or not.  The last key,
-        ``formatter``, can give the name of a javascript method for formatting
-        the ``value``.  Currently, available formatters are ``icon_label_url``
-        and ``date``.
-        
-        The ``icon_label_url`` formatter gets the URL and icon (if any) of the
-        subobject and creates a link using ``value`` as link text. The ``date``
-        formatter expects that ``value`` is an ISO date and returns a text date
-        in the format "<month name> <day>, <year>".
-
-        Here's an example of using the ``columns`` content type hook::
-
-          from substanced.util import find_index
-
-          def sorter(folder, resultset, reverse=False, limit=None):
-              index = find_index(folder, 'mycatalog', 'date')
-              if index is not None:
-                  resultset = resultset.sort(
-                                       index, reverse=reverse, limit=limit)
-              return resultset
-
-          def custom_columns(folder, subobject, request, default_columnspec):
-              return default_columnspec + [
-                  {'name': 'Review Date',
-                   'value': getattr(subobject, 'review_date', ''),
-                   'sorter': sorter,
-                   'formatter': 'date'},
-                  {'name': 'Rating',
-                   'value': getattr(subobject, 'rating', '')}
-                  ]
-
-          @content(
-              'My Custom Folder',
-              columns=custom_columns,
-              )
-          class MyCustomFolder(Persistent):
-              pass
-              
-        In some cases, it might be needed to override the custom columns
-        defined for an already existing content type. This can be accomplished
-        by registering the content type a second time, but passing the columns
-        then. For example, to add columns to the user folder content listing
-        from substanced::
-        
-          from substanced import root_factory
-          from substanced.interfaces import IUsers
-          from substanced.principal import Users
-          from myapp import custom_user_columns
-          
-          def main(global_config, **settings):
-              config = Configurator(
-                  root_factory=root_factory,
-                  settings=settings
-                  )
-              config.include('substanced')
-              config.add_content_type(
-                  IUsers,
-                  factory=Users,
-                  icon='icon-list-alt',
-                  columns=custom_user_columns
-                  )
-              config.scan()
-
-        XXX TODO Document ``sort_column_name``, ``reverse``, ``filter_values``
+        XXX TODO Document ``sort_column_name``, ``reverse``, and
+        ``filter_values`` arguments.  Document ``columns`` return value.
         """
         folder = self.context
         request = self.request
@@ -505,9 +513,9 @@ class FolderContentsViews(object):
         if end is None:
             end = start + 40
 
-        q = self.get_catalog_query()
+        q = self.get_query()
 
-        columns = self._columns()
+        columns = self.get_columns(None)
         
         for name, value in filter_values:
             if name:
@@ -520,8 +528,8 @@ class FolderContentsViews(object):
                 q = self._global_text_filter(folder, value, q)
 
         resultset = q.execute()
-        # NB: must take snapshot of folder_length *before* limiting the length
-        # of the resultset via any search
+        # NB: must take snapshot of folder_length before limiting the length
+        # of the resultset via any sort
         folder_length = len(resultset)
 
         sort_info = self._sort_info(
@@ -530,12 +538,12 @@ class FolderContentsViews(object):
             )
 
         sorter = sort_info['sorter']
+        sort_column_name = sort_info['column_name']
         if reverse is None:
             reverse = False
             column = sort_info['column']
             if column:
                 reverse = column.get('initial_sort_reverse', False)
-        sort_column_name = sort_info['column_name']
 
         if sorter is not None:
             resultset = sorter(
@@ -544,13 +552,7 @@ class FolderContentsViews(object):
 
         ids = resultset.ids
 
-        custom_columns = request.registry.content.metadata(
-            folder,
-            'columns',
-            _marker
-            )
-
-        buttons = self._buttons()
+        buttons = self.get_buttons()
 
         records = []
 
@@ -563,12 +565,8 @@ class FolderContentsViews(object):
                 # from the client, when a row is selected for an operation.)
                 id=name,
                 name=name,
-            )
-            columns = default_sdi_columns(folder, resource, request)
-            if custom_columns is None:
-                columns = []
-            elif custom_columns is not _marker:
-                columns = custom_columns(folder, resource, request, columns)
+                )
+            columns = self.get_columns(resource)
             for column in columns:
                 # XXX CM: adding arbitrary keys to the record based on
                 # configuration input is a bad idea here because we can't
@@ -597,16 +595,11 @@ class FolderContentsViews(object):
             'columns':columns,
             }
 
-    @mgmt_view(
-        request_method='GET',
-        permission='sdi.view',
-        xhr=False,
-        )
     def show(self):
         request = self.request
         context = self.context
 
-        buttons = self._buttons()
+        buttons = self.get_buttons()
 
         addables = self.sdi_add_views(context, request)
 
@@ -671,12 +664,6 @@ class FolderContentsViews(object):
 
         return result
 
-    @mgmt_view(
-        request_method='GET',
-        permission='sdi.view',
-        xhr=True,
-        renderer='json',
-        )
     def show_json(self):
         return self._get_json()
 
@@ -715,13 +702,6 @@ class FolderContentsViews(object):
 
         return items
 
-    @mgmt_view(
-        request_method='POST',
-        request_param="form.delete",
-        permission='sdi.manage-contents',
-        tab_condition=False,
-        check_csrf=True
-        )
     def delete(self):
         request = self.request
         context = self.context
@@ -743,13 +723,6 @@ class FolderContentsViews(object):
             request.sdiapi.flash_with_undo(msg)
         return HTTPFound(request.sdiapi.mgmt_path(context, '@@contents'))
 
-    @mgmt_view(
-        request_method='POST',
-        request_param="form.duplicate",
-        permission='sdi.manage-contents',
-        tab_condition=False,
-        check_csrf=True
-        )
     def duplicate(self):
         request = self.request
         context = self.context
@@ -768,14 +741,6 @@ class FolderContentsViews(object):
             request.sdiapi.flash_with_undo(msg)
         return HTTPFound(request.sdiapi.mgmt_path(context, '@@contents'))
 
-    @mgmt_view(
-        request_method='POST',
-        request_param="form.rename",
-        permission='sdi.manage-contents',
-        renderer='templates/rename.pt',
-        tab_condition=False,
-        check_csrf=True
-        )
     def rename(self):
         request = self.request
         context = self.context
@@ -787,13 +752,6 @@ class FolderContentsViews(object):
                               for name in torename
                               if name in context])
 
-    @mgmt_view(
-        request_method='POST',
-        request_param="form.rename_finish",
-        permission='sdi.manage-contents',
-        tab_condition=False,
-        check_csrf=True
-        )
     def rename_finish(self):
         request = self.request
         context = self.context
@@ -819,13 +777,6 @@ class FolderContentsViews(object):
             request.sdiapi.flash_with_undo(msg)
         return HTTPFound(request.sdiapi.mgmt_path(context, '@@contents'))
 
-    @mgmt_view(
-        request_method='POST',
-        request_param="form.copy",
-        permission='sdi.view',
-        tab_condition=False,
-        check_csrf=True
-        )
     def copy(self):
         request = self.request
         context = self.context
@@ -844,13 +795,6 @@ class FolderContentsViews(object):
 
         return HTTPFound(request.sdiapi.mgmt_path(context, '@@contents'))
 
-    @mgmt_view(
-        request_method='POST',
-        request_param="form.copy_finish",
-        permission='sdi.manage-contents',
-        tab_condition=False,
-        check_csrf=True
-        )
     def copy_finish(self):
         request = self.request
         context = self.context
@@ -879,13 +823,6 @@ class FolderContentsViews(object):
 
         return HTTPFound(request.sdiapi.mgmt_path(context, '@@contents'))
 
-    @mgmt_view(
-        request_method='POST',
-        request_param="form.move",
-        permission='sdi.view',
-        tab_condition=False,
-        check_csrf=True
-        )
     def move(self):
         request = self.request
         context = self.context
@@ -904,13 +841,6 @@ class FolderContentsViews(object):
 
         return HTTPFound(request.sdiapi.mgmt_path(context, '@@contents'))
 
-    @mgmt_view(
-        request_method='POST',
-        request_param="form.move_finish",
-        permission='sdi.manage-contents',
-        tab_condition=False,
-        check_csrf=True
-        )
     def move_finish(self):
         request = self.request
         context = self.context
@@ -939,15 +869,6 @@ class FolderContentsViews(object):
 
         return HTTPFound(request.sdiapi.mgmt_path(context, '@@contents'))
 
-    @mgmt_view(
-        request_method='POST',
-        xhr=True,
-        renderer='json',
-        request_param="ajax.reorder",
-        permission='sdi.manage-contents',
-        tab_condition=False,
-        check_csrf=False
-        )
     def reorder_rows(self):
         request = self.request
         context = self.context
@@ -966,135 +887,330 @@ class FolderContentsViews(object):
         results.update(self._get_json())
         return results
 
-def name_sorter(resource, resultset, limit=None, reverse=False):
-    index = find_index(resource, 'system', 'name')
-    if index is not None:
-        resultset = resultset.sort(index, limit=limit, reverse=reverse)
-    return resultset
+@action_method
+def add_folder_contents_views(
+    config,
+    cls=None,
+    name='contents',
+    context=None,
+    renderer='substanced.sdi.views:templates/contents.pt',
+    view_permission='sdi.view',
+    manage_contents_permission='sdi.manage-contents',
+    tab_condition=True,
+    tab_before=None,
+    tab_after=None,
+    tab_near=None,
+    **predicates
+    ):
+    """
+    A directive which adds a set of folder contents views.
+    
+    XXX the below was ripped out of its context from another method's docstring
+    and needs to be recontextualized here.
+    
+    This function honors three content type hooks: ``icon``, ``buttons``,
+    and ``columns``.
 
-def default_sdi_columns(folder, subobject, request):
-    """ The default columns content-type hook """
-    name = getattr(subobject, '__name__', '')
-    icon = get_icon_name(subobject, request) or ''
-    url = request.sdiapi.mgmt_path(subobject, '@@manage_main')
-    value = '<i class="%s"> </i> <a href="%s">%s</a>' % (icon, url, name)
-    columns = [
-        {'name': 'Name',
-         'value': value,
-         'formatter': 'html',
-         'sorter': name_sorter}
-        ]
-    return columns
+    The first content type hook is named ``icon``.  If the ``icon``
+    supplied to the content type configuration of a subobject is a
+    callable, the callable will be passed the subobject and the
+    ``request``; it is expected to return an icon name or ``None``.
+    ``icon`` may alternately be either ``None`` or a string representing a
+    icon name instead of a callable.
 
-def default_sdi_buttons(folder, request):
-    """ The default buttons content-type hook """
-    buttons = []
-    finish_buttons = []
+    The second content type hook is named ``buttons``.  The folder contents
+    view is a good place to wire up application specific functionality that
+    depends on content selection, so the button toolbar that shows up at
+    the bottom of the page is customizable. The default buttons can be
+    overridden by supplying a ``buttons`` keyword argument to the content
+    type argument list.  It must be a callable object which accepts
+    ``context, request, default_buttonspec`` and which returns a list of
+    dictionaries; each dictionary represents a button or a button group.
 
-    if 'tocopy' in request.session:
-        finish_buttons.extend(
-            [
-            {'id': 'copy_finish',
-              'name': 'form.copy_finish',
-              'class': 'btn-primary btn-sdi-act',
-              'value': 'copy_finish',
-              'text': 'Copy here'},
-            {'id': 'cancel',
-             'name': 'form.copy_finish',
-             'class': 'btn-danger btn-sdi-act',
-             'value': 'cancel',
-             'text': 'Cancel'},
-            ])
+    The ``buttons`` callable you supply will be passed the ``context`` and
+    the ``request`` and ``buttonspec`` (a sequence of default button
+    specifications). It must return a list of dictionaries representing
+    button specifications with at least a ``type`` key for the button
+    specification type and a ``buttons`` key with a list of dictionaries
+    representing the buttons. The ``type`` should be one of the string
+    values ``group`` or ``single``. A group will display its buttons side
+    by side, with no margin, while the single type will display each button
+    separately.
 
-    if 'tomove' in request.session:
-        finish_buttons.extend(
-            [{'id': 'move_finish',
-              'name': 'form.move_finish',
-              'class': 'btn-primary btn-sdi-act',
-              'value': 'move_finish',
-              'text': 'Move here'},
-             {'id': 'cancel',
-              'name': 'form.move_finish',
-              'class': 'btn-danger btn-sdi-act',
-              'value': 'cancel',
-              'text': 'Cancel'}])
+    Each button in a ``buttons`` dictionary is rendered using the button
+    tag and requires five keys: ``id`` for the button's id attribute,
+    ``name`` for the button's name attribute, ``class`` for any additional
+    css classes to be applied to it (see below), ``value`` for the value
+    that will be passed as a request parameter when the form is submitted
+    and ``text`` for the button's text.
 
-    if finish_buttons:
-        buttons.append(
-          {'type':'single', 'buttons':finish_buttons}
+    The ``class`` value is special because it will define the button's
+    behavior. There are four mutually exclusive class names that can be
+    used. ``btn-sdi-act`` is for buttons that will always be enabled,
+    independently of any selected content items. ``btn-sdi-sel`` means
+    the button will start as disabled and will only be enabled once one
+    or more items are selected. ``btn-sdi-one`` means the button will
+    only be enabled if there's exactly one item selected. Finally,
+    ``btn-sdi-del`` means the button will stay disabled until one or
+    more *deletable* items are selected. You *must* use one of these
+    classes for the button to be enabled.
+    
+    The ``class`` value can contain several classes separated by spaces.
+    In addition to the classes mentioned above, any custom css class or any
+    bootstrap button class can be used.
+    
+    Finally, each button can optionally include an ``enabled_for`` key,
+    which will point to a callable that will be passed a subobject from the
+    current folder and must return True if the button should be enabled for
+    that subobject or False if not.
+
+    Most of the time, the best strategy for using the buttons callable will
+    be to return a value containing the default buttonspec sequence passed
+    in to the function (it will be a list).::
+
+      def custom_buttons(context, request, default_buttonspec):
+          def some_condition(folder, subobject, request):
+              return getattr(context, 'can_use_button1', False)
+
+          custom_buttonspec = [{'type': 'single',
+                               'buttons': [{'id': 'button1',
+                                            'name': 'button1',
+                                            'class': 'btn-sdi-sel',
+                                            'enabled_for': some_condition,
+                                            'value': 'button1',
+                                            'text': 'Button 1'},
+                                           {'id': 'button2',
+                                            'name': 'button2',
+                                            'class': 'btn-sdi-act',
+                                            'value': 'button2',
+                                            'text': 'Button 2'}]}]
+          return default_buttonspec + custom_buttonspec
+
+      @content(
+          'My Custom Folder',
+          buttons=custom_buttons,
           )
+      class MyCustomFolder(Persistent):
+          pass
 
-    if not 'tomove' in request.session and not 'tocopy' in request.session:
+    Once the buttons are defined, a view needs to be registered to handle
+    the new buttons. The view configuration has to set Folder as a context
+    and include a ``request_param`` predicate with the same name as the
+    ``value`` defined for the corresponding button. The following template
+    can be used to register such views, changing only the ``request_param``
+    value::
 
-        can_manage = bool(has_permission('sdi.manage-contents', folder,request))
-        
-        def delete_enabled_for(folder, resource, request):
-            """
-            This function considers a subobject 'deletable' if the user has the
-            ``sdi.manage-contents`` permission on ``folder`` or if the
-            subobject has a ``__sdi_deletable__`` attribute which resolves to a
-            boolean ``True`` value.
+      @mgmt_view(
+      context=IFolder,
+      name='contents',
+      renderer='substanced.sdi:templates/contents.pt',
+      permission='sdi.manage-contents',
+      request_method='POST',
+      request_param='button1',
+      tab_condition=False,
+      )
+      def button1(context, request):
+          # add button functionality here, then go back to contents
+          request.session.flash('Just did what button1 does')
+          return HTTPFound(request.sdiapi.mgmt_path(context, '@@contents'))
 
-            This function honors one subobject hook:: ``__sdi_deletable__``.
-            If a subobject has an attribute named ``__sdi_deletable__``, it is
-            expected to be either a boolean or a callable.  If
-            ``__sdi_deletable__`` is a boolean, the value is used verbatim.  If
-            ``__sdi_deletable__`` is a callable, the callable is called with
-            two positional arguments: the subobject and the request; the result
-            is expected to be a boolean.  If a subobject has an
-            ``__sdi_deletable__`` attribute, and its resolved value is not
-            ``None``, the delete button will be off if it's a boolean False.
-            If ``__sdi_deletable__`` does not exist on a subobject or resolves
-            to ``None``, the delete button will be turned off if current user
-            does not have the ``sdi.manage-contents`` permission on the
-            ``folder``.
-            """
-            deletable = getattr(resource, '__sdi_deletable__', None)
-            if deletable is not None:
-                if callable(deletable):
-                    deletable = deletable(resource, request)
-            if deletable is None:
-                deletable = can_manage
-            deletable = bool(deletable) # cast return/attr value to bool
-            return deletable
+    Note that context has to be IFolder for this to work. If you need to
+    restrict a button to some specific list of content types, the Pyramid
+    ``content_type`` predicate can be used.
 
-        main_buttons = [
-             {'id': 'rename',
-              'name': 'form.rename',
-              'class': 'btn-sdi-sel',
-              'enabled_for':delete_enabled_for,
-              'value': 'rename',
-              'text': 'Rename'},
-              {'id': 'copy',
-              'name': 'form.copy',
-              'class': 'btn-sdi-sel',
-              'value': 'copy',
-              'text': 'Copy'},
-              {'id': 'move',
-              'name': 'form.move',
-              'class': 'btn-sdi-sel',
-              'enabled_for':delete_enabled_for,
-              'value': 'move',
-              'text': 'Move'},
-              {'id': 'duplicate',
-              'name': 'form.duplicate',
-              'class': 'btn-sdi-sel',
-              'value': 'duplicate',
-              'text': 'Duplicate'}
+    The third content-type hook is named ``columns``.  To display the
+    contents using a table with any given subobject attributes, a callable
+    named ``columns`` can be passed to a content type as metadata.  When
+    the folder contents SDI view is invoked against an object of the type,
+    the ``columns`` callable will be passed the folder, a subobject, the
+    ``request``, and a default column specification. It will be called once
+    for every object in the folder to obtain column representations for
+    each of its subobjects.  It must return a list of dictionaries with at
+    least a ``name`` key for the column header and a ``value`` key with
+    the correct column value given the subobject. The callable **must** be
+    prepared to receive subobjects that will *not* have the desired
+    attributes (the subobject passed will be ``None`` at least once in
+    order for the system to compute headers).
+
+    In addition to ``name`` and ``value``, the column dictionary may
+    contain the keys ``sorter``, ``initial_sort_column``,
+    ``initial_sort_reverse``, and ``formatter``. The ``sorter`` will either
+    be ``None`` if the column is not sortable, or a callback which accepts
+    a resource (the folder), a resultset, a ``limit`` keyword argument, and
+    a ``reverse`` keyword argument and which must return a sorted result
+    set.  The default ``sorter`` value is ``None``. The
+    ``initial_sort_column`` should be the ``True`` if this column should
+    be the initial sort column (it must also have a ``sorter``).  If no
+    column is marked as the initial sort column, the first column with a
+    ``sorter`` will be used as the initial sort column.  The
+    ``initial_sort_reverse`` key can be ``True`` or ``False`` if you want
+    the initial rendering to be sorted reverse or not.  The last key,
+    ``formatter``, can give the name of a javascript method for formatting
+    the ``value``.  Currently, available formatters are ``icon_label_url``
+    and ``date``.
+    
+    The ``icon_label_url`` formatter gets the URL and icon (if any) of the
+    subobject and creates a link using ``value`` as link text. The ``date``
+    formatter expects that ``value`` is an ISO date and returns a text date
+    in the format "<month name> <day>, <year>".
+
+    Here's an example of using the ``columns`` content type hook::
+
+      from substanced.util import find_index
+
+      def sorter(folder, resultset, reverse=False, limit=None):
+          index = find_index(folder, 'mycatalog', 'date')
+          if index is not None:
+              resultset = resultset.sort(
+                                   index, reverse=reverse, limit=limit)
+          return resultset
+
+      def custom_columns(folder, subobject, request, default_columnspec):
+          return default_columnspec + [
+              {'name': 'Review Date',
+               'value': getattr(subobject, 'review_date', ''),
+               'sorter': sorter,
+               'formatter': 'date'},
+              {'name': 'Rating',
+               'value': getattr(subobject, 'rating', '')}
               ]
 
-        buttons.append({'type': 'group', 'buttons':main_buttons})
+      @content(
+          'My Custom Folder',
+          columns=custom_columns,
+          )
+      class MyCustomFolder(Persistent):
+          pass
+          
+    In some cases, it might be needed to override the custom columns
+    defined for an already existing content type. This can be accomplished
+    by registering the content type a second time, but passing the columns
+    then. For example, to add columns to the user folder content listing
+    from substanced::
+    
+      from substanced import root_factory
+      from substanced.interfaces import IUsers
+      from substanced.principal import Users
+      from myapp import custom_user_columns
+      
+      def main(global_config, **settings):
+          config = Configurator(
+              root_factory=root_factory,
+              settings=settings
+              )
+          config.include('substanced')
+          config.add_content_type(
+              IUsers,
+              factory=Users,
+              icon='icon-list-alt',
+              columns=custom_user_columns
+              )
+          config.scan()
 
-        delete_buttons = [
-              {'id': 'delete',
-               'name': 'form.delete',
-               'class': 'btn-danger btn-sdi-sel',
-               'enabled_for':delete_enabled_for,
-               'value': 'delete',
-               'text': 'Delete'},
-               ]
+    """
 
-        buttons.append({'type': 'group', 'buttons':delete_buttons})
+    if cls is None:
+        cls = FolderContents
 
-    return buttons
+    if context is None:
+        context = IFolder
+        
+    add_fc_view = functools.partial(
+        config.add_mgmt_view,
+        view=cls,
+        name=name,
+        renderer=renderer,
+        context=context,
+        tab_condition=False,
+        **predicates
+        )
 
+    add_fc_view(
+        request_method='GET',
+        permission=view_permission,
+        tab_condition=tab_condition,
+        tab_before=tab_before,
+        tab_after=tab_after,
+        tab_near=tab_near,
+        xhr=False,
+        attr='show',
+        )
+    add_fc_view(
+        request_method='GET',
+        permission=view_permission,
+        xhr=True,
+        renderer='json',
+        attr='show_json',
+        )
+    add_fc_view(
+        request_method='POST',
+        request_param='form.delete',
+        permission=manage_contents_permission,
+        check_csrf=True,
+        attr='delete',
+        )
+    add_fc_view(
+        request_method='POST',
+        request_param='form.duplicate',
+        permission=manage_contents_permission,
+        check_csrf=True,
+        attr='duplicate',
+        )
+    add_fc_view(
+        request_method='POST',
+        request_param='form.rename',
+        permission=manage_contents_permission,
+        renderer='substanced.sdi.views:templates/rename.pt',
+        check_csrf=True,
+        attr='rename',
+        )
+    add_fc_view(
+        request_method='POST',
+        request_param='form.rename_finish',
+        permission=manage_contents_permission,
+        check_csrf=True,
+        attr='rename_finish',
+        )
+    add_fc_view(
+        request_method='POST',
+        request_param='form.copy',
+        permission=view_permission,
+        check_csrf=True,
+        attr='copy',
+        )
+    add_fc_view(
+        request_method='POST',
+        request_param='form.copy_finish',
+        permission=manage_contents_permission,
+        check_csrf=True,
+        attr='copy_finish',
+        )
+    add_fc_view(
+        request_method='POST',
+        request_param='form.move',
+        permission=view_permission,
+        check_csrf=True,
+        attr='move',
+        )
+    add_fc_view(
+        request_method='POST',
+        request_param='form.move_finish',
+        permission=manage_contents_permission,
+        check_csrf=True,
+        attr='move_finish',
+        )
+    add_fc_view(
+        request_method='POST',
+        renderer='json',
+        request_param='ajax.reorder',
+        permission=manage_contents_permission,
+        check_csrf=True,
+        attr='reorder_rows',
+        )
+        
+def includeme(config): # pragma: no cover
+    config.add_directive(
+        'add_folder_contents_views',
+        add_folder_contents_views,
+        action_wrap=False
+        )

@@ -116,7 +116,7 @@ class TestFileUploadPropertySheet(unittest.TestCase):
         request.registry.settings['substanced.uploads_tempdir'] = here
         request.session['substanced.tempstore'] = {'1':{}}
         inst = self._makeOne(context, request)
-        inst.after_set()
+        inst.after_set(True)
         self.assertEqual(request.session.get('substanced.tempstore'), None)
 
 class TestFile(unittest.TestCase):

@@ -1,4 +1,3 @@
-import datetime
 import inspect
 
 from pyramid.compat import is_nonstr_iter
@@ -8,7 +7,6 @@ import venusian
 from ..event import ContentCreated
 from ..util import (
     get_dotted_name,
-    set_created,
     set_oid,
     get_factory_type,
     )
@@ -36,9 +34,6 @@ class ContentRegistry(object):
         """ Return all content types known my this registry as a sequence."""
         return list(self.content_types.keys())
 
-    def _utcnow(self): # broken out for testing
-        return datetime.datetime.utcnow()
-
     def create(self, content_type, *arg, **kw):
         """ Create an instance of ``content_type`` by calling its factory
         with ``*arg`` and ``**kw``.  If the meta of the content type has an
@@ -56,7 +51,6 @@ class ContentRegistry(object):
         inst = factory(*arg, **kw)
         if oid is not None:
             set_oid(inst, oid)
-        set_created(inst, self._utcnow())
         meta = self.meta[content_type].copy()
         aftercreate = meta.get('after_create')
         if aftercreate is not None:

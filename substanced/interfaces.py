@@ -27,12 +27,22 @@ class IPropertySheet(Interface):
         and persist it to the context, refraining from persisting the keys in
         the struct that are named in ``omit`` (a sequence of strings or a
         string).  The data structure will have already been validated against
-        the propertysheet schema."""
+        the propertysheet schema.
 
-    def after_set():
-        """ Perform operations after a successful set. The default
-        propertysheet implementation sends an ObjectModified event and
-        flashes an undo message"""
+        You can return a value from this method.  It will be passed as
+        ``changed`` into the ``after_set`` method.  It should be ``False`` if
+        your ``set`` implementation *did not* change any persistent data.  Any
+        other return value will be conventionally interpreted as the
+        implementation having changed persistent data.
+        """
+
+    def after_set(changed):
+        """ Perform operations after a successful set.  ``changed`` is the
+        value returned from the ``set`` method.
+
+        The default propertysheet implementation sends an ObjectModified event
+        if the ``changed`` value is not ``False.``
+        """
 
 class IObjectMap(Interface):
     """ A map of objects to paths and a reference engine """

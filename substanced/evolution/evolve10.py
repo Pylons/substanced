@@ -8,4 +8,5 @@ def evolve(root):
     )
     catalog = root['catalogs']['system']
     catalog.update_indexes()
-    catalog.reindex(indexes=('created',))
+    if catalog.get('created'):
+        catalog.reindex(indexes=('created',))

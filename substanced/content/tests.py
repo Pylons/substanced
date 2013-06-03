@@ -29,7 +29,6 @@ class TestContentRegistry(unittest.TestCase):
         inst.content_types['dummy'] = lambda a: content
         inst.meta['dummy'] = {}
         self.assertEqual(inst.create('dummy', 'a'), content)
-        self.assertEqual(content.__created__, 1)
         self.assertTrue(registry.notified)
 
     def test_create_with_oid(self):

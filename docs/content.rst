@@ -322,12 +322,6 @@ Obtaining Metadata About a Content Object's Type
 Affecting Content Creation
 ==========================
 
-By default, any content that is created via the resource factory gets
-assigned a ``__created__`` attribute with a value of
-``datetime.datetime.utcnow()``.
-:py:func:`substanced.util.get_created` and
-:py:func:`substanced.util.set_created` manage the getting and setting.
-
 In some cases you might want your resource to perform some actions that
 can only take place after it has been seated in its container and but
 before the creation events have fired. The ``@content`` decorator and

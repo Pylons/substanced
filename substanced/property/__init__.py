@@ -38,6 +38,7 @@ class PropertySheet(object):
     def set(self, struct, omit=()):
         if not is_nonstr_iter(omit):
             omit = (omit,)
+        changed = False
         for child in self.schema:
             name = child.name
             if (name in struct) and not (name in omit):
@@ -47,10 +48,13 @@ class PropertySheet(object):
                 new_val = struct[name]
                 if existing_val != new_val:
                     setattr(self.context, name, new_val)
+                    changed = True
+        return changed
 
-    def after_set(self):
-        event = ObjectModified(self.context)
-        self.request.registry.subscribers((event, self.context), None)
+    def after_set(self, changed):
+        if changed is not False:
+            event = ObjectModified(self.context)
+            self.request.registry.subscribers((event, self.context), None)
 
 def is_propertied(resource, registry=None):
     if registry is None:

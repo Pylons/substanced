@@ -32,13 +32,16 @@ Features
 
 - Text search view.
 
-- Show spinner when a button is pressed on the folder contents view that leads
-  to another page (e.g. reindex or duplicate).
-
 - Separate out reindexing from catalog autosync at startup.
 
 - Add an autoevolve setting.
 
+- Better error handling in folder contents view when an ajax request fails.
+
+- Better loading animation in folder contents view when we're in the midst of
+  an ajax request.  Should be the same animation when a button is pressed on
+  the folder contents view that leads to another page (e.g. reindex or
+  duplicate).
 
 Can wait until after alpha 1
 ============================
@@ -62,8 +65,6 @@ Can wait until after alpha 1
   lists.
 
 - Add a ``substanced.load_dump`` key for use by root factory.
-
-- Figure out if YAML dump and reload will work if we get to move to Python 3.
 
 - Work out OpenID/Twitter/whatever authentication.
 

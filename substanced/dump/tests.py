@@ -349,20 +349,15 @@ class Test_ResourceDumpContext(unittest.TestCase):
             self.assertEqual(rsrc, resource)
             self.assertEqual(reg, registry)
             return 'ct'
-        def get_created(rsrc, next):
-            self.assertEqual(rsrc, resource)
-            return 'created'
         def get_oid(resource):
             return 'oid'
         def dump_yaml(data, filename):
             self.assertEqual(data['content_type'], 'ct')
             self.assertEqual(data['name'], resource.__name__)
             self.assertEqual(data['oid'], 'oid')
-            self.assertEqual(data['created'], 'created')
             self.assertEqual(data['is_service'], True)
             return 'dumped'
         inst.get_content_type = get_content_type
-        inst.get_created = get_created
         inst.get_oid = get_oid
         inst.dump_yaml = dump_yaml
         result = inst.dump_resource(resource)
@@ -422,7 +417,6 @@ class Test_ResourceLoadContext(unittest.TestCase):
         self.assertEqual(result, resource)
         self.assertEqual(resource.__name__, 'name')
         self.assertEqual(resource.__oid__, 1)
-        self.assertEqual(resource.__created__, now)
         self.assertTrue(resource.__is_service__)
         self.assertEqual(content.content_type, 'content_type')
         self.assertEqual(content.oid, 1)

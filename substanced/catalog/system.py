@@ -104,8 +104,6 @@ class SystemCatalogFactory(object):
 
     content_type = Field(action_mode=MODE_DEFERRED)
 
-    created = Field(action_mode=MODE_DEFERRED)
-
 def includeme(config): # pragma: no cover
     for name in ('interfaces', 'content_type', 'name', 'text'):
         config.add_indexview(
