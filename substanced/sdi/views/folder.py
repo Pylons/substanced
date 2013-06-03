@@ -67,10 +67,14 @@ class folder_contents_views(object):
         
         def callback(context, name, ob):
             config = context.config.with_package(info.module)
-            config.add_folder_contents_views(ob, **settings)
+            config.add_folder_contents_views(cls=ob, **settings)
 
-        info = self.venusian.attach(wrapped, callback, category='substanced',
-                                    depth=depth + 1)
+        info = self.venusian.attach(
+            wrapped,
+            callback,
+            category='substanced',
+            depth=depth+1
+            )
 
         settings['_info'] = info.codeinfo # fbo "action_method"
         return wrapped
@@ -1204,7 +1208,7 @@ def add_folder_contents_views(
         attr='reorder_rows',
         )
         
-def includeme(config):
+def includeme(config): # pragma: no cover
     config.add_directive(
         'add_folder_contents_views',
         add_folder_contents_views,

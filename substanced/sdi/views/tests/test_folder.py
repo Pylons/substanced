@@ -1,3 +1,4 @@
+import sys
 import colander
 import unittest
 
@@ -1468,7 +1469,111 @@ class TestFolderContents(unittest.TestCase):
             ]            
             )
 
+class Test_folder_contents_views_decorator(unittest.TestCase):
+    def setUp(self):
+        testing.setUp()
 
+    def tearDown(self):
+        testing.tearDown()
+
+    def _getTargetClass(self):
+        from ..folder import folder_contents_views
+        return folder_contents_views
+
+    def _makeOne(self, *arg, **kw):
+        return self._getTargetClass()(*arg, **kw)
+
+    def test_create_defaults(self):
+        decorator = self._makeOne()
+        self.assertEqual(decorator.settings, {})
+
+    def test_create_nondefaults(self):
+        decorator = self._makeOne(
+            name='frank',
+            match_param='match_param',
+            )
+        self.assertEqual(decorator.settings['name'], 'frank')
+        self.assertEqual(decorator.settings['match_param'], 'match_param')
+
+    def test_call_class(self):
+        decorator = self._makeOne()
+        venusian = DummyVenusian()
+        decorator.venusian = venusian
+        class foo(object): pass
+        wrapped = decorator(foo)
+        self.assertTrue(wrapped is foo)
+        config = call_venusian(venusian)
+        settings = config.settings
+        self.assertEqual(len(settings), 1)
+        self.assertEqual(len(settings[0]), 2)
+        self.assertEqual(settings[0]['cls'], None) # comes from call_venusian
+        self.assertEqual(settings[0]['_info'], 'codeinfo')
+
+    def test_stacking(self):
+        decorator1 = self._makeOne(name='1')
+        venusian1 = DummyVenusian()
+        decorator1.venusian = venusian1
+        venusian2 = DummyVenusian()
+        decorator2 = self._makeOne(name='2')
+        decorator2.venusian = venusian2
+        def foo(): pass
+        wrapped1 = decorator1(foo)
+        wrapped2 = decorator2(wrapped1)
+        self.assertTrue(wrapped1 is foo)
+        self.assertTrue(wrapped2 is foo)
+        config1 = call_venusian(venusian1)
+        self.assertEqual(len(config1.settings), 1)
+        self.assertEqual(config1.settings[0]['name'], '1')
+        config2 = call_venusian(venusian2)
+        self.assertEqual(len(config2.settings), 1)
+        self.assertEqual(config2.settings[0]['name'], '2')
+
+    def test_with_custom_predicates(self):
+        decorator = self._makeOne(custom_predicates=(1,))
+        venusian = DummyVenusian()
+        decorator.venusian = venusian
+        def foo(context, request): pass
+        decorated = decorator(foo)
+        self.assertTrue(decorated is foo)
+        config = call_venusian(venusian)
+        settings = config.settings
+        self.assertEqual(settings[0]['custom_predicates'], (1,))
+
+    def test_call_withdepth(self):
+        decorator = self._makeOne(_depth=1)
+        venusian = DummyVenusian()
+        decorator.venusian = venusian
+        def foo(): pass
+        decorator(foo)
+        self.assertEqual(venusian.depth, 2)
+
+class Test_add_folder_contents_views(unittest.TestCase):
+    def _callFUT(self, config, **kw):
+        from ..folder import add_folder_contents_views
+        return add_folder_contents_views(config, **kw)
+    
+    def test_it_gardenpath(self):
+        from ..folder import FolderContents
+        from substanced.interfaces import IFolder
+        config = DummyConfig()
+        self._callFUT(config)
+        self.assertEqual(len(config.settings), 11)
+        self.assertEqual(config.settings[0]['view'], FolderContents)
+        self.assertEqual(config.settings[0]['context'], IFolder)
+
+    def test_it_override_context_and_cls(self):
+        config = DummyConfig()
+        class Foo(object): pass
+        self._callFUT(config, cls=Foo, context=Foo)
+        self.assertEqual(config.settings[0]['view'], Foo)
+        self.assertEqual(config.settings[0]['context'], Foo)
+
+    def test_it_with_extra_predicates(self):
+        config = DummyConfig()
+        class Foo(object): pass
+        self._callFUT(config, slamdunk=1)
+        self.assertEqual(config.settings[0]['slamdunk'], 1)
+        
 class DummyContainer(object):
     oid_store = {}
 
@@ -1564,3 +1669,49 @@ class DummyObjectMap(object):
         self.result = result
     def object_for(self, oid):
         return self.result
+
+class DummyVenusianInfo(object):
+    scope = 'notaclass'
+    module = sys.modules['substanced.sdi.views.tests.test_folder']
+    codeinfo = 'codeinfo'
+
+class DummyVenusian(object):
+    def __init__(self, info=None):
+        if info is None:
+            info = DummyVenusianInfo()
+        self.info = info
+        self.attachments = []
+
+    def attach(self, wrapped, callback, category=None, depth=1):
+        self.attachments.append((wrapped, callback, category))
+        self.depth = depth
+        return self.info
+
+class DummyRegistry(object):
+    pass
+
+class DummyConfig(object):
+    _ainfo = None
+    def __init__(self):
+        self.settings = []
+        self.registry = DummyRegistry()
+
+    def add_folder_contents_views(self, **kw):
+        self.settings.append(kw)
+
+    add_mgmt_view = add_folder_contents_views
+
+    def with_package(self, pkg):
+        self.pkg = pkg
+        return self
+
+class DummyVenusianContext(object):
+    def __init__(self):
+        self.config = DummyConfig()
+    
+def call_venusian(venusian, context=None):
+    if context is None:
+        context = DummyVenusianContext()
+    for wrapped, callback, category in venusian.attachments:
+        callback(context, None, None)
+    return context.config
