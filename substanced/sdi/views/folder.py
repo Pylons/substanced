@@ -328,16 +328,16 @@ class FolderContents(object):
     def system_catalog(self):
         return find_catalog(self.context, 'system')
 
+    def modified_items(self):
+        items = self.request.POST.get('item-modify', '').split('/')
+        modified = [x for x in  items if x] # remove empty
+        return modified
+
     def _name_sorter(self, resource, resultset, limit=None, reverse=False):
         index = self.system_catalog.get('name')
         if index is not None:
             resultset = resultset.sort(index, limit=limit, reverse=reverse)
         return resultset
-
-    def _modified_items(self):
-        items = self.request.POST.get('item-modify', '').split('/')
-        modified = [x for x in  items if x] # remove empty
-        return modified
 
     def _column_headers(self, columns):
         is_ordered = self.context.is_ordered()
@@ -705,7 +705,7 @@ class FolderContents(object):
     def delete(self):
         request = self.request
         context = self.context
-        todelete = self._modified_items()
+        todelete = self.modified_items()
         deleted = 0
         for name in todelete:
             v = context.get(name)
@@ -726,7 +726,7 @@ class FolderContents(object):
     def duplicate(self):
         request = self.request
         context = self.context
-        toduplicate = self._modified_items()
+        toduplicate = self.modified_items()
         for name in toduplicate:
             newname = rename_duplicated_resource(context, name)
             context.copy(name, context, newname)
@@ -744,7 +744,7 @@ class FolderContents(object):
     def rename(self):
         request = self.request
         context = self.context
-        torename = self._modified_items()
+        torename = self.modified_items()
         if not torename:
             request.session.flash('No items renamed')
             return HTTPFound(request.sdiapi.mgmt_path(context, '@@contents'))
@@ -780,7 +780,7 @@ class FolderContents(object):
     def copy(self):
         request = self.request
         context = self.context
-        tocopy = self._modified_items()
+        tocopy = self.modified_items()
         
         if tocopy:
             l = []
@@ -826,7 +826,7 @@ class FolderContents(object):
     def move(self):
         request = self.request
         context = self.context
-        tomove = self._modified_items()
+        tomove = self.modified_items()
 
         if tomove:
             l = []
@@ -872,7 +872,7 @@ class FolderContents(object):
     def reorder_rows(self):
         request = self.request
         context = self.context
-        item_modify = self._modified_items()
+        item_modify = self.modified_items()
         insert_before = request.params.get('insert-before')
         if not insert_before:
             # '' or None means appending after the last item.
