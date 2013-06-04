@@ -289,6 +289,43 @@ class TestFolder(unittest.TestCase):
         self.assertEqual(events[1].name, 'a')
         self.assertEqual(folder['a'], dummy)
 
+    def test_validate_name_non_string(self):
+        folder = self._makeOne()
+        self.assertRaises(ValueError, folder.validate_name, object())
+
+    def test_validate_name_empty_string(self):
+        folder = self._makeOne()
+        self.assertRaises(ValueError, folder.validate_name, '')
+
+    def test_validate_name_non_decdable_string(self):
+        folder = self._makeOne()
+        self.assertRaises(ValueError, folder.validate_name, b'\x80')
+
+    def test_validate_name_reserved(self):
+        folder = self._makeOne()
+        self.assertRaises(ValueError, folder.validate_name, 'foo',
+                                      reserved_names=['foo', 'bar'])
+
+    def test_validate_name_startswith_goggles(self):
+        folder = self._makeOne()
+        self.assertRaises(ValueError, folder.validate_name, '@@foo')
+
+    def test_validate_name_startswith_slash(self):
+        folder = self._makeOne()
+        self.assertRaises(ValueError, folder.validate_name, '/foo')
+
+    def test_validate_name_endswith_slash(self):
+        folder = self._makeOne()
+        self.assertRaises(ValueError, folder.validate_name, 'foo/')
+
+    def test_validate_name_with_slash(self):
+        folder = self._makeOne()
+        self.assertRaises(ValueError, folder.validate_name, 'foo/bar')
+
+    def test_validate_name_ok(self):
+        folder = self._makeOne()
+        self.assertEqual(folder.validate_name('foo'), 'foo')
+
     def test_add_name_wrongtype(self):
         folder = self._makeOne()
         self.assertRaises(ValueError, folder.add, 1, 'foo')

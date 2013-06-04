@@ -395,7 +395,7 @@ class Folder(Persistent):
 
         try:
             name = u(name)
-        except UnicodeDecodeError:
+        except UnicodeDecodeError: #pragma NO COVER (on Py3k)
             raise ValueError('Name "%s" not decodeable to unicode' % name)
 
         if name in reserved_names:
