@@ -22,6 +22,7 @@
    -->
 
   <div metal:fill-slot="main">
+    <form id="contents_form" action="@@${request.view_name}" method="POST" class="sdi-contents-actions">
     <div class="container-fluid"
       tal:define="total slickgrid_wrapper_options['items']['total']">
 
@@ -29,7 +30,6 @@
       <div class="navbar-inner">
         <div class="span9 fb-toolbar-box">
 
-    <form action="@@${request.view_name}" method="POST" class="sdi-contents-actions">
       <fieldset>
       <input type="hidden" name="csrf_token"
              value="${request.session.get_csrf_token()}"/>
@@ -50,7 +50,7 @@
         <input type="hidden" name="item-modify" value="" />
         <script type="text/javascript">
             jQuery(function ($) {
-                var $form =  $('form[action="@@contents"]');
+                var $form =  $('#contents_form');
                 var $hiddenInput =  $form.find('input[name="item-modify"]');
 
                 // If a button is clicked, get the selections out of the grid,
@@ -99,7 +99,6 @@
         </tal:block>
 
       </fieldset>
-    </form>
         </div>
         <div class="form-search pull-right sdi-contents-filter">
           <div class="input-append">
@@ -196,5 +195,6 @@
 
 
     </div>
+    </form>
   </div>
 </div>
