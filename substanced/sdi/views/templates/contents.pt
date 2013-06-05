@@ -29,7 +29,7 @@
       <div class="navbar-inner">
         <div class="span9 fb-toolbar-box">
 
-    <form action="@@contents" method="POST" class="sdi-contents-actions">
+    <form action="@@${request.view_name}" method="POST" class="sdi-contents-actions">
       <fieldset>
       <input type="hidden" name="csrf_token"
              value="${request.session.get_csrf_token()}"/>
