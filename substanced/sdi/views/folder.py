@@ -566,14 +566,14 @@ class FolderContents(object):
                 id=name,
                 name=name,
                 )
-            columns = self.get_columns(resource)
-            for column in columns:
+            cols = self.get_columns(resource)
+            for col in cols:
                 # XXX CM: adding arbitrary keys to the record based on
                 # configuration input is a bad idea here because we can't
                 # guarantee a column name won't override the "reserved" names
                 # (name, id) added to the record above.  Ree?
-                cname = column['name']
-                record[cname] = column['value']
+                cname = col['name']
+                record[cname] = col['value']
             disable = []
             for button_group in buttons:
                 for button in button_group['buttons']:
