@@ -27,7 +27,7 @@
 
     <div class="navbar fb-toolbar">
       <div class="navbar-inner">
-        <div class="span8 fb-toolbar-box">
+        <div class="span9 fb-toolbar-box">
 
     <form action="@@contents" method="POST" class="sdi-contents-actions">
       <fieldset>
