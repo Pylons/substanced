@@ -896,6 +896,7 @@ def add_folder_contents_views(
     renderer='substanced.sdi.views:templates/contents.pt',
     view_permission='sdi.view',
     manage_contents_permission='sdi.manage-contents',
+    tab_title=None,
     tab_condition=True,
     tab_before=None,
     tab_after=None,
@@ -1132,6 +1133,7 @@ def add_folder_contents_views(
         tab_before=tab_before,
         tab_after=tab_after,
         tab_near=tab_near,
+        tab_title=tab_title,
         xhr=False,
         attr='show',
         )
