@@ -111,7 +111,15 @@
       </div>
     </div>
 
-    <img id="loading-img" src="${request.static_url('substanced.sdi:static/img/progress_bar.gif')}"/>
+    <div class="sdi-sg-header">
+        <span tal:condition="total">
+            <span class="sdi-sg-total">14</span> total
+            <span class="sdi-sg-selected-box" style="display: none">
+            (<span class="sdi-sg-selected">13</span> selected)
+            </span>
+        </span>
+        <img id="loading-img" src="${request.static_url('substanced.sdi:static/img/progress_bar.gif')}"/>
+    </div>
 
     <metal:slot define-slot="above-grid" />
 

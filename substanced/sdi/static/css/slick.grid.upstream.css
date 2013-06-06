@@ -1,4 +1,3 @@
-/*! sdidev-resources */
 /*
 IMPORTANT:
 In order to preserve the uniform grid appearance, all cell styles need to have padding, margin and border sizes.
@@ -155,34 +154,4 @@ classes should alter those!
   z-index: 10;
   position: absolute;
   border: 2px dashed black;
-}
-.slick-columnpicker {
-  border: 1px solid #718BB7;
-  background: #f0f0f0;
-  padding: 6px;
-  -moz-box-shadow: 2px 2px 2px silver;
-  -webkit-box-shadow: 2px 2px 2px silver;
-  min-width: 100px;
-  cursor: default;
-}
-
-.slick-columnpicker li {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  background: none;
-}
-
-.slick-columnpicker input {
-  margin: 4px;
-}
-
-.slick-columnpicker li a {
-  display: block;
-  padding: 4px;
-  font-weight: bold;
-}
-
-.slick-columnpicker li a:hover {
-  background: white;
 }
