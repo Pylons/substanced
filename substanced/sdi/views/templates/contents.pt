@@ -136,7 +136,6 @@
             $grid.slickgrid(${structure:slickgrid_wrapper_options});
             var gridWrapper = $grid.data('slickgrid');
             // filter
-            gridWrapper.setSearchString($filter.val());
             $filter.on('keyup', function (evt) {
                 gridWrapper.setSearchString($filter.val());
             });
