@@ -166,3 +166,12 @@ body .slickgrid-wrapper .slick-header-columns .slick-header-column.ui-state-defa
 .sdi-add-button {
   margin-right: 10px;
 }
+.slickgrid-footer {
+  width: 100%;
+  background: transparent;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  color: #333333;
+  padding: 5px 7.5834px;
+  margin-bottom: 1em;
+  font-weight: lighter;
+}
