@@ -1,7 +1,7 @@
 <div metal:use-macro="request.sdiapi.main_template">
 
   <div metal:fill-slot="main">
-    <form action="@@contents" method="POST">
+    <form action="@@${request.view_name}" method="POST">
       <fieldset>
         <input type="hidden"
                name="csrf_token" 

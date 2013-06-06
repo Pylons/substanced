@@ -791,6 +791,7 @@ class TestFolderContents(unittest.TestCase):
     def test_duplicate_multiple(self, mock_rename_duplicated_resource):
         context = mock.Mock()
         request = mock.Mock()
+        request.view_name = 'contents'
         request.POST.get.return_value = 'a/b'
         mock_rename_duplicated_resource.side_effect = ['a-1', 'b-1']
 
@@ -808,6 +809,7 @@ class TestFolderContents(unittest.TestCase):
     def test_duplicate_none(self):
         context = mock.Mock()
         request = mock.Mock()
+        request.view_name = 'contents'
         request.POST.get.return_value = ''
         inst = self._makeOne(context, request)
         inst.duplicate()
@@ -821,6 +823,7 @@ class TestFolderContents(unittest.TestCase):
         mock_rename_duplicated_resource.side_effect = ['a-1']
         context = mock.Mock()
         request = mock.Mock()
+        request.view_name = 'contents'
         request.POST.get.return_value = 'a'
         inst = self._makeOne(context, request)
         inst.duplicate()
@@ -876,6 +879,7 @@ class TestFolderContents(unittest.TestCase):
     def test_rename_finish(self):
         context = mock.Mock()
         request = mock.Mock()
+        request.view_name = 'contents'
         request.POST.getall.return_value = ('foobar',)
         request.POST.get.side_effect = lambda x: {
             'foobar': 'foobar2',
@@ -890,6 +894,7 @@ class TestFolderContents(unittest.TestCase):
     def test_rename_finish_multiple(self):
         context = mock.Mock()
         request = mock.Mock()
+        request.view_name = 'contents'
         request.POST.getall.return_value = ('foobar', 'foobar1')
         request.POST.get.side_effect = lambda x: {
             'foobar': 'foobar0',
@@ -907,6 +912,7 @@ class TestFolderContents(unittest.TestCase):
     def test_rename_finish_cancel(self):
         context = mock.Mock()
         request = mock.Mock()
+        request.view_name = 'contents'
         request.POST.getall.return_value = ('foobar',)
         request.POST.get.side_effect = lambda x: {
             'foobar': 'foobar0',
@@ -922,6 +928,7 @@ class TestFolderContents(unittest.TestCase):
         context = mock.MagicMock()
         context.rename.side_effect = FolderKeyError(_FOOBAR)
         request = mock.Mock()
+        request.view_name = 'contents'
         request.POST.getall.return_value = ('foobar',)
         request.POST.get.side_effect = lambda x: {
             'foobar': 'foobar0',
