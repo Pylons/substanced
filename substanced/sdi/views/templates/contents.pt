@@ -122,12 +122,12 @@
 
     <script type="text/javascript">
         $('#loading-img')
-            .hide()  // hide it initially
+            .css('opacity', 0)  // hide it initially
             .ajaxStart(function() {
-                $(this).show();
+                $(this).css('opacity', 1);
             })
             .ajaxStop(function() {
-                $(this).hide();
+                $(this).css('opacity', 0);
             });
         jQuery(function ($) {
             var $grid = $('#sdi-contents-table-sg');
