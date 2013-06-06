@@ -224,7 +224,7 @@ class Catalog(Folder):
         """ Bw compatibility method """
         return self.reindex_resource(obj, oid=docid)
 
-    def reindex(self, dry_run=False, commit_interval=200, indexes=None, 
+    def reindex(self, dry_run=False, commit_interval=3000, indexes=None, 
                 path_re=None, output=None, registry=None):
 
         """\

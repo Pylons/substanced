@@ -22,7 +22,7 @@ def main():
         action="store_true", default=False,
         help="Don't commit the transactions")
     parser.add_option('-i', '--interval', dest='commit_interval',
-        action="store", default=200,
+        action="store", default=3000,
         help="Commit every N transactions")
     parser.add_option('-p', '--path', dest='path',
         action="store", default=None, metavar='EXPR',
