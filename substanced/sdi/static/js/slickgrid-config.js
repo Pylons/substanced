@@ -268,12 +268,22 @@
                     var row = data[value];
                     return row.id;
                 });
+
+                // Update indicator with count of selected
+                if (selectedIds.length) {
+                    $('.sdi-sg-selected-box').show();
+                    $('.sdi-sg-selected').text(selectedIds.length);
+                } else {
+                    $('.sdi-sg-selected-box').hide();
+                }
                 //log('onSelectedRowsChanged rows=', selectedIds);
             });
 
             if (wrapperOptions.items) {
                 // load the items
+                log('items', wrapperOptions.items.total);
                 sdiRemoteModelPlugin.loadData(wrapperOptions.items);
+                $('.sdi-sg-total').text(wrapperOptions.items.total);
             }
             // provoke first run (will fetch items, if we are not at the
             // top of the grid, initially.)
