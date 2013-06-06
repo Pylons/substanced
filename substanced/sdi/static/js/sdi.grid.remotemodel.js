@@ -236,7 +236,11 @@
             $.each(data, function (key, value) {
                 delete data[key];
             });
-            data.length = 0;
+            // If we clear the cache: use null instead of 0, which
+            // allows on-demand loading to fetch in this case, while
+            // make sure not to go beyond the total, most specifically,
+            // do not do any fetch _beyond_ the total.
+            data.length = null;
         }
 
         function clearData(/*optional*/ scrollToTop) {
@@ -338,7 +342,7 @@
             }
 
             var total = data.length;
-            if (firstMissing === null || total > 0 &&
+            if (firstMissing === null || total !== null &&
                 firstMissing >= total && lastMissing >= total) {
                 // We can return, nothing to fetch. One of the followings
                 // has happened:
@@ -346,7 +350,7 @@
                 // 1. All records requested are present in the data.
                 //
                 // 2. The requested data is beyond the available total number
-                //    of records. (We skip this check if total == 0, which
+                //    of records. (We skip this check if total == null, which
                 //    means that we have just cleared the cache and
                 //    a full update is due.)
                 //
