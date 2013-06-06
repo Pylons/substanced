@@ -188,6 +188,7 @@
                 $viewport.stop(true, true).animate({
                     opacity: 1
                 });
+                $('.sdi-sg-total').text(grid.getData().length);
             });
 
             sdiRemoteModelPlugin.onAjaxError.subscribe(function (evt, args) {
