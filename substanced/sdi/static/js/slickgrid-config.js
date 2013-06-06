@@ -281,7 +281,6 @@
 
             if (wrapperOptions.items) {
                 // load the items
-                log('items', wrapperOptions.items.total);
                 sdiRemoteModelPlugin.loadData(wrapperOptions.items);
                 $('.sdi-sg-total').text(wrapperOptions.items.total);
             }
