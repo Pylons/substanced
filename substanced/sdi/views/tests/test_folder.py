@@ -550,18 +550,18 @@ class TestFolderContents(unittest.TestCase):
         self.assertEqual(length, 1)
         self.assertEqual(records[0]['disable'], [])
 
-    def test__filter_values(self):
+    def test_get_filter_values(self):
         from substanced.interfaces import IFolder
         context = DummyFolder(__provides__=IFolder)
         request = self._makeRequest()
         request.params = DummyContent()
         request.params.items = lambda *arg: [
-                ('filter', 'abc'),
+                ('filter.', 'abc'),
                 ('filter.foo', 'def'),
                 ('filter.bar', 'ghi'),
                 ]
         inst = self._makeOne(context, request)
-        result = inst._filter_values()
+        result = inst.get_filter_values()
         self.assertEqual(result, [
                 ('', 'abc'),
                 ('foo', 'def'),
@@ -792,6 +792,7 @@ class TestFolderContents(unittest.TestCase):
         context = mock.Mock()
         request = mock.Mock()
         request.view_name = 'contents'
+        request.params = {}
         request.POST.get.return_value = 'a/b'
         mock_rename_duplicated_resource.side_effect = ['a-1', 'b-1']
 
@@ -810,6 +811,7 @@ class TestFolderContents(unittest.TestCase):
         context = mock.Mock()
         request = mock.Mock()
         request.view_name = 'contents'
+        request.params = {}
         request.POST.get.return_value = ''
         inst = self._makeOne(context, request)
         inst.duplicate()
@@ -824,6 +826,7 @@ class TestFolderContents(unittest.TestCase):
         context = mock.Mock()
         request = mock.Mock()
         request.view_name = 'contents'
+        request.params = {}
         request.POST.get.return_value = 'a'
         inst = self._makeOne(context, request)
         inst.duplicate()
@@ -880,6 +883,7 @@ class TestFolderContents(unittest.TestCase):
         context = mock.Mock()
         request = mock.Mock()
         request.view_name = 'contents'
+        request.params = {}
         request.POST.getall.return_value = ('foobar',)
         request.POST.get.side_effect = lambda x: {
             'foobar': 'foobar2',
@@ -895,6 +899,7 @@ class TestFolderContents(unittest.TestCase):
         context = mock.Mock()
         request = mock.Mock()
         request.view_name = 'contents'
+        request.params = {}
         request.POST.getall.return_value = ('foobar', 'foobar1')
         request.POST.get.side_effect = lambda x: {
             'foobar': 'foobar0',
@@ -913,6 +918,7 @@ class TestFolderContents(unittest.TestCase):
         context = mock.Mock()
         request = mock.Mock()
         request.view_name = 'contents'
+        request.params = {}
         request.POST.getall.return_value = ('foobar',)
         request.POST.get.side_effect = lambda x: {
             'foobar': 'foobar0',
@@ -929,6 +935,7 @@ class TestFolderContents(unittest.TestCase):
         context.rename.side_effect = FolderKeyError(_FOOBAR)
         request = mock.Mock()
         request.view_name = 'contents'
+        request.params = {}
         request.POST.getall.return_value = ('foobar',)
         request.POST.get.side_effect = lambda x: {
             'foobar': 'foobar0',

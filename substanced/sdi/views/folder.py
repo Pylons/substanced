@@ -10,18 +10,18 @@ from pyramid.httpexceptions import HTTPFound
 from pyramid.security import has_permission
 from pyramid.util import action_method
 
-from ...folder import FolderKeyError
-from ...form import FormView
-from ...interfaces import IFolder
-from ...objectmap import find_objectmap
-from ...schema import Schema
-from ...util import (
+from substanced.folder import FolderKeyError
+from substanced.form import FormView
+from substanced.interfaces import IFolder
+from substanced.objectmap import find_objectmap
+from substanced.schema import Schema
+from substanced.util import (
     JsonDict,
     get_oid,
     find_catalog,
     get_icon_name,
     )
-from ..._compat import u
+from substanced._compat import u
 
 from .. import (
     mgmt_view,
@@ -333,6 +333,26 @@ class FolderContents(object):
         modified = [x for x in  items if x] # remove empty
         return modified
 
+    def get_filter_values(self):
+        request = self.request
+        filter_values = []
+        for k, v in request.params.items():
+            if v and k.startswith('filter'):
+                name = k[6:]
+                if name.startswith('.'):
+                    name = name[1:]
+                filter_values.append((name, v))
+        return filter_values
+
+    def get_redirect_response(self):
+        request = self.request
+        context = self.context
+        qs = [ ('filter.' + k, v) for k, v in self.get_filter_values() ]
+        return HTTPFound(
+            request.sdiapi.mgmt_path(context, '@@' + request.view_name,
+                                     _query=qs)
+            )
+
     def _name_sorter(self, resource, resultset, limit=None, reverse=False):
         index = self.system_catalog.get('name')
         if index is not None:
@@ -439,17 +459,6 @@ class FolderContents(object):
                     q = q & text.eq(filter_glob)
         return q
     
-    def _filter_values(self):
-        request = self.request
-        filter_values = []
-        for k, v in request.params.items():
-            if v and k.startswith('filter'):
-                name = k[6:]
-                if name.startswith('.'):
-                    name = name[1:]
-                filter_values.append((name, v))
-        return filter_values
-
     def _folder_contents(
         self,
         start=None,
@@ -595,13 +604,6 @@ class FolderContents(object):
             'columns':columns,
             }
 
-    def get_redirect_response(self):
-        request = self.request
-        context = self.context
-        return HTTPFound(
-            request.sdiapi.mgmt_path(context, '@@' + request.view_name)
-            )
-
     def show(self):
         request = self.request
         context = self.context
@@ -625,7 +627,12 @@ class FolderContents(object):
         end = 40 # load at least this many records.
         start = 0 # start at record number zero
 
-        folder_contents = self._folder_contents(start, end)
+        filter_values = self.get_filter_values()
+        folder_contents = self._folder_contents(
+            start,
+            end,
+            filter_values=filter_values
+            )
 
         records = folder_contents['records']
         folder_length = folder_contents['length']
@@ -681,7 +688,7 @@ class FolderContents(object):
             end = int(request.params.get('to'))
             sort_column_name = request.params.get('sortCol')
             sort_dir = request.params.get('sortDir') in ('true', 'True')
-            filter_values = self._filter_values()
+            filter_values = self.get_filter_values()
 
             reverse = (not sort_dir)
 
