@@ -65,7 +65,7 @@
                 return result;
             },
             date: function(row, cell, value, columnDef, dataContext) {
-                // value is an isodate string (or null).
+                // value is an isodate string.
                 if (value === null) {
                     // Allow null values.
                     return '';

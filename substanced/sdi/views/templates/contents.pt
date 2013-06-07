@@ -143,9 +143,24 @@
             // grid
             $grid.slickgrid(${structure:slickgrid_wrapper_options});
             var gridWrapper = $grid.data('slickgrid');
+            
+            // delay for filter helps to reduce
+            // the number of requests while typing
+            // continually.
+            var filterTimer;
+            var filterDelay = 250;       // millis
+            function delayedAction(inner) {
+                if (filterTimer) {
+                    clearTimeout(filterTimer);
+                }
+                filterTimer = setTimeout(inner, filterDelay);
+            }
+
             // filter
             $filter.on('keyup', function (evt) {
-                gridWrapper.setSearchString($filter.val());
+                delayedAction(function () {
+                    gridWrapper.setSearchString($filter.val());
+                });
             });
 
             // Update the buttons if the selection has changed.
