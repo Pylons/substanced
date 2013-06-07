@@ -23,8 +23,7 @@
 
   <div metal:fill-slot="main">
     <form id="contents_form" action="@@${request.view_name}" method="POST" class="sdi-contents-actions">
-    <div class="container-fluid"
-      tal:define="total slickgrid_wrapper_options['items']['total']">
+    <div class="container-fluid">
 
     <div class="navbar fb-toolbar">
       <div class="navbar-inner">
@@ -112,7 +111,7 @@
     </div>
 
     <div class="sdi-sg-header">
-        <span tal:condition="total">
+        <span>
             <span class="sdi-sg-total">&nbsp;</span> total
             <span class="sdi-sg-selected-box" style="display: none">
             (<span class="sdi-sg-selected">&nbsp;</span> selected)
@@ -123,8 +122,7 @@
 
     <metal:slot define-slot="above-grid" />
 
-    <div tal:condition="total" id="sdi-contents-table-sg" class="slickgrid-wrapper"></div>
-    <h3 tal:condition="not total">No Items</h3>
+    <div id="sdi-contents-table-sg" class="slickgrid-wrapper"></div>
 
     <metal:slot define-slot="below-grid" />
 
