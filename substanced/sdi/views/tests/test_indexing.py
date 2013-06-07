@@ -72,6 +72,10 @@ class DummyCatalog(object):
         self.oid = oid
         self.content = content
 
+    def reindex_resource(self, content, oid=None, action_mode=None):
+        self.action_mode = action_mode
+        return self.reindex_doc(oid, content)
+
 class DummySDIAPI(object):
     def mgmt_url(self, *arg, **kw):
         return 'http://mgmt_url'

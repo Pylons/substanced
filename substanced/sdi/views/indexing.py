@@ -2,7 +2,8 @@ from pyramid.view import view_defaults
 from pyramid.httpexceptions import HTTPFound
 from pyramid.session import check_csrf_token
 
-from ...util import (
+from substanced.interfaces import MODE_IMMEDIATE
+from substanced.util import (
     get_oid,
     find_catalogs,
     )
@@ -39,13 +40,15 @@ class IndexingView(object):
                 indexes.append({'index':index, 'value':docrepr})
         return {'catalogs':catalogs}
 
-    @mgmt_view(request_method='POST', tab_title=None)
+    @mgmt_view(request_method='POST', tab_condition=False)
     def reindex(self):
         context = self.context
         request = self.request
         check_csrf_token(request)
         oid = get_oid(context)
         for catalog in find_catalogs(context):
-            catalog.reindex_doc(oid, context)
+            catalog.reindex_resource(
+                context, oid=oid, action_mode=MODE_IMMEDIATE
+                )
         request.sdiapi.flash_with_undo('Object reindexed', 'success')
         return HTTPFound(request.sdiapi.mgmt_url(context, '@@indexing'))
