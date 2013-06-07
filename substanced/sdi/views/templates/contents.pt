@@ -103,7 +103,7 @@
           <div class="input-append">
        	    <input type="text" name="filter." class="input-medium search-query"
 	           placeholder="Type to filter…" tal:attributes="value request.params.get('filter.', '')">
-       	    <button type="submit" class="btn"><i class="icon-search"> </i></button>
+       	    <button type="submit" class="btn" disabled="true"><i class="icon-search"> </i></button>
           </div>
         </div>
 
