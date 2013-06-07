@@ -17,7 +17,7 @@
         }
     }
 
-    
+
     var months = ['January', 'February', 'March', 'April', 'May', 'June',
         'July', 'August', 'September', 'October', 'November', 'December'];
 
@@ -65,7 +65,11 @@
                 return result;
             },
             date: function(row, cell, value, columnDef, dataContext) {
-                // value is an isodate string.
+                // value is an isodate string (or null).
+                if (value === null) {
+                    // Allow null values.
+                    return '';
+                }
                 var year = value.substring(0, 4);
                 var month = value.substring(5, 7);
                 var day = value.substring(8, 10);
