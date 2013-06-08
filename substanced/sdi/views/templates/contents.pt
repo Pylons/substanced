@@ -50,6 +50,14 @@
         <script type="text/javascript">
             jQuery(function ($) {
                 var $form =  $('#contents_form');
+
+                // prevent form submission from happening when enter is pressed
+                $form.keypress( function(evt) {
+                    return !(evt.which==13 && evt.target.type!='textarea');
+                 });
+                // this prevents submit also by spacebar (keyCode==32)
+                $('#contents_form input[type="submit"]').attr('tabIndex',-1);
+
                 var $hiddenInput =  $form.find('input[name="item-modify"]');
 
                 // If a button is clicked, get the selections out of the grid,
