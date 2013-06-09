@@ -8,18 +8,26 @@
       were</a>.
     </div>
 
-    <form action="${url}" method="post">
-      <label> Username
-         <input type="text" name="login" value="${login}"/>
-      </label>
-      <label> Password
-         <input type="password" name="password" value="${password}"/>
-      </label>
-      <input type="submit" name="form.submitted" value="Log In" 
-             class="btn btn-primary"/>
-      <input type="hidden" name="csrf_token" 
-            value="${request.session.get_csrf_token()}"/>
-    </form>
+    <div class="login-form">
+      <h2>Log In as Another User</h2>
+
+      <form action="${url}" method="post">
+          <div class="clearfix">
+              <input type="text" name="login" value="${login}"
+                     placeholder="Login" autofocus="autofocus"/>
+          </div>
+          <div class="clearfix">
+              <input type="password" name="password"
+                     value="${password}"
+                     placeholder="Password"/>
+          </div>
+          <input type="submit" name="form.submitted" value="Log In"
+                 class="btn btn-primary"/>
+          <input type="hidden" name="csrf_token"
+                 value="${request.session.get_csrf_token()}"/>
+      </form>
+
+    </div>
 
     <a href="${request.sdiapi.mgmt_path(request.root, '@@resetpassword')}">
       Forgot your password?
