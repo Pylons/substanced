@@ -137,6 +137,7 @@ def on_startup(event):
     registry = app.registry
     settings = getattr(registry, 'settings', {})
     autosync = asbool(settings.get('substanced.autosync_catalogs', False))
+    autoreindex = asbool(settings.get('substanced.autoreindex_catalogs', False))
     if autosync:
         request = Request.blank('/autosync_catalogs') # path is meaningless
         request.registry = registry
@@ -148,7 +149,10 @@ def on_startup(event):
                 catalog = objectmap.object_for(oid)
                 if catalog is not None:
                     try:
-                        catalog.update_indexes(registry=registry, reindex=True)
+                        catalog.update_indexes(
+                            registry=registry,
+                            reindex=autoreindex
+                            )
                     except ComponentLookupError:
                         # could not find a catalog factory
                         pass

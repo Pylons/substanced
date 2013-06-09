@@ -323,6 +323,25 @@ change the configured default for indexing mode. This applies also to
 catalog itself and reindex with a mode that overrides all default modes
 on each index.
 
+Autosync and Autoreindex
+------------------------
+
+If you add ``substanced.autosync_catalogs = true`` within your application's
+``.ini`` file, all catalog indexes will be resynchronized with their catalog
+factory definitions at application startup time.  Indices which were added to
+the catalog factory since the last startup time will be added to each catalog
+which uses the index factory.  Likewise, indices which were removed will be
+removed from each catalog, and indices which were modified will be modified
+according to the catalog factory.  Having this setting in your ``.ini`` file is
+like pressing the ``Update indexes`` button on the ``Manage`` tab of each of
+your catalogs.
+
+If you add ``substanced.autoreindex_catalogs = true`` within your application's
+``.ini`` file, all catalogs that were changed as the result of an auto-sync
+will automatically be reindexed.  Having this setting in your ``.ini`` file is
+like pressing the ``Reindex catalog`` button on the ``Manage`` tab of each
+catalog which was changed as the result of hitting ``Update indexes``.
+
 Caveat on Complexity
 --------------------
 
