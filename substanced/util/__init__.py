@@ -1,8 +1,15 @@
 import calendar
 import itertools
-import math
 import json
+import math
+import os
+import pstats
+import tempfile
 import types
+try:
+    import cProfile as _profile
+except ImportError: # pragma: no cover (pypy)
+    import profile as _profile
 
 from zope.interface import providedBy
 from zope.interface.declarations import Declaration
@@ -566,4 +573,24 @@ def get_icon_name(resource, request):
         icon = icon(resource, request)
     return icon
 
-    
+def profile(
+    cmd,
+    globals,
+    locals,
+    sort_order=(),
+    callers=False
+    ):# pragma: no cover
+    """Allow for profiling of the entire process (e.g. during a bulk load)"""
+    fd, fn = tempfile.mkstemp()
+    try:
+        _profile.runctx(cmd, globals, locals, fn)
+        stats = pstats.Stats(fn)
+        stats.strip_dirs()
+        # calls,time,cumulative and cumulative,calls,time are useful
+        stats.sort_stats(*sort_order or ('cumulative', 'calls', 'time'))
+        if callers:
+            stats.print_callers(.3)
+        else:
+            stats.print_stats(.3)
+    finally:
+        os.remove(fn)
