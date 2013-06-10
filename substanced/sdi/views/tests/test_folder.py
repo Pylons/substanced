@@ -590,6 +590,7 @@ class TestFolderContents(unittest.TestCase):
         folder_contents = {
             'length':1,
             'sort_column_name':None,
+            'show_checkbox_column':True,
             'sort_reverse':True,
             'columns':[],
             'records': [{
@@ -618,6 +619,7 @@ class TestFolderContents(unittest.TestCase):
             )
         # None because it cannot be sorted.  
         self.assertEqual(slickgrid_wrapper_options['isReorderable'], False)
+        self.assertEqual(slickgrid_wrapper_options['showCheckboxColumn'], True)
         self.assertEqual(slickgrid_wrapper_options['sortCol'], None)   
         self.assertEqual(slickgrid_wrapper_options['sortDir'], False)
         self.assertEqual(slickgrid_wrapper_options['url'], '')
@@ -651,6 +653,7 @@ class TestFolderContents(unittest.TestCase):
             ]
         folder_contents = {
             'length':1,
+            'show_checkbox_column':True,
             'sort_column_name':'col1',
             'sort_reverse':False,
             'columns': columns,

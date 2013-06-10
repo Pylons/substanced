@@ -353,6 +353,13 @@ class FolderContents(object):
                                      _query=qs)
             )
 
+    def show_checkbox_column(self, button_groups, columns, resultset):
+        show_checkbox_column = False
+        for button_group in button_groups:
+            if len(button_group.get('buttons', [])):
+                show_checkbox_column = True
+        return show_checkbox_column
+
     def _name_sorter(self, resource, resultset, limit=None, reverse=False):
         index = self.system_catalog.get('name')
         if index is not None:
@@ -562,6 +569,8 @@ class FolderContents(object):
         ids = resultset.ids
 
         buttons = self.get_buttons()
+        show_checkbox_column = self.show_checkbox_column(
+            buttons, columns, resultset)
 
         records = []
 
@@ -602,6 +611,7 @@ class FolderContents(object):
             'sort_column_name':sort_column_name,
             'sort_reverse':reverse,
             'columns':columns,
+            'show_checkbox_column':show_checkbox_column,
             }
 
     def show(self):
@@ -638,6 +648,7 @@ class FolderContents(object):
         folder_length = folder_contents['length']
         sort_column_name = folder_contents['sort_column_name']
         sort_reverse = folder_contents['sort_reverse']
+        show_checkbox_column = folder_contents['show_checkbox_column']
         column_headers = self._column_headers(folder_contents['columns'])
 
         items  = {
@@ -668,6 +679,7 @@ class FolderContents(object):
             # Parameters for the remote data model
             url = '',   # use same url for ajax
             minimumLoad = end,
+            showCheckboxColumn = show_checkbox_column,
             )
 
         result = dict(
