@@ -122,7 +122,7 @@
 
             // checkbox column: add it
             var checkboxSelector = new Slick.CheckboxSelectColumn({});
-            if (this.wrapperOptions.showCheckboxColumns) {
+            if (this.wrapperOptions.showCheckboxColumn) {
                 columns.unshift(checkboxSelector.getColumnDefinition());
             }
 
@@ -314,5 +314,6 @@
 
     });
 })(window.jQuery);
+
 
 
