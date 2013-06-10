@@ -192,7 +192,8 @@
                 $viewport.stop(true, true).animate({
                     opacity: 1
                 });
-                $('.sdi-sg-total').text(grid.getData().length);
+                grid.updateHeader();
+
             });
 
             sdiRemoteModelPlugin.onAjaxError.subscribe(function (evt, args) {
@@ -225,6 +226,22 @@
                 preventDroppingOnSelf: true
             });
             grid.registerPlugin(moveRowsPlugin);
+
+            // Centralize handling of totals/selected/checkbox
+            // updating as data comes in
+            grid.updateHeader = function () {
+                var grid_total = grid.getData().length;
+                var minimum_load = sdiRemoteModelPlugin.options.minimumLoad;
+                $('.sdi-sg-total').text(grid_total);
+                var checkbox_header = $('.slick-column-name input[type="checkbox"]');
+                if (grid_total > minimum_load) {
+                    // Disable checkbox toggle, we have more items than
+                    // are visible
+                    checkbox_header.hide();
+                } else {
+                    checkbox_header.show();
+                };
+            };
 
 
             if (isReorderable) {
@@ -281,28 +298,16 @@
                 } else {
                     $('.sdi-sg-selected-box').hide();
                 }
-                //log('onSelectedRowsChanged rows=', selectedIds);
             });
 
             if (wrapperOptions.items) {
                 // load the items
                 sdiRemoteModelPlugin.loadData(wrapperOptions.items);
-                $('.sdi-sg-total').text(wrapperOptions.items.total);
+                grid.updateHeader();
             }
             // provoke first run (will fetch items, if we are not at the
             // top of the grid, initially.)
             grid.onViewportChanged.notify();
-
-            // Disable the global selection checkbox, as it does not work well yet.
-            this.element.find('.slick-column-name input[type="checkbox"]')
-                .remove();
-            grid.onHeaderCellRendered.subscribe(function (e, args) {
-                if (args.column.field == 'sel') {
-                    $(args.node).find('.slick-column-name input[type="checkbox"]')
-                        .remove();
-                }
-            });
-
         }
 
     });
