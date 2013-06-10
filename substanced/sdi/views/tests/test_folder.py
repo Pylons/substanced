@@ -209,6 +209,22 @@ class TestFolderContents(unittest.TestCase):
         self.assertEqual(col['field'], 'Col 2')
         self.assertEqual(col['sortable'], False)
 
+    def test__column_headers_sortable_false_for_nonresortable(self):
+        context = testing.DummyResource(is_ordered = lambda *arg: False)
+        request = self._makeRequest()
+        inst = self._makeOne(context, request)
+        columns = [
+                {'name': 'Col 1',
+                 'value': 'col1',
+                 'sorter': True,
+                 'resortable':False,},
+                ]
+        result = inst._column_headers(columns)
+        self.assertEqual(len(result), 1)
+
+        col = result[0]
+        self.assertEqual(col['field'], 'Col 1')
+        self.assertEqual(col['sortable'], False)
 
     def test__column_headers_no_custom(self):
         context = testing.DummyResource(is_ordered=lambda: False)

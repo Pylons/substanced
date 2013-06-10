@@ -374,6 +374,9 @@ class FolderContents(object):
         for order, column in enumerate(columns):
             name = column['name']
             sortable = column.get('sorter', None) is not None
+            if sortable and not column.get('resortable', True):
+                # allow column to specify a sorter but claim it's not resortable
+                sortable = False
 
             if is_ordered:
                 # We don't currently allow ordered folders to be resorted by
