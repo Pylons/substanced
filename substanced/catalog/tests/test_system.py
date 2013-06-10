@@ -88,3 +88,16 @@ class TestSystemIndexViews(unittest.TestCase):
         inst = self._makeOne(resource)
         result = inst.content_type(None)
         self.assertEqual(result, 'foo')
+
+    def test_content_type_None(self):
+        resource = testing.DummyResource()
+        content = testing.DummyResource()
+        def typeof(resrc):
+            self.assertEqual(resrc, resource)
+            return None
+        content.typeof = typeof
+        self.config.registry.content = content
+        inst = self._makeOne(resource)
+        result = inst.content_type('default')
+        self.assertEqual(result, 'default')
+        

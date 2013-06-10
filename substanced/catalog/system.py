@@ -35,7 +35,10 @@ class SystemIndexViews(object):
 
     def content_type(self, default):
         """ Returns the Substance D content type of the resource """
-        return get_content_type(self.resource)
+        result = get_content_type(self.resource)
+        if result is None:
+            return default
+        return result
  
     def text(self, default):
         """ Returns a derivation of the name for text indexing.  If name has no
