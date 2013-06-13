@@ -110,7 +110,7 @@ def main(argv=sys.argv):
     latest = False
 
     try:
-        opts, args = getopt.getopt(argv, 'l?hs:p:',
+        opts, args = getopt.getopt(argv, 'l?h',
                                          ['latest',
                                           'help',
                                          ])
@@ -135,10 +135,13 @@ def main(argv=sys.argv):
 
     manager = EvolutionManager(root, registry)
     complete = manager.evolve(latest)
+
     if complete:
-        _print('Completed: %s' % ','.join(complete))
+        _print('Evolution steps executed:')
+        for item in complete:
+            _print('   %s' % item)
     else:
-        _print('No steps completed')
+        _print('No evolution steps executed')
 
 if __name__ == '__main__':
     main()
