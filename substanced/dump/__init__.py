@@ -67,7 +67,8 @@ def set_yaml(registry):
     SLoader.add_constructor(u('!interface'), iface_constructor)
 
     def blob_representer(dumper, data):
-        data = data.open('r').read()
+        with data.open('r') as f:
+            data = f.read()
         encoded = encodebytes(data)
         u_encoded = encoded.decode('ascii')
         return dumper.represent_scalar(u('!blob'), u_encoded)

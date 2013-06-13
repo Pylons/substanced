@@ -60,7 +60,8 @@ class Test_set_yaml(unittest.TestCase):
             b"!blob 'YWJj\n\n  '\n"
             )
         result = yaml.load(stream, Loader=registry['yaml_loader'])
-        self.assertEqual(result.open('r').read(), b'abc')
+        with result.open('r') as f:
+            self.assertEqual(f.read(), b'abc')
 
 class Test_get_dumpers(unittest.TestCase):
     def _callFUT(self, registry):

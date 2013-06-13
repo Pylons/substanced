@@ -152,18 +152,18 @@ class TestFile(unittest.TestCase):
         stream = io.BytesIO(b'abc')
         inst = self._makeOne(stream, None)
         self.assertEqual(inst.mimetype, 'application/octet-stream')
-        fp = inst.blob.open('r')
-        fp.seek(0)
-        self.assertEqual(fp.read(), b'abc')
+        with inst.blob.open('r') as fp:
+            fp.seek(0)
+            self.assertEqual(fp.read(), b'abc')
 
     def test_ctor_with_stream_mimetype_USE_MAGIC(self):
         from . import USE_MAGIC
         stream = io.BytesIO(b'abc')
         inst = self._makeOne(stream, USE_MAGIC)
         self.assertEqual(inst.mimetype, 'text/plain')
-        fp = inst.blob.open('r')
-        fp.seek(0)
-        self.assertEqual(fp.read(), b'abc')
+        with inst.blob.open('r') as fp:
+            fp.seek(0)
+            self.assertEqual(fp.read(), b'abc')
 
     def test_ctor_with_mimetype_no_stream(self):
         inst = self._makeOne(None, 'text/plain')
@@ -173,9 +173,9 @@ class TestFile(unittest.TestCase):
         stream = io.BytesIO(b'abc')
         inst = self._makeOne(stream, 'text/foo')
         self.assertEqual(inst.mimetype, 'text/foo')
-        fp = inst.blob.open('r')
-        fp.seek(0)
-        self.assertEqual(fp.read(), b'abc')
+        with inst.blob.open('r') as fp:
+            fp.seek(0)
+            self.assertEqual(fp.read(), b'abc')
 
     def test_ctor_mimetype_is_USE_MAGIC_no_stream(self):
         from . import USE_MAGIC
