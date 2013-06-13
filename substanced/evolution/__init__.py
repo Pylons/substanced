@@ -1,145 +1,102 @@
-import sys
+from pkg_resources import EntryPoint
 
-import transaction
-
-from repoze.evolution import (
-    IEvolutionManager,
-    ZODBEvolutionManager,
-    evolve_to_latest,
+from pyramid.util import (
+    TopologicalSorter,
+    FIRST,
+    LAST,
     )
 
-VERSION = 10
-NAME = 'substanced'
+from ..interfaces import IEvolutionSteps
+from BTrees import family64
 
-def add_evolution_package(config, package_name):
-    """ Add a package to the evolution manager.  The package should contain
-    evolveN.py scripts which evolve the database (see the ``repoze.evolution``
-    package).  Call via ``config.add_evolution_package``."""
-    config.registry.registerUtility(
-        ZODBEvolutionManager,
-        IEvolutionManager, 
-        name=package_name
+_marker = object()
+
+class EvolutionManager(object):
+    def __init__(self, context, registry, txn=_marker):
+        self.context = context
+        self.registry = registry
+        if txn is _marker:
+            import transaction
+            self.transaction = transaction
+        else:
+            self.transaction = txn
+
+    def get_zodb_root(self):
+        return self.context._p_jar.root()
+
+    def get_finished_steps(self):
+        zodb_root = self.get_zodb_root()
+        finished_steps = zodb_root.setdefault(
+            'substanced.finished_evolution_steps',
+            family64.OO.Set()
+            )
+        return finished_steps
+
+    def add_finished_step(self, name):
+        finished_steps = self.get_finished_steps()
+        finished_steps.insert(name)
+
+    def remove_finished_step(self, name):
+        finished_steps = self.get_finished_steps()
+        finished_steps.remove(name)
+
+    def get_unfinished_steps(self):
+        tsorter = self.registry.queryUtility(IEvolutionSteps, None)
+        results = []
+        if tsorter is not None:
+            topo_ordered = [ x[1] for x in tsorter.sorted() ]
+            finished_steps = self.get_finished_steps()
+            for name, func in topo_ordered:
+                if not name in finished_steps:
+                    results.append((name, func))
+        return results
+
+    def evolve(self, commit=True):
+        steps = self.get_unfinished_steps()
+        complete = []
+        for name, func in steps:
+            if self.transaction is not None and commit:
+                self.transaction.begin()
+            func(self.context)
+            self.add_finished_step(name)
+            if self.transaction is not None and commit:
+                self.transaction.commit()
+            complete.append(name)
+        return complete
+
+def add_evolution_step(config, func, before=None, after=None, name=None):
+    if name is None:
+        name = func.__module__ + '.' + func.__name__
+    tsorter = config.registry.queryUtility(IEvolutionSteps)
+    if tsorter is None:
+        tsorter = TopologicalSorter(default_after=FIRST, default_before=LAST)
+        config.registry.registerUtility(tsorter, IEvolutionSteps)
+    tsorter.add(
+        name,
+        (name, func),
+        before=before,
+        after=after,
         )
 
-# custom exceptions FBO defining reprs for command-line display
+def legacy_to_new(root):
+    zodb_root = root._p_jar.root()
+    finished_steps = zodb_root.setdefault(
+        'substanced.finished_evolution_steps',
+        family64.OO.Set()
+        )
+    for i in range(1, 11):
+        finished_steps.insert('substanced.evolution.evolve%s.evolve' % i)
 
-class ConflictingFlags(Exception):
-    def __init__(self, flag1, flag2):
-        self.flag1 = flag1
-        self.flag2 = flag2
+VERSION = 10         # legacy
+NAME = 'substanced'  # legacy
 
-    def __repr__(self):
-        return 'Conflicting flags: %s cannot be used when %s is used' % (
-            self.flag1, self.flag2)
-
-class NoSuchPackage(Exception):
-    def __init__(self, pkg_name):
-        self.pkg_name = pkg_name
-
-    def __repr__(self):
-        return 'No such package named %s' % (self.pkg_name,)
-
-class NoPackageSpecified(Exception):
-    def __repr__(self):
-        return 'No package specified: %s' % (self.args[0],)
-
-def importer(pkg_name):
-    __import__(pkg_name)
-    return sys.modules[pkg_name]
-
-def evolve_packages(
-    registry,
-    root,
-    package=None,
-    set_db_version=None,
-    latest=False,
-    mark_all_current=False,
-    importer=importer,
-    ):
-    """ Evolve the package named ``package`` """
-    # importer in kwarg list for testing purposes only
-
-    if latest and (set_db_version is not None):
-        raise ConflictingFlags('latest', 'set_db_version')
-
-    if mark_all_current and (set_db_version is not None):
-        raise ConflictingFlags('mark_all_current', 'set_db_version')
-
-    if set_db_version and not package:
-        raise NoPackageSpecified(
-            'Not setting db version to %s ' % set_db_version
-            )
-
-    managers = list(registry.getUtilitiesFor(IEvolutionManager))
-
-    # XXX temporary hack to make substanced evolution happen before any other
-    # evolution (must die if/when we add topological sorting of evolution steps
-    # or packages)
-    for i, (pkg_name, factory) in enumerate(list(managers)):
-        if pkg_name == 'substanced.evolution':
-            managers.pop(i)
-            managers.insert(0, (pkg_name, factory))
-            break
-
-    if package and package not in [x[0] for x in managers]:
-        raise NoSuchPackage(package)
-
-    results = []
-
-    for pkg_name, factory in managers:
-        if (package is None) or (pkg_name == package):
-            
-            pkg = importer(pkg_name)
-
-            sw_version = pkg.VERSION
-
-            manager = factory(root, pkg_name, sw_version, 0)
-
-            db_version = manager.get_db_version()
-
-            result = {'package':pkg_name}
-            result['sw_version'] = sw_version
-            result['db_version'] = db_version
-
-            if set_db_version is None:
-
-                if latest:
-                    # does its own commit
-                    evolve_to_latest(manager)
-                    new_version = manager.get_db_version()
-                    result['new_version'] = new_version
-                    result['message'] = 'Evolved %s to %s' % (
-                        pkg_name, new_version)
-
-                elif mark_all_current:
-                    manager._set_db_version(sw_version)
-                    transaction.commit()
-                    result['new_version'] = sw_version
-                    result['message'] = 'Evolved %s to %s' % (
-                        pkg_name, sw_version)
-
-                else:
-                    result['new_version'] = db_version
-                    result['message'] = 'Not evolving (latest not specified)'
-
-            else:
-
-                if set_db_version == db_version:
-                    result['new_version'] = db_version
-                    result['message'] = 'Nothing to do'
-
-                else:
-                    manager._set_db_version(set_db_version)
-                    transaction.commit()
-                    result['new_version'] = set_db_version
-                    result['message'] = (
-                        'Database version set to %s' % set_db_version
-                        )
-
-            results.append(result)
-
-    return results
-
-def includeme(config): #pragma: no cover
+def includeme(config): # pragma: no cover
+    from .legacy import add_evolution_package
+    config.add_directive('add_evolution_step', add_evolution_step)
     config.add_directive('add_evolution_package', add_evolution_package)
     config.add_evolution_package('substanced.evolution')
+    config.add_evolution_step(legacy_to_new)
+    for i in range(1, 11):
+        scriptname = 'substanced.evolution.evolve%s' % i
+        evmodule = EntryPoint.parse('x=%s' % scriptname).load(False)
+        config.add_evolution_step(evmodule.evolve)

@@ -1,6 +1,6 @@
 import transaction
 from pyramid_zodbconn import get_connection
-from substanced.evolution import evolve_packages
+from substanced.evolution.legacy import evolve_packages
 
 from .stats import statsd_incr
 

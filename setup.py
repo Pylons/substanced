@@ -74,6 +74,7 @@ setup(name='substanced',
       test_suite="substanced",
       entry_points="""
       [console_scripts]
+      sd_evolve_legacy = substanced.scripts.evolve:legacy
       sd_evolve = substanced.scripts.evolve:main
       sd_reindex = substanced.scripts.reindex:main
       sd_drain_indexing = substanced.scripts.drain_indexing:main

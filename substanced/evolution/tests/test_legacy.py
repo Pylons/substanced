@@ -3,7 +3,7 @@ from pyramid import testing
 
 class Test_add_evolution_package(unittest.TestCase):
     def _callFUT(self, config, package_name):
-        from . import add_evolution_package
+        from ..legacy import add_evolution_package
         return add_evolution_package(config, package_name)
 
     def test_it(self):
@@ -22,7 +22,7 @@ class Test_add_evolution_package(unittest.TestCase):
 
 class TestConflictingFlags(unittest.TestCase):
     def _makeOne(self, flag1, flag2):
-        from . import ConflictingFlags
+        from ..legacy import ConflictingFlags
         return ConflictingFlags(flag1, flag2)
 
     def test___repr__(self):
@@ -34,7 +34,7 @@ class TestConflictingFlags(unittest.TestCase):
     
 class TestNoSuchPackage(unittest.TestCase):
     def _makeOne(self, pkg_name):
-        from . import NoSuchPackage
+        from ..legacy import NoSuchPackage
         return NoSuchPackage(pkg_name)
 
     def test___repr__(self):
@@ -46,7 +46,7 @@ class TestNoSuchPackage(unittest.TestCase):
         
 class TestNoPackageSpecificed(unittest.TestCase):
     def _makeOne(self, arg):
-        from . import NoPackageSpecified
+        from ..legacy import NoPackageSpecified
         return NoPackageSpecified(arg)
 
     def test___repr__(self):
@@ -58,7 +58,7 @@ class TestNoPackageSpecificed(unittest.TestCase):
 
 class Test_importer(unittest.TestCase):
     def _callFUT(self, pkg_name):
-        from . import importer
+        from ..legacy import importer
         return importer(pkg_name)
 
     def test_it(self):
@@ -67,32 +67,32 @@ class Test_importer(unittest.TestCase):
     
 class Test_evolve_packages(unittest.TestCase):
     def _callFUT(self, registry, root, **kw):
-        from . import evolve_packages
+        from ..legacy import evolve_packages
         return evolve_packages(registry, root, **kw)
 
     def test_conflicting_flags_latest(self):
-        from . import ConflictingFlags
+        from ..legacy import ConflictingFlags
         self.assertRaises(
             ConflictingFlags,
             self._callFUT, None, None, latest=True, set_db_version=1
             )
         
     def test_conflicting_flags_mark_all_current(self):
-        from . import ConflictingFlags
+        from ..legacy import ConflictingFlags
         self.assertRaises(
             ConflictingFlags,
             self._callFUT, None, None, mark_all_current=True, set_db_version=1
             )
 
     def test_set_db_version_without_package(self):
-        from . import NoPackageSpecified
+        from ..legacy import NoPackageSpecified
         self.assertRaises(
             NoPackageSpecified,
             self._callFUT, None, None, set_db_version=1
             )
 
     def test_no_such_package_registered(self):
-        from . import NoSuchPackage
+        from ..legacy import NoSuchPackage
         registry = DummyRegistry(result=())
         self.assertRaises(
             NoSuchPackage,
