@@ -4,6 +4,10 @@ import transaction
 
 from pyramid_zodbconn import get_connection
 
+from zope.interface import (
+    providedBy,
+    Interface,
+    )
 from zope.interface.interfaces import IInterface
 
 import venusian
@@ -49,6 +53,8 @@ CENTER1 = Sentinel('CENTER1')
 CENTER2 = Sentinel('CENTER2')
 
 MANAGE_ROUTE_NAME = 'substanced_manage'
+
+MAX_ORDER = 1 << 30
 
 _marker = object()
 
@@ -239,6 +245,7 @@ def sdi_mgmt_views(context, request, names=None):
     req.matched_route = request.matched_route
     req.method = 'GET' 
     req.registry = request.registry
+    sro_enum = list(enumerate(providedBy(context).__sro__[:-1]))
 
     for data in introspector.get_category('sdi views'): 
         related = data['related']
@@ -260,11 +267,26 @@ def sdi_mgmt_views(context, request, names=None):
             # url implied by this view, we'll be permitted to view it and
             # something reasonable will show up
             intr_context = view_intr['context']
+            sro_index = MAX_ORDER
+            
+            if intr_context is None:
+                intr_context = Interface
+
             if IInterface.providedBy(intr_context):
                 if not intr_context.providedBy(context):
                     continue
-            elif intr_context and not isinstance(context, intr_context):
+                for i, spec in sro_enum:
+                    if spec is intr_context:
+                        sro_index = i
+                        break
+            elif isinstance(context, intr_context):
+                for i, spec in sro_enum:
+                    if spec.implementedBy(intr_context):
+                        sro_index = i
+                        break
+            else: # pragma: no cover (coverage bug, this is reached)
                 continue
+
             if tab_condition is not None and names is None:
                 if callable(tab_condition):
                     if not tab_condition(context, request):
@@ -278,6 +300,7 @@ def sdi_mgmt_views(context, request, names=None):
             if hasattr(derived, '__permitted__'):
                 if not derived.__permitted__(context, req):
                     continue
+            predicate_order = getattr(derived, '__order__', MAX_ORDER)
             if view_name == request.view_name:
                 css_class = 'active'
             else:
@@ -288,10 +311,28 @@ def sdi_mgmt_views(context, request, names=None):
                  'tab_after':tab_after,
                  'title': tab_title or view_name.capitalize(),
                  'class': css_class,
+                 'predicate_order':predicate_order,
+                 'sro_index':sro_index,
                  'url': request.sdiapi.mgmt_path(
                      request.context, '@@%s' % view_name)
                  }
                 )
+
+    # De-duplicate the unordered list of tabs with the same view_name.  Prefer
+    # the tab with the lowest (sro_index, predicate_order) tuple, because this
+    # is the view that's most likely to be executed when visited and we'd
+    # like to get its title right.
+    unordered.sort(key=lambda s: (s['sro_index'], s['predicate_order']))
+    deduplicated = []
+    view_names = {}
+
+    # use a sort-break to take only the first of each same-named view data.
+    for view_data in unordered:
+        vn = view_data['view_name']
+        if vn in view_names:
+            continue
+        view_names[vn] = True
+        deduplicated.append(view_data)
 
     manually_ordered = []
 
@@ -299,25 +340,25 @@ def sdi_mgmt_views(context, request, names=None):
     
     if tab_order is not None:
         ordered_names = [ y for y in tab_order if y in
-                          [ x['view_name'] for x in unordered ] ]
+                          [ x['view_name'] for x in deduplicated ] ]
         for ordered_name in ordered_names:
             for view_data in unordered[:]:
                 if view_data['view_name'] == ordered_name:
-                    unordered.remove(view_data)
+                    deduplicated.remove(view_data)
                     manually_ordered.append(view_data)
 
-    # First sort non-manually-ordered views lexically by title. Reverse due to
-    # the behavior of the toposorter; we'd like groups of things that share the
+    # Sort non-manually-ordered views lexically by title. Reverse due to the
+    # behavior of the toposorter; we'd like groups of things that share the
     # same before/after to be alpha sorted ascending relative to each other,
     # and reversing lexical ordering here gets us that behavior down the line.
     lexically_ordered = sorted(
-        unordered,
+        deduplicated,
         key=operator.itemgetter('title'),
         reverse=True,
         )
 
-    # Then sort the lexically-presorted unordered views topologically based on
-    # any tab_before and tab_after values in the view data.
+    # Sort the lexically-presorted unordered views topologically based on any
+    # tab_before and tab_after values in the view data.
     tsorter = TopologicalSorter(default_after=CENTER1, default_before=CENTER2)
 
     tsorter.add(

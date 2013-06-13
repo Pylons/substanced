@@ -473,11 +473,10 @@ class Test_sdi_mgmt_views(unittest.TestCase):
         result = self._callFUT(context, request)
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0]['view_name'], 'name')
-        self.assertEqual(result[0]['title'], 'a')
+        self.assertEqual(result[0]['title'], 'b')
         self.assertEqual(result[0]['class'], None)
         self.assertEqual(result[0]['url'], '/mgmt_path')
-        # "a" is gone because we use topological sorting and it conflates
-        # view data with the same view name
+        # "a" is gone because we choose the first view data item via sort-break
 
     def test_one_related_view_gardenpath_with_taborder(self):
         request = testing.DummyRequest()
@@ -636,7 +635,162 @@ class Test_sdi_mgmt_views(unittest.TestCase):
         self.assertEqual(result[3]['class'], None)
         self.assertEqual(result[3]['url'], '/mgmt_path')
 
+    def test_duplicate_view_names_ordering_context_is_iface(self):
+        from zope.interface import Interface
+        from zope.interface import directlyProvides
+        request = testing.DummyRequest()
+        request.matched_route = None
+        request.sdiapi = DummySDIAPI()
+        request.registry.content = DummyContent()
+        request.view_name = 'name'
+        class I1(Interface):
+            pass
+        class I2(Interface):
+            pass
+        view_intr1 = DummyIntrospectable()
+        view_intr1.category_name = 'views'
+        view_intr1['name'] = 'name'
+        view_intr1['context'] = I1
+        view_intr1['derived_callable'] = None
+        intr1 = {}
+        intr1['tab_title'] = 'One'
+        intr1['tab_condition'] = None
+        intr1['tab_before'] = None
+        intr1['tab_after'] = None
+        intr1 = DummyIntrospectable(related=(view_intr1,), introspectable=intr1)
+        view_intr2 = DummyIntrospectable()
+        view_intr2.category_name = 'views'
+        view_intr2['name'] = 'name'
+        view_intr2['context'] = I2
+        view_intr2['derived_callable'] = None
+        intr2 = {}
+        intr2['tab_title'] = 'Two'
+        intr2['tab_condition'] = None
+        intr2['tab_before'] = None
+        intr2['tab_after'] = None
+        intr2 = DummyIntrospectable(related=(view_intr2,), introspectable=intr2)
+        request.registry.introspector = DummyIntrospector([(intr1, intr2)])
+        context = testing.DummyResource()
+        directlyProvides(context, (I2, I1))
+        result = self._callFUT(context, request)
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]['view_name'], 'name')
+        self.assertEqual(result[0]['title'], 'Two')
 
+    def test_duplicate_view_names_ordering_context_is_class(self):
+        request = testing.DummyRequest()
+        request.matched_route = None
+        request.sdiapi = DummySDIAPI()
+        request.registry.content = DummyContent()
+        request.view_name = 'name'
+        class MoreDirectContext(testing.DummyResource):
+            pass
+        view_intr1 = DummyIntrospectable()
+        view_intr1.category_name = 'views'
+        view_intr1['name'] = 'name'
+        view_intr1['context'] = MoreDirectContext
+        view_intr1['derived_callable'] = None
+        intr1 = {}
+        intr1['tab_title'] = 'One'
+        intr1['tab_condition'] = None
+        intr1['tab_before'] = None
+        intr1['tab_after'] = None
+        intr1 = DummyIntrospectable(related=(view_intr1,), introspectable=intr1)
+        view_intr2 = DummyIntrospectable()
+        view_intr2.category_name = 'views'
+        view_intr2['name'] = 'name'
+        view_intr2['context'] = testing.DummyResource
+        view_intr2['derived_callable'] = None
+        intr2 = {}
+        intr2['tab_title'] = 'Two'
+        intr2['tab_condition'] = None
+        intr2['tab_before'] = None
+        intr2['tab_after'] = None
+        intr2 = DummyIntrospectable(related=(view_intr2,), introspectable=intr2)
+        request.registry.introspector = DummyIntrospector([(intr1, intr2)])
+        context = MoreDirectContext()
+        result = self._callFUT(context, request)
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]['view_name'], 'name')
+        self.assertEqual(result[0]['title'], 'One')
+
+    def test_duplicate_view_names_ordering_context_iface_doesnt_match(self):
+        from zope.interface import Interface
+        class I1(Interface): pass
+        request = testing.DummyRequest()
+        request.matched_route = None
+        request.sdiapi = DummySDIAPI()
+        request.registry.content = DummyContent()
+        request.view_name = 'name'
+        class MoreDirectContext(testing.DummyResource):
+            pass
+        view_intr1 = DummyIntrospectable()
+        view_intr1.category_name = 'views'
+        view_intr1['name'] = 'name'
+        view_intr1['context'] = MoreDirectContext
+        view_intr1['derived_callable'] = None
+        intr1 = {}
+        intr1['tab_title'] = 'One'
+        intr1['tab_condition'] = None
+        intr1['tab_before'] = None
+        intr1['tab_after'] = None
+        intr1 = DummyIntrospectable(related=(view_intr1,), introspectable=intr1)
+        view_intr2 = DummyIntrospectable()
+        view_intr2.category_name = 'views'
+        view_intr2['name'] = 'name'
+        view_intr2['context'] = I1
+        view_intr2['derived_callable'] = None
+        intr2 = {}
+        intr2['tab_title'] = 'Two'
+        intr2['tab_condition'] = None
+        intr2['tab_before'] = None
+        intr2['tab_after'] = None
+        intr2 = DummyIntrospectable(related=(view_intr2,), introspectable=intr2)
+        request.registry.introspector = DummyIntrospector([(intr1, intr2)])
+        context = MoreDirectContext()
+        result = self._callFUT(context, request)
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0]['view_name'], 'name')
+        self.assertEqual(result[0]['title'], 'One')
+
+    def test_duplicate_view_names_ordering_context_neither_iface_nor_cls_match(
+        self):
+        from zope.interface import Interface
+        class I1(Interface): pass
+        request = testing.DummyRequest()
+        request.matched_route = None
+        request.sdiapi = DummySDIAPI()
+        request.registry.content = DummyContent()
+        request.view_name = 'name'
+        class MoreDirectContext(object):
+            pass
+        view_intr1 = DummyIntrospectable()
+        view_intr1.category_name = 'views'
+        view_intr1['name'] = 'name'
+        view_intr1['context'] = MoreDirectContext
+        view_intr1['derived_callable'] = None
+        intr1 = {}
+        intr1['tab_title'] = 'One'
+        intr1['tab_condition'] = None
+        intr1['tab_before'] = None
+        intr1['tab_after'] = None
+        intr1 = DummyIntrospectable(related=(view_intr1,), introspectable=intr1)
+        view_intr2 = DummyIntrospectable()
+        view_intr2.category_name = 'views'
+        view_intr2['name'] = 'name'
+        view_intr2['context'] = I1
+        view_intr2['derived_callable'] = None
+        intr2 = {}
+        intr2['tab_title'] = 'Two'
+        intr2['tab_condition'] = None
+        intr2['tab_before'] = None
+        intr2['tab_after'] = None
+        intr2 = DummyIntrospectable(related=(view_intr2,), introspectable=intr2)
+        request.registry.introspector = DummyIntrospector([(intr1, intr2)])
+        context = testing.DummyResource()
+        result = self._callFUT(context, request)
+        self.assertEqual(len(result), 0)
+        
 class Test_default_sdi_addable(unittest.TestCase):
     def _callFUT(self, context, intr):
         from .. import default_sdi_addable

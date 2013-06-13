@@ -144,12 +144,14 @@ class TestFileUploadTempStore(unittest.TestCase):
         inst = self._makeOne(request)
         here = os.path.dirname(__file__)
         thisfile = os.path.join(here, 'tests.py')
-        inst['a'] = {'fp':open(thisfile, 'rb')}
-        randid = inst.session['substanced.tempstore']['a']['randid']
-        self.assertTrue(randid)
-        fn = os.path.join(self.tempdir, randid)
-        self.assertTrue(open(fn).read(),
-                        open(thisfile, 'rb').read())
+        with open(thisfile, 'rb') as f:
+            inst['a'] = {'fp': f}
+            randid = inst.session['substanced.tempstore']['a']['randid']
+            self.assertTrue(randid)
+        with open(thisfile, 'rb') as g:
+            fn = os.path.join(self.tempdir, randid)
+            with open(fn, 'rb') as h:
+                self.assertEqual(h.read(), g.read())
 
     def test_get_data_None(self):
         request = self._makeRequest()
@@ -171,8 +173,9 @@ class TestFileUploadTempStore(unittest.TestCase):
             f.write(b'abc')
         inst.session['substanced.tempstore'] = {}
         inst.session['substanced.tempstore']['a'] = {'randid':'1234'}
-        self.assertEqual(inst.get('a')['fp'].read(),
-                         open(fn, 'rb').read())
+        with open(fn, 'rb') as f:
+            with inst.get('a')['fp'] as g:
+                self.assertEqual(g.read(), f.read())
 
     def test_get_with_randid_file_doesntexist(self):
         request = self._makeRequest()
@@ -201,7 +204,7 @@ class TestFileUploadTempStore(unittest.TestCase):
             f.write(b'foo')
         inst['a'] = {'randid':'abc'}
         inst.clear()
-        self.failIf(os.path.exists(tmpfile))
+        self.assertFalse(os.path.exists(tmpfile))
 
     def test_clear_doesntexist(self):
         request = self._makeRequest()

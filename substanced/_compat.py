@@ -24,6 +24,13 @@ except NameError: #pragma NO COVER Python >= 3.0
     INT_TYPES = (int,)
 
 try:
+    from base64 import decodebytes
+    from base64 import encodebytes
+except ImportError: #pragma NO COVER
+    from base64 import decodestring as decodebytes
+    from base64 import encodestring as encodebytes
+
+try:
     from urllib.parse import parse_qsl
 except ImportError: #pragma NO COVER
     from cgi import parse_qsl

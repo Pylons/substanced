@@ -190,7 +190,9 @@ class Test_preview_image_upload(unittest.TestCase):
         self.assertEqual(response.content_type, 'image/gif')
         fn = pkg_resources.resource_filename(
             'substanced.sdi', 'static/img/onepixel.gif')
-        self.assertEqual(response.body, open(fn, 'rb').read())
+        with open(fn, 'rb') as f:
+            expected = f.read()
+        self.assertEqual(response.body, expected)
 
     def test_with_fp(self):
         here = os.path.dirname(__file__)

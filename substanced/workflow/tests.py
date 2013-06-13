@@ -489,7 +489,7 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(state['title'], 'published')
         self.assertEqual(state['data'], {'callback': None})
         self.assertEqual(len(state['transitions']), 1)
-        self.assertEquals(state['transitions'][0]['name'], 'publish')
+        self.assertEqual(state['transitions'][0]['name'], 'publish')
 
     def test__get_states_published(self):
         from operator import itemgetter
@@ -506,7 +506,7 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(state['title'], 'pending')
         self.assertEqual(state['data'], {'callback': None})
         self.assertEqual(len(state['transitions']), 1)
-        self.assertEquals(state['transitions'][0]['name'], 'retract')
+        self.assertEqual(state['transitions'][0]['name'], 'retract')
 
         state = result[1]
         self.assertEqual(state['name'], 'private')
@@ -539,7 +539,7 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(state['title'], 'pending')
         self.assertEqual(state['data'], {'callback': None})
         self.assertEqual(len(state['transitions']), 1)
-        self.assertEquals(state['transitions'][0]['name'], 'submit')
+        self.assertEqual(state['transitions'][0]['name'], 'submit')
 
         state = result[1]
         self.assertEqual(state['name'], 'private')
