@@ -32,8 +32,6 @@ Features
 
 - Text search view.
 
-- Separate out reindexing from catalog autosync at startup.
-
 - Add an autoevolve setting.
 
 - Better error handling in folder contents view when an ajax request fails.
