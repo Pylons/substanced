@@ -626,9 +626,9 @@ class TestFolderContents(unittest.TestCase):
         context.is_reorderable = mock.Mock(return_value=False)
         context.is_ordered = mock.Mock(return_value=False)
         result = inst.show()
-        self.assert_('slickgrid_wrapper_options' in result)
+        self.assertTrue('slickgrid_wrapper_options' in result)
         slickgrid_wrapper_options = result['slickgrid_wrapper_options']
-        self.assert_('slickgridOptions' in slickgrid_wrapper_options)
+        self.assertTrue('slickgridOptions' in slickgrid_wrapper_options)
         self.assertEqual(
             slickgrid_wrapper_options['configName'],
             'sdi-content-grid'
@@ -639,11 +639,11 @@ class TestFolderContents(unittest.TestCase):
         self.assertEqual(slickgrid_wrapper_options['sortCol'], None)   
         self.assertEqual(slickgrid_wrapper_options['sortDir'], False)
         self.assertEqual(slickgrid_wrapper_options['url'], '')
-        self.assert_('items' in slickgrid_wrapper_options)
+        self.assertTrue('items' in slickgrid_wrapper_options)
         self.assertEqual(slickgrid_wrapper_options['items']['from'], 0)
         self.assertEqual(slickgrid_wrapper_options['items']['to'], 40)
         self.assertEqual(slickgrid_wrapper_options['items']['total'], 1)
-        self.assert_('records' in slickgrid_wrapper_options['items'])
+        self.assertTrue('records' in slickgrid_wrapper_options['items'])
         records = slickgrid_wrapper_options['items']['records']
         self.assertEqual(len(records), 1)
         self.assertEqual(records[0], {
@@ -695,9 +695,9 @@ class TestFolderContents(unittest.TestCase):
             'substanced.sdi.views.folder.find_catalog') as find_catalog:
             find_catalog.return_value = {'col1': 'COL1', 'col2': 'COL2'}
             result = inst.show()
-        self.assert_('slickgrid_wrapper_options' in result)
+        self.assertTrue('slickgrid_wrapper_options' in result)
         slickgrid_wrapper_options = result['slickgrid_wrapper_options']
-        self.assert_('slickgridOptions' in slickgrid_wrapper_options)
+        self.assertTrue('slickgridOptions' in slickgrid_wrapper_options)
         self.assertEqual(
             slickgrid_wrapper_options['configName'], 'sdi-content-grid'
             )
@@ -705,11 +705,11 @@ class TestFolderContents(unittest.TestCase):
         self.assertEqual(slickgrid_wrapper_options['sortCol'], 'col1')  
         self.assertEqual(slickgrid_wrapper_options['sortDir'], True)
         self.assertEqual(slickgrid_wrapper_options['url'], '')
-        self.assert_('items' in slickgrid_wrapper_options)
+        self.assertTrue('items' in slickgrid_wrapper_options)
         self.assertEqual(slickgrid_wrapper_options['items']['from'], 0)
         self.assertEqual(slickgrid_wrapper_options['items']['to'], 40)
         self.assertEqual(slickgrid_wrapper_options['items']['total'], 1)
-        self.assert_('records' in slickgrid_wrapper_options['items'])
+        self.assertTrue('records' in slickgrid_wrapper_options['items'])
         records = slickgrid_wrapper_options['items']['records']
         self.assertEqual(len(records), 1)
         self.assertEqual(records[0], {

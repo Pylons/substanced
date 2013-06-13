@@ -201,7 +201,7 @@ class TestFileUploadTempStore(unittest.TestCase):
             f.write(b'foo')
         inst['a'] = {'randid':'abc'}
         inst.clear()
-        self.failIf(os.path.exists(tmpfile))
+        self.assertFalse(os.path.exists(tmpfile))
 
     def test_clear_doesntexist(self):
         request = self._makeRequest()
