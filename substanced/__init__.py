@@ -1,11 +1,11 @@
 import transaction
 from pyramid_zodbconn import get_connection
-from substanced.evolution.legacy import evolve_packages
+from substanced.evolution import mark_unfinished_as_finished
 
 from .stats import statsd_incr
 
 def root_factory(request, t=transaction, g=get_connection,
-                 evolve_packages=evolve_packages):
+                 mark_unfinished_as_finished=mark_unfinished_as_finished):
     """ A function which can be used as a Pyramid ``root_factory``.  It
     accepts a request and returns an instance of the ``Root`` content type."""
     # accepts "t", "g", and "evolve_packages" for unit testing purposes only
@@ -16,11 +16,7 @@ def root_factory(request, t=transaction, g=get_connection,
         app_root = registry.content.create('Root')
         zodb_root['app_root'] = app_root
         t.savepoint() # give app_root a _p_jar
-        evolve_packages(
-            registry,
-            app_root,
-            mark_all_current=True,
-            )
+        mark_unfinished_as_finished(app_root, registry, t)
         t.commit()
     statsd_incr('root_factory', rate=.1)
     return zodb_root['app_root']

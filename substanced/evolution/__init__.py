@@ -1,4 +1,3 @@
-from pkg_resources import EntryPoint
 import transaction
 
 from pyramid.util import TopologicalSorter
@@ -47,6 +46,12 @@ class EvolutionManager(object):
                 if not name in finished_steps:
                     yield name, func
 
+    def mark_unfinshed_as_finished(self):
+        finished = self.get_finished_steps()
+        unfinished = self.get_unfinished_steps()
+        for name, func in unfinished:
+            finished.insert(name)
+
     def evolve(self, commit=True):
         steps = self.get_unfinished_steps()
         complete = []
@@ -65,15 +70,43 @@ class EvolutionManager(object):
     def out(self, msg): # pragma: no cover
         print (msg)
 
+def mark_unfinished_as_finished(app_root, registry, t=None):
+    """ Given the root object of a Substance D site as ``app_root`` and a
+    Pyramid registry, mark all pending evolution steps as completed without
+    actually executing them."""
+    emanager = EvolutionManager(app_root, registry, t)
+    return emanager.mark_unfinished_as_finished()
+
 def add_evolution_step(config, func, before=None, after=None, name=None):
+    """
+    A configurator directive which adds an evolution step.  An evolution step
+    can be used to perform upgrades or migrations of data structures in
+    existing databases to meet expectations of new code.
+
+    ``func`` should be a function that performs the evolution logic.  It should
+    accept a single argument (conventionally named) ``root``.  This will
+    be the root of the main ZODB database used to serve your Substance D site.
+
+    ``before`` should either be ``None``, another evolution step function, or
+    the dotted name to such a function.  By default, it is ``None``, which
+    means execute in the order defined by the calling order of
+    ``add_evolution_step``.
+
+    ``after`` should either be ``None``, another evolution step function, or
+    the dotted name to such a function.  By default, it is ``None``.
+
+    ``name`` is the name of the evolution step.  It must be unique between all
+    registered evolution steps.  If it is not provided, the dotted name of
+    the function used as ``func`` will be used as the evolution step name.
+    """
     func_desc = config.object_description(func)
     if name is None:
         name = get_dotted_name(func)
     else:
         func_desc = func_desc + ' (%s)' % name
-    if after and not isinstance(after, STRING_TYPES):
+    if after is not None and not isinstance(after, STRING_TYPES):
         after = get_dotted_name(after)
-    if before and not isinstance(before, STRING_TYPES):
+    if before is not None and not isinstance(before, STRING_TYPES):
         before = get_dotted_name(before)
     discriminator = ('evolution step', name)
     intr = config.introspectable(
@@ -87,12 +120,7 @@ def add_evolution_step(config, func, before=None, after=None, name=None):
         if tsorter is None:
             tsorter = TopologicalSorter()
             config.registry.registerUtility(tsorter, IEvolutionSteps)
-        tsorter.add(
-            name,
-            (name, func),
-            before=before,
-            after=after,
-            )
+        tsorter.add(name, (name, func), before=before, after=after)
     config.action(discriminator, register, introspectables=(intr,))
 
 VERSION = 10         # legacy
@@ -106,12 +134,4 @@ def legacy_to_new(root): # pragma: no cover
         finished_steps.insert('substanced.evolution.evolve%s.evolve' % i)
 
 def includeme(config): # pragma: no cover
-    from .legacy import add_evolution_package
     config.add_directive('add_evolution_step', add_evolution_step)
-    config.add_directive('add_evolution_package', add_evolution_package)
-    config.add_evolution_package('substanced.evolution')
-    config.add_evolution_step(legacy_to_new)
-    for i in range(1, VERSION+1):
-        scriptname = 'substanced.evolution.evolve%s' % i
-        evmodule = EntryPoint.parse('x=%s' % scriptname).load(False)
-        config.add_evolution_step(evmodule.evolve)

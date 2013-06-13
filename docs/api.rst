@@ -234,7 +234,9 @@ Other Helpers
 
 .. automodule:: substanced.evolution
 
-.. autofunction:: add_evolution_package
+.. autofunction:: add_evolution_step
+
+.. autofunction:: mark_unfinished_as_finished
 
 .. autofunction:: includeme
 
