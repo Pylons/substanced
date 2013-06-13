@@ -441,6 +441,12 @@ class Test_ResourceLoadContext(unittest.TestCase):
             return data
         inst = self._makeOne(None, registry, None, None, None)
         inst.load_yaml = load_yaml
+        class DummyLogger(object):
+            def __init__(self):
+                self._errors = []
+            def error(self, *args, **kw):
+                self._errors.append((args, kw))
+        inst.logger = logger = DummyLogger()
         self.assertRaises(ValueError, inst.load_resource)
 
     def test_load(self):
