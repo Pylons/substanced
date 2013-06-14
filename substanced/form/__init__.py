@@ -195,13 +195,12 @@ class FileUploadTempStore(object):
             while True:
                 randid = binascii.hexlify(os.urandom(20)).decode('ascii')
                 fn = os.path.join(self.tempdir, randid)
-                if not os.path.exists(fn):
-                    # XXX race condition
-                    fp = open(fn, 'w+b')
-                    newdata['randid'] = randid
+                if not os.path.exists(fn): # XXX race condition
                     break
-            for chunk in chunks(stream):
-                fp.write(chunk)
+            newdata['randid'] = randid
+            with open(fn, 'w+b') as fp:
+                for chunk in chunks(stream):
+                    fp.write(chunk)
 
         self._tempstore_set(name, newdata)
 

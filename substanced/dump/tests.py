@@ -60,7 +60,8 @@ class Test_set_yaml(unittest.TestCase):
             b"!blob 'YWJj\n\n  '\n"
             )
         result = yaml.load(stream, Loader=registry['yaml_loader'])
-        self.assertEqual(result.open('r').read(), b'abc')
+        with result.open('r') as f:
+            self.assertEqual(f.read(), b'abc')
 
 class Test_get_dumpers(unittest.TestCase):
     def _callFUT(self, registry):
@@ -441,6 +442,12 @@ class Test_ResourceLoadContext(unittest.TestCase):
             return data
         inst = self._makeOne(None, registry, None, None, None)
         inst.load_yaml = load_yaml
+        class DummyLogger(object):
+            def __init__(self):
+                self._errors = []
+            def error(self, *args, **kw):
+                self._errors.append((args, kw))
+        inst.logger = logger = DummyLogger()
         self.assertRaises(ValueError, inst.load_resource)
 
     def test_load(self):

@@ -246,12 +246,12 @@ class TestFolder(unittest.TestCase):
 
     def test__contains__(self):
         folder = self._makeOne({'a': 1, 'b': 2})
-        self.failUnless('a' in folder)
-        self.failIf('c' in folder)
+        self.assertTrue('a' in folder)
+        self.assertFalse('c' in folder)
 
     def test___nonzero__(self):
         folder = self._makeOne()
-        self.failUnless(folder)
+        self.assertTrue(folder)
 
     def test___setitem__nonstring(self):
         folder = self._makeOne()
@@ -279,11 +279,11 @@ class TestFolder(unittest.TestCase):
         folder['a'] = dummy
         self.assertEqual(folder._num_objects(), 1)
         self.assertEqual(len(events), 2)
-        self.failUnless(IObjectWillBeAdded.providedBy(events[0]))
+        self.assertTrue(IObjectWillBeAdded.providedBy(events[0]))
         self.assertEqual(events[0].object, dummy)
         self.assertEqual(events[0].parent, folder)
         self.assertEqual(events[0].name, 'a')
-        self.failUnless(IObjectAdded.providedBy(events[1]))
+        self.assertTrue(IObjectAdded.providedBy(events[1]))
         self.assertEqual(events[1].object, dummy)
         self.assertEqual(events[1].parent, folder)
         self.assertEqual(events[1].name, 'a')
@@ -365,11 +365,11 @@ class TestFolder(unittest.TestCase):
         folder.add('a', dummy, send_events=True)
         self.assertEqual(folder._num_objects(), 1)
         self.assertEqual(len(events), 2)
-        self.failUnless(IObjectWillBeAdded.providedBy(events[0]))
+        self.assertTrue(IObjectWillBeAdded.providedBy(events[0]))
         self.assertEqual(events[0].object, dummy)
         self.assertEqual(events[0].parent, folder)
         self.assertEqual(events[0].name, 'a')
-        self.failUnless(IObjectAdded.providedBy(events[1]))
+        self.assertTrue(IObjectAdded.providedBy(events[1]))
         self.assertEqual(events[1].object, dummy)
         self.assertEqual(events[1].parent, folder)
         self.assertEqual(events[1].name, 'a')
@@ -483,16 +483,16 @@ class TestFolder(unittest.TestCase):
         del folder['a']
         self.assertEqual(folder._num_objects(), 0)
         self.assertEqual(len(events), 2)
-        self.failUnless(IObjectWillBeRemoved.providedBy(events[0]))
-        self.failUnless(IObjectRemoved.providedBy(events[1]))
+        self.assertTrue(IObjectWillBeRemoved.providedBy(events[0]))
+        self.assertTrue(IObjectRemoved.providedBy(events[1]))
         self.assertEqual(events[0].object, dummy)
         self.assertEqual(events[0].parent, folder)
         self.assertEqual(events[0].name, 'a')
         self.assertEqual(events[1].object, dummy)
         self.assertEqual(events[1].parent, folder)
         self.assertEqual(events[1].name, 'a')
-        self.failIf(hasattr(dummy, '__parent__'))
-        self.failIf(hasattr(dummy, '__name__'))
+        self.assertFalse(hasattr(dummy, '__parent__'))
+        self.assertFalse(hasattr(dummy, '__name__'))
 
     def test_remove_miss(self):
         folder = self._makeOne()
@@ -521,8 +521,8 @@ class TestFolder(unittest.TestCase):
         folder.remove('a', send_events=True)
         self.assertEqual(folder._num_objects(), 0)
         self.assertEqual(len(events), 2)
-        self.failUnless(IObjectWillBeRemoved.providedBy(events[0]))
-        self.failUnless(IObjectRemoved.providedBy(events[1]))
+        self.assertTrue(IObjectWillBeRemoved.providedBy(events[0]))
+        self.assertTrue(IObjectRemoved.providedBy(events[1]))
         self.assertEqual(events[0].object, dummy)
         self.assertEqual(events[0].parent, folder)
         self.assertEqual(events[0].name, 'a')
@@ -532,8 +532,8 @@ class TestFolder(unittest.TestCase):
         self.assertEqual(events[1].name, 'a')
         self.assertFalse(events[1].moving)
 
-        self.failIf(hasattr(dummy, '__parent__'))
-        self.failIf(hasattr(dummy, '__name__'))
+        self.assertFalse(hasattr(dummy, '__parent__'))
+        self.assertFalse(hasattr(dummy, '__name__'))
 
     def test_remove_suppress_events(self):
         from ..interfaces import IObjectEvent
@@ -549,8 +549,8 @@ class TestFolder(unittest.TestCase):
         folder.remove('a', send_events=False)
         self.assertEqual(folder._num_objects(), 0)
         self.assertEqual(len(events), 0)
-        self.failIf(hasattr(dummy, '__parent__'))
-        self.failIf(hasattr(dummy, '__name__'))
+        self.assertFalse(hasattr(dummy, '__parent__'))
+        self.assertFalse(hasattr(dummy, '__name__'))
 
     def test_remove_moving(self):
         from ..interfaces import IObjectEvent
@@ -567,11 +567,11 @@ class TestFolder(unittest.TestCase):
         self.assertEqual(folder._num_objects(), 1)
         folder.remove('a', moving=True)
         self.assertEqual(folder._num_objects(), 0)
-        self.failIf(hasattr(dummy, '__parent__'))
-        self.failIf(hasattr(dummy, '__name__'))
+        self.assertFalse(hasattr(dummy, '__parent__'))
+        self.assertFalse(hasattr(dummy, '__name__'))
         self.assertEqual(len(events), 2)
-        self.failUnless(IObjectWillBeRemoved.providedBy(events[0]))
-        self.failUnless(IObjectRemoved.providedBy(events[1]))
+        self.assertTrue(IObjectWillBeRemoved.providedBy(events[0]))
+        self.assertTrue(IObjectRemoved.providedBy(events[1]))
         self.assertEqual(events[0].object, dummy)
         self.assertEqual(events[0].parent, folder)
         self.assertEqual(events[0].name, 'a')
@@ -746,16 +746,16 @@ class TestFolder(unittest.TestCase):
         self.assertEqual(result, dummy)
         self.assertEqual(folder._num_objects(), 0)
         self.assertEqual(len(events), 2)
-        self.failUnless(IObjectWillBeRemoved.providedBy(events[0]))
-        self.failUnless(IObjectRemoved.providedBy(events[1]))
+        self.assertTrue(IObjectWillBeRemoved.providedBy(events[0]))
+        self.assertTrue(IObjectRemoved.providedBy(events[1]))
         self.assertEqual(events[0].object, dummy)
         self.assertEqual(events[0].parent, folder)
         self.assertEqual(events[0].name, 'a')
         self.assertEqual(events[1].object, dummy)
         self.assertEqual(events[1].parent, folder)
         self.assertEqual(events[1].name, 'a')
-        self.failIf(hasattr(dummy, '__parent__'))
-        self.failIf(hasattr(dummy, '__name__'))
+        self.assertFalse(hasattr(dummy, '__parent__'))
+        self.assertFalse(hasattr(dummy, '__name__'))
 
     def test_pop_fail_nodefault(self):
         folder = self._makeOne()
@@ -793,7 +793,7 @@ class TestFolder(unittest.TestCase):
         name = 'La'
         folder = self._makeOne()
         folder[name] = DummyModel()
-        self.failUnless(folder.get(name))
+        self.assertTrue(folder.get(name))
 
     def test_unresolveable_unicode_getitem(self):
         from .._compat import u
@@ -805,7 +805,7 @@ class TestFolder(unittest.TestCase):
         name = 'La'
         folder = self._makeOne()
         folder[name] = DummyModel()
-        self.failUnless(folder[name])
+        self.assertTrue(folder[name])
 
     def test_find_service_missing(self):
         inst = self._makeOne()

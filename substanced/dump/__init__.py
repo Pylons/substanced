@@ -1,4 +1,3 @@
-import base64
 import logging
 import os
 
@@ -32,6 +31,8 @@ from substanced.util import (
     )
 from .._compat import TEXT
 from .._compat import u
+from .._compat import decodebytes
+from .._compat import encodebytes
 
 
 logger = logging.getLogger(__name__)
@@ -66,15 +67,16 @@ def set_yaml(registry):
     SLoader.add_constructor(u('!interface'), iface_constructor)
 
     def blob_representer(dumper, data):
-        data = data.open('r').read()
-        encoded = base64.encodestring(data)
+        with data.open('r') as f:
+            data = f.read()
+        encoded = encodebytes(data)
         u_encoded = encoded.decode('ascii')
         return dumper.represent_scalar(u('!blob'), u_encoded)
     def blob_constructor(loader, node):
         value = node.value
         if isinstance(value, TEXT):
             value = value.encode('ascii')
-        return Blob(base64.decodestring(value))
+        return Blob(decodebytes(value))
 
     SDumper.add_representer(Blob, blob_representer)
     SLoader.add_constructor(u('!blob'), blob_constructor)

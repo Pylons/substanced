@@ -94,11 +94,11 @@ class TestCatalog(unittest.TestCase):
 
     def test_ctor_defaults(self):
         catalog = self._makeOne()
-        self.failUnless(catalog.family is self.family)
+        self.assertTrue(catalog.family is self.family)
 
     def test_ctor_explicit_family(self):
         catalog = self._makeOne(family=BTrees.family32)
-        self.failUnless(catalog.family is BTrees.family32)
+        self.assertTrue(catalog.family is BTrees.family32)
 
     def test_index_resource_indexes(self):
         catalog = self._makeOne()
