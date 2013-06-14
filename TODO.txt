@@ -19,11 +19,6 @@ Features
 - How to prevent objects from being moved or duplicated into a place where
   they're not addable?
 
-- Evolution execution needs to be sorted by package.
-
-- Evolution should show the derived versions after a ``--latest``, not the
-  versions that were current before.
-
 - Use is_folder view predicate instead of context=IFolder in folder views
   (holdup is testing out folder button action overrides in the face of views
   being registered against IFolder).
