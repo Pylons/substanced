@@ -47,7 +47,7 @@ class EvolutionManager(object):
                 if not name in finished_steps:
                     yield name, func
 
-    def mark_unfinshed_as_finished(self):
+    def mark_unfinished_as_finished(self):
         finished = self.get_finished_steps()
         unfinished = self.get_unfinished_steps()
         for name, func in unfinished:
