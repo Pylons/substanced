@@ -129,10 +129,11 @@ NAME = 'substanced'  # legacy
 
 def legacy_to_new(root): # pragma: no cover
     zodb_root = root._p_jar.root()
-    last = zodb_root.get('repoze.evolution', {}).get('substanced.evolution', 1)
+    packages = zodb_root.get('repoze.evolution', {})
     finished_steps = zodb_root.setdefault(FINISHED_KEY, family64.OO.Set())
-    for i in range(1, last+1):
-        finished_steps.insert('substanced.evolution.evolve%s.evolve' % i)
+    for package, last in packages.items():
+        for i in range(1, last+1):
+            finished_steps.insert('%s.evolve%s.evolve' % (package, i))
 
 def includeme(config): # pragma: no cover
     config.add_directive('add_evolution_step', add_evolution_step)
