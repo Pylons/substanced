@@ -1,7 +1,10 @@
+import time
+
 from pkg_resources import EntryPoint
 import transaction
 
 from pyramid.util import TopologicalSorter
+from pyramid.threadlocal import get_current_registry
 
 from ..interfaces import IEvolutionSteps
 from ..util import get_dotted_name
@@ -23,20 +26,30 @@ class EvolutionManager(object):
             self.transaction = txn
 
     def get_zodb_root(self):
-        return self.context._p_jar.root()
+        zodb_root = self.context._p_jar.root()
+        return zodb_root
 
     def get_finished_steps(self):
         zodb_root = self.get_zodb_root()
-        finished_steps = zodb_root.setdefault(FINISHED_KEY, family64.OO.Set())
+        finished_steps = zodb_root.get(FINISHED_KEY, None)
+        if finished_steps is None:
+            # we must commit here in order for this method to always
+            # return the same object
+            finished_steps = family64.OO.BTree()
+            zodb_root[FINISHED_KEY] = finished_steps
+            self.transaction.commit()
         return finished_steps
+
+    def get_finished_steps_by_value(self):
+        return reversed(self.get_finished_steps().byValue(0))
 
     def add_finished_step(self, name):
         finished_steps = self.get_finished_steps()
-        finished_steps.insert(name)
+        finished_steps[name] = time.time()
 
     def remove_finished_step(self, name):
         finished_steps = self.get_finished_steps()
-        finished_steps.remove(name)
+        del finished_steps[name]
 
     def get_unfinished_steps(self):
         tsorter = self.registry.queryUtility(IEvolutionSteps)
@@ -51,20 +64,20 @@ class EvolutionManager(object):
         finished = self.get_finished_steps()
         unfinished = self.get_unfinished_steps()
         for name, func in unfinished:
-            finished.insert(name)
+            finished[name] = time.time()
 
     def evolve(self, commit=True):
         steps = self.get_unfinished_steps()
         complete = []
         for name, func in steps:
-            if commit:
-                self.transaction.begin()
+            self.transaction.begin()
             self.out('Executing evolution step %s' % name)
             func(self.context)
             self.add_finished_step(name)
             if commit:
-                self.transaction.note('Executed evolution step %s' % name)
-                self.transaction.commit()
+                t = self.transaction.get()
+                t.note('Executed evolution step %s' % name)
+                t.commit()
             complete.append(name)
         return complete
 
@@ -128,12 +141,14 @@ VERSION = 10         # legacy
 NAME = 'substanced'  # legacy
 
 def legacy_to_new(root): # pragma: no cover
-    zodb_root = root._p_jar.root()
+    registry = get_current_registry()
+    mgr = EvolutionManager(root, registry)
+    finished_steps = mgr.get_finished_steps()
+    zodb_root = mgr.get_zodb_root()
     packages = zodb_root.get('repoze.evolution', {})
-    finished_steps = zodb_root.setdefault(FINISHED_KEY, family64.OO.Set())
     for package, last in packages.items():
         for i in range(1, last+1):
-            finished_steps.insert('%s.evolve%s.evolve' % (package, i))
+            finished_steps['%s.evolve%s.evolve' % (package, i)] = 0
 
 def includeme(config): # pragma: no cover
     config.add_directive('add_evolution_step', add_evolution_step)

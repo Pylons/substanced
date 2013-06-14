@@ -28,6 +28,14 @@ class TestEvolutionManager(unittest.TestCase):
         steps = inst.get_finished_steps()
         self.assertEqual(steps, root._p_jar._root[FINISHED_KEY])
 
+    def test_get_finished_steps_by_value(self):
+        root = DummyRoot()
+        inst = self._makeOne(root, None, None)
+        inst.add_finished_step('abc')
+        inst.add_finished_step('def')
+        steps = inst.get_finished_steps_by_value()
+        self.assertEqual(list(x[1] for x in steps), ['abc', 'def'])
+
     def test_add_finished_step(self):
         from .. import FINISHED_KEY
         root = DummyRoot()
@@ -40,7 +48,7 @@ class TestEvolutionManager(unittest.TestCase):
         root = DummyRoot()
         inst = self._makeOne(root, None, None)
         steps = inst.get_finished_steps()
-        steps.insert('foo')
+        steps['foo'] = 1
         inst.remove_finished_step('foo')
         self.assertFalse('foo' in steps)
 
@@ -59,7 +67,7 @@ class TestEvolutionManager(unittest.TestCase):
         registry = DummyRegistry(steps)
         inst = self._makeOne(root, registry, None)
         finished = inst.get_finished_steps()
-        finished.insert('foo')
+        finished['foo'] = 1
         result = inst.get_unfinished_steps()
         self.assertEqual(list(result), [('bar', None)])
 
@@ -72,7 +80,7 @@ class TestEvolutionManager(unittest.TestCase):
         registry = DummyRegistry(steps)
         inst = self._makeOne(root, registry, None)
         finished = inst.get_finished_steps()
-        finished.insert('foo')
+        finished['foo'] = 1
         inst.mark_unfinished_as_finished()
         self.assertEqual(list(sorted(finished)), ['bar', 'foo'])
 
@@ -88,8 +96,8 @@ class TestEvolutionManager(unittest.TestCase):
         result = inst.evolve(False)
         self.assertEqual(log, ['Executing evolution step name'])
         self.assertEqual(result, ['name'])
-        self.assertEqual(txn.committed, 0)
-        self.assertEqual(txn.begun, 0)
+        self.assertEqual(txn.committed, 1)
+        self.assertEqual(txn.begun, 1)
         self.assertEqual(txn.notes, [])
 
     def test_evolve_commit_true(self):
@@ -104,7 +112,7 @@ class TestEvolutionManager(unittest.TestCase):
         result = inst.evolve(True)
         self.assertEqual(log, ['Executing evolution step name'])
         self.assertEqual(result, ['name'])
-        self.assertEqual(txn.committed, 1)
+        self.assertEqual(txn.committed, 2)
         self.assertEqual(txn.begun, 1)
         self.assertEqual(txn.notes, ['Executed evolution step name'])
 
@@ -266,6 +274,9 @@ class DummyTransaction(object):
 
     def note(self, msg):
         self.notes.append(msg)
+
+    def get(self):
+        return self
 
 class DummyJar(object):
     def __init__(self):
