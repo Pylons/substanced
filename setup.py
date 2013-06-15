@@ -31,7 +31,6 @@ install_requires = [
     'deform>=0.9.6', # retail form rendering capability (for documentability)
     'colander>=1.0a1', # subclassable schemanodes
     'deform_bootstrap',
-    'repoze.evolution',
     'pyramid_zodbconn',
     'pyramid_mailer',
     'cryptacular',
