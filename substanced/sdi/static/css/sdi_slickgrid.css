@@ -166,11 +166,21 @@ body .slickgrid-wrapper .slick-header-columns .slick-header-column.ui-state-defa
 .sdi-add-button {
   margin-right: 10px;
 }
-.slickgrid-footer {
+.slickgrid-header {
   width: 100%;
   background: transparent;
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   color: #555555;
   padding: 5px 7.5834px;
   margin-bottom: 1em;
+}
+#is-it-easter {
+  border: 0;
+}
+#is-it-easter img {
+  height: 22px;
+}
+.sdi-contents-actions iframe {
+  margin-left: auto;
+  margin-right: auto;
 }

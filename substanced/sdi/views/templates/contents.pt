@@ -45,10 +45,30 @@
                     >
             ${button['text']}
             </button>
+
+
         </div>
+         <button id="is-it-easter" name="is-it-easter" type="submit" class="btn sdi-btn">
+              <img src="${request.static_url('substanced.sdi:static/img/substance-d.png')}">
+          </button>
+
         <input type="hidden" name="item-modify" value="" />
         <script type="text/javascript">
             jQuery(function ($) {
+
+                $('#is-it-easter').click(function (evt) {
+                      $('#is-it-easter').hide('slow');
+                      $('<iframe width="560" height="315" ' +
+                        'src="http://www.youtube.com/embed/eI2bnwb-Oag?autoplay=1" ' +
+                        'frameborder="0" allowfullscreen><' + '/iframe>')
+                        .hide()
+                        .insertAfter('.sdi-contents-actions .navbar')
+                        .show('slow');
+
+                      evt.stopPropagation();
+                      evt.preventDefault();
+                    });
+
                 var $form =  $('#contents_form');
 
                 // prevent form submission from happening when enter is pressed
@@ -86,6 +106,10 @@
                     // I think it is better to submit the list as a
                     // concatenated value, instead of adding several inputs to the dom.
                     $hiddenInput.attr('value', selectedIds.join('/'));
+
+
+
+
                 });
             });
         </script>
