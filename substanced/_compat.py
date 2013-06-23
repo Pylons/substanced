@@ -23,7 +23,7 @@ try:
 except NameError: #pragma NO COVER Python >= 3.0
     INT_TYPES = (int,)
 
-try:
+try: # pragma: no cover Python < 3.0
     from base64 import decodebytes
     from base64 import encodebytes
 except ImportError: #pragma NO COVER
