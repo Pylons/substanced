@@ -106,7 +106,7 @@ the indexes related to that catalog type.
 
 However, before you'll be able to do this successfully, the ``mycatalog``
 catalog type must be described by a *catalog factory* in code.  A catalog
-factory is a collection of index descriptions.  Creating a catalog factory or
+factory is a collection of index descriptions.  Creating a catalog factory
 doesn't actually add a catalog to your database, but it makes it possible
 to add one later.
 
