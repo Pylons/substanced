@@ -244,6 +244,37 @@ class TestFile(unittest.TestCase):
         size = inst.get_size()
         self.assertEqual(size, os.stat(__file__).st_size)
 
+    def test_get_etag_blob_newer(self):
+        # E.g. if upload after setting title
+        from ZODB.utils import oid_repr
+        inst = self._makeOne(None, None)
+        inst._p_serial = b'DEADBEEF'
+        blob = inst.blob = DummyBlob()
+        blob._p_serial = b'EDABEDAC'
+        etag = inst.get_etag()
+        self.assertEqual(etag, oid_repr(b'EDABEDAC'))
+
+    def test_get_etag_file_newer(self):
+        # E.g. if title is updated after upload
+        from ZODB.utils import oid_repr
+        inst = self._makeOne(None, None)
+        inst._p_serial = b'EDABEDAC'
+        blob = inst.blob = DummyBlob()
+        blob._p_serial = b'DEADBEEF'
+        etag = inst.get_etag()
+        self.assertEqual(etag, oid_repr(b'EDABEDAC'))
+
+    def test_get_etag_file_newer_w_ghost_blob(self):
+        # E.g. if title is updated after upload
+        from ZODB.utils import oid_repr
+        from ZODB.utils import z64
+        inst = self._makeOne(None, None)
+        inst._p_serial = b'EDABEDAC'
+        blob = inst.blob = DummyBlob()
+        blob._p_serial = z64
+        etag = inst.get_etag()
+        self.assertEqual(etag, oid_repr(b'EDABEDAC'))
+
 class Test_context_is_a_file(unittest.TestCase):
     def _callFUT(self, context, request):
         from . import context_is_a_file
@@ -274,6 +305,8 @@ class DummyRegistry(object):
 class DummyBlob(object):
     def committed(self):
         return os.path.abspath(__file__)
+    def _p_activate(self):
+        self._p_serial = b'CACAFADA'
 
 class DummySDIAPI(object):
     def mgmt_path(self, *arg, **kw):

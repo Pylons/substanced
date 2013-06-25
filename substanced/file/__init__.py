@@ -7,6 +7,8 @@ import warnings
 from persistent import Persistent
 from pyramid.response import FileResponse
 from ZODB.blob import Blob
+from ZODB.utils import oid_repr
+from ZODB.utils import z64
 from zope.interface import implementer
 
 from ..util import get_oid
@@ -250,3 +252,13 @@ class File(Persistent):
         the file"""
         return os.stat(self.blob.committed()).st_size
 
+    def get_etag(self):
+        """ Return a token identifying the "version" of the file.
+        """
+        self._p_activate()
+        mine = self._p_serial
+        blob = self.blob._p_serial
+        if blob == z64:
+            self.blob._p_activate()
+            blob = self.blob._p_serial
+        return oid_repr(max(mine, blob))
