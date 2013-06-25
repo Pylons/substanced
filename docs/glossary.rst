@@ -107,3 +107,8 @@ Glossary
      An application server from which much of the spirit of Substance D is
      derived.  See http://zope.org.
 
+   DataDog
+     A Software-as-a-Service (SaaS) provider for monitoring and visualizing
+     performance data that is compatible with the ``statsd`` statstics output
+     channel used by Substance D.  See http://www.datadoghq.com
+

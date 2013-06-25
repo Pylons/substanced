@@ -22,7 +22,7 @@ Three components are involved in the process of collecting statistics:
 
 - A backend service displays graphs based on stored data. The service can be
   self-hosted such as `Graphite <http://graphite.readthedocs.org/en/latest/>`_
-  or it can be a SaaS solution such as `DataDog <http://www.datadoghq.com>`_
+  or it can be a SaaS solution such as `DataDog <http://www.datadoghq.com>`_.
 
 Setting Up
 ----------
@@ -39,11 +39,10 @@ file and add the following lines to your ``[app:main]`` section::
 Using DataDog with SubstanceD statistics
 ****************************************
 
-Substance D supports `DataDog <http://www.datadoghq.com/>`_, a
-Software-as-a-Service (SaaS) provider for monitoring and visualizing
-performance data. DataDog installs an `dogstatsd` agent for sending custom
-metrics on your local system. The agent is based on `StatsD
-<https://github.com/etsy/statsd>`_.
+Substance D supports :term:`DataDog`, a Software-as-a-Service (SaaS) provider
+for monitoring and visualizing performance data. DataDog installs an
+`dogstatsd` agent for sending custom metrics on your local system. The agent is
+based on `StatsD <https://github.com/etsy/statsd>`_.
 
 Using DataDog is an an easy way to get started with Substance D statistics.
 `Sign up for an account with DataDog <https://www.datadoghq.com/signup/>`_.
