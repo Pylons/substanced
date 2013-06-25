@@ -61,6 +61,10 @@ Can wait until after alpha 1
 
 - Work out OpenID/Twitter/whatever authentication.
 
+- Make statds pipeline so that statistics are sent only once per request
+  http://statsd.readthedocs.org/en/latest/pipeline.html
+
+
 Docs
 ----
 
