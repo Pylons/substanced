@@ -18,7 +18,7 @@ in a `YAML <http://yaml.org/>`_  representation on disk.
     This is intentional. The process of loading data into a new,
     or semi-new, or newer-than-new site has many policy implications.
     Too many to fit into a single loading script. Substance D considers
-    the particularls of loading data to be in the province of the
+    the particulars of loading data to be in the province of the
     application developer.
 
 Dumping Resources Using ``sd_dump``
