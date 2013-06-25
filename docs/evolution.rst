@@ -70,7 +70,7 @@ add the following:
     logger = logging.getLogger('evolution')
 
     def evolve_stuff(root):
-        logger.info('Hello')
+        logger.info('Stuff evolved.')
 
     def includeme(config):
         config.add_evolution_step(evolve_stuff)
@@ -101,9 +101,9 @@ be executed and marked as finished.
 
     $ bin/sd_evolve --latest etc/development.ini
 
-    2013-06-14 13:22:51,475 INFO  [evolution][MainThread] Hello
+    2013-06-14 13:22:51,475 INFO  [evolution][MainThread] Stuff evolved.
     Evolution steps executed:
-       substanced.evolution.legacy_to_new
+       substanced.evolution.evolve_stuff
 
 This examples shows a number of points:
 
