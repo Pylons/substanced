@@ -32,7 +32,7 @@ you have a number of storage options:
 - ``ZEO`` keeps a file on disk but runs a server process that manages
   transactions over a socket. This allows multiple app servers on
   multiple boxes, or background processes such as deferred indexing,
-  the access the database.
+  to access the database.
 
 - `RelStorage <http://pypi.python.org/pypi/RelStorage>`_
   stores and retrieves the Python objects from a
