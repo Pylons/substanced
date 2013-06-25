@@ -34,7 +34,7 @@ Here's how to use :func:`substanced.util.find_service`:
 
 .. code-block:: python
 
-   from substanced.content import find_service
+   from substanced.util import find_service
    principals = find_service(somecontext, 'principals')
 
 ``somecontext`` above is any :term:`resource` in the :term:`resource tree`.
