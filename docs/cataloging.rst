@@ -106,7 +106,7 @@ the indexes related to that catalog type.
 
 However, before you'll be able to do this successfully, the ``mycatalog``
 catalog type must be described by a *catalog factory* in code.  A catalog
-factory is a collection of index descriptions.  Creating a catalog factory
+factory is a collection of index descriptions.  Creating a catalog factory or
 doesn't actually add a catalog to your database, but it makes it possible
 to add one later.
 
@@ -178,11 +178,11 @@ Right now this is a bit painful.  For example:
 .. code-block:: python
 
    class MyCatalogViews(object):
-       def __init__(self, content):
-           self.content = content
+       def __init__(self, resource):
+           self.content = resource
 
         def freaky(self, default):
-            return getattr(self.content, 'freaky', default)
+            return getattr(self.resource, 'freaky', default)
 
    def includeme(config): # pragma: no cover
        for name in ('freaky',):
@@ -202,7 +202,7 @@ on the indexview object matching the ``attr`` passed in to ``add_indexview``.
 The ``default`` value passed in should be returned if the method is unable to
 compute a value for the content object.
 
-Hopefully soon we'll make this registration bit a bit less verbose.  But in any
+Hopefully soon we'll make this registration a bit less verbose.  But in any
 case, once this is done, whenever an object is added to the system, a value
 (the result of the ``freaky()`` method of the catalog view) will be indexed in
 the ``freaky`` field index.
