@@ -13,17 +13,20 @@ This system needs both built-in hooks at the Substance D framework
 level as well as extension points to analyze function points in the
 application you are writing.
 
-For this, Substance D supports
-`DataDog <http://www.datadoghq.com/>`_, a software-as-a-service (SaaS)
-provider for monitoring and visualizing performance data. DataDog
-installs an agent on your local system. This agent is based on
-`statsd <https://github.com/etsy/statsd>`_ which is used in other
-systems such as Graphite.
+Three components are involved in the process of collecting statistics:
 
-Setting Up Your Site
-====================
+- :mod:`substanced.stats` exposes Python API to collect data and sends it to
+  to `StatsD <https://github.com/etsy/statsd>` agent
+- StatsD agent aggregates data and sends it to backend service
+- Backend service displays graphs based on stored data. Can be self-hosted such
+  as `Graphite http://graphite.readthedocs.org/en/latest/<>`_ or SaaS solution as
+  `DataDog <http://graphite.readthedocs.org/en/latest/>`
 
-To enable statistics in your site, edit your ``.ini`` configuration
+
+Setting Up
+----------
+
+To enable statistics gathering in your site, edit your ``.ini`` configuration
 file and add the following lines to your ``[app:main]`` section::
 
     substanced.statsd.enabled = true
@@ -31,19 +34,36 @@ file and add the following lines to your ``[app:main]`` section::
     substanced.statsd.port = 8125
     substanced.statsd.prefix = substanced
 
-Then, sign up for an account with DataDog. This will provide you with
-the instructions for downloading and running the local agent.
+
+Using DataDog with SubstanceD statistics
+****************************************
+
+Substance D supports `DataDog <http://www.datadoghq.com/>`_,
+a Software-as-a-Service (SaaS) provider for monitoring and visualizing
+performance data. DataDog installs an `dogstatsd` agent for sending custom metrics
+on your local system. The agent is based on `StatsD <https://github.com/etsy/statsd>`_.
+
+`Sign up for an account with DataDog <https://www.datadoghq.com/signup/>`_.
+This will provide you with the instructions for downloading and running the local agent.
 
 Once you log into your DataDog dashboard, click on ``Infrastructure``
 and you'll see any hosts configured as part of your account:
 
 .. image:: images/datadog1.png
 
-The ``substanced`` entry in ``Apps`` is from the
-``substanced.statsd.prefix`` mentioned above. Clicking on that brings
-up Substance D specific monitoring in DataDog:
+The ``substanced`` entry in ``Apps`` table column is from the
+``substanced.statsd.prefix`` configured in `Settings up` section. 
+Clicking on that brings up Substance D specific monitoring in DataDog:
 
 .. image:: images/datadog2.png
+
+Clicking settings symbol on a graph will lead you to graph editor, where
+you can change how DataDog interprets and renders your graphs. A good resource
+how the editor works is `Graphing Primer <http://docs.datadoghq.com/graphing/#editor>`_. 
+
+DataDog also supports `Metric Alerts <https://app.datadoghq.com/alerts>`_ allowing you
+to send alerts when your statistics reach certain state.
+
 
 Logging Custom Statistics
 =========================

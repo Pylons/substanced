@@ -68,11 +68,6 @@ Can wait until after alpha 1
 Docs
 ----
 
-Statsd
-++++++
-
-- Improve narrative documentation about how to view statistics from ``statsd``.
-
 Folder Contents
 +++++++++++++++
 
