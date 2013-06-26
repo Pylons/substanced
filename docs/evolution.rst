@@ -120,7 +120,7 @@ This examples shows a number of points:
   transaction. If all the evolve scripts run to completion without
   exception, the transaction is committed.
 
-Manually Setting a Revision Number
+Manually Marking a Step As Evolved
 ==================================
 
 In some cases you might have performed the work in an evolve step by hand and
