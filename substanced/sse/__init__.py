@@ -31,8 +31,7 @@ class Events(persistent.Persistent):
         length.change(1)
 
     def since(self, when):
-        return self.events.items(when)
-        
+        return self.events.items(when, excludemin=True)
         
 class EventScribe(object):
     def __init__(self, context, max_items=100):
