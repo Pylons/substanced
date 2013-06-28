@@ -51,6 +51,7 @@ def scan(config): # pragma: no cover
     config.scan('.root')
     config.scan('.sdi')
     config.scan('.workflow')
+    config.scan('.sse')
     
 def includeme(config): # pragma: no cover
     """ Do the work of :func:`substanced.include`, then

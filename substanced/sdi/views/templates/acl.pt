@@ -1,64 +1,104 @@
 <div metal:use-macro="request.sdiapi.main_template">
 
+ <div metal:fill-slot="head-more">
+
+   <script type="text/javascript">
+
+    // update UI in real-time based if the browser supports SSE
+
+    if (!!window.EventSource) {
+
+      function redraw(tgt_sel, url) {
+          donehandler = function (html) {
+              $(tgt_sel).replaceWith(html);
+             };
+          $.ajax({
+              url:url,
+              type:'GET',
+          }).done(donehandler);
+     } 
+
+      var source = new EventSource('${request.sdiapi.mgmt_path(context)}/eventstream');
+      source.addEventListener('aclchanged' , function(e) {
+          redraw("#local_acl", "${request.sdiapi.mgmt_path(context, 'local_acl')}");
+          redraw("#inherited_acl", "${request.sdiapi.mgmt_path(context, 'inherited_acl')}");
+      });
+
+   }
+
+
+  </script>
+
+  </div>
+
+
  <div metal:fill-slot="main">
 
- <tal:local condition="local_acl">
+ <metal:local_acl define-macro="local_acl">
 
- <h2> Local ACL </h2>
+   <div id="local_acl">
 
- <table class="table table-striped">
+     <tal:local condition="local_acl">
 
-  <thead>
-   <tr>
-     <th width="15%">Allow / Deny</th>
-     <th width="25%">Principal</th>
-     <th width="40%">Permissions</th>
-     <th width="15%">Control</th>
-   </tr>
-  </thead>
+     <h2> Local ACL </h2>
 
-  <tbody>
+     <table class="table table-striped">
 
-   <tr tal:repeat="ace local_acl">
-     <td tal:content="ace[0]">Allow</td>
-     <td tal:content="ace[1]">PRINCIPAL</td>
-     <td tal:content="', '.join(ace[2])">PERM1, PERM2</td>
-     <td>
-      <form action="@@acl_edit" method="post">
-       <input type="hidden" name="index" value="${repeat['ace'].index}" />
+      <thead>
+       <tr>
+         <th width="15%">Allow / Deny</th>
+         <th width="25%">Principal</th>
+         <th width="40%">Permissions</th>
+         <th width="15%">Control</th>
+       </tr>
+      </thead>
 
-        <button
-            tal:attributes="disabled repeat['ace'].start or None"
-            name="form.move_up"
-            type="submit">
-          <i class="icon-arrow-up"> </i>
-        </button>
+      <tbody>
 
-        <button
-            tal:attributes="disabled repeat['ace'].end or None"
-            name="form.move_down"
-            type="submit">
-          <i class="icon-arrow-down"> </i>
-        </button>
+       <tr tal:repeat="ace local_acl">
+         <td tal:content="ace[0]">Allow</td>
+         <td tal:content="ace[1]">PRINCIPAL</td>
+         <td tal:content="', '.join(ace[2])">PERM1, PERM2</td>
+         <td>
+          <form action="@@acl_edit" method="post">
+           <input type="hidden" name="index" value="${repeat['ace'].index}" />
 
-        <button
-            name="form.remove"
-            type="submit">
-          <i class="icon-remove"> </i>
-        </button>
+            <button
+                tal:attributes="disabled repeat['ace'].start or None"
+                name="form.move_up"
+                type="submit">
+              <i class="icon-arrow-up"> </i>
+            </button>
 
-       <input type="hidden" name="csrf_token" 
-              value="${request.session.get_csrf_token()}"/>
+            <button
+                tal:attributes="disabled repeat['ace'].end or None"
+                name="form.move_down"
+                type="submit">
+              <i class="icon-arrow-down"> </i>
+            </button>
 
-      </form>
-     </td>
-   </tr>
+            <button
+                name="form.remove"
+                type="submit">
+              <i class="icon-remove"> </i>
+            </button>
 
-   </tbody>
+           <input type="hidden" name="csrf_token" 
+                  value="${request.session.get_csrf_token()}"/>
 
-  </table>
+          </form>
+         </td>
+       </tr>
 
- </tal:local>
+       </tbody>
+
+      </table>
+
+     </tal:local>
+
+   </div>
+
+ </metal:local_acl>
 
  <h2> Add ACL </h2>
 
@@ -112,65 +152,73 @@
   </table>
  </form>
 
- <tal:block condition="context is not request.root">
+ <metal:inherited_acl define-macro="inherited_acl">
 
- <h2> Inherit ACL </h2>
- <div class="row">
-  <form action="@@acl_edit" method="post">
-    <div class="span2">
-      <label class="radio inline">
-        <input type="radio" id="inherit_enabled" name="inherit" value="enabled"
-               tal:attributes="checked inheriting == 'enabled'"/> Enabled
-      </label>
+   <div id="inherited_acl">
 
-      <label class="radio inline">
+     <tal:block condition="context is not request.root">
 
-        <input type="radio" id="inherit_disabled" name="inherit"
-               value="disabled"
-               tal:attributes="checked inheriting == 'disabled'"/> Disabled
-      </label>
-    </div>
+     <h2> Inherit ACL </h2>
+     <div class="row">
+      <form action="@@acl_edit" method="post">
+        <div class="span2">
+          <label class="radio inline">
+            <input type="radio" id="inherit_enabled" name="inherit" value="enabled"
+                   tal:attributes="checked inheriting == 'enabled'"/> Enabled
+          </label>
 
-    <div class="span2">
+          <label class="radio inline">
 
-     <input type="submit" name="form.inherit" value="Update" />
-     <input type="hidden" name="csrf_token" 
-          value="${request.session.get_csrf_token()}"/>
+            <input type="radio" id="inherit_disabled" name="inherit"
+                   value="disabled"
+                   tal:attributes="checked inheriting == 'disabled'"/> Disabled
+          </label>
+        </div>
 
-    </div>
+        <div class="span2">
 
-  </form>
- </div>
+         <input type="submit" name="form.inherit" value="Update" />
+         <input type="hidden" name="csrf_token" 
+              value="${request.session.get_csrf_token()}"/>
 
- </tal:block>
+        </div>
 
- <tal:inherited condition="parent_acl">
+      </form>
+     </div>
 
- <h2> Inherited ACL </h2>
+     </tal:block>
 
- <table class="table table-striped">
+     <tal:inherited condition="parent_acl">
 
-  <thead>
-   <tr>
-     <th width="15%">Allow / Deny</th>
-     <th width="25%">Principal</th>
-     <th width="40%">Permissions</th>
-   </tr>
-  </thead>
+     <h2> Inherited ACL </h2>
 
-  <tbody>
+     <table class="table table-striped">
 
-   <tr tal:repeat="ace parent_acl">
-     <td tal:content="ace[0]">Allow</td>
-     <td tal:content="ace[1]">PRINCIPAL</td>
-     <td tal:content="', '.join(ace[2])">PERM1, PERM2</td>
-   </tr>
+      <thead>
+       <tr>
+         <th width="15%">Allow / Deny</th>
+         <th width="25%">Principal</th>
+         <th width="40%">Permissions</th>
+       </tr>
+      </thead>
 
-  </tbody>
+      <tbody>
 
- </table>
+       <tr tal:repeat="ace parent_acl">
+         <td tal:content="ace[0]">Allow</td>
+         <td tal:content="ace[1]">PRINCIPAL</td>
+         <td tal:content="', '.join(ace[2])">PERM1, PERM2</td>
+       </tr>
 
- </tal:inherited>
+      </tbody>
+
+     </table>
+
+     </tal:inherited>
+
+   </div>
+
+  </metal:inherited_acl>
 
 </div>
 

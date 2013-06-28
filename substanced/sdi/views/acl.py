@@ -42,6 +42,10 @@ class ACLEditViews(object):
         else:
             self.epilog = []
 
+    @mgmt_view(tab_condition=False, name='local_acl',
+               renderer='templates/acl#local_acl.pt')
+    @mgmt_view(tab_condition=False, name='inherited_acl',
+               renderer='templates/acl#inherited_acl.pt')
     @mgmt_view(tab_title='Security')
     def acl_view(self):
         return self.finish_acl_edit()
@@ -222,3 +226,4 @@ class ACLEditViews(object):
             users=users,
             groups=groups,
             )
+
