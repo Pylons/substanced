@@ -5,7 +5,7 @@
 </head>
 <body>
   <script>
-    var source = new EventSource('${request.sdiapi.mgmt_path(context)}/auditlog-eventstream');
+    var source = new EventSource('${request.sdiapi.mgmt_path(context, 'auditlog_eventstream');
     source.onmessage = function(e) {
         console.log(e.data);
         document.body.innerHTML += e.data + '<br>';

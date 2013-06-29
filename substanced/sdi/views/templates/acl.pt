@@ -18,7 +18,7 @@
           }).done(donehandler);
      } 
 
-      var source = new EventSource('${request.sdiapi.mgmt_path(context)}/eventstream');
+      var source = new EventSource('${request.sdiapi.mgmt_path(context, 'auditlog-eventstream', _query={'contextonly':'1'})}');
       source.addEventListener('aclchanged' , function(e) {
           redraw("#local_acl", "${request.sdiapi.mgmt_path(context, 'local_acl')}");
           redraw("#inherited_acl", "${request.sdiapi.mgmt_path(context, 'inherited_acl')}");

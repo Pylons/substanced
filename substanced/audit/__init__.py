@@ -29,22 +29,15 @@ class Layer(object):
         self._generation = generation
 
     def __iter__(self):
-        at = len(self._stack)
-        while at > 0:
-            at = at - 1
-            yield at, self._stack[at]
+        return enumerate(self._stack)
 
     def newer(self, latest_index):
         """ Yield items appended after `latest_index`.
-        
-        Implemented as a method on the layer to work around lack of generator
-        expressions in Python 2.5.x.
         """
-        for index, obj in self:
-            if index <= latest_index:
-                break
-            yield index, obj
-
+        start = latest_index + 1
+        items = self._stack[start:]
+        for idx, item in enumerate(items):
+            yield start+idx, item
 
     def push(self, obj):
         if len(self._stack) >= self._max_length:
@@ -76,21 +69,21 @@ class AppendStack(Persistent):
 
     def newer(self, latest_gen, latest_index):
         for gen, index, obj in self:
-            if (gen, index) <= (latest_gen, latest_index):
-                break
-            yield gen, index, obj
+            if (gen, index) >= (latest_gen, latest_index+1):
+                yield gen, index, obj
 
     def push(self, obj, pruner=None):
-        layers = self._layers
         max = self._max_layers
+        layers = self._layers
+        last_layer = layers[-1]
         try:
-            layers[0].push(obj)
+            last_layer.push(obj)
         except LayerFull:
             new_layer = Layer(self._max_length,
-                              generation=layers[0]._generation+1)
+                              generation=last_layer._generation+1)
             new_layer.push(obj)
-            self._layers.insert(0, new_layer)
-        self._layers, pruned = layers[:max], layers[max:]
+            layers.append(new_layer)
+        pruned, self._layers = layers[:-max], layers[-max:]
         if pruner is not None:
             for layer in pruned:
                 pruner(layer._generation, layer._stack)
@@ -108,6 +101,45 @@ class AppendStack(Persistent):
                 layer.push(item)
             self._layers.append(layer)
 
+    def _p_resolveConflict(self, old, committed, new):
+        o_m_layers, o_m_length, o_layers = old
+        c_m_layers, c_m_length, c_layers = committed
+        m_layers = [x[:] for x in c_layers]
+        n_m_layers, n_m_length, n_layers = new
+        
+        if not o_m_layers == n_m_layers == n_m_layers:
+            raise ConflictError('Conflicting max layers')
+
+        if not o_m_length == c_m_length == n_m_length:
+            raise ConflictError('Conflicting max length')
+
+        o_latest_gen = o_layers[-1][0]
+        o_latest_items = o_layers[-1][1]
+        c_earliest_gen = c_layers[0][0]
+        n_earliest_gen = n_layers[0][0]
+
+        if o_latest_gen < c_earliest_gen:
+            raise ConflictError('Committed obsoletes old')
+
+        if o_latest_gen < n_earliest_gen:
+            raise ConflictError('New obsoletes old')
+
+        new_objects = []
+        for n_generation, n_items in n_layers:
+            if n_generation == o_latest_gen:
+                new_objects.extend(n_items[len(o_latest_items):])
+            elif n_generation > o_latest_gen:
+                new_objects.extend(n_items)
+
+        while new_objects:
+            to_push, new_objects = new_objects[0], new_objects[1:]
+            if len(m_layers[-1][1]) == c_m_length:
+                m_layers.append((m_layers[-1][0]+1, []))
+            m_layers[-1][1].append(to_push)
+
+        return c_m_layers, c_m_length, m_layers[-c_m_layers:]
+            
+
     #
     # ZODB Conflict resolution
     #
@@ -121,11 +153,11 @@ class AppendStack(Persistent):
     # Compute the O -> N diff via the following:
     # - Find the layer, N' in N whose generation matches the newest generation
     #   in O, O'.
-    # - Compute the new items in N` by slicing it using the len(O').
+    # - Compute the new items in N' by slicing it using the len(O').
     # - That slice, plus any newer layers in N, form the set to be pushed
     #   onto C.
     #   
-    def _p_resolveConflict(self, old, committed, new):
+    def _p_resolveConflict_old(self, old, committed, new):
         o_m_layers, o_m_length, o_layers = old
         c_m_layers, c_m_length, c_layers = committed
         m_layers = [x[:] for x in c_layers]
@@ -179,7 +211,7 @@ class AuditScribe(object):
             setattr(find_root(self.context), '__auditlog__', auditlog)
         auditlog.add(name, oid, **kw)
             
-    def newer(self, gen, idx, oids=None):
+    def newer(self, gen, idx, oids=()):
         auditlog = self.get_auditlog()
         if auditlog is None:
             return []
@@ -188,7 +220,7 @@ class AuditScribe(object):
     def latest_id(self):
         auditlog = self.get_auditlog()
         if auditlog is None:
-            return 0, 0
+            return 0, -1
         gen, idx = auditlog.latest_id()
         return gen, idx
                 

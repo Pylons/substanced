@@ -61,7 +61,7 @@ class AuditScribeTests(unittest.TestCase):
         inst = self._makeOne(context)
         inst = self._makeOne(context)
         result = inst.latest_id()
-        self.assertEqual(result, (0,0))
+        self.assertEqual(result, (0,-1))
 
 class AuditLogEntryTests(unittest.TestCase):
     def test_it(self):
@@ -162,7 +162,7 @@ class LayerTests(unittest.TestCase):
         layer.push(OBJ1)
         layer.push(OBJ2)
         layer.push(OBJ3)
-        self.assertEqual(list(layer), [(2, OBJ3), (1, OBJ2), (0, OBJ1)])
+        self.assertEqual(list(layer), [(0, OBJ1), (1, OBJ2), (2, OBJ3)])
 
     def test_newer_miss(self):
         layer = self._makeOne()
@@ -178,7 +178,7 @@ class LayerTests(unittest.TestCase):
         layer.push(OBJ2)
         layer.push(OBJ3)
         self.assertEqual(list(layer.newer(0)),
-                         [(2, OBJ3), (1, OBJ2)])
+                         [(1, OBJ2), (2, OBJ3)])
 
     def test_push_one(self):
         layer = self._makeOne()
@@ -192,9 +192,9 @@ class LayerTests(unittest.TestCase):
         layer.push(OBJ1)
         layer.push(OBJ2)
         layer.push(OBJ3)
-        self.assertEqual(list(layer), [(2, OBJ3),
+        self.assertEqual(list(layer), [(0, OBJ1),
                                        (1, OBJ2),
-                                       (0, OBJ1),
+                                       (2, OBJ3),
                                       ])
 
     def test_push_overflow(self):
@@ -204,8 +204,8 @@ class LayerTests(unittest.TestCase):
         layer.push(OBJ1)
         layer.push(OBJ2)
         self.assertRaises(LayerFull, layer.push, OBJ3)
-        self.assertEqual(list(layer), [(1, OBJ2),
-                                       (0, OBJ1),
+        self.assertEqual(list(layer), [(0, OBJ1),
+                                       (1, OBJ2),
                                       ])
 
 
@@ -252,8 +252,8 @@ class AppendStackTests(unittest.TestCase):
         stack.push(OBJ1)
         stack.push(OBJ2)
         stack.push(OBJ3)
-        self.assertEqual(list(stack.newer(0, 0)),
-                         [(0, 2, OBJ3), (0, 1, OBJ2)])
+        result = list(stack.newer(0, 0))
+        self.assertEqual(result, [(0, 1, OBJ2), (0, 2, OBJ3)])
 
     def test_newer_hit_across_layers(self):
         stack = self._makeOne(max_length=2)
@@ -263,8 +263,8 @@ class AppendStackTests(unittest.TestCase):
         stack.push(OBJ1)
         stack.push(OBJ2)
         stack.push(OBJ3)
-        self.assertEqual(list(stack.newer(0, 0)),
-                         [(1, 0, OBJ3), (0, 1, OBJ2)])
+        result = list(stack.newer(0, 0))
+        self.assertEqual(result, [(0, 1, OBJ2), (1, 0, OBJ3)])
 
     def test_push_one(self):
         stack = self._makeOne()
@@ -279,13 +279,12 @@ class AppendStackTests(unittest.TestCase):
         stack.push(OBJ1)
         stack.push(OBJ2)
         stack.push(OBJ3)
-        self.assertEqual(list(stack), [(1, 0, OBJ3),
-                                       (0, 1, OBJ2),
-                                       (0, 0, OBJ1),
-                                      ])
+        self.assertEqual(
+            list(stack), [(0, 0, OBJ1), (0, 1, OBJ2), (1, 0, OBJ3)]
+            )
         self.assertEqual(len(stack._layers), 2)
-        self.assertEqual(stack._layers[0]._generation, 1)
-        self.assertEqual(stack._layers[1]._generation, 0)
+        self.assertEqual(stack._layers[0]._generation, 0)
+        self.assertEqual(stack._layers[1]._generation, 1)
 
     def test_push_trimming_layers(self):
         stack = self._makeOne(max_layers=4)
@@ -293,13 +292,13 @@ class AppendStackTests(unittest.TestCase):
             stack.push(obj)
         found = list(stack)
         self.assertEqual(len(found), 301)
-        self.assertEqual(found[0], (10, 0, 1000))
-        self.assertEqual(found[-1], (7, 0, 700))
+        self.assertEqual(found[0], (7, 0, 700))
+        self.assertEqual(found[-1], (10, 0, 1000))
         self.assertEqual(len(stack._layers), 4)
-        self.assertEqual(stack._layers[0]._generation, 10)
-        self.assertEqual(stack._layers[1]._generation, 9)
-        self.assertEqual(stack._layers[2]._generation, 8)
-        self.assertEqual(stack._layers[3]._generation, 7)
+        self.assertEqual(stack._layers[0]._generation, 7)
+        self.assertEqual(stack._layers[1]._generation, 8)
+        self.assertEqual(stack._layers[2]._generation, 9)
+        self.assertEqual(stack._layers[3]._generation, 10)
 
     def test_push_trimming_layers_with_archive_utility(self):
         _pruned = {}
@@ -310,13 +309,13 @@ class AppendStackTests(unittest.TestCase):
             stack.push(obj, pruner=_prune)
         found = list(stack)
         self.assertEqual(len(found), 301)
-        self.assertEqual(found[0], (10, 0, 1000))
-        self.assertEqual(found[-1], (7, 0, 700))
+        self.assertEqual(found[0], (7, 0, 700))
+        self.assertEqual(found[-1], (10, 0, 1000))
         self.assertEqual(len(stack._layers), 4)
-        self.assertEqual(stack._layers[0]._generation, 10)
-        self.assertEqual(stack._layers[1]._generation, 9)
-        self.assertEqual(stack._layers[2]._generation, 8)
-        self.assertEqual(stack._layers[3]._generation, 7)
+        self.assertEqual(stack._layers[0]._generation, 7)
+        self.assertEqual(stack._layers[1]._generation, 8)
+        self.assertEqual(stack._layers[2]._generation, 9)
+        self.assertEqual(stack._layers[3]._generation, 10)
         self.assertEqual(len(_pruned), 7)
         self.assertEqual(_pruned[0], list(range(0, 100)))
         self.assertEqual(_pruned[1], list(range(100, 200)))
@@ -335,43 +334,47 @@ class AppendStackTests(unittest.TestCase):
         for i in range(10):
             stack.push(i)
         self.assertEqual(stack.__getstate__(),
-                        (2, 3, [(3, [9]), (2, [6, 7, 8])]))
+                        (2, 3, [(2, [6, 7, 8]), (3, [9])])
+                         )
 
     def test___setstate___(self):
         stack = self._makeOne()
         STATE = (2,                 # _max_layers
                  3,                 # _max_length
-                 [(3, [9]),        # _layers[0] as (generation, list)
-                  (2, [6, 7, 8]),  # _layers[1] as (generation, list)
+                 [(2, [9]),        # _layers[0] as (generation, list)
+                  (3, [6, 7, 8]),  # _layers[1] as (generation, list)
                  ],
                 )
         stack.__setstate__(STATE)
         self.assertEqual(stack._max_layers, 2)
         self.assertEqual(stack._max_length, 3)
-        self.assertEqual(list(stack), [(3, 0, 9),
-                                       (2, 2, 8),
-                                       (2, 1, 7),
-                                       (2, 0, 6),
+        self.assertEqual(list(stack), [(2, 0, 9),
+                                       (3, 0, 6),
+                                       (3, 1, 7),
+                                       (3, 2, 8),
                                       ])
 
     def test__p_resolveConflict_mismatched_max_layers(self):
         from ZODB.POSException import ConflictError
         O_STATE = (2,                 # _max_layers
                    3,                 # _max_length
-                   [(3, [9]),        # _layers[0] as (generation, list)
-                    (2, [6, 7, 8]),  # _layers[1] as (generation, list)
+                   [
+                    (2, [6, 7, 8]),  # _layers[0] as (generation, list)
+                    (3, [9]),        # _layers[1] as (generation, list)
                    ],
                 )
         C_STATE = (2,                 # _max_layers
                    3,                 # _max_length
-                   [(3, [9]),        # _layers[0] as (generation, list)
-                    (2, [6, 7, 8]),  # _layers[1] as (generation, list)
+                   [
+                    (2, [6, 7, 8]),  # _layers[0] as (generation, list)
+                    (3, [9]),        # _layers[1] as (generation, list)
                    ],
                 )
         N_STATE = (3,                 # _max_layers
                    3,                 # _max_length
-                   [(3, [9]),        # _layers[0] as (generation, list)
-                    (2, [6, 7, 8]),  # _layers[1] as (generation, list)
+                   [
+                    (2, [6, 7, 8]),  # _layers[0] as (generation, list)
+                    (3, [9]),        # _layers[1] as (generation, list)
                    ],
                 )
         stack = self._makeOne()
@@ -382,20 +385,23 @@ class AppendStackTests(unittest.TestCase):
         from ZODB.POSException import ConflictError
         O_STATE = (2,                 # _max_layers
                    3,                 # _max_length
-                   [(3, [9]),        # _layers[0] as (generation, list)
-                    (2, [6, 7, 8]),  # _layers[1] as (generation, list)
+                   [
+                    (2, [6, 7, 8]),  # _layers[0] as (generation, list)
+                    (3, [9]),        # _layers[1] as (generation, list)
                    ],
                 )
         C_STATE = (2,                 # _max_layers
                    3,                 # _max_length
-                   [(3, [9]),        # _layers[0] as (generation, list)
-                    (2, [6, 7, 8]),  # _layers[1] as (generation, list)
+                   [
+                    (2, [6, 7, 8]),  # _layers[0] as (generation, list)
+                    (3, [9]),        # _layers[1] as (generation, list)
                    ],
                 )
-        N_STATE = (2,                 # _max_layers
-                   4,                 # _max_length
-                   [(3, [9]),        # _layers[0] as (generation, list)
-                    (2, [6, 7, 8]),  # _layers[1] as (generation, list)
+        N_STATE = (3,                 # _max_layers
+                   3,                 # _max_length
+                   [
+                    (2, [6, 7, 8]),  # _layers[0] as (generation, list)
+                    (3, [9]),        # _layers[1] as (generation, list)
                    ],
                 )
         stack = self._makeOne()
@@ -406,20 +412,23 @@ class AppendStackTests(unittest.TestCase):
         from ZODB.POSException import ConflictError
         O_STATE = (2,                 # _max_layers
                    3,                 # _max_length
-                   [(3, [9]),        # _layers[0] as (generation, list)
-                    (2, [6, 7, 8]),  # _layers[1] as (generation, list)
+                   [
+                    (2, [6, 7, 8]),  # _layers[0] as (generation, list)
+                    (3, [9]),        # _layers[1] as (generation, list)
                    ],
                 )
         C_STATE = (2,                 # _max_layers
                    3,                 # _max_length
-                   [(5, [29]),        # _layers[0] as (generation, list)
-                    (4, [26, 27, 28]),  # _layers[1] as (generation, list)
+                   [
+                    (4, [26, 27, 28]),  # _layers[0] as (generation, list)
+                    (5, [29]),        # _layers[1] as (generation, list)
                    ],
                 )
         N_STATE = (2,                 # _max_layers
                    3,                 # _max_length
-                   [(3, [9, 10]),    # _layers[0] as (generation, list)
-                    (2, [6, 7, 8]),  # _layers[1] as (generation, list)
+                   [
+                    (2, [6, 7, 8]),  # _layers[0] as (generation, list)
+                    (3, [9, 10]),    # _layers[1] as (generation, list)
                    ],
                 )
         stack = self._makeOne()
@@ -430,20 +439,23 @@ class AppendStackTests(unittest.TestCase):
         from ZODB.POSException import ConflictError
         O_STATE = (2,                 # _max_layers
                    3,                 # _max_length
-                   [(3, [9]),        # _layers[0] as (generation, list)
-                    (2, [6, 7, 8]),  # _layers[1] as (generation, list)
+                   [
+                    (2, [6, 7, 8]),  # _layers[0] as (generation, list)
+                    (3, [9]),        # _layers[1] as (generation, list)
                    ],
                 )
         C_STATE = (2,                 # _max_layers
                    3,                 # _max_length
-                   [(3, [9, 10]),    # _layers[0] as (generation, list)
-                    (2, [6, 7, 8]),  # _layers[1] as (generation, list)
+                   [
+                    (2, [6, 7, 8]),  # _layers[0] as (generation, list)
+                    (3, [9, 10]),    # _layers[1] as (generation, list)
                    ],
                 )
         N_STATE = (2,                 # _max_layers
                    3,                 # _max_length
-                   [(5, [29]),        # _layers[0] as (generation, list)
-                    (4, [26, 27, 28]),  # _layers[1] as (generation, list)
+                   [
+                    (4, [26, 27, 28]),  # _layers[0] as (generation, list)
+                    (5, [29]),        # _layers[1] as (generation, list)
                    ],
                 )
         stack = self._makeOne()
@@ -453,26 +465,30 @@ class AppendStackTests(unittest.TestCase):
     def test__p_resolveConflict_no_added_layers(self):
         O_STATE = (2,                 # _max_layers
                    3,                 # _max_length
-                   [(3, [9]),        # _layers[0] as (generation, list)
-                    (2, [6, 7, 8]),  # _layers[1] as (generation, list)
+                   [
+                    (2, [6, 7, 8]),  # _layers[0] as (generation, list)
+                    (3, [9]),        # _layers[1] as (generation, list)
                    ],
                 )
         C_STATE = (2,                 # _max_layers
                    3,                 # _max_length
-                   [(3, [9, 10]),    # _layers[0] as (generation, list)
-                    (2, [6, 7, 8]),  # _layers[1] as (generation, list)
+                   [
+                    (2, [6, 7, 8]),  # _layers[0] as (generation, list)
+                    (3, [9, 10]),    # _layers[1] as (generation, list)
                    ],
                 )
         N_STATE = (2,                 # _max_layers
                    3,                 # _max_length
-                   [(3, [9, 11]),    # _layers[0] as (generation, list)
-                    (2, [6, 7, 8]),  # _layers[1] as (generation, list)
+                   [
+                    (2, [6, 7, 8]),  # _layers[0] as (generation, list)
+                    (3, [9, 11]),    # _layers[1] as (generation, list)
                    ],
                 )
         M_STATE = (2,                 # _max_layers
                    3,                 # _max_length
-                   [(3, [9, 10, 11]),# _layers[0] as (generation, list)
-                    (2, [6, 7, 8]),  # _layers[1] as (generation, list)
+                   [
+                    (2, [6, 7, 8]),  # _layers[0] as (generation, list)
+                    (3, [9, 10, 11]),# _layers[1] as (generation, list)
                    ],
                 )
         stack = self._makeOne()
@@ -482,26 +498,30 @@ class AppendStackTests(unittest.TestCase):
     def test__p_resolveConflict_added_committed_layer(self):
         O_STATE = (2,                 # _max_layers
                    3,                 # _max_length
-                   [(3, [9]),        # _layers[0] as (generation, list)
-                    (2, [6, 7, 8]),  # _layers[1] as (generation, list)
+                   [
+                    (2, [6, 7, 8]),  # _layers[0] as (generation, list)
+                    (3, [9]),        # _layers[1] as (generation, list)
                    ],
                 )
         C_STATE = (2,                 # _max_layers
                    3,                 # _max_length
-                   [(4, [12]),       # _layers[0] as (generation, list)
-                    (3, [9, 10, 11]),# _layers[1] as (generation, list)
+                   [
+                    (3, [9, 10, 11]),# _layers[0] as (generation, list)
+                    (4, [12]),       # _layers[1] as (generation, list)
                    ],
                 )
         N_STATE = (2,                 # _max_layers
                    3,                 # _max_length
-                   [(3, [9, 13]),    # _layers[0] as (generation, list)
-                    (2, [6, 7, 8]),  # _layers[1] as (generation, list)
+                   [
+                    (2, [6, 7, 8]),  # _layers[0] as (generation, list)
+                    (3, [9, 13]),    # _layers[1] as (generation, list)
                    ],
                 )
         M_STATE = (2,                 # _max_layers
                    3,                 # _max_length
-                   [(4, [12, 13]),   # _layers[0] as (generation, list)
-                    (3, [9, 10, 11]),# _layers[1] as (generation, list)
+                   [
+                    (3, [9, 10, 11]),# _layers[0] as (generation, list)
+                    (4, [12, 13]),   # _layers[1] as (generation, list)
                    ],
                 )
         stack = self._makeOne()
@@ -511,26 +531,30 @@ class AppendStackTests(unittest.TestCase):
     def test__p_resolveConflict_added_new_layer(self):
         O_STATE = (2,                 # _max_layers
                    3,                 # _max_length
-                   [(3, [9]),        # _layers[0] as (generation, list)
-                    (2, [6, 7, 8]),  # _layers[1] as (generation, list)
+                   [
+                    (2, [6, 7, 8]),  # _layers[0] as (generation, list)
+                    (3, [9]),        # _layers[1] as (generation, list)
                    ],
                 )
         C_STATE = (2,                 # _max_layers
                    3,                 # _max_length
-                   [(3, [9, 10]),    # _layers[0] as (generation, list)
-                    (2, [6, 7, 8]),  # _layers[1] as (generation, list)
+                   [
+                    (2, [6, 7, 8]),  # _layers[0] as (generation, list)
+                    (3, [9, 10]),    # _layers[1] as (generation, list)
                    ],
                 )
         N_STATE = (2,                 # _max_layers
                    3,                 # _max_length
-                   [(4, [13, 14]),   # _layers[0] as (generation, list)
-                    (3, [9, 11, 12]),# _layers[1] as (generation, list)
+                   [
+                    (3, [9, 11, 12]),# _layers[0] as (generation, list)
+                    (4, [13, 14]),   # _layers[1] as (generation, list)
                    ],
                 )
         M_STATE = (2,                 # _max_layers
                    3,                 # _max_length
-                   [(4, [12, 13, 14]),# _layers[0] as (generation, list)
-                    (3, [9, 10, 11]),# _layers[1] as (generation, list)
+                   [
+                    (3, [9, 10, 11]),# _layers[0] as (generation, list)
+                    (4, [12, 13, 14]),# _layers[1] as (generation, list)
                    ],
                 )
         stack = self._makeOne()
