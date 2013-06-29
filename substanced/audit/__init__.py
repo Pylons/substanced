@@ -101,6 +101,23 @@ class AppendStack(Persistent):
                 layer.push(item)
             self._layers.append(layer)
 
+    #
+    # ZODB Conflict resolution
+    #
+    # The overall approach here is to compute the 'delta' from old -> new
+    # (objects added in new, not present in old), and push them onto the
+    # committed state to create a merged state.
+    # Unresolvable errors include:
+    # - any difference between O <-> C <-> N on the non-layers attributes.
+    # - either C or N has its oldest layer in a later generation than O's
+    #   newest layer.
+    # Compute the O -> N diff via the following:
+    # - Find the layer, N' in N whose generation matches the newest generation
+    #   in O, O'.
+    # - Compute the new items in N' by slicing it using the len(O').
+    # - That slice, plus any newer layers in N, form the set to be pushed
+    #   onto C.
+    #   
     def _p_resolveConflict(self, old, committed, new):
         o_m_layers, o_m_length, o_layers = old
         c_m_layers, c_m_length, c_layers = committed
@@ -138,64 +155,6 @@ class AppendStack(Persistent):
             m_layers[-1][1].append(to_push)
 
         return c_m_layers, c_m_length, m_layers[-c_m_layers:]
-            
-
-    #
-    # ZODB Conflict resolution
-    #
-    # The overall approach here is to compute the 'delta' from old -> new
-    # (objects added in new, not present in old), and push them onto the
-    # committed state to create a merged state.
-    # Unresolvable errors include:
-    # - any difference between O <-> C <-> N on the non-layers attributes.
-    # - either C or N has its oldest layer in a later generation than O's
-    #   newest layer.
-    # Compute the O -> N diff via the following:
-    # - Find the layer, N' in N whose generation matches the newest generation
-    #   in O, O'.
-    # - Compute the new items in N' by slicing it using the len(O').
-    # - That slice, plus any newer layers in N, form the set to be pushed
-    #   onto C.
-    #   
-    def _p_resolveConflict_old(self, old, committed, new):
-        o_m_layers, o_m_length, o_layers = old
-        c_m_layers, c_m_length, c_layers = committed
-        m_layers = [x[:] for x in c_layers]
-        n_m_layers, n_m_length, n_layers = new
-        
-        if not o_m_layers == n_m_layers == n_m_layers:
-            raise ConflictError('Conflicting max layers')
-
-        if not o_m_length == c_m_length == n_m_length:
-            raise ConflictError('Conflicting max length')
-
-        o_latest_gen = o_layers[0][0]
-        o_latest_items = o_layers[0][1]
-        c_earliest_gen = c_layers[-1][0]
-        n_earliest_gen = n_layers[-1][0]
-
-        if o_latest_gen < c_earliest_gen:
-            raise ConflictError('Committed obsoletes old')
-
-        if o_latest_gen < n_earliest_gen:
-            raise ConflictError('New obsoletes old')
-
-        new_objects = []
-        for n_generation, n_items in n_layers:
-            if n_generation > o_latest_gen:
-                new_objects[:0] = n_items
-            elif n_generation == o_latest_gen:
-                new_objects[:0] = n_items[len(o_latest_items):]
-            else:
-                break
-
-        while new_objects:
-            to_push, new_objects = new_objects[0], new_objects[1:]
-            if len(m_layers[0][1]) == c_m_length:
-                m_layers.insert(0, (m_layers[0][0]+1, []))
-            m_layers[0][1].append(to_push)
-
-        return c_m_layers, c_m_length, m_layers[:c_m_layers]
 
 class AuditScribe(object):
     def __init__(self, context):
