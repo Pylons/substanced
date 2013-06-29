@@ -17,7 +17,7 @@ class Layer(object):
 
     - Raise `LayerFull` on attempts to exceed that length.
 
-    - Iteration occurs in reverse order of appends, and yields (index, object)
+    - Iteration occurs in order of appends, and yields (index, object)
       tuples.
 
     - Hold generation (a sequence number) on behalf of `AppendStack`.
