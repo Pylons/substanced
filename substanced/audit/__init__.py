@@ -53,7 +53,7 @@ class AppendStack(Persistent):
 
     - Invariant:  the sequence of (generation, id) increases monotonically.
 
-    - Iteration occurs in reverse order of appends, and yields
+    - Iteration occurs in order of appends, and yields
       (generation, index, object) tuples.
     """
 
