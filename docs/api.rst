@@ -13,6 +13,13 @@
 
 .. autofunction:: root_factory
 
+:mod:`substanced.audit` API
+---------------------------
+
+.. automodule:: substanced.audit
+
+.. autoclass:: AuditScribe
+
 :mod:`substanced.catalog` API
 -----------------------------
 

@@ -170,6 +170,16 @@ class AuditScribe(object):
         return acquire(self.context, '__auditlog__', None)
 
     def add(self, name, oid, **kw):
+        """ Add an entry to the audit log.
+
+        The ``name`` is the 'event type' for the audit log entry.
+
+        The ``oid`` is a Substance D resource object identifier or ``None`` if
+        this event is not related to any particular oid.
+
+        ``**kw`` can be any set of keywords to be added to the payload.  Each
+        value must be JSON-serializable.
+        """
         auditlog = self.get_auditlog()
         if auditlog is None:
             if hasattr(self.context, '__parent__'):
