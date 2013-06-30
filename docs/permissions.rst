@@ -63,3 +63,8 @@ sdi.view
 sdi.edit-properties
 
   Allows for the editing of the properties of a property sheet for an object.
+
+sdi.view-auditlog
+
+  Allows the user to view the audit log event stream (``auditstream-sse``)
+  view.
