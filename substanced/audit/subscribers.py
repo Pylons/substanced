@@ -49,16 +49,16 @@ def acl_modified(event):
 def content_added_or_removed(event):
     """ Generates ContentAdded and ContentRemoved audit events """
     if IObjectWillBeRemoved.providedBy(event):
-        name = 'ContentRemoved'
+        event_name = 'ContentRemoved'
     elif IObjectAdded.providedBy(event):
-        name = 'ContentAdded'
+        event_name = 'ContentAdded'
     else:
         return False # for testing
     userinfo = get_userinfo()
     eventscribe = AuditScribe(event.object)
     parent = event.parent
     # this is an event related to the *container*, not to the object.
-    oid = get_oid(parent, None)
+    folder_oid = get_oid(parent, None)
     object_oid = get_oid(event.object, None)
     folder_path = resource_path(parent)
     object_name = event.name
@@ -66,10 +66,10 @@ def content_added_or_removed(event):
     loading = bool(event.loading)
     content_type = str(event.registry.content.typeof(event.object))
     eventscribe.add(
-        name,
-        oid,
+        event_name,
+        folder_oid,
         object_oid=object_oid,
-        folder_oid=oid,
+        folder_oid=folder_oid,
         folder_path=folder_path,
         object_name=object_name,
         content_type=content_type,
