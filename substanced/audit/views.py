@@ -9,26 +9,53 @@ from . import AuditScribe
     http_cache=0,
     )
 class AuditLogEventStreamView(object):
+    AuditScribe = AuditScribe # for test replacement
     def __init__(self, context, request):
         self.context = context
         self.request = request
 
     @mgmt_view(name='auditstream-sse', tab_condition=False)
-    def sse_auditstream(self):
-        if self.request.GET.get('contextonly'):
-            oids = [get_oid(self.context)]
-        else:
-            oids = map(int, self.request.GET.getall('oid'))
+    def auditstream_sse(self):
+        """Returns an event stream suitable for driving an HTML5 EventSource.
+           The event stream will contain auditing events.
+
+           Obtain all events::
+
+            var source = new EventSource(
+               "${request.sdiapi.mgmt_path(context, 'auditstream-sse')}");
+           
+           Obtain events for the context of the view only::
+
+            var source = new EventSource(
+               "${request.sdiapi.mgmt_path(context, 'auditstream-sse', _query={'contextonly':'1'})}");
+           
+           Obtain events for a single OID::
+
+            var source = new EventSource(
+               "${request.sdiapi.mgmt_path(context, 'auditstream-sse', _query={'oid':'12345'})}");
+
+           Obtain events for a set of OIDs::
+
+            var source = new EventSource(
+               "${request.sdiapi.mgmt_path(context, 'auditstream-sse', _query={'oid':['12345', '56789']})}");
+
+           The executing user will need to possess the ``sdi.view-auditstream``
+           permission against the context on which the view is invoked.
+        """
         response = self.request.response
         response.content_type = 'text/event-stream'
         last_event_id = self.request.headers.get('Last-Event-Id')
-        scribe = AuditScribe(self.context)
+        scribe = self.AuditScribe(self.context)
         if not last_event_id:
             # first call, set a baseline event id
             gen, idx = scribe.latest_id()
             response.text = compose_message('%s-%s' % (gen, idx))
             return response
         else:
+            if self.request.GET.get('contextonly'):
+                oids = [get_oid(self.context)]
+            else:
+                oids = map(int, self.request.GET.getall('oid'))
             gen, idx = map(int, last_event_id.split('-', 1))
             events = scribe.newer(gen, idx, oids=oids)
             for gen, idx, event in events:
