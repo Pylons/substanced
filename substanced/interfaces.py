@@ -171,6 +171,16 @@ class IContentCreated(Interface):
     meta = Attribute('The metainformation about the content type in the '
                      'content registry')
 
+class IContentIndexed(Interface):
+    """ An event type sent when a Substance D content object is indexed
+    or reindexed into any catalog """
+    object = Attribute('The object being indexed or reindexed')
+    
+class IContentUnindexed(Interface):
+    """ An event type sent when a Substance D content object is unindexed from
+    any catalog """
+    oid = Attribute('The oid of the object being unindexed')
+
 class IFolder(Interface):
     """ A Folder which stores objects using Unicode keys.
 

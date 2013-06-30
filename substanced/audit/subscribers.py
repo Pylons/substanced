@@ -11,6 +11,8 @@ from substanced.event import (
     subscribe_will_be_removed,
     subscribe_added,
     subscribe_modified,
+    subscribe_content_indexed,
+    subscribe_content_unindexed,
     )
 
 from substanced.util import get_oid
@@ -28,13 +30,13 @@ def get_userinfo():
 def acl_modified(event):
     """ Generates ACLModified audit events """
     userinfo = get_userinfo()
-    eventscribe = AuditScribe(event.object)
+    scribe = AuditScribe(event.object)
     oid = get_oid(event.object, None)
     old_acl = str(event.old_acl)
     new_acl = str(event.new_acl)
     path = resource_path(event.object)
     content_type = str(event.registry.content.typeof(event.object))
-    eventscribe.add(
+    scribe.add(
         'ACLModified',
         oid,
         object_path=path,
@@ -55,7 +57,7 @@ def content_added_or_removed(event):
     else:
         return False # for testing
     userinfo = get_userinfo()
-    eventscribe = AuditScribe(event.object)
+    scribe = AuditScribe(event.object)
     parent = event.parent
     # this is an event related to the *container*, not to the object.
     oid = get_oid(parent, None)
@@ -65,7 +67,7 @@ def content_added_or_removed(event):
     moving = bool(event.moving)
     loading = bool(event.loading)
     content_type = str(event.registry.content.typeof(event.object))
-    eventscribe.add(
+    scribe.add(
         name,
         oid,
         object_oid=object_oid,
@@ -81,11 +83,11 @@ def content_added_or_removed(event):
 @subscribe_modified()
 def content_modified(event):
     userinfo = get_userinfo()
-    eventscribe = AuditScribe(event.object)
+    scribe = AuditScribe(event.object)
     oid = get_oid(event.object, None)
     object_path = resource_path(event.object)
     content_type = str(event.registry.content.typeof(event.object))
-    eventscribe.add(
+    scribe.add(
         'ContentModified',
         oid,
         object_oid=oid,
@@ -93,3 +95,38 @@ def content_modified(event):
         content_type=content_type,
         userinfo=userinfo,
         )
+
+@subscribe_content_indexed()
+def content_indexed(event):
+    userinfo = get_userinfo()
+    scribe = AuditScribe(event.object)
+    object_oid = get_oid(event.object, None)
+    catalog_path = resource_path(event.catalog)
+    object_path = resource_path(event.object)
+    catalog_oid = get_oid(event.catalog, None)
+    scribe.add(
+        'ContentIndexed',
+        object_oid,
+        catalog_oid=catalog_oid,
+        catalog_path=catalog_path,
+        object_path=object_path,
+        object_oid=object_oid,
+        userinfo=userinfo,
+        )
+    
+@subscribe_content_unindexed()
+def content_unindexed(event):
+    userinfo = get_userinfo()
+    scribe = AuditScribe(event.object)
+    object_oid = event.oid
+    catalog_path = resource_path(event.catalog)
+    catalog_oid = get_oid(event.catalog, None)
+    scribe.add(
+        'ContentUnindexed',
+        object_oid,
+        catalog_oid=catalog_oid,
+        catalog_path=catalog_path,
+        object_oid=event.oid,
+        userinfo=userinfo,
+        )
+    

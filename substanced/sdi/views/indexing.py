@@ -29,6 +29,11 @@ class IndexingView(object):
         tab_title='Indexing',
         tab_near=RIGHT, # try not to be the default tab, we're too obscure
         )
+    @mgmt_view(
+        name='index_tables',
+        renderer='templates/indexing#index_tables.pt',
+        tab_condition=False,
+        )
     def show(self):
         oid = get_oid(self.context)
         catalogs = []

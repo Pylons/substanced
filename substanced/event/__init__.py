@@ -15,6 +15,8 @@ from ..interfaces import (
     IObjectModified,
     IACLModified,
     IContentCreated,
+    IContentIndexed,
+    IContentUnindexed,
     )
     
 class _ObjectEvent(object):
@@ -114,6 +116,19 @@ class ContentCreated(object):
         self.content_type = content_type
         self.meta = meta
 
+@implementer(IContentIndexed)
+class ContentIndexed(object):
+    def __init__(self, catalog, object):
+        self.catalog = catalog
+        self.object = object
+
+@implementer(IContentUnindexed)
+class ContentUnindexed(object):
+    def __init__(self, catalog, oid):
+        self.catalog = catalog
+        self.oid = oid
+
+
 # subscriber decorators, e.g.
 # @subscribe_added(MyContent)
 # def foo(event):
@@ -198,6 +213,16 @@ class subscribe_created(_ContentEventSubscriber):
     """ Decorator for registering an object created event subscriber
     (a subscriber for ContentCreated)."""
     event = IContentCreated
+
+class subscribe_content_indexed(_ContentEventSubscriber):
+    """ Decorator for registering an object created event subscriber
+    (a subscriber for ContentIndexed)."""
+    event = IContentIndexed
+
+class subscribe_content_unindexed(_ContentEventSubscriber):
+    """ Decorator for registering an object created event subscriber
+    (a subscriber for ContentUnindexed)."""
+    event = IContentUnindexed
     
 def add_content_subscriber(config, subscriber, iface=None, **predicates):
     """ Configurator directive that works like Pyramid's ``add_subscriber``,

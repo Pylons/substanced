@@ -1,35 +1,80 @@
 <div metal:use-macro="request.sdiapi.main_template">
 
+ <div metal:fill-slot="head-more">
+
+    <script type="text/javascript">
+
+      // update UI in real-time based if the browser supports SSE
+
+      if (!!window.EventSource) {
+
+        function redraw(tgt_sel, url) {
+            donehandler = function (html) {
+                $(tgt_sel).replaceWith(html);
+               };
+            $.ajax({
+                url:url,
+                type:'GET',
+            }).done(donehandler);
+       } 
+
+        function _redraw() {
+            redraw("#index_tables", "${request.sdiapi.mgmt_path(context, 'index_tables')}");
+        }
+
+        var source = new EventSource("${request.sdiapi.mgmt_path(context, 'auditstream-sse')}");
+        source.addEventListener("ContentIndexed" , function(e) {
+               _redraw();
+        });
+        source.addEventListener("ContentUnindexed" , function(e) {
+               _redraw();
+        });
+
+     }
+
+
+    </script>
+
+   </div>
+
   <div metal:fill-slot="main">
 
-    <div tal:repeat="(catalog,indexes) catalogs" style="margin-top: 20px">
-    
-      <h2>For catalog service at "${request.resource_path(catalog)}"</h2>
+    <metal:index_tables define-macro="index_tables">
 
-      <table class="table table-striped">
+      <div id="index_tables">
 
-        <thead>
-          <tr>
-            <th>Index name</th>
-            <th>Value</th>
-          </tr>
-        </thead>
+        <div tal:repeat="(catalog,indexes) catalogs" style="margin-top: 20px">
+        
+          <h2>For catalog service at "${request.resource_path(catalog)}"</h2>
 
-        <tbody>
-          <tr tal:repeat="index indexes">
-            <td>${index['index'].__name__}</td>
-            <td>${index['value']}</td>
-          </tr>
-        </tbody>
-      </table>
+          <table class="table table-striped">
 
-      <form action="@@indexing" method="post">
-        <input type="hidden" name="csrf_token" 
-               value="${request.session.get_csrf_token()}"/>
-        <input type="submit" name="form.reindex" value="Reindex This Object"/>
-      </form>
+            <thead>
+              <tr>
+                <th>Index name</th>
+                <th>Value</th>
+              </tr>
+            </thead>
 
-    </div>
+            <tbody>
+              <tr tal:repeat="index indexes">
+                <td>${index['index'].__name__}</td>
+                <td>${index['value']}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <form action="@@indexing" method="post">
+            <input type="hidden" name="csrf_token" 
+                   value="${request.session.get_csrf_token()}"/>
+            <input type="submit" name="form.reindex" value="Reindex This Object"/>
+          </form>
+
+        </div>
+
+     </div>
+
+   </metal:index_tables>
 
   </div>
 

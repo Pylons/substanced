@@ -18,11 +18,16 @@ from pyramid.threadlocal import get_current_registry
 from pyramid.util import (
     object_description,
     )
-
 from ..content import (
     content,
     service,
     )
+
+from ..event import (
+    ContentIndexed,
+    ContentUnindexed,
+    )
+
 from ..folder import Folder
 from ..interfaces import (
     ICatalog,
@@ -127,6 +132,11 @@ class Catalog(Folder):
             index.reset()
         self.objectids = self.family.IF.TreeSet()
 
+    def _notify(self, event, registry=None):
+        if registry is None:
+            registry = get_current_registry()
+        registry.subscribers((event, event.object), None)
+
     def index_resource(self, resource, oid=None, action_mode=None):
         """Register the resource in indexes of this catalog using ``oid`` as
         the indexing identifier.  If ``oid`` is not supplied, the ``__oid__``
@@ -141,6 +151,8 @@ class Catalog(Folder):
         which explicitly indicates that you'd like to use the index's
         action_mode value."""
         with statsd_timer('catalog.index_resource'):
+            event = ContentIndexed(self, resource)
+            self._notify(event)
             if oid is None:
                 oid = oid_from_resource(resource)
             for index in self.values():
@@ -175,6 +187,8 @@ class Catalog(Folder):
                 )
 
         with statsd_timer('catalog.unindex_resource'):
+            event = ContentUnindexed(self, oid)
+            self._notify(event)
             for index in self.values():
                 index.unindex_resource(oid, action_mode=action_mode)
 
@@ -209,6 +223,8 @@ class Catalog(Folder):
         smarter things during a reindex than what they would do during an
         unindex followed by a successive index.
         """
+        event = ContentIndexed(self, resource)
+        self._notify(event)
         if oid is None:
             oid = oid_from_resource(resource)
         with statsd_timer('catalog.reindex_resource'):
@@ -311,6 +327,8 @@ class Catalog(Folder):
                     )
             else:
                 for index in indexes:
+                    event = ContentIndexed(self, resource)
+                    self._notify(event)
                     self[index].reindex_resource(
                         resource,
                         oid=oid,
