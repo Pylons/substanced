@@ -1,7 +1,7 @@
 from logging import getLogger
 
 from pyramid.view import view_defaults
-from pyramid.compat import PY3
+from pyramid.compat import PY3, text_type
 from substanced.sdi import mgmt_view
 from substanced.util import get_oid
 
@@ -13,7 +13,7 @@ from . import AuditScribe
     )
 class AuditLogEventStreamView(object):
     AuditScribe = AuditScribe # for test replacement
-    logger = getLogger(__name__)
+    logger = getLogger('substanced')
 
     def __init__(self, context, request):
         self.context = context
@@ -71,7 +71,7 @@ class AuditLogEventStreamView(object):
                 oids = [get_oid(self.context)]
             _gen, _idx = map(int, last_event_id.split('-', 1))
             events = scribe.newer(_gen, _idx, oids=oids)
-            msg = ''
+            msg = text_type('')
             for gen, idx, event in events:
                 event_id = '%s-%s' % (gen, idx)
                 message = compose_message(event_id, event.name, event.payload)
