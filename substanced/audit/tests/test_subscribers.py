@@ -100,7 +100,7 @@ class Test_content_added_or_removed(unittest.TestCase):
         self.assertEqual(entry[0], 0)
         self.assertEqual(entry[1], 0)
         self.assertEqual(entry[2].name, 'ContentRemoved')
-        self.assertEqual(entry[2].oid, 5)
+        self.assertEqual(entry[2].oid, 10)
         self.assertEqual(
             json.loads(entry[2].payload),
             {
@@ -129,7 +129,7 @@ class Test_content_added_or_removed(unittest.TestCase):
         self.assertEqual(entry[0], 0)
         self.assertEqual(entry[1], 0)
         self.assertEqual(entry[2].name, 'ContentAdded')
-        self.assertEqual(entry[2].oid, 5)
+        self.assertEqual(entry[2].oid, 10)
         self.assertEqual(
             json.loads(entry[2].payload),
             {

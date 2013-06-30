@@ -77,4 +77,6 @@ Obtain all events for all oids::
     "${request.sdiapi.mgmt_path(context, 'auditstream-sse', _query={'all':'1'})}");
 
 The executing user will need to possess the ``sdi.view-auditstream`` permission
-against the context on which the view is invoked.
+against the context on which the view is invoked.  Each event payload will
+contain detailed information about the audit event as a string which represents
+a JSON dictionary.

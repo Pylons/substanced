@@ -56,9 +56,10 @@ def content_added_or_removed(event):
         return False # for testing
     userinfo = get_userinfo()
     eventscribe = AuditScribe(event.object)
-    oid = get_oid(event.object, None)
     parent = event.parent
-    folder_oid = get_oid(parent, None)
+    # this is an event related to the *container*, not to the object.
+    oid = get_oid(parent, None)
+    object_oid = get_oid(event.object, None)
     folder_path = resource_path(parent)
     object_name = event.name
     moving = bool(event.moving)
@@ -67,8 +68,8 @@ def content_added_or_removed(event):
     eventscribe.add(
         name,
         oid,
-        object_oid=oid,
-        folder_oid=folder_oid,
+        object_oid=object_oid,
+        folder_oid=oid,
         folder_path=folder_path,
         object_name=object_name,
         content_type=content_type,
