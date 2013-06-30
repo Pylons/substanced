@@ -397,8 +397,8 @@ class AppendStackTests(unittest.TestCase):
                     (3, [9]),        # _layers[1] as (generation, list)
                    ],
                 )
-        N_STATE = (3,                 # _max_layers
-                   3,                 # _max_length
+        N_STATE = (2,                 # _max_layers
+                   2,                 # _max_length
                    [
                     (2, [6, 7, 8]),  # _layers[0] as (generation, list)
                     (3, [9]),        # _layers[1] as (generation, list)
