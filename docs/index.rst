@@ -72,6 +72,7 @@ Narrative Documentation
    dump
    evolution
    folder_contents
+   audit
    configuration
    statistics
    retail
