@@ -9,8 +9,8 @@ class Test_aclchanged(unittest.TestCase):
         testing.tearDown()
         
     def _callFUT(self, event):
-        from ..subscribers import aclchanged
-        return aclchanged(event)
+        from ..subscribers import acl_modified
+        return acl_modified(event)
 
     def test_it(self):
         import json
@@ -28,11 +28,12 @@ class Test_aclchanged(unittest.TestCase):
         entry = entries[0]
         self.assertEqual(entry[0], 0)
         self.assertEqual(entry[1], 0)
-        self.assertEqual(entry[2].name, 'aclchanged')
+        self.assertEqual(entry[2].name, 'ACLModified')
         self.assertEqual(entry[2].oid, 5)
         self.assertEqual(
             json.loads(entry[2].payload),
-            {"old_acl": "old_acl", "new_acl": "new_acl", 'userid':'fred'}
+            {"old_acl": "old_acl", "new_acl": "new_acl", 'userid':'fred',
+             'object_path':'/'}
             )
         
 class Dummy(object):

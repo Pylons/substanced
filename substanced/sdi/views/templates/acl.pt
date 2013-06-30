@@ -19,7 +19,7 @@
      } 
 
       var source = new EventSource("${request.sdiapi.mgmt_path(context, 'auditstream-sse', _query={'oid':oids})}");
-      source.addEventListener('aclchanged' , function(e) {
+      source.addEventListener("ACLModified" , function(e) {
           redraw("#local_acl", "${request.sdiapi.mgmt_path(context, 'local_acl')}");
           redraw("#inherited_acl", "${request.sdiapi.mgmt_path(context, 'inherited_acl')}");
       });
