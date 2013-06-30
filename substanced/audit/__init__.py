@@ -196,10 +196,11 @@ class AuditLog(Persistent):
             entries = AppendStack(max_layers, layer_size)
         self.entries = entries
     
-    def add(self, name, oid, **kw):
+    def add(self, _name, _oid, **kw):
         timestamp = time.time()
+        kw.setdefault('time', timestamp)
         payload = json.dumps(kw)
-        entry = AuditLogEntry(name, oid, payload, timestamp)
+        entry = AuditLogEntry(_name, _oid, payload, timestamp)
         self.entries.push(entry)
 
     def newer(self, generation, index_id, oids=None):
