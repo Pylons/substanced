@@ -91,3 +91,7 @@ The executing user will need to possess the ``sdi.view-auditstream`` permission
 against the context on which the view is invoked.  Each event payload will
 contain detailed information about the audit event as a string which represents
 a JSON dictionary.
+
+See the ``acl.pt`` template in the ``substanced/sdi/views/templates`` directory
+of Substance D to see a "real-world" usage of this feature.
+
