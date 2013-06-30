@@ -13,8 +13,8 @@ class AuditLogEventStreamView(object):
         self.context = context
         self.request = request
 
-    @mgmt_view(name='auditlog-eventstream', tab_condition=False)
-    def eventstream(self):
+    @mgmt_view(name='auditstream-sse', tab_condition=False)
+    def sse_auditstream(self):
         if self.request.GET.get('contextonly'):
             oids = [get_oid(self.context)]
         else:
@@ -36,11 +36,6 @@ class AuditLogEventStreamView(object):
                 message = compose_message(event_id, event.name, event.payload)
                 response.text += message
         return response
-
-    @mgmt_view(name='show_events', renderer='templates/events.pt',
-               tab_condition=False)
-    def events(request):
-        return {}
 
 def compose_message(eventid, name=None, payload=''):
     msg = 'id: %s\n' % eventid

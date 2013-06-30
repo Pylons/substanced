@@ -22,6 +22,7 @@ class TestACLView(unittest.TestCase):
         request = testing.DummyRequest()
         site = make_site()
         site['page'] = context = testing.DummyResource()
+        context.__oid__ = 5
         site.__acl__ = context.__acl__ = [(None, 1, (None,))]
         user = DummyUser(1, _JOHN)
         site['principals']['users']['john'] = user
@@ -61,6 +62,7 @@ class TestMoveUp(unittest.TestCase):
         site.__acl__ = [(None, 1, (None,))]
         context.__acl__ = [(None, 1, (None,)),
                            (None, 2, (None,))]
+        context.__oid__ = 5
         user = DummyUser(1, _JOHN)
         user2 = DummyUser(2, _MARY)
         site['principals']['users']['john'] = user
@@ -102,6 +104,7 @@ class TestMoveDown(unittest.TestCase):
         site.__acl__ = [(None, 1, (None,))]
         context.__acl__ = [(None, 1, (None,)),
                            (None, 2, (None,))]
+        context.__oid__ = 5
         user = DummyUser(1, _JOHN)
         user2 = DummyUser(2, _MARY)
         site['principals']['users']['john'] = user
@@ -143,6 +146,7 @@ class TestRemove(unittest.TestCase):
         site.__acl__ = [(None, 1, (None,))]
         context.__acl__ = [(None, 1, (None,)),
                            (None, 2, (None,))]
+        context.__oid__ = 5
         user = DummyUser(1, _JOHN)
         user2 = DummyUser(2, _MARY)
         site['principals']['users']['john'] = user
@@ -186,6 +190,7 @@ class TestAdd(unittest.TestCase):
         site.__acl__ = [(None, 1, (None,))]
         context.__acl__ = [(None, 1, (None,)),
                            (None, 2, (None,))]
+        context.__oid__ = 5
         user = DummyUser(1, _JOHN)
         user2 = DummyUser(2, _MARY)
         site['principals']['users']['john'] = user
@@ -220,6 +225,7 @@ class TestAdd(unittest.TestCase):
         site.__acl__ = [(None, 1, (None,))]
         context.__acl__ = [(None, 1, (None,)),
                            (None, 2, (None,))]
+        context.__oid__ = 5
         user = DummyUser(1, _JOHN)
         user2 = DummyUser(2, _MARY)
         site['principals']['users']['john'] = user
@@ -254,6 +260,7 @@ class TestAdd(unittest.TestCase):
         site.__acl__ = [(None, 1, (None,))]
         context.__acl__ = [(None, 1, (None,)),
                            (None, 2, (None,))]
+        context.__oid__ = 5
         user = DummyUser(1, _JOHN)
         user2 = DummyUser(2, _MARY)
         site['principals']['users']['john'] = user
@@ -288,6 +295,7 @@ class TestAdd(unittest.TestCase):
         site.__acl__ = [(None, 1, (None,))]
         context.__acl__ = [(None, 1, (None,)),
                            (None, 2, (None,))]
+        context.__oid__ = 5
         user = DummyUser(1, _JOHN)
         site['principals']['users']['john'] = user
         site.__objectmap__ = DummyObjectMap({1:user})
@@ -313,6 +321,7 @@ class TestAdd(unittest.TestCase):
         site.__acl__ = [(None, 1, (None,))]
         context.__acl__ = [(None, 1, (None,)),
                            (None, 2, (None,))]
+        context.__oid__ = 5
         user = DummyUser(1, _JOHN)
         site['principals']['users']['john'] = user
         site.__objectmap__ = DummyObjectMap({1:user})
@@ -334,7 +343,8 @@ class TestAdd(unittest.TestCase):
         request.POST['principal'] = Everyone
         request.POST['permissions'] = 'test'
         site = make_site()
-        context = site['page'] = testing.DummyResource()
+        context = site['pagge'] = testing.DummyResource()
+        context.__oid__ = 5
         context.__acl__ = []
         inst = self._makeOne(context, request)
         resp = inst()
@@ -365,6 +375,7 @@ class TestInherit(unittest.TestCase):
         site.__acl__ = [(None, 1, (None,))]
         context.__acl__ = [(None, 1, (None,)),
                            (None, 2, (None,))]
+        context.__oid__ = 5
         user = DummyUser(1, _JOHN)
         user2 = DummyUser(2, _MARY)
         site['principals']['users']['john'] = user
@@ -396,6 +407,7 @@ class TestInherit(unittest.TestCase):
         site.__acl__ = [(None, 1, (None,))]
         context.__acl__ = [(None, 1, (None,)),
                            (None, 2, (None,))]
+        context.__oid__ = 5
         user = DummyUser(1, _JOHN)
         user2 = DummyUser(2, _MARY)
         site['principals']['users']['john'] = user
@@ -430,6 +442,7 @@ class TestOther(unittest.TestCase):
         from ....testing import make_site
         site = make_site()
         context = testing.DummyResource()
+        context.__oid__ = 5
         site['context'] = context
         return site
 
