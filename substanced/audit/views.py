@@ -19,17 +19,12 @@ class AuditLogEventStreamView(object):
         """Returns an event stream suitable for driving an HTML5 EventSource.
            The event stream will contain auditing events.
 
-           Obtain all events::
+           Obtain events for the context of the view only::
 
             var source = new EventSource(
                "${request.sdiapi.mgmt_path(context, 'auditstream-sse')}");
            
-           Obtain events for the context of the view only::
-
-            var source = new EventSource(
-               "${request.sdiapi.mgmt_path(context, 'auditstream-sse', _query={'contextonly':'1'})}");
-           
-           Obtain events for a single OID::
+           Obtain events for a single OID unrelated to the context::
 
             var source = new EventSource(
                "${request.sdiapi.mgmt_path(context, 'auditstream-sse', _query={'oid':'12345'})}");
@@ -39,6 +34,11 @@ class AuditLogEventStreamView(object):
             var source = new EventSource(
                "${request.sdiapi.mgmt_path(context, 'auditstream-sse', _query={'oid':['12345', '56789']})}");
 
+           Obtain all events for all oids::
+
+            var source = new EventSource(
+               "${request.sdiapi.mgmt_path(context, 'auditstream-sse', _query={'all':'1'})}");
+           
            The executing user will need to possess the ``sdi.view-auditstream``
            permission against the context on which the view is invoked.
         """
@@ -52,10 +52,12 @@ class AuditLogEventStreamView(object):
             response.text = compose_message('%s-%s' % (gen, idx))
             return response
         else:
-            if self.request.GET.get('contextonly'):
-                oids = [get_oid(self.context)]
-            else:
+            if self.request.GET.get('all'):
+                oids = ()
+            elif self.request.GET.get('oid'):
                 oids = map(int, self.request.GET.getall('oid'))
+            else:
+                oids = [get_oid(self.context)]
             gen, idx = map(int, last_event_id.split('-', 1))
             events = scribe.newer(gen, idx, oids=oids)
             for gen, idx, event in events:
