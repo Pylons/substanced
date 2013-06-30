@@ -33,6 +33,11 @@ class AuditScribeTests(unittest.TestCase):
         inst.add('name', 1, a=1)
         self.assertTrue(context.__auditlog__)
 
+    def test_add_auditlog_notexists_noparent(self):
+        context = object()
+        inst = self._makeOne(context)
+        self.assertRaises(ValueError, inst.add, 'name', 1, a=1)
+        
     def test_newer_auditlog_exists(self):
         context = testing.DummyResource()
         auditlog = DummyAuditLog([True])

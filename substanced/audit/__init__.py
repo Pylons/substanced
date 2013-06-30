@@ -166,8 +166,13 @@ class AuditScribe(object):
     def add(self, name, oid, **kw):
         auditlog = self.get_auditlog()
         if auditlog is None:
-            auditlog = AuditLog()
-            setattr(find_root(self.context), '__auditlog__', auditlog)
+            if hasattr(self.context, '__parent__'):
+                auditlog = AuditLog()
+                setattr(find_root(self.context), '__auditlog__', auditlog)
+            else:
+                raise ValueError(
+                    'context must have a parent to add an audit log entry'
+                    )
         auditlog.add(name, oid, **kw)
             
     def newer(self, gen, idx, oids=()):
