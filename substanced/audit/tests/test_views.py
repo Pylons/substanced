@@ -4,7 +4,9 @@ from pyramid import testing
 class Test_AuditLogEventStreamView(unittest.TestCase):
     def _makeOne(self, context, request):
         from ..views import AuditLogEventStreamView
-        return AuditLogEventStreamView(context, request)
+        view = AuditLogEventStreamView(context, request)
+        view.logger = DummyLogger()
+        return view
 
     def test_ctor(self):
         context = testing.DummyResource()
@@ -107,3 +109,6 @@ class DummyAuditScribe(object):
         yield 0, 1, event1
         yield 0, 2, event2
 
+class DummyLogger(object):
+    def debug(self, msg):
+        pass

@@ -1,4 +1,7 @@
+from logging import getLogger
+
 from pyramid.view import view_defaults
+from pyramid.compat import PY3
 from substanced.sdi import mgmt_view
 from substanced.util import get_oid
 
@@ -10,6 +13,8 @@ from . import AuditScribe
     )
 class AuditLogEventStreamView(object):
     AuditScribe = AuditScribe # for test replacement
+    logger = getLogger(__name__)
+
     def __init__(self, context, request):
         self.context = context
         self.request = request
@@ -42,34 +47,49 @@ class AuditLogEventStreamView(object):
            The executing user will need to possess the ``sdi.view-auditstream``
            permission against the context on which the view is invoked.
         """
-        response = self.request.response
+        request = self.request
+        response = request.response
         response.content_type = 'text/event-stream'
-        last_event_id = self.request.headers.get('Last-Event-Id')
+        last_event_id = request.headers.get('Last-Event-Id')
         scribe = self.AuditScribe(self.context)
         if not last_event_id:
             # first call, set a baseline event id
             gen, idx = scribe.latest_id()
-            response.text = compose_message('%s-%s' % (gen, idx))
+            msg = compose_message('%s-%s' % (gen, idx))
+            response.text = msg
+            self.logger.debug(
+                'New SSE connection on %s, returning %s' % (
+                    request.url, msg)
+                )
             return response
         else:
-            if self.request.GET.get('all'):
+            if request.GET.get('all'):
                 oids = ()
-            elif self.request.GET.get('oid'):
-                oids = map(int, self.request.GET.getall('oid'))
+            elif request.GET.get('oid'):
+                oids = map(int, request.GET.getall('oid'))
             else:
                 oids = [get_oid(self.context)]
-            gen, idx = map(int, last_event_id.split('-', 1))
-            events = scribe.newer(gen, idx, oids=oids)
+            _gen, _idx = map(int, last_event_id.split('-', 1))
+            events = scribe.newer(_gen, _idx, oids=oids)
+            msg = ''
             for gen, idx, event in events:
                 event_id = '%s-%s' % (gen, idx)
                 message = compose_message(event_id, event.name, event.payload)
-                response.text += message
-        return response
+                msg += message
+            self.logger.debug(
+                'SSE connection on %s with id %s-%s, returning %s' % (
+                    request.url, _gen, _idx, msg)
+                )
+            response.text = msg
+            return response
 
 def compose_message(eventid, name=None, payload=''):
     msg = 'id: %s\n' % eventid
     if name:
         msg += 'event: %s\n' % name
     msg += 'data: %s\n\n' % payload
-    return msg.decode('utf-8')
+    if PY3:
+        return msg
+    else:
+        return msg.decode('utf-8')
 
