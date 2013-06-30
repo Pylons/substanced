@@ -54,7 +54,10 @@ resource tree using JavaScript.  It will return an event stream suitable for
 driving an HTML5 ``EventSource`` (an HTML 5 feature, see
 http://www.html5rocks.com/en/tutorials/eventsource/basics/ for more
 information).  The event stream will contain auditing events.  This can be used
-for progressive enhancement of your application's UI.
+for progressive enhancement of your application's UI.  Substance D's SDI uses
+it for that purpose.  For example, when an object's ACL is changed, a user
+looking at the "Security" tab of that object in the SDI will see the change
+immediately, rather than upon the next page refresh.
 
 Obtain events for the context of the view only::
 
