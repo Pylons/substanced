@@ -78,7 +78,7 @@ class Test_AuditLogEventStreamView(unittest.TestCase):
             )
         self.assertEqual(inst.AuditScribe.gen, 1)
         self.assertEqual(inst.AuditScribe.idx, 1) 
-        self.assertEqual(inst.AuditScribe.oids, [3])
+        self.assertEqual(list(inst.AuditScribe.oids), [3])
         
 class GetAllDict(dict):
     def getall(self, name): # pragma: no cover
