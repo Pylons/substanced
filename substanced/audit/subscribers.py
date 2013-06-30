@@ -4,7 +4,7 @@ from substanced.util import get_oid
 from . import AuditScribe
 
 @subscribe_acl_modified()
-def eventsink(event):
+def aclchanged(event):
     eventscribe = AuditScribe(event.object)
     oid = get_oid(event.object)
     old_acl = str(event.old_acl)
