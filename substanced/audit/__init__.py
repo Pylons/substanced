@@ -160,6 +160,12 @@ class AuditScribe(object):
     def __init__(self, context):
         self.context = context
 
+    def __iter__(self):
+        auditlog = self.get_auditlog()
+        if auditlog is None:
+            return iter([])
+        return iter(auditlog.entries)
+
     def get_auditlog(self):
         return acquire(self.context, '__auditlog__', None)
 
@@ -220,6 +226,6 @@ class AuditLog(Persistent):
         layers = self.entries._layers
         last_layer = layers[-1]
         gen = last_layer._generation
-        index_id = len(last_layer._stack)
+        index_id = len(last_layer._stack) - 1
         return gen, index_id
 

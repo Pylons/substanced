@@ -1,0 +1,23 @@
+<div metal:use-macro="request.sdiapi.main_template">
+
+  <div metal:fill-slot="main">
+    <table border="0" class="table table-striped">
+      <thead>
+        <tr>
+          <th>Id</th>
+          <th>Name</th>
+          <th>Time</th>
+          <th>Payload</th>
+        </tr>
+      </thead>
+      <tr tal:repeat="(gen, idx, time, event) results">
+        <td width="10%">${gen}-${idx}</td>
+        
+        <td width="20%">${event.name}</td>
+        <td width="20%">${time}</td>
+        <td width="50%">${event.payload}</td>
+      </tr>
+    </table>
+  </div>
+
+</div>

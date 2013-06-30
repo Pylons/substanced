@@ -1,9 +1,11 @@
+import datetime
 from logging import getLogger
 
 from pyramid.view import view_defaults
 from pyramid.compat import PY3, text_type
-from substanced.sdi import mgmt_view
+from substanced.sdi import mgmt_view, RIGHT
 from substanced.util import get_oid
+from colander.iso8601 import UTC
 
 from . import AuditScribe
 
@@ -18,6 +20,23 @@ class AuditLogEventStreamView(object):
     def __init__(self, context, request):
         self.context = context
         self.request = request
+
+    @mgmt_view(
+        name='auditing',
+        tab_title='Auditing',
+        renderer='templates/auditing.pt',
+        tab_near=RIGHT,
+        physical_path='/',
+        )
+    def auditing(self):
+        scribe = self.AuditScribe(self.context)
+        results = []
+        for gen, idx, event in scribe:
+            timestamp = event.timestamp
+            time = datetime.datetime.fromtimestamp(timestamp, UTC).strftime(
+                '%Y-%m-%d %H:%M:%S UTC')
+            results.insert(0, (gen, idx, time, event))
+        return {'results':results}
 
     @mgmt_view(name='auditstream-sse', tab_condition=False)
     def auditstream_sse(self):
@@ -88,7 +107,7 @@ def compose_message(eventid, name=None, payload=''):
     if name:
         msg += 'event: %s\n' % name
     msg += 'data: %s\n\n' % payload
-    if PY3:
+    if PY3: # pragma: no cover
         return msg
     else:
         return msg.decode('utf-8')

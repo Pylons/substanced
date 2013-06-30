@@ -68,6 +68,20 @@ class AuditScribeTests(unittest.TestCase):
         result = inst.latest_id()
         self.assertEqual(result, (0,-1))
 
+    def test___iter__with_auditlog(self):
+        context = testing.DummyResource()
+        auditlog = DummyAuditLog([True, True])
+        context.__auditlog__ = auditlog
+        inst = self._makeOne(context)
+        result = list(inst)
+        self.assertEqual(result, [True, True])
+
+    def test___iter__no_auditlog(self):
+        context = testing.DummyResource()
+        inst = self._makeOne(context)
+        result = list(inst)
+        self.assertEqual(result, [])
+        
 class AuditLogEntryTests(unittest.TestCase):
     def test_it(self):
         from .. import AuditLogEntry
@@ -119,7 +133,7 @@ class AuditLogTests(unittest.TestCase):
     def test_latest_id(self):
         entries = DummyAppendStack()
         inst = self._makeOne(entries=entries)
-        self.assertEqual(inst.latest_id(), (0, 1))
+        self.assertEqual(inst.latest_id(), (0, 0))
         
 class LayerTests(unittest.TestCase):
 
@@ -571,6 +585,10 @@ class DummyAuditLog(object):
     def __init__(self, result=None):
         self.result = result
         self.added = []
+
+    @property
+    def entries(self):
+        return self.result
 
     def add(self, name, oid, **kw):
         self.added.append((name, oid, kw))

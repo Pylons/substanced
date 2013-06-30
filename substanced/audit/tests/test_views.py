@@ -79,6 +79,19 @@ class Test_AuditLogEventStreamView(unittest.TestCase):
         self.assertEqual(inst.AuditScribe.gen, 1)
         self.assertEqual(inst.AuditScribe.idx, 1) 
         self.assertEqual(list(inst.AuditScribe.oids), [3])
+
+    def test_auditing(self):
+        context = testing.DummyResource()
+        request = testing.DummyRequest()
+        inst = self._makeOne(context, request)
+        inst.AuditScribe = DummyAuditScribe()
+        result = inst.auditing()
+        self.assertEqual(result['results'][0][0], 0)
+        self.assertEqual(result['results'][0][1], 2)
+        self.assertEqual(result['results'][0][2], '1970-01-01 00:00:01 UTC')
+        self.assertEqual(result['results'][1][0], 0)
+        self.assertEqual(result['results'][1][1], 1)
+        self.assertEqual(result['results'][1][2], '1970-01-01 00:00:01 UTC')
         
 class GetAllDict(dict):
     def getall(self, name): # pragma: no cover
@@ -91,6 +104,7 @@ class DummyEvent(object):
     def __init__(self, payload):
         self.payload = payload
         self.name = 'smellin'
+        self.timestamp = 1
         
 class DummyAuditScribe(object):
     def __call__(self, context):
@@ -99,6 +113,9 @@ class DummyAuditScribe(object):
     
     def latest_id(self):
         return 0, 1
+
+    def __iter__(self):
+        return iter(self.newer(0, 0))
 
     def newer(self, gen, idx, oids=()):
         self.gen = gen
