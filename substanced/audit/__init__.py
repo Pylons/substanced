@@ -218,7 +218,7 @@ class AuditLog(Persistent):
 
     def latest_id(self):
         layers = self.entries._layers
-        last_layer = layers[0]
+        last_layer = layers[-1]
         gen = last_layer._generation
         index_id = len(last_layer._stack)
         return gen, index_id
