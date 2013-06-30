@@ -12,13 +12,19 @@ content.  At the time of this writing, "meaningful" is defined as:
 - When a resource is modified.
 
 The audit log is of a fixed size (currently 10,000 items).  When the audit log
-fills up, the oldest audit event is thrown away.  Currently there is no user
-interface to view the audit log, and we don't have an archiving mechanism in
-place to keep around the items popped off the end of the log when it fills up;
-both of these are planned.
+fills up, the oldest audit event is thrown away.  Currently we don't have an
+archiving mechanism in place to keep around the items popped off the end of the
+log when it fills up; this is planned.
 
 You can extend the auditing system by using the
 :class:`substanced.audit.AuditScribe`, writing your own events to the log.
+
+Viewing the Audit Log
+=====================
+
+The root object will have a tab named "Auditing".  You can view the currently
+active audit log entries from this page.  Accessing this tab requires the
+``sdi.view-auditlog`` permission.
 
 Adding an Audit Log Entry
 =========================
