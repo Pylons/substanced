@@ -10,6 +10,7 @@ from pyramid.security import (
 from pyramid.compat import is_nonstr_iter
 from pyramid.session import check_csrf_token
 from pyramid.view import view_defaults
+from pyramid.location import lineage
 
 from ...objectmap import find_objectmap
 from ...util import (
@@ -218,6 +219,8 @@ class ACLEditViews(object):
         groups = [ (get_oid(group), group.__name__) for group in groups ]
         groups += [ (Everyone, Everyone), (Authenticated, Authenticated) ]
 
+        oids = [ get_oid(x) for x in lineage(self.context) ]
+
         return dict(
             parent_acl=parent_acl or (),
             local_acl=local_acl,
@@ -225,5 +228,6 @@ class ACLEditViews(object):
             inheriting=inheriting,
             users=users,
             groups=groups,
+            oids=oids,
             )
 

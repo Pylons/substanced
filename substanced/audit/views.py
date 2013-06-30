@@ -24,7 +24,6 @@ class AuditLogEventStreamView(object):
         last_event_id = self.request.headers.get('Last-Event-Id')
         scribe = AuditScribe(self.context)
         if not last_event_id:
-            print 'no last event id'
             # first call, set a baseline event id
             gen, idx = scribe.latest_id()
             response.text = compose_message('%s-%s' % (gen, idx))
@@ -35,9 +34,7 @@ class AuditLogEventStreamView(object):
             for gen, idx, event in events:
                 event_id = '%s-%s' % (gen, idx)
                 message = compose_message(event_id, event.name, event.payload)
-                print message
                 response.text += message
-        print gen, idx
         return response
 
     @mgmt_view(name='show_events', renderer='templates/events.pt',
