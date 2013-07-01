@@ -17,9 +17,11 @@
         if (!!window.EventSource) {
 
           function redraw(e) {
-              console.log('redrawing');
               var gridWrapper = $('#sdi-contents-table-sg').data('slickgrid');
-              gridWrapper.sdiRemoteModelPlugin.clearData();
+              plugin = gridWrapper.sdiRemoteModelPlugin
+              if (!plugin.hasActiveRequest()) {
+                  plugin.clearData(false);
+              }
           }
 
           var source = new EventSource(

@@ -495,6 +495,7 @@
             setFilterArgs: setFilterArgs,
             syncGridSelection: syncGridSelection,
             ajax: ajax,
+            hasActiveRequest: hasActiveRequest,
 
             // events
             onDataLoading: onDataLoading,
