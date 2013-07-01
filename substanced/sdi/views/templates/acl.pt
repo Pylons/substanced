@@ -64,16 +64,20 @@
            <input type="hidden" name="index" value="${repeat['ace'].index}" />
 
             <button
-                tal:attributes="disabled repeat['ace'].start or None"
-                name="form.move_up"
-                type="submit">
+               tal:define="disabled repeat['ace'].start"
+               tal:attributes="disabled disabled or None;
+                               style disabled and 'opacity:0.4' or None"
+               name="form.move_up"
+               type="submit">
               <i class="icon-arrow-up"> </i>
             </button>
 
             <button
-                tal:attributes="disabled repeat['ace'].end or None"
-                name="form.move_down"
-                type="submit">
+               tal:define="disabled repeat['ace'].end"
+               tal:attributes="disabled disabled or None;
+                               style disabled and 'opacity:0.4' or None"
+               name="form.move_down"
+               type="submit">
               <i class="icon-arrow-down"> </i>
             </button>
 
