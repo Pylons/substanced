@@ -165,14 +165,15 @@
      <h2> Inherit ACL </h2>
      <div class="row">
       <form action="@@acl_edit" method="post">
+
+        <div style="margin-left: 40px;">
+
         <div class="span2">
           <label class="radio inline">
             <input type="radio" id="inherit_enabled" name="inherit" value="enabled"
                    tal:attributes="checked inheriting == 'enabled'"/> Enabled
           </label>
-
           <label class="radio inline">
-
             <input type="radio" id="inherit_disabled" name="inherit"
                    value="disabled"
                    tal:attributes="checked inheriting == 'disabled'"/> Disabled
@@ -180,10 +181,10 @@
         </div>
 
         <div class="span2">
-
          <input type="submit" name="form.inherit" value="Update" />
          <input type="hidden" name="csrf_token" 
               value="${request.session.get_csrf_token()}"/>
+        </div>
 
         </div>
 
