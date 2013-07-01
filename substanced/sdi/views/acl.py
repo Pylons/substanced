@@ -43,14 +43,20 @@ class ACLEditViews(object):
         else:
             self.epilog = []
 
-    @mgmt_view(tab_condition=False, name='local_acl',
-               renderer='templates/acl#local_acl.pt')
-    @mgmt_view(tab_condition=False, name='inherited_acl',
-               renderer='templates/acl#inherited_acl.pt')
     @mgmt_view(tab_title='Security')
     def acl_view(self):
         return self.finish_acl_edit()
 
+    @mgmt_view(tab_condition=False, name='inherited_acl',
+               renderer='templates/acl#inherited_acl.pt')
+    def inherited_acl(self):
+        return self.finish_acl_edit()
+
+    @mgmt_view(tab_condition=False, name='local_acl',
+               renderer='templates/acl#local_acl.pt')
+    def local_acl(self):
+        return self.finish_acl_edit()
+    
     @mgmt_view(request_param='form.move_up', tab_title='Security')
     def move_up(self):
         check_csrf_token(self.request)
