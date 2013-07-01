@@ -40,8 +40,10 @@
         <li>Has machinery for dumping content to the filesystem and loading content from
             such a dump</li>
       </ul>
-      To see it in action, click the button below and log in as <b>admin</b> with
-      the password <b>admin</b>.
+      See
+      the <a href="http://docs.pylonsproject.org/projects/substanced/en/latest/">documentation</a>
+      for detailed technical information. To see it in action, click the button
+      below and log in as <b>admin</b> with the password <b>admin</b>.
       <div style="margin-top: 1em;">
         <a class="btn btn-primary" href="${request.application_url}${manage_prefix}">See the management interface</a>
       </div>
