@@ -51,6 +51,8 @@ content object which this event is related to.  It may be ``None`` indicating
 that the event is global, and unrelated to any particular piece of content.
 You can pass any number of keyword arguments to
 :meth:`substanced.audit.AuditScribe.add`, each will be added to the payload.
+Each value supplied as a keyword argument *must* be JSON-serializable.  If one
+is not, you will receive an error when you attempt to add the event.
 
 Using The ``auditstream-sse`` View
 ==================================
@@ -89,3 +91,7 @@ The executing user will need to possess the ``sdi.view-auditstream`` permission
 against the context on which the view is invoked.  Each event payload will
 contain detailed information about the audit event as a string which represents
 a JSON dictionary.
+
+See the ``acl.pt`` template in the ``substanced/sdi/views/templates`` directory
+of Substance D to see a "real-world" usage of this feature.
+
