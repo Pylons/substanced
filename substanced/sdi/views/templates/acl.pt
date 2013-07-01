@@ -64,16 +64,20 @@
            <input type="hidden" name="index" value="${repeat['ace'].index}" />
 
             <button
-                tal:attributes="disabled repeat['ace'].start or None"
-                name="form.move_up"
-                type="submit">
+               tal:define="disabled repeat['ace'].start"
+               tal:attributes="disabled disabled or None;
+                               style disabled and 'opacity:0.4' or None"
+               name="form.move_up"
+               type="submit">
               <i class="icon-arrow-up"> </i>
             </button>
 
             <button
-                tal:attributes="disabled repeat['ace'].end or None"
-                name="form.move_down"
-                type="submit">
+               tal:define="disabled repeat['ace'].end"
+               tal:attributes="disabled disabled or None;
+                               style disabled and 'opacity:0.4' or None"
+               name="form.move_down"
+               type="submit">
               <i class="icon-arrow-down"> </i>
             </button>
 
@@ -100,7 +104,7 @@
 
  </metal:local_acl>
 
- <h2> Add ACL </h2>
+ <h2> Add ACE </h2>
 
  <form action="@@acl_edit" method="post">
  <table class="table">
@@ -161,14 +165,15 @@
      <h2> Inherit ACL </h2>
      <div class="row">
       <form action="@@acl_edit" method="post">
-        <div class="span2">
+
+        <div style="margin-left: 40px;">
+
+        <div class="span3">
           <label class="radio inline">
             <input type="radio" id="inherit_enabled" name="inherit" value="enabled"
                    tal:attributes="checked inheriting == 'enabled'"/> Enabled
           </label>
-
           <label class="radio inline">
-
             <input type="radio" id="inherit_disabled" name="inherit"
                    value="disabled"
                    tal:attributes="checked inheriting == 'disabled'"/> Disabled
@@ -176,10 +181,10 @@
         </div>
 
         <div class="span2">
-
          <input type="submit" name="form.inherit" value="Update" />
          <input type="hidden" name="csrf_token" 
               value="${request.session.get_csrf_token()}"/>
+        </div>
 
         </div>
 

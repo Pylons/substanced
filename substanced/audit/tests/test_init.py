@@ -147,13 +147,13 @@ class LayerTests(unittest.TestCase):
     def test_ctor_defaults(self):
         layer = self._makeOne()
         self.assertEqual(layer._max_length, 100)
-        self.failUnless(type(layer._stack) is list)
+        self.assertTrue(type(layer._stack) is list)
         self.assertEqual(layer._generation, 0)
 
     def test_ctor_w_positional(self):
         layer = self._makeOne(4, 14)
         self.assertEqual(layer._max_length, 4)
-        self.failUnless(type(layer._stack) is list)
+        self.assertTrue(type(layer._stack) is list)
         self.assertEqual(layer._generation, 14)
 
     def test_ctor_w_max_length(self):
