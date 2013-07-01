@@ -601,7 +601,10 @@ class IndexActionTM(threading.local):
         self.registered = False
         self.actions = []
         if self.index is not None:
-            self.index.clear_action_tm()
+            # NB: dont make setting _p_action_tm a method of the index,
+            # it has a side effect of calling setstate at times when
+            # the object state cannot be obtained
+            self.index._p_action_tm = None
             self.index = None # break circref
 
     tpc_abort = abort = tpc_finish

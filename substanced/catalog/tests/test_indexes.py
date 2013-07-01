@@ -58,12 +58,6 @@ class TestSDIndex(unittest.TestCase):
         self.assertEqual(result.index, inst)
         self.assertTrue(result.registered)
 
-    def test_clear_action_tm(self):
-        inst = self._makeOne()
-        inst._p_action_tm = True
-        inst.clear_action_tm()
-        self.assertEqual(inst._p_action_tm, None)
-
     def test_flush(self):
         inst = self._makeOne()
         tm = DummyActionTM(None)
