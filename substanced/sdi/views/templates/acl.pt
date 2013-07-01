@@ -104,7 +104,7 @@
 
  </metal:local_acl>
 
- <h2> Add ACL </h2>
+ <h2> Add ACE </h2>
 
  <form action="@@acl_edit" method="post">
  <table class="table">
