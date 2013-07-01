@@ -74,9 +74,6 @@ class SDIndex(object):
             action_tm.register()
         return action_tm
 
-    def clear_action_tm(self):
-        self._p_action_tm = None
-
     def flush(self, all=True):
         # This method will be called before query execution for every index
         # involved in a query.  It must be callable more than once without

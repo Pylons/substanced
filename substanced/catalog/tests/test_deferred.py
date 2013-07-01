@@ -927,7 +927,7 @@ class TestIndexActionTM(unittest.TestCase):
         index = DummyIndex()
         inst = self._makeOne(index)
         self.assertEqual(inst.tpc_finish(None), None)
-        self.assertTrue(index.cleared)
+        self.assertEqual(index._p_action_tm, None)
         self.assertEqual(inst.index, None)
         self.assertFalse(inst.registered)
         self.assertEqual(inst.actions, [])
@@ -1109,7 +1109,6 @@ class DummyIndexActionTM(object):
 
 class DummyIndex(object):
     __oid__ = 1
-    cleared = False
     oid = None
     def index_doc(self, oid, resource):
         self.oid = oid
@@ -1119,9 +1118,6 @@ class DummyIndex(object):
 
     def unindex_doc(self, oid):
         self.oid = oid
-
-    def clear_action_tm(self):
-        self.cleared = True
 
 class DummyLogger(object):
     def __init__(self):
