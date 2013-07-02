@@ -213,7 +213,7 @@ class TestUndoViews(unittest.TestCase):
             return conn
         conn._db.undo_exc = POSError
         inst.get_connection = get_connection
-        def unauthenticated_userid(req):
+        def authenticated_userid(req):
             self.assertEqual(req, request)
             return 1
         post = testing.DummyResource()
@@ -226,7 +226,7 @@ class TestUndoViews(unittest.TestCase):
         post.getall = getall
         request.POST = post
         request.sdiapi = DummySDIAPI()
-        inst.unauthenticated_userid = unauthenticated_userid
+        inst.authenticated_userid = authenticated_userid
         txn = DummyTransaction()
         inst.transaction = txn
         result = inst.undo_multiple()
