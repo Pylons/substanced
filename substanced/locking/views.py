@@ -14,7 +14,6 @@ from . import (
     LockService,
     )
 
-
 @mgmt_view(
     name='add_lock_service',
     tab_condition=False,

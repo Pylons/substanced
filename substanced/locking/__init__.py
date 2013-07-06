@@ -66,9 +66,10 @@ class LockOwnerSchema(colander.SchemaNode):
         context = self.bindings['context']
         principals = find_service(context, 'principals')
         if principals is None:
-            return () # fbo dump/load
-        values = [(get_oid(group), name) for name, group in 
-                  principals['users'].items()]
+            values = [] # fbo dump/load
+        else:
+            values = [(get_oid(group), name) for name, group in 
+                      principals['users'].items()]
         return deform_bootstrap.widget.ChosenSingleWidget(values=values)
 
     def validator(self, node, value):
@@ -156,6 +157,8 @@ class Lock(Persistent):
 
     def __init__(self, timeout=3600, last_refresh=None):
         self.timeout = timeout
+        # last_refresh must be a datetime.datetime object with a UTC tzinfo,
+        # if provided
         if last_refresh is None:
             last_refresh = now()
         self.last_refresh = last_refresh
@@ -201,11 +204,11 @@ class LockService(Folder, _AutoNamingFolder):
         lock_id = str(uuid.uuid4())
         return lock_id
 
-    def _get_ownerid(self, owner_or_ownerid, objectmap):
+    def _get_ownerid(self, owner_or_ownerid):
         ownerid = get_oid(owner_or_ownerid, None)
         if ownerid is None:
             ownerid = owner_or_ownerid
-        if not isinstance(int, ownerid):
+        if not isinstance(ownerid, int):
             raise ValueError(
                 'Bad value for owner_or_ownerid %r' % owner_or_ownerid
                 )
@@ -225,7 +228,7 @@ class LockService(Folder, _AutoNamingFolder):
         if when is None:
             when = now()
         objectmap = find_objectmap(self)
-        ownerid = self._get_ownerid(owner_or_ownerid, objectmap)
+        ownerid = self._get_ownerid(owner_or_ownerid)
         locks = objectmap.targets(resource, locktype)
         for lock in locks:
             if lock.is_valid():
@@ -254,7 +257,7 @@ class LockService(Folder, _AutoNamingFolder):
         # NB: callers should ensure that the user has 'sdi.lock' permission
         # on the resource before calling
         objectmap = find_objectmap(self)
-        ownerid = self._get_ownerid(owner_or_ownerid, objectmap)
+        ownerid = self._get_ownerid(owner_or_ownerid)
         locks = objectmap.targets(resource, locktype)
         for lock in locks:
             if lock.ownerid == ownerid:
