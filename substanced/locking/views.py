@@ -80,7 +80,7 @@ class LockServiceFolderContents(FolderContents):
         expires = getattr(subobject, 'expires', None)
         if expires is not None:
             expires = expires()
-            expires = expires.strftime('%Y-%m-%d %H:%M:%S UTC')
+            expires = expires.strftime('%Y-%m-%d %H:%M:%S')
         
         columns.extend((
             {'name':'Owner',
@@ -89,7 +89,7 @@ class LockServiceFolderContents(FolderContents):
             {'name':'Resource',
              'value':resource,
              },
-            {'name':'Expires',
+            {'name':'Expires (UTC)',
              'value':expires,
              },
             ))

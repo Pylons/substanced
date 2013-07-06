@@ -100,7 +100,7 @@ class LockResourceSchema(colander.SchemaNode):
 
     def validator(self, node, value):
         if value is None:
-            raise colander.Invalid(node, 'Unknown path')
+            raise colander.Invalid(node, 'Resource not found')
         if value is False:
             raise colander.Invalid(
                 node,
