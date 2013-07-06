@@ -63,7 +63,8 @@ class UnlockError(LockingError):
     """ Raised when an unlock attempt cannot be performed due to the owner
     suplied in the unlock request not matching the owner of the lock.
     Instances of this class have a ``lock`` attribute which is a
-    :class:`substanced.locking.Lock` object, representing the conflicting lock.
+    :class:`substanced.locking.Lock` object, representing the conflicting lock
+    or ``None`` if there was no lock to unlock.
     """
 
 def now():
