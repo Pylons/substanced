@@ -6,6 +6,8 @@ implementations.  """
 import datetime
 import uuid
 
+from zope.interface import implementer
+
 from persistent import Persistent
 
 import colander
@@ -20,6 +22,11 @@ from pyramid.traversal import (
     )
 from pyramid.threadlocal import get_current_registry
 
+from substanced.interfaces import (
+    ILockService,
+    WriteLock,
+    UserToLock,
+    )
 from substanced.content import (
     content,
     service
@@ -28,7 +35,6 @@ from substanced.folder import (
     _AutoNamingFolder,
     Folder,
     )
-from substanced.interfaces import ReferenceType
 from substanced.objectmap import (
     reference_target_property,
     reference_targetid_property,
@@ -41,14 +47,6 @@ from substanced.util import (
     )
 from substanced.schema import Schema
 
-class WriteLock(ReferenceType):
-    """ Represents a DAV-style writelock.  It's a Substance D reference type
-    from resource object to lock object"""
-
-class UserToLock(ReferenceType):
-    """ A reference type which represents the relationship from a user to
-    his set of locks """
-    
 class LockingError(Exception):
     def __init__(self, lock):
         self.lock = lock
@@ -217,6 +215,7 @@ class Lock(Persistent):
     service_name='locks',
     add_view='add_lock_service',
     )
+@implementer(ILockService)
 class LockService(Folder, _AutoNamingFolder):
     __sdi_addable__ = ('Lock',)
 
@@ -291,7 +290,7 @@ def _get_lock_service(resource):
         registry = get_current_registry()
         lockservice = registry.content.create('Lock Service')
         root = find_root(resource)
-        root.add_service('Lock Service', lockservice)
+        root.add_service('locks', lockservice)
     return lockservice
     
 def lock_resource(

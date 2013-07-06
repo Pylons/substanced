@@ -333,10 +333,6 @@ Other Helpers
 
 .. autoclass:: UnlockError
 
-.. autoclass:: WriteLock
-
-.. autoclass:: UserToLock
-
 .. autofunction:: lock_resource
 
 .. autofunction:: unlock_resource

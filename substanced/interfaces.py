@@ -759,3 +759,49 @@ class MODE_DEFERRED(Interface):
     :attr:`~substanced.interfaces.MODE_ATCOMMIT`."""
 
 EARLIEST_DATE = datetime.datetime(1970, 1, 1)
+
+class WriteLock(ReferenceType):
+    """ Represents a DAV-style writelock.  It's a Substance D reference type
+    from resource object to lock object"""
+
+class UserToLock(ReferenceType):
+    """ A reference type which represents the relationship from a user to
+    his set of locks """
+
+class ILockService(IAutoNamingFolder):
+    def lock(resource, owner_or_ownerid, timeout=None, locktype=WriteLock):
+        """
+
+        Lock a resource using the lock service.  If the resource is already
+        locked by the owner supplied as owner_or_ownerid, calling this method
+        will refresh the lock.  If the resource is not already locked by
+        another user, calling this method will create a new lock.  If the
+        resource is already locked by a different user, a
+        :class:`substanced.locking.LockError` will be raised.
+
+        .. warning::
+
+            Callers should assert that the owner has the ``sdi.lock``
+            permission against the resource before calling this function to
+            ensure that a user can't lock a resource he is not permitted to.
+
+       """
+
+    def unlock(resource, owner_or_ownerid):
+        """
+
+        Unlock a resource using the lock service.  If the resource is already
+        locked by a user other than the owner supplied as owner_or_ownerid or
+        the resource isn't already locked with this lock type, calling this
+        method will raise a :class:`substanced.locking.LockError` exception.
+        Otherwise the lock will be removed.
+
+        .. warning::
+
+           Callers should assert that the owner has the ``sdi.lock`` permission
+           against the resource before calling this function to ensure that a
+           user can't lock a resource he is not permitted to.
+       """
+        
+    
+    

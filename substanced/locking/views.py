@@ -2,6 +2,10 @@ from pyramid.traversal import resource_path
 
 from pyramid.httpexceptions import HTTPFound
 
+from substanced.interfaces import (
+    ILockService,
+    IFolder,
+    )
 from substanced.form import FormView
 from substanced.sdi import mgmt_view
 from substanced.sdi.views.folder import (
@@ -9,12 +13,10 @@ from substanced.sdi.views.folder import (
     folder_contents_views,
     )
 
-from . import (
-    LockSchema,
-    LockService,
-    )
+from . import LockSchema
 
 @mgmt_view(
+    context=IFolder,
     name='add_lock_service',
     tab_condition=False,
     permission='sdi.add-services',
@@ -25,7 +27,7 @@ def add_lock_service(context, request):
     return HTTPFound(location=request.sdiapi.mgmt_path(context))
 
 @mgmt_view(
-    content_type='Lock Service',
+    context=ILockService,
     name='add_lock',
     permission='sdi.add-content', 
     renderer='substanced.sdi.views:templates/form.pt',
@@ -51,7 +53,7 @@ class AddLockView(FormView):
             )
 
 @folder_contents_views(
-    context=LockService,
+    context=ILockService,
     )
 class LockServiceFolderContents(FolderContents):
     def get_buttons(self):
@@ -106,10 +108,10 @@ class LockServiceFolderContents(FolderContents):
             item.commit_suicide()
         return self.get_redirect_response()
     
-def includeme(config):
+def includeme(config): # pragma: no cover
     config.add_mgmt_view(
         LockServiceFolderContents,
-        context=LockService,
+        context=ILockService,
         name='contents',
         permission='sdi.manage-content',
         request_method='POST',
