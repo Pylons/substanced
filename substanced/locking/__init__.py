@@ -196,6 +196,16 @@ class LockService(Folder, _AutoNamingFolder):
         lock_id = str(uuid.uuid4())
         return lock_id
 
+    def _get_ownerid(self, owner_or_ownerid, objectmap):
+        ownerid = get_oid(owner_or_ownerid, None)
+        if ownerid is None:
+            ownerid = owner_or_ownerid
+        if not isinstance(int, ownerid):
+            raise ValueError(
+                'Bad value for owner_or_ownerid %r' % owner_or_ownerid
+                )
+        return ownerid
+
     def lock(
         self,
         resource,
@@ -210,13 +220,7 @@ class LockService(Folder, _AutoNamingFolder):
         if when is None:
             when = datetime.datetime.utcnow()
         objectmap = find_objectmap(self)
-        ownerid = get_oid(owner_or_ownerid, None)
-        if ownerid is None:
-            ownerid = owner_or_ownerid
-        if not isinstance(int, ownerid):
-            raise ValueError(
-                'Bad value for owner_or_ownerid %r' % owner_or_ownerid
-                )
+        ownerid = self._get_ownerid(owner_or_ownerid, objectmap)
         locks = objectmap.targets(resource, locktype)
         for lock in locks:
             if lock.is_valid():
@@ -238,13 +242,14 @@ class LockService(Folder, _AutoNamingFolder):
     def unlock(
         self,
         resource,
-        ownerid,
+        owner_or_ownerid,
         locktype=WriteLock,
         ):
 
         # NB: callers should ensure that the user has 'sdi.lock' permission
         # on the resource before calling
         objectmap = find_objectmap(self)
+        ownerid = self._get_ownerid(owner_or_ownerid, objectmap)
         locks = objectmap.targets(resource, locktype)
         for lock in locks:
             if lock.ownerid == ownerid:
@@ -263,21 +268,21 @@ def _get_lock_service(resource):
     
 def lock_resource(
     resource,
-    ownerid,
+    owner_or_ownerid,
     timeout=None,
     when=None,
     locktype=WriteLock,
     ):
     locks = _get_lock_service(resource)
-    return locks.lock(resource, ownerid, timeout, locktype=locktype)
+    return locks.lock(resource, owner_or_ownerid, timeout, locktype=locktype)
 
 def unlock_resource(
     resource,
-    ownerid,
+    owner_or_ownerid,
     locktype=WriteLock,
     ):
     locks = _get_lock_service(resource)
-    return locks.unlock(resource, ownerid, locktype=locktype)
+    return locks.unlock(resource, owner_or_ownerid, locktype=locktype)
 
 def includeme(config):
     config.add_permission('sdi.lock')
