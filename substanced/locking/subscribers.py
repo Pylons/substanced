@@ -9,7 +9,7 @@ from . import (
     )
 
 @subscribe_will_be_removed()
-def object_will_be_removed(event):
+def delete_locks(event):
     """ Remove all lock objects associated with an object and/or user when
     it/he is removed"""
     if event.moving is not None: # it's not really being removed
