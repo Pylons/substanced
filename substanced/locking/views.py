@@ -56,7 +56,7 @@ class AddLockView(FormView):
     )
 class LockServiceFolderContents(FolderContents):
     def get_buttons(self):
-        button_groups = self.get_default_buttons()
+        button_groups = self.get_default_buttons()[-1:]
         new_buttons = [
             {'id':'delete_expired',
              'name':'form.delete_expired',
