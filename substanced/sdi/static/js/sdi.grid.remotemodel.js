@@ -247,9 +247,10 @@
              // Delete the data
             _clearData();
             abortRequest();
-            // let the viewport load records currently visible
-            grid.invalidateAllRows();
-            grid.updateRowCount();
+            // XXX updateRowCount not really needed here, since we will always
+            // fetch after this, which will do the updateRowCount. Doing
+            // it here though will force to loose the scroll position and move to top.
+            // Similarly, we don't need to bother to invalidate the rows.
             grid.onViewportChanged.notify({scrollToTop: scrollToTop});
         }
 

@@ -21,19 +21,7 @@
               plugin = gridWrapper.sdiRemoteModelPlugin
               if (!plugin.hasActiveRequest()) {
                   // only do one request at a time
-                  var grid = gridWrapper.grid;
-                  // we should probably use plugin.clearData instead of 
-                  // putting all this code here but it resets the scrollbar 
-                  // to the top (as a side effect of calling updateRowCount,
-                  // for unknown reasons).
-                  data = grid.getData();
-                  $.each(data, function(key, value) {
-                      delete data[key];
-                  });
-                  // tell on-demand loading to fetch
-                  data.length = null;
-                  grid.invalidateAllRows();
-                  grid.onViewportChanged.notify({scrollToTop: false});
+                  plugin.clearData();
               }
           }
 
