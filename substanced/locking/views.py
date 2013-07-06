@@ -55,7 +55,6 @@ class AddLockView(FormView):
     context=LockService,
     )
 class LockServiceFolderContents(FolderContents):
-    show_contributor_filter = True
     def get_buttons(self):
         button_groups = self.get_default_buttons()
         new_buttons = [
