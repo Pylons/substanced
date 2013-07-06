@@ -73,6 +73,7 @@ Narrative Documentation
    evolution
    folder_contents
    audit
+   locking
    configuration
    statistics
    retail
