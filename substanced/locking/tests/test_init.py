@@ -123,6 +123,18 @@ class TestLockResourceSchema(unittest.TestCase):
         result = inst.preparer('/abc/def')
         self.assertEqual(result, False)
 
+    def test_preparer_value_is_colander_null(self):
+        import colander
+        self.config.testing_securitypolicy(permissive=True)
+        inst = self._makeOne()
+        resource = testing.DummyResource()
+        resource.__objectmap__ = DummyObjectMap(resource)
+        inst.bindings = {}
+        inst.bindings['context'] = resource
+        inst.bindings['request'] = testing.DummyRequest()
+        result = inst.preparer(colander.null)
+        self.assertEqual(result, colander.null)
+        
     def test_validator_value_None(self):
         from colander import Invalid
         inst = self._makeOne()
@@ -255,6 +267,12 @@ class TestLock(unittest.TestCase):
         self.assertFalse('foo' in parent)
 
 class TestLockService(unittest.TestCase):
+    def setUp(self):
+        self.config = testing.setUp()
+
+    def tearDown(self):
+        testing.tearDown()
+        
     def _makeOne(self):
         from .. import LockService
         return LockService()
@@ -279,6 +297,175 @@ class TestLockService(unittest.TestCase):
         inst = self._makeOne()
         self.assertRaises(ValueError, inst._get_ownerid, 'bogus')
 
+    def test_lock_without_existing_lock(self):
+        inst = self._makeOne()
+        lock = testing.DummyResource()
+        resource = testing.DummyResource()
+        self.config.registry.content = DummyContentRegistry(lock)
+        inst.__objectmap__ = DummyObjectMap([])
+        result = inst.lock(resource, 1)
+        self.assertEqual(result, lock)
+        self.assertEqual(result.ownerid, 1)
+        self.assertEqual(result.resource, resource)
+
+    def test_lock_with_invalid_existing_lock(self):
+        inst = self._makeOne()
+        lock = testing.DummyResource()
+        def commit_suicide():
+            lock.suicided = True
+        lock.commit_suicide = commit_suicide
+        lock.is_valid = lambda: False
+        resource = testing.DummyResource()
+        inst.__objectmap__ = DummyObjectMap([lock])
+        self.config.registry.content = DummyContentRegistry(lock)
+        result = inst.lock(resource, 1)
+        self.assertEqual(result, lock)
+        self.assertEqual(result.ownerid, 1)
+        self.assertEqual(result.resource, resource)
+        self.assertTrue(lock.suicided)
+
+    def test_lock_with_valid_existing_lock_different_userid(self):
+        from substanced.locking import LockError
+        inst = self._makeOne()
+        existing_lock = testing.DummyResource()
+        existing_lock.ownerid = 2
+        existing_lock.is_valid = lambda: True
+        resource = testing.DummyResource()
+        inst.__objectmap__ = DummyObjectMap([existing_lock])
+        self.assertRaises(LockError, inst.lock, resource, 1)
+
+    def test_lock_with_valid_existing_lock_same_userid(self):
+        inst = self._makeOne()
+        lock = testing.DummyResource()
+        lock.ownerid = 1
+        lock.is_valid = lambda: True
+        def refresh(timeout, when):
+            lock.timeout = timeout
+            lock.when = when
+        lock.refresh = refresh
+        resource = testing.DummyResource()
+        inst.__objectmap__ = DummyObjectMap([lock])
+        result = inst.lock(resource, 1, timeout=3600)
+        self.assertEqual(result.timeout, 3600)
+        self.assertTrue(result.when)
+
+    def test_unlock_without_existing_lock(self):
+        from substanced.locking import UnlockError
+        inst = self._makeOne()
+        resource = testing.DummyResource()
+        inst.__objectmap__ = DummyObjectMap([])
+        self.assertRaises(UnlockError, inst.unlock, resource, 1)
+
+    def test_unlock_with_invalid_existing_lock(self):
+        inst = self._makeOne()
+        lock = testing.DummyResource()
+        lock.ownerid = 1
+        lock.is_valid = lambda: False
+        def commit_suicide():
+            lock.suicided = True
+        lock.commit_suicide = commit_suicide
+        resource = testing.DummyResource()
+        inst.__objectmap__ = DummyObjectMap([lock])
+        inst.unlock(resource, 1)
+        self.assertTrue(lock.suicided)
+
+    def test_unlock_with_valid_existing_lock_same_userid(self):
+        inst = self._makeOne()
+        lock = testing.DummyResource()
+        lock.ownerid = 1
+        lock.is_valid = lambda: True
+        def commit_suicide():
+            lock.suicided = True
+        lock.commit_suicide = commit_suicide
+        resource = testing.DummyResource()
+        inst.__objectmap__ = DummyObjectMap([lock])
+        inst.unlock(resource, 1)
+        self.assertTrue(lock.suicided)
+
+class Test_lock_resource(unittest.TestCase):
+    def setUp(self):
+        self.config = testing.setUp()
+
+    def tearDown(self):
+        testing.tearDown()
+        
+    def _callFUT(self, resource, owner_or_ownerid, timeout=None):
+        from substanced.locking import lock_resource
+        return lock_resource(resource, owner_or_ownerid, timeout=timeout)
+
+    def test_it_with_existing_lock_service(self):
+        from substanced.locking import WriteLock
+        from zope.interface import alsoProvides
+        from substanced.interfaces import IFolder
+        resource = testing.DummyResource()
+        alsoProvides(resource, IFolder)
+        lockservice = DummyLockService()
+        resource['locks'] = lockservice
+        result = self._callFUT(resource, 1, 3600)
+        self.assertEqual(result, True)
+        self.assertEqual(lockservice.resource, resource)
+        self.assertEqual(lockservice.owner, 1)
+        self.assertEqual(lockservice.timeout, 3600)
+        self.assertEqual(lockservice.locktype, WriteLock)
+
+    def test_it_with_missing_lock_service(self):
+        from substanced.locking import WriteLock
+        from zope.interface import alsoProvides
+        from substanced.interfaces import IFolder
+        lockservice = DummyLockService()
+        self.config.registry.content = DummyContentRegistry(lockservice)
+        resource = testing.DummyResource()
+        resource.add_service = resource.__setitem__
+        alsoProvides(resource, IFolder)
+        result = self._callFUT(resource, 1, 3600)
+        self.assertEqual(result, True)
+        self.assertEqual(resource['Lock Service'], lockservice)
+        self.assertEqual(lockservice.resource, resource)
+        self.assertEqual(lockservice.owner, 1)
+        self.assertEqual(lockservice.timeout, 3600)
+        self.assertEqual(lockservice.locktype, WriteLock)
+
+class Test_unlock_resource(unittest.TestCase):
+    def setUp(self):
+        self.config = testing.setUp()
+
+    def tearDown(self):
+        testing.tearDown()
+        
+    def _callFUT(self, resource, owner_or_ownerid):
+        from substanced.locking import unlock_resource
+        return unlock_resource(resource, owner_or_ownerid)
+
+    def test_it_with_existing_lock_service(self):
+        from substanced.locking import WriteLock
+        from zope.interface import alsoProvides
+        from substanced.interfaces import IFolder
+        resource = testing.DummyResource()
+        alsoProvides(resource, IFolder)
+        lockservice = DummyLockService()
+        resource['locks'] = lockservice
+        result = self._callFUT(resource, 1)
+        self.assertEqual(result, True)
+        self.assertEqual(lockservice.resource, resource)
+        self.assertEqual(lockservice.owner, 1)
+        self.assertEqual(lockservice.locktype, WriteLock)
+
+    def test_it_with_missing_lock_service(self):
+        from substanced.locking import WriteLock
+        from zope.interface import alsoProvides
+        from substanced.interfaces import IFolder
+        lockservice = DummyLockService()
+        self.config.registry.content = DummyContentRegistry(lockservice)
+        resource = testing.DummyResource()
+        resource.add_service = resource.__setitem__
+        alsoProvides(resource, IFolder)
+        result = self._callFUT(resource, 1)
+        self.assertEqual(result, True)
+        self.assertEqual(resource['Lock Service'], lockservice)
+        self.assertEqual(lockservice.resource, resource)
+        self.assertEqual(lockservice.owner, 1)
+        self.assertEqual(lockservice.locktype, WriteLock)
+        
 class DummyObjectMap(object):
     def __init__(self, result, raises=None):
         self.result = result
@@ -292,9 +479,31 @@ class DummyObjectMap(object):
         if self.raises is not None:
             raise self.raises
         return self.result
+    def targets(self, resource, type):
+        return self.result
+    def add(self, *arg, **kw):
+        self.added = True
+
+class DummyContentRegistry(object):
+    def __init__(self, result):
+        self.result = result
+
+    def create(self, *arg, **kw):
+        return self.result
         
 class DummyUsers(object):
     def items(self):
         ob = testing.DummyResource()
         ob.__oid__ = 1
         yield 'name', ob
+
+class DummyLockService(object):
+    __is_service__ = True
+    def lock(self, resource, owner, timeout=None, locktype=None):
+        self.resource = resource
+        self.owner = owner
+        self.timeout = timeout
+        self.locktype = locktype
+        return True
+
+    unlock = lock

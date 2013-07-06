@@ -239,7 +239,6 @@ class LockService(Folder, _AutoNamingFolder):
         owner_or_ownerid,
         timeout=None,
         locktype=WriteLock,
-        when=None, # for testing
         ):
         # NB: callers should ensure that the user has 'sdi.lock' permission
         # on the resource before calling
@@ -250,8 +249,7 @@ class LockService(Folder, _AutoNamingFolder):
         for lock in locks:
             if lock.is_valid():
                 if lock.ownerid == ownerid:
-                    if when is None: # pragma: no cover
-                        when = now()
+                    when = now()
                     lock.refresh(timeout, when)
                     return lock
                 else:
@@ -278,17 +276,19 @@ class LockService(Folder, _AutoNamingFolder):
         objectmap = find_objectmap(self)
         ownerid = self._get_ownerid(owner_or_ownerid)
         locks = objectmap.targets(resource, locktype)
+        lock = None
         for lock in locks:
-            if lock.ownerid == ownerid:
+            if (not lock.is_valid()) or (lock.ownerid == ownerid):
                 lock.commit_suicide()
                 break
-        else:
+        else: # nobreak
             raise UnlockError(lock)
 
 def _get_lock_service(resource):
     lockservice = find_service(resource, 'locks')
     if lockservice is None:
-        lockservice = LockService()
+        registry = get_current_registry()
+        lockservice = registry.content.create('Lock Service')
         root = find_root(resource)
         root.add_service('Lock Service', lockservice)
     return lockservice
@@ -298,7 +298,6 @@ def lock_resource(
     owner_or_ownerid,
     timeout=None,
     locktype=WriteLock,
-    when=None, # for testing
     ):
     """ Lock a resource using the lock service.  If the resource is already
     locked by the owner supplied as owner_or_ownerid, calling this function
@@ -321,7 +320,6 @@ def lock_resource(
         owner_or_ownerid,
         timeout=timeout,
         locktype=locktype,
-        when=when
         )
 
 def unlock_resource(
@@ -348,7 +346,7 @@ def unlock_resource(
     locks = _get_lock_service(resource)
     return locks.unlock(resource, owner_or_ownerid, locktype=locktype)
 
-def includeme(config):
+def includeme(config): # pragma: no cover
     config.add_permission('sdi.lock')
     config.include('.views')
     
