@@ -286,7 +286,6 @@
                 });
             }
 
-            // XXX This is just to help debugging, with no real function here.
             grid.onSelectedRowsChanged.subscribe(function (evt) {
                 var selRows = grid.getSelectedRows();
                 var data = grid.getData();
