@@ -68,6 +68,31 @@ if one does not already exist.
    the resource before calling :func:`~substanced.locking.unlock_resource` to
    ensure that a user can't lock a resource he is not permitted to.
 
+Discovering Existing Locks
+==========================
+
+To discover any existing locks for a resource:
+
+.. code-block:: python
+
+   from substanced.locking import discover_resource_locks
+
+   locks = discover_resource_locks(someresource)
+   # "locks" will be a sequence
+
+The :func:`substanced.locking.discover_resource_locks` function will return a
+sequence of :class:`substanced.locking.Lock` objects related to the resource
+for the lock type provided to the function.  By default, only valid locks are
+returned.  Invalid locks for the resource may exist, but they are not returned
+unless the ``include_invalid`` argument passed to
+::func:`~substanced.locking.discover_resource_locks` is ``True``.
+
+Under normal circumstances, the length of the sequence returned will be either
+0 (if there are no locks) or 1 (if there is any lock).  In some special
+circumstances, however, when the :class:`substanced.locking.lock_resource` API
+is not used to create locks, there may be more than one lock related to a
+resource of the same type.
+
 Viewing The Lock Service
 ========================
 
@@ -76,4 +101,5 @@ The lock service is an object named ``locks`` in the Substance D root.
 
 You can use the SDI UI of this locks service to delete and edit existing locks.
 It's a good idea to periodically use the "Delete Expired" button in this UI to
-clear out existing expired locks that were not cleaned up by clients.
+clear out any existing expired locks that were orphaned by buggy or interrupted
+clients.

@@ -207,6 +207,7 @@ class Lock(Persistent):
         return expires >= when
 
     def commit_suicide(self):
+        """ Remove the lock from the lock service. """
         del self.__parent__[self.__name__]
         
 @service(
@@ -284,6 +285,17 @@ class LockService(Folder, _AutoNamingFolder):
         else: # nobreak
             raise UnlockError(lock)
 
+    def discover(self, resource, include_invalid=False, locktype=WriteLock):
+        objectmap = find_objectmap(self)
+        locks = objectmap.targets(resource, locktype)
+        valid = []
+        for lock in locks:
+            if include_invalid:
+                valid.append(lock)
+            elif lock.is_valid():
+                valid.append(lock)
+        return valid
+
 def _get_lock_service(resource):
     lockservice = find_service(resource, 'locks')
     if lockservice is None:
@@ -345,6 +357,29 @@ def unlock_resource(
 
     locks = _get_lock_service(resource)
     return locks.unlock(resource, owner_or_ownerid, locktype=locktype)
+
+def discover_resource_locks(
+    resource,
+    include_invalid=False,
+    locktype=WriteLock,
+    ):
+    """ Return a sequence of :class:`substanced.locking.Lock` objects related
+    to the resource for the given lock type.  By default, only valid locks are
+    returned.  Invalid locks for the resource may exist, but they are not
+    returned unless ``include_invalid`` is ``True``.
+
+    Under normal circumstances, the length of the sequence returned will be
+    either 0 (if there are no locks) or 1 (if there is any lock).  In some
+    special circumstances, however, when the
+    :class:`substanced.locking.lock_resource` API is not used to create locks,
+    there may be more than one lock related to a resource of the same type.
+    """
+    locks = _get_lock_service(resource)
+    return locks.discover(
+        resource,
+        include_invalid=include_invalid,
+        locktype=locktype
+        )
 
 def includeme(config): # pragma: no cover
     config.add_permission('sdi.lock')
