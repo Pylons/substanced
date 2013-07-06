@@ -195,7 +195,6 @@
                     opacity: 1
                 });
                 grid.updateHeader();
-
             });
 
             sdiRemoteModelPlugin.onAjaxError.subscribe(function (evt, args) {
@@ -245,7 +244,12 @@
                 }
             };
 
-
+            grid.onSelectedRowsChanged.subscribe(function (e, args) {
+                // Need to re-hide the globak checkbox also,
+                // because changing the selection causes it re-instantiated.
+                grid.updateHeader();
+            });
+            
             if (isReorderable) {
 
                 //moveRowsPlugin.onBeforeMoveRows.subscribe(function (e, data) {
