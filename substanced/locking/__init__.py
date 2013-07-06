@@ -302,10 +302,11 @@ def lock_resource(
     ):
     """ Lock a resource using the lock service.  If the resource is already
     locked by the owner supplied as owner_or_ownerid, calling this function
-    will refresh the lock.  If the resource is already locked by a different
-    user, a :class:`substanced.locking.LockError` will be raised.  This
-    function has the side effect of creating a Lock Service in the Substance D
-    root if one does not already exist. """
+    will refresh the lock.  If the resource is not already locked by another
+    user, calling this function will create a new lock.  If the resource is
+    already locked by a different user, a :class:`substanced.locking.LockError`
+    will be raised.  This function has the side effect of creating a Lock
+    Service in the Substance D root if one does not already exist."""
     locks = _get_lock_service(resource)
     return locks.lock(
         resource,
