@@ -701,11 +701,11 @@ def reference_source_property(reftype):
        # definition
 
        from substanced.content import content
-       from substanced.objectmap import reference_property
+       from substanced.objectmap import reference_source_property
 
        @content('Profile')
        class Profile(Persistent):
-           user = reference_property('profile-to-user')
+           user = reference_source_property('profile-to-user')
 
        # subsequent usage of the property in a view...
 
