@@ -64,6 +64,11 @@ default_resources = {
                    'deform_bootstrap:static/jquery_chosen/chosen.css')
             },
         },
+    'modernizr': {
+        None:{
+            'js':('deform:static/scripts/modernizr.custom.input-types-and-atts.js',),
+            },
+        },
     }
 
 # NB: don't depend on deform_bootstrap.css, it uses less, and its .less
