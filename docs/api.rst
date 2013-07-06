@@ -321,6 +321,26 @@ Other Helpers
    :members:
 
 
+:mod:`substanced.locking` API
+-----------------------------
+
+.. automodule:: substanced.locking
+
+.. autoclass:: Lock
+   :members:
+
+.. autoclass:: LockError
+
+.. autoclass:: UnlockError
+
+.. autoclass:: WriteLock
+
+.. autoclass:: UserToLock
+
+.. autofunction:: lock_resource
+
+.. autofunction:: unlock_resource
+
 :mod:`substanced.objectmap` API
 --------------------------------
 

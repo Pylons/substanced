@@ -1,3 +1,8 @@
+""" Advisory exclusive DAV-style locks for content objects.  When a resource is
+locked, it is presumed that its SDI UI will display a warning to users who do
+not hold the lock.  The locking service can also be used by add-ons such as DAV
+implementations.  """
+
 import datetime
 import uuid
 
@@ -37,8 +42,8 @@ from substanced.util import (
 from substanced.schema import Schema
 
 class WriteLock(ReferenceType):
-    """ Represents a DAV-style writelock.  It's a reference type from resource
-    object to lock object """
+    """ Represents a DAV-style writelock.  It's a Substance D reference type
+    from resource object to lock object"""
 
 class UserToLock(ReferenceType):
     """ A reference type which represents the relationship from a user to
@@ -49,10 +54,17 @@ class LockingError(Exception):
         self.lock = lock
 
 class LockError(LockingError):
-    pass
+    """ Raised when a lock attempt cannot be performed due to an existing
+    conflicting lock.  Instances of this class have a ``lock`` attribute which
+    is a :class:`substanced.locking.Lock` object, representing the conflicting
+    lock. """
 
 class UnlockError(LockingError):
-    pass
+    """ Raised when an unlock attempt cannot be performed due to the owner
+    suplied in the unlock request not matching the owner of the lock.
+    Instances of this class have a ``lock`` attribute which is a
+    :class:`substanced.locking.Lock` object, representing the conflicting lock.
+    """
 
 def now():
     return datetime.datetime.utcnow().replace(tzinfo=UTC)
@@ -150,6 +162,7 @@ class LockPropertySheet(PropertySheet):
         )
     )
 class Lock(Persistent):
+    """ A persistent object representing a lock. """
     owner = reference_target_property(UserToLock)
     resource = reference_target_property(WriteLock)
     ownerid = reference_targetid_property(UserToLock)
@@ -163,7 +176,9 @@ class Lock(Persistent):
             last_refresh = now()
         self.last_refresh = last_refresh
 
-    def refresh(self, timeout=None, when=None):
+    def refresh(self, timeout=None, when=None): # "when" is for testing
+        """ Refresh the lock.  If the timeout is not None, set the timeout for
+        this lock too. """
         if timeout is not None:
             self.timeout = timeout
         if when is None: # pragma: no cover
@@ -171,11 +186,15 @@ class Lock(Persistent):
         self.last_refresh = when
 
     def expires(self):
+        """ Return a datetime object representing the point in time at which
+        this lock will expire or has expired. """
         if self.timeout is None:
             return None
         return self.last_refresh + datetime.timedelta(seconds=self.timeout)
 
     def is_valid(self, when=None):
+        """ Return True if this lock has not yet expired and its resource still
+        exists """
         objectmap = find_objectmap(self)
         if objectmap is not None:
             # might be None if we're not yet seated
@@ -219,20 +238,20 @@ class LockService(Folder, _AutoNamingFolder):
         resource,
         owner_or_ownerid,
         timeout=None,
-        when=None,
         locktype=WriteLock,
+        when=None, # for testing
         ):
         # NB: callers should ensure that the user has 'sdi.lock' permission
         # on the resource before calling
 
-        if when is None:
-            when = now()
         objectmap = find_objectmap(self)
         ownerid = self._get_ownerid(owner_or_ownerid)
         locks = objectmap.targets(resource, locktype)
         for lock in locks:
             if lock.is_valid():
                 if lock.ownerid == ownerid:
+                    if when is None: # pragma: no cover
+                        when = now()
                     lock.refresh(timeout, when)
                     return lock
                 else:
@@ -263,8 +282,8 @@ class LockService(Folder, _AutoNamingFolder):
             if lock.ownerid == ownerid:
                 lock.commit_suicide()
                 break
-            else:
-                raise UnlockError(lock)
+        else:
+            raise UnlockError(lock)
 
 def _get_lock_service(resource):
     lockservice = find_service(resource, 'locks')
@@ -278,17 +297,35 @@ def lock_resource(
     resource,
     owner_or_ownerid,
     timeout=None,
-    when=None,
     locktype=WriteLock,
+    when=None, # for testing
     ):
+    """ Lock a resource using the lock service.  If the resource is already
+    locked by the owner supplied as owner_or_ownerid, calling this function
+    will refresh the lock.  If the resource is already locked by a different
+    user, a :class:`substanced.locking.LockError` will be raised.  This
+    function has the side effect of creating a Lock Service in the Substance D
+    root if one does not already exist. """
     locks = _get_lock_service(resource)
-    return locks.lock(resource, owner_or_ownerid, timeout, locktype=locktype)
+    return locks.lock(
+        resource,
+        owner_or_ownerid,
+        timeout=timeout,
+        locktype=locktype,
+        when=when
+        )
 
 def unlock_resource(
     resource,
     owner_or_ownerid,
     locktype=WriteLock,
     ):
+    """ Unlock a resource using the lock service.  If the resource is already
+    locked by a user other than the owner supplied as owner_or_ownerid or the
+    resource isn't already locked with this lock type, calling this function
+    will raise a :class:`substanced.locking.LockError` exception.  Otherwise
+    the lock will be removed.  This function has the side effect of creating a
+    Lock Service in the Substance D root if one does not already exist. """
     locks = _get_lock_service(resource)
     return locks.unlock(resource, owner_or_ownerid, locktype=locktype)
 

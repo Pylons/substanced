@@ -278,8 +278,7 @@ class TestLockService(unittest.TestCase):
     def test__get_ownerid_bogus(self):
         inst = self._makeOne()
         self.assertRaises(ValueError, inst._get_ownerid, 'bogus')
-        
-        
+
 class DummyObjectMap(object):
     def __init__(self, result, raises=None):
         self.result = result
