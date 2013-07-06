@@ -242,7 +242,7 @@
                     checkbox_header.hide();
                 } else {
                     checkbox_header.show();
-                };
+                }
             };
 
 
