@@ -276,7 +276,9 @@
                             data: {
                                 'ajax.reorder': 'ajax.reorder',
                                 'item-modify': selectedIds.join('/'),
-                                'insert-before': insertBeforeId
+                                'insert-before': insertBeforeId,
+                                // csrf_token needed for post requests
+                                'csrf_token': wrapperOptions.csrfToken
                             },
                             dataType: 'json'
                     });

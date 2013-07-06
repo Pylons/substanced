@@ -683,6 +683,8 @@ class FolderContents(object):
             url = '',   # use same url for ajax
             minimumLoad = end,
             showCheckboxColumn = show_checkbox_column,
+            # csrf needed for post requests
+            csrfToken = request.session.get_csrf_token(),
             )
 
         result = dict(
