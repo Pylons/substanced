@@ -4,6 +4,7 @@ import uuid
 from persistent import Persistent
 
 import colander
+from colander.iso8601 import UTC
 import deform_bootstrap
 import deform.widget
 
@@ -52,6 +53,9 @@ class LockError(LockingError):
 
 class UnlockError(LockingError):
     pass
+
+def now():
+    return datetime.datetime.utcnow().replace(tzinfo=UTC)
 
 class LockOwnerSchema(colander.SchemaNode):
     title = 'Owner'
@@ -113,7 +117,7 @@ class LockSchema(Schema):
     last_refresh = colander.SchemaNode(
         colander.DateTime(),
         title='Last Refresh',
-        default=datetime.datetime.utcnow(),
+        default=now(),
         )
     resource = LockResourceSchema()
 
@@ -153,14 +157,14 @@ class Lock(Persistent):
     def __init__(self, timeout=3600, last_refresh=None):
         self.timeout = timeout
         if last_refresh is None:
-            last_refresh = datetime.datetime.utcnow()
+            last_refresh = now()
         self.last_refresh = last_refresh
 
     def refresh(self, timeout=None, when=None):
         if timeout is not None:
             self.timeout = timeout
         if when is None: # pragma: no cover
-            when = datetime.datetime.utcnow()
+            when = now()
         self.last_refresh = when
 
     def expires(self):
@@ -175,7 +179,7 @@ class Lock(Persistent):
             if self.resourceid is None:
                 return False
         if when is None: # pragma: no cover
-            when = datetime.datetime.utcnow()
+            when = now()
         expires = self.expires()
         if expires is None:
             return True
@@ -219,7 +223,7 @@ class LockService(Folder, _AutoNamingFolder):
         # on the resource before calling
 
         if when is None:
-            when = datetime.datetime.utcnow()
+            when = now()
         objectmap = find_objectmap(self)
         ownerid = self._get_ownerid(owner_or_ownerid, objectmap)
         locks = objectmap.targets(resource, locktype)
