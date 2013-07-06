@@ -108,6 +108,7 @@ class LockSchema(Schema):
         colander.Int(),
         validator=colander.Range(0),
         default=3600,
+        title='Timeout (secs)',
         )
     last_refresh = colander.SchemaNode(
         colander.DateTime(),
