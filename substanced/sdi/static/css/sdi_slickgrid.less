@@ -1,18 +1,18 @@
 /** Build from https://github.com/Pylons/sdidev to rebuild this LESS file **/
 
-@import "../../../../../bootstrap/less/variables.less";
-@import "../../../../../slickgrid/bootstrap/slickgrid.less";
+@import "../../../../bower_components/bootstrap/less/variables.less";
+@import "../../../../bower_components/slickgrid-bootstrap/bootstrap/slickgrid.less";
 
 .slickgrid-wrapper {
   height: 380px; // for 10 rows x 35px
   width: 100%;
-  .slickGrid();
+  .SlickGrid();
   // Add a bottom border to the grid.
   border-bottom: 1px solid @tableBorder;
 
   .cell-reorder {
     cursor: move;
-    background: url("images/drag-handle.png") no-repeat center center;
+    background: url("../../sdistatic/img/drag-handle.png") no-repeat center center;
   }
 
   .cell-selection {
@@ -54,7 +54,8 @@
   width: 100%;
   background: @tableBackground;
   font-family: @sansFontFamily;
-  color: @lightGray;
+  //color: @lightGray;       // XXX ??
+  color: #333;
   padding: 5px 7.5834px;
   margin-bottom: 1em;
 }

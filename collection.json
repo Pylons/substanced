@@ -23,7 +23,8 @@
       ["bower", "slickgrid", "controls/slick.columnpicker.css"]
     ],
     "sdi_bootstrap.css": [
-      "substanced/sdi/static/css/sdi_bootstrap.less"
+      "substanced/sdi/static/css/sdi_bootstrap.less",
+      "substanced/sdi/static/css/sdi_slickgrid.less"
     ],
     "bootstrap.js": [
       ["bower", "bootstrap", "docs/assets/js/bootstrap.js"]
