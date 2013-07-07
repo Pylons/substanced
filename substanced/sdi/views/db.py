@@ -9,17 +9,18 @@ from .. import mgmt_view
 
 @view_defaults(
     physical_path='/',
-    name='manage_db',
+    name='database',
     renderer='templates/db.pt',
     permission='sdi.manage-database'
     )
 class ManageDatabase(object):
     get_connection = staticmethod(get_connection)
+
     def __init__(self, context, request):
         self.context = context
         self.request = request
 
-    @mgmt_view(request_method='GET', tab_title='Manage DB')
+    @mgmt_view(request_method='GET', tab_title='Database')
     def view(self):
         conn = self.get_connection(self.request)
         db = conn.db()
@@ -56,12 +57,12 @@ class ManageDatabase(object):
         except:
             self.request.session.flash('Invalid number of days', 'error')
             raise HTTPFound(location=self.request.sdiapi.mgmt_path(
-                self.context, '@@manage_db'))
+                self.context, '@@database'))
         conn = self.get_connection(self.request)
         conn.db().pack(days=days)
         self.request.session.flash('Database packed to %s days' % days)
         return HTTPFound(location=self.request.sdiapi.mgmt_path(
-            self.context, '@@manage_db'))
+            self.context, '@@database'))
 
     @mgmt_view(request_method='POST', request_param='flush_cache',
                check_csrf=True)
@@ -70,5 +71,5 @@ class ManageDatabase(object):
         conn.db().cacheMinimize()
         self.request.session.flash('Database flushed cache')
         return HTTPFound(location=self.request.sdiapi.mgmt_path(
-            self.context, '@@manage_db'))
+            self.context, '@@database'))
 
