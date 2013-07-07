@@ -149,7 +149,7 @@
             var $filter = $('.sdi-contents-filter input');
 
             // grid
-            $grid.sdigrid(${slickgrid_wrapper_options});
+            $grid.sdigrid(${structure: slickgrid_wrapper_options});
             var gridWrapper = $grid.data('sdigrid');
             
             // delay for filter helps to reduce
