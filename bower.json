@@ -1,0 +1,12 @@
+{
+    "name": "substanced",
+    "version": "0.1.0",
+    "dependencies": {
+        "jquery": ">=1.8 <1.9",
+        "jquery-ui": ">=1.8 <2",
+        "bootstrap": "==2.2.2",
+        "slickgrid": ">=2.0 <3",
+        "slickgrid-bootstrap": "https://github.com/reebalazs/SlickGrid-bootstrap.git",
+        "slickgrid-plugin-rowmovemanager": "https://github.com/reebalazs/SlickGrid-plugin-rowmovemanager.git"
+    }
+}

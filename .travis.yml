@@ -1,0 +1,34 @@
+language:
+  - python
+  - node_js
+python:
+  - 2.6
+  - 2.7
+node_js:
+  - "0.10"
+notifications:
+  irc: irc.freenode.org#greenfinity
+install:
+  - pip install -e '.[testing]' --use-mirrors
+  - npm install buster
+  - export PATH="$PWD/node_modules/.bin:$PATH"
+  - export DISPLAY=:99.0
+before_script:
+  - echo 'Starting buster server...'
+  - buster server &
+  - echo 'Done.'
+  - echo 'Starting xvfb for FF...'
+  - sh -e /etc/init.d/xvfb start
+  - sleep 5
+  - echo 'Done.'
+  - echo 'Starting phantomjs browser...'
+  - phantomjs ./node_modules/buster/script/phantom.js &
+  - echo 'Done.'
+  - sleep 8
+  - echo 'Starting firefox browser...'
+  - firefox http://localhost:1111/capture &
+  - sleep 8
+  - echo 'Done.' 
+script:
+  - nosetests --with-coverage --cover-package=substanced --cover-min-percentage=100
+  - buster test

@@ -1,0 +1,2 @@
+# this will make sure diff is not showed for dist files, but still commited to repo
+substanced/sdi/static/dist/** -diff

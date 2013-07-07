@@ -6,7 +6,9 @@
 .coverage
 coverage.xml
 build/
-dist/
+/lib/
+/bower_components/
+/node_modules/
 .tox/
 nosetests.xml
 env*/

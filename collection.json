@@ -1,0 +1,31 @@
+{
+    "slickgrid.upstream.js": [
+        ["bower", "slickgrid", "lib/jquery.event.drag-2.0.min.js"],
+        ["bower", "jquery-ui", "ui/jquery.ui.core.js"],
+        ["bower", "jquery-ui", "ui/jquery.ui.widget.js"],
+        ["bower", "jquery-ui", "ui/jquery.ui.mouse.js"],
+        ["bower", "jquery-ui", "ui/jquery.ui.resizable.js"],
+        ["bower", "jquery-ui", "ui/jquery.ui.sortable.js"],
+        ["bower", "slickgrid", "slick.core.js"],
+        ["bower", "slickgrid", "slick.grid.js"],
+        ["bower", "slickgrid", "slick.dataview.js"],
+        ["bower", "slickgrid", "plugins/slick.checkboxselectcolumn.js"],
+        ["bower", "slickgrid", "plugins/slick.rowselectionmodel.js"],
+        ["bower", "slickgrid-plugin-rowmovemanager", "plugins/slick.rowmovemanager.js"],
+        ["bower", "slickgrid-bootstrap", "plugins/slick.responsiveness.js"],
+        ["bower", "slickgrid-bootstrap", "bootstrap/bootstrap-slickgrid.js"]
+    ],
+    "jquery.js": [
+        ["bower", "jquery", "jquery.js"]
+    ],
+    "slick.grid.upstream.css": [
+      ["bower", "slickgrid", "slick.grid.css"],
+      ["bower", "slickgrid", "controls/slick.columnpicker.css"]
+    ],
+    "sdi_bootstrap.css": [
+      "substanced/sdi/static/css/sdi_bootstrap.less"
+    ],
+    "bootstrap.js": [
+      ["bower", "bootstrap", "docs/assets/js/bootstrap.js"]
+    ]
+}
