@@ -72,7 +72,11 @@ On MacOSX with homebrew, you can do the following::
 For installation on other system, check out the documentation of NodeJS and npm.
 http://nodejs.org/download/ and ...
 
-After that you can cd to the package directory, and issue the following commands.
+We only test the system with NodeJS version >= 0.10, so please make sure that
+you use a compliant version.
+
+After having installed NodeJS and npm on your system,
+you can cd to the package directory, and issue the following commands.
 
 The following command re-generates all ``dist`` resources from scratch::
 
