@@ -1,5 +1,22 @@
 /** Build from https://github.com/Pylons/sdidev to rebuild this LESS file **/
 /* Mixins for SlickGrid */
+@keyframes showgridrow {
+  0% {
+    opacity: 0.3;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+@-webkit-keyframes showgridrow {
+  /* Safari and Chrome */
+  0% {
+    opacity: 0.3;
+  }
+  100% {
+    opacity: 1;
+  }
+}
 .slickgrid-wrapper {
   height: 380px;
   width: 100%;
@@ -157,6 +174,12 @@ body .slickgrid-wrapper .slick-header-columns .slick-header-column.ui-state-defa
 .slickgrid-wrapper .cell-multiline {
   white-space: normal;
 }
+.slickgrid-wrapper .slick-row {
+  animation: showgridrow 0.5s;
+  -webkit-animation: showgridrow 0.5s;
+  /* Safari and Chrome */
+
+}
 .sdi-contents-filter {
   margin-top: 5px;
 }
@@ -166,7 +189,7 @@ body .slickgrid-wrapper .slick-header-columns .slick-header-column.ui-state-defa
 .sdi-add-button {
   margin-right: 10px;
 }
-.slickgrid-footer {
+.slickgrid-header {
   width: 100%;
   background: transparent;
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
