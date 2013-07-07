@@ -1,3 +1,4 @@
+/*! Built by sdidev-resources version 0.1.0 */
 /* ===================================================
  * bootstrap-transition.js v2.2.2
  * http://twitter.github.com/bootstrap/javascript.html#transitions

@@ -4,10 +4,11 @@
   <metal:slot fill-slot="head-more">
     <metal:slot define-slot="head-more">
       <!-- slickgrid -->
-      <script src="${request.static_url('substanced.sdi:static/js/slickgrid.upstream.js')}" type="text/javascript"></script>
+      <script src="${request.static_url('substanced.sdi:static/dist/slickgrid.upstream.js')}" type="text/javascript"></script>
       <script src="${request.static_url('substanced.sdi:static/js/sdi.grid.remotemodel.js')}" type="text/javascript"></script>
+      <script src="${request.static_url('substanced.sdi:static/js/sdi.grid.js')}" type="text/javascript"></script>
       <script src="${request.static_url('substanced.sdi:static/js/slickgrid-config.js')}" type="text/javascript"></script>
-      <link href="${request.static_url('substanced.sdi:static/css/slick.grid.upstream.css')}" rel="stylesheet" />
+      <link href="${request.static_url('substanced.sdi:static/dist/slick.grid.upstream.css')}" rel="stylesheet" />
       <link href="${request.static_url('substanced.sdi:static/css/sdi_slickgrid.css')}" rel="stylesheet" />
     </metal:slot>
   </metal:slot>
@@ -63,7 +64,7 @@
                 // If a button is clicked, get the selections out of the grid,
                 // and add it to a form as a hidden field.
                 $form.find('button').click(function (evt) {
-                    var gridWrapper = $('#sdi-contents-table-sg').data('slickgrid');
+                    var gridWrapper = $('#sdi-contents-table-sg').data('sdigrid');
                     var grid = gridWrapper.grid;
                     var selRows = grid.getSelectedRows();
                     if (selRows.length > 100) {
@@ -146,9 +147,10 @@
         jQuery(function ($) {
             var $grid = $('#sdi-contents-table-sg');
             var $filter = $('.sdi-contents-filter input');
+
             // grid
-            $grid.slickgrid(${structure:slickgrid_wrapper_options});
-            var gridWrapper = $grid.data('slickgrid');
+            $grid.sdigrid(${slickgrid_wrapper_options});
+            var gridWrapper = $grid.data('sdigrid');
             
             // delay for filter helps to reduce
             // the number of requests while typing

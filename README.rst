@@ -1,6 +1,12 @@
 Substance D
 ===========
 
+|travis|_
+
+.. |travis| image:: https://travis-ci.org/reebalazs/substanced.png?branch=ree-build-resources-allin
+.. _travis: https://travis-ci.org/reebalazs/substanced
+
+
 An application server built upon the Pyramid web framework.  It provides a
 user interface for managing content as well as libraries and utilities which
 make it easy to create applications.

@@ -1,3 +1,7 @@
+<<<<<<< HEAD:substanced/sdi/static/css/slick.grid.upstream.css
+=======
+/*! Built by sdidev-resources version 0.1.0 */
+>>>>>>> origin/ree-build-resources-allin:substanced/sdi/static/dist/slick.grid.upstream.css
 /*
 IMPORTANT:
 In order to preserve the uniform grid appearance, all cell styles need to have padding, margin and border sizes.
@@ -12,6 +16,7 @@ classes should alter those!
 }
 
 .slick-header-columns, .slick-headerrow-columns {
+  width: 999999px;
   position: relative;
   white-space: nowrap;
   cursor: default;
