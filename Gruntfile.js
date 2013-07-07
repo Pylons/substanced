@@ -12,17 +12,17 @@ module.exports = function(grunt) {
       },
       js: {
         files: {
-          'src/substanced/substanced/sdi/static/dist/slickgrid.upstream.js':
+          'substanced/sdi/static/dist/slickgrid.upstream.js':
             collect.select('slickgrid.upstream.js'),
-          'src/substanced/substanced/sdi/static/dist/jquery.js':
+          'substanced/sdi/static/dist/jquery.js':
             collect.select('jquery.js'),
-          'src/substanced/substanced/sdi/static/dist/bootstrap.js':
+          'substanced/sdi/static/dist/bootstrap.js':
             collect.select('bootstrap.js')
         }
       },
       css: {
         files: {
-          'src/substanced/substanced/sdi/static/dist/slick.grid.upstream.css':
+          'substanced/sdi/static/dist/slick.grid.upstream.css':
             collect.select('slick.grid.upstream.css')
         }
       }
@@ -33,11 +33,11 @@ module.exports = function(grunt) {
       },
       js: {
         files: {
-          'src/substanced/substanced/sdi/static/dist/slickgrid.upstream.js':
+          'substanced/sdi/static/dist/slickgrid.upstream.js':
             collect.select('slickgrid.upstream.js'),
-          'src/substanced/substanced/sdi/static/dist/jquery.js':
+          'substanced/sdi/static/dist/jquery.js':
             collect.select('jquery.js'),
-          'src/substanced/substanced/sdi/static/dist/bootstrap.js':
+          'substanced/sdi/static/dist/bootstrap.js':
             collect.select('bootstrap.js')
 
         }
@@ -46,20 +46,20 @@ module.exports = function(grunt) {
     less: {
       'default': {
         options: {
-          paths: ['src/substanced/substanced/sdi/static/css']
+          paths: ['substanced/sdi/static/css']
         },
         files: {
-          'src/substanced/substanced/sdi/static/dist/sdi_bootstrap.css':
+          'substanced/sdi/static/dist/sdi_bootstrap.css':
             collect.select('sdi_bootstrap.css')
         }
       },
       minify: {
         options: {
-          paths: ['src/substanced/substanced/sdi/static/css'],
+          paths: ['substanced/sdi/static/css'],
           yuicompress: true
         },
         files: {
-          'src/substanced/substanced/sdi/static/dist/sdi_bootstrap.css':
+          'substanced/sdi/static/dist/sdi_bootstrap.css':
             collect.select('sdi_bootstrap.css')
         }
       }
