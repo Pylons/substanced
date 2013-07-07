@@ -55,7 +55,7 @@ Authoring Javascript
 --------------------
 
 The Javascript resources are included in the package, under the ``substanced/sdi/static/dist``
-directory. By default, this are in minified form.
+directory. By default, these are in minified form.
 
 Substance D provides a makefile that makes it easy to regenerate the ``dist`` resources.
 
@@ -72,18 +72,18 @@ On MacOSX with homebrew, you can do the following::
 For installation on other system, check out the documentation of NodeJS and npm.
 http://nodejs.org/download/ and ...
 
-After that you can cd to the package directory, and issue the following commands::
+After that you can cd to the package directory, and issue the following commands.
+
+The following command re-generates all ``dist`` resources from scratch::
 
     $ make
     
-This re-generates all ``dist`` resources from scratch::
+This replaces all ``dist`` resources with a concatenated, but un-minified
+version to help better debugging. Source files are also watched for changes,
+and the resources are re-generated on the fly::
 
     $ make watch
     
-This replaces all ``dist`` resources with a concatenated, but un-minified
-version to help better debugging. Source files are also watched for changes,
-and the resources are re-generated on the fly.
-
 After you finish working with ``make watch``, make sure you run ``make`` again
 to switch back to the compressed resource versions. (Important before comitting.)
 
