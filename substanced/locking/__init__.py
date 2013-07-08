@@ -260,9 +260,9 @@ class LockService(Folder, _AutoNamingFolder):
                 break
         registry = get_current_registry()
         lock = registry.content.create('Lock', timeout=timeout)
+        self.add_next(lock) # NB: must add before setting ownerid/resource
         lock.ownerid = ownerid
         lock.resource = resource
-        self.add_next(lock)
         return lock
 
     def unlock(
