@@ -184,16 +184,16 @@
             $viewport = this.element.find('.slick-viewport');
             sdiRemoteModelPlugin.onDataLoading.subscribe(function (evt, args) {
                 // indicate loading
-                $viewport.stop(true, true).animate({
-                    opacity: 0.3
-                });
+                //$viewport.stop(true, true).animate({
+                //   opacity: 0.3
+                //});
             });
 
             sdiRemoteModelPlugin.onDataLoaded.subscribe(function (evt, args) {
                 // stop indication of loading
-                $viewport.stop(true, true).animate({
-                    opacity: 1
-                });
+                //$viewport.stop(true, true).animate({
+                //    opacity: 1
+                //});
                 grid.updateHeader();
             });
 
@@ -249,7 +249,7 @@
                 // because changing the selection causes it re-instantiated.
                 grid.updateHeader();
             });
-            
+
             if (isReorderable) {
 
                 //moveRowsPlugin.onBeforeMoveRows.subscribe(function (e, data) {
