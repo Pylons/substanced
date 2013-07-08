@@ -189,14 +189,15 @@ class TestLockPropertySheet(unittest.TestCase):
         self.assertEqual(context.resource, 'abc')
         
 class TestLock(unittest.TestCase):
-    def _makeOne(self, timeout=3600, last_refresh=None):
+    def _makeOne(self, timeout=3600, comment=None, last_refresh=None):
         from .. import Lock
-        return Lock(timeout=timeout, last_refresh=last_refresh)
+        return Lock(timeout=timeout, comment=comment, last_refresh=last_refresh)
 
     def test_ctor(self):
-        inst = self._makeOne(5000, 1000)
+        inst = self._makeOne(5000, 'comment', 1000)
         self.assertEqual(inst.timeout, 5000)
         self.assertEqual(inst.last_refresh, 1000)
+        self.assertEqual(inst.comment, 'comment')
 
     def test_refresh(self):
         import datetime
@@ -558,10 +559,11 @@ class DummyUsers(object):
 
 class DummyLockService(object):
     __is_service__ = True
-    def lock(self, resource, owner, timeout=None, locktype=None):
+    def lock(self, resource, owner, timeout=None, comment=None, locktype=None):
         self.resource = resource
         self.owner = owner
         self.timeout = timeout
+        self.comment = comment
         self.locktype = locktype
         return True
 

@@ -131,6 +131,12 @@ class LockSchema(Schema):
         title='Last Refresh',
         default=now(),
         )
+    comment = colander.SchemaNode(
+        colander.String(),
+        validator=colander.Length(255),
+        missing=None,
+        title='Comment',
+        )
     resource = LockResourceSchema()
 
 class LockPropertySheet(PropertySheet):
@@ -167,8 +173,9 @@ class Lock(Persistent):
     ownerid = reference_targetid_property(UserToLock)
     resourceid = reference_targetid_property(WriteLock)
 
-    def __init__(self, timeout=3600, last_refresh=None):
+    def __init__(self, timeout=3600, comment=None, last_refresh=None):
         self.timeout = timeout
+        self.comment=comment
         # last_refresh must be a datetime.datetime object with a UTC tzinfo,
         # if provided
         if last_refresh is None:
@@ -239,6 +246,7 @@ class LockService(Folder, _AutoNamingFolder):
         resource,
         owner_or_ownerid,
         timeout=None,
+        comment=None,
         locktype=WriteLock,
         ):
         # NB: callers should ensure that the user has 'sdi.lock' permission
@@ -259,7 +267,7 @@ class LockService(Folder, _AutoNamingFolder):
                 lock.commit_suicide()
                 break
         registry = get_current_registry()
-        lock = registry.content.create('Lock', timeout=timeout)
+        lock = registry.content.create('Lock', timeout=timeout, comment=comment)
         self.add_next(lock) # NB: must add before setting ownerid/resource
         lock.ownerid = ownerid
         lock.resource = resource
@@ -309,6 +317,7 @@ def lock_resource(
     resource,
     owner_or_ownerid,
     timeout=None,
+    comment=None,
     locktype=WriteLock,
     ):
     """ Lock a resource using the lock service.  If the resource is already
@@ -331,6 +340,7 @@ def lock_resource(
         resource,
         owner_or_ownerid,
         timeout=timeout,
+        comment=comment,
         locktype=locktype,
         )
 
@@ -356,7 +366,11 @@ def unlock_resource(
     """
 
     locks = _get_lock_service(resource)
-    return locks.unlock(resource, owner_or_ownerid, locktype=locktype)
+    return locks.unlock(
+        resource,
+        owner_or_ownerid,
+        locktype=locktype
+        )
 
 def discover_resource_locks(
     resource,
