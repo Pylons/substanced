@@ -117,7 +117,7 @@ class TestFormView(unittest.TestCase):
         result = inst()
         self.assertEqual(result,
                          {'css_links': (), 'js_links': (), 'form': 'rendered'})
-        self.assertEqual(request.session.peek_flash(),
+        self.assertEqual(request.session.peek_flash('error'),
                          ['<div class="error">Failed: </div>'])
 
 
