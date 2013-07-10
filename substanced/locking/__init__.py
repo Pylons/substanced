@@ -25,6 +25,7 @@ from pyramid.traversal import (
     find_root,
     resource_path,
     )
+from webob.exc import HTTPForbidden
 
 from substanced.interfaces import (
     ILockService,
@@ -412,7 +413,7 @@ class Locked(object):
     """
     def __init__(self, resource, request, locktype=WriteLock):
         if not has_permission('sdi.lock', resource, request):
-            raise Forbidden()
+            raise HTTPForbidden('Cannot lock resource')
         self.resource = resource
         self.ownerid = authenticated_userid(request)
         self.locktype = locktype
