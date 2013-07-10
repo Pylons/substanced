@@ -555,7 +555,7 @@ class LockedTests(unittest.TestCase):
         return DummyRequest(**kw)
 
     def test_ctor_wo_permission(self):
-        from webob.exc import HTTPForbidden
+        from pyramid.exceptions import HTTPForbidden
         with testing.testConfig() as config:
             config.testing_securitypolicy(permissive=False)
             self.assertRaises(HTTPForbidden, self._makeOne)

@@ -15,7 +15,7 @@ from colander.iso8601 import UTC
 import deform_bootstrap
 import deform.widget
 
-from pyramid.exceptions import Forbidden
+from pyramid.exceptions import HTTPForbidden
 from pyramid.security import (
     authenticated_userid,
     has_permission,
@@ -25,7 +25,6 @@ from pyramid.traversal import (
     find_root,
     resource_path,
     )
-from webob.exc import HTTPForbidden
 
 from substanced.interfaces import (
     ILockService,
