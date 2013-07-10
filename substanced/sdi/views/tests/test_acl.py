@@ -39,6 +39,18 @@ class TestACLView(unittest.TestCase):
         self.assertEqual(resp['permissions'], ['-- ALL --'])
         self.assertEqual(resp['inheriting'], 'enabled')
 
+class TestInheritedACL(TestACLView):
+
+    def _makeOne(self, context, request):
+        from ..acl import ACLEditViews
+        return ACLEditViews(context, request).inherited_acl
+
+class TestLocaldACL(TestACLView):
+
+    def _makeOne(self, context, request):
+        from ..acl import ACLEditViews
+        return ACLEditViews(context, request).local_acl
+
 class TestMoveUp(unittest.TestCase):
     def setUp(self):
         self.config = testing.setUp()
