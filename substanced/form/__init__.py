@@ -101,7 +101,7 @@ class FormView(object):
         self.context = context
         self.request = request
 
-    def __call__(self):
+    def _build_form(self):
         use_ajax = getattr(self, 'use_ajax', False)
         ajax_options = getattr(self, 'ajax_options', '{}')
         action = getattr(self, 'action', '')
@@ -118,6 +118,10 @@ class FormView(object):
         form.widget.template = 'substanced:widget/templates/form.pt' 
         self.before(form)
         reqts = form.get_widget_resources()
+        return form, reqts
+
+    def __call__(self):
+        form, reqts = self._build_form()
         result = None
 
         for button in form.buttons:
