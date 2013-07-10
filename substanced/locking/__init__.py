@@ -403,6 +403,9 @@ def discover_resource_locks(
 class Locked(object):
     """Context manager for code which must run while a lock is held.
 
+    If the current user does not have the 'sdi.lock' permission on
+    the resource, raise HTTPForbidden from the constructor.
+
     Typical usage in a browser view:
 
     try:
@@ -422,11 +425,8 @@ class Locked(object):
     def __enter__(self):
         """Create a lock for the resource, owned by the current user.
 
-        Ensure that the current user has the 'sdi.lock' permission on
-        the resource.
-
         If the resource is locked by another user, raise LockError
-        (and therefore skips the suite).
+        (and therefore skip the suite).
 
         Pass a unique marker to ``lock_resource`` as the comment, so
         that we can tell in ``__exit__`` if the lock was created for us
