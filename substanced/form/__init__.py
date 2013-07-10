@@ -84,6 +84,10 @@ default_resources = {
 resource_registry = deform.widget.ResourceRegistry(use_defaults=False)
 resource_registry.registry = default_resources
 
+class FormError(Exception):
+    """Non-validation-related error.
+    """
+
 class Form(deform.form.Form):
     """ Subclass of ``deform.form.Form`` which uses a custom resource
     registry designed for Substance D. XXX point at deform docs. """
@@ -130,12 +134,19 @@ class FormView(object):
                 try:
                     controls = self.request.POST.items()
                     validated = form.validate(controls)
-                    result = success_method(validated)
                 except deform.exception.ValidationFailure as e:
                     fail = getattr(self, '%s_failure' % button.name, None)
                     if fail is None:
                         fail = self.failure
                     result = fail(e)
+                else:
+                    try:
+                        result = success_method(validated)
+                    except FormError as e:
+                        snippet = '<div class="error">Failed: %s</div>' % e
+                        self.request.session.flash(snippet, 'error',
+                                                allow_duplicate=True)
+                        result = {'form': form.render(validated)}
                 break
 
         if result is None:

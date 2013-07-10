@@ -51,42 +51,74 @@ class TestFormView(unittest.TestCase):
         inst.form_class = DummyForm
         result = inst()
         self.assertEqual(result, 'success')
-        
-    def test___call__button_in_request_fail(self):
-        schema = DummySchema()
-        request = testing.DummyRequest()
-        context = testing.DummyResource()
-        request.POST['submit'] = True
-        inst = self._makeOne(context, request)
-        inst.schema = schema
-        inst.buttons = (DummyButton('submit'), )
-        import deform.exception
-        def raiseit(*arg):
-            raise deform.exception.ValidationFailure(None, None, None)
-        inst.submit_success = raiseit
-        inst.form_class = DummyForm
-        inst.submit_failure = lambda *arg: 'failure'
-        result = inst()
-        self.assertEqual(result, 'failure')
 
-    def test___call__button_in_request_fail_no_failure_handler(self):
+    def test___call__button_in_request_validation_fails_w_handler(self):
+        import deform.exception
         schema = DummySchema()
         request = testing.DummyRequest()
         context = testing.DummyResource()
         request.POST['submit'] = True
-        inst = self._makeOne(context, request)
-        inst.schema = schema
-        inst.buttons = (DummyButton('submit'), )
-        import deform.exception
-        def raiseit(*arg):
+        def _validate(*args):
             exc = deform.exception.ValidationFailure(None, None, None)
             exc.render = lambda *arg: 'failure'
             raise exc
-        inst.submit_success = raiseit
+        inst = self._makeOne(context, request)
+        inst.schema = schema
+        inst.buttons = (DummyButton('submit'), )
+        form, reqts = inst._build_form()
+        form.validate = _validate
+        inst._build_form = lambda *arg: (form, {'js': (), 'css': ()})
+        def raiseit(*arg):
+            self.fail()
+        inst.submit_success = raiseit # shouldn't get there
         inst.form_class = DummyForm
         result = inst()
         self.assertEqual(result,
                          {'css_links': (), 'js_links': (), 'form': 'failure'})
+
+    def test___call__button_in_request_validateion_fails_wo_handler(self):
+        import deform.exception
+        schema = DummySchema()
+        request = testing.DummyRequest()
+        context = testing.DummyResource()
+        request.POST['submit'] = True
+        def _validate(*args):
+            exc = deform.exception.ValidationFailure(None, None, None)
+            exc.render = lambda *arg: 'failure'
+            raise exc
+        inst = self._makeOne(context, request)
+        inst.schema = schema
+        inst.buttons = (DummyButton('submit'), )
+        form, reqts = inst._build_form()
+        form.validate = _validate
+        inst._build_form = lambda *arg: (form, {'js': (), 'css': ()})
+        def raiseit(*arg):
+            self.fail()
+        inst.submit_success = raiseit # shouldn't get there
+        inst.form_class = DummyForm
+        result = inst()
+        self.assertEqual(result,
+                         {'css_links': (), 'js_links': (), 'form': 'failure'})
+
+    def test___call__button_in_request_fail(self):
+        from . import FormError
+        schema = DummySchema()
+        request = testing.DummyRequest()
+        context = testing.DummyResource()
+        request.POST['submit'] = True
+        inst = self._makeOne(context, request)
+        inst.schema = schema
+        inst.buttons = (DummyButton('submit'), )
+        def raiseit(*arg):
+            raise FormError()
+        inst.submit_success = raiseit
+        inst.form_class = DummyForm
+        inst.submit_failure = lambda *arg: 'failure'
+        result = inst()
+        self.assertEqual(result,
+                         {'css_links': (), 'js_links': (), 'form': 'rendered'})
+        self.assertEqual(request.session.peek_flash(),
+                         ['<div class="error">Failed: </div>'])
 
 
 class TestFileUploadTempStore(unittest.TestCase):
@@ -241,12 +273,18 @@ class DummyForm(object):
 
 class DummySchema(object):
     name = 'schema'
-    description = 'desc'
-    title = 'title'
-    
+    title = 'Schema'
+    description = 'Dummy schema for testing'
+    required = True
+    children = ()
+    typ = None
     def bind(self, **kw):
         self.kw = kw
         return self
+    def serialize(self, appstruct):
+        return appstruct
+    def cstruct_children(self, cstruct):
+        return ()
     
 class DummyButton(object):
     def __init__(self, name):
