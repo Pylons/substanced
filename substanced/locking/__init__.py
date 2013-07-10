@@ -79,7 +79,7 @@ class LockOwnerSchema(colander.SchemaNode):
         if principals is None:
             values = [] # fbo dump/load
         else:
-            values = [(get_oid(group), name) for name, group in 
+            values = [(get_oid(group), name) for name, group in
                       principals['users'].items()]
         return deform_bootstrap.widget.ChosenSingleWidget(values=values)
 
@@ -117,7 +117,7 @@ class LockResourceSchema(colander.SchemaNode):
                 node,
                 'You do not have permission to lock this resource'
                 )
-        
+
 class LockSchema(Schema):
     ownerid = LockOwnerSchema()
     timeout = colander.SchemaNode(
@@ -216,7 +216,7 @@ class Lock(Persistent):
     def commit_suicide(self):
         """ Remove the lock from the lock service. """
         del self.__parent__[self.__name__]
-        
+
 @service(
     'Lock Service',
     icon='icon-briefcase',
@@ -312,7 +312,7 @@ def _get_lock_service(resource):
         root = find_root(resource)
         root.add_service('locks', lockservice)
     return lockservice
-    
+
 def lock_resource(
     resource,
     owner_or_ownerid,
@@ -362,7 +362,7 @@ def unlock_resource(
            Callers should assert that the owner has the ``sdi.lock`` permission
            against the resource before calling this function to ensure that a
            user can't lock a resource he is not permitted to.
-           
+
     """
 
     locks = _get_lock_service(resource)
@@ -398,4 +398,4 @@ def discover_resource_locks(
 def includeme(config): # pragma: no cover
     config.add_permission('sdi.lock')
     config.include('.views')
-    
+

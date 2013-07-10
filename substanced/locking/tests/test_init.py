@@ -10,7 +10,7 @@ class TestLockError(unittest.TestCase):
     def test_ctor(self):
         inst = self._makeOne('lock')
         self.assertEqual(inst.lock, 'lock')
-        
+
 class TestUnlockError(unittest.TestCase):
     def _makeOne(self, lock):
         from .. import UnlockError
@@ -49,7 +49,7 @@ class TestLockOwnerSchema(unittest.TestCase):
         inst.bindings['context'] = resource
         widget = inst.widget
         self.assertEqual(widget.values, [(1, 'name')])
-        
+
     def test_widget_principals_is_None(self):
         from zope.interface import alsoProvides
         from substanced.interfaces import IFolder
@@ -85,7 +85,7 @@ class TestLockResourceSchema(unittest.TestCase):
 
     def tearDown(self):
         testing.tearDown()
-        
+
     def _makeOne(self):
         from .. import LockResourceSchema
         return LockResourceSchema()
@@ -111,7 +111,7 @@ class TestLockResourceSchema(unittest.TestCase):
         inst.bindings['request'] = testing.DummyRequest()
         result = inst.preparer('/abc/def')
         self.assertEqual(result, None)
-        
+
     def test_preparer_value_is_path_not_allowed(self):
         self.config.testing_securitypolicy(permissive=False)
         inst = self._makeOne()
@@ -134,7 +134,7 @@ class TestLockResourceSchema(unittest.TestCase):
         inst.bindings['request'] = testing.DummyRequest()
         result = inst.preparer(colander.null)
         self.assertEqual(result, colander.null)
-        
+
     def test_validator_value_None(self):
         from colander import Invalid
         inst = self._makeOne()
@@ -163,7 +163,7 @@ class TestLockPropertySheet(unittest.TestCase):
         inst = self._makeOne(context, request)
         result = inst.get()
         self.assertEqual(result['resource'], colander.null)
-        
+
     def test_get_resource_is_valid(self):
         context = testing.DummyResource()
         resource = testing.DummyResource()
@@ -180,14 +180,14 @@ class TestLockPropertySheet(unittest.TestCase):
         inst = self._makeOne(context, request)
         inst.set({'resource':colander.null})
         self.assertEqual(context.resource, None)
-        
+
     def test_set_resource_is_not_null(self):
         context = testing.DummyResource()
         request = testing.DummyRequest()
         inst = self._makeOne(context, request)
         inst.set({'resource':'abc'})
         self.assertEqual(context.resource, 'abc')
-        
+
 class TestLock(unittest.TestCase):
     def _makeOne(self, timeout=3600, comment=None, last_refresh=None):
         from .. import Lock
@@ -205,7 +205,7 @@ class TestLock(unittest.TestCase):
         now = datetime.datetime.utcnow()
         inst.refresh(when=now)
         self.assertEqual(inst.last_refresh, now)
-        
+
     def test_refresh_with_timeout(self):
         import datetime
         inst = self._makeOne()
@@ -218,7 +218,7 @@ class TestLock(unittest.TestCase):
         inst = self._makeOne()
         inst.timeout = None
         self.assertEqual(inst.expires(), None)
-        
+
     def test_expires_timeout_is_int(self):
         import datetime
         inst = self._makeOne()
@@ -231,7 +231,7 @@ class TestLock(unittest.TestCase):
         inst = self._makeOne()
         inst.timeout = None
         self.assertTrue(inst.is_valid())
-        
+
     def test_is_valid_expires_timeout_is_int(self):
         import datetime
         inst = self._makeOne()
@@ -273,7 +273,7 @@ class TestLockService(unittest.TestCase):
 
     def tearDown(self):
         testing.tearDown()
-        
+
     def _makeOne(self):
         from .. import LockService
         return LockService()
@@ -288,12 +288,12 @@ class TestLockService(unittest.TestCase):
         inst = self._makeOne()
         result = inst._get_ownerid(resource)
         self.assertEqual(result, 1)
-        
+
     def test__get_ownerid_oid(self):
         inst = self._makeOne()
         result = inst._get_ownerid(1)
         self.assertEqual(result, 1)
-        
+
     def test__get_ownerid_bogus(self):
         inst = self._makeOne()
         self.assertRaises(ValueError, inst._get_ownerid, 'bogus')
@@ -402,14 +402,14 @@ class TestLockService(unittest.TestCase):
         inst.__objectmap__ = DummyObjectMap([lock1, lock2])
         result = inst.discover(None, include_invalid=True)
         self.assertEqual(result, [lock1, lock2])
-        
+
 class Test_lock_resource(unittest.TestCase):
     def setUp(self):
         self.config = testing.setUp()
 
     def tearDown(self):
         testing.tearDown()
-        
+
     def _callFUT(self, resource, owner_or_ownerid, timeout=None):
         from substanced.locking import lock_resource
         return lock_resource(resource, owner_or_ownerid, timeout=timeout)
@@ -452,7 +452,7 @@ class Test_unlock_resource(unittest.TestCase):
 
     def tearDown(self):
         testing.tearDown()
-        
+
     def _callFUT(self, resource, owner_or_ownerid):
         from substanced.locking import unlock_resource
         return unlock_resource(resource, owner_or_ownerid)
@@ -493,7 +493,7 @@ class Test_discover_resource_locks(unittest.TestCase):
 
     def tearDown(self):
         testing.tearDown()
-        
+
     def _callFUT(self, resource):
         from substanced.locking import discover_resource_locks
         return discover_resource_locks(resource)
@@ -525,7 +525,7 @@ class Test_discover_resource_locks(unittest.TestCase):
         self.assertEqual(resource['locks'], lockservice)
         self.assertEqual(lockservice.resource, resource)
         self.assertEqual(lockservice.locktype, WriteLock)
-        
+
 class DummyObjectMap(object):
     def __init__(self, result, raises=None):
         self.result = result
@@ -550,7 +550,7 @@ class DummyContentRegistry(object):
 
     def create(self, *arg, **kw):
         return self.result
-        
+
 class DummyUsers(object):
     def items(self):
         ob = testing.DummyResource()
