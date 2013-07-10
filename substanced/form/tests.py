@@ -68,7 +68,7 @@ class TestFormView(unittest.TestCase):
         form, reqts = inst._build_form()
         form.validate = _validate
         inst._build_form = lambda *arg: (form, {'js': (), 'css': ()})
-        def raiseit(*arg):
+        def raiseit(*arg): #pragma NO COVER
             self.fail()
         inst.submit_success = raiseit # shouldn't get there
         inst.form_class = DummyForm
@@ -92,7 +92,7 @@ class TestFormView(unittest.TestCase):
         form, reqts = inst._build_form()
         form.validate = _validate
         inst._build_form = lambda *arg: (form, {'js': (), 'css': ()})
-        def raiseit(*arg):
+        def raiseit(*arg): #pragma NO COVER
             self.fail()
         inst.submit_success = raiseit # shouldn't get there
         inst.form_class = DummyForm

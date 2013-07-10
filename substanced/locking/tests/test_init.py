@@ -624,7 +624,7 @@ class LockedTests(unittest.TestCase):
             # Simulate borrowed lock
             painless = []
             class Lock(object):
-                def commit_suicide(x):
+                def commit_suicide(x): #pragma NO COVER
                     painless.append(x)
             lock = Lock()
             lock.comment = 'COMMENT'
@@ -685,11 +685,7 @@ class DummyUsers(object):
 
 class DummyLockService(object):
     __is_service__ = True
-    _can_lock = True
     def lock(self, resource, owner, timeout=None, comment=None, locktype=None):
-        from .. import LockError
-        if not self._can_lock:
-            raise LockError(self)
         self.resource = resource
         self.owner = owner
         self.timeout = timeout
