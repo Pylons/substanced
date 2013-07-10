@@ -15,12 +15,16 @@ from colander.iso8601 import UTC
 import deform_bootstrap
 import deform.widget
 
-from pyramid.security import has_permission
+from pyramid.exceptions import Forbidden
+from pyramid.security import (
+    authenticated_userid,
+    has_permission,
+    )
+from pyramid.threadlocal import get_current_registry
 from pyramid.traversal import (
     find_root,
     resource_path,
     )
-from pyramid.threadlocal import get_current_registry
 
 from substanced.interfaces import (
     ILockService,
@@ -394,6 +398,48 @@ def discover_resource_locks(
         include_invalid=include_invalid,
         locktype=locktype
         )
+
+class Locked(object):
+    """Context manager for code which must run while a lock is held.
+
+    Typical usage in a browser view:
+
+    try:
+        with Locked(context, request):
+            context.update(...)
+    except LockError:
+        return Response(....)
+    """
+    def __init__(self, resource, request, locktype=WriteLock):
+        if not has_permission('sdi.lock', resource, request):
+            raise Forbidden()
+        self.resource = resource
+        self.ownerid = authenticated_userid(request)
+        self.locktype = locktype
+        self.marker = 'Transient lock: %s' % id(self)
+
+    def __enter__(self):
+        """Create a lock for the resource, owned by the current user.
+
+        Ensure that the current user has the 'sdi.lock' permission on
+        the resource.
+
+        If the resource is locked by another user, raise LockError
+        (and therefore skips the suite).
+
+        Pass a unique marker to ``lock_resource`` as the comment, so
+        that we can tell in ``__exit__`` if the lock was created for us
+        (rather than being borrowed).
+        """
+        self.lock = lock_resource(self.resource, self.ownerid,
+                                  comment=self.marker,
+                                  locktype=self.locktype)
+
+    def __exit__(self, *dontcare):
+        """If we created the lock, destroy it.
+        """
+        if self.lock.comment == self.marker:
+            self.lock.commit_suicide()
 
 def includeme(config): # pragma: no cover
     config.add_permission('sdi.lock')
