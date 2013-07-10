@@ -39,8 +39,8 @@ does not already exist.
    the resource before calling :func:`~substanced.locking.lock_resource` to
    ensure that a user can't lock a resource he is not permitted to.
 
-Locking a Resource
-==================
+Unlocking a Resource
+====================
 
 To unlock a resource:
 
@@ -55,7 +55,7 @@ To unlock a resource:
 If the resource is already locked by a user other than the owner supplied as
 ``owner_or_ownerid`` (the parameter filled by ``request.user`` above) or the
 resource isn't already locked with this lock type, calling this function will
-raise a :class:`substanced.locking.LockError` exception.  Otherwise the lock
+raise a :exc:`substanced.locking.LockError` exception.  Otherwise the lock
 will be removed.
 
 Using the :func:`substanced.locking.unlock_resource` function has the side
@@ -89,7 +89,7 @@ unless the ``include_invalid`` argument passed to
 
 Under normal circumstances, the length of the sequence returned will be either
 0 (if there are no locks) or 1 (if there is any lock).  In some special
-circumstances, however, when the :class:`substanced.locking.lock_resource` API
+circumstances, however, when the :func:`substanced.locking.lock_resource` API
 is not used to create locks, there may be more than one lock related to a
 resource of the same type.
 
@@ -103,3 +103,36 @@ You can use the SDI UI of this locks service to delete and edit existing locks.
 It's a good idea to periodically use the "Delete Expired" button in this UI to
 clear out any existing expired locks that were orphaned by buggy or interrupted
 clients.
+
+Transient Locks
+===============
+
+For application code which needs to make updates to potentially-locked
+resources within the scope of a single request,
+:class:`substanced.locking.Locked` provides a convenient
+:term:`context manager` API.
+
+- Its constructor checks for the ``sdi.lock`` permission, and raises an
+  :exc:`pyramid.exceptions.HTTPForbidden` exception if the user does not
+  have the permission.
+
+- When the context is entered, the context manager uses the
+  :func:`substanced.locking.lock_resource` function to borrow or create
+  a lock on the resource, owned by the currently-authenticated user.
+
+- The attempt to create / borrow a lock might raise a
+  :exc:`substanced.locking.LockError`.
+
+- If the lock was created when the context was entered, the context manager
+  destroys it on exit from the context.
+
+Example:
+
+.. code-block:: python
+
+   from substanced.locking import Locked, LockError
+   try:
+       with Locked(self.context, self.request):
+           update_context(reqeust.POST)
+   except LockError as e:
+       raise FormError('locked by "%s"' % e.lock.owner.__name__)
