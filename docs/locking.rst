@@ -93,6 +93,21 @@ circumstances, however, when the :func:`substanced.locking.lock_resource` API
 is not used to create locks, there may be more than one lock related to a
 resource of the same type.
 
+In some applications, the important thing is to ensure that a particular
+user *could* lock a resource before updating it (e.g., from a browser view
+on a property sheet).  The ::func:`~substanced.locking.could_lock_resource`
+API is designed for these cases:  if the supplied userid could not lock the
+resource, it raises a :exc:`substanced.locking.LockError` exception:
+
+.. code-block:: python
+
+   from substanced.locking import could_lock_resource, LockError
+
+   try:
+       could_lock_resource(someresource, request.user)
+   except LockError as e:
+       raise FormError('locked by "%s"' % e.lock.owner.__name__)
+
 Viewing The Lock Service
 ========================
 
