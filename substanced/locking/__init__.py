@@ -451,48 +451,6 @@ def discover_resource_locks(
         locktype=locktype
         )
 
-class Locked(object):
-    """Context manager for code which must run while a lock is held.
-
-    If the current user does not have the 'sdi.lock' permission on
-    the resource, raise HTTPForbidden from the constructor.
-
-    Typical usage in a browser view:
-
-    try:
-        with Locked(context, request):
-            context.update(...)
-    except LockError:
-        return Response(....)
-    """
-    def __init__(self, resource, request, locktype=WriteLock):
-        if not has_permission('sdi.lock', resource, request):
-            raise HTTPForbidden('Cannot lock resource')
-        self.resource = resource
-        self.ownerid = authenticated_userid(request)
-        self.locktype = locktype
-        self.marker = 'Transient lock: %s' % id(self)
-
-    def __enter__(self):
-        """Create a lock for the resource, owned by the current user.
-
-        If the resource is locked by another user, raise LockError
-        (and therefore skip the suite).
-
-        Pass a unique marker to ``lock_resource`` as the comment, so
-        that we can tell in ``__exit__`` if the lock was created for us
-        (rather than being borrowed).
-        """
-        self.lock = lock_resource(self.resource, self.ownerid,
-                                  comment=self.marker,
-                                  locktype=self.locktype)
-
-    def __exit__(self, *dontcare):
-        """If we created the lock, destroy it.
-        """
-        if self.lock.comment == self.marker:
-            self.lock.commit_suicide()
-
 def includeme(config): # pragma: no cover
     config.add_permission('sdi.lock')
     config.include('.views')
