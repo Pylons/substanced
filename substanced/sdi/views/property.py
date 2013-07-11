@@ -10,7 +10,6 @@ from pyramid.security import (
 
 from ...form import FormError
 from ...form import FormView
-from ...locking import Locked
 from ...locking import LockError
 from ...locking import could_lock_resource
 

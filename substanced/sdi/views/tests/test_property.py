@@ -258,24 +258,14 @@ class DummyLock(object):
     def __init__(self, owner, comment):
         self.owner = DummyUser(owner)
         self.comment = comment
-    def commit_suicide(self):
-        pass
 
 class DummyLockService(object):
     __is_service__ = True
     def __init__(self, can_lock):
         self._can_lock = can_lock
 
-    def lock(self, resource, owner, timeout=None, comment=None, locktype=None):
-        from ....locking import LockError
-        if not self._can_lock:
-            raise LockError(DummyLock('otheruser', 'existing'))
-        return DummyLock(owner, comment)
-
     def borrow_lock(self, resource, owner, locktype=None):
         from ....locking import LockError
         if not self._can_lock:
             raise LockError(DummyLock('otheruser', 'existing'))
         return True
-
-    unlock = lock
