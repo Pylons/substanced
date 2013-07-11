@@ -489,6 +489,49 @@ class Test_lock_resource(unittest.TestCase):
         self.assertEqual(lockservice.timeout, 3600)
         self.assertEqual(lockservice.locktype, WriteLock)
 
+class Test_could_lock_resource(unittest.TestCase):
+    def setUp(self):
+        self.config = testing.setUp()
+
+    def tearDown(self):
+        testing.tearDown()
+
+    def _callFUT(self, resource, owner_or_ownerid, timeout=None):
+        from substanced.locking import could_lock_resource
+        return could_lock_resource(resource, owner_or_ownerid, timeout=timeout)
+
+    def test_it_with_existing_lock_service(self):
+        from substanced.locking import WriteLock
+        from zope.interface import alsoProvides
+        from substanced.interfaces import IFolder
+        resource = testing.DummyResource()
+        alsoProvides(resource, IFolder)
+        lockservice = DummyLockService()
+        resource['locks'] = lockservice
+        result = self._callFUT(resource, 1, 3600)
+        self.assertEqual(result, True)
+        self.assertEqual(lockservice.resource, resource)
+        self.assertEqual(lockservice.owner, 1)
+        self.assertEqual(lockservice.timeout, 3600)
+        self.assertEqual(lockservice.locktype, WriteLock)
+
+    def test_it_with_missing_lock_service(self):
+        from substanced.locking import WriteLock
+        from zope.interface import alsoProvides
+        from substanced.interfaces import IFolder
+        lockservice = DummyLockService()
+        self.config.registry.content = DummyContentRegistry(lockservice)
+        resource = testing.DummyResource()
+        resource.add_service = resource.__setitem__
+        alsoProvides(resource, IFolder)
+        result = self._callFUT(resource, 1, 3600)
+        self.assertEqual(result, True)
+        self.assertEqual(resource['locks'], lockservice)
+        self.assertEqual(lockservice.resource, resource)
+        self.assertEqual(lockservice.owner, 1)
+        self.assertEqual(lockservice.timeout, 3600)
+        self.assertEqual(lockservice.locktype, WriteLock)
+
 class Test_unlock_resource(unittest.TestCase):
     def setUp(self):
         self.config = testing.setUp()
@@ -736,7 +779,7 @@ class DummyLockService(object):
         self.locktype = locktype
         return True
 
-    unlock = lock
+    unlock = borrow_lock = lock
 
     def discover(self, resource, include_invalid=False, locktype=None):
         self.resource = resource

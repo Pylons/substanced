@@ -369,6 +369,41 @@ def lock_resource(
         locktype=locktype,
         )
 
+def could_lock_resource(
+    resource,
+    owner_or_ownerid,
+    timeout=None,
+    locktype=WriteLock,
+    ):
+    """ Check that a given owner could lock a resource using the lock service.
+
+    If the resource is already locked by the owner supplied as
+    owner_or_ownerid, calling this function will *not* refresh the lock.
+
+    If the resource is not already locked by another user, calling this
+    function will *not* create a new lock.
+
+    If the resource is already locked by a different user, raise a
+    :class:`substanced.locking.LockError`.
+
+    This function has the side effect of creating a Lock
+    Service in the Substance D root if one does not already exist.
+
+    .. warning::
+
+       Callers should assert that the owner has the ``sdi.lock`` permission
+       against the resource before calling this function to ensure that a user
+       can't lock a resource he is not permitted to.
+    """
+    locks = _get_lock_service(resource)
+    locks.borrow_lock(
+        resource,
+        owner_or_ownerid,
+        timeout=timeout,
+        locktype=locktype,
+        ) # may raise LockError
+    return True
+
 def unlock_resource(
     resource,
     owner_or_ownerid,
