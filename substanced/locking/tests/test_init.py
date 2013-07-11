@@ -298,6 +298,50 @@ class TestLockService(unittest.TestCase):
         inst = self._makeOne()
         self.assertRaises(ValueError, inst._get_ownerid, 'bogus')
 
+    def test_borrow_lock_without_existing_lock(self):
+        inst = self._makeOne()
+        inst.__objectmap__ = DummyObjectMap([])
+        resource = testing.DummyResource()
+        self.assertTrue(inst.borrow_lock(resource, 1) is None)
+
+    def test_borrow_lock_with_invalid_existing_lock(self):
+        inst = self._makeOne()
+        lock = testing.DummyResource()
+        def commit_suicide():
+            lock.suicided = True
+        lock.commit_suicide = commit_suicide
+        lock.is_valid = lambda: False
+        resource = testing.DummyResource()
+        inst.__objectmap__ = DummyObjectMap([lock])
+        self.config.registry.content = DummyContentRegistry(lock)
+        self.assertTrue(inst.borrow_lock(resource, 1) is None)
+        self.assertTrue(lock.suicided)
+
+    def test_borrow_lock_with_valid_existing_lock_different_userid(self):
+        from substanced.locking import LockError
+        inst = self._makeOne()
+        existing_lock = testing.DummyResource()
+        existing_lock.ownerid = 2
+        existing_lock.is_valid = lambda: True
+        resource = testing.DummyResource()
+        inst.__objectmap__ = DummyObjectMap([existing_lock])
+        self.assertRaises(LockError, inst.borrow_lock, resource, 1)
+
+    def test_borrow_lock_with_valid_existing_lock_same_userid(self):
+        inst = self._makeOne()
+        lock = testing.DummyResource()
+        lock.ownerid = 1
+        lock.is_valid = lambda: True
+        def refresh(timeout, when):
+            lock.timeout = timeout
+            lock.when = when
+        lock.refresh = refresh
+        resource = testing.DummyResource()
+        inst.__objectmap__ = DummyObjectMap([lock])
+        result = inst.borrow_lock(resource, 1, timeout=3600)
+        self.assertEqual(result.timeout, 3600)
+        self.assertTrue(result.when)
+
     def test_lock_without_existing_lock(self):
         inst = self._makeOne()
         lock = testing.DummyResource()

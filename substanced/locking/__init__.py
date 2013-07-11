@@ -245,17 +245,21 @@ class LockService(Folder, _AutoNamingFolder):
                 )
         return ownerid
 
-    def lock(
+    def borrow_lock(
         self,
         resource,
         owner_or_ownerid,
         timeout=None,
-        comment=None,
         locktype=WriteLock,
         ):
-        # NB: callers should ensure that the user has 'sdi.lock' permission
-        # on the resource before calling
+        """Search for an existing, avlid lock on resource.
 
+        - If not found, return None.
+
+        - If owned by 'owner_or_ownerid', return it.
+
+        - Otherwise, raise LockError.
+        """
         objectmap = find_objectmap(self)
         ownerid = self._get_ownerid(owner_or_ownerid)
         locks = objectmap.targets(resource, locktype)
@@ -270,10 +274,27 @@ class LockService(Folder, _AutoNamingFolder):
             else:
                 lock.commit_suicide()
                 break
+
+    def lock(
+        self,
+        resource,
+        owner_or_ownerid,
+        timeout=None,
+        comment=None,
+        locktype=WriteLock,
+        ):
+        # NB: callers should ensure that the user has 'sdi.lock' permission
+        # on the resource before calling
+
+        lock = self.borrow_lock(
+                    resource, owner_or_ownerid, timeout, locktype)
+        if lock is not None:
+            return lock
+
         registry = get_current_registry()
         lock = registry.content.create('Lock', timeout=timeout, comment=comment)
         self.add_next(lock) # NB: must add before setting ownerid/resource
-        lock.ownerid = ownerid
+        lock.ownerid = self._get_ownerid(owner_or_ownerid)
         lock.resource = resource
         return lock
 
