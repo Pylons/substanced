@@ -266,8 +266,6 @@ class LockService(Folder, _AutoNamingFolder):
         for lock in locks:
             if lock.is_valid():
                 if lock.ownerid == ownerid:
-                    when = now()
-                    lock.refresh(timeout, when)
                     return lock
                 else:
                     raise LockError(lock)
@@ -289,6 +287,8 @@ class LockService(Folder, _AutoNamingFolder):
         lock = self.borrow_lock(
                     resource, owner_or_ownerid, timeout, locktype)
         if lock is not None:
+            when = now()
+            lock.refresh(timeout, when)
             return lock
 
         registry = get_current_registry()

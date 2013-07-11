@@ -332,15 +332,14 @@ class TestLockService(unittest.TestCase):
         lock = testing.DummyResource()
         lock.ownerid = 1
         lock.is_valid = lambda: True
-        def refresh(timeout, when):
+        lock.timeout = None
+        def refresh(timeout, when): #pragma NO COVER
             lock.timeout = timeout
-            lock.when = when
         lock.refresh = refresh
         resource = testing.DummyResource()
         inst.__objectmap__ = DummyObjectMap([lock])
-        result = inst.borrow_lock(resource, 1, timeout=3600)
-        self.assertEqual(result.timeout, 3600)
-        self.assertTrue(result.when)
+        result = inst.borrow_lock(resource, 1)
+        self.assertEqual(result.timeout, None)
 
     def test_lock_without_existing_lock(self):
         inst = self._makeOne()
