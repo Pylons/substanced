@@ -249,7 +249,6 @@ class LockService(Folder, _AutoNamingFolder):
         self,
         resource,
         owner_or_ownerid,
-        timeout=None,
         locktype=WriteLock,
         ):
         """Search for an existing, avlid lock on resource.
@@ -284,8 +283,7 @@ class LockService(Folder, _AutoNamingFolder):
         # NB: callers should ensure that the user has 'sdi.lock' permission
         # on the resource before calling
 
-        lock = self.borrow_lock(
-                    resource, owner_or_ownerid, timeout, locktype)
+        lock = self.borrow_lock(resource, owner_or_ownerid, locktype)
         if lock is not None:
             when = now()
             lock.refresh(timeout, when)
@@ -372,7 +370,6 @@ def lock_resource(
 def could_lock_resource(
     resource,
     owner_or_ownerid,
-    timeout=None,
     locktype=WriteLock,
     ):
     """ Check that a given owner could lock a resource using the lock service.
@@ -399,7 +396,6 @@ def could_lock_resource(
     locks.borrow_lock(
         resource,
         owner_or_ownerid,
-        timeout=timeout,
         locktype=locktype,
         ) # may raise LockError
     return True
