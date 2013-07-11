@@ -58,25 +58,6 @@ class TestPropertySheetsView(unittest.TestCase):
         self.config.testing_securitypolicy(permissive=False)
         self.assertRaises(HTTPForbidden, inst.save_success, {'a':1})
 
-    def test_save_success_no_lock_permission(self):
-        from pyramid.httpexceptions import HTTPForbidden
-        request = testing.DummyRequest()
-        request.sdiapi = DummySDIAPI()
-        sheet_factory = DummySheetFactory([('change', 'sdi.change'),
-                                           ('lock', 'sdi.lock'),
-                                          ])
-        request.registry.content = DummyContent(
-            [('name', sheet_factory)])
-        resource = testing.DummyResource()
-        request.context = resource
-        inst = self._makeOne(request)
-        # Allow 'sdi.change', but forbid 'sdi.lock'.
-        def _permits(context, principals, permission):
-            return permission != 'sdi.lock'
-        policy = self.config.testing_securitypolicy(permissive=False)
-        policy.permits = _permits
-        self.assertRaises(HTTPForbidden, inst.save_success, {'a':1})
-
     def test_save_success_cannot_lock(self):
         from zope.interface import alsoProvides
         from substanced.form import FormError
@@ -290,5 +271,11 @@ class DummyLockService(object):
         if not self._can_lock:
             raise LockError(DummyLock('otheruser', 'existing'))
         return DummyLock(owner, comment)
+
+    def borrow_lock(self, resource, owner, locktype=None):
+        from ....locking import LockError
+        if not self._can_lock:
+            raise LockError(DummyLock('otheruser', 'existing'))
+        return True
 
     unlock = lock
