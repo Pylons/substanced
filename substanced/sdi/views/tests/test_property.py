@@ -45,22 +45,6 @@ class TestPropertySheetsView(unittest.TestCase):
         self.assertTrue(inst.schema, 'schema')
         self.assertEqual(inst.sheet_names, ['othername'])
 
-    def test_save_success(self):
-        request = testing.DummyRequest()
-        request.sdiapi = DummySDIAPI()
-        request.registry = testing.DummyResource()
-        request.registry.content = DummyContent(
-            [('name', DummyPropertySheet)])
-        resource = testing.DummyResource()
-        request.context = resource
-        inst = self._makeOne(request)
-        response = inst.save_success({'a':1})
-        self.assertEqual(response.location, '/mgmt_path')
-        self.assertEqual(inst.active_sheet.struct, {'a': 1})
-        self.assertTrue(inst.active_sheet.after)
-        self.assertEqual(request.sdiapi.flashed,
-                         ('Updated properties', 'success') )
-
     def test_save_success_no_change_permission(self):
         from pyramid.httpexceptions import HTTPForbidden
         request = testing.DummyRequest()
@@ -73,6 +57,40 @@ class TestPropertySheetsView(unittest.TestCase):
         inst = self._makeOne(request)
         self.config.testing_securitypolicy(permissive=False)
         self.assertRaises(HTTPForbidden, inst.save_success, {'a':1})
+
+    def test_save_success_cannot_lock(self):
+        from zope.interface import alsoProvides
+        from substanced.form import FormError
+        from substanced.interfaces import IFolder
+        request = testing.DummyRequest()
+        request.sdiapi = DummySDIAPI()
+        request.registry.content = DummyContent(
+            [('name', DummyPropertySheet)])
+        resource = testing.DummyResource()
+        alsoProvides(resource, IFolder)
+        resource['locks'] = DummyLockService(False)
+        request.context = resource
+        inst = self._makeOne(request)
+        self.assertRaises(FormError, inst.save_success, {'a':1})
+
+    def test_save_success_ok(self):
+        from zope.interface import alsoProvides
+        from substanced.interfaces import IFolder
+        request = testing.DummyRequest()
+        request.sdiapi = DummySDIAPI()
+        request.registry.content = DummyContent(
+            [('name', DummyPropertySheet)])
+        resource = testing.DummyResource()
+        alsoProvides(resource, IFolder)
+        resource['locks'] = DummyLockService(True)
+        request.context = resource
+        inst = self._makeOne(request)
+        response = inst.save_success({'a':1})
+        self.assertEqual(response.location, '/mgmt_path')
+        self.assertEqual(inst.active_sheet.struct, {'a': 1})
+        self.assertTrue(inst.active_sheet.after)
+        self.assertEqual(request.sdiapi.flashed,
+                         ('Updated properties', 'success') )
 
     def test_show(self):
         request = testing.DummyRequest()
@@ -231,3 +249,23 @@ class DummySDIAPI(object):
 
     def flash_with_undo(self, msg, category):
         self.flashed = (msg, category)
+
+class DummyUser(object):
+    def __init__(self, owner):
+        self.__name__ = owner
+
+class DummyLock(object):
+    def __init__(self, owner, comment):
+        self.owner = DummyUser(owner)
+        self.comment = comment
+
+class DummyLockService(object):
+    __is_service__ = True
+    def __init__(self, can_lock):
+        self._can_lock = can_lock
+
+    def borrow_lock(self, resource, owner, locktype=None):
+        from ....locking import LockError
+        if not self._can_lock:
+            raise LockError(DummyLock('otheruser', 'existing'))
+        return True

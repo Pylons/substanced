@@ -3,9 +3,15 @@ from pyramid.httpexceptions import (
     HTTPForbidden,
     HTTPNotFound,
     )
-from pyramid.security import has_permission
+from pyramid.security import (
+    authenticated_userid,
+    has_permission,
+    )
 
+from ...form import FormError
 from ...form import FormView
+from ...locking import LockError
+from ...locking import could_lock_resource
 
 from .. import mgmt_view
 
@@ -35,7 +41,7 @@ def has_permission_to_view_any_propertysheet(context, request):
     )
 class PropertySheetsView(FormView):
     buttons = ('save',)
-    
+
     def __init__(self, request):
         self.request = request
         self.context = request.context
@@ -79,7 +85,12 @@ class PropertySheetsView(FormView):
             raise HTTPForbidden(
                 "You don't have permission to change properties of this "
                 "property sheet")
-        changed = self.active_sheet.set(appstruct)
+        try:
+            ownerid = authenticated_userid(self.request)
+            if could_lock_resource(self.context, ownerid): #may raise
+                changed = self.active_sheet.set(appstruct)
+        except LockError as e:
+            raise FormError('locked by "%s"' % e.lock.owner.__name__)
         self.active_sheet.after_set(changed)
         self.request.sdiapi.flash_with_undo('Updated properties', 'success')
         return HTTPFound(self.request.sdiapi.mgmt_path(

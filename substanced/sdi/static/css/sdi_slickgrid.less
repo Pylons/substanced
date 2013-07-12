@@ -3,6 +3,25 @@
 @import "../../../../../bootstrap/less/variables.less";
 @import "../../../../../slickgrid/bootstrap/slickgrid.less";
 
+@keyframes showgridrow {
+  0%   {
+    opacity: 0.3;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@-webkit-keyframes showgridrow { /* Safari and Chrome */
+  0%   {
+    opacity: 0.3;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+
 .slickgrid-wrapper {
   height: 380px; // for 10 rows x 35px
   width: 100%;
@@ -32,6 +51,11 @@
     white-space: normal;
   }
 
+  .slick-row {
+    animation: showgridrow 0.5s;
+    -webkit-animation: showgridrow 0.5s; /* Safari and Chrome */
+  }
+
 }
 
 // 
@@ -54,7 +78,8 @@
   width: 100%;
   background: @tableBackground;
   font-family: @sansFontFamily;
-  color: @lightGray;
+  //color: @lightGray;    // XXX ???
+  color: #555555;
   padding: 5px 7.5834px;
   margin-bottom: 1em;
 }

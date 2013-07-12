@@ -38,6 +38,7 @@ def include(config): # pragma: no cover
     config.include('.widget')
     config.include('.workflow')
     config.include('.dump')
+    config.include('.locking')
 
 def scan(config): # pragma: no cover
     """ Perform all ``config.scan`` tasks required for Substance D and the
@@ -52,6 +53,7 @@ def scan(config): # pragma: no cover
     config.scan('.sdi')
     config.scan('.workflow')
     config.scan('.audit')
+    config.scan('.locking')
     
 def includeme(config): # pragma: no cover
     """ Do the work of :func:`substanced.include`, then

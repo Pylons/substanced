@@ -184,18 +184,17 @@
             $viewport = this.element.find('.slick-viewport');
             sdiRemoteModelPlugin.onDataLoading.subscribe(function (evt, args) {
                 // indicate loading
-                $viewport.stop(true, true).animate({
-                    opacity: 0.3
-                });
+                //$viewport.stop(true, true).animate({
+                //   opacity: 0.3
+                //});
             });
 
             sdiRemoteModelPlugin.onDataLoaded.subscribe(function (evt, args) {
                 // stop indication of loading
-                $viewport.stop(true, true).animate({
-                    opacity: 1
-                });
+                //$viewport.stop(true, true).animate({
+                //    opacity: 1
+                //});
                 grid.updateHeader();
-
             });
 
             sdiRemoteModelPlugin.onAjaxError.subscribe(function (evt, args) {
@@ -242,9 +241,14 @@
                     checkbox_header.hide();
                 } else {
                     checkbox_header.show();
-                };
+                }
             };
 
+            grid.onSelectedRowsChanged.subscribe(function (e, args) {
+                // Need to re-hide the globak checkbox also,
+                // because changing the selection causes it re-instantiated.
+                grid.updateHeader();
+            });
 
             if (isReorderable) {
 
@@ -276,7 +280,9 @@
                             data: {
                                 'ajax.reorder': 'ajax.reorder',
                                 'item-modify': selectedIds.join('/'),
-                                'insert-before': insertBeforeId
+                                'insert-before': insertBeforeId,
+                                // csrf_token needed for post requests
+                                'csrf_token': wrapperOptions.csrfToken
                             },
                             dataType: 'json'
                     });
@@ -284,7 +290,6 @@
                 });
             }
 
-            // XXX This is just to help debugging, with no real function here.
             grid.onSelectedRowsChanged.subscribe(function (evt) {
                 var selRows = grid.getSelectedRows();
                 var data = grid.getData();

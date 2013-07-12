@@ -109,6 +109,6 @@ def compose_message(eventid, name=None, payload=''):
     msg += 'data: %s\n\n' % payload
     if PY3: # pragma: no cover
         return msg
-    else:
+    else: # pragma: no cover
         return msg.decode('utf-8')
 

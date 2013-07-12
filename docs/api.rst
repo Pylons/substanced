@@ -321,6 +321,40 @@ Other Helpers
    :members:
 
 
+:mod:`substanced.locking` API
+-----------------------------
+
+.. automodule:: substanced.locking
+
+.. autoclass:: Lock
+   :members:
+
+   .. attribute:: ownerid
+
+      The owner oid for this lock.
+
+   .. attribute:: owner
+
+      The owner object of this lock (a User).
+
+   .. attribute:: resourceid
+
+      The oid of the resource related to this lock.
+
+   .. attribute:: resource
+
+      The resource object related to this lock.
+
+.. autoclass:: LockError
+
+.. autoclass:: UnlockError
+
+.. autofunction:: lock_resource
+
+.. autofunction:: unlock_resource
+
+.. autofunction:: discover_resource_locks
+
 :mod:`substanced.objectmap` API
 --------------------------------
 

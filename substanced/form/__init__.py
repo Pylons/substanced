@@ -64,6 +64,11 @@ default_resources = {
                    'deform_bootstrap:static/jquery_chosen/chosen.css')
             },
         },
+    'modernizr': {
+        None:{
+            'js':('deform:static/scripts/modernizr.custom.input-types-and-atts.js',),
+            },
+        },
     }
 
 # NB: don't depend on deform_bootstrap.css, it uses less, and its .less
@@ -78,6 +83,10 @@ default_resources = {
 
 resource_registry = deform.widget.ResourceRegistry(use_defaults=False)
 resource_registry.registry = default_resources
+
+class FormError(Exception):
+    """Non-validation-related error.
+    """
 
 class Form(deform.form.Form):
     """ Subclass of ``deform.form.Form`` which uses a custom resource
@@ -96,7 +105,7 @@ class FormView(object):
         self.context = context
         self.request = request
 
-    def __call__(self):
+    def _build_form(self):
         use_ajax = getattr(self, 'use_ajax', False)
         ajax_options = getattr(self, 'ajax_options', '{}')
         action = getattr(self, 'action', '')
@@ -113,6 +122,10 @@ class FormView(object):
         form.widget.template = 'substanced:widget/templates/form.pt' 
         self.before(form)
         reqts = form.get_widget_resources()
+        return form, reqts
+
+    def __call__(self):
+        form, reqts = self._build_form()
         result = None
 
         for button in form.buttons:
@@ -121,12 +134,19 @@ class FormView(object):
                 try:
                     controls = self.request.POST.items()
                     validated = form.validate(controls)
-                    result = success_method(validated)
                 except deform.exception.ValidationFailure as e:
                     fail = getattr(self, '%s_failure' % button.name, None)
                     if fail is None:
                         fail = self.failure
                     result = fail(e)
+                else:
+                    try:
+                        result = success_method(validated)
+                    except FormError as e:
+                        snippet = '<div class="error">Failed: %s</div>' % e
+                        self.request.session.flash(snippet, 'error',
+                                                allow_duplicate=True)
+                        result = {'form': form.render(validated)}
                 break
 
         if result is None:

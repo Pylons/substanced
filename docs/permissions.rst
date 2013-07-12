@@ -28,6 +28,10 @@ sdi.change-password
 
   Protects views of a user which allow for the changing of passwords.
 
+sdi.lock
+
+  Protects views which allow users to lock or unlock a resource.
+
 sdi.manage-catalog
 
   Protects views which allow users to manage catalog data and indexes within a

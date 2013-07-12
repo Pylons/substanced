@@ -4,10 +4,7 @@ import ZODB.POSException
 
 from pyramid_zodbconn import get_connection
 from pyramid.httpexceptions import HTTPFound
-from pyramid.security import (
-    authenticated_userid,
-    unauthenticated_userid
-    )
+from pyramid.security import authenticated_userid
 
 from .. import mgmt_view
 from ...objectmap import find_objectmap
@@ -16,7 +13,7 @@ class UndoViews(object):
     transaction = transaction # for tests
     get_connection = staticmethod(get_connection) # for tests
     find_objectmap = staticmethod(find_objectmap) # for tests
-    unauthenticated_userid = staticmethod(unauthenticated_userid) # for tests
+    authenticated_userid = staticmethod(authenticated_userid) # for tests
 
     def __init__(self, context, request):
         self.context = context
@@ -39,7 +36,7 @@ class UndoViews(object):
         undohash = request.params['undohash']
         undo = None
         db = self._get_db()
-        userid = authenticated_userid(request)
+        userid = self.authenticated_userid(request)
         # I am permitted to undo it if:
         #
         # - It happend within the most recent 50 transactions.
@@ -90,7 +87,7 @@ class UndoViews(object):
         tids = []
         descriptions = []
 
-        uid = self.unauthenticated_userid(request)
+        uid = self.authenticated_userid(request)
 
         for tid in transaction_info:
             tid = tid.split(b' ', 1)
