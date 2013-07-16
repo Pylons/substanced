@@ -16,6 +16,32 @@
       </p>
     </form>
 
+    <h2>Evolve</h2>
+    <form action="./database" method="POST">
+      <input type="hidden" value="${request.session.get_csrf_token()}"
+             name="csrf_token"/>
+      <p>Finished and unfinished steps
+         <input type="submit" class="btn btn-primary" 
+                value="Show" name="show_evolve"/>
+      </p>
+      <p>Run evolve steps up to the latests
+         <input type="submit" class="btn btn-primary" 
+                value="Evolve" name="evolve"/>
+         <input type="submit" class="btn btn-primary" 
+                value="Dry-run" name="dryrun"/>
+      </p>
+      <p>Mark step named
+         <input class="span3" type="text" value="" name="step"/> as finished.
+         <input type="submit" class="btn btn-primary" 
+                 value="Go" name="evolve_finished"/>
+      </p>
+      <p>Mark step named
+         <input class="span3" type="text" value="" name="step"/> as unfinished.
+         <input type="submit" class="btn btn-primary" 
+                 value="Go" name="evolve_unfinished"/>
+      </p>
+    </form>
+
     <h2>Details</h2>
 
     <table class="table">

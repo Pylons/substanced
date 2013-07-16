@@ -1,11 +1,16 @@
 import json
+import datetime
+import transaction
 
 from pyramid_zodbconn import get_connection
 
 from pyramid.httpexceptions import HTTPFound
 from pyramid.view import view_defaults
+from pyramid.traversal import find_root
 
 from .. import mgmt_view
+from ...evolution import EvolutionManager
+
 
 @view_defaults(
     physical_path='/',
@@ -73,3 +78,93 @@ class ManageDatabase(object):
         return HTTPFound(location=self.request.sdiapi.mgmt_path(
             self.context, '@@database'))
 
+    @mgmt_view(request_method='POST',
+               request_param='show_evolve',
+               renderer='templates/db_show_evolve.pt',
+               check_csrf=True)
+    def show_evolve(self):
+        root = find_root(self.request.context)
+        manager = EvolutionManager(root, self.request.registry)
+
+        d = dict(
+            unfinished_steps=list(manager.get_unfinished_steps()),
+            finished_steps=list(manager.get_finished_steps_by_value()),
+            format_timestamp=lambda t: datetime.datetime.fromtimestamp(t).strftime('%Y-%m-%d %H:%M:%S')
+            )
+        return d
+
+    @mgmt_view(request_method='POST',
+               request_param='dryrun',
+               check_csrf=True)
+    def dryrun(self):
+        root = find_root(self.request.context)
+        manager = EvolutionManager(root, self.request.registry)
+        complete = manager.evolve(commit=False)
+        if complete:
+            self.request.session.flash('%d evolution steps dry-run' % len(complete))
+        else:
+            self.request.session.flash('No evolution steps dry-run')
+        return HTTPFound(location=self.request.sdiapi.mgmt_path(
+            self.context, '@@database'))
+
+    @mgmt_view(request_method='POST',
+               request_param='evolve',
+               check_csrf=True)
+    def evolve(self):
+        root = find_root(self.request.context)
+        manager = EvolutionManager(root, self.request.registry)
+        complete = manager.evolve(commit=True)
+        if complete:
+            self.request.session.flash('%d evolution steps executed' % len(complete))
+        else:
+            self.request.session.flash('No evolution steps executed')
+        return HTTPFound(location=self.request.sdiapi.mgmt_path(
+            self.context, '@@database'))
+
+    @mgmt_view(request_method='POST',
+               request_param='evolve_finished',
+               check_csrf=True)
+    def evolve_finished(self):
+        root = find_root(self.request.context)
+        manager = EvolutionManager(root, self.request.registry)
+        step = self.request.POST['step']
+
+        finished_steps = manager.get_finished_steps()
+        unfinished_steps = dict(manager.get_unfinished_steps())
+
+        if step in finished_steps:
+            self.request.session.flash('Step %s already marked as finished' % step)
+        else:
+            if step in unfinished_steps:
+                manager.add_finished_step(step)
+                self.request.session.flash('Step %s marked as finished' % step)
+                t = transaction.get()
+                t.note('Marked %s evolution step as finished' % step)
+            else:
+                self.request.session.flash('Unknown step %s, not marking as finished' % step)
+        return HTTPFound(location=self.request.sdiapi.mgmt_path(
+            self.context, '@@database'))
+
+    @mgmt_view(request_method='POST',
+               request_param='evolve_unfinished',
+               check_csrf=True)
+    def evolve_unfinished(self):
+        root = find_root(self.request.context)
+        manager = EvolutionManager(root, self.request.registry)
+        step = self.request.POST['step']
+
+        finished_steps = manager.get_finished_steps()
+        unfinished_steps = dict(manager.get_unfinished_steps())
+
+        if step in finished_steps:
+            manager.remove_finished_step(step)
+            self.request.session.flash('Step %s marked as unfinished' % step)
+            t = transaction.get()
+            t.note('Marked %s evolution step as unfinished' % step)
+        else:
+            if step in unfinished_steps:
+                self.request.session.flash('Step %s already marked as unfinished' % step)
+            else:
+                self.request.session.flash('Unknown step %s, not marking as unfinished' % step)
+        return HTTPFound(location=self.request.sdiapi.mgmt_path(
+            self.context, '@@database'))
