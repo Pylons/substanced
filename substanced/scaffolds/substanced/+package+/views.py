@@ -16,7 +16,7 @@ from .resources import DocumentSchema
     renderer='templates/splash.pt',
     )
 def splash_view(request):
-    manage_prefix = request.registry.settings.get('substanced.manage_prefix', 
+    manage_prefix = request.registry.settings.get('substanced.manage_prefix',
                                                   '/manage')
     return {'manage_prefix': manage_prefix}
 
@@ -39,8 +39,8 @@ def document_view(context, request):
 @mgmt_view(
     context=IFolder,
     name='add_document',
-    tab_title='Add Document', 
-    permission='sdi.add-content', 
+    tab_title='Add Document',
+    permission='sdi.add-content',
     renderer='substanced.sdi:templates/form.pt',
     tab_condition=False,
     )
@@ -57,4 +57,3 @@ class AddDocumentView(FormView):
         return HTTPFound(
             self.request.sdiapi.mgmt_path(self.context, '@@contents')
             )
-

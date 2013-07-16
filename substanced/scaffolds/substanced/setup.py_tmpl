@@ -34,7 +34,7 @@ setup(name='{{project}}',
       install_requires=requires,
       tests_require=requires,
       test_suite="{{project}}",
-      entry_points = """\
+      entry_points="""\
       [paste.app_factory]
       main = {{project}}:main
       """,

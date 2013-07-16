@@ -53,7 +53,7 @@ class SubstanceDTemplateTest(TemplateTest):
         finally:
             shutil.rmtree(self.directory)
             os.chdir(self.old_cwd)
-    
+
 
 if __name__ == '__main__':     # pragma: no cover
     test = SubstanceDTemplateTest()
