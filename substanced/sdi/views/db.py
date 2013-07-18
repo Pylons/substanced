@@ -2,6 +2,8 @@ import json
 import datetime
 import transaction
 
+from colander.iso8601 import UTC
+
 from pyramid_zodbconn import get_connection
 
 from pyramid.httpexceptions import HTTPFound
@@ -171,4 +173,5 @@ class ManageDatabase(object):
 
 
 def _format_timestamp(t):
-    return datetime.datetime.fromtimestamp(t).strftime('%Y-%m-%d %H:%M:%S')
+    return datetime.datetime.fromtimestamp(t, tz=UTC).strftime(
+        '%Y-%m-%d %H:%M:%S UTC')

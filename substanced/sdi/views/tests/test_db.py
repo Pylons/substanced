@@ -216,7 +216,7 @@ class TestManageDatabase(unittest.TestCase):
     def test_format_timestamp(self):
         from ..db import _format_timestamp
         dt = _format_timestamp(1374121920.462345)
-        self.assertEqual(dt, '2013-07-18 06:32:00')
+        self.assertEqual(dt, '2013-07-18 04:32:00 UTC')
 
 
 class DummyDB(object):
