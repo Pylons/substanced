@@ -78,6 +78,9 @@ class EvolutionManager(object):
                 t = self.transaction.get()
                 t.note('Executed evolution step %s' % name)
                 t.commit()
+            else:
+                t = self.transaction.get()
+                t.abort()
             complete.append(name)
         return complete
 
