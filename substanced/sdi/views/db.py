@@ -20,6 +20,7 @@ from ...evolution import EvolutionManager
     )
 class ManageDatabase(object):
     get_connection = staticmethod(get_connection)
+    EvolutionManager = staticmethod(EvolutionManager)
 
     def __init__(self, context, request):
         self.context = context
@@ -78,27 +79,26 @@ class ManageDatabase(object):
         return HTTPFound(location=self.request.sdiapi.mgmt_path(
             self.context, '@@database'))
 
-    @mgmt_view(request_method='POST',
+    @mgmt_view(request_method='GET',
                request_param='show_evolve',
                renderer='templates/db_show_evolve.pt',
-               check_csrf=True)
+              )
     def show_evolve(self):
         root = find_root(self.request.context)
-        manager = EvolutionManager(root, self.request.registry)
+        manager = self.EvolutionManager(root, self.request.registry)
 
-        d = dict(
+        return dict(
             unfinished_steps=list(manager.get_unfinished_steps()),
             finished_steps=list(manager.get_finished_steps_by_value()),
-            format_timestamp=lambda t: datetime.datetime.fromtimestamp(t).strftime('%Y-%m-%d %H:%M:%S')
+            format_timestamp=_format_timestamp,
             )
-        return d
 
     @mgmt_view(request_method='POST',
                request_param='dryrun',
                check_csrf=True)
     def dryrun(self):
         root = find_root(self.request.context)
-        manager = EvolutionManager(root, self.request.registry)
+        manager = self.EvolutionManager(root, self.request.registry)
         complete = manager.evolve(commit=False)
         if complete:
             self.request.session.flash('%d evolution steps dry-run' % len(complete))
@@ -112,7 +112,7 @@ class ManageDatabase(object):
                check_csrf=True)
     def evolve(self):
         root = find_root(self.request.context)
-        manager = EvolutionManager(root, self.request.registry)
+        manager = self.EvolutionManager(root, self.request.registry)
         complete = manager.evolve(commit=True)
         if complete:
             self.request.session.flash('%d evolution steps executed' % len(complete))
@@ -126,7 +126,7 @@ class ManageDatabase(object):
                check_csrf=True)
     def evolve_finished(self):
         root = find_root(self.request.context)
-        manager = EvolutionManager(root, self.request.registry)
+        manager = self.EvolutionManager(root, self.request.registry)
         step = self.request.POST['step']
 
         finished_steps = manager.get_finished_steps()
@@ -143,14 +143,14 @@ class ManageDatabase(object):
             else:
                 self.request.session.flash('Unknown step %s, not marking as finished' % step)
         return HTTPFound(location=self.request.sdiapi.mgmt_path(
-            self.context, '@@database'))
+            self.context, '@@database', _query=dict(show_evolve=True)))
 
     @mgmt_view(request_method='POST',
                request_param='evolve_unfinished',
                check_csrf=True)
     def evolve_unfinished(self):
         root = find_root(self.request.context)
-        manager = EvolutionManager(root, self.request.registry)
+        manager = self.EvolutionManager(root, self.request.registry)
         step = self.request.POST['step']
 
         finished_steps = manager.get_finished_steps()
@@ -167,4 +167,8 @@ class ManageDatabase(object):
             else:
                 self.request.session.flash('Unknown step %s, not marking as unfinished' % step)
         return HTTPFound(location=self.request.sdiapi.mgmt_path(
-            self.context, '@@database'))
+            self.context, '@@database', _query=dict(show_evolve=True)))
+
+
+def _format_timestamp(t):
+    return datetime.datetime.fromtimestamp(t).strftime('%Y-%m-%d %H:%M:%S')
