@@ -98,7 +98,8 @@ Can Wait Forever (Nice-to-Have)
 
 - XML-RPC.
 
-- Drag and drop ACE reordering in ACL edit view.
+- Drag and drop ACE reordering in ACL edit view (note: Paul has this
+  somewhere).
 
 - Ability to add and edit principals in existing ACEs in ACL edit view.
 
@@ -130,11 +131,6 @@ Probably Bad Ideas
 - Catalog event subscriber currently does a hellishly expensive recatalog of
   allowed indexes when an ACL is changed.  Not sure if there's even a general
   way to make this do less work, but could be.
-
-Science Fiction
-===============
-
-- Play around with gevent and/or websockets.
 
 Made Irrelevant
 ===============
