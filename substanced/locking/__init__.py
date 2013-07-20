@@ -15,11 +15,7 @@ from colander.iso8601 import UTC
 import deform_bootstrap
 import deform.widget
 
-from pyramid.exceptions import HTTPForbidden
-from pyramid.security import (
-    authenticated_userid,
-    has_permission,
-    )
+from pyramid.security import has_permission
 from pyramid.threadlocal import get_current_registry
 from pyramid.traversal import (
     find_root,
