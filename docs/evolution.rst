@@ -67,6 +67,12 @@ way that Substance D ``Folder`` objects work is changed and folder objects need
 to be evolved, it may be impossible to view the evolution GUI, and you may need
 to use the console script.
 
+Autoevolve
+==========
+
+If you add `substanced.autoevolve = true` within your application .ini file,
+evolution upgrade steps will be run when your application starts.
+
 Adding Evolution Support To a Package
 =====================================
 
