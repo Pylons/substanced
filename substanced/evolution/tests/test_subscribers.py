@@ -22,7 +22,7 @@ class Test_on_startup(unittest.TestCase):
         app.registry = registry
         event = DummyEvent(app, None)
         self._callFUT(event)
-        self.assertEquals(mock_EvolutionManager.mock_calls, [])
+        self.assertEqual(mock_EvolutionManager.mock_calls, [])
 
     @mock.patch('substanced.evolution.subscribers.EvolutionManager')
     def test_autoevolve_missing(self, mock_EvolutionManager):
@@ -31,11 +31,12 @@ class Test_on_startup(unittest.TestCase):
         app.registry = registry
         event = DummyEvent(app, None)
         self._callFUT(event)
-        self.assertEquals(mock_EvolutionManager.mock_calls, [])
+        self.assertEqual(mock_EvolutionManager.mock_calls, [])
 
     @mock.patch('substanced.evolution.subscribers.EvolutionManager')
     def test_autosync_no_steps(self, mock_EvolutionManager):
-        mock_EvolutionManager().evolve().__nonzero__ = mock.Mock(return_value=False)
+        mock_EvolutionManager().evolve().__nonzero__ = mock.Mock(
+            return_value=False)
         registry = self.config.registry
         registry.settings['substanced.autoevolve'] = 'true'
         app = testing.DummyResource()
@@ -48,7 +49,8 @@ class Test_on_startup(unittest.TestCase):
 
     @mock.patch('substanced.evolution.subscribers.EvolutionManager')
     def test_autoevolve_run_steps(self, mock_EvolutionManager):
-        mock_EvolutionManager().evolve().__iter__ = mock.Mock(return_value=iter(["a", "b"]))
+        mock_EvolutionManager().evolve().__iter__ = mock.Mock(
+            return_value=iter(["a", "b"]))
         registry = self.config.registry
         registry.settings['substanced.autoevolve'] = 'true'
         app = testing.DummyResource()
