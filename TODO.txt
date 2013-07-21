@@ -12,8 +12,6 @@ Features
 
 - Ability to dump and load blobs.
 
-- Remove interfaces index?
-
 - Use hasattr(__is_folder__) instead of IFolder.providedBy in is_folder.
 
 - How to prevent objects from being moved or duplicated into a place where
@@ -23,9 +21,7 @@ Features
   (holdup is testing out folder button action overrides in the face of views
   being registered against IFolder).
 
-- Change all mentions of ``context`` to ``resource``.
-
-- Text search view.
+- Change all mentions of ``context`` to ``resource`` in docs.
 
 - Better error handling in folder contents view when an ajax request fails.
 
