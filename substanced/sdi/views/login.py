@@ -39,9 +39,16 @@ from .. import mgmt_view
 def login(context, request):
     login_url = request.sdiapi.mgmt_path(request.context, 'login')
     referrer = request.url
-    if login_url in referrer: # pragma: no cover
+    if '/auditstream-sse' in referrer:
+        # If we're being invoked as the result of a failed request to the
+        # auditstream sse view, bail.  Otherwise the came_from will be set to
+        # the auditstream URL, and the user who this happens to will eventually
+        # be redirected to it and they'll be left scratching their head when
+        # they see e.g. "id: 0-10\ndata: " when they log in successfully.
+        return HTTPForbidden()
+    if login_url in referrer:
         # never use the login form itself as came_from
-        referrer = request.sdiapi.mgmt_path(request.root) 
+        referrer = request.sdiapi.mgmt_path(request.root)
     came_from = request.session.setdefault('sdi.came_from', referrer)
     login = ''
     password = ''
