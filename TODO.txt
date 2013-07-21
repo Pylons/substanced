@@ -27,8 +27,6 @@ Features
 
 - Text search view.
 
-- Add an autoevolve setting.
-
 - Better error handling in folder contents view when an ajax request fails.
 
 - Better loading animation in folder contents view when we're in the midst of
