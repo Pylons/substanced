@@ -12,7 +12,7 @@ from zope.interface.interfaces import IInterface
 
 import venusian
 
-from pyramid.authentication import SessionAuthenticationPolicy
+from pyramid.authentication import AuthTktAuthenticationPolicy
 from pyramid.authorization import ACLAuthorizationPolicy
 from pyramid.decorator import reify
 from pyramid.exceptions import ConfigurationError
@@ -566,7 +566,18 @@ def includeme(config): # pragma: no cover
     session_factory = UnencryptedCookieSessionFactoryConfig(secret)
     config.set_session_factory(session_factory)
     from ..principal import groupfinder
-    authn_policy = SessionAuthenticationPolicy(callback=groupfinder)
+    # NB: we use the AuthTktAuthenticationPolicy rather than the session
+    # authentication policy because using the session policy can cause static
+    # resources to be uncacheable.  In particular, if you use the
+    # UnencryptedBlahBlahBlah session factory, and anything asks for the
+    # authenticated or unauthenticated user from the policy, the session needs
+    # to be reserialized because that factory works by resetting the cookie on
+    # every access to set the last-accessed value.  In practice, pyramid_tm
+    # asks for the unauthenticated user, so every static resource will have a
+    # set-cookie header in it, making them uncacheable.  This could also be
+    # solved by using a different session factory (e.g. pyramid_redis_sessions)
+    # which does not reserialize the cookie on every access.
+    authn_policy = AuthTktAuthenticationPolicy(secret, callback=groupfinder)
     authz_policy = ACLAuthorizationPolicy()
     config.set_authentication_policy(authn_policy)
     config.set_authorization_policy(authz_policy)
