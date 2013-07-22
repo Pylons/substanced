@@ -60,8 +60,7 @@ def login(context, request):
         else:
             login = request.params['login']
             password = request.params['password']
-            principals = find_service(context, 'principals')
-            users = principals['users']
+            users = find_service(context, 'principals', 'users')
             user = users.get(login)
             if user is not None and user.check_password(password):
                 request.session.pop('sdi.came_from', None)
