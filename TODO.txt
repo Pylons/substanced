@@ -4,13 +4,7 @@ Must-have pre-alpha-1
 Features
 --------
 
-- Change folder data structure such that _order is not (oid, name) but separate
-  oid and name datastructures are kept so we have a shot of making sort merging
-  faster.
-
 - Release deform2 (merge deform_bootstrap).
-
-- Ability to dump and load blobs.
 
 - Use hasattr(__is_folder__) instead of IFolder.providedBy in is_folder.
 
@@ -24,6 +18,12 @@ Features
 
 Can wait until after alpha 1
 ============================
+
+- Change folder data structure such that _order is not (oid, name) but separate
+  oid and name datastructures are kept so we have a shot of making sort merging
+  faster.
+
+- Ability to more efficiently dump and load blobs.
 
 - Stamp created objects with creator information?
 
