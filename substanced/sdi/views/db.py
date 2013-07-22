@@ -1,8 +1,7 @@
 import json
 import datetime
 import transaction
-
-from colander.iso8601 import UTC
+import pytz
 
 from pyramid_zodbconn import get_connection
 
@@ -172,6 +171,7 @@ class ManageDatabase(object):
             self.context, '@@database', _query=dict(show_evolve=True)))
 
 
-def _format_timestamp(t):
-    return datetime.datetime.fromtimestamp(t, tz=UTC).strftime(
-        '%Y-%m-%d %H:%M:%S UTC')
+def _format_timestamp(t, timezone):
+    tz = pytz.timezone(timezone)
+    return tz.localize(datetime.datetime.utcfromtimestamp(t)).strftime(
+        '%Y-%m-%d %H:%M:%S %Z')

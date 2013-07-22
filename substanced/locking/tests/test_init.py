@@ -26,7 +26,7 @@ class Test_now(unittest.TestCase):
         return now()
 
     def test_it(self):
-        from colander.iso8601 import UTC
+        from pytz import UTC
         result = self._callFUT()
         self.assertEqual(result.tzinfo, UTC)
 
