@@ -860,7 +860,12 @@ class Test_sdi_add_views(unittest.TestCase):
         result = self._callFUT(context, request)
         self.assertEqual(
             result,
-            [{'url': '/mgmt_path', 'type_name': 'Content', 'icon': ''}])
+            [{
+                    'url': '/mgmt_path',
+                    'type_name': 'Content',
+                    'icon': '',
+                    'content_type':'Content',
+                    }])
 
     def test_one_content_type_not_addable(self):
         request = testing.DummyRequest()
@@ -949,7 +954,12 @@ class Test_sdi_add_views(unittest.TestCase):
         self.assertEqual(checked, [True])
         self.assertEqual(
             result,
-            [{'url': '/mgmt_path', 'type_name': 'Content', 'icon': ''}])
+            [
+                {'url': '/mgmt_path',
+                 'type_name': 'Content',
+                 'icon': '',
+                 'content_type':'Content',
+                 }])
 
 class Test_user(unittest.TestCase):
     def _callFUT(self, request):

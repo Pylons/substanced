@@ -1045,6 +1045,38 @@ class TestFolderContents(unittest.TestCase):
                          mock.call('tocopy'))
 
     @mock.patch('substanced.sdi.views.folder.find_objectmap')
+    def test_copy_finish_zero(self, mock_find_objectmap):
+        context = mock.MagicMock()
+        mock_folder = mock_find_objectmap().object_for()
+        mock_folder.__parent__ = mock.MagicMock()
+        mock_folder.__name__ = mock.sentinel.name
+        request = mock.MagicMock()
+        request.session.__getitem__.return_value = [123]
+        request.POST.get.side_effect = lambda x: {
+            'form.copy_finish': 'copy_finish'}[x]
+
+        inst = self._makeOne(context, request)
+
+        # content type wont be addable, because we haven't patched
+        # sdi_add_views to return a valid content type set
+
+        inst.copy_finish()
+
+        call_list = request.session.flash.call_args_list
+        self.assertEqual(len(call_list), 2)
+
+        request.session.flash.assert_any_call(
+            'No items copied')
+        request.session.flash.assert_any_call(
+            '"%s" is of a type (%s) that is not addable here, not copied' % (
+                mock.sentinel.name, request.registry.content.typeof(None)
+                ), 'error',
+            )
+            
+        self.assertEqual(request.session.__delitem__.call_args,
+                         mock.call('tocopy'))
+        
+    @mock.patch('substanced.sdi.views.folder.find_objectmap')
     def test_copy_finish_one(self, mock_find_objectmap):
         context = mock.MagicMock()
         mock_folder = mock_find_objectmap().object_for()
@@ -1056,6 +1088,8 @@ class TestFolderContents(unittest.TestCase):
             'form.copy_finish': 'copy_finish'}[x]
 
         inst = self._makeOne(context, request)
+        ct = request.registry.content.typeof(None)
+        inst.sdi_add_views = lambda *arg: [ {'content_type':ct} ]
         inst.copy_finish()
 
         self.assertEqual(mock_folder.__parent__.copy.call_args,
@@ -1076,6 +1110,8 @@ class TestFolderContents(unittest.TestCase):
             'form.copy_finish': 'copy_finish'}[x]
 
         inst = self._makeOne(context, request)
+        ct = request.registry.content.typeof(None)
+        inst.sdi_add_views = lambda *arg: [ {'content_type':ct} ]
         inst.copy_finish()
 
         self.assertTrue(mock.call(123) in
@@ -1102,6 +1138,8 @@ class TestFolderContents(unittest.TestCase):
             'form.copy_finish': 'copy_finish'}[x]
 
         inst = self._makeOne(context, request)
+        ct = request.registry.content.typeof(None)
+        inst.sdi_add_views = lambda *arg: [ {'content_type':ct} ]
         self.assertRaises(HTTPFound, inst.copy_finish)
         request.session.flash.assert_called_once_with(_FOOBAR, 'error')
 
@@ -1188,6 +1226,38 @@ class TestFolderContents(unittest.TestCase):
                          mock.call('tomove'))
 
     @mock.patch('substanced.sdi.views.folder.find_objectmap')
+    def test_move_finish_zero(self, mock_find_objectmap):
+        context = mock.MagicMock()
+        mock_folder = mock_find_objectmap().object_for()
+        mock_folder.__parent__ = mock.MagicMock()
+        mock_folder.__name__ = mock.sentinel.name
+        request = mock.MagicMock()
+        request.session.__getitem__.return_value = [123]
+        request.POST.get.side_effect = lambda x: {
+            'form.move_finish': 'move_finish'}[x]
+
+        inst = self._makeOne(context, request)
+
+        # content type wont be addable, because we haven't patched
+        # sdi_add_views to return a valid content type set
+
+        inst.move_finish()
+
+        call_list = request.session.flash.call_args_list
+        self.assertEqual(len(call_list), 2)
+
+        request.session.flash.assert_any_call(
+            'No items moved')
+        request.session.flash.assert_any_call(
+            '"%s" is of a type (%s) that is not addable here, not moved' % (
+                mock.sentinel.name, request.registry.content.typeof(None)
+                ), 'error',
+            )
+            
+        self.assertEqual(request.session.__delitem__.call_args,
+                         mock.call('tomove'))
+        
+    @mock.patch('substanced.sdi.views.folder.find_objectmap')
     def test_move_finish_one(self, mock_find_objectmap):
         context = mock.MagicMock()
         mock_folder = mock_find_objectmap().object_for()
@@ -1199,6 +1269,8 @@ class TestFolderContents(unittest.TestCase):
             'form.move_finish': 'move_finish'}[x]
 
         inst = self._makeOne(context, request)
+        ct = request.registry.content.typeof(None)
+        inst.sdi_add_views = lambda *arg: [ {'content_type':ct} ]
         inst.move_finish()
 
         self.assertEqual(mock_folder.__parent__.move.call_args,
@@ -1219,6 +1291,8 @@ class TestFolderContents(unittest.TestCase):
             'form.move_finish': 'move_finish'}[x]
 
         inst = self._makeOne(context, request)
+        ct = request.registry.content.typeof(None)
+        inst.sdi_add_views = lambda *arg: [ {'content_type':ct} ]
         inst.move_finish()
 
         self.assertTrue(mock.call(123) in
@@ -1245,6 +1319,8 @@ class TestFolderContents(unittest.TestCase):
             'form.move_finish': 'move_finish'}[x]
 
         inst = self._makeOne(context, request)
+        ct = request.registry.content.typeof(None)
+        inst.sdi_add_views = lambda *arg: [ {'content_type':ct} ]
         self.assertRaises(HTTPFound, inst.move_finish)
         request.session.flash.assert_called_once_with(_FOOBAR, 'error')
 

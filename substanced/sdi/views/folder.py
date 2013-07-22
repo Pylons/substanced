@@ -837,19 +837,26 @@ class FolderContents(object):
             request.session.flash('No items copied')
             return self.get_redirect_response()
 
+        num_copied = 0
+
         try:
             for oid in tocopy:
                 obj = objectmap.object_for(oid)
-                obj.__parent__.copy(obj.__name__, context)
+                copied = self.move_here_if_addable(obj, copy=True)
+                if copied:
+                    num_copied += 1
         except FolderKeyError as e:
             self.request.session.flash(e.args[0], 'error')
             raise self.get_redirect_response()
 
-        if len(tocopy) == 1:
+        if num_copied == 0:
+            msg = 'No items copied'
+            request.session.flash(msg)
+        elif num_copied == 1:
             msg = 'Copied 1 item'
             request.sdiapi.flash_with_undo(msg)
         else:
-            msg = 'Copied %s items' % len(tocopy)
+            msg = 'Copied %s items' % num_copied
             request.sdiapi.flash_with_undo(msg)
 
         return self.get_redirect_response()
@@ -883,19 +890,26 @@ class FolderContents(object):
             request.session.flash('No items moved')
             return self.get_redirect_response()
 
+        num_moved = 0
+
         try:
             for oid in tomove:
                 obj = objectmap.object_for(oid)
-                obj.__parent__.move(obj.__name__, context)
+                moved = self.move_here_if_addable(obj)
+                if moved:
+                    num_moved += 1
         except FolderKeyError as e:
             self.request.session.flash(e.args[0], 'error')
             raise self.get_redirect_response()
 
-        if len(tomove) == 1:
+        if num_moved == 0:
+            msg = 'No items moved'
+            request.session.flash(msg)
+        elif num_moved == 1:
             msg = 'Moved 1 item'
             request.sdiapi.flash_with_undo(msg)
         else:
-            msg = 'Moved %s items' % len(tomove)
+            msg = 'Moved %s items' % num_moved
             request.sdiapi.flash_with_undo(msg)
 
         return self.get_redirect_response()
@@ -918,6 +932,33 @@ class FolderContents(object):
         results.update(self._get_json())
         return results
 
+    def get_addable_content_types(self):
+        add_views = self.sdi_add_views(self.context, self.request)
+        content_types = set([ x['content_type'] for x in add_views ])
+        return content_types
+
+    def move_here_if_addable(self, obj, copy=False):
+        request = self.request
+        context = self.context
+        content_types = self.get_addable_content_types()
+        obj_type = request.registry.content.typeof(obj)
+        obj_name = obj.__name__
+        if obj_type in content_types:
+            if copy:
+                obj.__parent__.copy(obj_name, context)
+            else:
+                obj.__parent__.move(obj_name, context)
+            return True
+        if copy:
+            action = 'copied'
+        else:
+            action = 'moved'
+        self.request.session.flash(
+            '"%s" is of a type (%s) that is not addable here, not %s' % (
+                obj_name, obj_type, action), 'error'
+            )
+        return False
+        
 @action_method
 def add_folder_contents_views(
     config,

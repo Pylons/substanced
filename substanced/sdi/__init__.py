@@ -430,7 +430,11 @@ def sdi_add_views(context, request):
                         continue
             type_name = meta.get('name', content_type)
             icon = meta.get('icon', '')
-            data = dict(type_name=type_name, icon=icon)
+            data = dict(
+                type_name=type_name,
+                icon=icon,
+                content_type=content_type
+                )
             candidates[viewname] = data
 
     candidate_names = candidates.keys()
