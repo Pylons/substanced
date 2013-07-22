@@ -22,11 +22,6 @@ Features
 
 - Better error handling in folder contents view when an ajax request fails.
 
-- Better loading animation in folder contents view when we're in the midst of
-  an ajax request.  Should be the same animation when a button is pressed on
-  the folder contents view that leads to another page (e.g. reindex or
-  duplicate).
-
 Can wait until after alpha 1
 ============================
 
