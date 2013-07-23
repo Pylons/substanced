@@ -1,11 +1,11 @@
 import datetime
+import pytz
 from logging import getLogger
 
 from pyramid.view import view_defaults
 from pyramid.compat import PY3, text_type
 from substanced.sdi import mgmt_view, RIGHT
 from substanced.util import get_oid
-from colander.iso8601 import UTC
 
 from . import AuditScribe
 
@@ -33,8 +33,9 @@ class AuditLogEventStreamView(object):
         results = []
         for gen, idx, event in scribe:
             timestamp = event.timestamp
-            time = datetime.datetime.fromtimestamp(timestamp, UTC).strftime(
-                '%Y-%m-%d %H:%M:%S UTC')
+            tz = self.request.user.timezone
+            time = tz.localize(datetime.datetime.utcfromtimestamp(timestamp)).strftime(
+                '%Y-%m-%d %H:%M:%S %Z')
             results.insert(0, (gen, idx, time, event))
         return {'results':results}
 

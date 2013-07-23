@@ -52,6 +52,9 @@ default_resources = {
             'css':'deform:static/css/form.css',
             },
         },
+    'bootstrap': {
+        None: {},
+    },
     'tinymce': {
         None:{
             'js':'deform:static/tinymce/jscripts/tiny_mce/tiny_mce.js',
