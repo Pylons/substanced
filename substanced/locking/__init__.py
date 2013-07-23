@@ -133,7 +133,7 @@ class LockSchema(Schema):
         )
     comment = colander.SchemaNode(
         colander.String(),
-        validator=colander.Length(255),
+        validator=colander.Length(max=255),
         missing=None,
         title='Comment',
         )
