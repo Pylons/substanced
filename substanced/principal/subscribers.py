@@ -108,8 +108,7 @@ def acl_maybe_added(event):
 def acl_modified(event):
     """ When an object bearing an ACL is modified or added, using the object
     map, form relationships between the principal objects it names and the
-    ACL-bearing object.  Disallow a principal involved in any such relationship
-    from being deleted using reference integrity."""
+    ACL-bearing object."""
     objectmap = find_objectmap(event.object)
 
     if objectmap is not None:
