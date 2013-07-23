@@ -5,13 +5,13 @@ implementations.  """
 
 import datetime
 import uuid
+import pytz
 
 from zope.interface import implementer
 
 from persistent import Persistent
 
 import colander
-from colander.iso8601 import UTC
 import deform_bootstrap
 import deform.widget
 
@@ -66,7 +66,7 @@ class UnlockError(LockingError):
     """
 
 def now():
-    return datetime.datetime.utcnow().replace(tzinfo=UTC)
+    return datetime.datetime.utcnow().replace(tzinfo=pytz.UTC)
 
 class LockOwnerSchema(colander.SchemaNode):
     title = 'Owner'
@@ -133,7 +133,7 @@ class LockSchema(Schema):
         )
     comment = colander.SchemaNode(
         colander.String(),
-        validator=colander.Length(255),
+        validator=colander.Length(max=255),
         missing=None,
         title='Comment',
         )

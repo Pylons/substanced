@@ -81,8 +81,11 @@ class Test_AuditLogEventStreamView(unittest.TestCase):
         self.assertEqual(list(inst.AuditScribe.oids), [3])
 
     def test_auditing(self):
+        import pytz
         context = testing.DummyResource()
         request = testing.DummyRequest()
+        request.user = testing.DummyResource()
+        request.user.timezone = pytz.timezone('UTC')
         inst = self._makeOne(context, request)
         inst.AuditScribe = DummyAuditScribe()
         result = inst.auditing()

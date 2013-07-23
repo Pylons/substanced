@@ -5,8 +5,10 @@ from persistent import Persistent
 from cryptacular.bcrypt import BCRYPTPasswordManager
 
 from zope.interface import implementer
+from deform_bootstrap.widget import ChosenSingleWidget
 
 import colander
+import pytz
 
 from pyramid.renderers import render
 from pyramid.security import (
@@ -307,6 +309,14 @@ class UserSchema(Schema):
             colander.Length(max=100)
             ),
         )
+    tzname = colander.SchemaNode(
+        colander.String(),
+        title='Timezone',
+        widget=ChosenSingleWidget(
+            values=zip(pytz.all_timezones, pytz.all_timezones)
+            ),
+        validator=colander.OneOf(pytz.all_timezones),
+        )
     groupids = MultireferenceIdSchemaNode(
         choices_getter=groups_choices,
         title='Groups',
@@ -327,6 +337,7 @@ class UserPropertySheet(PropertySheet):
 @implementer(IUser)
 class User(Folder):
     """ Represents a user.  """
+    tzname = 'UTC' # backwards compatibility default
 
     pwd_manager = BCRYPTPasswordManager()
 
@@ -334,15 +345,22 @@ class User(Folder):
     groups = multireference_source_property(UserToGroup)
     name = renamer()
 
-    def __init__(self, password=None, email=None):
+    def __init__(self, password=None, email=None, tzname=None):
         Folder.__init__(self)
         if password is not None:
             password = self.pwd_manager.encode(password)
         self.password = password
         self.email = email
+        if tzname is None:
+            tzname = 'UTC'
+        self.tzname = tzname
 
     def __dump__(self):
         return dict(password=self.password)
+
+    @property
+    def timezone(self):
+        return pytz.timezone(self.tzname)
 
     def check_password(self, password):
         """ Checks if the plaintext password passed as ``password`` matches
