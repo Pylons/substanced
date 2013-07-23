@@ -106,8 +106,8 @@ def acl_maybe_added(event):
 
 @subscribe_acl_modified()
 def acl_modified(event):
-    """ When an object bearing an ACL is modified or added, using the object
-    map, form relationships between the principal objects it names and the
+    """ When the ACL of any object is modified, using the object map, form
+    references between the principal objects named in the ACL and the
     ACL-bearing object."""
     objectmap = find_objectmap(event.object)
 
