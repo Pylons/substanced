@@ -40,7 +40,7 @@
       <tbody>
         <tr tal:repeat="step finished_steps">
            <td>${step[1]}</td>
-           <td>${format_timestamp(step[0], request.user.timezone}</td>
+           <td>${format_timestamp(step[0], request.user.timezone)}</td>
            <td>
              <form action="./@@database" method="POST">
                 <input type="hidden" value="${request.session.get_csrf_token()}"

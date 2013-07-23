@@ -84,6 +84,7 @@ class LockServiceFolderContents(FolderContents):
             expires = expires()
         if expires is not None:
             tz = self.request.user.timezone
+            expires = expires.replace(tzinfo=None) # in case it's not naive
             expires = tz.localize(expires).strftime('%Y-%m-%d %H:%M:%S %Z')
         
         columns.extend((

@@ -298,9 +298,9 @@ class TestUser(unittest.TestCase):
     def tearDown(self):
         testing.tearDown()
         
-    def _makeOne(self, password, email=''):
+    def _makeOne(self, password, email='', tzname=None):
         from .. import User
-        return User(password, email)
+        return User(password, email, tzname)
 
     def test___dump__(self):
         inst = self._makeOne('abc')
@@ -334,6 +334,16 @@ class TestUser(unittest.TestCase):
         principals['users']['user'] = inst
         inst.email_password_reset(request)
         self.assertTrue(get_mailer(request).outbox)
+
+    def test_timezone_default(self):
+        import pytz
+        inst = self._makeOne('abc')
+        self.assertEqual(inst.timezone, pytz.UTC)
+        
+    def test_timezone_nondefault(self):
+        import pytz
+        inst = self._makeOne('abc', tzname='US/Eastern')
+        self.assertEqual(inst.timezone, pytz.timezone('US/Eastern'))
 
 class Test_groupfinder(unittest.TestCase):
     def _callFUT(self, userid, request):
