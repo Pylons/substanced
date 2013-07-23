@@ -98,9 +98,7 @@ class Principals(Folder):
     """
     def __sdi_addable__(self, context, introspectable):
         ct = introspectable.get('content_type')
-        if ct in ('Users', 'Groups', 'Password Resets'):
-            return True
-        return False
+        return ct in ('Users', 'Groups', 'Password Resets')
         
     def after_create(self, inst, registry):
         users = registry.content.create('Users')
