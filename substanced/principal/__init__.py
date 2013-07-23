@@ -28,6 +28,7 @@ from ..interfaces import (
     IPrincipals,
     IPasswordResets,
     IPasswordReset,
+    IUserLocator,
     UserToGroup,
     UserToPasswordReset,
     )
@@ -414,15 +415,32 @@ class PasswordReset(Persistent):
     def commit_suicide(self):
         del self.__parent__[self.__name__]
 
+@implementer(IUserLocator)
+class DefaultUserLocator(object):
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+
+    def get_user(self, login):
+        context = self.context
+        users = find_service(context, 'principals', 'users')
+        return users.get(login)
+
+    def get_groupids(self, userid):
+        objectmap = find_objectmap(self.context)
+        if objectmap is None:
+            return None
+        user = objectmap.object_for(userid)
+        if user is None:
+            return None
+        return user.groupids
+
 def groupfinder(userid, request):
     """ A Pyramid authentication policy groupfinder callback that uses the
-    Substance D principal system to find groups."""
+    Substance D user locator system to find group identifiers."""
     context = request.context
-    objectmap = find_objectmap(context)
-    if objectmap is None:
-        return None
-    user = objectmap.object_for(userid)
-    if user is None:
-        return None
-    return user.groupids
+    adapter = request.registry.queryAdapter((context, request), IUserLocator)
+    if adapter is None:
+        adapter = DefaultUserLocator(context, request)
+    return adapter.get_groupids(userid)
 

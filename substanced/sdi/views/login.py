@@ -10,12 +10,12 @@ from pyramid.security import (
     NO_PERMISSION_REQUIRED,
     )
 
-from ...util import (
-    get_oid,
-    find_service,
-    )
+from ...util import get_oid
 
 from .. import mgmt_view
+
+from substanced.interfaces import IUserLocator
+from substanced.principal import DefaultUserLocator
 
 @mgmt_view(
     name='login',
@@ -60,8 +60,13 @@ def login(context, request):
         else:
             login = request.params['login']
             password = request.params['password']
-            users = find_service(context, 'principals', 'users')
-            user = users.get(login)
+            adapter = request.registry.queryAdapter(
+                (context, request),
+                IUserLocator
+                )
+            if adapter is None:
+                adapter = DefaultUserLocator(context, request)
+            user = adapter.get_user(login)
             if user is not None and user.check_password(password):
                 request.session.pop('sdi.came_from', None)
                 headers = remember(request, get_oid(user))
