@@ -50,12 +50,12 @@ To unlock a resource:
    from pyramid.security import has_permission
 
    if has_permission('sdi.lock', someresource, request):
-       unlock_resource(someresource, request.user, timeout=3600)
+       unlock_resource(someresource, request.user)
 
 If the resource is already locked by a user other than the owner supplied as
 ``owner_or_ownerid`` (the parameter filled by ``request.user`` above) or the
 resource isn't already locked with this lock type, calling this function will
-raise a :exc:`substanced.locking.LockError` exception.  Otherwise the lock
+raise a :exc:`substanced.locking.UnlockError` exception.  Otherwise the lock
 will be removed.
 
 Using the :func:`substanced.locking.unlock_resource` function has the side
@@ -66,6 +66,32 @@ if one does not already exist.
 
    Callers should assert that the owner has the ``sdi.lock`` permission against
    the resource before calling :func:`~substanced.locking.unlock_resource` to
+   ensure that a user can't lock a resource he is not permitted to.
+
+To unlock a resource usin a token:
+
+.. code-block:: python
+
+   from substanced.locking import unlock_token
+   from pyramid.security import has_permission
+
+   if has_permission('sdi.lock', someresource, request):
+       unlock_resource(someresource, token, request.user)
+
+If the lock identified by ``token`` belongs to a user other than the owner
+supplied as ``owner_or_ownerid`` (the parameter filled by ``request.user``
+above) or if no lock exists under ``token`` , calling this function will
+raise a :exc:`substanced.locking.LockError` exception.  Otherwise the lock
+will be removed.
+
+Using the :func:`substanced.locking.unlock_token` function has the side
+effect of creating a "Lock Service" (named ``locks``) in the Substance D root
+if one does not already exist.
+
+.. warning::
+
+   Callers should assert that the owner has the ``sdi.lock`` permission against
+   the resource before calling :func:`~substanced.locking.unlock_token` to
    ensure that a user can't lock a resource he is not permitted to.
 
 Discovering Existing Locks

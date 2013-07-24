@@ -451,7 +451,7 @@ class TestLockService(unittest.TestCase):
         lock.ownerid = 2
         lock.is_valid = lambda: True
         lock.suicided = False
-        def commit_suicide():
+        def commit_suicide(): #pragma NO COVER
             lock.suicided = True
         lock.commit_suicide = commit_suicide
         self.assertRaises(UnlockError, inst.unlock_token, 'OWNEDBYOTHER', 1)
@@ -607,6 +607,42 @@ class Test_unlock_resource(unittest.TestCase):
         self.assertEqual(lockservice.owner, 1)
         self.assertEqual(lockservice.locktype, WriteLock)
 
+class Test_unlock_token(unittest.TestCase):
+    def setUp(self):
+        self.config = testing.setUp()
+
+    def tearDown(self):
+        testing.tearDown()
+
+    def _callFUT(self, resource, token, ownerid):
+        from substanced.locking import unlock_token
+        return unlock_token(resource, token, ownerid)
+
+    def test_it_with_existing_lock_service(self):
+        from zope.interface import alsoProvides
+        from substanced.interfaces import IFolder
+        resource = testing.DummyResource()
+        alsoProvides(resource, IFolder)
+        lockservice = resource['locks'] = DummyLockService()
+        result = self._callFUT(resource, 'TOKEN', 1)
+        self.assertEqual(result, True)
+        self.assertEqual(lockservice.token, 'TOKEN')
+        self.assertEqual(lockservice.owner, 1)
+
+    def test_it_with_missing_lock_service(self):
+        from zope.interface import alsoProvides
+        from substanced.interfaces import IFolder
+        lockservice = DummyLockService()
+        self.config.registry.content = DummyContentRegistry(lockservice)
+        resource = testing.DummyResource()
+        resource.add_service = resource.__setitem__
+        alsoProvides(resource, IFolder)
+        result = self._callFUT(resource, 'TOKEN', 1)
+        self.assertEqual(result, True)
+        self.assertEqual(resource['locks'], lockservice)
+        self.assertEqual(lockservice.token, 'TOKEN')
+        self.assertEqual(lockservice.owner, 1)
+
 class Test_discover_resource_locks(unittest.TestCase):
     def setUp(self):
         self.config = testing.setUp()
@@ -692,6 +728,11 @@ class DummyLockService(object):
         return True
 
     unlock = lock
+
+    def unlock_token(self, token, owner):
+        self.token = token
+        self.owner = owner
+        return True
 
     def discover(self, resource, include_invalid=False, locktype=None):
         self.resource = resource

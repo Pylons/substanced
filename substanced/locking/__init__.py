@@ -445,6 +445,33 @@ def unlock_resource(
         locktype=locktype
         )
 
+def unlock_token(
+    resource,
+    token,
+    owner_or_ownerid,
+    ):
+    """
+    Remove a token from the lock service.  If the lock is owned by a user
+    user other than the owner supplied as owner_or_ownerid or the
+    token doesn't identfiy a valid lock, calling this function
+    will raise a :class:`substanced.locking.UnlockError` exception.  Otherwise
+    the lock will be removed.  This function has the side effect of creating a
+    Lock Service in the Substance D root if one does not already exist.
+
+        .. warning::
+
+           Callers should assert that the owner has the ``sdi.lock`` permission
+           against the resource before calling this function to ensure that a
+           user can't lock a resource he is not permitted to.
+
+    """
+
+    locks = _get_lock_service(resource)
+    return locks.unlock_token(
+        token,
+        owner_or_ownerid,
+        )
+
 def discover_resource_locks(
     resource,
     include_invalid=False,
