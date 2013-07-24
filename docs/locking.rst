@@ -68,7 +68,7 @@ if one does not already exist.
    the resource before calling :func:`~substanced.locking.unlock_resource` to
    ensure that a user can't lock a resource he is not permitted to.
 
-To unlock a resource usin a token:
+To unlock a resource using an explicit lock token:
 
 .. code-block:: python
 
@@ -76,7 +76,7 @@ To unlock a resource usin a token:
    from pyramid.security import has_permission
 
    if has_permission('sdi.lock', someresource, request):
-       unlock_resource(someresource, token, request.user)
+       unlock_token(someresource, token, request.user)
 
 If the lock identified by ``token`` belongs to a user other than the owner
 supplied as ``owner_or_ownerid`` (the parameter filled by ``request.user``
