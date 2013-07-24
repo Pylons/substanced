@@ -66,7 +66,7 @@ def login(context, request):
                 )
             if adapter is None:
                 adapter = DefaultUserLocator(context, request)
-            user = adapter.get_user(login)
+            user = adapter.get_user_by_login(login)
             if user is not None and user.check_password(password):
                 request.session.pop('sdi.came_from', None)
                 headers = remember(request, get_oid(user))

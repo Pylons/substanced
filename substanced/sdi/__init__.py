@@ -42,8 +42,10 @@ from pyramid.util import (
     Sentinel,
     )
 
-from ..objectmap import find_objectmap
 from ..util import acquire
+
+from ..interfaces import IUserLocator
+from ..principal import DefaultUserLocator
 
 LEFT = 'LEFT'
 RIGHT = 'RIGHT'
@@ -454,11 +456,14 @@ def sdi_add_views(context, request):
     return L
 
 def user(request):
+    context = request.context
     userid = authenticated_userid(request)
     if userid is None:
         return None
-    objectmap = find_objectmap(request.context)
-    return objectmap.object_for(userid)
+    adapter = request.registry.queryAdapter((context, request), IUserLocator)
+    if adapter is None:
+        adapter = DefaultUserLocator(context, request)
+    return adapter.get_user_by_userid(userid)
 
 def mgmt_path(request, obj, *arg, **kw): # XXX deprecate
     return request.sdiapi.mgmt_path(obj, *arg, **kw)

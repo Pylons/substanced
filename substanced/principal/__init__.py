@@ -421,16 +421,20 @@ class DefaultUserLocator(object):
         self.context = context
         self.request = request
 
-    def get_user(self, login):
+    def get_user_by_login(self, login):
         context = self.context
         users = find_service(context, 'principals', 'users')
         return users.get(login)
 
-    def get_groupids(self, userid):
+    def get_user_by_userid(self, userid):
         objectmap = find_objectmap(self.context)
         if objectmap is None:
             return None
         user = objectmap.object_for(userid)
+        return user
+
+    def get_groupids(self, userid):
+        user = self.get_user_by_userid(userid)
         if user is None:
             return None
         return user.groupids
