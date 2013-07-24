@@ -427,6 +427,47 @@ class TestLockService(unittest.TestCase):
         inst.unlock(resource, 1)
         self.assertTrue(lock.suicided)
 
+    def test_unlock_token_wo_lock(self):
+        from substanced.locking import UnlockError
+        inst = self._makeOne()
+        resource = testing.DummyResource()
+        self.assertRaises(UnlockError, inst.unlock_token, 'NONESUCH', 1)
+
+    def test_unlock_token_w_invalid_lock(self):
+        from substanced.locking import UnlockError
+        inst = self._makeOne()
+        lock = inst['INVALID'] = testing.DummyResource()
+        lock.is_valid = lambda: False
+        def commit_suicide():
+            lock.suicided = True
+        lock.commit_suicide = commit_suicide
+        self.assertRaises(UnlockError, inst.unlock_token, 'INVALID', 1)
+        self.assertTrue(lock.suicided)
+
+    def test_unlock_token_w_valid_lock_not_owned_by_user(self):
+        from substanced.locking import UnlockError
+        inst = self._makeOne()
+        lock = inst['OWNEDBYOTHER'] = testing.DummyResource()
+        lock.ownerid = 2
+        lock.is_valid = lambda: True
+        lock.suicided = False
+        def commit_suicide():
+            lock.suicided = True
+        lock.commit_suicide = commit_suicide
+        self.assertRaises(UnlockError, inst.unlock_token, 'OWNEDBYOTHER', 1)
+        self.assertFalse(lock.suicided)
+
+    def test_unlock_token_w_valid_lock_owned_by_user(self):
+        inst = self._makeOne()
+        lock = inst['VALID'] = testing.DummyResource()
+        lock.ownerid = 1
+        lock.is_valid = lambda: True
+        def commit_suicide():
+            lock.suicided = True
+        lock.commit_suicide = commit_suicide
+        inst.unlock_token('VALID', 1)
+        self.assertTrue(lock.suicided)
+
     def test_discover_filter_invalid(self):
         inst = self._makeOne()
         lock1 = testing.DummyResource()

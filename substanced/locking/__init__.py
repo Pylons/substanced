@@ -314,6 +314,25 @@ class LockService(Folder, _AutoNamingFolder):
         else: # nobreak
             raise UnlockError(lock)
 
+    def unlock_token(
+        self,
+        token,
+        owner_or_ownerid,
+        ):
+
+        # NB: callers should ensure that the user has 'sdi.lock' permission
+        # on the resource before calling
+        ownerid = self._get_ownerid(owner_or_ownerid)
+        lock = self.get(token)
+        if lock is None:
+            raise UnlockError(None)
+        if not lock.is_valid():
+            lock.commit_suicide()
+            raise UnlockError(None)
+        if lock.ownerid != ownerid:
+            raise UnlockError(lock)
+        lock.commit_suicide()
+
     def discover(self, resource, include_invalid=False, locktype=WriteLock):
         objectmap = find_objectmap(self)
         locks = objectmap.targets(resource, locktype)
