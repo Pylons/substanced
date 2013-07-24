@@ -401,6 +401,7 @@ class TestLockService(unittest.TestCase):
         self.assertRaises(UnlockError, inst.unlock, resource, 1)
 
     def test_unlock_with_invalid_existing_lock(self):
+        from substanced.locking import UnlockError
         inst = self._makeOne()
         lock = testing.DummyResource()
         lock.ownerid = 1
@@ -410,7 +411,7 @@ class TestLockService(unittest.TestCase):
         lock.commit_suicide = commit_suicide
         resource = testing.DummyResource()
         inst.__objectmap__ = DummyObjectMap([lock])
-        inst.unlock(resource, 1)
+        self.assertRaises(UnlockError, inst.unlock, resource, 1)
         self.assertTrue(lock.suicided)
 
     def test_unlock_with_valid_existing_lock_same_userid(self):

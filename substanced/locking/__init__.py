@@ -306,7 +306,9 @@ class LockService(Folder, _AutoNamingFolder):
         locks = objectmap.targets(resource, locktype)
         lock = None
         for lock in locks:
-            if (not lock.is_valid()) or (lock.ownerid == ownerid):
+            if not lock.is_valid():
+                lock.commit_suicide()
+            elif lock.ownerid == ownerid:
                 lock.commit_suicide()
                 break
         else: # nobreak
