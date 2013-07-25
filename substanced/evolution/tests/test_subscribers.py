@@ -35,8 +35,10 @@ class Test_on_startup(unittest.TestCase):
 
     @mock.patch('substanced.evolution.subscribers.EvolutionManager')
     def test_autosync_no_steps(self, mock_EvolutionManager):
-        mock_EvolutionManager().evolve().__nonzero__ = mock.Mock(
-            return_value=False)
+        returnFalse = lambda *x: False
+        # Python3 / Py3k
+        mock_EvolutionManager().evolve().__nonzero__ = returnFalse
+        mock_EvolutionManager().evolve().__bool__ = returnFalse
         registry = self.config.registry
         registry.settings['substanced.autoevolve'] = 'true'
         app = testing.DummyResource()
