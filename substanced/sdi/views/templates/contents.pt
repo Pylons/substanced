@@ -9,6 +9,29 @@
       <script src="${request.static_url('substanced.sdi:static/js/slickgrid-config.js')}" type="text/javascript"></script>
       <link href="${request.static_url('substanced.sdi:static/css/slick.grid.upstream.css')}" rel="stylesheet" />
       <link href="${request.static_url('substanced.sdi:static/css/sdi_slickgrid.css')}" rel="stylesheet" />
+
+     <script type="text/javascript">
+
+        // update UI in real-time based if the browser supports SSE
+
+        if (!!window.EventSource) {
+
+          function redraw(e) {
+              var gridWrapper = $('#sdi-contents-table-sg').data('slickgrid');
+              plugin = gridWrapper.sdiRemoteModelPlugin
+              if (!plugin.hasActiveRequest()) {
+                  plugin.clearData(false);
+              }
+          }
+
+          var source = new EventSource(
+              "${request.sdiapi.mgmt_path(context, 'auditstream-sse')}");
+          source.addEventListener("ContentAdded" , redraw)
+          source.addEventListener("ContentRemoved" , redraw)
+        }
+
+   </script>
+
     </metal:slot>
   </metal:slot>
 
