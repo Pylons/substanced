@@ -189,12 +189,22 @@ class TestLockPropertySheet(unittest.TestCase):
         self.assertEqual(context.resource, 'abc')
 
 class TestLock(unittest.TestCase):
-    def _makeOne(self, timeout=3600, comment=None, last_refresh=None):
+    def _makeOne(self,
+                 infinite=False,
+                 timeout=3600,
+                 comment=None,
+                 last_refresh=None,
+                ):
         from .. import Lock
-        return Lock(timeout=timeout, comment=comment, last_refresh=last_refresh)
+        return Lock(infinite=infinite,
+                    timeout=timeout,
+                    comment=comment,
+                    last_refresh=last_refresh,
+                   )
 
     def test_ctor(self):
-        inst = self._makeOne(5000, 'comment', 1000)
+        inst = self._makeOne(False, 5000, 'comment', 1000)
+        self.assertEqual(inst.infinite, False)
         self.assertEqual(inst.timeout, 5000)
         self.assertEqual(inst.last_refresh, 1000)
         self.assertEqual(inst.comment, 'comment')
@@ -259,6 +269,14 @@ class TestLock(unittest.TestCase):
         inst.last_refresh = now
         inst.__objectmap__ = DummyObjectMap([])
         self.assertFalse(inst.is_valid(now))
+
+    def test_depth_wo_infinite(self):
+        inst = self._makeOne(infinite=False)
+        self.assertEqual(inst.depth, '0')
+
+    def test_depth_w_infinite(self):
+        inst = self._makeOne(infinite=True)
+        self.assertEqual(inst.depth, 'infinity')
 
     def test_commit_suicide(self):
         inst = self._makeOne()
@@ -351,6 +369,19 @@ class TestLockService(unittest.TestCase):
         self.assertEqual(result, lock)
         self.assertEqual(result.ownerid, 1)
         self.assertEqual(result.resource, resource)
+        self.assertEqual(result.infinite, False)
+
+    def test_lock_without_existing_lock_w_infinite(self):
+        inst = self._makeOne()
+        lock = testing.DummyResource()
+        resource = testing.DummyResource()
+        self.config.registry.content = DummyContentRegistry(lock)
+        inst.__objectmap__ = DummyObjectMap([])
+        result = inst.lock(resource, 1, infinite=True)
+        self.assertEqual(result, lock)
+        self.assertEqual(result.ownerid, 1)
+        self.assertEqual(result.resource, resource)
+        self.assertEqual(result.infinite, True)
 
     def test_lock_with_invalid_existing_lock(self):
         inst = self._makeOne()
@@ -495,9 +526,11 @@ class Test_lock_resource(unittest.TestCase):
     def tearDown(self):
         testing.tearDown()
 
-    def _callFUT(self, resource, owner_or_ownerid, timeout=None):
+    def _callFUT(self, resource, owner_or_ownerid, timeout=None,
+                 infinite=False):
         from substanced.locking import lock_resource
-        return lock_resource(resource, owner_or_ownerid, timeout=timeout)
+        return lock_resource(resource, owner_or_ownerid,
+                              timeout=timeout, infinite=infinite)
 
     def test_it_with_existing_lock_service(self):
         from substanced.locking import WriteLock
@@ -507,12 +540,13 @@ class Test_lock_resource(unittest.TestCase):
         alsoProvides(resource, IFolder)
         lockservice = DummyLockService()
         resource['locks'] = lockservice
-        result = self._callFUT(resource, 1, 3600)
+        result = self._callFUT(resource, 1, 3600, infinite=True)
         self.assertEqual(result, True)
         self.assertEqual(lockservice.resource, resource)
         self.assertEqual(lockservice.owner, 1)
         self.assertEqual(lockservice.timeout, 3600)
         self.assertEqual(lockservice.locktype, WriteLock)
+        self.assertEqual(lockservice.infinite, True)
 
     def test_it_with_missing_lock_service(self):
         from substanced.locking import WriteLock
@@ -530,6 +564,7 @@ class Test_lock_resource(unittest.TestCase):
         self.assertEqual(lockservice.owner, 1)
         self.assertEqual(lockservice.timeout, 3600)
         self.assertEqual(lockservice.locktype, WriteLock)
+        self.assertEqual(lockservice.infinite, False)
 
 class Test_could_lock_resource(unittest.TestCase):
     def setUp(self):
@@ -715,12 +750,14 @@ class DummyUsers(object):
 
 class DummyLockService(object):
     __is_service__ = True
-    def lock(self, resource, owner, timeout=None, comment=None, locktype=None):
+    def lock(self, resource, owner,
+             timeout=None, comment=None, locktype=None, infinite=False):
         self.resource = resource
         self.owner = owner
         self.timeout = timeout
         self.comment = comment
         self.locktype = locktype
+        self.infinite = infinite
         return True
 
     def borrow_lock(self, resource, owner, locktype=None):
