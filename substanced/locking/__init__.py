@@ -133,6 +133,13 @@ class LockSchema(Schema):
         default=3600,
         title='Timeout (secs)',
         )
+    infinite = colander.SchemaNode(
+        colander.Boolean(),
+        default=False,
+        missing=False,
+        title='Infinite?',
+        description='Locks all descendants',
+        )
     last_refresh = colander.SchemaNode(
         colander.DateTime(),
         title='Last Refresh',
@@ -174,15 +181,22 @@ class LockPropertySheet(PropertySheet):
         )
     )
 class Lock(Persistent):
-    """ A persistent object representing a lock. """
+    """ A persistent object representing a lock.
+    """
     owner = reference_target_property(UserToLock)
     resource = reference_target_property(WriteLock)
     ownerid = reference_targetid_property(UserToLock)
     resourceid = reference_targetid_property(WriteLock)
 
-    def __init__(self, timeout=3600, comment=None, last_refresh=None):
+    def __init__(self,
+                 infinite=False,
+                 timeout=3600,
+                 comment=None,
+                 last_refresh=None,
+                ):
         self.timeout = timeout
         self.comment=comment
+        self.infinite = infinite
         # last_refresh must be a datetime.datetime object with a UTC tzinfo,
         # if provided
         if last_refresh is None:
@@ -225,8 +239,13 @@ class Lock(Persistent):
             return True
         return expires >= when
 
+    @property
+    def depth(self):
+        return 'infinity' if self.infinite else '0'
+
     def commit_suicide(self):
-        """ Remove the lock from the lock service. """
+        """ Remove this lock from the lock service.
+        """
         del self.__parent__[self.__name__]
 
 @service(
@@ -287,6 +306,7 @@ class LockService(Folder, _AutoNamingFolder):
         timeout=None,
         comment=None,
         locktype=WriteLock,
+        infinite=False,
         ):
         # NB: callers should ensure that the user has 'sdi.lock' permission
         # on the resource before calling
@@ -298,10 +318,14 @@ class LockService(Folder, _AutoNamingFolder):
             return lock
 
         registry = get_current_registry()
-        lock = registry.content.create('Lock', timeout=timeout, comment=comment)
+        lock = registry.content.create('Lock',
+                                       )
         self.add_next(lock) # NB: must add before setting ownerid/resource
         lock.ownerid = self._get_ownerid(owner_or_ownerid)
         lock.resource = resource
+        lock.timeout = timeout
+        lock.comment = comment
+        lock.infinite = infinite
         return lock
 
     def unlock(
@@ -401,6 +425,7 @@ def lock_resource(
         timeout=timeout,
         comment=comment,
         locktype=locktype,
+        infinite=infinite,
         )
 
 def could_lock_resource(
