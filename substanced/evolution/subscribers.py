@@ -1,4 +1,5 @@
 import logging
+import os
 
 from pyramid.events import (
     ApplicationCreated,
@@ -16,7 +17,10 @@ def on_startup(event):
     app = event.object
     registry = app.registry
     settings = getattr(registry, 'settings', {})
-    autoevolve = asbool(settings.get('substanced.autoevolve', False))
+    autoevolve = asbool(
+        os.environ.get('SUBSTANCED_AUTOEVOLVE',
+                       settings.get('substanced.autoevolve', False))
+        )
     if autoevolve:
         request = Request.blank('/') # path is meaningless
         request.registry = registry

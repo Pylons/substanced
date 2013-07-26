@@ -335,7 +335,16 @@ class Test_on_startup(unittest.TestCase):
         from ..subscribers import on_startup
         return on_startup(event)
 
-    def test_autosync_false(self):
+    def test_autosync_false_from_ini(self):
+        registry = self.config.registry
+        registry.settings['substanced.catalogs.autosync'] = 'false'
+        app = testing.DummyResource()
+        app.registry = registry
+        event = DummyEvent(app, None)
+        result = self._callFUT(event)
+        self.assertEqual(result, None)
+
+    def test_autosync_false_from_ini_bc(self):
         registry = self.config.registry
         registry.settings['substanced.autosync_catalogs'] = 'false'
         app = testing.DummyResource()
@@ -343,8 +352,8 @@ class Test_on_startup(unittest.TestCase):
         event = DummyEvent(app, None)
         result = self._callFUT(event)
         self.assertEqual(result, None)
-
-    def test_autosync_missing(self):
+        
+    def test_autosync_missing_from_ini(self):
         registry = self.config.registry
         app = testing.DummyResource()
         app.registry = registry
@@ -352,9 +361,9 @@ class Test_on_startup(unittest.TestCase):
         result = self._callFUT(event)
         self.assertEqual(result, None)
 
-    def test_autosync_true_no_objectmap(self):
+    def test_autosync_true_from_ini_no_objectmap(self):
         registry = self.config.registry
-        registry.settings['substanced.autosync_catalogs'] = 'true'
+        registry.settings['substanced.catalogs.autosync'] = 'true'
         app = testing.DummyResource()
         app.registry = registry
         root = testing.DummyResource()
@@ -363,9 +372,35 @@ class Test_on_startup(unittest.TestCase):
         result = self._callFUT(event)
         self.assertEqual(result, None)
 
+    def test_autosync_false_from_environ(self):
+        import os
+        from mock import patch
+        with patch.dict(os.environ, {'SUBSTANCED_CATALOGS_AUTOSYNC':'false'}):
+            registry = self.config.registry
+            registry.settings['substanced.catalogs.autosync'] = 'true'
+            app = testing.DummyResource()
+            app.registry = registry
+            event = DummyEvent(app, None)
+            result = self._callFUT(event)
+            self.assertEqual(result, None)
+
+    def test_autosync_true_from_environ_no_objectmap(self):
+        from mock import patch
+        import os
+        with patch.dict(os.environ, {'SUBSTANCED_CATALOGS_AUTOSYNC':'true'}):
+            registry = self.config.registry
+            registry.settings['substanced.catalogs.autosync'] = 'false'
+            app = testing.DummyResource()
+            app.registry = registry
+            root = testing.DummyResource()
+            app.root_factory = lambda *arg: root
+            event = DummyEvent(app, None)
+            result = self._callFUT(event)
+            self.assertEqual(result, None)
+        
     def test_autosync_true_no_oids(self):
         registry = self.config.registry
-        registry.settings['substanced.autosync_catalogs'] = 'true'
+        registry.settings['substanced.catalogs.autosync'] = 'true'
         app = testing.DummyResource()
         app.registry = registry
         root = testing.DummyResource()
@@ -377,7 +412,7 @@ class Test_on_startup(unittest.TestCase):
 
     def test_autosync_true_with_oids(self):
         registry = self.config.registry
-        registry.settings['substanced.autosync_catalogs'] = 'true'
+        registry.settings['substanced.catalogs.autosync'] = 'true'
         app = testing.DummyResource()
         app.registry = registry
         root = testing.DummyResource()
@@ -392,7 +427,7 @@ class Test_on_startup(unittest.TestCase):
     def test_autosync_true_with_oids_raises(self):
         from zope.interface.interfaces import ComponentLookupError
         registry = self.config.registry
-        registry.settings['substanced.autosync_catalogs'] = 'true'
+        registry.settings['substanced.catalogs.autosync'] = 'true'
         app = testing.DummyResource()
         app.registry = registry
         root = testing.DummyResource()

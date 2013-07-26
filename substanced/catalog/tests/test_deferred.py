@@ -993,6 +993,24 @@ class TestIndexActionTM(unittest.TestCase):
              'done processing index actions']
             )
 
+    def test__process_all_False_no_action_processor_force_deferred(self):
+        self.config.registry.settings[
+            'substanced.catalogs.force_deferred'] = True
+        index = DummyIndex()
+        inst = self._makeOne(index)
+        logger = DummyLogger()
+        inst.logger = logger
+        a1 = DummyAction(1)
+        inst._process([a1], all=False)
+        self.assertTrue(a1.executed)
+        self.assertEqual(
+            logger.messages,
+            ['begin index actions processing',
+             'executing actions all immediately: no action processor',
+             'executing action action 1',
+             'done processing index actions']
+            )
+        
     def test__process_all_False_inactive_action_processor(self):
         from substanced.interfaces import IIndexingActionProcessor
         from zope.interface import Interface
@@ -1015,6 +1033,30 @@ class TestIndexActionTM(unittest.TestCase):
              'done processing index actions']
             )
 
+    def test__process_all_False_inactive_action_processor_force_deferred(self):
+        self.config.registry.settings[
+            'substanced.catalogs.force_deferred'] = True
+        from substanced.interfaces import IIndexingActionProcessor
+        from zope.interface import Interface
+        self.config.registry.registerAdapter(
+            DummyActionProcessor, (Interface,), IIndexingActionProcessor
+            )
+        index = DummyIndex()
+        index.active = False
+        inst = self._makeOne(index)
+        logger = DummyLogger()
+        inst.logger = logger
+        a1 = DummyAction(1)
+        inst._process([a1], all=False)
+        self.assertTrue(a1.executed)
+        self.assertEqual(
+            logger.messages,
+            ['begin index actions processing',
+             'executing deferred actions: deferred mode forced via "substanced.catalogs.force_deferred" flag in configuration',
+             'executing action action 1',
+             'done processing index actions']
+            )
+        
     def test__process_all_False_active_action_processor(self):
         from substanced.interfaces import (
             IIndexingActionProcessor,
@@ -1181,6 +1223,7 @@ class DummyAction(object):
     index = testing.DummyResource()
     index.__oid__ = 1
     executed = False
+    mode = None
 
     def __init__(self, oid, index_oid=1, position=1, raises=None, anti=False,
                  antiresult=None):

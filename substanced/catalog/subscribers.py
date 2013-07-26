@@ -1,6 +1,7 @@
-from zope.interface.interfaces import ComponentLookupError
-
 import logging
+import os
+
+from zope.interface.interfaces import ComponentLookupError
 
 from pyramid.traversal import resource_path
 from pyramid.settings import asbool
@@ -136,8 +137,20 @@ def on_startup(event):
     app = event.object
     registry = app.registry
     settings = getattr(registry, 'settings', {})
-    autosync = asbool(settings.get('substanced.autosync_catalogs', False))
-    autoreindex = asbool(settings.get('substanced.autoreindex_catalogs', False))
+    autosync = asbool(
+        os.environ.get(
+            'SUBSTANCED_CATALOGS_AUTOSYNC',
+            settings.get(
+                'substanced.catalogs.autosync',
+                settings.get('substanced.autosync_catalogs', False) # bc
+                )))
+    autoreindex = asbool(
+        os.environ.get(
+            'SUBSTANCED_CATALOGS_AUTOREINDEX',
+            settings.get(
+                'substanced.catalogs.autoreindex',
+                settings.get('substanced.autoreindex_catalogs', False) # bc
+                )))
     if autosync:
         request = Request.blank('/autosync_catalogs') # path is meaningless
         request.registry = registry

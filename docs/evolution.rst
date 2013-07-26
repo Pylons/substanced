@@ -71,7 +71,9 @@ Autoevolve
 ==========
 
 If you add `substanced.autoevolve = true` within your application .ini file,
-evolution upgrade steps will be run when your application starts.
+all pending evolution upgrade steps will be run when your application starts.
+Alternately you can use the ``SUBSTANCED_AUTOEVOLVE`` evnironment variable
+(e.g. ``export SUBSTANCED_AUTOEVOLVE=true``) to do the same thing.
 
 Adding Evolution Support To a Package
 =====================================

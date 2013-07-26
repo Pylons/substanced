@@ -1,9 +1,12 @@
+import os
+
 import logging
 import persistent
 import threading
 import time
 import transaction
 
+from pyramid.settings import asbool
 from pyramid.threadlocal import get_current_registry
 from transaction.interfaces import ISavepointDataManager
 from zope.interface import implementer
@@ -575,6 +578,7 @@ class IndexActionTM(threading.local):
 
     transaction = transaction # for testing
     logger = logger # for testing
+    os = os # for testing
     
     def __init__(self, index):
         self.index = index
@@ -637,25 +641,40 @@ class IndexActionTM(threading.local):
                 IIndexingActionProcessor
                 )
 
-            active = False
-            reason = None
+            force_deferred = asbool(
+                self.os.environ.get(
+                    'SUBSTANCED_CATALOGS_FORCE_DEFERRED',
+                    registry.settings.get(
+                        'substanced.catalogs.force_deferred', False)
+                    ))
 
             if processor:
                 active = processor.active()
-                if not active:
-                    reason = 'inactive'
-            else:
-                reason = 'no'
+                if active or force_deferred:
+                    if force_deferred:
+                        self.logger.debug(
+                            ('executing deferred actions: deferred mode '
+                             'forced via "substanced.catalogs.force_deferred" '
+                             'flag in configuration')
+                            )
+                    else:
+                        self.logger.debug(
+                            'executing deferred actions: action processor '
+                            'active'
+                            )
+                    self.execute_actions_deferred(actions, processor)
+                else:
+                    self.logger.debug(
+                        'executing actions all immediately: inactive action '
+                        'processor'
+                        )
+                    self.execute_actions_immediately(actions)
+                    
 
-            if active:
-                self.logger.debug(
-                    'executing deferred actions: action processor active'
-                    )
-                self.execute_actions_deferred(actions, processor)
             else:
                 self.logger.debug(
-                    'executing actions all immediately: %s action '
-                    'processor' % (reason,)
+                    'executing actions all immediately: no action '
+                    'processor'
                     )
                 self.execute_actions_immediately(actions)
 
@@ -666,10 +685,10 @@ class IndexActionTM(threading.local):
             self.logger.debug('executing action %r' % (action,))
             action.execute()
 
-    def execute_actions_deferred(self, actions, processor):
+    def execute_actions_deferred(self, actions, processor, force=False):
         deferred = []
         for action in actions:
-            if action.mode is MODE_DEFERRED:
+            if force or action.mode is MODE_DEFERRED:
                 self.logger.debug('adding deferred action %r' % (action,))
                 deferred.append(action)
             else:

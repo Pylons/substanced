@@ -326,7 +326,7 @@ on each index.
 Autosync and Autoreindex
 ------------------------
 
-If you add ``substanced.autosync_catalogs = true`` within your application's
+If you add ``substanced.catalogs.autosync = true`` within your application's
 ``.ini`` file, all catalog indexes will be resynchronized with their catalog
 factory definitions at application startup time.  Indices which were added to
 the catalog factory since the last startup time will be added to each catalog
@@ -334,26 +334,41 @@ which uses the index factory.  Likewise, indices which were removed will be
 removed from each catalog, and indices which were modified will be modified
 according to the catalog factory.  Having this setting in your ``.ini`` file is
 like pressing the ``Update indexes`` button on the ``Manage`` tab of each of
-your catalogs.
+your catalogs.  The ``SUBSTANCED_CATALOGS_AUTOSYNC`` environment variable can
+also be used to turn this behavior on.  For example ``export
+SUBSTANCED_CATALOGS_AUTOSYNC=true``.
 
-If you add ``substanced.autoreindex_catalogs = true`` within your application's
+If you add ``substanced.catalogs.autoreindex = true`` within your application's
 ``.ini`` file, all catalogs that were changed as the result of an auto-sync
 will automatically be reindexed.  Having this setting in your ``.ini`` file is
 like pressing the ``Reindex catalog`` button on the ``Manage`` tab of each
-catalog which was changed as the result of hitting ``Update indexes``.
+catalog which was changed as the result of hitting ``Update indexes``.  The
+``SUBSTANCED_CATALOGS_AUTOREINDEX`` environment variable can also be used to
+turn this behavior on.  For example ``export
+SUBSTANCED_CATALOGS_AUTOREINDEX=true``.
 
-Caveat on Complexity
---------------------
 
-Substance D's configurable catalog system comes from 15 years of
-lessons learned in building larger systems and seeing both the good and
-the bad. This is reflected into the idea of multiple catalogs,
-each with multiple indexes, which each can have a default mode and a
-call-time mode override.
+Forcing Deferral of Indexing
+----------------------------
 
-This gets even more fun when the "index later" ability of deferred
-indexing is mixed in. And last, the "undo" facility introduces its own
-challenges.
+There may be times when you'd like to defer all catalog indexing operations,
+such as during a bulk load of data from a script.  Normally, only indexes
+marked with ``MODE_DEFERRED`` use deferred indexing, and actions associated
+with those indexes are even then only actually deferred if an index processor
+is active.
 
-Thus, the approach in Substance D is the result of multiple feats of
-juggling and refactoring.
+You can force Substance D to defer all catalog indexing using the
+``substanced.catalogs.force_deferred`` flag in your application's ``.ini``
+file.  When this flag is used, all catalog indexing operations will be added to
+the indexer's queue, even those indexes marked as ``MODE_IMMEDIATE`` or
+``MODE_ATCOMMIT``.  Deferral will also happen whether or not the indexer is
+running, unlike during normal operations.
+
+When you use this flag, you can stop the indexer process, do your bulk load,
+and start the indexer again when it's convenient to have all the content
+indexing done in the background.
+
+The ``SUBSTANCED_CATALOGS_FORCE_DEFERRED`` environment variable can also be
+used to turn this behavior on.  For example ``export
+SUBSTANCED_CATALOGS_FORCE_DEFERRED=true``.
+
