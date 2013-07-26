@@ -453,6 +453,9 @@ class BasicActionProcessor(object):
         if zodb_root is None:
             return None
         queue = zodb_root.get(self.queue_name)
+        if queue is None:
+            queue = ActionsQueue()
+            zodb_root[self.queue_name] = queue
         return queue
 
     def active(self):
@@ -470,20 +473,15 @@ class BasicActionProcessor(object):
     def engage(self):
         queue = self.get_queue()
         if queue is None:
-            zodb_root = self.get_root()
-            if zodb_root is None:
-                raise RuntimeError('Context has no jar')
-            queue = ActionsQueue()
-            queue.pactive = True
-            zodb_root[self.queue_name] = queue
-        else:
-            queue.pactive = True
+            raise RuntimeError('Context has no jar')
+        queue.pactive = True
 
     @commit(1, 'disengaging actions processor')
     def disengage(self):
         queue = self.get_queue()
-        if queue is not None:
-            queue.pactive = False
+        if queue is None:
+            raise RuntimeError('Context has no jar')
+        queue.pactive = False
 
     def add(self, actions):
         queue = self.get_queue()
@@ -650,18 +648,29 @@ class IndexActionTM(threading.local):
 
             if processor:
                 active = processor.active()
-                if active or force_deferred:
-                    if force_deferred:
+                queue = processor.get_queue()
+                if force_deferred:
+                    if queue is not None:
                         self.logger.debug(
                             ('executing deferred actions: deferred mode '
                              'forced via "substanced.catalogs.force_deferred" '
-                             'flag in configuration')
+                             'flag in configuration or envvar')
                             )
+                        self.execute_actions_deferred(
+                            actions, processor, force=True)
                     else:
+                        # this can happen when a catalog is added to a newly
+                        # created object (one that does not have a jar)
                         self.logger.debug(
-                            'executing deferred actions: action processor '
-                            'active'
+                            'executing actions all immediately: no jar '
+                            'available to find queue'
                             )
+                        self.execute_actions_immediately(actions)
+                elif active:
+                    self.logger.debug(
+                        'executing deferred actions: action processor '
+                        'active'
+                        )
                     self.execute_actions_deferred(actions, processor)
                 else:
                     self.logger.debug(
@@ -669,7 +678,6 @@ class IndexActionTM(threading.local):
                         'processor'
                         )
                     self.execute_actions_immediately(actions)
-                    
 
             else:
                 self.logger.debug(
