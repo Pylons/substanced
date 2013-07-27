@@ -8,7 +8,8 @@ def root_factory(request, t=transaction, g=get_connection,
                  mark_unfinished_as_finished=mark_unfinished_as_finished):
     """ A function which can be used as a Pyramid ``root_factory``.  It
     accepts a request and returns an instance of the ``Root`` content type."""
-    # accepts "t", "g", and "evolve_packages" for unit testing purposes only
+    # accepts "t", "g", and "mark_unfinished_as_finished" for unit testing
+    # purposes only
     conn = g(request)
     zodb_root = conn.root()
     if not 'app_root' in zodb_root:
