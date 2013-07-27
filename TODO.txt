@@ -4,55 +4,27 @@ Must-have pre-alpha-1
 Features
 --------
 
-- Change folder data structure such that _order is not (oid, name) but separate
-  oid and name datastructures are kept so we have a shot of making sort merging
-  faster.
-
 - Release deform2 (merge deform_bootstrap).
 
-- Ability to dump and load blobs.
-
-- Remove interfaces index?
-
 - Use hasattr(__is_folder__) instead of IFolder.providedBy in is_folder.
-
-- How to prevent objects from being moved or duplicated into a place where
-  they're not addable?
 
 - Use is_folder view predicate instead of context=IFolder in folder views
   (holdup is testing out folder button action overrides in the face of views
   being registered against IFolder).
 
-- Change all mentions of ``context`` to ``resource``.
-
-- Text search view.
-
-- Add an autoevolve setting.
+- Change all mentions of ``context`` to ``resource`` in docs.
 
 - Better error handling in folder contents view when an ajax request fails.
-
-- Better loading animation in folder contents view when we're in the midst of
-  an ajax request.  Should be the same animation when a button is pressed on
-  the folder contents view that leads to another page (e.g. reindex or
-  duplicate).
 
 Can wait until after alpha 1
 ============================
 
-- Stamp created objects with creator information?
+- Ability to more efficiently dump and load blobs.
 
-- Fix actions processor so it won't drop actions on the floor if
-  a keyboardinterrupt or another exception happens after a popall.
+- Stamp created objects with creator information?
 
 - Add specific configurator directives for object event registrations
   (e.g. config.subscribe_modified).
-
-- __viewable__, __renameable__, __deletable__, __copyable__, __duplicatable__
-  attributes of contained objects in folder contents view that controls
-  how contained object can be acted upon?  E.g.::
-
-    def __viewable__(self, context, request):
-        return has_permission('sdi.view', context, request)
 
 - Once we depend on Pyramid 1.4b1+, normalize subscriber predicate argument
   lists.
@@ -98,7 +70,8 @@ Can Wait Forever (Nice-to-Have)
 
 - XML-RPC.
 
-- Drag and drop ACE reordering in ACL edit view.
+- Drag and drop ACE reordering in ACL edit view (note: Paul has this
+  somewhere).
 
 - Ability to add and edit principals in existing ACEs in ACL edit view.
 
@@ -131,10 +104,13 @@ Probably Bad Ideas
   allowed indexes when an ACL is changed.  Not sure if there's even a general
   way to make this do less work, but could be.
 
-Science Fiction
-===============
+- __viewable__, __renameable__, __deletable__, __copyable__, __duplicatable__
+  attributes of contained objects in folder contents view that controls
+  how contained object can be acted upon?  E.g.::
 
-- Play around with gevent and/or websockets.
+    def __viewable__(self, context, request):
+        return has_permission('sdi.view', context, request)
+
 
 Made Irrelevant
 ===============

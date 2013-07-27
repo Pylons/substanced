@@ -29,6 +29,27 @@ class Test_login(unittest.TestCase):
         from ..login import login
         return login(context, request)
 
+    def test_referrer_is_auditstream(self):
+        from pyramid.httpexceptions import HTTPForbidden
+        request = testing.DummyRequest()
+        request.url = '/auditstream-sse'
+        request.sdiapi = DummySDIAPI()
+        context = testing.DummyResource()
+        result = self._callFUT(context, request)
+        self.assertEqual(result.__class__, HTTPForbidden)
+
+    def test_referrer_is_login_view(self):
+        request = testing.DummyRequest()
+        request.url = '/mgmt_path'
+        request.sdiapi = DummySDIAPI()
+        context = testing.DummyResource()
+        result = self._callFUT(context, request)
+        self.assertEqual(result['url'], '/mgmt_path')
+        self.assertEqual(result['came_from'], '/mgmt_path')
+        self.assertEqual(result['login'], '')
+        self.assertEqual(result['password'], '')
+        self.assertEqual(request.session['sdi.came_from'], '/mgmt_path')
+        
     def test_form_not_submitted(self):
         request = testing.DummyRequest()
         request.sdiapi = DummySDIAPI()

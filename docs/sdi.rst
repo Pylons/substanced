@@ -255,6 +255,8 @@ This tab appears on the root object of the site and lets you:
 
 - Pack the old revisions of objects in the database.
 
+- Inspect and run evolution steps  
+
 - Flush the object cache.
 
 - See details and statistics about the database, the connection, and

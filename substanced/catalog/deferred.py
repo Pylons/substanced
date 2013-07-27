@@ -1,9 +1,12 @@
+import os
+
 import logging
 import persistent
 import threading
 import time
 import transaction
 
+from pyramid.settings import asbool
 from pyramid.threadlocal import get_current_registry
 from transaction.interfaces import ISavepointDataManager
 from zope.interface import implementer
@@ -450,6 +453,9 @@ class BasicActionProcessor(object):
         if zodb_root is None:
             return None
         queue = zodb_root.get(self.queue_name)
+        if queue is None:
+            queue = ActionsQueue()
+            zodb_root[self.queue_name] = queue
         return queue
 
     def active(self):
@@ -467,20 +473,15 @@ class BasicActionProcessor(object):
     def engage(self):
         queue = self.get_queue()
         if queue is None:
-            zodb_root = self.get_root()
-            if zodb_root is None:
-                raise RuntimeError('Context has no jar')
-            queue = ActionsQueue()
-            queue.pactive = True
-            zodb_root[self.queue_name] = queue
-        else:
-            queue.pactive = True
+            raise RuntimeError('Context has no jar')
+        queue.pactive = True
 
     @commit(1, 'disengaging actions processor')
     def disengage(self):
         queue = self.get_queue()
-        if queue is not None:
-            queue.pactive = False
+        if queue is None:
+            raise RuntimeError('Context has no jar')
+        queue.pactive = False
 
     def add(self, actions):
         queue = self.get_queue()
@@ -575,6 +576,7 @@ class IndexActionTM(threading.local):
 
     transaction = transaction # for testing
     logger = logger # for testing
+    os = os # for testing
     
     def __init__(self, index):
         self.index = index
@@ -637,25 +639,50 @@ class IndexActionTM(threading.local):
                 IIndexingActionProcessor
                 )
 
-            active = False
-            reason = None
+            force_deferred = asbool(
+                self.os.environ.get(
+                    'SUBSTANCED_CATALOGS_FORCE_DEFERRED',
+                    registry.settings.get(
+                        'substanced.catalogs.force_deferred', False)
+                    ))
 
             if processor:
                 active = processor.active()
-                if not active:
-                    reason = 'inactive'
-            else:
-                reason = 'no'
+                queue = processor.get_queue()
+                if force_deferred:
+                    if queue is not None:
+                        self.logger.debug(
+                            ('executing deferred actions: deferred mode '
+                             'forced via "substanced.catalogs.force_deferred" '
+                             'flag in configuration or envvar')
+                            )
+                        self.execute_actions_deferred(
+                            actions, processor, force=True)
+                    else:
+                        # this can happen when a catalog is added to a newly
+                        # created object (one that does not have a jar)
+                        self.logger.debug(
+                            'executing actions all immediately: no jar '
+                            'available to find queue'
+                            )
+                        self.execute_actions_immediately(actions)
+                elif active:
+                    self.logger.debug(
+                        'executing deferred actions: action processor '
+                        'active'
+                        )
+                    self.execute_actions_deferred(actions, processor)
+                else:
+                    self.logger.debug(
+                        'executing actions all immediately: inactive action '
+                        'processor'
+                        )
+                    self.execute_actions_immediately(actions)
 
-            if active:
-                self.logger.debug(
-                    'executing deferred actions: action processor active'
-                    )
-                self.execute_actions_deferred(actions, processor)
             else:
                 self.logger.debug(
-                    'executing actions all immediately: %s action '
-                    'processor' % (reason,)
+                    'executing actions all immediately: no action '
+                    'processor'
                     )
                 self.execute_actions_immediately(actions)
 
@@ -666,10 +693,10 @@ class IndexActionTM(threading.local):
             self.logger.debug('executing action %r' % (action,))
             action.execute()
 
-    def execute_actions_deferred(self, actions, processor):
+    def execute_actions_deferred(self, actions, processor, force=False):
         deferred = []
         for action in actions:
-            if action.mode is MODE_DEFERRED:
+            if force or action.mode is MODE_DEFERRED:
                 self.logger.debug('adding deferred action %r' % (action,))
                 deferred.append(action)
             else:

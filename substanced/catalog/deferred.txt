@@ -77,7 +77,7 @@ queued for the processor in an actions queue.  Queued actions are not executed
 in the web transaction.  Instead, the action processor will drain the actions
 queue periodically and execute the actions in its separate process.  It will
 sleep for some number of seconds, pop the entire action queue, execute all of
-the actions it popped, commit, then sleep again.  If it encounters an conflict
+the actions it popped, commit, then sleep again.  If it encounters a conflict
 error while it's committing, it aborts the transaction and sleeps, then tries
 again.  This goes on for the lifetime of the action processor process.
 
@@ -91,18 +91,4 @@ performance but the site won't get completely inconsistent while the action
 processor is out of service.
 
 The action queue uses application-level conflict resolution code to deal with
-the fact that it's going to be a hotspot in any application.  It currently
-doesn't handle undo properly, but it's otherwise OK.
-
-Things to do to make this "real":
-
-- Handle undo properly.
-
-- Make a decision whether or not to, by default, flush any pending actions when
-  a catalog query is executed.  Doing so would allow the developer to never
-  need to think about whether any action has been deferred, and he'd always see
-  catalog state as if all indexes were ``MODE_IMMEDIATE``.  The other option is
-  to not flush actions by default, but allow the developer to flush them
-  manually (this is already possible).
-
-- Decide on modes for default indexes.
+the fact that it's going to be a hotspot in any application.

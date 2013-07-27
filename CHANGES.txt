@@ -1,12 +1,4 @@
-
 Unreleased
 ----------
-
-- Remove the usage of the ajax manager from the
-  remote view manager of the slickgrid.
-
-
-0.1 (2011-08-14)
-----------------
 
 - Initial release.

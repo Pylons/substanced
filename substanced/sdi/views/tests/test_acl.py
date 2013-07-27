@@ -358,6 +358,7 @@ class TestAdd(unittest.TestCase):
         context = site['pagge'] = testing.DummyResource()
         context.__oid__ = 5
         context.__acl__ = []
+        context.__objectmap__ = DummyObjectMap({})
         inst = self._makeOne(context, request)
         resp = inst()
         self.assertEqual(context.__acl__[-1], ('allow', Everyone, 'view'))
@@ -464,6 +465,7 @@ class TestOther(unittest.TestCase):
         site = self._makeSite()
         context = site['context']
         context.__acl__ = []
+        context.__objectmap__ = DummyObjectMap({})
         inst = self._makeOne(context, request)
         inst.get_all_permissions = lambda *arg: [NO_PERMISSION_REQUIRED,'view']
         result = inst.finish_acl_edit()
@@ -577,6 +579,8 @@ class DummyObjectMap(object):
         self.objectmap = objectmap
     def object_for(self, oid):
         return self.objectmap.get(oid, None)
+    def pathcount(self, context):
+        return 0
 
 class DummySDIAPI(object):
     def flash_with_undo(self, message):

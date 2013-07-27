@@ -28,21 +28,19 @@ class DocumentSchema(Schema):
 
 class DocumentPropertySheet(PropertySheet):
     schema = DocumentSchema()
-    
+
 @content(
     'Document',
     icon='icon-align-left',
-    add_view='add_document', 
-    propertysheets = (
+    add_view='add_document',
+    propertysheets=(
         ('Basic', DocumentPropertySheet),
         ),
     )
 class Document(Persistent):
 
     name = renamer()
-    
+
     def __init__(self, title='', body=''):
         self.title = title
         self.body = body
-
-        

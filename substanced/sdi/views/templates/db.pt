@@ -16,6 +16,24 @@
       </p>
     </form>
 
+    <h2>Evolve</h2>
+    <form action="./database" method="POST">
+      <input type="hidden" value="${request.session.get_csrf_token()}"
+             name="csrf_token"/>
+      <p>Run evolve steps up to the latests
+         <input type="submit" class="btn btn-primary" 
+                value="Evolve" name="evolve"/>
+         <input type="submit" class="btn btn-primary" 
+                value="Dry-run" name="dryrun"/>
+      </p>
+    </form>
+    <form action="./database" method="GET">
+      <p>
+         <input type="submit" class="btn btn-primary" 
+                value="Show summary of steps (finished and unfinished)" name="show_evolve"/>
+      </p>
+    </form>
+
     <h2>Details</h2>
 
     <table class="table">

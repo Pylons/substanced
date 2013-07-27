@@ -40,6 +40,7 @@ install_requires = [
     'zope.component', # implictly depended upon by zope.copy
     'zope.deprecation',
     'statsd',
+    'pytz',
     ]
 
 docs_extras = ['Sphinx', 'repoze.sphinx.autointerface']

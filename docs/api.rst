@@ -415,6 +415,10 @@ Other Helpers
 .. autoclass:: User
    :members:
 
+   .. attribute:: timezone
+
+      A Python "tzinfo" object representing the user's preferred timezone.
+
 .. autofunction:: groupfinder
 
 :mod:`substanced.property` API

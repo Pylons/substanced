@@ -83,7 +83,9 @@ class LockServiceFolderContents(FolderContents):
         if expires is not None:
             expires = expires()
         if expires is not None:
-            expires = expires.strftime('%Y-%m-%d %H:%M:%S')
+            tz = self.request.user.timezone
+            expires = expires.replace(tzinfo=None) # in case it's not naive
+            expires = tz.localize(expires).strftime('%Y-%m-%d %H:%M:%S %Z')
         
         columns.extend((
             {'name':'Owner',
@@ -92,7 +94,7 @@ class LockServiceFolderContents(FolderContents):
             {'name':'Resource',
              'value':resource,
              },
-            {'name':'Expires (UTC)',
+            {'name':'Expires',
              'value':expires,
              },
             ))

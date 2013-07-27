@@ -10,12 +10,12 @@ from pyramid.security import (
     NO_PERMISSION_REQUIRED,
     )
 
-from ...util import (
-    get_oid,
-    find_service,
-    )
+from ...util import get_oid
 
 from .. import mgmt_view
+
+from substanced.interfaces import IUserLocator
+from substanced.principal import DefaultUserLocator
 
 @mgmt_view(
     name='login',
@@ -39,9 +39,16 @@ from .. import mgmt_view
 def login(context, request):
     login_url = request.sdiapi.mgmt_path(request.context, 'login')
     referrer = request.url
-    if login_url in referrer: # pragma: no cover
+    if '/auditstream-sse' in referrer:
+        # If we're being invoked as the result of a failed request to the
+        # auditstream sse view, bail.  Otherwise the came_from will be set to
+        # the auditstream URL, and the user who this happens to will eventually
+        # be redirected to it and they'll be left scratching their head when
+        # they see e.g. "id: 0-10\ndata: " when they log in successfully.
+        return HTTPForbidden()
+    if login_url in referrer:
         # never use the login form itself as came_from
-        referrer = request.sdiapi.mgmt_path(request.root) 
+        referrer = request.sdiapi.mgmt_path(request.root)
     came_from = request.session.setdefault('sdi.came_from', referrer)
     login = ''
     password = ''
@@ -53,9 +60,13 @@ def login(context, request):
         else:
             login = request.params['login']
             password = request.params['password']
-            principals = find_service(context, 'principals')
-            users = principals['users']
-            user = users.get(login)
+            adapter = request.registry.queryAdapter(
+                (context, request),
+                IUserLocator
+                )
+            if adapter is None:
+                adapter = DefaultUserLocator(context, request)
+            user = adapter.get_user_by_login(login)
             if user is not None and user.check_password(password):
                 request.session.pop('sdi.came_from', None)
                 headers = remember(request, get_oid(user))

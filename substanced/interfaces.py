@@ -803,5 +803,20 @@ class ILockService(IAutoNamingFolder):
            user can't lock a resource he is not permitted to.
        """
         
+class IUserLocator(Interface):
+    """ Adapter responsible for returning a user by his login name and/or
+    userid as well as group objects of a user by his userid."""
     
+    def get_user_by_login(login):
+        """ Return an IUser object or ``None`` if no such user exists. The
+        ``login`` argument is the *login name* of the user, not an oid."""
+
+    def get_user_by_userid(userid):
+        """ Return an IUser object or ``None`` if no such user exists. The
+        ``login`` argument is the *user id* of the user (usually an oid)."""
+        
+    def get_groupids(userid):
+        """ Return all the group-related principal identifiers for a user with
+        the user principal identifier ``userid`` as a sequence.  If no user
+        exists under ``userid``, return ``None``."""
     

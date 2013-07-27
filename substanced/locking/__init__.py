@@ -1,25 +1,23 @@
-""" Advisory exclusive DAV-style locks for content objects.  When a resource is
-locked, it is presumed that its SDI UI will display a warning to users who do
-not hold the lock.  The locking service can also be used by add-ons such as DAV
-implementations.  """
+""" Advisory exclusive DAV-style locks for content objects.
+
+When a resource is locked, it is presumed that its SDI UI will display a
+warning to users who do not hold the lock.  The locking service can also be
+used by add-ons such as DAV implementations.
+"""
 
 import datetime
 import uuid
+import pytz
 
 from zope.interface import implementer
 
 from persistent import Persistent
 
 import colander
-from colander.iso8601 import UTC
 import deform_bootstrap
 import deform.widget
 
-from pyramid.exceptions import HTTPForbidden
-from pyramid.security import (
-    authenticated_userid,
-    has_permission,
-    )
+from pyramid.security import has_permission
 from pyramid.threadlocal import get_current_registry
 from pyramid.traversal import (
     find_root,
@@ -56,21 +54,26 @@ class LockingError(Exception):
         self.lock = lock
 
 class LockError(LockingError):
-    """ Raised when a lock attempt cannot be performed due to an existing
-    conflicting lock.  Instances of this class have a ``lock`` attribute which
-    is a :class:`substanced.locking.Lock` object, representing the conflicting
-    lock. """
+    """ Raised when a lock cannot be created due to a conflicting lock.
+
+    Instances of this class have a ``lock`` attribute which is a
+    :class:`substanced.locking.Lock` object, representing the conflicting
+    lock.
+    """
 
 class UnlockError(LockingError):
-    """ Raised when an unlock attempt cannot be performed due to the owner
-    suplied in the unlock request not matching the owner of the lock.
+    """ Raised when a lock cannot be removed
+
+    This may be because the owner suplied in the unlock request does not
+    match the owner of the lock, or becaues the lock no longer exists.
+
     Instances of this class have a ``lock`` attribute which is a
-    :class:`substanced.locking.Lock` object, representing the conflicting lock
+    :class:`substanced.locking.Lock` object, representing the conflicting lock,
     or ``None`` if there was no lock to unlock.
     """
 
 def now():
-    return datetime.datetime.utcnow().replace(tzinfo=UTC)
+    return datetime.datetime.utcnow().replace(tzinfo=pytz.UTC)
 
 class LockOwnerSchema(colander.SchemaNode):
     title = 'Owner'
@@ -130,6 +133,13 @@ class LockSchema(Schema):
         default=3600,
         title='Timeout (secs)',
         )
+    infinite = colander.SchemaNode(
+        colander.Boolean(),
+        default=False,
+        missing=False,
+        title='Infinite?',
+        description='Locks all descendants',
+        )
     last_refresh = colander.SchemaNode(
         colander.DateTime(),
         title='Last Refresh',
@@ -137,7 +147,7 @@ class LockSchema(Schema):
         )
     comment = colander.SchemaNode(
         colander.String(),
-        validator=colander.Length(255),
+        validator=colander.Length(max=255),
         missing=None,
         title='Comment',
         )
@@ -171,15 +181,22 @@ class LockPropertySheet(PropertySheet):
         )
     )
 class Lock(Persistent):
-    """ A persistent object representing a lock. """
+    """ A persistent object representing a lock.
+    """
     owner = reference_target_property(UserToLock)
     resource = reference_target_property(WriteLock)
     ownerid = reference_targetid_property(UserToLock)
     resourceid = reference_targetid_property(WriteLock)
 
-    def __init__(self, timeout=3600, comment=None, last_refresh=None):
+    def __init__(self,
+                 infinite=False,
+                 timeout=3600,
+                 comment=None,
+                 last_refresh=None,
+                ):
         self.timeout = timeout
         self.comment=comment
+        self.infinite = infinite
         # last_refresh must be a datetime.datetime object with a UTC tzinfo,
         # if provided
         if last_refresh is None:
@@ -187,8 +204,10 @@ class Lock(Persistent):
         self.last_refresh = last_refresh
 
     def refresh(self, timeout=None, when=None): # "when" is for testing
-        """ Refresh the lock.  If the timeout is not None, set the timeout for
-        this lock too. """
+        """ Refresh the lock.
+
+        If the timeout is not None, set the timeout for this lock too.
+        """
         if timeout is not None:
             self.timeout = timeout
         if when is None: # pragma: no cover
@@ -196,15 +215,18 @@ class Lock(Persistent):
         self.last_refresh = when
 
     def expires(self):
-        """ Return a datetime object representing the point in time at which
-        this lock will expire or has expired. """
+        """ Return the future datetime at which this lock will expire.
+
+        For invalid locks, the returned value indicates the point in the past
+        at which the lock expired.
+        """
         if self.timeout is None:
             return None
         return self.last_refresh + datetime.timedelta(seconds=self.timeout)
 
     def is_valid(self, when=None):
-        """ Return True if this lock has not yet expired and its resource still
-        exists """
+        """ Return True if the lock has not expired and its resource exists.
+        """
         objectmap = find_objectmap(self)
         if objectmap is not None:
             # might be None if we're not yet seated
@@ -217,8 +239,13 @@ class Lock(Persistent):
             return True
         return expires >= when
 
+    @property
+    def depth(self):
+        return 'infinity' if self.infinite else '0'
+
     def commit_suicide(self):
-        """ Remove the lock from the lock service. """
+        """ Remove this lock from the lock service.
+        """
         del self.__parent__[self.__name__]
 
 @service(
@@ -251,13 +278,13 @@ class LockService(Folder, _AutoNamingFolder):
         owner_or_ownerid,
         locktype=WriteLock,
         ):
-        """Search for an existing, avlid lock on resource.
+        """ Search for an existing, avlid lock on resource.
 
-        - If not found, return None.
+        If not found, return None.
 
-        - If owned by 'owner_or_ownerid', return it.
+        If owned by 'owner_or_ownerid', return it.
 
-        - Otherwise, raise LockError.
+        Otherwise, raise LockError.
         """
         objectmap = find_objectmap(self)
         ownerid = self._get_ownerid(owner_or_ownerid)
@@ -279,6 +306,7 @@ class LockService(Folder, _AutoNamingFolder):
         timeout=None,
         comment=None,
         locktype=WriteLock,
+        infinite=False,
         ):
         # NB: callers should ensure that the user has 'sdi.lock' permission
         # on the resource before calling
@@ -290,10 +318,14 @@ class LockService(Folder, _AutoNamingFolder):
             return lock
 
         registry = get_current_registry()
-        lock = registry.content.create('Lock', timeout=timeout, comment=comment)
+        lock = registry.content.create('Lock',
+                                       )
         self.add_next(lock) # NB: must add before setting ownerid/resource
         lock.ownerid = self._get_ownerid(owner_or_ownerid)
         lock.resource = resource
+        lock.timeout = timeout
+        lock.comment = comment
+        lock.infinite = infinite
         return lock
 
     def unlock(
@@ -310,11 +342,32 @@ class LockService(Folder, _AutoNamingFolder):
         locks = objectmap.targets(resource, locktype)
         lock = None
         for lock in locks:
-            if (not lock.is_valid()) or (lock.ownerid == ownerid):
+            if not lock.is_valid():
+                lock.commit_suicide()
+            elif lock.ownerid == ownerid:
                 lock.commit_suicide()
                 break
         else: # nobreak
             raise UnlockError(lock)
+
+    def unlock_token(
+        self,
+        token,
+        owner_or_ownerid,
+        ):
+
+        # NB: callers should ensure that the user has 'sdi.lock' permission
+        # on the resource before calling
+        ownerid = self._get_ownerid(owner_or_ownerid)
+        lock = self.get(token)
+        if lock is None:
+            raise UnlockError(None)
+        if not lock.is_valid():
+            lock.commit_suicide()
+            raise UnlockError(None)
+        if lock.ownerid != ownerid:
+            raise UnlockError(lock)
+        lock.commit_suicide()
 
     def discover(self, resource, include_invalid=False, locktype=WriteLock):
         objectmap = find_objectmap(self)
@@ -342,13 +395,20 @@ def lock_resource(
     timeout=None,
     comment=None,
     locktype=WriteLock,
+    infinite=False,
     ):
-    """ Lock a resource using the lock service.  If the resource is already
-    locked by the owner supplied as owner_or_ownerid, calling this function
-    will refresh the lock.  If the resource is not already locked by another
-    user, calling this function will create a new lock.  If the resource is
-    already locked by a different user, a :class:`substanced.locking.LockError`
-    will be raised.  This function has the side effect of creating a Lock
+    """ Lock a resource using the lock service.
+
+    If the resource is already locked by the owner supplied as
+    owner_or_ownerid, refresh the lock using ``timeout``.
+
+    If the resource is not already locked by another user, create a new lock
+    with the given values.
+
+    If the resource is already locked by a different user, raise a
+    :class:`substanced.locking.LockError`
+
+    This function has the side effect of creating a Lock
     Service in the Substance D root if one does not already exist.
 
     .. warning::
@@ -365,6 +425,7 @@ def lock_resource(
         timeout=timeout,
         comment=comment,
         locktype=locktype,
+        infinite=infinite,
         )
 
 def could_lock_resource(
@@ -383,8 +444,8 @@ def could_lock_resource(
     If the resource is already locked by a different user, raise a
     :class:`substanced.locking.LockError`.
 
-    This function has the side effect of creating a Lock
-    Service in the Substance D root if one does not already exist.
+    This function has the side effect of creating a Lock Service in the
+    Substance D root if one does not already exist.
 
     .. warning::
 
@@ -405,13 +466,16 @@ def unlock_resource(
     owner_or_ownerid,
     locktype=WriteLock,
     ):
-    """
-    Unlock a resource using the lock service.  If the resource is already
-    locked by a user other than the owner supplied as owner_or_ownerid or the
-    resource isn't already locked with this lock type, calling this function
-    will raise a :class:`substanced.locking.LockError` exception.  Otherwise
-    the lock will be removed.  This function has the side effect of creating a
-    Lock Service in the Substance D root if one does not already exist.
+    """ Unlock a resource using the lock service.
+
+    If the resource is already locked by a user other than the owner supplied
+    as ``owner_or_ownerid`` or the resource isn't already locked with this
+    lock type, raise a :class:`substanced.locking.UnlockError` exception.
+
+    Otherwise, remove the lock.
+
+    This function has the side effect of creating a Lock Service in the
+    Substance D root if one does not already exist.
 
         .. warning::
 
@@ -428,21 +492,56 @@ def unlock_resource(
         locktype=locktype
         )
 
+def unlock_token(
+    resource,
+    token,
+    owner_or_ownerid,
+    ):
+    """ Remove a lock from the lock service based on its token.
+
+    If the lock is owned by a user user other than the owner supplied as
+    ``owner_or_ownerid`` or ``token`` doesn't identfiy a valid lock,
+    raise a :class:`substanced.locking.UnlockError` exception.
+
+    Otherwise remove the lock indicated by ``token``.
+
+    This function has the side effect of creating a Lock Service in the
+    Substance D root if one does not already exist.
+
+        .. warning::
+
+           Callers should assert that the owner has the ``sdi.lock`` permission
+           against the resource before calling this function to ensure that a
+           user can't lock a resource he is not permitted to.
+
+    """
+
+    locks = _get_lock_service(resource)
+    return locks.unlock_token(
+        token,
+        owner_or_ownerid,
+        )
+
 def discover_resource_locks(
     resource,
     include_invalid=False,
     locktype=WriteLock,
     ):
-    """ Return a sequence of :class:`substanced.locking.Lock` objects related
-    to the resource for the given lock type.  By default, only valid locks are
-    returned.  Invalid locks for the resource may exist, but they are not
+    """ Return locks related to ``resource`` for the given ``locktype``.
+
+    Return a sequence of :class:`substanced.locking.Lock` objects.
+
+    By default, only valid locks are returned.
+
+    Invalid locks for the resource may exist, but they are not
     returned unless ``include_invalid`` is ``True``.
 
     Under normal circumstances, the length of the sequence returned will be
-    either 0 (if there are no locks) or 1 (if there is any lock).  In some
-    special circumstances, however, when the
+    either 0 (if there are no locks) or 1 (if there is any lock).
+
+    In some special circumstances, however, when the
     :class:`substanced.locking.lock_resource` API is not used to create locks,
-    there may be more than one lock related to a resource of the same type.
+    there may be more than one lock of the same type related to a resource.
     """
     locks = _get_lock_service(resource)
     return locks.discover(

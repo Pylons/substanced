@@ -321,6 +321,43 @@ class ObjectMap(Persistent):
                     )
         return result
 
+    def pathcount(self, obj_or_path_tuple, depth=None, include_origin=True):
+        """ Return the total number of objectids under a given path given an
+        object or a path tuple.  If ``depth`` is None, count all object ids
+        under the path.  If ``depth`` is an integer, use that depth instead.
+        If ``include_origin`` is ``True``, count the object identifier of the
+        object that was passed, otherwise omit it."""
+        path_tuple = self._get_path_tuple(obj_or_path_tuple)
+        omap = self.pathindex.get(path_tuple)
+
+        result = 0
+
+        if omap is None:
+            return result
+        
+        if depth is None:
+            for d, oidset in omap.items():
+                
+                if d == 0 and not include_origin:
+                    continue
+
+                result += len(oidset)
+
+        else:
+            for d in range(depth+1):
+
+                if d == 0 and not include_origin:
+                    continue
+
+                oidset = omap.get(d)
+
+                if oidset is None:
+                    continue
+                else:
+                    result += len(oidset)
+
+        return result
+
     def pathlookup(self, obj_or_path_tuple, depth=None, include_origin=True):
         """ Return a set of objectids under a given path given an object or a
         path tuple.  If ``depth`` is None, return all object ids under the

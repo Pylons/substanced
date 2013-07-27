@@ -85,6 +85,7 @@ class TestLockServiceFolderContents(unittest.TestCase):
 
     def test_get_columns_subobject_is_lock(self):
         import datetime
+        import pytz
         context = testing.DummyResource()
         owner = testing.DummyResource()
         owner.__name__ = 'owner'
@@ -94,13 +95,15 @@ class TestLockServiceFolderContents(unittest.TestCase):
         now = datetime.datetime(2012, 10, 12)
         context.expires = lambda: now
         request = testing.DummyRequest()
+        request.user = testing.DummyResource()
+        request.user.timezone = pytz.timezone('UTC')
         inst = self._makeOne(context, request)
         inst.get_default_columns = lambda *arg: [{}]
         columns = inst.get_columns(context)
         self.assertEqual(len(columns), 4)
         self.assertEqual(columns[1]['value'], 'owner')
         self.assertEqual(columns[2]['value'], '/')
-        self.assertEqual(columns[3]['value'], '2012-10-12 00:00:00')
+        self.assertEqual(columns[3]['value'], '2012-10-12 00:00:00 UTC')
 
     def test_get_columns_subobject_is_lock_w_expires_returning_None(self):
         context = testing.DummyResource()

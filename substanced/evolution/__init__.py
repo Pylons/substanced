@@ -78,6 +78,9 @@ class EvolutionManager(object):
                 t = self.transaction.get()
                 t.note('Executed evolution step %s' % name)
                 t.commit()
+            else:
+                t = self.transaction.get()
+                t.abort()
             complete.append(name)
         return complete
 
@@ -153,6 +156,7 @@ def legacy_to_new(root): # pragma: no cover
 def includeme(config): # pragma: no cover
     config.add_directive('add_evolution_step', add_evolution_step)
     config.add_evolution_step(legacy_to_new)
+    config.scan('.subscribers')
     for i in range(1, VERSION+1):
         scriptname = 'substanced.evolution.evolve%s' % i
         evmodule = EntryPoint.parse('x=%s' % scriptname).load(False)

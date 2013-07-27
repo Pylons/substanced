@@ -696,8 +696,8 @@ class TestBasicActionProcessor(unittest.TestCase):
     def test_disengage_no_queue(self):
         context = testing.DummyResource()
         inst = self._makeOne(context)
-        context._p_jar = DummyJar(None)
-        self.assertEqual(inst.disengage(), None)
+        context._p_jar = None
+        self.assertRaises(RuntimeError, inst.disengage)
 
     def test_disengage(self):
         context = testing.DummyResource()
@@ -993,6 +993,24 @@ class TestIndexActionTM(unittest.TestCase):
              'done processing index actions']
             )
 
+    def test__process_all_False_no_action_processor_force_deferred(self):
+        self.config.registry.settings[
+            'substanced.catalogs.force_deferred'] = True
+        index = DummyIndex()
+        inst = self._makeOne(index)
+        logger = DummyLogger()
+        inst.logger = logger
+        a1 = DummyAction(1)
+        inst._process([a1], all=False)
+        self.assertTrue(a1.executed)
+        self.assertEqual(
+            logger.messages,
+            ['begin index actions processing',
+             'executing actions all immediately: no action processor',
+             'executing action action 1',
+             'done processing index actions']
+            )
+        
     def test__process_all_False_inactive_action_processor(self):
         from substanced.interfaces import IIndexingActionProcessor
         from zope.interface import Interface
@@ -1001,6 +1019,7 @@ class TestIndexActionTM(unittest.TestCase):
             )
         index = DummyIndex()
         index.active = False
+        index.queue = True
         inst = self._makeOne(index)
         logger = DummyLogger()
         inst.logger = logger
@@ -1015,6 +1034,58 @@ class TestIndexActionTM(unittest.TestCase):
              'done processing index actions']
             )
 
+    def test__process_all_False_inactive_action_processor_force_deferred(self):
+        self.config.registry.settings[
+            'substanced.catalogs.force_deferred'] = True
+        from substanced.interfaces import IIndexingActionProcessor
+        from zope.interface import Interface
+        self.config.registry.registerAdapter(
+            DummyActionProcessor, (Interface,), IIndexingActionProcessor
+            )
+        index = DummyIndex()
+        index._p_jar = DummyJar(None)
+        index.active = False
+        index.queue = True
+        inst = self._makeOne(index)
+        logger = DummyLogger()
+        inst.logger = logger
+        a1 = DummyAction(1)
+        inst._process([a1], all=False)
+        self.assertFalse(a1.executed)
+        self.assertEqual(
+            logger.messages,
+            ['begin index actions processing',
+             'executing deferred actions: deferred mode forced via "substanced.catalogs.force_deferred" flag in configuration or envvar',
+             'adding deferred action action 1',
+             'done processing index actions']
+            )
+
+    def test__process_all_False_force_deferred_no_jar(self):
+        self.config.registry.settings[
+            'substanced.catalogs.force_deferred'] = True
+        from substanced.interfaces import IIndexingActionProcessor
+        from zope.interface import Interface
+        self.config.registry.registerAdapter(
+            DummyActionProcessor, (Interface,), IIndexingActionProcessor
+            )
+        index = DummyIndex()
+        index._p_jar = DummyJar(None)
+        index.active = False
+        index.queue = None
+        inst = self._makeOne(index)
+        logger = DummyLogger()
+        inst.logger = logger
+        a1 = DummyAction(1)
+        inst._process([a1], all=False)
+        self.assertTrue(a1.executed)
+        self.assertEqual(
+            logger.messages,
+            ['begin index actions processing',
+             'executing actions all immediately: no jar available to find queue',
+             'executing action action 1',
+             'done processing index actions']
+            )
+        
     def test__process_all_False_active_action_processor(self):
         from substanced.interfaces import (
             IIndexingActionProcessor,
@@ -1027,6 +1098,7 @@ class TestIndexActionTM(unittest.TestCase):
             )
         index = DummyIndex()
         index.active = True
+        index.queue = True
         inst = self._makeOne(index)
         logger = DummyLogger()
         inst.logger = logger
@@ -1181,6 +1253,7 @@ class DummyAction(object):
     index = testing.DummyResource()
     index.__oid__ = 1
     executed = False
+    mode = None
 
     def __init__(self, oid, index_oid=1, position=1, raises=None, anti=False,
                  antiresult=None):
@@ -1235,6 +1308,8 @@ class DummyActionProcessor(object):
     def add(self, actions):
         self.context.added = actions
 
+    def get_queue(self):
+        return self.context.queue
     
 class DummyObjectmap(object):
     def __init__(self, result):

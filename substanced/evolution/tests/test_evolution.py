@@ -99,6 +99,7 @@ class TestEvolutionManager(unittest.TestCase):
         self.assertEqual(txn.committed, 1)
         self.assertEqual(txn.begun, 1)
         self.assertEqual(txn.notes, [])
+        self.assertEqual(txn.was_aborted, True)
 
     def test_evolve_commit_true(self):
         root = DummyRoot()
@@ -115,6 +116,7 @@ class TestEvolutionManager(unittest.TestCase):
         self.assertEqual(txn.committed, 2)
         self.assertEqual(txn.begun, 1)
         self.assertEqual(txn.notes, ['Executed evolution step name'])
+        self.assertEqual(txn.was_aborted, False)
 
 class Test_mark_unfinished_as_finished(unittest.TestCase):
     def _callFUT(self, app_root, registry, t):
@@ -265,6 +267,7 @@ class DummyTransaction(object):
         self.begun = 0
         self.committed = 0
         self.notes = []
+        self.was_aborted = False
 
     def begin(self):
         self.begun += 1
@@ -277,6 +280,10 @@ class DummyTransaction(object):
 
     def get(self):
         return self
+
+    def abort(self):
+        self.was_aborted = True
+
 
 class DummyJar(object):
     def __init__(self):

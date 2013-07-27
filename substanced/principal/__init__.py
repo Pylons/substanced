@@ -5,8 +5,10 @@ from persistent import Persistent
 from cryptacular.bcrypt import BCRYPTPasswordManager
 
 from zope.interface import implementer
+from deform_bootstrap.widget import ChosenSingleWidget
 
 import colander
+import pytz
 
 from pyramid.renderers import render
 from pyramid.security import (
@@ -26,6 +28,7 @@ from ..interfaces import (
     IPrincipals,
     IPasswordResets,
     IPasswordReset,
+    IUserLocator,
     UserToGroup,
     UserToPasswordReset,
     )
@@ -96,9 +99,7 @@ class Principals(Folder):
     """
     def __sdi_addable__(self, context, introspectable):
         ct = introspectable.get('content_type')
-        if ct in ('Users', 'Groups', 'Password Resets'):
-            return True
-        return False
+        return ct in ('Users', 'Groups', 'Password Resets')
         
     def after_create(self, inst, registry):
         users = registry.content.create('Users')
@@ -307,6 +308,14 @@ class UserSchema(Schema):
             colander.Length(max=100)
             ),
         )
+    tzname = colander.SchemaNode(
+        colander.String(),
+        title='Timezone',
+        widget=ChosenSingleWidget(
+            values=zip(pytz.all_timezones, pytz.all_timezones)
+            ),
+        validator=colander.OneOf(pytz.all_timezones),
+        )
     groupids = MultireferenceIdSchemaNode(
         choices_getter=groups_choices,
         title='Groups',
@@ -327,6 +336,7 @@ class UserPropertySheet(PropertySheet):
 @implementer(IUser)
 class User(Folder):
     """ Represents a user.  """
+    tzname = 'UTC' # backwards compatibility default
 
     pwd_manager = BCRYPTPasswordManager()
 
@@ -334,15 +344,22 @@ class User(Folder):
     groups = multireference_source_property(UserToGroup)
     name = renamer()
 
-    def __init__(self, password=None, email=None):
+    def __init__(self, password=None, email=None, tzname=None):
         Folder.__init__(self)
         if password is not None:
             password = self.pwd_manager.encode(password)
         self.password = password
         self.email = email
+        if tzname is None:
+            tzname = 'UTC'
+        self.tzname = tzname
 
     def __dump__(self):
         return dict(password=self.password)
+
+    @property
+    def timezone(self):
+        return pytz.timezone(self.tzname)
 
     def check_password(self, password):
         """ Checks if the plaintext password passed as ``password`` matches
@@ -398,15 +415,36 @@ class PasswordReset(Persistent):
     def commit_suicide(self):
         del self.__parent__[self.__name__]
 
+@implementer(IUserLocator)
+class DefaultUserLocator(object):
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+
+    def get_user_by_login(self, login):
+        context = self.context
+        users = find_service(context, 'principals', 'users')
+        return users.get(login)
+
+    def get_user_by_userid(self, userid):
+        objectmap = find_objectmap(self.context)
+        if objectmap is None:
+            return None
+        user = objectmap.object_for(userid)
+        return user
+
+    def get_groupids(self, userid):
+        user = self.get_user_by_userid(userid)
+        if user is None:
+            return None
+        return user.groupids
+
 def groupfinder(userid, request):
     """ A Pyramid authentication policy groupfinder callback that uses the
-    Substance D principal system to find groups."""
+    Substance D user locator system to find group identifiers."""
     context = request.context
-    objectmap = find_objectmap(context)
-    if objectmap is None:
-        return None
-    user = objectmap.object_for(userid)
-    if user is None:
-        return None
-    return user.groupids
+    adapter = request.registry.queryAdapter((context, request), IUserLocator)
+    if adapter is None:
+        adapter = DefaultUserLocator(context, request)
+    return adapter.get_groupids(userid)
 

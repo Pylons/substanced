@@ -19,7 +19,7 @@ substanced.secret = seekri1
 substanced.initial_login = admin
 substanced.initial_password = admin
 substanced.uploads_tempdir = %(here)s/tmp
-substanced.autosync_catalogs = true
+substanced.catalogs.autosync = true
 
 mail.default_sender = substanced_demo@pylonsproject.org
 

@@ -28,7 +28,8 @@ from .. import mgmt_view
     context=IFile,
     name='', 
     permission='sdi.view',
-    tab_condition=False
+    tab_condition=False,
+    http_cache=0,
     )
 def view_file(context, request):
     return context.get_response(request=request)
