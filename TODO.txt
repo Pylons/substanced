@@ -19,26 +19,12 @@ Features
 Can wait until after alpha 1
 ============================
 
-- Change folder data structure such that _order is not (oid, name) but separate
-  oid and name datastructures are kept so we have a shot of making sort merging
-  faster.
-
 - Ability to more efficiently dump and load blobs.
 
 - Stamp created objects with creator information?
 
-- Fix actions processor so it won't drop actions on the floor if
-  a keyboardinterrupt or another exception happens after a popall.
-
 - Add specific configurator directives for object event registrations
   (e.g. config.subscribe_modified).
-
-- __viewable__, __renameable__, __deletable__, __copyable__, __duplicatable__
-  attributes of contained objects in folder contents view that controls
-  how contained object can be acted upon?  E.g.::
-
-    def __viewable__(self, context, request):
-        return has_permission('sdi.view', context, request)
 
 - Once we depend on Pyramid 1.4b1+, normalize subscriber predicate argument
   lists.
@@ -117,6 +103,14 @@ Probably Bad Ideas
 - Catalog event subscriber currently does a hellishly expensive recatalog of
   allowed indexes when an ACL is changed.  Not sure if there's even a general
   way to make this do less work, but could be.
+
+- __viewable__, __renameable__, __deletable__, __copyable__, __duplicatable__
+  attributes of contained objects in folder contents view that controls
+  how contained object can be acted upon?  E.g.::
+
+    def __viewable__(self, context, request):
+        return has_permission('sdi.view', context, request)
+
 
 Made Irrelevant
 ===============
