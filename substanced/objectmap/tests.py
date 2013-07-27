@@ -241,6 +241,16 @@ class TestObjectMap(unittest.TestCase):
         result = list(gen)
         self.assertEqual(result, [])
 
+    def test_pathcount_not_valid(self):
+        inst = self._makeOne()
+        self.assertRaises(ValueError, inst.pathcount, 1)
+        
+    def test_pathcount_traversable_object(self):
+        inst = self._makeOne()
+        obj = testing.DummyResource()
+        result = inst.pathcount(obj)
+        self.assertEqual(result, 0)
+
     def test_navgen_notexist(self):
         inst = self._makeOne()
         result = inst.navgen((_BLANK,), 99)
@@ -376,9 +386,11 @@ class TestObjectMap(unittest.TestCase):
 
         def l(path, depth=None, include_origin=True):
             path_tuple = split(path)
-            return sorted(
+            oids = sorted(
                 list(objmap.pathlookup(path_tuple, depth, include_origin))
                 )
+            count = objmap.pathcount(path_tuple, depth, include_origin)
+            return oids, count
 
         objmap = self._makeOne()
         objmap._v_nextid = 1
@@ -397,47 +409,47 @@ class TestObjectMap(unittest.TestCase):
 
         # /
         nodepth = l('/')
-        assert nodepth == [oid1, oid2, oid3, oid4, oid5], nodepth
+        assert nodepth == ([oid1, oid2, oid3, oid4, oid5], 5), nodepth
         depth0 = l('/', depth=0)
-        assert depth0 == [oid4], depth0
+        assert depth0 == ([oid4], 1), depth0
         depth1 = l('/', depth=1)
-        assert depth1 == [oid3, oid4, oid5], depth1
+        assert depth1 == ([oid3, oid4, oid5], 3), depth1
         depth2 = l('/', depth=2)
-        assert depth2 == [oid1, oid3, oid4, oid5], depth2
+        assert depth2 == ([oid1, oid3, oid4, oid5], 4), depth2
         depth3 = l('/', depth=3)
-        assert depth3 == [oid1, oid2, oid3, oid4, oid5], depth3
+        assert depth3 == ([oid1, oid2, oid3, oid4, oid5], 5), depth3
         depth4 = l('/', depth=4)
-        assert depth4 == [oid1, oid2, oid3, oid4, oid5], depth4
+        assert depth4 == ([oid1, oid2, oid3, oid4, oid5], 5), depth4
 
         # /a
         nodepth = l('/a')
-        assert nodepth == [oid1, oid2, oid3], nodepth
+        assert nodepth == ([oid1, oid2, oid3], 3), nodepth
         depth0 = l('/a', depth=0)
-        assert depth0 == [oid3], depth0
+        assert depth0 == ([oid3], 1), depth0
         depth1 = l('/a', depth=1)
-        assert depth1 == [oid1, oid3], depth1
+        assert depth1 == ([oid1, oid3], 2), depth1
         depth2 = l('/a', depth=2)
-        assert depth2 == [oid1, oid2, oid3], depth2
+        assert depth2 == ([oid1, oid2, oid3], 3), depth2
         depth3 = l('/a', depth=3)
-        assert depth3 == [oid1, oid2, oid3], depth3
+        assert depth3 == ([oid1, oid2, oid3], 3), depth3
 
         # /a/b
         nodepth = l('/a/b')
-        assert nodepth == [oid1, oid2], nodepth
+        assert nodepth == ([oid1, oid2], 2), nodepth
         depth0 = l('/a/b', depth=0)
-        assert depth0 == [oid1], depth0
+        assert depth0 == ([oid1], 1), depth0
         depth1 = l('/a/b', depth=1)
-        assert depth1 == [oid1, oid2], depth1
+        assert depth1 == ([oid1, oid2], 2), depth1
         depth2 = l('/a/b', depth=2)
-        assert depth2 == [oid1, oid2], depth2
+        assert depth2 == ([oid1, oid2], 2), depth2
 
         # /a/b/c
         nodepth = l('/a/b/c')
-        assert nodepth == [oid2], nodepth
+        assert nodepth == ([oid2], 1), nodepth
         depth0 = l('/a/b/c', depth=0)
-        assert depth0 == [oid2], depth0
+        assert depth0 == ([oid2], 1), depth0
         depth1 = l('/a/b/c', depth=1)
-        assert depth1 == [oid2], depth1
+        assert depth1 == ([oid2], 1), depth1
 
         # remove '/a/b'
         removed = objmap.remove(oid1)
@@ -445,43 +457,43 @@ class TestObjectMap(unittest.TestCase):
 
         # /a/b/c
         nodepth = l('/a/b/c')
-        assert nodepth == [], nodepth
+        assert nodepth == ([], 0), nodepth
         depth0 = l('/a/b/c', depth=0)
-        assert depth0 == [], depth0
+        assert depth0 == ([], 0), depth0
         depth1 = l('/a/b/c', depth=1)
-        assert depth1 == [], depth1
+        assert depth1 == ([], 0), depth1
 
         # /a/b
         nodepth = l('/a/b')
-        assert nodepth == [], nodepth
+        assert nodepth == ([], 0), nodepth
         depth0 = l('/a/b', depth=0)
-        assert depth0 == [], depth0
+        assert depth0 == ([], 0), depth0
         depth1 = l('/a/b', depth=1)
-        assert depth1 == [], depth1
+        assert depth1 == ([], 0), depth1
 
         # /a
         nodepth = l('/a')
-        assert nodepth == [oid3], nodepth
+        assert nodepth == ([oid3], 1), nodepth
         depth0 = l('/a', depth=0)
-        assert depth0 == [oid3], depth0
+        assert depth0 == ([oid3], 1), depth0
         depth1 = l('/a', depth=1)
-        assert depth1 == [oid3], depth1
+        assert depth1 == ([oid3], 1), depth1
 
         # /
         nodepth = l('/')
-        assert nodepth == [oid3, oid4, oid5], nodepth
+        assert nodepth == ([oid3, oid4, oid5], 3), nodepth
         depth0 = l('/', depth=0)
-        assert depth0 == [oid4], depth0
+        assert depth0 == ([oid4], 1), depth0
         depth1 = l('/', depth=1)
-        assert depth1 == [oid3, oid4, oid5], depth1
+        assert depth1 == ([oid3, oid4, oid5], 3), depth1
 
         # test include_origin false with /, no depth
         nodepth = l('/', include_origin=False)
-        assert nodepth == [oid3, oid5], nodepth
+        assert nodepth == ([oid3, oid5], 2), nodepth
 
         # test include_origin false with /, depth=1
         depth1 = l('/', include_origin=False, depth=0)
-        assert depth1 == [], depth1
+        assert depth1 == ([], 0), depth1
         
         pathindex = objmap.pathindex
         keys = list(pathindex.keys())

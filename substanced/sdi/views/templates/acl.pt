@@ -26,6 +26,18 @@
 
    }
 
+   var pathcount = ${pathcount};
+
+   function loading_indicator() {
+       result = true;
+       if (pathcount > 500) {
+          result = confirm('This operation could take a long time. ${pathcount} objects will need to be reindexed, are you sure you want to continue?');
+       }
+       if (result) {
+           $('#loading-img').css('display', 'inline');
+       }
+       return result;
+   }
 
   </script>
 
@@ -33,6 +45,9 @@
 
 
  <div metal:fill-slot="main">
+
+ <img id="loading-img" src="${request.static_url('substanced.sdi:static/img/progress_bar.gif')}"
+      style="display:none;"/>
 
  <metal:local_acl define-macro="local_acl">
 
@@ -60,7 +75,7 @@
          <td tal:content="ace[1]">PRINCIPAL</td>
          <td tal:content="', '.join(ace[2])">PERM1, PERM2</td>
          <td>
-          <form action="@@acl_edit" method="post">
+          <form action="@@acl_edit" method="post" onsubmit="return loading_indicator()">
            <input type="hidden" name="index" value="${repeat['ace'].index}" />
 
             <button

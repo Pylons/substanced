@@ -200,6 +200,7 @@ class ACLEditViews(object):
 
     def finish_acl_edit(self):
         principal_service = find_service(self.context, 'principals')
+        objectmap = find_objectmap(self.context)
         registry = self.request.registry
         self.acl = self.acl + self.epilog
 
@@ -227,6 +228,8 @@ class ACLEditViews(object):
 
         oids = [ get_oid(x) for x in lineage(self.context) ]
 
+        pathcount = objectmap.pathcount(self.context)
+
         return dict(
             parent_acl=parent_acl or (),
             local_acl=local_acl,
@@ -235,5 +238,6 @@ class ACLEditViews(object):
             users=users,
             groups=groups,
             oids=oids,
+            pathcount=pathcount,
             )
 
