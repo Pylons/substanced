@@ -518,18 +518,16 @@ class sdiapi(object):
         request.session.flash(snippet, queue, allow_duplicate=allow_duplicate)
 
     def mgmt_path(self, obj, *arg, **kw):
-        route_name = kw.pop('route_name', MANAGE_ROUTE_NAME)
         request = self.request
         traverse = resource_path_tuple(obj)
         kw['traverse'] = traverse
-        return request.route_path(route_name, *arg, **kw)
+        return request.route_path(MANAGE_ROUTE_NAME, *arg, **kw)
 
     def mgmt_url(self, obj, *arg, **kw):
-        route_name = kw.pop('route_name', MANAGE_ROUTE_NAME)
         request = self.request
         traverse = resource_path_tuple(obj)
         kw['traverse'] = traverse
-        return request.route_url(route_name, *arg, **kw)
+        return request.route_url(MANAGE_ROUTE_NAME, *arg, **kw)
 
     def breadcrumbs(self):
         request = self.request
