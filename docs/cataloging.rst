@@ -140,7 +140,7 @@ the root object is created for the first time.
     def created(event):
         root = event.object
         service = root['catalogs']
-        service.add_catalog('app1', update_indexes=True)
+        service.add_catalog('mycatalog', update_indexes=True)
 
 Querying Across Catalogs
 ------------------------
@@ -168,44 +168,140 @@ Once a new catalog has been added to the database, each time a new
 *catalogable* object is added to the site, its attributes will be indexed by
 each catalog in its lineage that "cares about" the object.  The object will
 always be indexed in the "system" catalog.  To make sure it's cataloged in
-custom catalogs, you'll need to do some work.  To index the object in custom
-application indexes, you will need to create a *indexview* for your content,
-and register it using :func:`substanced.catalog.add_indexview` (a configurator
-directive).
+custom catalogs, you'll need to do some work.  To index the object in a custom
+application index, you will need to create an *index view* for your content
+using :class:`substanced.catalog.indexview`, and **scan** the resulting index
+view using :meth:`pyramid.config.Configurator.scan`:
 
-Right now this is a bit painful.  For example:
+For example:
 
 .. code-block:: python
 
+   from substanced.catalog import indexview
+
    class MyCatalogViews(object):
        def __init__(self, resource):
-           self.content = resource
+           self.resource = resource
 
+        @indexview(catalog_name='mycatalog')
         def freaky(self, default):
             return getattr(self.resource, 'freaky', default)
 
-   def includeme(config): # pragma: no cover
-       for name in ('freaky',):
-           config.add_indexview(
-               MyCatalogViews,
-               catalog_name='mycatalog',
-               index_name=name,
-               attr=name
-               )
-
-The index view should be a class that accepts a single argument,
+An index view class should be a class that accepts a single argument,
 (conventionally named ``resource``), in its constructor, and which has one or
 more methods named after potential index names.  When it comes time for the
-system to index your content, it will create an instance of your indexview
-class, and it will then call one or more of its methods; it will call methods
-on the indexview object matching the ``attr`` passed in to ``add_indexview``.
-The ``default`` value passed in should be returned if the method is unable to
-compute a value for the content object.
+system to index your content, Substance D will create an instance of your
+indexview class, and it will then call one or more of its methods; it will call
+methods on the indexview object matching the ``attr`` passed in to
+``add_indexview``.  The ``default`` value passed in should be returned if the
+method is unable to compute a value for the content object.
 
-Hopefully soon we'll make this registration a bit less verbose.  But in any
-case, once this is done, whenever an object is added to the system, a value
-(the result of the ``freaky()`` method of the catalog view) will be indexed in
-the ``freaky`` field index.
+Once this is done, whenever an object is added to the system, a value (the
+result of the ``freaky()`` method of the catalog view) will be indexed in the
+``freaky`` field index.
+
+You can attach multiple index views to the same index view class:
+
+.. code-block:: python
+
+   from substanced.catalog import indexview
+
+   class MyCatalogViews(object):
+       def __init__(self, resource):
+           self.resource = resource
+
+        @indexview(catalog_name='mycatalog')
+        def freaky(self, default):
+            return getattr(self.resource, 'freaky', default)
+
+        @indexview(catalog_name='mycatalog')
+        def funky(self, default):
+            return getattr(self.resource, 'funky', default)
+
+You can use the "index_name" parameter to ``indexview`` to tell the system that
+the index name is not the same as the method name in the index view:
+
+.. code-block:: python
+
+   from substanced.catalog import indexview
+
+   class MyCatalogViews(object):
+       def __init__(self, resource):
+           self.resource = resource
+
+        @indexview(catalog_name='mycatalog')
+        def freaky(self, default):
+            return getattr(self.resource, 'freaky', default)
+
+        @indexview(catalog_name='mycatalog', index_name='funky')
+        def notfunky(self, default):
+            return getattr(self.resource, 'funky', default)
+
+You can use the ``context`` parameter to ``indexview`` to tell the system that
+this particular index view should only be executed when the class of the
+resource (or any of its interfaces) matches the value of the context:
+
+.. code-block:: python
+
+   from substanced.catalog import indexview
+
+   class MyCatalogViews(object):
+       def __init__(self, resource):
+           self.resource = resource
+
+        @indexview(catalog_name='mycatalog', context=HasFreaky)
+        def freaky(self, default):
+            return getattr(self.resource, 'freaky', default)
+
+        @indexview(catalog_name='mycatalog', index_name='funky')
+        def notfunky(self, default):
+            return getattr(self.resource, 'funky', default)
+
+You can use the ``indexview_defaults`` class decorator to save typing in each
+``indexview`` declaration.  Keyword argument names supplied to
+``indexview_defaults`` will be used if the ``indexview`` does not supply the
+same keyword:
+
+.. code-block:: python
+
+   from substanced.catalog import (
+       indexview,
+       indexview_defaults,
+       )
+
+   @indexview_defaults(catalog_name='mycatalog')
+   class MyCatalogViews(object):
+       def __init__(self, resource):
+           self.resource = resource
+
+        @indexview()
+        def freaky(self, default):
+            return getattr(self.resource, 'freaky', default)
+
+        @indexview()
+        def notfunky(self, default):
+            return getattr(self.resource, 'funky', default)
+
+The above configuration is the same as:
+
+.. code-block:: python
+
+   from substanced.catalog import indexview
+
+   class MyCatalogViews(object):
+       def __init__(self, resource):
+           self.resource = resource
+
+        @indexview(catalog_name='mycatalog')
+        def freaky(self, default):
+            return getattr(self.resource, 'freaky', default)
+
+        @indexview(catalog_name='mycatalog')
+        def notfunky(self, default):
+            return getattr(self.resource, 'funky', default)
+
+You can also use the :func:`substanced.catalog.add_indexview` directive to add
+index views imperatively, instead of using the ``@indexview`` decorator.
 
 Allowed Index and Security
 --------------------------

@@ -17,6 +17,8 @@ from pyramid.traversal import resource_path
 from pyramid.threadlocal import get_current_registry
 from pyramid.util import (
     object_description,
+    viewdefaults,
+    action_method,
     )
 
 from ..content import (
@@ -515,6 +517,53 @@ class catalog_factory(object):
 
         return cls
 
+class indexview_defaults(object):
+    """ A class :term:`decorator` which, when applied to a class, will provide
+    defaults for all index view configurations defined in the class.  This
+    decorator accepts all the arguments accepted by
+    :meth:`substanced.catalog.indexview`, and each has the same meaning.
+    """
+    def __init__(self, **settings):
+        self.settings = settings
+    
+    def __call__(self, wrapped):
+        wrapped.__view_defaults__ = self.settings.copy()
+        return wrapped
+
+class indexview(object):
+    """ A class :term:`decorator` which, when applied to an index view class
+    method, will mark the method as an index view.  This decorator accepts all
+    the arguments accepted by :meth:`substanced.catalog.add_indexview`, and
+    each has the same meaning.
+    """
+    venusian = venusian # for testing injection
+    
+    def __init__(self, **settings):
+        self.settings = settings
+
+    def __call__(self, wrapped):
+        settings = self.settings.copy()
+        depth = settings.pop('_depth', 0)
+
+        def callback(context, name, ob):
+            config = context.config.with_package(info.module)
+            config.add_indexview(ob, **settings)
+    
+        info = self.venusian.attach(wrapped, callback, category='substanced',
+                                    depth=depth + 1)
+
+        if info.scope == 'class':
+            # if the decorator was attached to a method in a class, or
+            # otherwise executed at class scope, we need to set an
+            # 'attr' into the settings if one isn't already in there
+            if settings.get('attr') is None:
+                settings['attr'] = wrapped.__name__
+            if settings.get('index_name') is None:
+                settings['index_name'] = wrapped.__name__
+
+        settings['_info'] = info.codeinfo # fbo "action_method"
+        return wrapped
+        
 def is_catalogable(resource, registry=None):
     if registry is None:
         registry = get_current_registry()
@@ -568,6 +617,8 @@ def add_catalog_factory(config, name, cls):
 
     config.action(discriminator, callable=register, introspectables=(intr,))
 
+@viewdefaults
+@action_method
 def add_indexview(
     config,
     view,
@@ -679,8 +730,7 @@ def add_indexview(
 def includeme(config): # pragma: no cover
     config.add_view_predicate('catalogable', _CatalogablePredicate)
     config.add_directive('add_catalog_factory', add_catalog_factory)
-    config.add_directive('add_indexview', add_indexview)
-    config.include('.system')
+    config.add_directive('add_indexview', add_indexview, action_wrap=False)
     config.add_permission('view') # canonize this as a permission name
     config.registry.registerAdapter(
         deferred.BasicActionProcessor,

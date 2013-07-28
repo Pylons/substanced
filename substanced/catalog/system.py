@@ -8,23 +8,30 @@ from .factories import (
     Text,
     )
 
-from . import catalog_factory
+from . import (
+    catalog_factory,
+    indexview,
+    indexview_defaults,
+    )
 
 from ..interfaces import (
     MODE_DEFERRED,
     )
 from ..util import get_content_type
 
+@indexview_defaults(catalog_name='system')
 class SystemIndexViews(object):
     def __init__(self, resource):
         self.resource = resource
 
+    @indexview()
     def interfaces(self, default):
         """ Return a set of all interfaces implemented by the object, including
         inherited interfaces (but no classes).
         """
         return get_interfaces(self.resource, classes=False)
 
+    @indexview()
     def name(self, default):
         """ Returns the ``__name__`` of the object or ``default`` if the object
         has no ``__name__``."""
@@ -33,6 +40,7 @@ class SystemIndexViews(object):
             return default
         return name
 
+    @indexview()
     def content_type(self, default):
         """ Returns the Substance D content type of the resource """
         result = get_content_type(self.resource)
@@ -40,6 +48,7 @@ class SystemIndexViews(object):
             return default
         return result
  
+    @indexview()
     def text(self, default):
         """ Returns a derivation of the name for text indexing.  If name has no
         separator characters in it, the function will return the name
@@ -106,12 +115,3 @@ class SystemCatalogFactory(object):
     text = Text(action_mode=MODE_DEFERRED)
 
     content_type = Field(action_mode=MODE_DEFERRED)
-
-def includeme(config): # pragma: no cover
-    for name in ('interfaces', 'content_type', 'name', 'text'):
-        config.add_indexview(
-            SystemIndexViews,
-            catalog_name='system',
-            index_name=name,
-            attr=name
-            )

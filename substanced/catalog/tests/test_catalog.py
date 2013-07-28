@@ -724,10 +724,128 @@ class TestCatalogsService(unittest.TestCase):
         inst = self._makeOne()
         self.assertFalse(inst.__sdi_addable__(None, None))
 
+class Test_indexview(unittest.TestCase):
+    def setUp(self):
+        testing.setUp()
+
+    def tearDown(self):
+        testing.tearDown()
+
+    def _getTargetClass(self):
+        from substanced.catalog import indexview
+        return indexview
+
+    def _makeOne(self, *arg, **kw):
+        return self._getTargetClass()(*arg, **kw)
+
+    def test_create_defaults(self):
+        decorator = self._makeOne()
+        self.assertEqual(decorator.settings, {})
+
+    def test_create_nondefaults(self):
+        decorator = self._makeOne(
+            catalog_name=None, index_name='fred'
+            )
+        self.assertEqual(decorator.settings['catalog_name'], None)
+        self.assertEqual(decorator.settings['index_name'], 'fred')
+
+    def test_call_as_method(self):
+        decorator = self._makeOne(catalog_name='fred', context='context')
+        venusian = DummyVenusian()
+        decorator.venusian = venusian
+        decorator.venusian.info.scope = 'class'
+        def foo(self): pass
+        def bar(self): pass
+        class foo(object):
+            foomethod = decorator(foo)
+            barmethod = decorator(bar)
+        config = call_venusian(venusian)
+        settings = config.settings
+        self.assertEqual(len(settings), 2)
+        self.assertEqual(settings[0]['attr'], 'foo')
+        self.assertEqual(settings[0]['index_name'], 'foo')
+        self.assertEqual(settings[0]['catalog_name'], 'fred')
+        self.assertEqual(settings[0]['context'], 'context')
+        self.assertEqual(settings[1]['attr'], 'bar')
+        self.assertEqual(settings[1]['catalog_name'], 'fred')
+        self.assertEqual(settings[1]['index_name'], 'bar')
+        self.assertEqual(settings[1]['context'], 'context')
+
+    def test_call_as_method_with_indexname(self):
+        decorator1 = self._makeOne(catalog_name='fred', context='context',
+                                   index_name='abc')
+        decorator2 = self._makeOne(catalog_name='fred', context='context',
+                                   index_name='def')
+        venusian = DummyVenusian()
+        decorator1.venusian = venusian
+        decorator1.venusian.info.scope = 'class'
+        decorator2.venusian = venusian
+        decorator2.venusian.info.scope = 'class'
+        def foo(self): pass
+        def bar(self): pass
+        class foo(object):
+            foomethod = decorator1(foo)
+            barmethod = decorator2(bar)
+        config = call_venusian(venusian)
+        settings = config.settings
+        self.assertEqual(len(settings), 2)
+        self.assertEqual(settings[0]['attr'], 'foo')
+        self.assertEqual(settings[0]['index_name'], 'abc')
+        self.assertEqual(settings[0]['catalog_name'], 'fred')
+        self.assertEqual(settings[0]['context'], 'context')
+        self.assertEqual(settings[1]['attr'], 'bar')
+        self.assertEqual(settings[1]['catalog_name'], 'fred')
+        self.assertEqual(settings[1]['index_name'], 'def')
+        self.assertEqual(settings[1]['context'], 'context')
+        
+    def test_call_withdepth(self):
+        decorator = self._makeOne(_depth=1)
+        venusian = DummyVenusian()
+        decorator.venusian = venusian
+        def bar(self): pass
+        class foo(object):
+            foomethod = decorator(bar)
+        self.assertEqual(venusian.depth, 2)
+
+        
+class Test_indexview_defaults(unittest.TestCase):
+    def test_it(self):
+        from substanced.catalog import indexview_defaults
+        @indexview_defaults(route_name='abc', renderer='def')
+        class Foo(object): pass
+        self.assertEqual(Foo.__view_defaults__['route_name'],'abc')
+        self.assertEqual(Foo.__view_defaults__['renderer'],'def')
+
+    def test_it_inheritance_not_overridden(self):
+        from substanced.catalog import indexview_defaults
+        @indexview_defaults(route_name='abc', renderer='def')
+        class Foo(object): pass
+        class Bar(Foo): pass
+        self.assertEqual(Bar.__view_defaults__['route_name'],'abc')
+        self.assertEqual(Bar.__view_defaults__['renderer'],'def')
+
+    def test_it_inheritance_overriden(self):
+        from substanced.catalog import indexview_defaults
+        @indexview_defaults(route_name='abc', renderer='def')
+        class Foo(object): pass
+        @indexview_defaults(route_name='ghi')
+        class Bar(Foo): pass
+        self.assertEqual(Bar.__view_defaults__['route_name'],'ghi')
+        self.assertFalse('renderer' in Bar.__view_defaults__)
+
+    def test_it_inheritance_overriden_empty(self):
+        from substanced.catalog import indexview_defaults
+        @indexview_defaults(route_name='abc', renderer='def')
+        class Foo(object): pass
+        @indexview_defaults()
+        class Bar(Foo): pass
+        self.assertEqual(Bar.__view_defaults__, {})
+        
 class DummyIntrospectable(dict):
     pass
 
 class DummyConfigurator(object):
+    _ainfo = None
     def __init__(self, registry):
         self.actions = []
         self.intr = DummyIntrospectable()
@@ -751,6 +869,9 @@ class DummyConfigurator(object):
 
     def add_catalog_factory(self, name, cls, **extra):
         self.catalog_factory = (name, cls)
+
+    def maybe_dotted(self, view):
+        return view
 
 class DummyObjectMap(object):
     def __init__(self, objectid_to=None): 
@@ -861,9 +982,39 @@ class DummyVenusian(object):
         if info is None:
             info = DummyVenusianInfo()
         self.info = info
+        self.attachments = []
         
-    def attach(self, wrapped, callback, category):
+    def attach(self, wrapped, callback, category, depth=1):
+        self.attachments.append((wrapped, callback, category))
         self.wrapped = wrapped
         self.callback = callback
         self.category = category
+        self.depth = depth
         return self.info
+
+class DummyRegistry(object):
+    pass
+
+class DummyConfig(object):
+    def __init__(self):
+        self.settings = []
+        self.registry = DummyRegistry()
+
+    def add_indexview(self, ob, **kw):
+        self.settings.append(kw)
+
+    def with_package(self, pkg):
+        self.pkg = pkg
+        return self
+    
+class DummyVenusianContext(object):
+    def __init__(self):
+        self.config = DummyConfig()
+    
+def call_venusian(venusian, context=None):
+    if context is None:
+        context = DummyVenusianContext()
+    for wrapped, callback, category in venusian.attachments:
+        callback(context, None, None)
+    return context.config
+    

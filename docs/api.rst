@@ -64,6 +64,10 @@
 
 .. autofunction:: add_indexview
 
+.. autoclass:: indexview
+
+.. autoclass:: indexview_defaults
+
 :mod:`substanced.catalog.indexes` API
 -------------------------------------
 
