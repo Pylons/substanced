@@ -671,13 +671,8 @@ def add_indexview(
             )
 
     In this way you can use the same class to represent a bunch of different
-    index views.  Eventually there will be a decorator that you'll be able to
-    place on such a class that will allow you to scan the class
-    without making these imperative ``add_indexview`` calls, but right now
-    there is not.
-
-    An index view will be looked up by the cataloging machinery when it wants
-    to insert value into a particular catalog type's index.  The
+    index views.  An index view will be looked up by the cataloging machinery
+    when it wants to insert value into a particular catalog type's index.  The
     ``catalog_name`` you use specify which catalog name this indeview is good
     for; it should match the string passed to ``add_catalog_factory`` as a
     ``name``.  The ``index_name`` argument should match an index name used
@@ -689,6 +684,8 @@ def add_indexview(
     resource being indexed has that class or interface.  Eventually we'll
     provide a way to add predicates other than ``context`` too.
 
+    The :class:`substanced.catalog.indexview` decorator provides a declarative
+    analogue to using this configuration directive.
     """
 
     if context is None:
