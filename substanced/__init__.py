@@ -27,6 +27,7 @@ def include(config): # pragma: no cover
     default aspects of the SDI to work."""
     config.include('pyramid_zodbconn')
     config.include('pyramid_mailer')
+    config.include('.evolution')
     config.include('.stats')
     config.include('.folder')
     config.include('.event')
@@ -35,7 +36,6 @@ def include(config): # pragma: no cover
     config.include('.objectmap')
     config.include('.property')
     config.include('.catalog')
-    config.include('.evolution')
     config.include('.widget')
     config.include('.workflow')
     config.include('.dump')

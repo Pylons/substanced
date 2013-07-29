@@ -438,13 +438,13 @@ class ObjectMap(Persistent):
         """ Return a set of object identifiers of the objects connected to
         ``obj`` a source using reference type ``reftype``"""
         oid = self._refid_for(obj)
-        return self.family.IF.Set(self.referencemap.sourceids(oid, reftype))
+        return self.family.OO.Set(self.referencemap.sourceids(oid, reftype))
 
     def targetids(self, obj, reftype):
         """ Return a set of object identifiers of the objects connected to
         ``obj`` a target using reference type ``reftype``"""
         oid = self._refid_for(obj)
-        return self.family.IF.Set(self.referencemap.targetids(oid, reftype))
+        return self.family.OO.Set(self.referencemap.targetids(oid, reftype))
 
     def sources(self, obj, reftype):
         """ Return a generator which will return the objects connected to
@@ -534,13 +534,13 @@ class ReferenceMap(Persistent):
         refset = self.refmap.get(reftype)
         if refset is not None:
             return refset.targetids(oid)
-        return self.family.IF.Set()
+        return self.family.OO.Set()
 
     def sourceids(self, oid, reftype):
         refset = self.refmap.get(reftype)
         if refset is not None:
             return refset.sourceids(oid)
-        return self.family.IF.Set()
+        return self.family.OO.Set()
 
     def remove(self, oids):
         for refset in self.refmap.values():
@@ -564,13 +564,13 @@ class ReferenceSet(Persistent):
     family = BTrees.family64
 
     def __init__(self):
-        self.src2target = self.family.IO.BTree()
-        self.target2src = self.family.IO.BTree()
+        self.src2target = self.family.OO.BTree()
+        self.target2src = self.family.OO.BTree()
 
     def connect(self, source, target):
-        targets = self.src2target.setdefault(source, self.family.IF.TreeSet())
+        targets = self.src2target.setdefault(source, self.family.OO.TreeSet())
         targets.insert(target)
-        sources = self.target2src.setdefault(target, self.family.IF.TreeSet())
+        sources = self.target2src.setdefault(target, self.family.OO.TreeSet())
         sources.insert(source)
 
     def disconnect(self, source, target):
@@ -589,20 +589,20 @@ class ReferenceSet(Persistent):
                 pass
 
     def targetids(self, oid):
-        return self.src2target.get(oid, self.family.IF.Set())
+        return self.src2target.get(oid, self.family.OO.Set())
 
     def is_target(self, oid):
         return oid in self.target2src
 
     def sourceids(self, oid):
-        return self.target2src.get(oid, self.family.IF.Set())
+        return self.target2src.get(oid, self.family.OO.Set())
 
     def is_source(self, oid):
         return oid in self.src2target
 
     def remove(self, oidset):
         # XXX is there a way to make this less expensive?
-        removed = self.family.IF.Set()
+        removed = self.family.OO.Set()
         for oid in oidset:
             if oid in self.src2target:
                 removed.insert(oid)
@@ -1040,6 +1040,8 @@ class SourceIntegrityError(ReferentialIntegrityError):
 class TargetIntegrityError(ReferentialIntegrityError):
     pass
 
+
 def includeme(config): # pragma: no cover
     config.add_view_predicate('referenced', _ReferencedPredicate)
+    config.include('.evolve')
 
