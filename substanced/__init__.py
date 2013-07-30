@@ -1,3 +1,6 @@
+from .db import root_factory
+root_factory = root_factory # API
+
 def include(config): # pragma: no cover
     """ Perform all ``config.include`` tasks required for Substance D and the
     default aspects of the SDI to work."""

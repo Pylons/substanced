@@ -34,8 +34,23 @@ def root_factory(request, t=transaction, g=get_connection,
         raise HTTPNotFound(name)
     return factory(request)
 
+def add_reference_root(config, factory, name):
+    def register():
+        config.registry.registerUtility(factory, IReferenceRoot, name=name)
+        
+    intr = config.introspectable(
+        'substance d reference roots',
+        name,
+        config.object_description(factory),
+        'substance d reference root'
+        )
+    
+    intr['factory'] = factory
+    intr['name'] = name
+    
+    config.action((IReferenceRoot, name), register, introspectables=(intr,))
+
 def includeme(config): # pragma: no cover
-    config.registry.registerUtility(
-        zodb_root_factory, IReferenceRoot)
-    config.registry.registerUtility(
-        zodb_root_factory, IReferenceRoot, name='zodb')
+    config.add_directive('add_reference_root', add_reference_root)
+    config.add_reference_root(zodb_root_factory, '')
+    config.add_reference_root(zodb_root_factory, 'zodb')
