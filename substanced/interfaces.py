@@ -820,3 +820,5 @@ class IUserLocator(Interface):
         the user principal identifier ``userid`` as a sequence.  If no user
         exists under ``userid``, return ``None``."""
     
+class IReferenceRoot(Interface):
+    pass

@@ -1049,7 +1049,8 @@ class Test_sdiapi(unittest.TestCase):
         def route_path(route_name, *arg, **kw):
             self.assertEqual(route_name, MANAGE_ROUTE_NAME)
             self.assertEqual(arg, ('a',))
-            self.assertEqual(kw, {'b':1, 'traverse':('',)})
+            self.assertEqual(
+                kw, {'b':1, 'traverse':('',), 'maybeslash':'', 'rootname':''})
             return '/path'
         request.route_path = route_path
         inst = self._makeOne(request)
@@ -1063,7 +1064,8 @@ class Test_sdiapi(unittest.TestCase):
         def route_url(route_name, *arg, **kw):
             self.assertEqual(route_name, MANAGE_ROUTE_NAME)
             self.assertEqual(arg, ('a',))
-            self.assertEqual(kw, {'b':1, 'traverse':('',)})
+            self.assertEqual(
+                kw, {'b':1, 'traverse':('',), 'maybeslash':'', 'rootname':''})
             return 'http://example.com/path'
         request.route_url = route_url
         inst = self._makeOne(request)

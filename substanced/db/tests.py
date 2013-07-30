@@ -1,7 +1,7 @@
 import unittest
 from pyramid import testing
 
-class Test_root_factory(unittest.TestCase):
+class Test_zodb_root_factory(unittest.TestCase):
     def setUp(self):
         self.config = testing.setUp()
 
@@ -9,9 +9,9 @@ class Test_root_factory(unittest.TestCase):
         testing.tearDown()
         
     def _callFUT(self, request, transaction, get_connection, evolve_packages):
-        from . import root_factory
-        return root_factory(request, transaction, get_connection,
-                            evolve_packages)
+        from . import zodb_root_factory
+        return zodb_root_factory(request, transaction, get_connection,
+                                 evolve_packages)
 
     def _makeRequest(self, app_root=None):
         request = Dummy()

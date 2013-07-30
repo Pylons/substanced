@@ -521,12 +521,16 @@ class sdiapi(object):
         request = self.request
         traverse = resource_path_tuple(obj)
         kw['traverse'] = traverse
+        kw['rootname'] = request.matchdict.get('rootname', '')
+        kw['maybeslash'] = request.matchdict.get('maybeslash', '')
         return request.route_path(MANAGE_ROUTE_NAME, *arg, **kw)
 
     def mgmt_url(self, obj, *arg, **kw):
         request = self.request
         traverse = resource_path_tuple(obj)
         kw['traverse'] = traverse
+        kw['rootname'] = request.matchdict.get('rootname', '')
+        kw['maybeslash'] = request.matchdict.get('maybeslash', '')
         return request.route_url(MANAGE_ROUTE_NAME, *arg, **kw)
 
     def breadcrumbs(self):
@@ -559,7 +563,8 @@ def includeme(config): # pragma: no cover
     # b/c alias for template lookups
     config.override_asset(to_override='substanced.sdi:templates/',
                           override_with='substanced.sdi.views:templates/')
-    manage_prefix = settings.get('substanced.manage_prefix', '/manage')
+    manage_prefix = settings.get(
+        'substanced.manage_prefix', '/{rootname:[^/]*?}{maybeslash:/*}manage')
     manage_pattern = manage_prefix + '*traverse'
     config.add_route(MANAGE_ROUTE_NAME, manage_pattern)
     config.add_request_method(mgmt_path) # XXX deprecate
