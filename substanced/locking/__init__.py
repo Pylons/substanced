@@ -17,6 +17,7 @@ import colander
 import deform_bootstrap
 import deform.widget
 
+from pyramid.location import lineage
 from pyramid.security import has_permission
 from pyramid.threadlocal import get_current_registry
 from pyramid.traversal import (
@@ -369,15 +370,21 @@ class LockService(Folder, _AutoNamingFolder):
             raise UnlockError(lock)
         lock.commit_suicide()
 
-    def discover(self, resource, include_invalid=False, locktype=WriteLock):
+    def discover(self, resource,
+                 include_invalid=False,
+                 include_lineage=True,
+                 locktype=WriteLock):
         objectmap = find_objectmap(self)
-        locks = objectmap.targets(resource, locktype)
         valid = []
-        for lock in locks:
-            if include_invalid:
-                valid.append(lock)
-            elif lock.is_valid():
-                valid.append(lock)
+        if include_lineage:
+            resources = lineage(resource)
+        else:
+            resources = [resource]
+        for res in resources:
+            locks = objectmap.targets(res, locktype)
+            for lock in locks:
+                if include_invalid or lock.is_valid():
+                    valid.append(lock)
         return valid
 
 def _get_lock_service(resource):

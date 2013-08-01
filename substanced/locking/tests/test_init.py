@@ -500,23 +500,95 @@ class TestLockService(unittest.TestCase):
         self.assertTrue(lock.suicided)
 
     def test_discover_filter_invalid(self):
+        root = testing.DummyResource()
+        context = root['context'] = testing.DummyResource()
         inst = self._makeOne()
         lock1 = testing.DummyResource()
         lock1.is_valid = lambda: True
         lock2 = testing.DummyResource()
         lock2.is_valid = lambda: False
-        inst.__objectmap__ = DummyObjectMap([lock1, lock2])
-        result = inst.discover(None)
+        def _targets(resource, type):
+            if resource.__name__ == 'context':
+                return [lock1, lock2]
+            return ()
+        inst.__objectmap__ = DummyObjectMap(None)
+        inst.__objectmap__.targets = _targets
+        result = inst.discover(context)
+        self.assertEqual(result, [lock1])
+
+    def test_discover_default(self):
+        root = testing.DummyResource()
+        context = root['context'] = testing.DummyResource()
+        inst = self._makeOne()
+        lock1 = testing.DummyResource()
+        lock1.is_valid = lambda: True
+        lock2 = testing.DummyResource()
+        lock2.is_valid = lambda: False
+        lock3 = testing.DummyResource()
+        lock3.is_valid = lambda: True
+        def _targets(resource, type):
+            if resource.__name__ == 'context':
+                return [lock1, lock2]
+            return [lock3]
+        inst.__objectmap__ = DummyObjectMap(None)
+        inst.__objectmap__.targets = _targets
+        result = inst.discover(context)
+        # Lineage included by default
+        self.assertEqual(result, [lock1, lock3])
+
+    def test_discover_w_include_lineage(self):
+        root = testing.DummyResource()
+        context = root['context'] = testing.DummyResource()
+        inst = self._makeOne()
+        lock1 = testing.DummyResource()
+        lock1.is_valid = lambda: True
+        lock2 = testing.DummyResource()
+        lock2.is_valid = lambda: False
+        lock3 = testing.DummyResource()
+        lock3.is_valid = lambda: True
+        def _targets(resource, type):
+            if resource.__name__ == 'context':
+                return [lock1, lock2]
+            return [lock3]
+        inst.__objectmap__ = DummyObjectMap(None)
+        inst.__objectmap__.targets = _targets
+        result = inst.discover(context, include_lineage=True)
+        self.assertEqual(result, [lock1, lock3])
+
+    def test_discover_wo_include_lineage(self):
+        root = testing.DummyResource()
+        context = root['context'] = testing.DummyResource()
+        inst = self._makeOne()
+        lock1 = testing.DummyResource()
+        lock1.is_valid = lambda: True
+        lock2 = testing.DummyResource()
+        lock2.is_valid = lambda: False
+        lock3 = testing.DummyResource()
+        lock3.is_valid = lambda: True
+        def _targets(resource, type):
+            if resource.__name__ == 'context':
+                return [lock1, lock2]
+            return [lock3]
+        inst.__objectmap__ = DummyObjectMap(None)
+        inst.__objectmap__.targets = _targets
+        result = inst.discover(context, include_lineage=False)
         self.assertEqual(result, [lock1])
 
     def test_discover_invalid_not_filtered_when_include_invalid(self):
+        root = testing.DummyResource()
+        context = root['context'] = testing.DummyResource()
         inst = self._makeOne()
         lock1 = testing.DummyResource()
         lock1.is_valid = lambda: True
         lock2 = testing.DummyResource()
         lock2.is_valid = lambda: False
-        inst.__objectmap__ = DummyObjectMap([lock1, lock2])
-        result = inst.discover(None, include_invalid=True)
+        def _targets(resource, type):
+            if resource.__name__ == 'context':
+                return [lock1, lock2]
+            return ()
+        inst.__objectmap__ = DummyObjectMap(None)
+        inst.__objectmap__.targets = _targets
+        result = inst.discover(context, include_invalid=True)
         self.assertEqual(result, [lock1, lock2])
 
 class Test_lock_resource(unittest.TestCase):
