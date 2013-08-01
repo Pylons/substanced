@@ -757,9 +757,9 @@ class Test_discover_resource_locks(unittest.TestCase):
     def tearDown(self):
         testing.tearDown()
 
-    def _callFUT(self, resource):
+    def _callFUT(self, resource, **kw):
         from substanced.locking import discover_resource_locks
-        return discover_resource_locks(resource)
+        return discover_resource_locks(resource, **kw)
 
     def test_it_with_existing_lock_service(self):
         from substanced.locking import WriteLock
@@ -773,6 +773,23 @@ class Test_discover_resource_locks(unittest.TestCase):
         self.assertEqual(result, True)
         self.assertEqual(lockservice.resource, resource)
         self.assertEqual(lockservice.locktype, WriteLock)
+        self.assertEqual(lockservice.include_invalid, False)
+        self.assertEqual(lockservice.include_lineage, True)
+
+    def test_it_with_include_lineage_False(self):
+        from substanced.locking import WriteLock
+        from zope.interface import alsoProvides
+        from substanced.interfaces import IFolder
+        resource = testing.DummyResource()
+        alsoProvides(resource, IFolder)
+        lockservice = DummyLockService()
+        resource['locks'] = lockservice
+        result = self._callFUT(resource, include_lineage=False)
+        self.assertEqual(result, True)
+        self.assertEqual(lockservice.resource, resource)
+        self.assertEqual(lockservice.locktype, WriteLock)
+        self.assertEqual(lockservice.include_invalid, False)
+        self.assertEqual(lockservice.include_lineage, False)
 
     def test_it_with_missing_lock_service(self):
         from substanced.locking import WriteLock
@@ -788,6 +805,8 @@ class Test_discover_resource_locks(unittest.TestCase):
         self.assertEqual(resource['locks'], lockservice)
         self.assertEqual(lockservice.resource, resource)
         self.assertEqual(lockservice.locktype, WriteLock)
+        self.assertEqual(lockservice.include_invalid, False)
+        self.assertEqual(lockservice.include_lineage, True)
 
 class DummyObjectMap(object):
     def __init__(self, result, raises=None):
@@ -843,7 +862,11 @@ class DummyLockService(object):
         self.owner = owner
         return True
 
-    def discover(self, resource, include_invalid=False, locktype=None):
+    def discover(self, resource,
+                 include_invalid=False, include_lineage=True, locktype=None,
+                ):
         self.resource = resource
         self.locktype = locktype
+        self.include_invalid = include_invalid
+        self.include_lineage = include_lineage
         return True

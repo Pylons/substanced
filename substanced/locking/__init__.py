@@ -532,6 +532,7 @@ def unlock_token(
 def discover_resource_locks(
     resource,
     include_invalid=False,
+    include_lineage=True,
     locktype=WriteLock,
     ):
     """ Return locks related to ``resource`` for the given ``locktype``.
@@ -554,6 +555,7 @@ def discover_resource_locks(
     return locks.discover(
         resource,
         include_invalid=include_invalid,
+        include_lineage=include_lineage,
         locktype=locktype
         )
 

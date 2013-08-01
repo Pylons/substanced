@@ -119,6 +119,15 @@ circumstances, however, when the :func:`substanced.locking.lock_resource` API
 is not used to create locks, there may be more than one lock related to a
 resource of the same type.
 
+By default, the ``discover_resource_locks`` API returns locks for the
+provided object, plus locks on any object in its :term:`lineage`.  To suppress
+this default, pass ``include_lineage=False``, e.g.:
+
+.. code-block:: python
+
+   locks = discover_resource_locks(someresource)
+   # "locks" will be only those set on 'someresource'
+
 In some applications, the important thing is to ensure that a particular
 user *could* lock a resource before updating it (e.g., from a browser view
 on a property sheet).  The ::func:`~substanced.locking.could_lock_resource`
