@@ -165,7 +165,7 @@ class FolderContents(object):
                   'value': 'copy_finish',
                   'text': 'Copy here'},
                 {'id': 'cancel',
-                 'name': 'form.copy_finish',
+                 'name': 'form.copy_finish_cancel',
                  'class': 'btn-danger btn-sdi-act',
                  'value': 'cancel',
                  'text': 'Cancel'},
@@ -179,7 +179,7 @@ class FolderContents(object):
                   'value': 'move_finish',
                   'text': 'Move here'},
                  {'id': 'cancel',
-                  'name': 'form.move_finish',
+                  'name': 'form.move_finish_cancel',
                   'class': 'btn-danger btn-sdi-act',
                   'value': 'cancel',
                   'text': 'Cancel'}])
@@ -826,16 +826,18 @@ class FolderContents(object):
 
         return self.get_redirect_response()
 
+    def copy_finish_cancel(self):
+        request = self.request
+        del request.session['tocopy']
+        request.session.flash('No items copied')
+        return self.get_redirect_response()
+
     def copy_finish(self):
         request = self.request
         context = self.context
         objectmap = find_objectmap(context)
         tocopy = request.session['tocopy']
         del request.session['tocopy']
-
-        if self.request.POST.get('form.copy_finish') == "cancel":
-            request.session.flash('No items copied')
-            return self.get_redirect_response()
 
         num_copied = 0
 
@@ -879,16 +881,18 @@ class FolderContents(object):
 
         return self.get_redirect_response()
 
+    def move_finish_cancel(self):
+        request = self.request
+        del request.session['tomove']
+        request.session.flash('No items moved')
+        return self.get_redirect_response()
+
     def move_finish(self):
         request = self.request
         context = self.context
         objectmap = find_objectmap(context)
         tomove = request.session['tomove']
         del request.session['tomove']
-
-        if self.request.POST.get('form.move_finish') == "cancel":
-            request.session.flash('No items moved')
-            return self.get_redirect_response()
 
         num_moved = 0
 
@@ -1261,6 +1265,13 @@ def add_folder_contents_views(
         )
     add_fc_view(
         request_method='POST',
+        request_param='form.copy_finish_cancel',
+        permission=view_permission,
+        check_csrf=True,
+        attr='copy_finish_cancel',
+        )
+    add_fc_view(
+        request_method='POST',
         request_param='form.move',
         permission=view_permission,
         check_csrf=True,
@@ -1272,6 +1283,13 @@ def add_folder_contents_views(
         permission=manage_contents_permission,
         check_csrf=True,
         attr='move_finish',
+        )
+    add_fc_view(
+        request_method='POST',
+        request_param='form.move_finish_cancel',
+        permission=view_permission,
+        check_csrf=True,
+        attr='move_finish_cancel',
         )
     add_fc_view(
         request_method='POST',

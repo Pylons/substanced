@@ -1036,9 +1036,9 @@ class TestFolderContents(unittest.TestCase):
         request.POST.get.return_value = ('foobar',)
         request.POST.get.side_effect = lambda x: {
             'foobar': 'foobar0',
-            'form.copy_finish': 'cancel'}[x]
+            'form.copy_finish_cancel': 'cancel'}[x]
         inst = self._makeOne(context, request)
-        inst.copy_finish()
+        inst.copy_finish_cancel()
 
         request.session.flash.assert_called_once_with('No items copied')
         self.assertEqual(request.session.__delitem__.call_args,
@@ -1219,7 +1219,7 @@ class TestFolderContents(unittest.TestCase):
             'foobar': 'foobar0',
             'form.move_finish': 'cancel'}[x]
         inst = self._makeOne(context, request)
-        inst.move_finish()
+        inst.move_finish_cancel()
 
         request.session.flash.assert_called_once_with('No items moved')
         self.assertEqual(request.session.__delitem__.call_args,
@@ -1549,7 +1549,7 @@ class TestFolderContents(unittest.TestCase):
                   'class': 'btn-danger btn-sdi-act', 
                   'id': 'cancel', 
                   'value': 'cancel', 
-                  'name': 'form.copy_finish'}],
+                  'name': 'form.copy_finish_cancel'}],
                'type': 'single'}
                ]
                )
@@ -1573,7 +1573,7 @@ class TestFolderContents(unittest.TestCase):
                  'class': 'btn-danger btn-sdi-act',
                  'id': 'cancel',
                  'value': 'cancel',
-                 'name':'form.move_finish'}],
+                 'name':'form.move_finish_cancel'}],
              'type': 'single'}
             ]            
             )
@@ -1666,7 +1666,7 @@ class Test_add_folder_contents_views(unittest.TestCase):
         from substanced.interfaces import IFolder
         config = DummyConfig()
         self._callFUT(config)
-        self.assertEqual(len(config.settings), 11)
+        self.assertEqual(len(config.settings), 13)
         self.assertEqual(config.settings[0]['view'], FolderContents)
         self.assertEqual(config.settings[0]['context'], IFolder)
 
