@@ -563,12 +563,8 @@ class TestLockService(unittest.TestCase):
         lock1.is_valid = lambda: True
         lock2 = testing.DummyResource()
         lock2.is_valid = lambda: False
-        lock3 = testing.DummyResource()
-        lock3.is_valid = lambda: True
         def _targets(resource, type):
-            if resource.__name__ == 'context':
-                return [lock1, lock2]
-            return [lock3]
+            return [lock1, lock2]
         inst.__objectmap__ = DummyObjectMap(None)
         inst.__objectmap__.targets = _targets
         result = inst.discover(context, include_lineage=False)
