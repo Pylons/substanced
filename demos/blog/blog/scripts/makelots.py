@@ -30,6 +30,9 @@ def main():
                           'html', datetime.date.today())
         id = 'blogentry_%s' % n
         root[id] = entry
+        if n % 1000 == 0:
+            print ('committing')
+            transaction.commit()
     print ('committing')
     transaction.commit()
            
