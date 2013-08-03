@@ -42,5 +42,6 @@ setup(name='blog',
       main = blog:main
       [console_scripts]
       blog_import = blog.scripts.import:main
+      blog_makelots = blog.scripts.makelots:main
       """
       )
