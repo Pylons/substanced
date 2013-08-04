@@ -35,7 +35,7 @@ install_requires = [
     'pyramid_mailer',
     'cryptacular',
     'python-magic',
-    'pyyaml',
+    'PyYAML',
     'zope.copy',
     'zope.component', # implictly depended upon by zope.copy
     'zope.deprecation',
