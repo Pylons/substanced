@@ -21,7 +21,7 @@
               plugin = gridWrapper.sdiRemoteModelPlugin
               if (!plugin.hasActiveRequest()) {
                   // only do one request at a time
-                  plugin.clearData();
+                  plugin.resetData();
               }
           }
 

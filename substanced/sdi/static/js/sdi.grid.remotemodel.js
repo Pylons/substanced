@@ -231,6 +231,21 @@
             return query;
         }
 
+        function resetData() {
+            console.log('starting');
+            abortRequest();
+
+            var vp = grid.getViewport(null);
+            var query = $.extend({
+                    from: vp.top,
+                    to: vp.bottom,
+                    sortCol: options.sortCol || '',
+                    sortDir: options.sortDir || ''
+                }, (options.extraQuery || {}));
+            ensureData(query);
+            console.log('finishing');
+        }
+
         function _clearData() {
             // Delete the data
             $.each(data, function (key, value) {
@@ -492,6 +507,7 @@
 
             clearData: clearData,
             loadData: loadData,
+            resetData: resetData,
             setSorting: setSorting,
             setFilterArgs: setFilterArgs,
             syncGridSelection: syncGridSelection,
