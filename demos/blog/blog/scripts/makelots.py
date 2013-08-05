@@ -35,6 +35,8 @@ def main():
             transaction.commit()
     print ('committing')
     transaction.commit()
+    root._p_jar._db.close()
+    closer()
            
 if __name__ == '__main__':
    main()
