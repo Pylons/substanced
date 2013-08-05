@@ -16,7 +16,7 @@
   <div metal:fill-slot="main">
     <h2>Manage</h2>
 
-    <form action="./database" method="POST">
+    <form action="./database" method="POST" onsubmit="return loading_indicator()">
       <input type="hidden" value="${request.session.get_csrf_token()}"
              name="csrf_token"/>
       <p>Remove previous revisions of objects that are older than
