@@ -1,5 +1,4 @@
 import datetime
-import pytz
 from logging import getLogger
 
 from pyramid.view import view_defaults
@@ -32,10 +31,9 @@ class AuditLogEventStreamView(object):
         scribe = self.AuditScribe(self.context)
         results = []
         for gen, idx, event in scribe:
-            timestamp = event.timestamp
             tz = self.request.user.timezone
-            time = tz.localize(datetime.datetime.utcfromtimestamp(timestamp)).strftime(
-                '%Y-%m-%d %H:%M:%S %Z')
+            dt = datetime.datetime.fromtimestamp(event.timestamp, tz)
+            time = dt.strftime('%Y-%m-%d %H:%M:%S %Z')
             results.insert(0, (gen, idx, time, event))
         return {'results':results}
 
