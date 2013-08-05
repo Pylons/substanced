@@ -3,7 +3,7 @@
   <div metal:fill-slot="main">
     <h2>Manage</h2>
 
-    <form action="./database" method="POST" onsubmit="return sdi_loading_indicator_on()">
+    <form action="./@@database" method="POST" onsubmit="return sdi_loading_indicator_on()">
       <input type="hidden" value="${request.session.get_csrf_token()}"
              name="csrf_token"/>
       <p>Remove previous revisions of objects that are older than
@@ -17,7 +17,7 @@
     </form>
 
     <h2>Evolve</h2>
-    <form action="./database" method="POST" onsubmit="return sdi_loading_indicator_on()">
+    <form action="./@@database" method="POST" onsubmit="return sdi_loading_indicator_on()">
       <input type="hidden" value="${request.session.get_csrf_token()}"
              name="csrf_token"/>
       <p>Run evolve steps up to the latest
@@ -27,7 +27,7 @@
                 value="Dry-run" name="dryrun"/>
       </p>
     </form>
-    <form action="./database" method="GET">
+    <form action="./@@database" method="GET">
       <p>
          <input type="submit" class="btn btn-primary" 
                 value="Show summary of steps (finished and unfinished)" name="show_evolve"/>
