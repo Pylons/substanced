@@ -1,5 +1,18 @@
 <div metal:use-macro="request.sdiapi.main_template">
 
+ <div metal:fill-slot="head-more">
+
+   <script type="text/javascript">
+
+   function loading_indicator() {
+       $('#sdi-loading-img').css('display', 'inline');
+       return true;
+   }
+
+   </script>
+
+ </div>
+
   <div metal:fill-slot="main">
     <h2>Manage</h2>
 
@@ -17,10 +30,10 @@
     </form>
 
     <h2>Evolve</h2>
-    <form action="./database" method="POST">
+    <form action="./database" method="POST" onsubmit="return loading_indicator()">
       <input type="hidden" value="${request.session.get_csrf_token()}"
              name="csrf_token"/>
-      <p>Run evolve steps up to the latests
+      <p>Run evolve steps up to the latest
          <input type="submit" class="btn btn-primary" 
                 value="Evolve" name="evolve"/>
          <input type="submit" class="btn btn-primary" 
