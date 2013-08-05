@@ -5,7 +5,7 @@ config["sdi.grid.remotemodel"] = {
     rootPath: "../",
     environment: "browser",
     libs: [
-        "buster-test/testlib/jquery-1.7.2.min.js"
+        "buster-test/testlib/jquery-1.7.2.js"
     ],
     sources: [
         "sdi.grid.remotemodel.js"

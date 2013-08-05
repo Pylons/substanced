@@ -30,7 +30,7 @@
     <!-- Scripts -->
     <script src="${request.static_url('deform:static/scripts/jquery-1.7.2.min.js')}"
             type="text/javascript"></script>
-    <script src="${request.static_url('substanced.sdi:static/js/bootstrap.min.js')}"
+    <script src="${request.static_url('substanced.sdi:static/js/bootstrap.js')}"
             type="text/javascript"></script>
 
     <more tal:omit-tag="" metal:define-slot="head-more"></more>
