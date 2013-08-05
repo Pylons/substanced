@@ -34,7 +34,7 @@
           result = confirm('This operation could take a long time. ${pathcount} objects will need to be reindexed, are you sure you want to continue?');
        }
        if (result) {
-           $('#sdi-loading-img').css('display', 'inline');
+           sdi_loading_indicator_on() // from sdi.js
        }
        return result;
    }
