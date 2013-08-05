@@ -174,5 +174,5 @@ class ManageDatabase(object):
 def _format_timestamp(t, tz):
     if hasattr(tz, 'upper'): # it's a timezone name, not a timezone object
         tz = pytz.timezone(tz)
-    return tz.localize(datetime.datetime.utcfromtimestamp(t)).strftime(
+    return datetime.datetime.fromtimestamp(t, tz).strftime(
         '%Y-%m-%d %H:%M:%S %Z')
