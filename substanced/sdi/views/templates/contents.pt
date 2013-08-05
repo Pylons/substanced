@@ -31,12 +31,6 @@
           source.addEventListener("ContentRemoved" , redraw)
         }
 
-
-        function loading_indicator() {
-            $('#sdi-loading-img').css('display', 'inline');
-            return true;
-        }
-
    </script>
 
     </metal:slot>
@@ -53,7 +47,7 @@
 
   <div metal:fill-slot="main">
     <form id="contents_form" action="@@${request.view_name}" method="POST" class="sdi-contents-actions"
-          onsubmit="return loading_indicator()">
+          onsubmit="return sdi_loading_indicator_on()">
     <div class="container-fluid">
 
     <div class="navbar fb-toolbar">
