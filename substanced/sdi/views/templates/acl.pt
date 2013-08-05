@@ -34,7 +34,7 @@
           result = confirm('This operation could take a long time. ${pathcount} objects will need to be reindexed, are you sure you want to continue?');
        }
        if (result) {
-           $('#loading-img').css('display', 'inline');
+           $('#sdi-loading-img').css('display', 'inline');
        }
        return result;
    }
@@ -45,9 +45,6 @@
 
 
  <div metal:fill-slot="main">
-
- <img id="loading-img" src="${request.static_url('substanced.sdi:static/img/progress_bar.gif')}"
-      style="display:none;"/>
 
  <metal:local_acl define-macro="local_acl">
 

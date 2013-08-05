@@ -149,7 +149,6 @@
             (<span class="sdi-sg-selected">&nbsp;</span> selected)
             </span>
         </span>
-        <img id="loading-img" src="${request.static_url('substanced.sdi:static/img/progress_bar.gif')}"/>
     </div>
 
     <metal:slot define-slot="above-grid" />
@@ -159,13 +158,12 @@
     <metal:slot define-slot="below-grid" />
 
     <script type="text/javascript">
-        $('#loading-img')
-            .css('opacity', 0)  // hide it initially
+        $('#sdi-loading-img')
             .ajaxStart(function() {
-                $(this).css('opacity', 1);
+                $(this).css('display', 'inline');
             })
             .ajaxStop(function() {
-                $(this).css('opacity', 0);
+                $(this).css('display', 'none');
             });
         jQuery(function ($) {
             var $grid = $('#sdi-contents-table-sg');

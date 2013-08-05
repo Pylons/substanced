@@ -52,6 +52,8 @@
 
             <div class="nav-collapse">
                 <div class="nav pull-right">
+                  <img id="sdi-loading-img" src="${request.static_url('substanced.sdi:static/img/progress_bar.gif')}"
+                       style="display:none"/>
                     <div class="btn-group" tal:condition="request.user">
                         <a class="btn btn-primary"
                            href="${request.sdiapi.mgmt_path(request.user)}"><i
