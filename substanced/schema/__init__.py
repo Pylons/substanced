@@ -50,18 +50,18 @@ class Schema(colander.Schema):
       class MySchema(Schema):
           my_value = colander.SchemaNode(colander.String())
 
-      And in your application code, *bind* the schema, passing the request
-      as a keyword argument:
+    And in your application code, *bind* the schema, passing the request
+    as a keyword argument:
 
-      .. code-block:: python
+    .. code-block:: python
 
-        def aview(request):
-            schema = MySchema().bind(request=request)
+      def aview(request):
+          schema = MySchema().bind(request=request)
 
-      In order for the CRSFSchema to work, you must configure a *session
-      factory* in your Pyramid application.  This is usually done by
-      Substance D itself, but may not be done for you in extremely custom
-      configurations.
+    In order for the CRSFSchema to work, you must configure a *session
+    factory* in your Pyramid application.  This is usually done by
+    Substance D itself, but may not be done for you in extremely custom
+    configurations.
     """
     schema_type = RemoveCSRFMapping
     _csrf_token_ = CSRFToken()
