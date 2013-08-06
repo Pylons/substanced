@@ -73,9 +73,11 @@
 
     <table class="table">
       <thead>
-        <th>Connection</th>
-        <th>Number of non-ghost objects (in total ${db.cacheSize()})</th>
-        <th>Number of ghost objects</th>
+        <tr>
+          <th>Connection</th>
+          <th>Number of non-ghost objects (in total ${db.cacheSize()})</th>
+          <th>Number of ghost objects</th>
+        </tr>
       </thead>
       <tbody>
         <tr tal:repeat="cache db.cacheDetailSize()">

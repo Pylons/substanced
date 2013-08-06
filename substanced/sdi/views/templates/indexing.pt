@@ -23,7 +23,7 @@
         </tbody>
       </table>
 
-      <form action="@@indexing" method="post">
+      <form action="@@indexing" method="post" onsubmit="sdi_loading_indicator_on()">
         <input type="hidden" name="csrf_token" 
                value="${request.session.get_csrf_token()}"/>
         <input type="submit" name="form.reindex" value="Reindex This Object"/>

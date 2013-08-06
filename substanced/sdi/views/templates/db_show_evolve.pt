@@ -10,8 +10,10 @@
 
     <table tal:condition="unfinished_steps" class="table">
       <thead>
-        <th>Step name</th>
-        <th>Action</th>
+        <tr>
+          <th>Step name</th>
+          <th>Action</th>
+        </tr>
       </thead>
       <tbody>
         <tr tal:repeat="step unfinished_steps">
@@ -33,9 +35,11 @@
 
     <table class="table">
       <thead>
-        <th>Step name</th>
-        <th>Applied on</th>
-        <th>Action</th>
+        <tr>
+          <th>Step name</th>
+          <th>Applied on</th>
+          <th>Action</th>
+        </tr>
       </thead>
       <tbody>
         <tr tal:repeat="step finished_steps">
