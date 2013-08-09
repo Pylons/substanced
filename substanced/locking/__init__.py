@@ -49,6 +49,7 @@ from substanced.util import (
     get_oid,
     )
 from substanced.schema import Schema
+from substanced._compat import INT_TYPES
 
 class LockingError(Exception):
     def __init__(self, lock):
@@ -267,7 +268,7 @@ class LockService(Folder, _AutoNamingFolder):
         ownerid = get_oid(owner_or_ownerid, None)
         if ownerid is None:
             ownerid = owner_or_ownerid
-        if not isinstance(ownerid, int):
+        if not isinstance(ownerid, INT_TYPES):
             raise ValueError(
                 'Bad value for owner_or_ownerid %r' % owner_or_ownerid
                 )
