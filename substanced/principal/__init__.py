@@ -379,6 +379,8 @@ class User(Folder):
         reset = principals.add_reset(self)
         # XXX should this really point at an SDI URL?
         reseturl = request.application_url + request.sdiapi.mgmt_path(reset)
+        if not self.email:
+            raise ValueError('User does not possess a valid email address.')
         message = Message(
             subject = 'Account information for %s' % sitename,
             recipients = [self.email],

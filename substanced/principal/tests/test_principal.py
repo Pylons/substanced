@@ -331,9 +331,27 @@ class TestUser(unittest.TestCase):
         request.root = site
         self.config.include('pyramid_mailer.testing')
         inst = self._makeOne('password')
+        inst.email = 'foo@example.com'
         principals['users']['user'] = inst
         inst.email_password_reset(request)
         self.assertTrue(get_mailer(request).outbox)
+
+    def test_email_password_user_has_no_email(self):
+        from ...testing import make_site
+        site = make_site()
+        principals = site['principals']
+        principals['resets'] = testing.DummyResource()
+        def add_reset(user):
+            self.assertEqual(user, inst)
+        principals.add_reset = add_reset
+        request = testing.DummyRequest()
+        request.sdiapi = DummySDIAPI()
+        request.root = site
+        self.config.include('pyramid_mailer.testing')
+        inst = self._makeOne('password')
+        inst.email = None
+        principals['users']['user'] = inst
+        self.assertRaises(ValueError, inst.email_password_reset, request)
 
     def test_timezone_default(self):
         import pytz
