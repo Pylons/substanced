@@ -27,6 +27,8 @@ def delete_locks_for_resource(event):
 def delete_locks_for_user(event):
     """ Remove all lock objects associated with a user when it is about to be
     removed"""
+    # XXX what if the principal service containing the user is removed?
+    # this event won't be fired
     if event.moving is not None: # it's not really being removed
         return
     if event.loading: # fbo dump/load
