@@ -10,6 +10,11 @@ class Test_principal_added(unittest.TestCase):
         event = testing.DummyResource(loading=True)
         result = self._callFUT(event)
         self.assertEqual(result, None)
+
+    def test_user_does_not_have_an_oid(self):
+        event = testing.DummyResource()
+        event.object = testing.DummyResource()
+        self.assertRaises(AttributeError, self._callFUT, event)
         
     def test_user_not_in_groups(self):
         from ...testing import make_site
@@ -94,6 +99,12 @@ class Test_user_added(unittest.TestCase):
         result = self._callFUT(event)
         self.assertEqual(result, None)
 
+    def test_it_user_has_no_oid(self):
+        user = testing.DummyResource()
+        event = testing.DummyResource(object=user, loading=False)
+        event.registry = DummyRegistry()
+        self.assertRaises(AttributeError, self._callFUT, event)
+        
     def test_it(self):
         from pyramid.security import Allow
         user = testing.DummyResource()

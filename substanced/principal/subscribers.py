@@ -26,17 +26,22 @@ def user_added(event):
     if event.loading: # fbo dump/load
         return
     user = event.object
-    registry = event.registry
+    user_oid = get_oid(user)
+    # When a user is added to a user folder which is not yet seated in a place
+    # that has an objectmap, the call to get_oid(user) above will raise an
+    # AttributeError.
     set_acl(
         user,
-        [(Allow, get_oid(user), ('sdi.view', 'sdi.change-password'))],
-        registry=registry,
+        [(Allow, user_oid, ('sdi.view', 'sdi.change-password'))],
+        registry=event.registry,
         )
 
 @subscribe_will_be_removed(IUser)
 def user_will_be_removed(event):
     """ Remove all password reset objects associated with a user when the user
     is removed """
+    # XXX what if the principal service containing the user is removed?
+    # this event won't be fired
     if event.moving is not None: # it's not really being removed
         return
     if event.loading: # fbo dump/load
@@ -58,9 +63,17 @@ def principal_added(event):
     # disallow same-named groups and users for human sanity (not because
     # same-named users and groups are disallowed by the system)
     principal = event.object
-    principal_name = principal.__name__
     principals = find_service(principal, 'principals')
+    if principals is None:
+        # fire when trying to add a principal to a folder which hasn't
+        # yet been seated (raise an appropriate error, rather than letting
+        # it fall through to erroring out on principals['groups'] below)
+        raise ValueError(
+            'No principals service in lineage when adding a principal'
+            )
 
+    principal_name = principal.__name__
+    
     if IUser.providedBy(principal):
         # it's a user
         groups = principals['groups']
