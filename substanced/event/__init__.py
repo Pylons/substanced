@@ -2,6 +2,8 @@ from functools import update_wrapper
 
 import venusian
 
+from pyramid.decorator import reify
+
 from zope.interface import (
     implementer,
     Interface,
@@ -16,9 +18,12 @@ from ..interfaces import (
     IACLModified,
     IContentCreated,
     )
+
+from ..util import find_objectmap
     
 class _ObjectEvent(object):
     pass
+        
 
 @implementer(IObjectAdded)
 class ObjectAdded(_ObjectEvent):
@@ -93,6 +98,16 @@ class ObjectWillBeRemoved(object):
         self.name = name
         self.moving = moving
         self.loading = loading
+
+    @reify
+    def removed_oids(self):
+        """ Helper property that caches oids that will be removed as the result
+        of this event.  Will return an empty sequence if objectmap cannot be
+        found on self.parent."""
+        objectmap = find_objectmap(self.parent)
+        if objectmap is None:
+            return []
+        return objectmap.pathlookup(self.object)
 
 @implementer(IObjectModified)
 class ObjectModified(object): # pragma: no cover

@@ -148,7 +148,27 @@ class Test_FolderEventSubscriber(unittest.TestCase):
                          [self.event, IFoo, IBar])
 
     
+class TestObjectWillBeRemoved(unittest.TestCase):
+    def _makeOne(self, *arg, **kw):
+        from . import ObjectWillBeRemoved
+        return ObjectWillBeRemoved(*arg, **kw)
 
+    def test_removed_oids_objectmap_is_None(self):
+        obj = testing.DummyResource()
+        parent = testing.DummyResource()
+        name = 'name'
+        inst = self._makeOne(obj, parent, name)
+        self.assertEqual(inst.removed_oids, [])
+        
+    def test_removed_oids_objectmap_is_not_None(self):
+        obj = testing.DummyResource()
+        parent = testing.DummyResource()
+        objectmap = testing.DummyResource()
+        objectmap.pathlookup = lambda *arg: [1]
+        parent.__objectmap__ = objectmap
+        name = 'name'
+        inst = self._makeOne(obj, parent, name)
+        self.assertEqual(inst.removed_oids, [1])
 
 class Test_add_content_subscriber(unittest.TestCase):
     def _callFUT(self, config, subscriber, iface=None, **predicates):
