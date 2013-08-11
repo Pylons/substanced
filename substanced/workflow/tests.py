@@ -999,8 +999,13 @@ class init_workflows_for_objectTests(unittest.TestCase):
 
     def _callFUT(self, event):
         from . import init_workflows_for_object
-        init_workflows_for_object(event)
+        return init_workflows_for_object(event)
 
+    def test_event_moving(self):
+        event = mock.Mock()
+        event.moving = True
+        self.assertEqual(self._callFUT(event), None)
+        
     @mock.patch('substanced.workflow.get_content_type')
     def test_no_workflows(self, mock_get_content_type):
         from . import WorkflowRegistry
@@ -1010,6 +1015,7 @@ class init_workflows_for_objectTests(unittest.TestCase):
         event.registry = mock.Mock()
         event.registry.workflow = WorkflowRegistry()
         event.object = obj
+        event.moving = None
         self._callFUT(event)
         self.assertEqual(obj.mock_calls, [])
 
@@ -1026,6 +1032,7 @@ class init_workflows_for_objectTests(unittest.TestCase):
         event.registry = mock.Mock()
         event.registry.workflow = workflow
         event.object = obj
+        event.moving = None
         self._callFUT(event)
         self.assertEqual(obj.mock_calls, [])
 
@@ -1047,6 +1054,7 @@ class init_workflows_for_objectTests(unittest.TestCase):
         event.registry = mock.Mock()
         event.registry.workflow = workflow
         event.object = obj
+        event.moving = None
         self._callFUT(event)
         self.assertEqual(obj.mock_calls, [])
         self.assertEqual(wf.mock_calls, [])
@@ -1074,6 +1082,7 @@ class init_workflows_for_objectTests(unittest.TestCase):
         event.registry = mock.Mock()
         event.registry.workflow = workflow
         event.object = obj
+        event.moving = None
         self._callFUT(event)
         self.assertEqual(obj.mock_calls, [])
         self.assertEqual(
@@ -1098,6 +1107,7 @@ class init_workflows_for_objectTests(unittest.TestCase):
         event.registry = mock.Mock()
         event.registry.workflow = workflow
         event.object = obj
+        event.moving = None
         self._callFUT(event)
         self.assertEqual(obj.mock_calls, [])
         self.assertEqual(
@@ -1125,6 +1135,7 @@ class init_workflows_for_objectTests(unittest.TestCase):
         event.registry = mock.Mock()
         event.registry.workflow = workflow
         event.object = obj
+        event.moving = None
         self._callFUT(event)
         self.assertEqual(obj2.mock_calls, [])
         self.assertEqual(
