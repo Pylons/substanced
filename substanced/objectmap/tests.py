@@ -2140,11 +2140,10 @@ class Test_referential_integrity(unittest.TestCase):
     def test_reftype_with_source_integrity_with_only_self_targetid(self):
         from ..interfaces import ReferenceType
         obj = testing.DummyResource()
-        obj.__oid__ = 1
         class Reference(ReferenceType):
             source_integrity = True
         obj.__objectmap__ = DummyObjectMap(
-            reftypes=(Reference,), targetids=set([1])
+            reftypes=(Reference,), targetids=set([100])
             )
         event = DummyEvent(obj)
         self.assertEqual(None, self._callFUT(event)) # self-reference ignored
@@ -2173,11 +2172,10 @@ class Test_referential_integrity(unittest.TestCase):
     def test_reftype_with_target_integrity_with_only_self_sourceid(self):
         from ..interfaces import ReferenceType
         obj = testing.DummyResource()
-        obj.__oid__ = 1
         class Reference(ReferenceType):
             target_integrity = True
         obj.__objectmap__ = DummyObjectMap(
-            reftypes=(Reference,), sourceids=set([1])
+            reftypes=(Reference,), sourceids=set([100])
             )
         event = DummyEvent(obj)
         self.assertEqual(None, self._callFUT(event)) # self-reference ignored
@@ -2206,6 +2204,8 @@ class DummyEvent(object):
     def __init__(self, object, moving=None):
         self.object = object
         self.moving = moving
+
+    removed_oids = (100,)
 
 class Dummy(object):
     pass

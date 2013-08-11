@@ -973,30 +973,37 @@ class _ReferencedPredicate(object):
 def referential_integrity(event):
     if event.moving is not None: # being moved
         return
-    obj = event.object
-    obj_oid = get_oid(obj, None)
-    objectmap = find_objectmap(obj)
+
+    objectmap = find_objectmap(event.object)
+
     if objectmap is None:
         return
-    for reftype in objectmap.get_reftypes():
 
-        is_iface = IInterface.providedBy(reftype)
+    reftypes = list(objectmap.get_reftypes())
 
-        if is_iface and reftype.queryTaggedValue('source_integrity', False):
-            targetids = objectmap.targetids(obj, reftype)
-            if obj_oid in targetids:
-                targetids.remove(obj_oid) # self-referential
-            if targetids:
-                # object is a source
-                raise SourceIntegrityError(obj, reftype, targetids)
+    for oid in event.removed_oids:
 
-        if is_iface and reftype.queryTaggedValue('target_integrity', False):
-            sourceids = objectmap.sourceids(obj, reftype)
-            if obj_oid in sourceids:
-                sourceids.remove(obj_oid) # self-referential
-            if sourceids:
-                # object is a target
-                raise TargetIntegrityError(obj, reftype, sourceids)
+        for reftype in reftypes:
+
+            is_iface = IInterface.providedBy(reftype)
+
+            if is_iface and reftype.queryTaggedValue('source_integrity', False):
+                targetids = objectmap.targetids(oid, reftype)
+                if oid in targetids:
+                    targetids.remove(oid) # self-referential
+                if targetids:
+                    # object is a source
+                    obj = objectmap.object_for(oid)
+                    raise SourceIntegrityError(obj, reftype, targetids)
+
+            if is_iface and reftype.queryTaggedValue('target_integrity', False):
+                sourceids = objectmap.sourceids(oid, reftype)
+                if oid in sourceids:
+                    sourceids.remove(oid) # self-referential
+                if sourceids:
+                    # object is a target
+                    obj = objectmap.object_for(oid)
+                    raise TargetIntegrityError(obj, reftype, sourceids)
 
 class ReferentialIntegrityError(Exception):
     """ Exception raised when a referential integrity constraint is violated.
