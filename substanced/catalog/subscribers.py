@@ -58,6 +58,11 @@ def object_added(event):
             if catalogs == old_catalogs:
                 reindex_only = True
 
+    # XXX note that adding objects to an unseated folder that itself contains a
+    # catalog will cause rework to be done, as the below logic will fire once
+    # for the children of the object that was added before the seating, then
+    # once for the same children when the parent object is seated.
+
     for node in postorder(obj):
         oid = get_oid(node, None)
         if oid is not None:
