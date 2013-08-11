@@ -231,8 +231,7 @@ class ObjectMap(Persistent):
 
         omap = self.pathindex.get(path_tuple)
 
-        # rationale: if this key isn't present, no path added ever
-        # contained it
+        # rationale: if this key isn't present, no path added ever contained it
         if omap is None:
             return set()
 
