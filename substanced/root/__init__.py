@@ -61,7 +61,7 @@ class Root(Folder):
         # NB: creation of objectmap deferred until after creation to allow for
         # dump system loader to successfully load a root object; if this were
         # done in __init__, the oid of the root object would not be resettable,
-        # and loaded references to the root object could not be resolved
+        # and loaded references to the root object could not be resolved.
         self.__objectmap__ = ObjectMap(self)
         self.__objectmap__.add(self, ('',))
         catalogs = registry.content.create('Catalogs')
@@ -80,8 +80,6 @@ class Root(Folder):
                 )
         login = settings.get('substanced.initial_login', 'admin')
         email = settings.get('substanced.initial_email', 'admin@example.com')
-        # side effect of ObjectMap constructor: it sets the ``__objectmap__``
-        # attribute of the argument you pass it.
         principals = registry.content.create('Principals')
         # prevent SDI deletion/renaming of root principals service
         principals.__sdi_deletable__ = False
