@@ -17,7 +17,6 @@ from zope.interface.declarations import Declaration
 from pyramid.location import lineage
 from pyramid.threadlocal import get_current_registry
 
-from ..event import ACLModified
 from ..interfaces import IFolder
 
 from .._compat import (
@@ -357,6 +356,7 @@ def set_acl(resource, new_acl, registry=None):
     passed, this function will use the current threadlocal registry to send the
     event.
     """
+    from ..event import ACLModified # avoid circdep
     old_acl = getattr(resource, '__acl__', None)
     if new_acl == old_acl:
         return False
