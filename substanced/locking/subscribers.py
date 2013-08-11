@@ -9,21 +9,30 @@ from . import (
     )
 
 @subscribe_will_be_removed()
-def delete_locks(event):
-    """ Remove all lock objects associated with an object and/or user when
-    it/he is removed"""
+def delete_locks_for_resource(event):
+    """ Remove all lock objects associated with an resource when it is about to
+    be removed """
     if event.moving is not None: # it's not really being removed
         return
     if event.loading: # fbo dump/load
         return
-    resource = event.object
-    objectmap = find_objectmap(resource)
-    if objectmap is not None:
-        # might be None if resource is a broken object
-        if IUser.providedBy(resource):
-            locks = objectmap.targets(resource, UserToLock)
+    objectmap = find_objectmap(event.parent)
+    if objectmap is not None: # might be None if parent is not seated
+        for oid in event.removed_oids:
+            locks = objectmap.targets(oid, WriteLock)
             for lock in locks:
                 lock.commit_suicide()
-        locks = objectmap.targets(resource, WriteLock)
+
+@subscribe_will_be_removed(IUser)
+def delete_locks_for_user(event):
+    """ Remove all lock objects associated with a user when it is about to be
+    removed"""
+    if event.moving is not None: # it's not really being removed
+        return
+    if event.loading: # fbo dump/load
+        return
+    objectmap = find_objectmap(event.parent)
+    if objectmap is not None: # might be None if parent is not seated
+        locks = objectmap.targets(event.object, UserToLock)
         for lock in locks:
             lock.commit_suicide()
