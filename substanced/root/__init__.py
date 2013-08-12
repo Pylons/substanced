@@ -80,6 +80,7 @@ class Root(Folder):
                 )
         login = settings.get('substanced.initial_login', 'admin')
         email = settings.get('substanced.initial_email', 'admin@example.com')
+
         principals = registry.content.create('Principals')
         # prevent SDI deletion/renaming of root principals service
         principals.__sdi_deletable__ = False
@@ -87,7 +88,14 @@ class Root(Folder):
         user = principals.add_user(login, password, email, registry=registry)
         admins = principals.add_group('admins', registry=registry)
         admins.memberids.connect([user])
+
+        locks = registry.content.create('Lock Service')
+        # prevent SDI deletion/renaming of locks service
+        locks.__sdi_deletable__ = False
+        self.add_service('locks', locks, registry=registry)
+
         self.sdi_title = 'Substance D'
+
         set_acl(
             self,
             [(Allow, get_oid(admins), ALL_PERMISSIONS)],

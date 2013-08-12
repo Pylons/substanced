@@ -617,22 +617,11 @@ class Test_lock_resource(unittest.TestCase):
         self.assertEqual(lockservice.infinite, True)
 
     def test_it_with_missing_lock_service(self):
-        from substanced.locking import WriteLock
         from zope.interface import alsoProvides
         from substanced.interfaces import IFolder
-        lockservice = DummyLockService()
-        self.config.registry.content = DummyContentRegistry(lockservice)
         resource = testing.DummyResource()
-        resource.add_service = resource.__setitem__
         alsoProvides(resource, IFolder)
-        result = self._callFUT(resource, 1, 3600)
-        self.assertEqual(result, True)
-        self.assertEqual(resource['locks'], lockservice)
-        self.assertEqual(lockservice.resource, resource)
-        self.assertEqual(lockservice.owner, 1)
-        self.assertEqual(lockservice.timeout, 3600)
-        self.assertEqual(lockservice.locktype, WriteLock)
-        self.assertEqual(lockservice.infinite, False)
+        self.assertRaises(ValueError, self._callFUT, resource, 1, 3600)
 
 class Test_could_lock_resource(unittest.TestCase):
     def setUp(self):
@@ -659,15 +648,9 @@ class Test_could_lock_resource(unittest.TestCase):
     def test_it_with_missing_lock_service(self):
         from zope.interface import alsoProvides
         from substanced.interfaces import IFolder
-        lockservice = DummyLockService()
-        self.config.registry.content = DummyContentRegistry(lockservice)
         resource = testing.DummyResource()
-        resource.add_service = resource.__setitem__
         alsoProvides(resource, IFolder)
-        result = self._callFUT(resource, 1)
-        self.assertEqual(result, True)
-        self.assertEqual(resource['locks'], lockservice)
-        self.assertEqual(lockservice.borrowed, resource)
+        self.assertRaises(ValueError, self._callFUT, resource, 1)
 
 class Test_unlock_resource(unittest.TestCase):
     def setUp(self):
@@ -695,20 +678,12 @@ class Test_unlock_resource(unittest.TestCase):
         self.assertEqual(lockservice.locktype, WriteLock)
 
     def test_it_with_missing_lock_service(self):
-        from substanced.locking import WriteLock
         from zope.interface import alsoProvides
         from substanced.interfaces import IFolder
-        lockservice = DummyLockService()
-        self.config.registry.content = DummyContentRegistry(lockservice)
         resource = testing.DummyResource()
         resource.add_service = resource.__setitem__
         alsoProvides(resource, IFolder)
-        result = self._callFUT(resource, 1)
-        self.assertEqual(result, True)
-        self.assertEqual(resource['locks'], lockservice)
-        self.assertEqual(lockservice.resource, resource)
-        self.assertEqual(lockservice.owner, 1)
-        self.assertEqual(lockservice.locktype, WriteLock)
+        self.assertRaises(ValueError, self._callFUT, resource, 1)
 
 class Test_unlock_token(unittest.TestCase):
     def setUp(self):
@@ -735,16 +710,10 @@ class Test_unlock_token(unittest.TestCase):
     def test_it_with_missing_lock_service(self):
         from zope.interface import alsoProvides
         from substanced.interfaces import IFolder
-        lockservice = DummyLockService()
-        self.config.registry.content = DummyContentRegistry(lockservice)
         resource = testing.DummyResource()
         resource.add_service = resource.__setitem__
         alsoProvides(resource, IFolder)
-        result = self._callFUT(resource, 'TOKEN', 1)
-        self.assertEqual(result, True)
-        self.assertEqual(resource['locks'], lockservice)
-        self.assertEqual(lockservice.token, 'TOKEN')
-        self.assertEqual(lockservice.owner, 1)
+        self.assertRaises(ValueError, self._callFUT, resource, 'TOKEN', 1)
 
 class Test_discover_resource_locks(unittest.TestCase):
     def setUp(self):
@@ -788,21 +757,11 @@ class Test_discover_resource_locks(unittest.TestCase):
         self.assertEqual(lockservice.include_lineage, False)
 
     def test_it_with_missing_lock_service(self):
-        from substanced.locking import WriteLock
         from zope.interface import alsoProvides
         from substanced.interfaces import IFolder
-        lockservice = DummyLockService()
-        self.config.registry.content = DummyContentRegistry(lockservice)
         resource = testing.DummyResource()
-        resource.add_service = resource.__setitem__
         alsoProvides(resource, IFolder)
-        result = self._callFUT(resource)
-        self.assertEqual(result, True)
-        self.assertEqual(resource['locks'], lockservice)
-        self.assertEqual(lockservice.resource, resource)
-        self.assertEqual(lockservice.locktype, WriteLock)
-        self.assertEqual(lockservice.include_invalid, False)
-        self.assertEqual(lockservice.include_lineage, True)
+        self.assertRaises(ValueError, self._callFUT, resource)
 
 class DummyObjectMap(object):
     def __init__(self, result, raises=None):

@@ -41,7 +41,8 @@ class TestRoot(unittest.TestCase):
         created.add_group = add_group
         created2 = testing.DummyResource()
         created2.add_catalog = add_catalog
-        created_stack = [created2, created]
+        locks = testing.DummyResource()
+        created_stack = [created2, created, locks]
         registry = testing.DummyResource()
         registry.settings = settings
         registry.content = testing.DummyResource()
@@ -66,10 +67,12 @@ class TestRoot(unittest.TestCase):
         inst.after_create(inst, registry)
         self.assertTrue('__objectmap__' in inst.__dict__)
         principals = inst['principals']
+        locks = inst['locks']
         self.assertTrue(principals.__is_service__)
         self.assertTrue(registry.group.connected)
         self.assertTrue(inst.__acl__)
         self.assertFalse(registry.created.__sdi_deletable__)
+        self.assertTrue(locks.__is_service__)
 
     def test_after_create_without_password(self):
         from pyramid.exceptions import ConfigurationError

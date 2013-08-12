@@ -389,13 +389,10 @@ class LockService(Folder, _AutoNamingFolder):
         return valid
 
 def _get_lock_service(resource):
-    lockservice = find_service(resource, 'locks')
-    if lockservice is None:
-        registry = get_current_registry()
-        lockservice = registry.content.create('Lock Service')
-        root = find_root(resource)
-        root.add_service('locks', lockservice)
-    return lockservice
+    locks = find_service(resource, 'locks')
+    if locks is None:
+        raise ValueError('No lock service in lineage')
+    return locks
 
 def lock_resource(
     resource,
@@ -563,4 +560,5 @@ def discover_resource_locks(
 def includeme(config): # pragma: no cover
     config.add_permission('sdi.lock')
     config.include('.views')
+    config.include('.evolve')
 
