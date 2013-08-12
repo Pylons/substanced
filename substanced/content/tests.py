@@ -154,6 +154,15 @@ class TestContentRegistry(unittest.TestCase):
         inst = self._makeOne()
         inst.factory_types['dummy'] = 'ContentType'
         self.assertEqual(inst.find(resource, 'ContentType'), root)
+
+    def test_factory_type_for_content_type_exists(self):
+        inst = self._makeOne()
+        inst.factory_types['dummy'] = 'ct'
+        self.assertEqual(inst.factory_type_for_content_type('ct'), 'dummy')
+
+    def test_factory_type_for_content_type_notexists(self):
+        inst = self._makeOne()
+        self.assertEqual(inst.factory_type_for_content_type('ct'), None)
         
 class Test_content(unittest.TestCase):
     def _makeOne(self, content_type):

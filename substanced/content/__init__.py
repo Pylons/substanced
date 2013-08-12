@@ -104,6 +104,12 @@ class ContentRegistry(object):
             if self.typeof(location) == content_type:
                 return location
 
+    def factory_type_for_content_type(self, content_type):
+        """ Return the factory_type value for the content_type requested """
+        for ftype, ctype in self.factory_types.items():
+            if ctype == content_type:
+                return ftype
+
 # venusian decorator that marks a content factory
 class content(object):
     """ Use as a decorator for a content factory (usually a class).  Accepts

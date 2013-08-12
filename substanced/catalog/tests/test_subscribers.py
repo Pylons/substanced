@@ -337,6 +337,7 @@ class Test_on_startup(unittest.TestCase):
 
     def test_autosync_false_from_ini(self):
         registry = self.config.registry
+        registry.content = DummyContentRegistry()
         registry.settings['substanced.catalogs.autosync'] = 'false'
         app = testing.DummyResource()
         app.registry = registry
@@ -346,6 +347,7 @@ class Test_on_startup(unittest.TestCase):
 
     def test_autosync_false_from_ini_bc(self):
         registry = self.config.registry
+        registry.content = DummyContentRegistry()
         registry.settings['substanced.autosync_catalogs'] = 'false'
         app = testing.DummyResource()
         app.registry = registry
@@ -355,6 +357,7 @@ class Test_on_startup(unittest.TestCase):
         
     def test_autosync_missing_from_ini(self):
         registry = self.config.registry
+        registry.content = DummyContentRegistry()
         app = testing.DummyResource()
         app.registry = registry
         event = DummyEvent(app, None)
@@ -363,6 +366,7 @@ class Test_on_startup(unittest.TestCase):
 
     def test_autosync_true_from_ini_no_objectmap(self):
         registry = self.config.registry
+        registry.content = DummyContentRegistry()
         registry.settings['substanced.catalogs.autosync'] = 'true'
         app = testing.DummyResource()
         app.registry = registry
@@ -377,6 +381,7 @@ class Test_on_startup(unittest.TestCase):
         from mock import patch
         with patch.dict(os.environ, {'SUBSTANCED_CATALOGS_AUTOSYNC':'false'}):
             registry = self.config.registry
+            registry.content = DummyContentRegistry()
             registry.settings['substanced.catalogs.autosync'] = 'true'
             app = testing.DummyResource()
             app.registry = registry
@@ -389,6 +394,7 @@ class Test_on_startup(unittest.TestCase):
         import os
         with patch.dict(os.environ, {'SUBSTANCED_CATALOGS_AUTOSYNC':'true'}):
             registry = self.config.registry
+            registry.content = DummyContentRegistry()
             registry.settings['substanced.catalogs.autosync'] = 'false'
             app = testing.DummyResource()
             app.registry = registry
@@ -400,6 +406,7 @@ class Test_on_startup(unittest.TestCase):
         
     def test_autosync_true_no_oids(self):
         registry = self.config.registry
+        registry.content = DummyContentRegistry()
         registry.settings['substanced.catalogs.autosync'] = 'true'
         app = testing.DummyResource()
         app.registry = registry
@@ -412,6 +419,7 @@ class Test_on_startup(unittest.TestCase):
 
     def test_autosync_true_with_oids(self):
         registry = self.config.registry
+        registry.content = DummyContentRegistry()
         registry.settings['substanced.catalogs.autosync'] = 'true'
         app = testing.DummyResource()
         app.registry = registry
@@ -427,6 +435,7 @@ class Test_on_startup(unittest.TestCase):
     def test_autosync_true_with_oids_raises(self):
         from zope.interface.interfaces import ComponentLookupError
         registry = self.config.registry
+        registry.content = DummyContentRegistry()
         registry.settings['substanced.catalogs.autosync'] = 'true'
         app = testing.DummyResource()
         app.registry = registry
@@ -507,3 +516,11 @@ class DummyIndex(object):
     def reindex_resource(self, resource, oid=None, action_mode=None):
         self.oid = oid
         self.resource = resource
+
+class DummyContentRegistry(object):
+    def __init__(self, result=None):
+        self.result = result
+
+    def factory_type_for_content_type(self, content_type):
+        return self.result
+    

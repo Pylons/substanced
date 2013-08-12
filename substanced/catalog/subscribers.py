@@ -51,7 +51,7 @@ def object_added(event):
         # as the old place, just reindex; don't add.  The object_removed
         # subscriber depends on this behavior.
         if event.parent is event.moving:
-            # optimization to avoid calling find_catalogs (rename)
+            # optimization to avoid calling find_catalogs during simple rename
             reindex_only = True 
         else:
             old_catalogs = find_catalogs(event.moving)
@@ -162,7 +162,9 @@ def on_startup(event):
         root = app.root_factory(request)
         objectmap = find_objectmap(root)
         if objectmap is not None:
-            oids = objectmap.get_extent(get_dotted_name(Catalog))
+            content = registry.content
+            factory_type = content.factory_type_for_content_type('Catalog')
+            oids = objectmap.get_extent(factory_type)
             for oid in oids:
                 catalog = objectmap.object_for(oid)
                 if catalog is not None:
