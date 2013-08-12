@@ -24,10 +24,7 @@ from ..util import (
     postorder,
     get_oid,
     find_catalogs,
-    get_dotted_name,
     )
-
-from . import Catalog
 
 logger = logging.getLogger(__name__)
 
