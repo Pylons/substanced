@@ -197,7 +197,7 @@ class AuditScribe(object):
         gen, idx = auditlog.latest_id()
         return gen, idx
                 
-class AuditLogEntry(Persistent):
+class AuditLogEntry(object):
     def __init__(self, name, oid, payload, timestamp):
         self.name = name
         self.oid = oid
