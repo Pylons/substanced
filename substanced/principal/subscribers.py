@@ -35,13 +35,15 @@ def user_added(event):
         [(Allow, user_oid, ('sdi.view', 'sdi.change-password'))],
         registry=event.registry,
         )
+    # When set_acl is called, it will end up sending an ACLModified event,
+    # which will cause the acl_modified function below to be called.
 
 @subscribe_will_be_removed(IUser)
 def user_will_be_removed(event):
     """ Remove all password reset objects associated with a user when the user
     is removed """
-    # XXX what if the principal service containing the user is removed?
-    # this event won't be fired
+    # if the principal service containing the user (or any other containment
+    # parent of the user) is removed, this event won't be fired
     if event.moving is not None: # it's not really being removed
         return
     if event.loading: # fbo dump/load
@@ -59,6 +61,9 @@ def principal_added(event):
     An :class:`substanced.event.IObjectAdded` event subscriber."""
     if event.loading: # fbo dump/load
         return
+
+    # NB: don't return on event.moving; it's possible the user is being moved
+    # between locations that have different user folders.
 
     # disallow same-named groups and users for human sanity (not because
     # same-named users and groups are disallowed by the system)
@@ -108,7 +113,7 @@ def acl_maybe_added(event):
     obj = event.object
     objectmap = find_objectmap(obj)
 
-    if objectmap is not None:
+    if objectmap is not None: # object might not yet be seated
         for resource in postorder(obj):
             acl = getattr(resource, '__acl__', None)
             if acl is not None:
@@ -124,7 +129,7 @@ def acl_modified(event):
     ACL-bearing object."""
     objectmap = find_objectmap(event.object)
 
-    if objectmap is not None:
+    if objectmap is not None: # object might not yet be seated
 
         old_principals = _referenceable_principals(event.old_acl)
         new_principals = _referenceable_principals(event.new_acl)
