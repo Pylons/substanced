@@ -9,6 +9,7 @@ from pyramid.security import (
 
 from ..interfaces import IRoot
 
+from ..audit import AuditLog
 from ..content import content
 from ..folder import Folder
 from ..objectmap import ObjectMap
@@ -64,6 +65,8 @@ class Root(Folder):
         # and loaded references to the root object could not be resolved.
         self.__objectmap__ = ObjectMap(self)
         self.__objectmap__.add(self, ('',))
+        self.__auditlog__ = AuditLog()
+
         catalogs = registry.content.create('Catalogs')
         catalogs.__sdi_deletable__ = False
         self.add_service('catalogs', catalogs)
@@ -102,4 +105,3 @@ class Root(Folder):
             registry=registry,
             )
         
-    

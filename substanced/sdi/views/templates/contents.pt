@@ -29,6 +29,8 @@
               "${request.sdiapi.mgmt_path(context, 'auditstream-sse')}");
           source.addEventListener("ContentAdded" , redraw)
           source.addEventListener("ContentRemoved" , redraw)
+          source.addEventListener("ContentMoved" , redraw)
+          source.addEventListener("ContentDuplicated" , redraw)
         }
 
    </script>

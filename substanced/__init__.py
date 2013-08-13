@@ -40,6 +40,7 @@ def include(config): # pragma: no cover
     config.include('.workflow')
     config.include('.dump')
     config.include('.locking')
+    config.include('.audit')
 
 def scan(config): # pragma: no cover
     """ Perform all ``config.scan`` tasks required for Substance D and the

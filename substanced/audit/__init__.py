@@ -4,7 +4,6 @@ import time
 from persistent import Persistent
 from ZODB.POSException import ConflictError
 
-from pyramid.traversal import find_root
 from pyramid.compat import is_nonstr_iter
 
 from substanced.util import acquire
@@ -182,13 +181,7 @@ class AuditScribe(object):
         """
         auditlog = self.get_auditlog()
         if auditlog is None:
-            if hasattr(self.context, '__parent__'):
-                auditlog = AuditLog()
-                setattr(find_root(self.context), '__auditlog__', auditlog)
-            else:
-                raise ValueError(
-                    'context must have a parent to add an audit log entry'
-                    )
+            return
         auditlog.add(name, oid, **kw)
             
     def newer(self, gen, idx, oids=()):
@@ -239,3 +232,5 @@ class AuditLog(Persistent):
         index_id = len(last_layer._stack) - 1
         return gen, index_id
 
+def includeme(config): # pragma: no cover
+    config.include('.evolve')
