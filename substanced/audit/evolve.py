@@ -8,7 +8,6 @@ def remove_bogus_auditlogs(root):
     for resource in postorder(root):
         i += 1
         if hasattr(resource, '__auditlog__'):
-            import pdb; pdb.set_trace()
             del resource.__auditlog__
         resource._p_deactivate()
         if i % 1000 == 0:
