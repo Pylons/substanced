@@ -311,6 +311,20 @@ class FolderContents(object):
         else:
             return columnsfn(context, resource, request, defaults)
 
+    def get_options(self):
+        # #33, allow overriding the grid's rowHeight among other
+        # grid options. Like get_columns, you subclass to let a
+        # custom contents view change the behavior of the grid.
+
+        return dict(
+            editable=False,
+            enableAddRow=False,
+            enableCellNavigation=True,
+            asyncEditorLoading=True,
+            forceFitColumns=True,
+            rowHeight=35,
+            )
+
     def get_default_query(self):
         """ The default query function for a folder """
         system_catalog = self.system_catalog
@@ -626,14 +640,7 @@ class FolderContents(object):
         addables = self.sdi_add_views(context, request)
 
         # construct the default slickgrid widget options
-        slickgrid_options = dict(
-            editable = False,
-            enableAddRow = False,
-            enableCellNavigation = True,
-            asyncEditorLoading = True,
-            forceFitColumns = True,
-            rowHeight = 35,
-            )
+        slickgrid_options = self.get_options()
 
         is_reorderable = context.is_reorderable()
 
