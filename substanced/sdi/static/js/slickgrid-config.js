@@ -121,12 +121,22 @@
             }
 
             // checkbox column: add it
-            var checkboxSelector = new Slick.CheckboxSelectColumn({});
+            var cbo_class = "sdi-sg-checkboxcell";
+            var cbo = {cssClass: cbo_class};
+            var checkboxSelector = new Slick.CheckboxSelectColumn(cbo);
             if (this.wrapperOptions.showCheckboxColumn) {
                 columns.unshift(checkboxSelector.getColumnDefinition());
             }
 
             var grid = this.grid = new Slick.Grid(this.element, [], columns, wrapperOptions.slickgridOptions);
+
+            // #49, allow clicking on the div around the checkbox
+            // to toggle selection
+            if (this.wrapperOptions.showCheckboxColumn) {
+                this.element.on('click', "." + cbo_class, function (evt) {
+                    $(this).find(":checkbox").click();
+                })
+            }
 
             var sortCol = wrapperOptions.sortCol;
             var sortDir = wrapperOptions.sortDir;
