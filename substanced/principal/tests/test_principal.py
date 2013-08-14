@@ -383,6 +383,71 @@ class TestPasswordReset(unittest.TestCase):
         self.assertEqual(user.password, 'password')
         self.assertFalse('reset' in parent)
 
+class TestDefaultUserLocator(unittest.TestCase):
+    def _getTargetClass(self):
+        from .. import DefaultUserLocator
+        return DefaultUserLocator
+
+    def _makeOne(self, context=None, request=None):
+        return self._getTargetClass()(context, request)
+
+    def test_class_conforms_to_IUserLocator(self):
+        from zope.interface.verify import verifyClass
+        from ...interfaces import IUserLocator
+        verifyClass(IUserLocator, self._getTargetClass())
+
+    def test_instance_conforms_to_IUserLocator(self):
+        from zope.interface.verify import verifyObject
+        from ...interfaces import IUserLocator
+        context = object()
+        request = {}
+        verifyObject(IUserLocator, self._makeOne())
+
+    def test_get_user_by_login(self):
+        from pyramid.testing import DummyModel
+        from pyramid.testing import DummyRequest
+        from zope.interface import directlyProvides
+        from ...interfaces import IFolder
+        context = DummyModel()
+        directlyProvides(context, IFolder)
+        principals = context['principals'] = DummyModel(__is_service__=True)
+        directlyProvides(principals, IFolder)
+        users = principals['users'] = DummyModel()
+        phred = users['phred'] = DummyModel()
+        adapter = self._makeOne(context, DummyRequest())
+        self.assertTrue(adapter.get_user_by_login('phred') is phred)
+
+    def test_get_user_by_userid(self):
+        from pyramid.testing import DummyModel
+        from pyramid.testing import DummyRequest
+        from zope.interface import directlyProvides
+        from ...interfaces import IFolder
+        context = DummyModel()
+        directlyProvides(context, IFolder)
+        principals = context['principals'] = DummyModel(__is_service__=True)
+        directlyProvides(principals, IFolder)
+        users = principals['users'] = DummyModel()
+        phred = users['phred'] = DummyModel()
+        adapter = self._makeOne(context, DummyRequest())
+        omap = context.__objectmap__ = DummyObjectMap(oid123=phred)
+        self.assertTrue(adapter.get_user_by_userid('oid123') is phred)
+
+    def test_get_groupids(self):
+        from pyramid.testing import DummyModel
+        from pyramid.testing import DummyRequest
+        from zope.interface import directlyProvides
+        from ...interfaces import IFolder
+        context = DummyModel()
+        directlyProvides(context, IFolder)
+        principals = context['principals'] = DummyModel(__is_service__=True)
+        directlyProvides(principals, IFolder)
+        users = principals['users'] = DummyModel()
+        phred = users['phred'] = DummyModel()
+        phred.groupids = ['phlyntstones']
+        adapter = self._makeOne(context, DummyRequest())
+        omap = context.__objectmap__ = DummyObjectMap(oid123=phred)
+        self.assertEqual(adapter.get_groupids('oid123'), ['phlyntstones'])
+
 class Test_groupfinder(unittest.TestCase):
     def _callFUT(self, userid, request):
         from .. import groupfinder
@@ -430,12 +495,16 @@ class DummyFolder(testing.DummyResource):
             raise KeyError(value)
 
 class DummyObjectMap(object):
-    def __init__(self, result=()):
+    def __init__(self, result=(), **kw):
         self.result = result
         self.connections = []
+        self.map = kw
 
     def sources(self, object, reftype):
         return self.result
+
+    def object_for(self, oid):
+        return self.map.get(oid)
 
     def connect(self, source, target, reftype):
         self.connections.append((source, target, reftype))
