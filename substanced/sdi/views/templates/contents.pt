@@ -138,7 +138,8 @@
           <div class="input-append">
        	    <input type="text" name="filter." class="input-medium search-query"
 	           placeholder="Type to filter…" tal:attributes="value request.params.get('filter.', '')">
-       	    <button type="submit" class="btn" disabled="true"><i class="icon-search"> </i></button>
+       	    <button id="sdi-contents-filter-clear" class="btn"><i
+       	    class="icon-remove-circle"></i></button>
           </div>
         </div>
 
@@ -192,6 +193,15 @@
                 delayedAction(function () {
                     gridWrapper.setSearchString($filter.val());
                 });
+            });
+
+            // Clear filter, issue 47
+            $('#sdi-contents-filter-clear')
+            .on('click', function () {
+                $filter
+                    .val('')
+                    .trigger('keyup');
+                return false;
             });
 
             // Update the buttons if the selection has changed.
