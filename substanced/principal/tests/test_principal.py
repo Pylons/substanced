@@ -92,21 +92,6 @@ class TestUsers(unittest.TestCase):
         inst = self._makeOne()
         self.assertFalse(inst.__sdi_addable__(None, intr))
 
-class TestPasswordResets(unittest.TestCase):
-    def _makeOne(self):
-        from .. import PasswordResets
-        return PasswordResets()
-
-    def test___sdi_addable__True(self):
-        intr = {'content_type':'Password Reset'}
-        inst = self._makeOne()
-        self.assertTrue(inst.__sdi_addable__(None, intr))
-
-    def test___sdi_addable__False(self):
-        intr = {'content_type':'Wrong'}
-        inst = self._makeOne()
-        self.assertFalse(inst.__sdi_addable__(None, intr))
-
 class TestGroups(unittest.TestCase):
     def _makeOne(self):
         from .. import Groups
@@ -363,6 +348,41 @@ class TestUser(unittest.TestCase):
         inst = self._makeOne('abc', tzname='US/Eastern')
         self.assertEqual(inst.timezone, pytz.timezone('US/Eastern'))
 
+class TestPasswordResets(unittest.TestCase):
+    def _makeOne(self):
+        from .. import PasswordResets
+        return PasswordResets()
+
+    def test___sdi_addable__True(self):
+        intr = {'content_type':'Password Reset'}
+        inst = self._makeOne()
+        self.assertTrue(inst.__sdi_addable__(None, intr))
+
+    def test___sdi_addable__False(self):
+        intr = {'content_type':'Wrong'}
+        inst = self._makeOne()
+        self.assertFalse(inst.__sdi_addable__(None, intr))
+
+class TestPasswordReset(unittest.TestCase):
+    def _makeOne(self):
+        from .. import PasswordReset
+        return PasswordReset()
+
+    def test_reset_password(self):
+        from ...interfaces import IFolder
+        parent = testing.DummyResource(__provides__=IFolder)
+        user = testing.DummyResource()
+        def set_password(password):
+            user.password = password
+        user.set_password = set_password
+        objectmap = DummyObjectMap((user,))
+        inst = self._makeOne()
+        parent.__objectmap__ = objectmap
+        parent['reset'] = inst
+        inst.reset_password('password')
+        self.assertEqual(user.password, 'password')
+        self.assertFalse('reset' in parent)
+
 class Test_groupfinder(unittest.TestCase):
     def _callFUT(self, userid, request):
         from .. import groupfinder
@@ -399,26 +419,6 @@ class Test_groupfinder(unittest.TestCase):
         request.context = context
         result = self._callFUT(1, request)
         self.assertEqual(result, (1,2))
-
-class TestPasswordReset(unittest.TestCase):
-    def _makeOne(self):
-        from .. import PasswordReset
-        return PasswordReset()
-
-    def test_reset_password(self):
-        from ...interfaces import IFolder
-        parent = testing.DummyResource(__provides__=IFolder)
-        user = testing.DummyResource()
-        def set_password(password):
-            user.password = password
-        user.set_password = set_password
-        objectmap = DummyObjectMap((user,))
-        inst = self._makeOne()
-        parent.__objectmap__ = objectmap
-        parent['reset'] = inst
-        inst.reset_password('password')
-        self.assertEqual(user.password, 'password')
-        self.assertFalse('reset' in parent)
 
         
 from ...interfaces import IFolder
