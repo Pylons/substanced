@@ -435,6 +435,13 @@ class DefaultUserLocator(object):
         user = objectmap.object_for(userid)
         return user
 
+    def get_user_by_email(self, email):
+        context = self.context
+        users = find_service(context, 'principals', 'users')
+        for user in users.values():
+            if user.email == email:
+                return user
+
     def get_groupids(self, userid):
         user = self.get_user_by_userid(userid)
         if user is None:

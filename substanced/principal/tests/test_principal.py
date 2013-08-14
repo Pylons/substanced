@@ -416,6 +416,7 @@ class TestDefaultUserLocator(unittest.TestCase):
         phred = users['phred'] = DummyModel()
         adapter = self._makeOne(context, DummyRequest())
         self.assertTrue(adapter.get_user_by_login('phred') is phred)
+        self.assertTrue(adapter.get_user_by_login('bharney') is None)
 
     def test_get_user_by_userid(self):
         from pyramid.testing import DummyModel
@@ -431,6 +432,25 @@ class TestDefaultUserLocator(unittest.TestCase):
         adapter = self._makeOne(context, DummyRequest())
         omap = context.__objectmap__ = DummyObjectMap(oid123=phred)
         self.assertTrue(adapter.get_user_by_userid('oid123') is phred)
+        self.assertTrue(adapter.get_user_by_userid('nonesuch') is None)
+
+    def test_get_user_by_email(self):
+        from pyramid.testing import DummyModel
+        from pyramid.testing import DummyRequest
+        from zope.interface import directlyProvides
+        from ...interfaces import IFolder
+        context = DummyModel()
+        directlyProvides(context, IFolder)
+        principals = context['principals'] = DummyModel(__is_service__=True)
+        directlyProvides(principals, IFolder)
+        users = principals['users'] = DummyModel()
+        bharney = users['bharney'] = DummyModel(email='bharney@example.com')
+        phred = users['phred'] = DummyModel(email='phred@example.com')
+        adapter = self._makeOne(context, DummyRequest())
+        self.assertTrue(
+            adapter.get_user_by_email('phred@example.com') is phred)
+        self.assertTrue(
+            adapter.get_user_by_email('nonesuch@example.com') is None)
 
     def test_get_groupids(self):
         from pyramid.testing import DummyModel
