@@ -1,30 +1,46 @@
-<div metal:use-macro="request.sdiapi.main_template">
+<html metal:use-macro="request.sdiapi.main_template">
+ <body>
+  <div metal:fill-slot="main">
 
-    <div metal:fill-slot="main">
-        <div class="login-form">
-            <h2>Log In</h2>
+   <metal:slot metal:define-slot="before-login-form" />
 
-            <form action="${url}" method="post">
-                <div class="clearfix">
-                    <input type="text" name="login" value="${login}"
-                           placeholder="Login" autofocus="autofocus"/>
-                </div>
-                <div class="clearfix">
-                    <input type="password" name="password"
-                           value="${password}"
-                           placeholder="Password"/>
-                </div>
-                <input type="submit" name="form.submitted" value="Log In"
-                       class="btn btn-primary"/>
-                <input type="hidden" name="csrf_token"
-                       value="${request.session.get_csrf_token()}"/>
-            </form>
-        </div>
+   <div class="login-form">
 
-        <a href="${request.sdiapi.mgmt_path(request.root, '@@resetpassword')}">
-            Forgot your password?
-        </a>
+    <h2>Log In</h2>
 
-    </div>
+    <form action="${url}" method="post"
+          metal:define-macro="login-form">
 
-</div>
+     <input type="hidden" name="csrf_token"
+            value="${request.session.get_csrf_token()}" />
+
+     <div class="clearfix">
+      <input type="text" name="login"
+             autofocus="autofocus" placeholder="Login"
+             value="${login}" />
+     </div>
+
+     <div class="clearfix">
+      <input type="password" name="password"
+             placeholder="Password"
+             value="${password}" />
+     </div>
+
+     <input type="submit" name="form.submitted" class="btn btn-primary"
+            value="Log In" />
+
+    </form>
+
+   </div>
+
+   <p id="password-reset-link"
+      metal:define-macro="password-reset-link">
+    <a href="${request.sdiapi.mgmt_path(request.root, '@@resetpassword')}"
+    >Forgot your password?</a>
+   </p>
+
+   <metal:slot metal:define-slot="after-login-form" />
+
+  </div>
+ </body>
+</html>
