@@ -1,4 +1,7 @@
-<html metal:use-macro="request.sdiapi.main_template">
+<html metal:extend-macro="request.sdiapi.main_template">
+ <head>
+    <metal:slot metal:define-slot="head-more" />
+ </head>
  <body>
   <div metal:fill-slot="main">
 
