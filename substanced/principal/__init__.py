@@ -293,9 +293,15 @@ def groups_choices(context, request):
               principals['groups'].items()]
     return values
 
+_ZONES = pytz.all_timezones
+
+@colander.deferred
+def tzname_widget(node, kw):
+    return ChosenSingleWidget(values=zip(_ZONES, _ZONES))
+
 class UserSchema(Schema):
-    """ The property schema for :class:`substanced.principal.User`
-    objects."""
+    """ Property schema for :class:`substanced.principal.User` objects.
+    """
     name = colander.SchemaNode(
         colander.String(),
         validator=login_validator,
@@ -311,10 +317,8 @@ class UserSchema(Schema):
     tzname = colander.SchemaNode(
         colander.String(),
         title='Timezone',
-        widget=ChosenSingleWidget(
-            values=zip(pytz.all_timezones, pytz.all_timezones)
-            ),
-        validator=colander.OneOf(pytz.all_timezones),
+        widget=tzname_widget,
+        validator=colander.OneOf(_ZONES)
         )
     groupids = MultireferenceIdSchemaNode(
         choices_getter=groups_choices,
