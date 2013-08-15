@@ -13,6 +13,7 @@
      <h2>Log In</h2>
     </metal:slot>
 
+    <metal:slot metal:define-slot="login-form">
     <form action="${url}" method="post"
           metal:define-macro="login-form">
 
@@ -35,14 +36,17 @@
             value="Log In" />
 
     </form>
+    </metal:slot>
 
    </div>
 
+   <metal:slot metal:define-slot="password-reset-link">
    <p id="password-reset-link"
       metal:define-macro="password-reset-link">
     <a href="${request.sdiapi.mgmt_path(request.root, '@@resetpassword')}"
     >Forgot your password?</a>
    </p>
+   </metal:slot>
 
    <metal:slot metal:define-slot="after-login-form" />
 
