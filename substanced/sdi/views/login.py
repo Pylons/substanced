@@ -2,6 +2,7 @@ from pyramid.httpexceptions import (
     HTTPForbidden,
     HTTPFound
     )
+from pyramid.renderers import get_renderer
 from pyramid.session import check_csrf_token
 from pyramid.security import (
     remember,
@@ -73,11 +74,15 @@ def login(context, request):
                 return HTTPFound(location = came_from, headers = headers)
             request.session.flash('Failed login', 'error')
 
+    login_form = get_renderer('substanced:substanced/sdi/templates/login.pt'
+                             ).implementation()
     return dict(
         url = request.sdiapi.mgmt_path(request.root, 'login'),
         came_from = came_from,
         login = login,
         password = password,
+        form = login_form.macros['login-form'],
+        reset = login_form.macros['password-reset-link'],
         )
 
 @mgmt_view(

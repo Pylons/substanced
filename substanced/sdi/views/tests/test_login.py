@@ -39,11 +39,15 @@ class Test_login(unittest.TestCase):
         self.assertEqual(result.__class__, HTTPForbidden)
 
     def test_referrer_is_login_view(self):
+        from pyramid.testing import testConfig
         request = testing.DummyRequest()
         request.url = '/mgmt_path'
         request.sdiapi = DummySDIAPI()
         context = testing.DummyResource()
-        result = self._callFUT(context, request)
+        with testConfig() as config:
+            config.testing_add_renderer(
+                    'substanced:substanced/sdi/templates/login.pt')
+            result = self._callFUT(context, request)
         self.assertEqual(result['url'], '/mgmt_path')
         self.assertEqual(result['came_from'], '/mgmt_path')
         self.assertEqual(result['login'], '')
@@ -51,22 +55,41 @@ class Test_login(unittest.TestCase):
         self.assertEqual(request.session['sdi.came_from'], '/mgmt_path')
         
     def test_form_not_submitted(self):
+        from pyramid.testing import testConfig
+        class DummyRenderer(object):
+            def __init__(self, macros):
+                self.macros = macros
+            def implementation(self):
+                return self
         request = testing.DummyRequest()
         request.sdiapi = DummySDIAPI()
         context = testing.DummyResource()
-        result = self._callFUT(context, request)
+        form, reset = object(), object()
+        renderer = DummyRenderer(
+                    {'login-form': form, 'password-reset-link': reset})
+        with testConfig() as config:
+            config.testing_add_renderer(
+                    'substanced:substanced/sdi/templates/login.pt', renderer)
+            result = self._callFUT(context, request)
         self.assertEqual(result['url'], '/mgmt_path')
         self.assertEqual(result['came_from'], 'http://example.com')
         self.assertEqual(result['login'], '')
         self.assertEqual(result['password'], '')
-        self.assertEqual(request.session['sdi.came_from'], 'http://example.com')
+        self.assertTrue(result['form'] is form)
+        self.assertTrue(result['reset'] is reset)
+        self.assertEqual(request.session['sdi.came_from'],
+                         'http://example.com')
 
     def test_form_submitted_csrf_error(self):
+        from pyramid.testing import testConfig
         request = testing.DummyRequest()
         request.params['form.submitted'] = True
         request.sdiapi = DummySDIAPI()
         context = testing.DummyResource()
-        result = self._callFUT(context, request)
+        with testConfig() as config:
+            config.testing_add_renderer(
+                    'substanced:substanced/sdi/templates/login.pt')
+            result = self._callFUT(context, request)
         self.assertEqual(result['url'], '/mgmt_path')
         self.assertEqual(result['came_from'], 'http://example.com')
         self.assertEqual(result['login'], '')
@@ -75,6 +98,7 @@ class Test_login(unittest.TestCase):
         self.assertEqual(request.session['sdi.came_from'], 'http://example.com')
         
     def test_form_submitted_failed_login_no_user(self):
+        from pyramid.testing import testConfig
         from ....testing import make_site
         request = testing.DummyRequest()
         request.params['form.submitted'] = True
@@ -83,7 +107,10 @@ class Test_login(unittest.TestCase):
         request.sdiapi = DummySDIAPI()
         request.params['csrf_token'] = request.session.get_csrf_token()
         context = make_site()
-        result = self._callFUT(context, request)
+        with testConfig() as config:
+            config.testing_add_renderer(
+                    'substanced:substanced/sdi/templates/login.pt')
+            result = self._callFUT(context, request)
         self.assertEqual(result['url'], '/mgmt_path')
         self.assertEqual(result['came_from'], 'http://example.com')
         self.assertEqual(result['login'], 'login')
@@ -92,6 +119,7 @@ class Test_login(unittest.TestCase):
         self.assertEqual(request.session['sdi.came_from'], 'http://example.com')
 
     def test_form_submitted_failed_login_wrong_password(self):
+        from pyramid.testing import testConfig
         from ....testing import make_site
         request = testing.DummyRequest()
         request.params['form.submitted'] = True
@@ -101,7 +129,10 @@ class Test_login(unittest.TestCase):
         request.params['csrf_token'] = request.session.get_csrf_token()
         context = make_site()
         context['principals']['users']['login'] = DummyUser(0)
-        result = self._callFUT(context, request)
+        with testConfig() as config:
+            config.testing_add_renderer(
+                    'substanced:substanced/sdi/templates/login.pt')
+            result = self._callFUT(context, request)
         self.assertEqual(result['url'], '/mgmt_path')
         self.assertEqual(result['came_from'], 'http://example.com')
         self.assertEqual(result['login'], 'login')
@@ -110,6 +141,7 @@ class Test_login(unittest.TestCase):
         self.assertEqual(request.session['sdi.came_from'], 'http://example.com')
 
     def test_form_submitted_success(self):
+        from pyramid.testing import testConfig
         from ....testing import make_site
         request = testing.DummyRequest()
         request.params['form.submitted'] = True
@@ -121,7 +153,10 @@ class Test_login(unittest.TestCase):
         user = DummyUser(1)
         user.__oid__ = 1
         context['principals']['users']['login'] = user
-        result = self._callFUT(context, request)
+        with testConfig() as config:
+            config.testing_add_renderer(
+                    'substanced:substanced/sdi/templates/login.pt')
+            result = self._callFUT(context, request)
         self.assertEqual(result.location, 'http://example.com')
         self.assertTrue(result.headers)
         self.assertTrue('sdi.came_from' not in request.session)
