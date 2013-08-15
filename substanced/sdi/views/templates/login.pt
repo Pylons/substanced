@@ -6,7 +6,9 @@
 
    <div class="login-form">
 
-    <h2>Log In</h2>
+    <metal:slot metal:define-slot="login-form-title">
+     <h2>Log In</h2>
+    </metal:slot>
 
     <form action="${url}" method="post"
           metal:define-macro="login-form">

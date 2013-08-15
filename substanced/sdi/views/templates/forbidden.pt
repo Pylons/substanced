@@ -1,6 +1,7 @@
-<div metal:use-macro="request.sdiapi.main_template">
+<html metal:use-macro="login_template">
+ <body>
 
-  <div metal:fill-slot="main">
+  <metal:slot metal:fill-slot="before-login-form">
 
     <div class="alert alert-error">
       Sorry, your account is not permitted to perform the requested action.
@@ -8,15 +9,11 @@
       <a onclick="javascript:history.go(-2)">return to where you were</a>.
     </div>
 
-    <div class="login-form">
-      <h2>Log In as Another User</h2>
+  </metal:slot>
 
-      <form metal:use-macro="form" />
+  <metal:slot metal:fill-slot="login-form-title">
+   <h2>Log In as Another User</h2>
+  </metal:slot>
 
-    </div>
-
-    <p metal:use-macro="reet" />
-
-  </div>
-
-</div>
+ </body>
+</html>

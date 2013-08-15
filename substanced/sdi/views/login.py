@@ -74,15 +74,15 @@ def login(context, request):
                 return HTTPFound(location = came_from, headers = headers)
             request.session.flash('Failed login', 'error')
 
-    login_form = get_renderer('substanced:substanced/sdi/templates/login.pt'
-                             ).implementation()
+    # Pass this through FBO views (e.g., forbidden) which use its macros.
+    template = get_renderer('substanced:sdi/views/templates/login.pt'
+                           ).implementation()
     return dict(
         url = request.sdiapi.mgmt_path(request.root, 'login'),
         came_from = came_from,
         login = login,
         password = password,
-        form = login_form.macros['login-form'],
-        reset = login_form.macros['password-reset-link'],
+        login_template = template,
         )
 
 @mgmt_view(
