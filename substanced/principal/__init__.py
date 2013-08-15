@@ -296,7 +296,7 @@ def groups_choices(context, request):
 _ZONES = pytz.all_timezones
 
 @colander.deferred
-def tzname_widget(node, kw):
+def tzname_widget(node, kw): #pragma NO COVER
     return ChosenSingleWidget(values=zip(_ZONES, _ZONES))
 
 class UserSchema(Schema):
