@@ -90,6 +90,8 @@
 
 <div class="container-fluid">
 
+  <metal:slot metal:define-slot="outer-content">
+
     <ul class="breadcrumb"
         tal:define="breadcrumbs request.sdiapi.breadcrumbs()"
         tal:condition="breadcrumbs">
@@ -144,6 +146,8 @@
         </div>
 
     </div>
+
+  </metal:slot>
 
 </div>
 
