@@ -165,6 +165,51 @@
                             .append(args.flash)
                     );
             }
+            // Remove previous error status messages, if any.
+            $('.contents-error').remove();
+        });
+
+        // handle errors
+        gridWrapper.sdiRemoteModelPlugin.onAjaxError.subscribe(function (evt, args) {
+            // If we have an Unauthenticated, we get a parse error. We try to figure
+            // out from the response html, if this has happened because our session
+            // has expired.
+            if (args.textStatus == 'parsererror' &&
+                    args.xhr.responseText.indexOf('Not logged in') != -1) {
+                if ($('.contents-ajax-unauthorized').length === 0) {
+                    // Let's display it a status message in case the user clicks cancel.
+                    $('#messages')
+                        .append(
+                            $('<div class="alert contents-error contents-ajax-unauthorized"></div>')
+                                .append('It looks like your authentication session has expired.<br>' +
+                                'You can ' +
+                                    '<a class="contents-ajax-error-reload" href="#"> reload the page</a>.'
+                                    )
+                        );
+                    // Suggest the user to reload the page which will enable her to login.
+                    if (confirm('It looks like your authentication session has expired.\n' +
+                                'Do you wish to leave the page, and log in again?')) {
+                        document.location.reload();
+                    }
+                }
+            } else {
+                // We have a real error. Display a message if it's not already on.
+                if ($('.contents-ajax-error').length === 0) {
+                    $('#messages')
+                        .append(
+                            $('<div class="alert contents-error contents-ajax-error"></div>')
+                                .append('Error reaching the server. This is probably a temporary error.<br>' +
+                                    'If your network connection resumes, ' +
+                                    'the error state should resolve by itself. You can also ' +
+                                    '<a class="contents-ajax-error-reload" href="#"> reload the page</a>.'
+                                    )
+                        );
+                }
+            }
+            $('.contents-ajax-error-reload').click(function() {
+                document.location.reload();
+                return false;
+            });
         });
 
     };            // end load_contents_pt()

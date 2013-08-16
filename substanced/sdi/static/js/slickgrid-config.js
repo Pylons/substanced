@@ -207,20 +207,6 @@
                 grid.updateHeader();
             });
 
-            sdiRemoteModelPlugin.onAjaxError.subscribe(function (evt, args) {
-                // If we have an Unauthenticated, we get a parse error. We try to figure
-                // out from the response html, if this has happened because our session
-                // has expired.
-                if (args.textStatus == 'parsererror' &&
-                        args.xhr.responseText.indexOf('Not logged in') != -1) {
-                    // Suggest the user to reload the page which will enable her to login.
-                    if (confirm('It looks like your authentication session has expired.\n' +
-                                'Do you wish to leave the page, and log in again?')) {
-                        document.location.reload();
-                    }
-                }
-            });
-
             // sorting
             grid.onSort.subscribe(function (e, args) {
                 sortDir = args.sortAsc;

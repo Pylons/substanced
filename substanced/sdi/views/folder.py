@@ -549,7 +549,7 @@ class FolderContents(object):
         q = self.get_query()
 
         columns = self.get_columns(None)
-        
+
         for name, value in filter_values:
             if name:
                 for col in columns:
