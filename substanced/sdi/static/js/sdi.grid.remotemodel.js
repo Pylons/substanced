@@ -164,6 +164,13 @@
         function ajax(ajaxOpts, /*optional*/ ignoreMissing) {
             // Make an ajax request by keeping our specific queue policy
 
+                
+                    if ($('.contents-error').length !== 0) {
+                        console.log('prevented');
+                        return;
+                    }
+
+
             var jqXHR,
                 dfd = $.Deferred(),
                 promise = dfd.promise();
