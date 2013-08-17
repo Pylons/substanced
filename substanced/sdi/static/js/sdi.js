@@ -20,15 +20,62 @@
                 // only do one request at a time
                 plugin.resetData();
             }
+            // remove the error messages XXX XXX
+            $('.contents-error').remove();
+
+
         }
 
+
         // update UI in real-time based if the browser supports SSE
-        if (!!window.EventSource) {
-            var source = new EventSource(options.eventSource);
+        var reconnectTimer;
+        var source;
+        function connectEventSource() {
+            if (source) {
+                source.close();
+            }
+            source = new EventSource(options.eventSource);
             source.addEventListener("ContentAdded" , redraw);
             source.addEventListener("ContentRemoved" , redraw);
             source.addEventListener("ContentMoved" , redraw);
             source.addEventListener("ContentDuplicated" , redraw);
+            source.addEventListener('error', function(evt) {
+                var current = evt.currentTarget;
+                var state;
+                if (current.readyState == EventSource.OPEN) {
+                    state = 'OPEN';
+                    if (reconnectTimer) {
+                        clearTimeout(reconnectTimer);
+                    }
+                }
+                if (current.readyState == EventSource.CLOSED) {
+                    state = 'CLOSED';
+                    if (reconnectTimer) {
+                        clearTimeout(reconnectTimer);
+                    }
+                    reconnectTimer = setTimeout(function() {
+                        console.log('RECONNECT');
+                        connectEventSource();
+                    }, 10000);
+                }
+                if (current.readyState == EventSource.CONNECTING) {
+                    state = 'CONNECTING';
+                    if (reconnectTimer) {
+                        try {
+                            clearTimeout(reconnectTimer);
+                        } catch(e) {
+                        }
+                    }
+                    // Remove previous error status messages, if any.
+                    $('.contents-error').remove();
+                    // redraw the grid
+                    redraw();
+                }
+                console.log('EventSource state:', state);
+            });
+        }
+        if (!!window.EventSource) {
+            connectEventSource();
         }
 
         // --

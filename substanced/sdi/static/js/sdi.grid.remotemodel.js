@@ -164,6 +164,13 @@
         function ajax(ajaxOpts, /*optional*/ ignoreMissing) {
             // Make an ajax request by keeping our specific queue policy
 
+            // XXX this should be an explicit state rather than checking the dom
+            if ($('.contents-error').length !== 0) {
+                //console.log('prevented');
+                return;
+            }
+
+
             var jqXHR,
                 dfd = $.Deferred(),
                 promise = dfd.promise();
@@ -233,7 +240,7 @@
         }
 
         function resetData() {
-            console.log('starting');
+            //console.log('starting');
             abortRequest();
 
             var vp = grid.getViewport(null);
@@ -244,7 +251,7 @@
                     sortDir: options.sortDir || ''
                 }, (options.extraQuery || {}));
             ensureData(query);
-            console.log('finishing');
+            //console.log('finishing');
         }
 
         function _clearData() {
