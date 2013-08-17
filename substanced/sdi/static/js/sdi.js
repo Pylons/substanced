@@ -64,7 +64,6 @@
                         try {
                             clearTimeout(reconnectTimer);
                         } catch(e) {
-
                         }
                     }
                     // Remove previous error status messages, if any.
