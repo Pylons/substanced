@@ -240,7 +240,7 @@
         }
 
         function resetData() {
-            console.log('starting');
+            //console.log('starting');
             abortRequest();
 
             var vp = grid.getViewport(null);
@@ -251,7 +251,7 @@
                     sortDir: options.sortDir || ''
                 }, (options.extraQuery || {}));
             ensureData(query);
-            console.log('finishing');
+            //console.log('finishing');
         }
 
         function _clearData() {
