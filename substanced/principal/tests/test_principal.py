@@ -491,19 +491,36 @@ class Test_groupfinder(unittest.TestCase):
         request.context = context
         result = self._callFUT(1, request)
         self.assertEqual(result, None)
-        
+
+    def test_w_adapter(self):
+        from pyramid.testing import testConfig
+        from zope.interface import Interface
+        from ...interfaces import IFolder
+        from ...interfaces import IUserLocator
+        request = testing.DummyRequest()
+        context = testing.DummyResource(__provides__=IFolder)
+        request.context = context
+        locator = DummyLocator((1, 2))
+        def _locator(context, request):
+            return locator
+        with testConfig() as config:
+            config.registry.registerAdapter(_locator, (Interface, Interface),
+                                            IUserLocator)
+            result = self._callFUT(1, request)
+        self.assertEqual(result, (1, 2))
+
     def test_garden_path(self):
         from ...interfaces import IFolder
         request = testing.DummyRequest()
         context = testing.DummyResource(__provides__=IFolder)
         omap = testing.DummyResource()
         user = testing.DummyResource()
-        user.groupids = (1,2)
+        user.groupids = (1, 2)
         omap.object_for = lambda *arg: user
         context.__objectmap__ = omap
         request.context = context
         result = self._callFUT(1, request)
-        self.assertEqual(result, (1,2))
+        self.assertEqual(result, (1, 2))
 
         
 from ...interfaces import IFolder
@@ -545,3 +562,12 @@ class DummyContentRegistry(object):
 class DummySDIAPI(object):
     def mgmt_path(self, *arg, **kw):
         return '/mgmt_path'
+
+
+class DummyLocator(object):
+    def __init__(self, group_ids=None):
+        self._group_ids = group_ids
+
+    def get_groupids(self, userid):
+        self._userid = userid
+        return self._group_ids
