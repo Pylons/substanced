@@ -139,6 +139,33 @@ class Test_login(unittest.TestCase):
         self.assertEqual(request.session['_f_error'], ['Failed login'])
         self.assertEqual(request.session['sdi.came_from'], 'http://example.com')
 
+    def test_form_submitted_success_w_locator_adapter(self):
+        from pyramid.testing import testConfig
+        from zope.interface import Interface
+        from ....interfaces import IUserLocator
+        from ....testing import make_site
+        request = testing.DummyRequest()
+        request.params['form.submitted'] = True
+        request.params['login'] = 'login'
+        request.params['password'] = 'password'
+        request.sdiapi = DummySDIAPI()
+        request.params['csrf_token'] = request.session.get_csrf_token()
+        context = make_site()
+        user = DummyUser(1)
+        user.__oid__ = 2
+        locator = DummyLocator(user)
+        def _locator(context, request):
+            return locator
+        with testConfig() as config:
+            config.testing_add_renderer(
+                    'substanced:sdi/views/templates/login.pt')
+            config.registry.registerAdapter(_locator, (Interface, Interface),
+                                            IUserLocator)
+            result = self._callFUT(context, request)
+        self.assertEqual(result.location, 'http://example.com')
+        self.assertTrue(result.headers)
+        self.assertTrue('sdi.came_from' not in request.session)
+
     def test_form_submitted_success(self):
         from pyramid.testing import testConfig
         from ....testing import make_site
@@ -170,3 +197,11 @@ class DummyUser(object):
 class DummySDIAPI(object):
     def mgmt_path(self, *arg, **kw):
         return '/mgmt_path'
+
+class DummyLocator(object):
+    def __init__(self, user=None):
+        self._user = user
+
+    def get_user_by_login(self, login):
+        self._login = login
+        return self._user

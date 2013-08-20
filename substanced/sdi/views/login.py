@@ -61,7 +61,7 @@ def login(context, request):
         else:
             login = request.params['login']
             password = request.params['password']
-            adapter = request.registry.queryAdapter(
+            adapter = request.registry.queryMultiAdapter(
                 (context, request),
                 IUserLocator
                 )
