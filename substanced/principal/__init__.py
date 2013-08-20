@@ -458,7 +458,8 @@ def groupfinder(userid, request):
     """ A Pyramid authentication policy groupfinder callback that uses the
     Substance D user locator system to find group identifiers."""
     context = request.context
-    adapter = request.registry.queryAdapter((context, request), IUserLocator)
+    adapter = request.registry.queryMultiAdapter((context, request),
+                                                 IUserLocator)
     if adapter is None:
         adapter = DefaultUserLocator(context, request)
     return adapter.get_groupids(userid)
