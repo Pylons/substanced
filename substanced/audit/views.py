@@ -105,8 +105,8 @@ def compose_message(eventid, name=None, payload=''):
     msg = 'id: %s\n' % eventid
     if name:
         msg += 'event: %s\n' % name
-    msg += 'data: %s\n' % payload
     msg += 'retry: 10000\n'
+    msg += 'data: %s\n' % payload
     msg += '\n'
     if PY3: # pragma: no cover
         return msg
