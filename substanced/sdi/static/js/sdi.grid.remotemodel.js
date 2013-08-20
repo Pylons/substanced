@@ -83,6 +83,7 @@
 
         var grid;
         var data;
+        var ids_to_data_key = {}; // maps row id (like "document_0") to data key
         var activeRequest;
         var scrollPosition;  // scrolling movement (prefetch) forward or backward
 
@@ -163,6 +164,13 @@
         function ajax(ajaxOpts, /*optional*/ ignoreMissing) {
             // Make an ajax request by keeping our specific queue policy
 
+            // XXX this should be an explicit state rather than checking the dom
+            if ($('.contents-error').length !== 0) {
+                //console.log('prevented');
+                return;
+            }
+
+
             var jqXHR,
                 dfd = $.Deferred(),
                 promise = dfd.promise();
@@ -232,7 +240,7 @@
         }
 
         function resetData() {
-            console.log('starting');
+            //console.log('starting');
             abortRequest();
 
             var vp = grid.getViewport(null);
@@ -243,7 +251,7 @@
                     sortDir: options.sortDir || ''
                 }, (options.extraQuery || {}));
             ensureData(query);
-            console.log('finishing');
+            //console.log('finishing');
         }
 
         function _clearData() {
@@ -256,6 +264,7 @@
             // make sure not to go beyond the total, most specifically,
             // do not do any fetch _beyond_ the total.
             data.length = null;
+            ids_to_data_key = {};
         }
 
         function clearData(/*optional*/ scrollToTop) {
@@ -277,6 +286,9 @@
                 //log('loadData', from, to, to - from);
                 for (i = from; i < to; i++) {
                     data[i] = _data.records[i - from];
+                    if (data[i] !== undefined) {
+                        ids_to_data_key[data[i].id] = i;
+                    }
                 }
                 data.length = _data.total;
                 // Update the grid.
@@ -451,17 +463,15 @@
             return ids;
         }
 
-        function mapIdsToRows(ids, from, to) {
+        function mapIdsToRows(ids) {
             var rows = [];
             var i;
-            //log('mapIdsToRows', from, to, data[from]);
-            for (i = from; i < to; i++) {
-                if (data[i] !== undefined) {
-                    if (ids[data[i].id]) {
-                        rows.push(i);
-                    }
+            $.each(ids, function(key, item) {
+                var data_key = ids_to_data_key[key];
+                if (data[data_key] !== undefined) {
+                    rows.push(data_key);
                 }
-            }
+            });
             return rows;
         }
 
@@ -483,7 +493,7 @@
                 if (args.from !== undefined) {
                     // restore selections
                     inHandler = true;
-                    var selectedRows = mapIdsToRows(selectedRowIds, args.from, args.to);
+                    var selectedRows = mapIdsToRows(selectedRowIds);
                     if (! preserveHidden) {
                         selectedRowIds = mapRowsToIds(selectedRows);
                     }

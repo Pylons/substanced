@@ -22,7 +22,7 @@ class Test_AuditLogEventStreamView(unittest.TestCase):
         inst = self._makeOne(context, request)
         inst.AuditScribe = DummyAuditScribe()
         response = inst.auditstream_sse()
-        self.assertEqual(response.text, 'id: 0-1\ndata: \n\n')
+        self.assertEqual(response.text, 'id: 0-1\nretry: 10000\ndata: \n\n')
 
     def test_auditstream_sse_with_last_event_id(self):
         context = testing.DummyResource()
@@ -35,8 +35,8 @@ class Test_AuditLogEventStreamView(unittest.TestCase):
         response = inst.auditstream_sse()
         self.assertEqual(
             response.text,
-            ('id: 0-1\nevent: smellin\ndata: payload1\n\n'
-             'id: 0-2\nevent: smellin\ndata: payload2\n\n')
+            ('id: 0-1\nevent: smellin\nretry: 10000\ndata: payload1\n\n'
+             'id: 0-2\nevent: smellin\nretry: 10000\ndata: payload2\n\n')
             )
         self.assertEqual(inst.AuditScribe.gen, 1)
         self.assertEqual(inst.AuditScribe.idx, 1) 
@@ -54,8 +54,8 @@ class Test_AuditLogEventStreamView(unittest.TestCase):
         response = inst.auditstream_sse()
         self.assertEqual(
             response.text,
-            ('id: 0-1\nevent: smellin\ndata: payload1\n\n'
-             'id: 0-2\nevent: smellin\ndata: payload2\n\n')
+            ('id: 0-1\nevent: smellin\nretry: 10000\ndata: payload1\n\n'
+             'id: 0-2\nevent: smellin\nretry: 10000\ndata: payload2\n\n')
             )
         self.assertEqual(inst.AuditScribe.gen, 1)
         self.assertEqual(inst.AuditScribe.idx, 1) 
@@ -73,8 +73,8 @@ class Test_AuditLogEventStreamView(unittest.TestCase):
         response = inst.auditstream_sse()
         self.assertEqual(
             response.text,
-            ('id: 0-1\nevent: smellin\ndata: payload1\n\n'
-             'id: 0-2\nevent: smellin\ndata: payload2\n\n')
+            ('id: 0-1\nevent: smellin\nretry: 10000\ndata: payload1\n\n'
+             'id: 0-2\nevent: smellin\nretry: 10000\ndata: payload2\n\n')
             )
         self.assertEqual(inst.AuditScribe.gen, 1)
         self.assertEqual(inst.AuditScribe.idx, 1) 
