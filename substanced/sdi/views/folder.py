@@ -143,6 +143,7 @@ class FolderContents(object):
     """ The default folder contents views class """
 
     sdi_add_views = staticmethod(sdi_add_views) # for testing
+    minimum_load = 40
 
     def __init__(self, context, request):
         self.context = context
@@ -544,7 +545,7 @@ class FolderContents(object):
             start = 0
 
         if end is None:
-            end = start + 40
+            end = start + self.minimum_load
 
         q = self.get_query()
 
@@ -644,7 +645,7 @@ class FolderContents(object):
 
         is_reorderable = context.is_reorderable()
 
-        end = 40 # load at least this many records.
+        end = self.minimum_load # load at least this many records.
         start = 0 # start at record number zero
 
         filter_values = self.get_filter_values()
