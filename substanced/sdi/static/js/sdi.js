@@ -28,7 +28,6 @@
 
 
         // update UI in real-time based if the browser supports SSE
-        var reconnectTimer;
         var source;
         function connectEventSource() {
             if (source) {
@@ -39,40 +38,6 @@
             source.addEventListener("ContentRemoved" , redraw);
             source.addEventListener("ContentMoved" , redraw);
             source.addEventListener("ContentDuplicated" , redraw);
-            source.addEventListener('error', function(evt) {
-                var current = evt.currentTarget;
-                var state;
-                if (current.readyState == EventSource.OPEN) {
-                    state = 'OPEN';
-                    if (reconnectTimer) {
-                        clearTimeout(reconnectTimer);
-                    }
-                }
-                if (current.readyState == EventSource.CLOSED) {
-                    state = 'CLOSED';
-                    if (reconnectTimer) {
-                        clearTimeout(reconnectTimer);
-                    }
-                    reconnectTimer = setTimeout(function() {
-                        console.log('RECONNECT');
-                        connectEventSource();
-                    }, 10000);
-                }
-                if (current.readyState == EventSource.CONNECTING) {
-                    state = 'CONNECTING';
-                    if (reconnectTimer) {
-                        try {
-                            clearTimeout(reconnectTimer);
-                        } catch(e) {
-                        }
-                    }
-                    // Remove previous error status messages, if any.
-                    $('.contents-error').remove();
-                    // redraw the grid
-                    redraw();
-                }
-                console.log('EventSource state:', state);
-            });
         }
         if (!!window.EventSource) {
             connectEventSource();
