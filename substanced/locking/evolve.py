@@ -9,4 +9,7 @@ def add_lock_service(root):
     locks.__sdi_deletable__ = False
 
 def includeme(config):
-    config.add_evolution_step(add_lock_service)
+    config.add_evolution_step(
+        add_lock_service,
+        after='substanced.audit.evolve.add_root_auditlog',
+        )
