@@ -78,6 +78,8 @@
       </div>
     </div>
 
+    <metal:slot define-slot="above-grid" />
+
     <div class="sdi-sg-header">
         <span>
             <span class="sdi-sg-total">&nbsp;</span> total
@@ -86,8 +88,6 @@
             </span>
         </span>
     </div>
-
-    <metal:slot define-slot="above-grid" />
 
     <div id="sdi-contents-table-sg" class="slickgrid-wrapper"></div>
 
