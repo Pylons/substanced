@@ -177,6 +177,7 @@ class ILoggedIn(Interface):
     the user initiates, just ones which result in an interactive login."""
     login = Attribute('The login name used by the user')
     user = Attribute('The user object computed by Substance D')
+    context = Attribute('The context resource that was active during login')
     request = Attribute('The request which resulted in the login')
 
 class IFolder(Interface):

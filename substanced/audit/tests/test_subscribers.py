@@ -300,6 +300,77 @@ class Test_content_modified(unittest.TestCase):
                 },
             )
 
+class Test_logged_in(unittest.TestCase):
+    def setUp(self):
+        self.request = testing.DummyRequest()
+        self.config = testing.setUp(request=self.request)
+
+    def tearDown(self):
+        testing.tearDown()
+        
+    def _callFUT(self, event):
+        from ..subscribers import logged_in
+        return logged_in(event)
+
+    def test_it_noscribe(self):
+        event = Dummy()
+        context = testing.DummyResource()
+        event.context = context
+        self.assertEqual(self._callFUT(event), None)
+
+    def test_it_user_has_oid(self):
+        from substanced.audit import AuditLog
+        event = Dummy()
+        context = testing.DummyResource()
+        context.__auditlog__ = AuditLog()
+        event.context = context
+        user = Dummy()
+        user.__oid__ = 5
+        event.user = user
+        event.login = 'login'
+        self._callFUT(event)
+        entries = list(context.__auditlog__.entries)
+        self.assertEqual(len(entries), 1)
+        entry = entries[0]
+        self.assertEqual(entry[0], 0)
+        self.assertEqual(entry[1], 0)
+        self.assertEqual(entry[2].name, 'LoggedIn')
+        self.assertEqual(entry[2].oid, None)
+        self.assertEqual(
+            json.loads(entry[2].payload),
+            {
+                'user_oid': 5,
+                'login': 'login',
+                'time': entry[2].timestamp,
+                },
+            )
+
+    def test_it_user_has_no_oid(self):
+        from substanced.audit import AuditLog
+        event = Dummy()
+        context = testing.DummyResource()
+        context.__auditlog__ = AuditLog()
+        event.context = context
+        user = Dummy()
+        event.user = user
+        event.login = 'login'
+        self._callFUT(event)
+        entries = list(context.__auditlog__.entries)
+        self.assertEqual(len(entries), 1)
+        entry = entries[0]
+        self.assertEqual(entry[0], 0)
+        self.assertEqual(entry[1], 0)
+        self.assertEqual(entry[2].name, 'LoggedIn')
+        self.assertEqual(entry[2].oid, None)
+        self.assertEqual(
+            json.loads(entry[2].payload),
+            {
+                'user_oid': None,
+                'login': 'login',
+                'time': entry[2].timestamp,
+                },
+            )
+        
 class Dummy(object):
     def __init__(self, kw=None):
         if kw:

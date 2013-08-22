@@ -6,6 +6,7 @@ from substanced.event import (
     subscribe_will_be_removed,
     subscribe_added,
     subscribe_modified,
+    subscribe_logged_in,
     )
 
 from substanced.util import (
@@ -108,3 +109,11 @@ def content_modified(event):
         content_type=content_type,
         userinfo=userinfo,
         )
+
+@subscribe_logged_in()
+def logged_in(event):
+    scribe = _get_scribe(event.context)
+    if scribe is None:
+        return
+    user_oid = get_oid(event.user, None)
+    scribe.add('LoggedIn', None, login=event.login, user_oid=user_oid)

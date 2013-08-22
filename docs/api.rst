@@ -240,6 +240,10 @@ Other Helpers
    :members:
    :inherited-members:
 
+.. autoclass:: subscribe_logged_in
+   :members:
+   :inherited-members:
+
 :mod:`substanced.evolution` API
 --------------------------------
 

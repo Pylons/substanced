@@ -132,9 +132,10 @@ class ContentCreated(object):
 
 @implementer(ILoggedIn)
 class LoggedIn(object):
-    def __init__(self, login, user, request):
+    def __init__(self, login, user, context, request):
         self.login = login
         self.user = user
+        self.context = context
         self.request = request
 
 # subscriber decorators, e.g.
@@ -147,6 +148,20 @@ class _Subscriber(object):
     def __call__(self, wrapped):
         self.venusian.attach(wrapped, self.register, category='substanced')
         return wrapped
+
+class _SimpleSubscriber(_Subscriber):
+    def __init__(self, **predicates):
+        self.predicates = predicates
+
+    def register(self, scanner, name, wrapped):
+        registry = scanner.config.registry
+        def wrapper(event, *arg): # *arg ignored, XXX it can go away pyr1.4b1+
+            event.registry = registry
+            return wrapped(event)
+        if hasattr(wrapped, '__name__'):
+            update_wrapper(wrapper, wrapped)
+        wrapper.wrapped = wrapped
+        scanner.config.add_subscriber(wrapper, self.event, **self.predicates)
 
 class _FolderEventSubscriber(_Subscriber):
     def __init__(self, obj=None, container=None, **predicates):
@@ -221,6 +236,11 @@ class subscribe_created(_ContentEventSubscriber):
     """ Decorator for registering an object created event subscriber
     (a subscriber for ContentCreated)."""
     event = IContentCreated
+
+class subscribe_logged_in(_SimpleSubscriber):
+    """ Decorator for registering an event listener for when a user is logged
+    in """
+    event = ILoggedIn
     
 def add_content_subscriber(config, subscriber, iface=None, **predicates):
     """ Configurator directive that works like Pyramid's ``add_subscriber``,

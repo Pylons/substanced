@@ -148,6 +148,61 @@ class Test_FolderEventSubscriber(unittest.TestCase):
                          [self.event, IFoo, IBar])
 
     
+class Test_SimpleSubscriber(unittest.TestCase):
+    
+    event = IDummy
+
+    def setUp(self):
+        self.config = testing.setUp()
+
+    def tearDown(self):
+        testing.tearDown()
+
+    def _makeOne(self, **predicates):
+        from . import _SimpleSubscriber
+        class Subscriber(_SimpleSubscriber):
+            event = self.event
+        return Subscriber(**predicates)
+
+    def test_register_defaults(self):
+        dec = self._makeOne()
+        def foo(event): pass
+        config = DummyConfigurator()
+        scanner = Dummy()
+        scanner.config = config
+        dec.register(scanner, None, foo)
+        self.assertEqual(len(config.subscribed), 1)
+        subscriber = config.subscribed[0]
+        wrapper = subscriber['wrapped']
+        event = Dummy()
+        self.assertEqual(wrapper(event), None)
+        self.assertEqual(event.registry, scanner.config.registry)
+        self.assertEqual(wrapper.wrapped, foo)
+        self.assertEqual(subscriber['ifaces'], self.event)
+        
+    def test_with_predicates(self):
+        class IFoo(Interface): pass
+        dec = self._makeOne(a=1)
+        def foo(event): pass
+        config = DummyConfigurator()
+        scanner = Dummy()
+        scanner.config = config
+        dec.register(scanner, None, foo)
+        self.assertEqual(len(config.subscribed), 1)
+        subscriber = config.subscribed[0]
+        self.assertEqual(subscriber['wrapped'].wrapped, foo)
+        self.assertEqual(subscriber['ifaces'], self.event)
+        self.assertEqual(subscriber['predicates'], {'a':1})
+
+    def test___call__(self):
+        dec = self._makeOne()
+        dummy_venusian = DummyVenusian()
+        dec.venusian = dummy_venusian
+        def foo(): pass
+        dec(foo)
+        self.assertEqual(dummy_venusian.attached,
+                         [(foo, dec.register, 'substanced')])
+
 class TestObjectWillBeRemoved(unittest.TestCase):
     def _makeOne(self, *arg, **kw):
         from . import ObjectWillBeRemoved
