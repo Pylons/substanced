@@ -17,6 +17,7 @@ from ..interfaces import (
     IObjectModified,
     IACLModified,
     IContentCreated,
+    ILoggedIn,
     )
 
 from ..util import find_objectmap
@@ -128,6 +129,13 @@ class ContentCreated(object):
         self.object = object
         self.content_type = content_type
         self.meta = meta
+
+@implementer(ILoggedIn)
+class LoggedIn(object):
+    def __init__(self, login, user, request):
+        self.login = login
+        self.user = user
+        self.request = request
 
 # subscriber decorators, e.g.
 # @subscribe_added(MyContent)

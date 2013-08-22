@@ -17,6 +17,7 @@ from .. import mgmt_view
 
 from substanced.interfaces import IUserLocator
 from substanced.principal import DefaultUserLocator
+from substanced.event import LoggedIn
 
 @mgmt_view(
     name='login',
@@ -71,6 +72,7 @@ def login(context, request):
             if user is not None and user.check_password(password):
                 request.session.pop('sdi.came_from', None)
                 headers = remember(request, get_oid(user))
+                request.registry.notify(LoggedIn(login, user, request))
                 return HTTPFound(location = came_from, headers = headers)
             request.session.flash('Failed login', 'error')
 

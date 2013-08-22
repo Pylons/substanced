@@ -171,6 +171,14 @@ class IContentCreated(Interface):
     meta = Attribute('The metainformation about the content type in the '
                      'content registry')
 
+class ILoggedIn(Interface):
+    """ An event type sent when a user supplies a valid username and password
+    to a login view.  Note that this event is not sent on *every* request that
+    the user initiates, just ones which result in an interactive login."""
+    login = Attribute('The login name used by the user')
+    user = Attribute('The user object computed by Substance D')
+    request = Attribute('The request which resulted in the login')
+
 class IFolder(Interface):
     """ A Folder which stores objects using Unicode keys.
 
