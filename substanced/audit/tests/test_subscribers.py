@@ -314,16 +314,18 @@ class Test_logged_in(unittest.TestCase):
 
     def test_it_noscribe(self):
         event = Dummy()
+        event.request = Dummy()
         context = testing.DummyResource()
-        event.context = context
+        event.request.context = context
         self.assertEqual(self._callFUT(event), None)
 
     def test_it_user_has_oid(self):
         from substanced.audit import AuditLog
         event = Dummy()
+        event.request = Dummy()
         context = testing.DummyResource()
         context.__auditlog__ = AuditLog()
-        event.context = context
+        event.request.context = context
         user = Dummy()
         user.__oid__ = 5
         event.user = user
@@ -348,9 +350,10 @@ class Test_logged_in(unittest.TestCase):
     def test_it_user_has_no_oid(self):
         from substanced.audit import AuditLog
         event = Dummy()
+        event.request = Dummy()
         context = testing.DummyResource()
         context.__auditlog__ = AuditLog()
-        event.context = context
+        event.request.context = context
         user = Dummy()
         event.user = user
         event.login = 'login'

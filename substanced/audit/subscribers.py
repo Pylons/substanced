@@ -112,7 +112,8 @@ def content_modified(event):
 
 @subscribe_logged_in()
 def logged_in(event):
-    scribe = _get_scribe(event.context)
+    context = event.request.context # event.context may be HTTPForbidden
+    scribe = _get_scribe(context)
     if scribe is None:
         return
     user_oid = get_oid(event.user, None)
