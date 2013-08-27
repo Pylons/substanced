@@ -76,6 +76,7 @@ Narrative Documentation
    locking
    configuration
    statistics
+   vrooting
    retail
 
 API Documentation
