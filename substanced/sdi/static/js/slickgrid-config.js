@@ -60,7 +60,7 @@
                 if (labelUrl) {
                     result += '<a href="' + labelUrl + '">' + label + '</a>';
                 } else {
-                    result += value;
+                    result += label;
                 }
                 return result;
             },
