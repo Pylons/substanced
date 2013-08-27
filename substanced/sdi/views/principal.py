@@ -162,7 +162,7 @@ class ResetRequestView(FormView):
         user = users[login]
         user.email_password_reset(request)
         request.session.flash('Emailed password reset instructions', 'success')
-        home = request.sdiapi.mgmt_path(request.root)
+        home = request.sdiapi.mgmt_path(request.virtual_root)
         return HTTPFound(location=home)
         
 class ResetSchema(Schema):
@@ -190,5 +190,5 @@ class ResetView(FormView):
         context = self.context
         context.reset_password(appstruct['new_password'])
         request.session.flash('Password reset, you may now log in', 'success')
-        home = request.sdiapi.mgmt_path(request.root)
+        home = request.sdiapi.mgmt_path(request.virtual_root)
         return HTTPFound(location=home)

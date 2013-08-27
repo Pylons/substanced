@@ -50,7 +50,7 @@ def login(context, request):
         return HTTPForbidden()
     if login_url in referrer:
         # never use the login form itself as came_from
-        referrer = request.sdiapi.mgmt_path(request.root)
+        referrer = request.sdiapi.mgmt_path(request.virtual_root)
     came_from = request.session.setdefault('sdi.came_from', referrer)
     login = ''
     password = ''
@@ -80,7 +80,7 @@ def login(context, request):
     template = get_renderer('substanced:sdi/views/templates/login.pt'
                            ).implementation()
     return dict(
-        url = request.sdiapi.mgmt_path(request.root, 'login'),
+        url = request.sdiapi.mgmt_path(request.virtual_root, '@@login'),
         came_from = came_from,
         login = login,
         password = password,

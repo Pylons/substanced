@@ -313,7 +313,7 @@ class TestUser(unittest.TestCase):
         principals.add_reset = add_reset
         request = testing.DummyRequest()
         request.sdiapi = DummySDIAPI()
-        request.root = site
+        request.virtual_root = site
         self.config.include('pyramid_mailer.testing')
         inst = self._makeOne('password')
         inst.email = 'foo@example.com'
@@ -331,7 +331,7 @@ class TestUser(unittest.TestCase):
         principals.add_reset = add_reset
         request = testing.DummyRequest()
         request.sdiapi = DummySDIAPI()
-        request.root = site
+        request.virtual_root = site
         self.config.include('pyramid_mailer.testing')
         inst = self._makeOne('password')
         inst.email = None

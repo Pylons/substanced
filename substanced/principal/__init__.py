@@ -55,6 +55,7 @@ from ..util import (
     renamer,
     set_acl,
     find_service,
+    acquire,
     )
 from ..stats import statsd_gauge
 from .._compat import _LETTERS
@@ -377,8 +378,8 @@ class User(Folder):
 
     def email_password_reset(self, request):
         """ Sends a password reset email."""
-        root = request.root
-        sitename = getattr(root, 'title', None) or 'Substance D'
+        root = request.virtual_root
+        sitename = acquire(root, 'title', None) or 'Substance D'
         principals = find_service(self, 'principals')
         reset = principals.add_reset(self)
         # XXX should this really point at an SDI URL?

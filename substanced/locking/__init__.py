@@ -20,10 +20,7 @@ import deform.widget
 from pyramid.location import lineage
 from pyramid.security import has_permission
 from pyramid.threadlocal import get_current_registry
-from pyramid.traversal import (
-    find_root,
-    resource_path,
-    )
+from pyramid.traversal import resource_path
 
 from substanced.interfaces import (
     ILockService,
@@ -413,8 +410,8 @@ def lock_resource(
     If the resource is already locked by a different user, raise a
     :class:`substanced.locking.LockError`
 
-    This function has the side effect of creating a Lock
-    Service in the Substance D root if one does not already exist.
+    If a Lock Service does not already exist in the lineage, a
+    :exc:`ValueError` will be raised.
 
     .. warning::
 
@@ -449,8 +446,8 @@ def could_lock_resource(
     If the resource is already locked by a different user, raise a
     :class:`substanced.locking.LockError`.
 
-    This function has the side effect of creating a Lock Service in the
-    Substance D root if one does not already exist.
+    If a Lock Service does not already exist in the lineage, a
+    :exc:`ValueError` will be raised.
 
     .. warning::
 
@@ -479,8 +476,8 @@ def unlock_resource(
 
     Otherwise, remove the lock.
 
-    This function has the side effect of creating a Lock Service in the
-    Substance D root if one does not already exist.
+    If a Lock Service does not already exist in the lineage, a
+    :exc:`ValueError` will be raised.
 
         .. warning::
 
@@ -510,8 +507,8 @@ def unlock_token(
 
     Otherwise remove the lock indicated by ``token``.
 
-    This function has the side effect of creating a Lock Service in the
-    Substance D root if one does not already exist.
+    If a Lock Service does not already exist in the lineage, a
+    :exc:`ValueError` will be raised.
 
         .. warning::
 

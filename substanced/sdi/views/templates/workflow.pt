@@ -1,7 +1,6 @@
 <div metal:use-macro="request.sdiapi.main_template">
 
-  <div metal:fill-slot="main"
-       tal:define="root_url request.sdiapi.mgmt_url(request.root)">
+  <div metal:fill-slot="main">
 
     <h1>Workflows</h1>
 

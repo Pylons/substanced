@@ -1049,7 +1049,7 @@ class Test_sdiapi(unittest.TestCase):
         def route_path(route_name, *arg, **kw):
             self.assertEqual(route_name, MANAGE_ROUTE_NAME)
             self.assertEqual(arg, ('a',))
-            self.assertEqual(kw, {'b':1, 'traverse':('',)})
+            self.assertEqual(kw, {'b':1, 'traverse':'/'})
             return '/path'
         request.route_path = route_path
         inst = self._makeOne(request)
@@ -1063,7 +1063,7 @@ class Test_sdiapi(unittest.TestCase):
         def route_url(route_name, *arg, **kw):
             self.assertEqual(route_name, MANAGE_ROUTE_NAME)
             self.assertEqual(arg, ('a',))
-            self.assertEqual(kw, {'b':1, 'traverse':('',)})
+            self.assertEqual(kw, {'b':1, 'traverse':'/'})
             return 'http://example.com/path'
         request.route_url = route_url
         inst = self._makeOne(request)
@@ -1096,6 +1096,27 @@ class Test_sdiapi(unittest.TestCase):
                'icon': None}]
             )
 
+    def test_breadcrumbs_with_vroot(self):
+        self.config.testing_securitypolicy(permissive=True)
+        resource = testing.DummyResource()
+        second = testing.DummyResource()
+        second.__parent__ = resource
+        second.__name__ = 'second'
+        request = testing.DummyRequest()
+        request.virtual_root = second
+        request.sdiapi = DummySDIAPI()
+        request.context = second
+        request.registry.content = DummyContent()
+        inst = self._makeOne(request)
+        result = inst.breadcrumbs()
+        self.assertEqual(
+            result,
+             [{'url': '/mgmt_path',
+               'active': 'active',
+               'name': 'second',
+               'icon': None}]
+            )
+        
     def test_sdi_title_exists(self):
         resource = testing.DummyResource()
         resource.sdi_title = 'My Title'

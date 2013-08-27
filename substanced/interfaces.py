@@ -165,8 +165,8 @@ class IACLModified(IObjectEvent):
 class IContentCreated(Interface):
     """ An event type sent when a Substance D content object is created 
     via ``registry.content.create``"""
-    object = Attribute('The freshly created root object.  It will already '
-                       'have been seated into the ZODB database')
+    object = Attribute('The freshly created content object.  It will not yet '
+                       'have been seated into any folder.')
     content_type = Attribute('The content type of the object that was created')
     meta = Attribute('The metainformation about the content type in the '
                      'content registry')
@@ -724,7 +724,7 @@ class ISDIAPI(Interface):
 
         - ``url``: The ``request.mgmt_path`` to that resource
 
-        - ``name``: The resource's ``__name__`` or 'Home' for the root
+        - ``name``: The resource ``__name__`` or 'Home' for the root
 
         - ``active``: Boolean representing whether the resource is
           in the breadcrumb is the current context
@@ -733,7 +733,7 @@ class ISDIAPI(Interface):
         """
 
     def sdi_title():
-        """ The ``sdi_title`` of the root or "Substance D" if
+        """ The ``sdi_title`` of the virtual root or "Substance D" if
          not defined """
 
     def mgmt_views(context):

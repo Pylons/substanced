@@ -36,7 +36,8 @@ class ManagementViews(object):
         if not view_data:
             request.session['came_from'] = request.url
             raise HTTPForbidden(
-                location=request.sdiapi.mgmt_path(request.root, '@@login')
+                location=request.sdiapi.mgmt_path(
+                    request.virtual_root, '@@login')
                 )
         view_name = '@@%s' % (view_data[0]['view_name'],)
         return HTTPFound(

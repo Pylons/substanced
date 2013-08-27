@@ -531,15 +531,17 @@ class sdiapi(object):
     def breadcrumbs(self):
         request = self.request
         breadcrumbs = []
-        for resource in reversed(list(lineage(request.context))):
+        for resource in lineage(request.context):
             if not has_permission('sdi.view', resource, request):
                 return []
             url = request.sdiapi.mgmt_path(resource, '@@manage_main')
             name = resource.__name__ or 'Home'
             icon = request.registry.content.metadata(resource, 'icon')
             active = resource is request.context and 'active' or None
-            breadcrumbs.append({'url':url, 'name':name, 'active':active,
-                                'icon':icon})
+            breadcrumbs.insert(0, {'url':url, 'name':name, 'active':active,
+                                   'icon':icon})
+            if resource is request.virtual_root:
+                break
         return breadcrumbs
 
     def sdi_title(self):

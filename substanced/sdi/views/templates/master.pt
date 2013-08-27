@@ -38,7 +38,7 @@
 
 </head>
 
-<body tal:define="home_path request.sdiapi.mgmt_path(request.root)">
+<body tal:define="home_path request.sdiapi.mgmt_path(request.virtual_root)">
 
 <div class="navbar navbar-fixed-top">
     <div class="navbar-inner">

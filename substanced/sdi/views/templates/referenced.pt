@@ -1,7 +1,7 @@
 <div metal:use-macro="request.sdiapi.main_template">
 
   <div metal:fill-slot="main"
-       tal:define="root_url request.sdiapi.mgmt_url(request.root)">
+       tal:define="root_url request.sdiapi.mgmt_url(request.virtual_root)">
 
     <div tal:repeat="(title, ids) [('As source', targets), ('As target', sources)]">
 

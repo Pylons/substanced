@@ -43,7 +43,7 @@
    <metal:slot metal:define-slot="password-reset-link">
    <p id="password-reset-link"
       metal:define-macro="password-reset-link">
-    <a href="${request.sdiapi.mgmt_path(request.root, '@@resetpassword')}"
+    <a href="${request.sdiapi.mgmt_path(request.virtual_root, '@@resetpassword')}"
     >Forgot your password?</a>
    </p>
    </metal:slot>

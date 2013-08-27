@@ -203,7 +203,7 @@ class FileUploadTempStore(object):
         self.session = request.session
         
     def preview_url(self, uid):
-        root = self.request.root
+        root = self.request.virtual_root
         return self.request.sdiapi.mgmt_path(
             root, '@@preview_image_upload', uid)
 
