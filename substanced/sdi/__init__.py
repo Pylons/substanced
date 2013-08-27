@@ -31,7 +31,6 @@ from pyramid.security import (
     has_permission,
     )
 from pyramid.session import UnencryptedCookieSessionFactoryConfig
-from pyramid.traversal import resource_path_tuple
 
 from pyramid.util import (
     action_method,
@@ -55,7 +54,6 @@ CENTER1 = Sentinel('CENTER1')
 CENTER2 = Sentinel('CENTER2')
 
 MANAGE_ROUTE_NAME = 'substanced_manage'
-
 MAX_ORDER = 1 << 30
 
 _marker = object()
@@ -519,13 +517,14 @@ class sdiapi(object):
 
     def mgmt_path(self, obj, *arg, **kw):
         request = self.request
-        traverse = resource_path_tuple(obj)
+        traverse = request.resource_path(obj)
         kw['traverse'] = traverse
-        return request.route_path(MANAGE_ROUTE_NAME, *arg, **kw)
+        result = request.route_path(MANAGE_ROUTE_NAME, *arg, **kw)
+        return result
 
     def mgmt_url(self, obj, *arg, **kw):
         request = self.request
-        traverse = resource_path_tuple(obj)
+        traverse = request.resource_path(obj)
         kw['traverse'] = traverse
         return request.route_url(MANAGE_ROUTE_NAME, *arg, **kw)
 
