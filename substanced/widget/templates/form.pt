@@ -39,7 +39,7 @@
     <div class="form-actions">
       <tal:block repeat="button field.buttons">
         <button
-            tal:attributes="disabled button.disabled"
+            tal:attributes="disabled 'disabled' if button.disabled else None"
             id="${field.formid+button.name}"
             name="${button.name}"
             type="${button.type}"
