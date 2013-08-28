@@ -31,6 +31,7 @@ from pyramid.security import (
     has_permission,
     )
 from pyramid.session import UnencryptedCookieSessionFactoryConfig
+from pyramid.traversal import traversal_path
 
 from pyramid.util import (
     action_method,
@@ -517,14 +518,14 @@ class sdiapi(object):
 
     def mgmt_path(self, obj, *arg, **kw):
         request = self.request
-        traverse = request.resource_path(obj)
+        traverse = ('',) + traversal_path(request.resource_path(obj))
         kw['traverse'] = traverse
         result = request.route_path(MANAGE_ROUTE_NAME, *arg, **kw)
         return result
 
     def mgmt_url(self, obj, *arg, **kw):
         request = self.request
-        traverse = request.resource_path(obj)
+        traverse = ('',) + traversal_path(request.resource_path(obj))
         kw['traverse'] = traverse
         return request.route_url(MANAGE_ROUTE_NAME, *arg, **kw)
 
