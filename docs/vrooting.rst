@@ -29,11 +29,11 @@ a Substance D application that runs on localhost on port 6543::
       RequestHeader add X-Vhm-Root /folder1
   </VirtualHost>
 
-In the above configuration, when users log in on ``example.com:80``, the root
-they see in the SDI will be ``/folder1`` instead of the real root.  They will
-not be able to access the real root.
+In the above configuration, when users log in on ``http://example.com/manage``,
+the root they see in the SDI will be ``/folder1`` instead of the real root.
+They will not be able to access the real root.
 
-Note that retail requests to the same hostname will *also* be rooted at
-``folder1``.
+Note that retail requests (requests without ``/manage``) to the same hostname
+will *also* be rooted at ``folder1``.
 
 This feature requires Pyramid version 1.4.4 or better.
