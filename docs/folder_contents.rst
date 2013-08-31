@@ -59,7 +59,6 @@ mappings conforming to the datagrid's contract. For example:
             ('Basic', BinderPropertySheet),
             ),
         columns=binder_columns,
-        catalog=True,
         )
 
 The callable is passed the folder, a subobject, the ``request``,
@@ -313,7 +312,6 @@ type declaration:
             ('Basic', BinderPropertySheet),
             ),
         columns=binder_columns,
-        catalog=True,
         )
 
 The ``binder_columns`` points to a callable where we perform the work
