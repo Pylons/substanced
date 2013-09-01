@@ -22,11 +22,10 @@
     <h1>Substance D management interface demo</h1>
 
     <div>
-      <a href="https://github.com/Pylons/substanced">Substance D</a> is an
-      application development environment built using the <a
-      href="http://pylonsproject.org">Pyramid</a> web framework.  It owes much
-      of its spirit to the <a href="http://www.zope.org">Zope 2</a> web
-      application server. It has the following features:
+      <p><a href="https://github.com/Pylons/substanced">Substance D</a> is an
+      application server built using the <a
+      href="http://pylonsproject.org">Pyramid</a> web framework.
+      It has the following features:</p>
       <ul>
         <li>Uses <a href="http://zodb.org">ZODB</a> to store its content</li>
         <li>Has built in users and groups management</li>
@@ -40,63 +39,15 @@
         <li>Has machinery for dumping content to the filesystem and loading content from
             such a dump</li>
       </ul>
-      See
+      <p>See
       the <a href="http://docs.pylonsproject.org/projects/substanced/en/latest/">documentation</a>
-      for detailed technical information. To see it in action, click the button
-      below and log in as <b>admin</b> with the password <b>admin</b>.
+      for detailed technical information.</p>
+      <p>To see it in action, click the button
+      below and log in as <b>admin</b> with the password <b>admin</b>.</p>
       <div style="margin-top: 1em;">
         <a class="btn btn-primary" href="${request.application_url}${manage_prefix}">See the management interface</a>
       </div>
 
-      <div class="blockquote" style="margin-top:1em;">
-
-        <p>
-          The two hemispheres of my brain are competing?" Fred said.
-        </p>
-
-        <p>
-          "Yes."
-        </p>
-
-        <p>
-        "Why?"
-        </p>
-
-        <p>
-        "Substance D. It often causes that, functionally. This is what we
-        expected; this is what the tests confirm. Damage having taken place in
-        the normally dominant left hemisphere, the right hemisphere is attempting
-        to compensate for the impairment. But the twin functions do not fuse,
-        because this is an abnormal condition the body isn't prepared for. It
-        should never happen. "Cross-cuing", we call it. Related to splitbrain
-        phenomena. We could perform a right hemispherectomy, but--"
-        </p>
-
-        <p>
-        "Will this go away," Fred interrupted, "when I get off Substance D?"
-        </p>
-
-        <p>
-        "Probably," the psychologist on the left said, nodding. "It's a
-        functional impairment."
-        </p>
-
-        <p>
-        The other man said, "It may be organic damage. It may be
-        permanent. Time'll tell, and only after you are off Substance D for a
-        long while. And off entirely."
-        </p>
-
-        <p>
-        "What?" Fred said. He did not understand the answer-- was it yes or no?
-        Was he damaged forever or not? Which had they said?
-        </p>
-
-        <p>
-        -- <b>Phillip K. Dick, A Scanner Darkly</b>
-        </p>
-
-      </div>
 
     </div>
   </div>
