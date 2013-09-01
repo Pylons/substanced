@@ -116,7 +116,7 @@ pygments_style = 'sphinx'
 
 # Add and use Pylons theme
 html_theme_path = ['_themes']
-html_theme = 'pyramid'
+html_theme = 'pylons'
 html_theme_options = dict(
     github_url='https://github.com/Pylons/substanced',
 #    in_progress='true'
