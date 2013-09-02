@@ -5,7 +5,7 @@ import colander
 
 class TestPropertySheet(unittest.TestCase):
     def _makeOne(self, context, request):
-        from . import PropertySheet
+        from .. import PropertySheet
         return PropertySheet(context, request)
 
     def test_get(self):
@@ -110,7 +110,7 @@ class Test_is_propertied(unittest.TestCase):
         testing.tearDown()
 
     def _callFUT(self, resource, registry=None):
-        from . import is_propertied
+        from .. import is_propertied
         return is_propertied(resource, registry)
 
     def test_no_registry_passed(self):
@@ -132,7 +132,7 @@ class Test_is_propertied(unittest.TestCase):
 
 class Test_PropertiedPredicate(unittest.TestCase):
     def _makeOne(self, val, config):
-        from . import _PropertiedPredicate
+        from .. import _PropertiedPredicate
         return _PropertiedPredicate(val, config)
 
     def test_text(self):

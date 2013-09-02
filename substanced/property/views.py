@@ -8,12 +8,11 @@ from pyramid.security import (
     has_permission,
     )
 
-from ...form import FormError
-from ...form import FormView
-from ...locking import LockError
-from ...locking import could_lock_resource
-
-from .. import mgmt_view
+from ..form import FormError
+from ..form import FormView
+from ..locking import LockError
+from ..locking import could_lock_resource
+from ..sdi import mgmt_view
 
 def has_permission_to_view_any_propertysheet(context, request):
     candidates = request.registry.content.metadata(

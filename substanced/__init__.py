@@ -51,6 +51,7 @@ def scan(config): # pragma: no cover
     config.scan('.folder')
     config.scan('.objectmap')
     config.scan('.principal')
+    config.scan('.property')
     config.scan('.root')
     config.scan('.sdi')
     config.scan('.workflow')

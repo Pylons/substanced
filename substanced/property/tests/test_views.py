@@ -9,7 +9,7 @@ class TestPropertySheetsView(unittest.TestCase):
         testing.tearDown()
         
     def _makeOne(self, request):
-        from ..property import PropertySheetsView
+        from ..views import PropertySheetsView
         return PropertySheetsView(request)
 
     def test_ctor_no_viewable_sheet_factories(self):
@@ -162,7 +162,7 @@ class Test_has_permission_to_view_any_propertysheet(unittest.TestCase):
         testing.tearDown()
 
     def _callFUT(self, context, request):
-        from ..property import has_permission_to_view_any_propertysheet
+        from ..views import has_permission_to_view_any_propertysheet
         return has_permission_to_view_any_propertysheet(context, request)
         
     def test_no_candidates(self):
@@ -265,7 +265,7 @@ class DummyLockService(object):
         self._can_lock = can_lock
 
     def borrow_lock(self, resource, owner, locktype=None):
-        from ....locking import LockError
+        from substanced.locking import LockError
         if not self._can_lock:
             raise LockError(DummyLock('otheruser', 'existing'))
         return True
