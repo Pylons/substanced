@@ -4,24 +4,24 @@ import deform.widget
 from pyramid.httpexceptions import HTTPFound
 from pyramid.security import NO_PERMISSION_REQUIRED
 
-from ...form import FormView
-from ...schema import Schema
+from ..form import FormView
+from ..schema import Schema
 
-from ...interfaces import (
+from ..interfaces import (
     IUsers,
     IUser,
     IGroups,
     IPasswordReset,
     )
 
-from .. import mgmt_view
+from ..sdi import mgmt_view
 
-from ...principal import (
+from . import (
     UserSchema,
     GroupSchema,
     )
 
-from ...util import find_service
+from ..util import find_service
 
 class AddUserSchema(UserSchema):
     password = colander.SchemaNode(
@@ -43,7 +43,7 @@ def add_principals_service(context, request):
     context=IUsers,
     name='add_user',
     permission='sdi.add-user', 
-    renderer='templates/form.pt',
+    renderer='substanced.sdi.views:templates/form.pt',
     tab_condition=False
     )
 class AddUserView(FormView):
@@ -66,7 +66,7 @@ class AddUserView(FormView):
     context=IGroups,
     name='add_group',
     permission='sdi.add-group', 
-    renderer='templates/form.pt',
+    renderer='substanced.sdi.views:templates/form.pt',
     tab_condition=False
     )
 class AddGroupView(FormView):
@@ -109,7 +109,7 @@ class UserPasswordSchema(Schema):
     name='change_password',
     tab_title='Change Password',
     permission='sdi.change-password',
-    renderer='templates/form.pt',
+    renderer='substanced.sdi.views:templates/form.pt',
     )
 class ChangePasswordView(FormView):
     title = 'Change Password'
@@ -145,7 +145,7 @@ class ResetRequestSchema(Schema):
 @mgmt_view(
     name='resetpassword',
     tab_condition=False,
-    renderer='templates/form.pt',
+    renderer='substanced.sdi.views:templates/form.pt',
     permission=NO_PERMISSION_REQUIRED,
     )
 class ResetRequestView(FormView):
@@ -177,7 +177,7 @@ class ResetSchema(Schema):
     context=IPasswordReset,
     name='',
     tab_condition=False,
-    renderer='templates/form.pt',
+    renderer='substanced.sdi.views:templates/form.pt',
     permission=NO_PERMISSION_REQUIRED,
     )
 class ResetView(FormView):

@@ -4,7 +4,7 @@ from pyramid import testing
 
 class Test_add_principals_service(unittest.TestCase):
     def _callFUT(self, context, request):
-        from ..principal import add_principals_service
+        from ..views import add_principals_service
         return add_principals_service(context, request)
 
     def test_it(self):
@@ -19,7 +19,7 @@ class Test_add_principals_service(unittest.TestCase):
 
 class TestAddUserView(unittest.TestCase):
     def _makeOne(self, context, request):
-        from ..principal import AddUserView
+        from ..views import AddUserView
         return AddUserView(context, request)
 
     def _makeRequest(self, resource):
@@ -41,7 +41,7 @@ class TestAddUserView(unittest.TestCase):
 
 class TestAddGroupView(unittest.TestCase):
     def _makeOne(self, context, request):
-        from ..principal import AddGroupView
+        from ..views import AddGroupView
         return AddGroupView(context, request)
 
     def _makeRequest(self, resource):
@@ -63,7 +63,7 @@ class TestAddGroupView(unittest.TestCase):
 
 class Test_password_validator(unittest.TestCase):
     def _makeOne(self, node, kw):
-        from ..principal import password_validator
+        from ..views import password_validator
         return password_validator(node, kw)
 
     def test_it_success(self):
@@ -88,7 +88,7 @@ class Test_password_validator(unittest.TestCase):
 
 class TestChangePasswordView(unittest.TestCase):
     def _makeOne(self, context, request):
-        from ..principal import ChangePasswordView
+        from ..views import ChangePasswordView
         return ChangePasswordView(context, request)
 
     def test_add_success(self):
@@ -103,7 +103,7 @@ class TestChangePasswordView(unittest.TestCase):
 
 class TestRequestResetView(unittest.TestCase):
     def _makeOne(self, context, request):
-        from ..principal import ResetRequestView
+        from ..views import ResetRequestView
         return ResetRequestView(context, request)
 
     def _makeRequest(self):
@@ -112,7 +112,7 @@ class TestRequestResetView(unittest.TestCase):
         return request
 
     def _makeSite(self):
-        from ....testing import make_site
+        from substanced.testing import make_site
         return make_site()
 
     def test_send_success(self):
@@ -127,7 +127,7 @@ class TestRequestResetView(unittest.TestCase):
 
 class TestResetView(unittest.TestCase):
     def _makeOne(self, context, request):
-        from ..principal import ResetView
+        from ..views import ResetView
         return ResetView(context, request)
 
     def _makeRequest(self):
@@ -148,11 +148,11 @@ class TestResetView(unittest.TestCase):
 
 class Test_login_validator(unittest.TestCase):
     def _makeOne(self, node, kw):
-        from ..principal import login_validator
+        from ..views import login_validator
         return login_validator(node, kw)
 
     def _makeSite(self):
-        from ....interfaces import IFolder
+        from substanced.interfaces import IFolder
         site = testing.DummyResource(__provides__=IFolder)
         principals = testing.DummyResource(__is_service__=True)
         users = testing.DummyResource()
