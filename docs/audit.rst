@@ -43,6 +43,28 @@ Note that if you do not configure an audit database, real-time SDI features
 such as your folder contents views updating without a manual refresh will not 
 work.
 
+Once you've configured the audit database, you need to add an audit log object
+to the new database.  You can do this using pshell::
+
+    [chrism@thinko sdnet]$ bin/pshell etc/development.ini 
+    Python 3.3.2 (default, Jun  1 2013, 04:46:52) 
+    [GCC 4.6.3] on linux
+    Type "help" for more information.
+
+    Environment:
+      app          The WSGI application.
+      registry     Active Pyramid registry.
+      request      Active request object.
+      root         Root of the default resource tree.
+      root_factory Default root factory used to create `root`.
+
+    >>> from substanced.audit import set_auditlog
+    >>> set_auditlog(root)
+    >>> import transaction; transaction.commit()
+
+Once you've done this, the "Auditing" tab of the root object in the SDI should
+no longer indicate that auditing is not configured.
+
 Viewing the Audit Log
 =====================
 
