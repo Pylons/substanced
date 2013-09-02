@@ -2,6 +2,7 @@ import datetime
 from logging import getLogger
 
 from pyramid.view import view_defaults
+from pyramid.httpexceptions import HTTPPreconditionFailed
 from pyramid.compat import PY3, text_type
 from substanced.sdi import mgmt_view, RIGHT
 from substanced.util import (
@@ -75,8 +76,7 @@ class AuditLogEventStreamView(object):
         last_event_id = request.headers.get('Last-Event-Id')
         log = self.get_auditlog(self.context)
         if log is None:
-            response.text = text_type('')
-            return response
+            return HTTPPreconditionFailed('Auditing not configured')
         if not last_event_id:
             # first call, set a baseline event id
             gen, idx = log.latest_id()

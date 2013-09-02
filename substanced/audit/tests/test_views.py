@@ -22,7 +22,7 @@ class Test_AuditLogEventStreamView(unittest.TestCase):
         inst = self._makeOne(context, request)
         inst.get_auditlog = lambda c: None
         response = inst.auditstream_sse()
-        self.assertEqual(response.text, '')
+        self.assertEqual(response.detail, 'Auditing not configured')
         
     def test_auditstream_sse_no_last_event_id(self):
         context = testing.DummyResource()
