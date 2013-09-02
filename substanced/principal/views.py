@@ -43,7 +43,7 @@ def add_principals_service(context, request):
     context=IUsers,
     name='add_user',
     permission='sdi.add-user', 
-    renderer='substanced.sdi.views:templates/form.pt',
+    renderer='substanced.sdi:templates/form.pt',
     tab_condition=False
     )
 class AddUserView(FormView):
@@ -66,7 +66,7 @@ class AddUserView(FormView):
     context=IGroups,
     name='add_group',
     permission='sdi.add-group', 
-    renderer='substanced.sdi.views:templates/form.pt',
+    renderer='substanced.sdi:templates/form.pt',
     tab_condition=False
     )
 class AddGroupView(FormView):
@@ -109,7 +109,7 @@ class UserPasswordSchema(Schema):
     name='change_password',
     tab_title='Change Password',
     permission='sdi.change-password',
-    renderer='substanced.sdi.views:templates/form.pt',
+    renderer='substanced.sdi:templates/form.pt',
     )
 class ChangePasswordView(FormView):
     title = 'Change Password'
@@ -145,7 +145,7 @@ class ResetRequestSchema(Schema):
 @mgmt_view(
     name='resetpassword',
     tab_condition=False,
-    renderer='substanced.sdi.views:templates/form.pt',
+    renderer='substanced.sdi:templates/form.pt',
     permission=NO_PERMISSION_REQUIRED,
     )
 class ResetRequestView(FormView):
@@ -177,7 +177,7 @@ class ResetSchema(Schema):
     context=IPasswordReset,
     name='',
     tab_condition=False,
-    renderer='substanced.sdi.views:templates/form.pt',
+    renderer='substanced.sdi:templates/form.pt',
     permission=NO_PERMISSION_REQUIRED,
     )
 class ResetView(FormView):
