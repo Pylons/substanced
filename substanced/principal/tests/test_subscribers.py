@@ -6,12 +6,12 @@ class Test_principal_added(unittest.TestCase):
         from ..subscribers import principal_added
         return principal_added(event)
 
-    def test_event_wo_loading(self):
+    def test_event_wo_loading_attr(self):
         event = testing.DummyResource()
         event.object = testing.DummyResource()
         self.assertRaises(AttributeError, self._callFUT, event)
 
-    def test_loading(self):
+    def test_event_w_loading_True(self):
         event = testing.DummyResource(loading=True)
         result = self._callFUT(event)
         self.assertEqual(result, None)
