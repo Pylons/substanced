@@ -39,6 +39,10 @@ The database cannot be your main database.  The reason that the audit database
 must live in a separate ZODB database is that we don't want undo operations to
 undo the audit log data.
 
+Note that if you do not configure an audit database, real-time SDI features
+such as your folder contents views updating without a manual refresh will not 
+work.
+
 Viewing the Audit Log
 =====================
 
