@@ -8,7 +8,7 @@ from substanced.util import (
     find_catalogs,
     )
 
-from .. import (
+from substanced.sdi import (
     mgmt_view,
     RIGHT,
     )

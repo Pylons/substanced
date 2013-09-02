@@ -8,14 +8,12 @@ from pyramid.httpexceptions import HTTPFound
 
 from pyramid.view import view_defaults
 
-from ...objectmap import find_objectmap
-from ...interfaces import ICatalog, IFolder
-
-from ...catalog import logger
-from ...form import FormView
-from ...schema import Schema
-    
-from .. import mgmt_view
+from substanced.catalog import logger
+from substanced.form import FormView
+from substanced.interfaces import ICatalog, IFolder
+from substanced.objectmap import find_objectmap
+from substanced.schema import Schema
+from substanced.sdi import mgmt_view
 
 def context_is_an_index(context, request):
     return request.registry.content.metadata(context, 'is_index', False)
