@@ -7,9 +7,9 @@ from pyramid.httpexceptions import HTTPFound
 from pyramid.response import Response
 from pyramid.security import NO_PERMISSION_REQUIRED
 
-from ...form import FormView
+from ..form import FormView
 
-from ...file import (
+from ..file import (
     FilePropertiesSchema,
     FileUploadTempStore,
     file_upload_widget,
@@ -17,12 +17,12 @@ from ...file import (
     USE_MAGIC,
     )
 
-from ...interfaces import (
+from ..interfaces import (
     IFile,
     IFolder,
     )
 
-from .. import mgmt_view
+from ..sdi import mgmt_view
 
 @mgmt_view(
     context=IFile,
