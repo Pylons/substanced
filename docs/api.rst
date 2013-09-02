@@ -175,6 +175,8 @@ Other Helpers
 :mod:`substanced.db` API
 ------------------------
 
+.. automodule:: substanced.db
+
 .. autofunction:: root_factory
 
 :mod:`substanced.dump` API
