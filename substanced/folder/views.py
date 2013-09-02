@@ -978,7 +978,7 @@ def add_folder_contents_views(
     cls=None,
     name='contents',
     context=None,
-    renderer='templates/contents.pt',
+    renderer='substanced.folder:templates/contents.pt', # do not abbreviate
     view_permission='sdi.view',
     manage_contents_permission='sdi.manage-contents',
     tab_title=None,
