@@ -6,7 +6,7 @@ from pyramid import testing
 
 IS_32_BIT = sys.maxsize == 2**32
 
-from .._compat import u
+from substanced._compat import u
 _BLANK = u('')
 _SLASH = u('/')
 _A = u('a')
@@ -22,7 +22,7 @@ class TestObjectMap(unittest.TestCase):
         testing.tearDown()
 
     def _makeOne(self, root=None, family=None):
-        from . import ObjectMap
+        from .. import ObjectMap
         if root is None:
             root = DummyRoot()
         return ObjectMap(root, family=family)
@@ -671,7 +671,7 @@ class TestObjectMap(unittest.TestCase):
         
 class TestReferenceSet(unittest.TestCase):
     def _makeOne(self):
-        from . import ReferenceSet
+        from .. import ReferenceSet
         return ReferenceSet()
 
     def test_connect_empty(self):
@@ -781,7 +781,7 @@ class TestReferenceSet(unittest.TestCase):
 
 class TestReferenceMap(unittest.TestCase):
     def _makeOne(self, map=None):
-        from . import ReferenceMap
+        from .. import ReferenceMap
         return ReferenceMap(map)
 
     def test_ctor(self):
@@ -858,7 +858,7 @@ class TestReferenceMap(unittest.TestCase):
 
 class TestExtentMap(unittest.TestCase):
     def _makeOne(self):
-        from . import ExtentMap
+        from .. import ExtentMap
         return ExtentMap()
 
     def test_ctor(self):
@@ -871,7 +871,7 @@ class TestExtentMap(unittest.TestCase):
         obj = Dummy()
         inst.add(obj, 1)
         inst.add(obj, 2)
-        dummy_dotted = 'substanced.objectmap.tests.Dummy'
+        dummy_dotted = 'substanced.objectmap.tests.test_init.Dummy'
         self.assertEqual(
             list(inst.extent_to_oids.keys()),
             [dummy_dotted]
@@ -914,7 +914,7 @@ class TestExtentMap(unittest.TestCase):
 
     def test_get(self):
         inst = self._makeOne()
-        dummy_dotted = 'substanced.objectmap.tests.Dummy'
+        dummy_dotted = 'substanced.objectmap.tests.test_init.Dummy'
         obj = Dummy()
         inst.add(obj, 1)
         self.assertEqual(
@@ -935,7 +935,7 @@ class Test_reference_sourceid_property(unittest.TestCase):
     def _makeInst(self, reftype=None):
         if reftype is None:
             reftype = Dummy
-        from . import reference_sourceid_property
+        from .. import reference_sourceid_property
         class Inner(self.DummyFolder):
             prop = reference_sourceid_property(reftype)
         inst = Inner()
@@ -1007,7 +1007,7 @@ class Test_reference_targetid_property(unittest.TestCase):
     def _makeInst(self, reftype=None):
         if reftype is None:
             reftype = Dummy
-        from . import reference_targetid_property
+        from .. import reference_targetid_property
         class Inner(self.DummyFolder):
             prop = reference_targetid_property(reftype)
         inst = Inner()
@@ -1075,7 +1075,7 @@ class Test_reference_source_property(unittest.TestCase):
     def _makeInst(self, reftype=None):
         if reftype is None:
             reftype = Dummy
-        from . import reference_source_property
+        from .. import reference_source_property
         class Inner(self.DummyFolder):
             prop = reference_source_property(reftype)
         inst = Inner()
@@ -1150,7 +1150,7 @@ class Test_reference_target_property(unittest.TestCase):
     def _makeInst(self, reftype=None):
         if reftype is None:
             reftype = Dummy
-        from . import reference_target_property
+        from .. import reference_target_property
         class Inner(self.DummyFolder):
             prop = reference_target_property(reftype)
         inst = Inner()
@@ -1225,7 +1225,7 @@ class Test_multireference_sourceid_property(unittest.TestCase):
     def _makeInst(self, reftype=None, ignore_missing=False):
         if reftype is None:
             reftype = Dummy
-        from . import multireference_sourceid_property
+        from .. import multireference_sourceid_property
         class Inner(self.DummyFolder):
             prop = multireference_sourceid_property(
                 reftype,
@@ -1385,7 +1385,7 @@ class Test_multireference_source_property(unittest.TestCase):
     def _makeInst(self, reftype=None, ignore_missing=False):
         if reftype is None:
             reftype = Dummy
-        from . import multireference_source_property
+        from .. import multireference_source_property
         class Inner(self.DummyFolder):
             prop = multireference_source_property(
                 reftype,
@@ -1546,7 +1546,7 @@ class Test_multireference_targetid_property(unittest.TestCase):
     def _makeInst(self, reftype=None, ignore_missing=False):
         if reftype is None:
             reftype = Dummy
-        from . import multireference_targetid_property
+        from .. import multireference_targetid_property
         class Inner(self.DummyFolder):
             prop = multireference_targetid_property(
                 reftype,
@@ -1707,7 +1707,7 @@ class Test_multireference_target_property(unittest.TestCase):
     def _makeInst(self, reftype=None, ignore_missing=False):
         if reftype is None:
             reftype = Dummy
-        from . import multireference_target_property
+        from .. import multireference_target_property
         class Inner(self.DummyFolder):
             prop = multireference_target_property(
                 reftype,
@@ -1867,7 +1867,7 @@ class TestMultireference(unittest.TestCase):
         resolve=False,
         orientation='source'
         ):
-        from . import Multireference
+        from .. import Multireference
         return Multireference(
             context,
             oids,
@@ -2044,7 +2044,7 @@ class TestMultireference(unittest.TestCase):
 
 class Test_ReferencedPredicate(unittest.TestCase):
     def _makeOne(self, val, config):
-        from . import _ReferencedPredicate
+        from .. import _ReferencedPredicate
         return _ReferencedPredicate(val, config)
 
     def test_text(self):
@@ -2071,7 +2071,7 @@ class Test_ReferencedPredicate(unittest.TestCase):
 
 class Test_has_references(unittest.TestCase):
     def _callFUT(self, context):
-        from . import has_references
+        from .. import has_references
         return has_references(context)
     
     def test_objectmap_is_None(self):
@@ -2093,7 +2093,7 @@ class Test_has_references(unittest.TestCase):
 
 class Test_referential_integrity(unittest.TestCase):
     def _callFUT(self, event):
-        from . import referential_integrity
+        from .. import referential_integrity
         return referential_integrity(event)
 
     def test_moving(self):
@@ -2117,7 +2117,7 @@ class Test_referential_integrity(unittest.TestCase):
         self.assertFalse(self._callFUT(event))
 
     def test_reftype_with_source_integrity_no_targetids(self):
-        from ..interfaces import ReferenceType
+        from substanced.interfaces import ReferenceType
         obj = testing.DummyResource()
         class Reference(ReferenceType):
             source_integrity = True
@@ -2126,8 +2126,8 @@ class Test_referential_integrity(unittest.TestCase):
         self.assertFalse(self._callFUT(event))
 
     def test_reftype_with_source_integrity_with_targetids(self):
-        from ..interfaces import ReferenceType
-        from . import SourceIntegrityError
+        from substanced.interfaces import ReferenceType
+        from .. import SourceIntegrityError
         obj = testing.DummyResource()
         class Reference(ReferenceType):
             source_integrity = True
@@ -2138,7 +2138,7 @@ class Test_referential_integrity(unittest.TestCase):
         self.assertRaises(SourceIntegrityError, self._callFUT, event)
 
     def test_reftype_with_source_integrity_with_only_self_targetid(self):
-        from ..interfaces import ReferenceType
+        from substanced.interfaces import ReferenceType
         obj = testing.DummyResource()
         class Reference(ReferenceType):
             source_integrity = True
@@ -2149,7 +2149,7 @@ class Test_referential_integrity(unittest.TestCase):
         self.assertEqual(None, self._callFUT(event)) # self-reference ignored
 
     def test_reftype_with_target_integrity_no_sourceids(self):
-        from ..interfaces import ReferenceType
+        from substanced.interfaces import ReferenceType
         obj = testing.DummyResource()
         class Reference(ReferenceType):
             target_integrity = True
@@ -2158,8 +2158,8 @@ class Test_referential_integrity(unittest.TestCase):
         self.assertFalse(self._callFUT(event))
 
     def test_reftype_with_target_integrity_with_sourceids(self):
-        from ..interfaces import ReferenceType
-        from . import TargetIntegrityError
+        from substanced.interfaces import ReferenceType
+        from .. import TargetIntegrityError
         obj = testing.DummyResource()
         class Reference(ReferenceType):
             target_integrity = True
@@ -2170,7 +2170,7 @@ class Test_referential_integrity(unittest.TestCase):
         self.assertRaises(TargetIntegrityError, self._callFUT, event)
 
     def test_reftype_with_target_integrity_with_only_self_sourceid(self):
-        from ..interfaces import ReferenceType
+        from substanced.interfaces import ReferenceType
         obj = testing.DummyResource()
         class Reference(ReferenceType):
             target_integrity = True
@@ -2182,7 +2182,7 @@ class Test_referential_integrity(unittest.TestCase):
 
 class TestReferentialIntegrityError(unittest.TestCase):
     def _makeOne(self, obj, reftype, oids):
-        from . import ReferentialIntegrityError
+        from .. import ReferentialIntegrityError
         return ReferentialIntegrityError(obj, reftype, oids)
 
     def test_get_objects(self):

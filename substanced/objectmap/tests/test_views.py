@@ -10,7 +10,7 @@ class TestReferencedView(unittest.TestCase):
         testing.tearDown()
 
     def _makeOne(self, context, request):
-        from  ..referenced import ReferencedView
+        from  ..views import ReferencedView
         return ReferencedView(context, request)
 
     def test_show(self):

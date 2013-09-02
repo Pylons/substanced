@@ -1,14 +1,16 @@
 from pyramid.view import view_defaults
 from pyramid.security import NO_PERMISSION_REQUIRED
 
-from ...objectmap import (
+from . import (
     find_objectmap,
     ReferentialIntegrityError,
     )
-from ...util import get_oid
+from ..util import get_oid
 
-from .. import mgmt_view
-from .. import RIGHT
+from ..sdi import (
+    mgmt_view,
+    RIGHT,
+    )
 
 @view_defaults(
     referenced=True,
