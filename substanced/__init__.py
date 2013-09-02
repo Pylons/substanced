@@ -33,6 +33,7 @@ def scan(config): # pragma: no cover
     config.scan('.property')
     config.scan('.root')
     config.scan('.sdi')
+    config.scan('.db')
     config.scan('.workflow')
     config.scan('.audit')
     config.scan('.locking')
