@@ -11,8 +11,6 @@
 
 .. autofunction:: scan
 
-.. autofunction:: root_factory
-
 :mod:`substanced.audit` API
 ---------------------------
 
@@ -173,6 +171,11 @@ Other Helpers
    :members:
 
 .. autofunction:: includeme
+
+:mod:`substanced.db` API
+------------------------
+
+.. autofunction:: root_factory
 
 :mod:`substanced.dump` API
 -----------------------------

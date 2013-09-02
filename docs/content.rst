@@ -363,13 +363,13 @@ Substance D applications will start with:
 
 .. code-block:: python
 
-    from substanced import root_factory
+    from substanced.db import root_factory
     def main(global_config, **settings):
         """ This function returns a Pyramid WSGI application.
         """
         config = Configurator(settings=settings, root_factory=root_factory)
 
-The :py:func:`substanced.root_factory` callable contains the following
+The :py:func:`substanced.db.root_factory` callable contains the following
 line:
 
 .. code-block:: python

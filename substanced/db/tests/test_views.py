@@ -3,7 +3,7 @@ from pyramid import testing
 
 class TestManageDatabase(unittest.TestCase):
     def _makeOne(self, context, request):
-        from ..db import ManageDatabase
+        from ..views import ManageDatabase
         return ManageDatabase(context, request)
 
     def test_view_with_activity_monitor(self):
@@ -214,7 +214,7 @@ class TestManageDatabase(unittest.TestCase):
 
 
     def test_format_timestamp(self):
-        from ..db import _format_timestamp
+        from ..views import _format_timestamp
         dt = _format_timestamp(1374121920.462345, 'UTC')
         self.assertEqual(dt, '2013-07-18 04:32:00 UTC')
 

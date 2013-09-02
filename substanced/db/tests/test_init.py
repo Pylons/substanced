@@ -9,7 +9,7 @@ class Test_root_factory(unittest.TestCase):
         testing.tearDown()
         
     def _callFUT(self, request, transaction, get_connection, evolve_packages):
-        from . import root_factory
+        from .. import root_factory
         return root_factory(request, transaction, get_connection,
                             evolve_packages)
 

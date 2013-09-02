@@ -9,8 +9,8 @@ from pyramid.httpexceptions import HTTPFound
 from pyramid.view import view_defaults
 from pyramid.traversal import find_root
 
-from .. import mgmt_view
-from ...evolution import EvolutionManager
+from ..sdi import mgmt_view
+from ..evolution import EvolutionManager
 
 
 @view_defaults(
