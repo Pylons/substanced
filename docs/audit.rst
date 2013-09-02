@@ -31,7 +31,7 @@ section in the ``.ini`` file associated with the app::
 An example of "some ZODB URI" above might be (for a FileStorage database, if 
 your application doesn't use multiple processes)::
 
-  zodbconn.uri.audit = file://%(here)s/auditlog.fs?connection_cache_size=50000&blobstorage_dir=%(here)s/blobs&blobstorage_layout=bushy
+  zodbconn.uri.audit = file://%(here)s/auditlog.fs
 
 Or if your application uses multiple processes, use a ZEO URL.
 
