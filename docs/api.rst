@@ -219,6 +219,14 @@ Other Helpers
    :members:
    :inherited-members:
 
+.. autoclass:: LoggedIn
+   :members:
+   :inherited-members:
+
+.. autoclass:: RootAdded
+   :members:
+   :inherited-members:
+
 .. autoclass:: subscribe_added
    :members:
    :inherited-members:
@@ -244,6 +252,10 @@ Other Helpers
    :inherited-members:
 
 .. autoclass:: subscribe_logged_in
+   :members:
+   :inherited-members:
+
+.. autoclass:: subscribe_root_added
    :members:
    :inherited-members:
 
