@@ -3,11 +3,11 @@ import operator
 from pyramid.httpexceptions import HTTPFound
 from pyramid.view import view_defaults
 
-from .. import (
+from ..sdi import (
     mgmt_view,
     RIGHT,
     )
-from ...util import get_content_type
+from ..util import get_content_type
 
 @view_defaults(
     permission='sdi.manage-workflow',

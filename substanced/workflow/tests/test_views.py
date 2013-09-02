@@ -10,7 +10,7 @@ class TestIndexingView(unittest.TestCase):
         testing.tearDown()
 
     def _makeOne(self, context, request):
-        from  ..workflow import WorkflowViews
+        from  ..views import WorkflowViews
         return WorkflowViews(context, request)
 
     def test__get_workflows(self):
