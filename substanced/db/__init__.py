@@ -3,6 +3,7 @@ from pyramid_zodbconn import get_connection
 from substanced.evolution import mark_unfinished_as_finished
 
 from ..stats import statsd_incr
+from ..event import RootAdded
 
 def root_factory(request, t=transaction, g=get_connection,
                  mark_unfinished_as_finished=mark_unfinished_as_finished):
@@ -16,6 +17,7 @@ def root_factory(request, t=transaction, g=get_connection,
         registry = request.registry
         app_root = registry.content.create('Root')
         zodb_root['app_root'] = app_root
+        registry.notify(RootAdded(app_root))
         t.savepoint() # give app_root a _p_jar
         mark_unfinished_as_finished(app_root, registry, t)
         t.commit()

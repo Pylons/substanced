@@ -4,16 +4,17 @@ from logging import getLogger
 from pyramid.view import view_defaults
 from pyramid.compat import PY3, text_type
 from substanced.sdi import mgmt_view, RIGHT
-from substanced.util import get_oid
-
-from . import AuditScribe
+from substanced.util import (
+    get_oid,
+    get_auditlog,
+    )
 
 @view_defaults(
     permission='sdi.view-auditlog',
     http_cache=0,
     )
 class AuditLogEventStreamView(object):
-    AuditScribe = AuditScribe # for test replacement
+    get_auditlog = staticmethod(get_auditlog) # for test replacement
     logger = getLogger('substanced')
 
     def __init__(self, context, request):
@@ -28,14 +29,17 @@ class AuditLogEventStreamView(object):
         physical_path='/',
         )
     def auditing(self):
-        scribe = self.AuditScribe(self.context)
+        log = self.get_auditlog(self.context)
+        log_exists = False
         results = []
-        for gen, idx, event in scribe:
-            tz = self.request.user.timezone
-            dt = datetime.datetime.fromtimestamp(event.timestamp, tz)
-            time = dt.strftime('%Y-%m-%d %H:%M:%S %Z')
-            results.insert(0, (gen, idx, time, event))
-        return {'results':results}
+        if log is not None:
+            log_exists = True
+            for gen, idx, event in log:
+                tz = self.request.user.timezone
+                dt = datetime.datetime.fromtimestamp(event.timestamp, tz)
+                time = dt.strftime('%Y-%m-%d %H:%M:%S %Z')
+                results.insert(0, (gen, idx, time, event))
+        return {'results':results, 'log_exists':log_exists}
 
     @mgmt_view(name='auditstream-sse', tab_condition=False)
     def auditstream_sse(self):
@@ -69,10 +73,13 @@ class AuditLogEventStreamView(object):
         response = request.response
         response.content_type = 'text/event-stream'
         last_event_id = request.headers.get('Last-Event-Id')
-        scribe = self.AuditScribe(self.context)
+        log = self.get_auditlog(self.context)
+        if log is None:
+            response.text = text_type('')
+            return response
         if not last_event_id:
             # first call, set a baseline event id
-            gen, idx = scribe.latest_id()
+            gen, idx = log.latest_id()
             msg = compose_message('%s-%s' % (gen, idx))
             response.text = msg
             self.logger.debug(
@@ -88,7 +95,7 @@ class AuditLogEventStreamView(object):
             else:
                 oids = [get_oid(self.context)]
             _gen, _idx = map(int, last_event_id.split('-', 1))
-            events = scribe.newer(_gen, _idx, oids=oids)
+            events = log.newer(_gen, _idx, oids=oids)
             msg = text_type('')
             for gen, idx, event in events:
                 event_id = '%s-%s' % (gen, idx)

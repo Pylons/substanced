@@ -917,6 +917,33 @@ class Test_get_icon_name(unittest.TestCase):
         request.registry = registry
         resource = Dummy()
         self.assertEqual(self._callFUT(resource, request), 'icon')
+
+
+class test_get_auditlog(unittest.TestCase):
+    def _callFUT(self, context):
+        from . import get_auditlog
+        return get_auditlog(context)
+
+    def test_get_auditlog_exists(self):
+        context = testing.DummyResource()
+        auditlog = testing.DummyResource()
+        root = {'auditlog':auditlog}
+        context._p_jar = DummyConnection(root=root)
+        inst = self._callFUT(context)
+        self.assertEqual(inst, auditlog)
+
+    def test_get_auditlog_notexists(self):
+        context = testing.DummyResource()
+        root = {}
+        context._p_jar = DummyConnection(root=root)
+        inst = self._callFUT(context)
+        self.assertEqual(inst, None)
+
+    def test_get_auditlog_get_connection_keyerror(self):
+        context = testing.DummyResource()
+        context._p_jar = DummyConnection(KeyError())
+        inst = self._callFUT(context)
+        self.assertEqual(inst, None)
         
 class DummyContent(object):
     renamed_from = None
@@ -948,4 +975,18 @@ class DummyContentRegistry(object):
 
 class Dummy(object):
     pass
+
+class DummyConnection(object):
+    def __init__(self, conn=None, root=None):
+        self._conn = conn
+        self._root = root
+
+    def root(self):
+        return self._root
+
+    def get_connection(self, name):
+        conn = self._conn
+        if isinstance(conn, KeyError):
+            raise KeyError
+        return self
 

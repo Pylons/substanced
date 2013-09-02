@@ -1,81 +1,6 @@
 import unittest
-
 from pyramid import testing
 
-class AuditScribeTests(unittest.TestCase):
-    def _makeOne(self, context):
-        from .. import AuditScribe
-        return AuditScribe(context)
-
-    def test_get_auditlog_exists(self):
-        context = testing.DummyResource()
-        auditlog = testing.DummyResource()
-        context.__auditlog__ = auditlog
-        inst = self._makeOne(context)
-        self.assertEqual(inst.get_auditlog(), auditlog)
-
-    def test_get_auditlog_notexists(self):
-        context = testing.DummyResource()
-        inst = self._makeOne(context)
-        self.assertEqual(inst.get_auditlog(), None)
-
-    def test_add_auditlog_exists(self):
-        context = testing.DummyResource()
-        auditlog = DummyAuditLog()
-        context.__auditlog__ = auditlog
-        inst = self._makeOne(context)
-        inst.add('name', 1, a=1)
-        self.assertEqual(auditlog.added, [('name', 1, {'a':1})])
-        
-    def test_add_auditlog_notexists(self):
-        context = testing.DummyResource()
-        inst = self._makeOne(context)
-        self.assertEqual(inst.add('name', 1, a=1), None)
-
-    def test_newer_auditlog_exists(self):
-        context = testing.DummyResource()
-        auditlog = DummyAuditLog([True])
-        context.__auditlog__ = auditlog
-        inst = self._makeOne(context)
-        result = inst.newer(1, 1)
-        self.assertEqual(result, [True])
-        
-    def test_newer_auditlog_notexists(self):
-        context = testing.DummyResource()
-        inst = self._makeOne(context)
-        inst = self._makeOne(context)
-        result = inst.newer(1, 1)
-        self.assertEqual(result, [])
-
-    def test_latest_id_auditlog_exists(self):
-        context = testing.DummyResource()
-        auditlog = DummyAuditLog([1,1])
-        context.__auditlog__ = auditlog
-        inst = self._makeOne(context)
-        result = inst.latest_id()
-        self.assertEqual(result, (1,1))
-        
-    def test_latest_id_auditlog_notexists(self):
-        context = testing.DummyResource()
-        inst = self._makeOne(context)
-        inst = self._makeOne(context)
-        result = inst.latest_id()
-        self.assertEqual(result, (0,-1))
-
-    def test___iter__with_auditlog(self):
-        context = testing.DummyResource()
-        auditlog = DummyAuditLog([True, True])
-        context.__auditlog__ = auditlog
-        inst = self._makeOne(context)
-        result = list(inst)
-        self.assertEqual(result, [True, True])
-
-    def test___iter__no_auditlog(self):
-        context = testing.DummyResource()
-        inst = self._makeOne(context)
-        result = list(inst)
-        self.assertEqual(result, [])
-        
 class AuditLogEntryTests(unittest.TestCase):
     def test_it(self):
         from .. import AuditLogEntry
@@ -128,6 +53,25 @@ class AuditLogTests(unittest.TestCase):
         entries = DummyAppendStack()
         inst = self._makeOne(entries=entries)
         self.assertEqual(inst.latest_id(), (0, 0))
+
+    def test___len__(self):
+        entry = DummyAuditLogEntry()
+        entries = DummyAppendStack([(0, 0, entry)])
+        inst = self._makeOne(entries=entries)
+        result = len(inst)
+        self.assertEqual(result, 1)
+
+    def test___bool__(self):
+        inst = self._makeOne()
+        result = bool(inst)
+        self.assertEqual(result, True)
+
+    def test___iter__(self):
+        entry = DummyAuditLogEntry()
+        entries = DummyAppendStack([(0, 0, entry)])
+        inst = self._makeOne(entries=entries)
+        result = list(inst)
+        self.assertEqual(result, [(0, 0, entry)])
         
 class LayerTests(unittest.TestCase):
 
@@ -248,6 +192,16 @@ class AppendStackTests(unittest.TestCase):
         stack = self._makeOne()
         self.assertEqual(list(stack), [])
 
+    def test___len__(self):
+        inst = self._makeOne()
+        result = len(inst)
+        self.assertEqual(result, 0)
+
+    def test___bool__(self):
+        inst = self._makeOne()
+        result = bool(inst)
+        self.assertEqual(result, True)
+        
     def test_newer_empty(self):
         stack = self._makeOne()
         self.assertEqual(list(stack.newer(0, 0)), [])
@@ -574,24 +528,48 @@ class AppendStackTests(unittest.TestCase):
         merged = stack._p_resolveConflict(O_STATE, C_STATE, N_STATE)
         self.assertEqual(merged, M_STATE)
 
+class Test_set_auditlog(unittest.TestCase):
+    def _callFUT(self, context):
+        from .. import set_auditlog
+        return set_auditlog(context)
+    
+    def test_it_keyerror(self):
+        conn = DummyConnection(KeyError)
+        context = testing.DummyResource()
+        context._p_jar = conn
+        self.assertEqual(self._callFUT(context), None)
 
-class DummyAuditLog(object):
-    def __init__(self, result=None):
-        self.result = result
-        self.added = []
+    def test_it_auditlog_exists(self):
+        root = {'auditlog':True}
+        conn = DummyConnection(root=root)
+        context = testing.DummyResource()
+        context._p_jar = conn
+        self.assertEqual(self._callFUT(context), None)
+        self.assertEqual(root['auditlog'], True)
 
-    @property
-    def entries(self):
-        return self.result
-
-    def add(self, name, oid, **kw):
-        self.added.append((name, oid, kw))
+    def test_it_auditlog_notexists(self):
+        root = {}
+        conn = DummyConnection(root=root)
+        context = testing.DummyResource()
+        context._p_jar = conn
+        self.assertEqual(self._callFUT(context), None)
+        self.assertTrue('auditlog' in root)
         
-    def newer(self, gen, idx, oids):
-        return self.result
+class DummyConnection(object):
+    def __init__(self, conn=None, root=None):
+        if root is None:
+            root = {}
+        self._conn = conn
+        self._root = root
 
-    def latest_id(self):
-        return self.result
+    def get_connection(self, name):
+        if self._conn is KeyError:
+            raise KeyError
+        return self
+
+    def root(self):
+        return self._root
+
 
 class DummyLayer(object):
     _generation = 0
@@ -602,6 +580,12 @@ class DummyAppendStack(object):
         self.pushed = []
         self.result = result
         self._layers = [DummyLayer()]
+
+    def __len__(self):
+        return len(self.result)
+
+    def __iter__(self):
+        return iter(self.result)
         
     def push(self, entry):
         self.pushed.append(entry)

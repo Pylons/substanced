@@ -6,8 +6,6 @@ from ZODB.POSException import ConflictError
 
 from pyramid.compat import is_nonstr_iter
 
-from substanced.util import acquire
-
 class LayerFull(Exception):
     pass
 
@@ -65,6 +63,14 @@ class AppendStack(Persistent):
         for layer in self._layers:
             for index, item in layer:
                 yield layer._generation, index, item
+
+    def __bool__(self):
+        return True
+
+    __nonzero__ = __bool__
+
+    def __len__(self):
+        return len(list(iter(self)))
 
     def newer(self, latest_gen, latest_index):
         for gen, index, obj in self:
@@ -155,48 +161,17 @@ class AppendStack(Persistent):
 
         return c_m_layers, c_m_length, m_layers[-c_m_layers:]
 
-class AuditScribe(object):
-    def __init__(self, context):
-        self.context = context
-
-    def __iter__(self):
-        auditlog = self.get_auditlog()
-        if auditlog is None:
-            return iter([])
-        return iter(auditlog.entries)
-
-    def get_auditlog(self):
-        return acquire(self.context, '__auditlog__', None)
-
-    def add(self, name, oid, **kw):
-        """ Add an entry to the audit log.
-
-        The ``name`` is the 'event type' for the audit log entry.
-
-        The ``oid`` is a Substance D resource object identifier or ``None`` if
-        this event is not related to any particular oid.
-
-        ``**kw`` can be any set of keywords to be added to the payload.  Each
-        value must be JSON-serializable.
-        """
-        auditlog = self.get_auditlog()
-        if auditlog is None:
-            return
-        auditlog.add(name, oid, **kw)
-            
-    def newer(self, gen, idx, oids=()):
-        auditlog = self.get_auditlog()
-        if auditlog is None:
-            return []
-        return auditlog.newer(gen, idx, oids)
-
-    def latest_id(self):
-        auditlog = self.get_auditlog()
-        if auditlog is None:
-            return 0, -1
-        gen, idx = auditlog.latest_id()
-        return gen, idx
-                
+def set_auditlog(context):
+    conn = context._p_jar
+    try:
+        auditconn = conn.get_connection('audit')
+    except KeyError:
+        return
+    root = auditconn.root()
+    if not 'auditlog' in root:
+        auditlog = AuditLog()
+        root['auditlog'] = auditlog
+    
 class AuditLogEntry(object):
     def __init__(self, name, oid, payload, timestamp):
         self.name = name
@@ -209,6 +184,17 @@ class AuditLog(Persistent):
         if entries is None: # for testing
             entries = AppendStack(max_layers, layer_size)
         self.entries = entries
+
+    def __iter__(self):
+        return iter(self.entries)
+
+    def __len__(self):
+        return len(self.entries)
+    
+    def __bool__(self):
+        return True
+
+    __nonzero__ = __bool__
     
     def add(self, _name, _oid, **kw):
         timestamp = time.time()

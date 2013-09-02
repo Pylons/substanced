@@ -7,15 +7,16 @@ from substanced.event import (
     subscribe_added,
     subscribe_modified,
     subscribe_logged_in,
+    subscribe_root_added,
     )
 
 from substanced.util import (
     get_oid,
     postorder,
-    acquire,
+    get_auditlog,
     )
 
-from . import AuditScribe
+from . import set_auditlog
 
 def _get_userinfo():
     request = get_current_request()
@@ -24,14 +25,9 @@ def _get_userinfo():
     username = getattr(user, '__name__', None)
     return {'oid':userid, 'name':username}
 
-def _get_scribe(context):
-    auditlog = acquire(context, '__auditlog__', None)
-    if auditlog is not None:
-        return AuditScribe(context)
-
 def _add_record(event_name, event, objects):
-    scribe = _get_scribe(event.parent)
-    if scribe is None:
+    log = get_auditlog(event.parent)
+    if log is None:
         return
     userinfo = _get_userinfo()
     object_name = event.name
@@ -41,7 +37,7 @@ def _add_record(event_name, event, objects):
         folder_path = resource_path(parent)
         folder_oid = get_oid(parent, None)
         object_oid = get_oid(obj, None)
-        scribe.add(
+        log.add(
             event_name,
             folder_oid, # this is an event related to the *container*
             object_oid=object_oid,
@@ -55,8 +51,8 @@ def _add_record(event_name, event, objects):
 @subscribe_acl_modified()
 def acl_modified(event):
     """ Generates ACLModified audit events """
-    scribe = _get_scribe(event.object)
-    if scribe is None:
+    log = get_auditlog(event.object)
+    if log is None:
         return
     userinfo = _get_userinfo()
     oid = get_oid(event.object, None)
@@ -64,7 +60,7 @@ def acl_modified(event):
     new_acl = str(event.new_acl)
     path = resource_path(event.object)
     content_type = str(event.registry.content.typeof(event.object))
-    scribe.add(
+    log.add(
         'ACLModified',
         oid,
         object_path=path,
@@ -94,14 +90,14 @@ def content_removed(event):
 
 @subscribe_modified()
 def content_modified(event):
-    scribe = _get_scribe(event.object)
-    if scribe is None:
+    log = get_auditlog(event.object)
+    if log is None:
         return
     userinfo = _get_userinfo()
     oid = get_oid(event.object, None)
     object_path = resource_path(event.object)
     content_type = str(event.registry.content.typeof(event.object))
-    scribe.add(
+    log.add(
         'ContentModified',
         oid,
         object_oid=oid,
@@ -113,8 +109,18 @@ def content_modified(event):
 @subscribe_logged_in()
 def logged_in(event):
     context = event.request.context # event.context may be HTTPForbidden
-    scribe = _get_scribe(context)
-    if scribe is None:
+    log = get_auditlog(context)
+    if log is None:
         return
     user_oid = get_oid(event.user, None)
-    scribe.add('LoggedIn', None, login=event.login, user_oid=user_oid)
+    log.add('LoggedIn', None, login=event.login, user_oid=user_oid)
+
+@subscribe_root_added()
+def root_added(event):
+    """ Add an audit log to the audit connection root object; we cannot do this
+    until the root object has a connection, therefore we subscribe to the root
+    added event """
+    root = event.object
+    set_auditlog(root)
+
+    

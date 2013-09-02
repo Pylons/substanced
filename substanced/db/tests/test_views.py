@@ -1,5 +1,6 @@
 import unittest
 from pyramid import testing
+import mock
 
 class TestManageDatabase(unittest.TestCase):
     def _makeOne(self, context, request):

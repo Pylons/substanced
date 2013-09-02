@@ -16,7 +16,7 @@
 
 .. automodule:: substanced.audit
 
-.. autoclass:: AuditScribe
+.. autoclass:: AuditLog
 
 :mod:`substanced.catalog` API
 -----------------------------
@@ -553,6 +553,8 @@ Other Helpers
 .. autofunction:: get_dotted_name
 
 .. autofunction:: get_icon_name
+
+.. autofunction:: get_auditlog
 
 .. autoclass:: Batch
 

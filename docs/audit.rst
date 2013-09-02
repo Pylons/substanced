@@ -3,7 +3,7 @@ Using Auditing
 ==============
 
 Substance D keeps an audit log of all meaningful operations performed against
-content.  At the time of this writing, "meaningful" is defined as:
+content if you have an audit database configured.  At the time of this writing, "meaningful" is defined as:
 
 - When an ACL is changed.
 
@@ -17,7 +17,27 @@ archiving mechanism in place to keep around the items popped off the end of the
 log when it fills up; this is planned.
 
 You can extend the auditing system by using the
-:class:`substanced.audit.AuditScribe`, writing your own events to the log.
+:class:`substanced.audit.AuditLog`, writing your own events to the log.
+
+Configuring the Audit Database
+==============================
+
+In order to enable auditing, you have to add an ``audit`` database to your
+Substance D configuration.  This means adding a key to your application's 
+section in the ``.ini`` file associated with the app::
+
+  zodbconn.uri.audit = <some ZODB uri>
+
+An example of "some ZODB URI" above might be (for a FileStorage database, if 
+your application doesn't use multiple processes)::
+
+  zodbconn.uri.audit = file://%(here)s/auditlog.fs?connection_cache_size=50000&blobstorage_dir=%(here)s/blobs&blobstorage_layout=bushy
+
+Or if your application uses multiple processes, use a ZEO URL.
+
+The database cannot be your main database.  The reason that the audit database
+must live in a separate ZODB database is that we don't want undo operations to
+undo the audit log data.
 
 Viewing the Audit Log
 =====================
@@ -34,15 +54,19 @@ audit log:
 
 .. code-block:: python
 
-   from substanced.audit import AuditScribe
-   from substanced.util import get_oid
+   from substanced.util import get_oid, get_auditlog
 
    def myview(context, request):
-       scribe = AuditScribe(context)
-       scribe.add('NailsFiled', get_oid(context), type='fingernails')
+       auditlog = get_auditlog(context)
+       auditlog.add('NailsFiled', get_oid(context), type='fingernails')
        ...
 
-This will add a ``NailsFiled`` event with the payload
+.. warning::
+
+   If you don't have an audit database defined, the 
+   :func:`~substanced.util.get_auditlog` API will return ``None``.
+
+This will add a``NailsFiled`` event with the payload
 ``{'type':'fingernails'}`` to the audit log.  The payload will also
 automatically include a UNIX timestamp as the key ``time``.  The first argument
 is the audit log typename.  Audit entries of the same kind should share the
@@ -50,17 +74,17 @@ same type name.  It should be a string.  The second argument is the oid of the
 content object which this event is related to.  It may be ``None`` indicating
 that the event is global, and unrelated to any particular piece of content.
 You can pass any number of keyword arguments to
-:meth:`substanced.audit.AuditScribe.add`, each will be added to the payload.
+:meth:`substanced.audit.AuditLog.add`, each will be added to the payload.
 Each value supplied as a keyword argument *must* be JSON-serializable.  If one
 is not, you will receive an error when you attempt to add the event.
 
 Using The ``auditstream-sse`` View
 ==================================
 
-You can use a view named ``auditstream-sse`` against any resource in your
-resource tree using JavaScript.  It will return an event stream suitable for
-driving an HTML5 ``EventSource`` (an HTML 5 feature, see
-http://www.html5rocks.com/en/tutorials/eventsource/basics/ for more
+If you have auditing enabled, you can use a view named ``auditstream-sse`` 
+against any resource in your resource tree using JavaScript.  It will return
+an event stream suitable for driving an HTML5 ``EventSource`` (an HTML 5 
+feature, see http://www.html5rocks.com/en/tutorials/eventsource/basics/ for more
 information).  The event stream will contain auditing events.  This can be used
 for progressive enhancement of your application's UI.  Substance D's SDI uses
 it for that purpose.  For example, when an object's ACL is changed, a user

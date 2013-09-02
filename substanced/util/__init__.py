@@ -573,6 +573,19 @@ def get_icon_name(resource, request):
         icon = icon(resource, request)
     return icon
 
+def get_auditlog(context):
+    """ Returns the current :class:`pyramid.audit.AuditLog` object or ``None``
+    if no audit database is configured """
+    conn = context._p_jar
+    try:
+        auditlogconn = conn.get_connection('audit')
+    except KeyError:
+        return None
+    root = auditlogconn.root()
+    auditlog = root.get('auditlog')
+    if auditlog is not None:
+        return auditlog
+
 def profile(
     cmd,
     globals,
@@ -596,3 +609,4 @@ def profile(
                 stats.print_stats(.3)
     finally:
         os.remove(fn)
+

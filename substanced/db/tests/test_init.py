@@ -77,5 +77,6 @@ class Dummy(object):
     pass
 
 class DummyRegistry(object):
-    pass
+    def notify(self, event):
+        self.event = event
 

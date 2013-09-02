@@ -1,4 +1,7 @@
-from substanced.audit import AuditLog
+from substanced.audit import (
+    AuditLog,
+    set_auditlog,
+    )
 from substanced.util import postorder
 
 def remove_bogus_auditlogs(root):
@@ -15,8 +18,14 @@ def remove_bogus_auditlogs(root):
 
 def add_root_auditlog(root):
     root.__auditlog__ = AuditLog()
+
+def use_external_db(root):
+    if hasattr(root, '__auditlog__'):
+        del root.__auditlog__
+    set_auditlog(root)
         
 def includeme(config):
     config.add_evolution_step(remove_bogus_auditlogs)
     config.add_evolution_step(add_root_auditlog)
+    config.add_evolution_step(use_external_db)
 

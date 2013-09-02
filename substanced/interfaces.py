@@ -180,6 +180,11 @@ class ILoggedIn(Interface):
     context = Attribute('The context resource that was active during login')
     request = Attribute('The request which resulted in the login')
 
+class IRootAdded(Interface):
+    """ An event type sent when the Substance D root object has a connection to
+    the database as its ``_p_jar`` attribute. """
+    object = Attribute('The root object')
+
 class IFolder(Interface):
     """ A Folder which stores objects using Unicode keys.
 

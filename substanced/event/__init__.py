@@ -18,6 +18,7 @@ from ..interfaces import (
     IACLModified,
     IContentCreated,
     ILoggedIn,
+    IRootAdded,
     )
 
 from ..util import find_objectmap
@@ -138,6 +139,11 @@ class LoggedIn(object):
         self.context = context
         self.request = request
 
+@implementer(IRootAdded)
+class RootAdded(object):
+    def __init__(self, object):
+        self.object = object
+        
 # subscriber decorators, e.g.
 # @subscribe_added(MyContent)
 # def foo(event):
@@ -241,7 +247,12 @@ class subscribe_logged_in(_SimpleSubscriber):
     """ Decorator for registering an event listener for when a user is logged
     in """
     event = ILoggedIn
-    
+
+class subscribe_root_added(_SimpleSubscriber):
+    """ Decorator for registering an event listener for when a root object
+    has a database connection """
+    event = IRootAdded
+
 def add_content_subscriber(config, subscriber, iface=None, **predicates):
     """ Configurator directive that works like Pyramid's ``add_subscriber``,
     except it wraps the subscriber in something that first adds the
