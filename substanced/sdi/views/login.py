@@ -77,7 +77,7 @@ def login(context, request):
             request.session.flash('Failed login', 'error')
 
     # Pass this through FBO views (e.g., forbidden) which use its macros.
-    template = get_renderer('substanced:sdi/views/templates/login.pt'
+    template = get_renderer('substanced.sdi.views:templates/login.pt'
                            ).implementation()
     return dict(
         url = request.sdiapi.mgmt_path(request.virtual_root, '@@login'),

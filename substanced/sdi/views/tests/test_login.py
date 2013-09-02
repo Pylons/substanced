@@ -46,7 +46,7 @@ class Test_login(unittest.TestCase):
         context = testing.DummyResource()
         with testConfig() as config:
             config.testing_add_renderer(
-                    'substanced:sdi/views/templates/login.pt')
+                    'substanced.sdi.views:templates/login.pt')
             result = self._callFUT(context, request)
         self.assertEqual(result['url'], '/mgmt_path')
         self.assertEqual(result['came_from'], '/mgmt_path')
@@ -69,7 +69,7 @@ class Test_login(unittest.TestCase):
                     {'login-form': form, 'password-reset-link': reset})
         with testConfig() as config:
             config.testing_add_renderer(
-                    'substanced:sdi/views/templates/login.pt', renderer)
+                    'substanced.sdi.views:templates/login.pt', renderer)
             result = self._callFUT(context, request)
         self.assertEqual(result['url'], '/mgmt_path')
         self.assertEqual(result['came_from'], 'http://example.com')
@@ -87,7 +87,7 @@ class Test_login(unittest.TestCase):
         context = testing.DummyResource()
         with testConfig() as config:
             config.testing_add_renderer(
-                    'substanced:sdi/views/templates/login.pt')
+                    'substanced.sdi.views:templates/login.pt')
             result = self._callFUT(context, request)
         self.assertEqual(result['url'], '/mgmt_path')
         self.assertEqual(result['came_from'], 'http://example.com')
@@ -108,7 +108,7 @@ class Test_login(unittest.TestCase):
         context = make_site()
         with testConfig() as config:
             config.testing_add_renderer(
-                    'substanced:sdi/views/templates/login.pt')
+                    'substanced.sdi.views:templates/login.pt')
             result = self._callFUT(context, request)
         self.assertEqual(result['url'], '/mgmt_path')
         self.assertEqual(result['came_from'], 'http://example.com')
@@ -130,7 +130,7 @@ class Test_login(unittest.TestCase):
         context['principals']['users']['login'] = DummyUser(0)
         with testConfig() as config:
             config.testing_add_renderer(
-                    'substanced:sdi/views/templates/login.pt')
+                    'substanced.sdi.views:templates/login.pt')
             result = self._callFUT(context, request)
         self.assertEqual(result['url'], '/mgmt_path')
         self.assertEqual(result['came_from'], 'http://example.com')
@@ -158,7 +158,7 @@ class Test_login(unittest.TestCase):
             return locator
         with testConfig() as config:
             config.testing_add_renderer(
-                    'substanced:sdi/views/templates/login.pt')
+                    'substanced.sdi.views:templates/login.pt')
             config.registry.registerAdapter(_locator, (Interface, Interface),
                                             IUserLocator)
             result = self._callFUT(context, request)
@@ -181,7 +181,7 @@ class Test_login(unittest.TestCase):
         context['principals']['users']['login'] = user
         with testConfig() as config:
             config.testing_add_renderer(
-                    'substanced:sdi/views/templates/login.pt')
+                    'substanced.sdi.views:templates/login.pt')
             result = self._callFUT(context, request)
         self.assertEqual(result.location, 'http://example.com')
         self.assertTrue(result.headers)
