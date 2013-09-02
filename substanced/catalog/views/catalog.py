@@ -153,7 +153,7 @@ class SearchCatalogView(FormView):
     name='contents',
     request_param='form.reindex',
     request_method='POST',
-    renderer='substanced.sdi:templates/contents.pt',
+    renderer='substanced.folder:templates/contents.pt',
     permission='sdi.manage-contents',
     tab_condition=False,
     )

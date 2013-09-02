@@ -15,11 +15,11 @@ class TestFolder(unittest.TestCase):
         testing.tearDown()
 
     def _getTargetClass(self):
-        from . import Folder
+        from .. import Folder
         return Folder
 
     def _makeSite(self, objectmap=None):
-        from ..interfaces import IFolder
+        from substanced.interfaces import IFolder
         from zope.interface import alsoProvides
         site = testing.DummyResource()
         if objectmap:
@@ -33,11 +33,11 @@ class TestFolder(unittest.TestCase):
 
     def test_klass_provides_IFolder(self):
         klass = self._getTargetClass()
-        from ..interfaces import IFolder
+        from substanced.interfaces import IFolder
         verifyClass(IFolder, klass)
 
     def test_inst_provides_IFolder(self):
-        from ..interfaces import IFolder
+        from substanced.interfaces import IFolder
         inst = self._makeOne()
         verifyObject(IFolder, inst)
 
@@ -266,9 +266,9 @@ class TestFolder(unittest.TestCase):
         self.assertRaises(ValueError, folder.__setitem__, '', None)
 
     def test___setitem__(self):
-        from ..interfaces import IObjectEvent
-        from ..interfaces import IObjectWillBeAdded
-        from ..interfaces import IObjectAdded
+        from substanced.interfaces import IObjectEvent
+        from substanced.interfaces import IObjectWillBeAdded
+        from substanced.interfaces import IObjectAdded
         events = []
         def listener(event, obj, container):
             events.append(event)
@@ -352,9 +352,9 @@ class TestFolder(unittest.TestCase):
         self.assertRaises(ValueError, folder.check_name, '@@abc')
 
     def test_add_send_events(self):
-        from ..interfaces import IObjectEvent
-        from ..interfaces import IObjectWillBeAdded
-        from ..interfaces import IObjectAdded
+        from substanced.interfaces import IObjectEvent
+        from substanced.interfaces import IObjectWillBeAdded
+        from substanced.interfaces import IObjectAdded
         events = []
         def listener(event, obj, container):
             events.append(event)
@@ -376,7 +376,7 @@ class TestFolder(unittest.TestCase):
         self.assertEqual(folder['a'], dummy)
 
     def test_add_suppress_events(self):
-        from ..interfaces import IObjectEvent
+        from substanced.interfaces import IObjectEvent
         events = []
         def listener(event, obj, container):
             events.append(event) #pragma NO COVER
@@ -460,7 +460,7 @@ class TestFolder(unittest.TestCase):
         )
 
     def test___setitem__exists(self):
-        from . import FolderKeyError
+        from .. import FolderKeyError
         dummy = DummyModel()
         folder = self._makeOne({'a': dummy})
         self.assertEqual(folder._num_objects(), 1)
@@ -468,9 +468,9 @@ class TestFolder(unittest.TestCase):
         self.assertEqual(folder._num_objects(), 1)
 
     def test___delitem__(self):
-        from ..interfaces import IObjectEvent
-        from ..interfaces import IObjectRemoved
-        from ..interfaces import IObjectWillBeRemoved
+        from substanced.interfaces import IObjectEvent
+        from substanced.interfaces import IObjectRemoved
+        from substanced.interfaces import IObjectWillBeRemoved
         events = []
         def listener(event, obj, container):
             events.append(event)
@@ -506,9 +506,9 @@ class TestFolder(unittest.TestCase):
         self.assertTrue(folder.remove("a") is dummy)
 
     def test_remove_send_events(self):
-        from ..interfaces import IObjectEvent
-        from ..interfaces import IObjectRemoved
-        from ..interfaces import IObjectWillBeRemoved
+        from substanced.interfaces import IObjectEvent
+        from substanced.interfaces import IObjectRemoved
+        from substanced.interfaces import IObjectWillBeRemoved
         events = []
         def listener(event, obj, container):
             events.append(event)
@@ -536,7 +536,7 @@ class TestFolder(unittest.TestCase):
         self.assertFalse(hasattr(dummy, '__name__'))
 
     def test_remove_suppress_events(self):
-        from ..interfaces import IObjectEvent
+        from substanced.interfaces import IObjectEvent
         events = []
         def listener(event, obj, container):
             events.append(event) #pragma NO COVER
@@ -553,9 +553,9 @@ class TestFolder(unittest.TestCase):
         self.assertFalse(hasattr(dummy, '__name__'))
 
     def test_remove_moving(self):
-        from ..interfaces import IObjectEvent
-        from ..interfaces import IObjectRemoved
-        from ..interfaces import IObjectWillBeRemoved
+        from substanced.interfaces import IObjectEvent
+        from substanced.interfaces import IObjectRemoved
+        from substanced.interfaces import IObjectWillBeRemoved
         events = []
         def listener(event, obj, container):
             events.append(event) #pragma NO COVER
@@ -731,9 +731,9 @@ class TestFolder(unittest.TestCase):
                 ])
 
     def test_pop_success(self):
-        from ..interfaces import IObjectEvent
-        from ..interfaces import IObjectRemoved
-        from ..interfaces import IObjectWillBeRemoved
+        from substanced.interfaces import IObjectEvent
+        from substanced.interfaces import IObjectRemoved
+        from substanced.interfaces import IObjectWillBeRemoved
         dummy = DummyModel()
         dummy.__parent__ = None
         dummy.__name__ = None
@@ -783,7 +783,7 @@ class TestFolder(unittest.TestCase):
         self.assertTrue(r.endswith('>'))
 
     def test_unresolveable_unicode_setitem(self):
-        from .._compat import u
+        from substanced._compat import u
         name = u(b'La Pe\xc3\xb1a', 'utf-8').encode('latin-1')
         folder = self._makeOne()
         self.assertRaises(ValueError,
@@ -796,7 +796,7 @@ class TestFolder(unittest.TestCase):
         self.assertTrue(folder.get(name))
 
     def test_unresolveable_unicode_getitem(self):
-        from .._compat import u
+        from substanced._compat import u
         name = u(b'La Pe\xc3\xb1a', 'utf-8').encode('latin-1')
         folder = self._makeOne()
         self.assertRaises(UnicodeDecodeError, folder.__getitem__, name)
@@ -952,7 +952,7 @@ class TestFolder(unittest.TestCase):
 
 class TestSequentialAutoNamingFolder(unittest.TestCase):
     def _makeOne(self, d=None, autoname_length=None, autoname_start=None):
-        from . import SequentialAutoNamingFolder
+        from .. import SequentialAutoNamingFolder
         return SequentialAutoNamingFolder(
             d,
             autoname_length=autoname_length,
@@ -1011,7 +1011,7 @@ class TestSequentialAutoNamingFolder(unittest.TestCase):
 
 class TestRandomAutoNamingFolder(unittest.TestCase):
     def _makeOne(self, d=None, autoname_length=None):
-        from . import RandomAutoNamingFolder
+        from .. import RandomAutoNamingFolder
         return RandomAutoNamingFolder(d, autoname_length=autoname_length)
 
     def test_next_name_doesntexist(self):
@@ -1043,7 +1043,7 @@ class TestRandomAutoNamingFolder(unittest.TestCase):
 
 class TestCopyHook(unittest.TestCase):
     def _makeOne(self, context):
-        from . import CopyHook
+        from .. import CopyHook
         return CopyHook(context)
 
     def test_nonpersistent(self):

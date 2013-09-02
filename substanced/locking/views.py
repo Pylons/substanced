@@ -8,7 +8,7 @@ from substanced.interfaces import (
     )
 from substanced.form import FormView
 from substanced.sdi import mgmt_view
-from substanced.sdi.views.folder import (
+from substanced.folder.views import (
     FolderContents,
     folder_contents_views,
     )

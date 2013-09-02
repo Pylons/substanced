@@ -14,7 +14,7 @@
 
   <!--!
       you can use this template as a macro to replace slickgrid config, e.g.
-      <div metal:use-macro="request.sdiapi.get_macro('substanced.sdi.views:templates/contents.pt', 'main')">
+      <div metal:use-macro="request.sdiapi.get_macro('substanced.folder:templates/contents.pt', 'main')">
         <div metal:fill-slot="head-more">
           ... replace slickgrid css and js ...
         </div>

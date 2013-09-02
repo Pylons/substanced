@@ -166,7 +166,7 @@ When clicked, this button will do a form ``POST`` of the selected
 docids to a view that you have implemented. Which view? The
 ``'name': 'form.reindex'`` item sets the parameter on the POST. You can
 then register a view against this.
-:py:mod:`substanced.sdi.views.catalog` shows this:
+:py:mod:`substanced.catalog.views.catalog` shows this:
 
 .. code-block:: python
 
@@ -176,7 +176,7 @@ then register a view against this.
         name='contents',
         request_param='form.reindex',
         request_method='POST',
-        renderer='substanced.sdi:templates/contents.pt',
+        renderer='substanced.folder:templates/contents.pt',
         permission='sdi.manage-contents',
         tab_condition=False,
         )

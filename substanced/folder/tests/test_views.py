@@ -6,12 +6,12 @@ from pyramid import testing
 from pyramid.httpexceptions import HTTPFound
 import mock
 
-from ...._compat import u
+from substanced._compat import u
 _FOOBAR = u('foobar')
 
 class Test_name_validator(unittest.TestCase):
     def _callFUT(self, node, kw):
-        from ..folder import name_validator
+        from ..views import name_validator
         return name_validator(node, kw)
 
     def _makeKw(self, exc=None):
@@ -35,7 +35,7 @@ class Test_name_validator(unittest.TestCase):
 
 class Test_rename_duplicated_resource(unittest.TestCase):
     def _callFUT(self, context, name):
-        from ..folder import rename_duplicated_resource
+        from ..views import rename_duplicated_resource
         return rename_duplicated_resource(context, name)
         
     def test_rename_first(self):
@@ -72,7 +72,7 @@ class Test_rename_duplicated_resource(unittest.TestCase):
 
 class TestAddFolderView(unittest.TestCase):
     def _makeOne(self, context, request):
-        from ..folder import AddFolderView
+        from ..views import AddFolderView
         return AddFolderView(context, request)
 
     def _makeRequest(self, **kw):
@@ -98,7 +98,7 @@ class TestFolderContents(unittest.TestCase):
         testing.tearDown()
 
     def _makeOne(self, context, request):
-        from ..folder import FolderContents
+        from ..views import FolderContents
         return FolderContents(context, request)
 
     def _makeRequest(self, **kw):
@@ -692,7 +692,7 @@ class TestFolderContents(unittest.TestCase):
         context.is_reorderable = mock.Mock(return_value=False)
         context.is_ordered = mock.Mock(return_value=False)
         with mock.patch(
-            'substanced.sdi.views.folder.find_catalog') as find_catalog:
+            'substanced.folder.views.find_catalog') as find_catalog:
             find_catalog.return_value = {'col1': 'COL1', 'col2': 'COL2'}
             result = inst.show()
         self.assertTrue('slickgrid_wrapper_options' in result)
@@ -806,7 +806,7 @@ class TestFolderContents(unittest.TestCase):
         self.assertEqual(result.location, '/mgmt_path')
         self.assertFalse('a' in context)
 
-    @mock.patch('substanced.sdi.views.folder.rename_duplicated_resource')
+    @mock.patch('substanced.folder.views.rename_duplicated_resource')
     def test_duplicate_multiple(self, mock_rename_duplicated_resource):
         context = mock.Mock()
         request = mock.Mock()
@@ -839,7 +839,7 @@ class TestFolderContents(unittest.TestCase):
         request.session.flash.assert_called_once_with('No items duplicated')
         request.sdiapi.mgmt_path.called_once_with(context, '@@contents')
 
-    @mock.patch('substanced.sdi.views.folder.rename_duplicated_resource')
+    @mock.patch('substanced.folder.views.rename_duplicated_resource')
     def test_duplicate_one(self, mock_rename_duplicated_resource):
         mock_rename_duplicated_resource.side_effect = ['a-1']
         context = mock.Mock()
@@ -949,7 +949,7 @@ class TestFolderContents(unittest.TestCase):
         self.assertFalse(context.rename.called)
 
     def test_rename_finish_already_exists(self):
-        from ....folder import FolderKeyError
+        from .. import FolderKeyError
         context = mock.MagicMock()
         context.rename.side_effect = FolderKeyError(_FOOBAR)
         request = mock.Mock()
@@ -966,7 +966,7 @@ class TestFolderContents(unittest.TestCase):
         context.rename.assert_any_call('foobar', 'foobar0')
         request.session.flash.assert_called_once_with(_FOOBAR, 'error')
 
-    @mock.patch('substanced.sdi.views.folder.get_oid')
+    @mock.patch('substanced.folder.views.get_oid')
     def test_copy_one(self, mock_get_oid):
         context = mock.Mock()
         context.get.side_effect = lambda x: {
@@ -983,7 +983,7 @@ class TestFolderContents(unittest.TestCase):
         self.assertEqual(mock_get_oid.mock_calls, [mock.call('foobar')])
         self.assertTrue(request.session.__setitem__.called)
 
-    @mock.patch('substanced.sdi.views.folder.get_oid')
+    @mock.patch('substanced.folder.views.get_oid')
     def test_copy_multi(self, mock_get_oid):
         context = mock.Mock()
         context.get.side_effect = lambda x: {'foobar': 'foobar',
@@ -1001,7 +1001,7 @@ class TestFolderContents(unittest.TestCase):
                          [mock.call('foobar'), mock.call('foobar1')])
         self.assertTrue(request.session.__setitem__.called)
 
-    @mock.patch('substanced.sdi.views.folder.get_oid')
+    @mock.patch('substanced.folder.views.get_oid')
     def test_copy_missing_child(self, mock_get_oid):
         context = mock.Mock()
         context.get.side_effect = lambda x: {
@@ -1017,7 +1017,7 @@ class TestFolderContents(unittest.TestCase):
         self.assertEqual(mock_get_oid.mock_calls, [mock.call('foobar')])
         self.assertTrue(request.session.__setitem__.called)
 
-    @mock.patch('substanced.sdi.views.folder.get_oid')
+    @mock.patch('substanced.folder.views.get_oid')
     def test_copy_none(self, mock_get_oid):
         context = mock.Mock()
         context.__contains__ = mock.Mock(return_value=True)
@@ -1044,7 +1044,7 @@ class TestFolderContents(unittest.TestCase):
         self.assertEqual(request.session.__delitem__.call_args,
                          mock.call('tocopy'))
 
-    @mock.patch('substanced.sdi.views.folder.find_objectmap')
+    @mock.patch('substanced.folder.views.find_objectmap')
     def test_copy_finish_zero(self, mock_find_objectmap):
         context = mock.MagicMock()
         mock_folder = mock_find_objectmap().object_for()
@@ -1076,7 +1076,7 @@ class TestFolderContents(unittest.TestCase):
         self.assertEqual(request.session.__delitem__.call_args,
                          mock.call('tocopy'))
         
-    @mock.patch('substanced.sdi.views.folder.find_objectmap')
+    @mock.patch('substanced.folder.views.find_objectmap')
     def test_copy_finish_one(self, mock_find_objectmap):
         context = mock.MagicMock()
         mock_folder = mock_find_objectmap().object_for()
@@ -1098,7 +1098,7 @@ class TestFolderContents(unittest.TestCase):
         self.assertEqual(request.session.__delitem__.call_args,
                          mock.call('tocopy'))
 
-    @mock.patch('substanced.sdi.views.folder.find_objectmap')
+    @mock.patch('substanced.folder.views.find_objectmap')
     def test_copy_finish_multi(self, mock_find_objectmap):
         context = mock.MagicMock()
         mock_folder = mock_find_objectmap().object_for()
@@ -1124,9 +1124,9 @@ class TestFolderContents(unittest.TestCase):
         self.assertEqual(request.session.__delitem__.call_args,
                          mock.call('tocopy'))
 
-    @mock.patch('substanced.sdi.views.folder.find_objectmap')
+    @mock.patch('substanced.folder.views.find_objectmap')
     def test_copy_finish_already_exists(self, mock_find_objectmap):
-        from ....folder import FolderKeyError
+        from .. import FolderKeyError
         context = mock.MagicMock()
         mock_folder = mock_find_objectmap().object_for()
         mock_folder.__parent__ = mock.MagicMock()
@@ -1143,7 +1143,7 @@ class TestFolderContents(unittest.TestCase):
         self.assertRaises(HTTPFound, inst.copy_finish)
         request.session.flash.assert_called_once_with(_FOOBAR, 'error')
 
-    @mock.patch('substanced.sdi.views.folder.get_oid')
+    @mock.patch('substanced.folder.views.get_oid')
     def test_move_one(self, mock_get_oid):
         context = mock.Mock()
         context.get.side_effect = lambda x: {
@@ -1161,7 +1161,7 @@ class TestFolderContents(unittest.TestCase):
         self.assertTrue(request.session.__setitem__.call_args,
                         [mock.call('tomove')])
 
-    @mock.patch('substanced.sdi.views.folder.get_oid')
+    @mock.patch('substanced.folder.views.get_oid')
     def test_move_multi(self, mock_get_oid):
         context = mock.Mock()
         context.get.side_effect = lambda x: {'foobar': 'foobar',
@@ -1179,7 +1179,7 @@ class TestFolderContents(unittest.TestCase):
         self.assertTrue(request.session.__setitem__.call_args,
                         [mock.call('tomove')])
 
-    @mock.patch('substanced.sdi.views.folder.get_oid')
+    @mock.patch('substanced.folder.views.get_oid')
     def test_move_missing_child(self, mock_get_oid):
         context = mock.Mock()
         context.get.side_effect = lambda x: {'foobar': 'foobar',
@@ -1196,7 +1196,7 @@ class TestFolderContents(unittest.TestCase):
         self.assertTrue(request.session.__setitem__.call_args,
                         [mock.call('tomove')])
 
-    @mock.patch('substanced.sdi.views.folder.get_oid')
+    @mock.patch('substanced.folder.views.get_oid')
     def test_move_none(self, mock_get_oid):
         context = mock.Mock()
         context.get.side_effect = lambda x: {'foobar': 'foobar',
@@ -1225,7 +1225,7 @@ class TestFolderContents(unittest.TestCase):
         self.assertEqual(request.session.__delitem__.call_args,
                          mock.call('tomove'))
 
-    @mock.patch('substanced.sdi.views.folder.find_objectmap')
+    @mock.patch('substanced.folder.views.find_objectmap')
     def test_move_finish_zero(self, mock_find_objectmap):
         context = mock.MagicMock()
         mock_folder = mock_find_objectmap().object_for()
@@ -1257,7 +1257,7 @@ class TestFolderContents(unittest.TestCase):
         self.assertEqual(request.session.__delitem__.call_args,
                          mock.call('tomove'))
         
-    @mock.patch('substanced.sdi.views.folder.find_objectmap')
+    @mock.patch('substanced.folder.views.find_objectmap')
     def test_move_finish_one(self, mock_find_objectmap):
         context = mock.MagicMock()
         mock_folder = mock_find_objectmap().object_for()
@@ -1279,7 +1279,7 @@ class TestFolderContents(unittest.TestCase):
         self.assertEqual(request.session.__delitem__.call_args,
                          mock.call('tomove'))
 
-    @mock.patch('substanced.sdi.views.folder.find_objectmap')
+    @mock.patch('substanced.folder.views.find_objectmap')
     def test_move_finish_multi(self, mock_find_objectmap):
         context = mock.MagicMock()
         mock_folder = mock_find_objectmap().object_for()
@@ -1305,9 +1305,9 @@ class TestFolderContents(unittest.TestCase):
                          mock.call('tomove'))
         request.sdiapi.flash_with_undo.assert_called_once_with('Moved 2 items')
 
-    @mock.patch('substanced.sdi.views.folder.find_objectmap')
+    @mock.patch('substanced.folder.views.find_objectmap')
     def test_move_finish_already_exists(self, mock_find_objectmap):
-        from ....folder import FolderKeyError
+        from .. import FolderKeyError
         context = mock.MagicMock()
         mock_folder = mock_find_objectmap().object_for()
         mock_folder.__parent__ = mock.MagicMock()
@@ -1586,7 +1586,7 @@ class Test_folder_contents_views_decorator(unittest.TestCase):
         testing.tearDown()
 
     def _getTargetClass(self):
-        from ..folder import folder_contents_views
+        from ..views import folder_contents_views
         return folder_contents_views
 
     def _makeOne(self, *arg, **kw):
@@ -1658,11 +1658,11 @@ class Test_folder_contents_views_decorator(unittest.TestCase):
 
 class Test_add_folder_contents_views(unittest.TestCase):
     def _callFUT(self, config, **kw):
-        from ..folder import add_folder_contents_views
+        from ..views import add_folder_contents_views
         return add_folder_contents_views(config, **kw)
     
     def test_it_gardenpath(self):
-        from ..folder import FolderContents
+        from ..views import FolderContents
         from substanced.interfaces import IFolder
         config = DummyConfig()
         self._callFUT(config)
@@ -1781,7 +1781,7 @@ class DummyObjectMap(object):
 
 class DummyVenusianInfo(object):
     scope = 'notaclass'
-    module = sys.modules['substanced.sdi.views.tests.test_folder']
+    module = sys.modules['substanced.folder.tests.test_views']
     codeinfo = 'codeinfo'
 
 class DummyVenusian(object):
