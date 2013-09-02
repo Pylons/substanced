@@ -6,15 +6,24 @@ class Test_principal_added(unittest.TestCase):
         from ..subscribers import principal_added
         return principal_added(event)
 
+    def test_event_wo_loading(self):
+        event = testing.DummyResource()
+        event.object = testing.DummyResource()
+        self.assertRaises(AttributeError, self._callFUT, event)
+
     def test_loading(self):
         event = testing.DummyResource(loading=True)
         result = self._callFUT(event)
         self.assertEqual(result, None)
 
-    def test_user_does_not_have_an_oid(self):
-        event = testing.DummyResource()
-        event.object = testing.DummyResource()
-        self.assertRaises(AttributeError, self._callFUT, event)
+    def test_wo_principals_service(self):
+        from zope.interface import directlyProvides
+        from ...interfaces import IFolder
+        event = testing.DummyResource(loading=False)
+        root = testing.DummyResource()
+        directlyProvides(root, IFolder)
+        event.object = root['testing'] = testing.DummyResource()
+        self.assertRaises(ValueError, self._callFUT, event)
         
     def test_user_not_in_groups(self):
         from ...testing import make_site
