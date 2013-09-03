@@ -203,11 +203,7 @@ Other Helpers
 
 .. autoclass:: FileEditable
 
-.. autoclass:: TextEditable
-
 .. autofunction:: register_editable_adapter
-
-.. autofunction:: register_source_adapter
 
 :mod:`substanced.event` API
 ---------------------------

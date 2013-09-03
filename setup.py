@@ -41,7 +41,6 @@ install_requires = [
     'zope.deprecation',
     'statsd',
     'pytz',
-    'lxml',
     ]
 
 docs_extras = ['Sphinx', 'repoze.sphinx.autointerface']
