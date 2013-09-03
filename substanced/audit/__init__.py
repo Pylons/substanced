@@ -186,9 +186,11 @@ class AuditLog(Persistent):
         self.entries = entries
 
     def __iter__(self):
+        """ Iterate over the audit log entries """
         return iter(self.entries)
 
     def __len__(self):
+        """ Return the length of the audit log entry list """
         return len(self.entries)
     
     def __bool__(self):
@@ -197,6 +199,9 @@ class AuditLog(Persistent):
     __nonzero__ = __bool__
     
     def add(self, _name, _oid, **kw):
+        """ Add a record the audit log.  ``_name`` should be the event name,
+        ``_oid`` should be an object oid or ``None``, and ``kw`` should be a
+        json-serializable dictionary """
         timestamp = time.time()
         kw.setdefault('time', timestamp)
         payload = json.dumps(kw)
@@ -204,6 +209,8 @@ class AuditLog(Persistent):
         self.entries.push(entry)
 
     def newer(self, generation, index_id, oids=None):
+        """ Return the events newer than the combination of ``generation`` and
+        ``oid``.  Filter using ``oids`` if supplied.  """
         if oids and not is_nonstr_iter(oids):
             oids = [oids]
         items = self.entries.newer(generation, index_id)
@@ -212,6 +219,8 @@ class AuditLog(Persistent):
                 yield gen, idx, entry
 
     def latest_id(self):
+        """ Return the generation and the index id as a tuple, representing
+        the latest audit log entry """
         layers = self.entries._layers
         last_layer = layers[-1]
         gen = last_layer._generation
