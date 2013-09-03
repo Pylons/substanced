@@ -31,7 +31,6 @@ from pyramid.security import (
     has_permission,
     )
 from pyramid.session import UnencryptedCookieSessionFactoryConfig
-from pyramid.traversal import traversal_path
 
 from pyramid.util import (
     action_method,
