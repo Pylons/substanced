@@ -143,7 +143,7 @@ view that lives in your application:
        title = request.POST['title']
        body = request.POST['body']
        entry = request.registry.content.create('Blog Entry', title, body)
-       context['title] = entry
+       context['title'] = entry
        return HTTPFound(request.resource_url(entry))
 
 The arguments passed to ``request.registry.content.create`` must start with
