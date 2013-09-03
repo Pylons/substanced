@@ -17,6 +17,7 @@
 .. automodule:: substanced.audit
 
 .. autoclass:: AuditLog
+   :members:
 
 :mod:`substanced.catalog` API
 -----------------------------
@@ -463,6 +464,7 @@ Other Helpers
 .. automodule:: substanced.property
 
 .. autoclass:: PropertySheet
+   :members:
 
 :mod:`substanced.schema` API
 ----------------------------
@@ -571,6 +573,7 @@ Other Helpers
 .. autofunction:: get_auditlog
 
 .. autoclass:: Batch
+   :members:
 
 :mod:`substanced.widget` API
 ----------------------------
