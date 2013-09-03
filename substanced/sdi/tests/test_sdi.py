@@ -1046,30 +1046,54 @@ class Test_sdiapi(unittest.TestCase):
         from .. import MANAGE_ROUTE_NAME
         request = testing.DummyRequest()
         context = testing.DummyResource()
-        def route_path(route_name, *arg, **kw):
-            self.assertEqual(route_name, MANAGE_ROUTE_NAME)
+        def resource_path(resource, *arg, **kw):
             self.assertEqual(arg, ('a',))
-            self.assertEqual(kw, {'b':1, 'traverse':('',)})
+            self.assertEqual(kw, {'b':1, 'route_name':MANAGE_ROUTE_NAME})
             return '/path'
-        request.route_path = route_path
+        request.resource_path = resource_path
         inst = self._makeOne(request)
         result = inst.mgmt_path(context, 'a', b=1)
         self.assertEqual(result, '/path')
 
+    def test_mgmt_path_with_alt_route_name(self):
+        route_name = 'foo'
+        request = testing.DummyRequest()
+        context = testing.DummyResource()
+        def resource_path(resource, *arg, **kw):
+            self.assertEqual(arg, ('a',))
+            self.assertEqual(kw, {'b':1, 'route_name':route_name})
+            return '/path'
+        request.resource_path = resource_path
+        inst = self._makeOne(request)
+        result = inst.mgmt_path(context, 'a', b=1, route_name=route_name)
+        self.assertEqual(result, '/path')
+        
     def test_mgmt_url(self):
         from .. import MANAGE_ROUTE_NAME
         request = testing.DummyRequest()
         context = testing.DummyResource()
-        def route_url(route_name, *arg, **kw):
-            self.assertEqual(route_name, MANAGE_ROUTE_NAME)
+        def resource_url(resource, *arg, **kw):
             self.assertEqual(arg, ('a',))
-            self.assertEqual(kw, {'b':1, 'traverse':('',)})
+            self.assertEqual(kw, {'b':1, 'route_name':MANAGE_ROUTE_NAME})
             return 'http://example.com/path'
-        request.route_url = route_url
+        request.resource_url = resource_url
         inst = self._makeOne(request)
         result = inst.mgmt_url(context, 'a', b=1)
         self.assertEqual(result, 'http://example.com/path')
 
+    def test_mgmt_url_with_alt_route_name(self):
+        route_name = 'foo'
+        request = testing.DummyRequest()
+        context = testing.DummyResource()
+        def resource_url(resource, *arg, **kw):
+            self.assertEqual(arg, ('a',))
+            self.assertEqual(kw, {'b':1, 'route_name':route_name})
+            return 'http://example.com/path'
+        request.resource_url = resource_url
+        inst = self._makeOne(request)
+        result = inst.mgmt_url(context, 'a', b=1, route_name=route_name)
+        self.assertEqual(result, 'http://example.com/path')
+        
     def test_breadcrumbs_no_permissions(self):
         self.config.testing_securitypolicy(permissive=False)
         resource = testing.DummyResource()
@@ -1187,6 +1211,34 @@ class Test_flash_with_undo(unittest.TestCase):
         request.sdiapi = DummySDIAPI()
         self._callFUT(request, 'a')
         self.assertEqual(request.sdiapi.flashed, 'a')
+
+class Test__bwcompat_kw(unittest.TestCase):
+    def _callFUT(self, kw):
+        from .. import _bwcompat_kw
+        return _bwcompat_kw(kw)
+
+    def test_call_with_all(self):
+        kw = {
+            '_query':'query',
+            '_anchor':'anchor',
+            '_app_url':'app_url',
+            '_host':'host',
+            '_scheme':'scheme',
+            '_port':'port'
+            }
+        result = self._callFUT(kw)
+        self.assertEqual(
+            result,
+            {
+                'query':'query',
+                'anchor':'anchor',
+                'app_url':'app_url',
+                'host':'host',
+                'scheme':'scheme',
+                'port':'port'
+                }
+            )
+        
 
 class DummyContent(object):
     def __init__(self, **kw):

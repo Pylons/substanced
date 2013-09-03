@@ -55,17 +55,17 @@ class AuditLogEventStreamView(object):
            Obtain events for a single OID unrelated to the context::
 
             var source = new EventSource(
-               "${request.sdiapi.mgmt_path(context, 'auditstream-sse', _query={'oid':'12345'})}");
+               "${request.sdiapi.mgmt_path(context, 'auditstream-sse', query={'oid':'12345'})}");
 
            Obtain events for a set of OIDs::
 
             var source = new EventSource(
-               "${request.sdiapi.mgmt_path(context, 'auditstream-sse', _query={'oid':['12345', '56789']})}");
+               "${request.sdiapi.mgmt_path(context, 'auditstream-sse', query={'oid':['12345', '56789']})}");
 
            Obtain all events for all oids::
 
             var source = new EventSource(
-               "${request.sdiapi.mgmt_path(context, 'auditstream-sse', _query={'all':'1'})}");
+               "${request.sdiapi.mgmt_path(context, 'auditstream-sse', query={'all':'1'})}");
            
            The executing user will need to possess the ``sdi.view-auditstream``
            permission against the context on which the view is invoked.

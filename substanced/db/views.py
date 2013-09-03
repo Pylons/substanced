@@ -144,7 +144,7 @@ class ManageDatabase(object):
             else:
                 self.request.session.flash('Unknown step %s, not marking as finished' % step)
         return HTTPFound(location=self.request.sdiapi.mgmt_path(
-            self.context, '@@database', _query=dict(show_evolve=True)))
+            self.context, '@@database', query=dict(show_evolve=True)))
 
     @mgmt_view(request_method='POST',
                request_param='evolve_unfinished',
@@ -168,7 +168,7 @@ class ManageDatabase(object):
             else:
                 self.request.session.flash('Unknown step %s, not marking as unfinished' % step)
         return HTTPFound(location=self.request.sdiapi.mgmt_path(
-            self.context, '@@database', _query=dict(show_evolve=True)))
+            self.context, '@@database', query=dict(show_evolve=True)))
 
 
 def _format_timestamp(t, tz):

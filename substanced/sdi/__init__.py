@@ -504,7 +504,7 @@ class sdiapi(object):
             t.setExtendedInfo('undohash', hsh)
             csrf_token = request.session.get_csrf_token()
             query = {'csrf_token': csrf_token, 'undohash': hsh}
-            url = self.mgmt_path(request.context, '@@undo_recent', _query=query)
+            url = self.mgmt_path(request.context, '@@undo_recent', query=query)
             vars = {'msg': msg, 'url': url}
             button = render(
                 'views/templates/undobutton.pt', vars, request=request)
@@ -517,17 +517,22 @@ class sdiapi(object):
         request.session.flash(snippet, queue, allow_duplicate=allow_duplicate)
 
     def mgmt_path(self, obj, *arg, **kw):
-        request = self.request
-        traverse = ('',) + traversal_path(request.resource_path(obj))
-        kw['traverse'] = traverse
-        result = request.route_path(MANAGE_ROUTE_NAME, *arg, **kw)
-        return result
+        """ Return the path of the resource ``obj`` with the ``manage`` path
+        prepended.  Accepts all the same arguments as
+        :meth:`~pyramid.request.Request.resource_path`. """
+        kw = _bwcompat_kw(kw)
+        if 'route_name' not in kw:
+            kw['route_name'] = MANAGE_ROUTE_NAME
+        return self.request.resource_path(obj, *arg, **kw)
 
     def mgmt_url(self, obj, *arg, **kw):
-        request = self.request
-        traverse = ('',) + traversal_path(request.resource_path(obj))
-        kw['traverse'] = traverse
-        return request.route_url(MANAGE_ROUTE_NAME, *arg, **kw)
+        """ Return the URL of the resource ``obj`` with the ``manage`` path
+        prepended to its path.  Accepts all the same arguments as
+        :meth:`~pyramid.request.Request.resource_url`"""
+        kw = _bwcompat_kw(kw)
+        if 'route_name' not in kw:
+            kw['route_name'] = MANAGE_ROUTE_NAME
+        return self.request.resource_url(obj, *arg, **kw)
 
     def breadcrumbs(self):
         request = self.request
@@ -550,6 +555,18 @@ class sdiapi(object):
 
     def mgmt_views(self, context):
         return self.sdi_mgmt_views(context, self.request)
+
+def _bwcompat_kw(kw):
+    """ mgmt_path and mgmt_url used to use route_url, and existing packages
+    want to pass _query, _anchor, etc.  Convert these to non-under-prefixed
+    values """
+    for name in ('query', 'anchor', 'app_url', 'host', 'scheme', 'port'):
+        alias = '_' + name
+        if alias in kw:
+            val = kw[alias]
+            del kw[alias]
+            kw[name] = val
+    return kw
 
 def includeme(config): # pragma: no cover
     settings = config.registry.settings

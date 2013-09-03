@@ -24,7 +24,7 @@ except IOError:
     README = CHANGES = ''
 
 install_requires = [
-    'pyramid>=1.4dev', # effective_principals predicate
+    'pyramid>=1.5dev', # route_name argument to resource_url
     'ZODB3', 
     'hypatia>=0.1a6', # check_query method of text index
     'venusian>=1.0a3',  # pyramid wants this too (prefer_finals...)

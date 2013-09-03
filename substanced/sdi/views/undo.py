@@ -155,14 +155,14 @@ class UndoViews(object):
         else:
             earlier = last
             earlier = self.request.sdiapi.mgmt_path(
-                self.context, 'undo', _query={'first':earlier}
+                self.context, 'undo', query={'first':earlier}
                 )
         if first <= 0:
             later = None
         else:
             later = first - size
             later = self.request.sdiapi.mgmt_path(
-                self.context, 'undo', _query={'first':later}
+                self.context, 'undo', query={'first':later}
                 )
 
         batch_num = first / size
