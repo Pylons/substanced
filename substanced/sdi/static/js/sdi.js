@@ -66,10 +66,12 @@
                         } catch(e) {
                         }
                     }
-                    // Remove previous error status messages, if any.
-                    $('.contents-error').remove();
-                    // redraw the grid
-                    redraw();
+                    if ($('.contents-error').length > 0) {
+                        // Remove previous error status messages, if any.
+                        $('.contents-error').remove();
+                        // redraw the grid
+                        redraw();
+                    }
                 }
                 console.log('EventSource state:', state);
             });
