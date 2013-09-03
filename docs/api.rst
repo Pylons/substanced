@@ -193,6 +193,19 @@ Other Helpers
 
 .. autofunction:: includeme
 
+:mod:`substanced.editable` API
+------------------------------
+
+.. automodule:: substanced.editable
+
+.. autointerface:: IEditable
+   :members:
+   :inherited-members:
+
+.. autoclass:: FileEditable
+
+.. autofunction:: register_editable_adapter
+
 :mod:`substanced.event` API
 ---------------------------
 
