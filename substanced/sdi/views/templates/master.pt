@@ -27,7 +27,7 @@
           href="${request.static_url('substanced.sdi:static/img/favicon.ico')}"/>
 
     <!-- Scripts -->
-    <script src="${request.static_url('deform:static/scripts/jquery-1.7.2.min.js')}"
+    <script src="${request.static_url('substanced.sdi:static/js/jquery-2.0.3.js')}"
             type="text/javascript"></script>
     <script src="${request.static_url('substanced.sdi:static/js/bootstrap.js')}"
             type="text/javascript"></script>
