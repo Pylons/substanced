@@ -17,4 +17,5 @@ Data.fs*
 .*.sw?
 .sw?
 .DS_Store
-
+coverage
+test
