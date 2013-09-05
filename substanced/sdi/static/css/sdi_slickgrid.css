@@ -197,3 +197,7 @@ body .slickgrid-wrapper .slick-header-columns .slick-header-column.ui-state-defa
   padding: 5px 7.5834px;
   margin-bottom: 1em;
 }
+.slick-cell,
+.slick-header-column {
+  height: 35px !important;
+}
