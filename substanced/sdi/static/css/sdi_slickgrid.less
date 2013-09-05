@@ -1,7 +1,159 @@
 /** Build from https://github.com/Pylons/sdidev to rebuild this LESS file **/
 
 @import "../../../../../bootstrap/less/variables.less";
-@import "../../../../../slickgrid/bootstrap/slickgrid.less";
+
+/* Mixins for SlickGrid */
+
+.slickGrid () {
+
+    width: 100%;
+    position: relative;
+
+    .slickcell-padding () {
+        @fontSize: 14px; // ??? should we use some id here?
+
+        padding: 5px 7.5834px;
+        font-size: @fontSize;
+        td {
+            font-size: @fontSize;
+        }
+        body & {
+            line-height: 20px;
+        }
+    }
+
+    // Reset the margin of the checkboxes. The grid
+    // needs a selection checbkx column. Bootstrap gives
+    // these elements a 4px top margin, which we have to reset
+    // by aligning to baseline.
+    input[type="checkbox"] {
+        vertical-align: baseline;
+        margin: 0;   // paranoid
+    }
+
+    .slick-viewport {
+        // Add a top border to visually separate the headers.
+        border-top: 1px solid @table-border-color;
+    }
+
+    .grid-canvas {
+        .slick-row {
+            border: 0 none;
+            position: absolute;
+        }
+        .slick-cell, .slick-headerrow-column {
+            border-top: 0;
+            border-bottom: 1px solid @table-border-color;
+            border-left: 0;
+            border-right: 0;
+        }
+        .even {
+            background: @table-bg-accent;
+        }
+        
+
+        /* XXX ... needed ? */
+        .slick-cell {
+            .slickcell-padding ();
+            a, a:visited, .ui-widget-content a, .ui-widget-content a:visited {
+                color: @link-color;
+                text-decoration: none;
+            }
+            a:hover, .ui-widget-content a:hover {
+                color: lighten(@link-color, 20%);
+                text-decoration: none;
+                border-bottom: none;
+            }
+            table {
+                height: 100%;
+                border: 0 none;
+                padding: 0;
+                background: none;
+            }
+            td {
+                border: 0 none;
+                padding: 0;
+                vertical-align: middle;
+                text-align: left;
+            }
+        }
+    }
+ 
+    .slick-header {
+        border-top: 0;
+        border-bottom: 0;
+    }
+
+    .slick-header-columns {
+        background: @table-bg;
+
+        .slick-header-column {
+            height: 20px;
+            line-height: 20px;
+
+            margin: 0;
+
+            &.ui-state-default {
+                .slickcell-padding ();
+            }
+
+            border-right: 1px solid #FFFFFF;
+            border-left: 0px;
+            border-top: 0px;
+            border-bottom: 0px;
+
+            //@slickgridHoverHeaderColor: lighten(@text-color, 20%);   // XXX
+            //@slickgridSortingHeaderColor: lighten(@text-color, 20%);   // XXX
+
+            @slickgridHoverHeaderColor: @text-color;
+            @slickgridSortingHeaderColor: @text-color;
+            
+            .reset-columns () {
+                /* like TH  */
+                background: @table-bg;
+                font-family: @font-family-sans-serif;
+                color: @text-color;
+                font-weight: bold;
+                text-shadow: 0 -1px 0 rgba(0,0,0,.4);
+                a, a:visited {
+                    color: @text-color;
+                }
+                a:hover {
+                    color: @slickgridHoverHeaderColor;
+                }    
+            }
+ 
+            .reset-columns ();
+            &.ui-state-default {
+                .reset-columns ();
+            }
+           
+            &.slick-header-column-sorted {
+                font-style: normal;
+                color: @slickgridSortingHeaderColor;
+            }
+            &:hover {
+                color: @slickgridHoverHeaderColor;
+            }
+
+            .slick-sort-indicator-asc {
+                vertical-align: middle;
+                &:before {
+                    border-top: 0;
+                    border-bottom: .266666667em solid #fff;
+                }
+            }
+
+            .slick-sort-indicator-desc {
+                vertical-align: middle;
+            }
+           
+        }
+    }
+
+}
+
+
 
 @keyframes showgridrow {
   0%   {
@@ -27,7 +179,7 @@
   width: 100%;
   .slickGrid();
   // Add a bottom border to the grid.
-  border-bottom: 1px solid @tableBorder;
+  border-bottom: 1px solid @table-border-color;
 
   .cell-reorder {
     cursor: move;
@@ -76,8 +228,8 @@
 
 .slickgrid-header {
   width: 100%;
-  background: @tableBackground;
-  font-family: @sansFontFamily;
+  background: @table-bg;
+  font-family: @font-family-sans-serif;
   //color: @lightGray;    // XXX ???
   color: #555555;
   padding: 5px 7.5834px;

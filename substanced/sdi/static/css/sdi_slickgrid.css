@@ -62,12 +62,12 @@ body .slickgrid-wrapper .grid-canvas .slick-cell {
 .slickgrid-wrapper .grid-canvas .slick-cell a:visited,
 .slickgrid-wrapper .grid-canvas .slick-cell .ui-widget-content a,
 .slickgrid-wrapper .grid-canvas .slick-cell .ui-widget-content a:visited {
-  color: #0088cc;
+  color: #428bca;
   text-decoration: none;
 }
 .slickgrid-wrapper .grid-canvas .slick-cell a:hover,
 .slickgrid-wrapper .grid-canvas .slick-cell .ui-widget-content a:hover {
-  color: #33bbff;
+  color: #92bce0;
   text-decoration: none;
   border-bottom: none;
 }
