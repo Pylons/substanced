@@ -7613,7 +7613,9 @@ textarea {
 }
 .sdi-contents-filter .btn {
   margin-top: 3px;
+  border-radius: 0 14px 14px 0;
 }
 .sdi-contents-filter .form-control {
   margin-top: 3px;
+  border-radius: 14px 0 0 14px;
 }
