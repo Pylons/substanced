@@ -63,7 +63,7 @@
         <div class="btn-group pull-left sdi-add-button" tal:condition="addables">
           <a class="btn btn-primary"
              href="${request.sdiapi.mgmt_path(context, '@@add')}"><i
-             class="icon-plus-sign icon-white"></i> Add</a>
+             class="glyphicon glyphicon-plus-sign icon-white"></i> Add</a>
           <a class="btn btn-primary dropdown-toggle"
               data-toggle="dropdown" href="#"><span class="caret"></span></a>
           <ul class="dropdown-menu">
