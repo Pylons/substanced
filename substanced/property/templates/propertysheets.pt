@@ -29,7 +29,11 @@
       
     </div>
 
-    <div id="form" tal:content="structure form"/>
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-4" id="form" tal:content="structure form"/>
+        </div>
+      </div>
 
   </div>
 
