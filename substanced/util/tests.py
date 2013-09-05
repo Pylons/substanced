@@ -919,10 +919,16 @@ class Test_get_icon_name(unittest.TestCase):
         self.assertEqual(self._callFUT(resource, request), 'icon')
 
 
-class test_get_auditlog(unittest.TestCase):
+class Test_get_auditlog(unittest.TestCase):
     def _callFUT(self, context):
         from . import get_auditlog
         return get_auditlog(context)
+
+    def test_get_auditlog__p_jar_is_None(self):
+        context = testing.DummyResource()
+        context._p_jar = None
+        inst = self._callFUT(context)
+        self.assertEqual(inst, None)
 
     def test_get_auditlog_exists(self):
         context = testing.DummyResource()
