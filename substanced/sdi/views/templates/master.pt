@@ -3,8 +3,8 @@
       xmlns:metal="http://xml.zope.org/namespaces/metal"
       metal:define-macro="main"
       tal:define="mp request.sdiapi.mgmt_path;
-                  su request.static_url">
-
+                  su request.static_url;
+                  sdititle request.sdiapi.sdi_title()">
 <head>
     <meta charset="utf-8"/>
     <title metal:define-slot="page-title">${view.title | request.sdiapi.sdi_title()}</title>
@@ -50,12 +50,12 @@
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
       </button>
-      <a tal:define="sdititle request.sdiapi.sdi_title()"
-         class="navbar-brand"
-         href="${mp(request.virtual_root)}"><img 
-                    alt="${sdititle}"
-                    src="${su('substanced.sdi:static/img/capsule-icon-32.png')}"
-                    />${sdititle}</a>
+      <a class="navbar-brand" href="${mp(request.virtual_root)}">
+        <img alt="${sdititle}" height="24"
+             src="${su('substanced.sdi:static/img/capsule-icon-32.png')}"
+             />
+        ${sdititle}
+      </a>
     </div>
 
     <div class="collapse navbar-collapse">

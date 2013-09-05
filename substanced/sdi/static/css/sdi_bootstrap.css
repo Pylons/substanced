@@ -7578,16 +7578,10 @@ td.visible-print {
 }
 /** Styling for the Substance D SDI  **/
 body {
-  padding-top: 55px;
-}
-@media (max-width: 980px) {
-  body {
-    padding-top: 0;
-  }
+  padding-top: 66px;
 }
 .breadcrumb {
-  padding: 7px 14px;
-  margin: 18px 0 18px;
+  margin-bottom: 0px;
   background-image: -webkit-gradient(linear, left 0%, left 100%, from(#ffffff), to(#eeeeee));
   background-image: -webkit-linear-gradient(top, #ffffff, 0%, #eeeeee, 100%);
   background-image: -moz-linear-gradient(top, #ffffff 0%, #eeeeee 100%);
@@ -7611,15 +7605,9 @@ body {
 textarea {
   width: auto;
 }
-.search-query {
-  border-radius: 14px 0 0 14px;
+.navbar-brand {
+  text-transform: uppercase;
 }
-input.search-query {
-  padding-left: 20px;
-  padding-right: 20px;
-  height: 34px;
-  vertical-align: middle;
-}
-.form-search .input-group .btn {
-  border-radius: 0 14px 14px 0;
+.nav-tabs {
+  margin-top: 10px;
 }
