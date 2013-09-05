@@ -5959,6 +5959,23 @@ a.site-title {
   vertical-align: top;
   display: inline-block;
 }
+.navbar .btn,
+.navbar .btn-group {
+  margin-top: 5px;
+}
 textarea {
   width: auto;
+}
+.search-query {
+  border-radius: 14px 0 0 14px;
+}
+input.search-query {
+  padding-left: 14px;
+  padding-right: 14px;
+  height: 32px;
+  padding: 4px 6px;
+  vertical-align: middle;
+}
+.form-search .input-group .btn {
+  border-radius: 0 14px 14px 0;
 }
