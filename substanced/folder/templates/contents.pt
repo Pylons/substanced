@@ -36,7 +36,7 @@
           onsubmit="return sdi_loading_indicator_on()">
       <div class="container">
 
-        <div class="navbar row">
+        <div class="navbar row contents-button-bar">
           <div class="col-md-2">
             <tal:block condition="'tocopy' not in request.session and 'tomove' not in request.session">
               <div class="btn-group sdi-add-button" tal:condition="addables">
