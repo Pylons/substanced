@@ -69,8 +69,8 @@
                                 class="glyphicon glyphicon-user glyphicon-white"> </i>
             ${request.user.__name__}</a>
           <a class="btn btn-primary dropdown-toggle"
-             data-toggle="dropdown" href="#"><b
-                                class="caret"></b></a>
+             data-toggle="dropdown" href="#"><span
+                                class="caret"></span></a>
           <ul class="dropdown-menu">
             <li>
               <a href="${request.sdiapi.mgmt_path(request.user, '')}"><i
