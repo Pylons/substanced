@@ -23,97 +23,108 @@
   </metal:slot>
 
   <!--!
-      you can use this template as a macro to replace slickgrid config, e.g.
-      <div metal:use-macro="request.sdiapi.get_macro('substanced.folder:templates/contents.pt', 'main')">
-        <div metal:fill-slot="head-more">
-          ... replace slickgrid css and js ...
-        </div>
-      </div>
-   -->
+  you can use this template as a macro to replace slickgrid config, e.g.
+  <div metal:use-macro="request.sdiapi.get_macro('substanced.folder:templates/contents.pt', 'main')">
+  <div metal:fill-slot="head-more">
+  ... replace slickgrid css and js ...
+  </div>
+  </div>
+  -->
 
   <div metal:fill-slot="main">
     <form id="contents_form" action="@@${request.view_name}" method="POST" class="sdi-contents-actions"
           onsubmit="return sdi_loading_indicator_on()">
-    <div class="container">
+      <div class="container">
 
-    <div class="navbar fb-toolbar">
-      <div class="navbar-inner">
-        <div class="col-md-9 fb-toolbar-box">
+        <div class="navbar row">
+          <div class="col-md-9">
 
-      <fieldset>
-      <input type="hidden" name="csrf_token"
-             value="${request.session.get_csrf_token()}"/>
-
-        <div tal:repeat="group buttons"
-           class="${group['type']=='group' and 'btn-group' or 'btn-single'}">
-            <button tal:repeat="button group['buttons']"
-		    tal:attributes="disabled 'btn-sdi-act' not in button['class'] and 'true' or False"
-                    id="${button['id']}"
-                    name="${button['name']}"
-                    class="btn btn-sdi ${button['class']}"
-                    value="${button['value']}"
-                    type="submit"
-                    >
-            ${button['text']}
-            </button>
-        </div>
-        <input type="hidden" name="item-modify" value="" />
-
-        <tal:block tal:condition="'tocopy' not in request.session and 'tomove' not in request.session">
-        <div class="btn-group pull-left sdi-add-button" tal:condition="addables">
-          <a class="btn btn-primary"
-             href="${request.sdiapi.mgmt_path(context, '@@add')}"><i
+            <fieldset>
+              <input type="hidden" name="csrf_token"
+                     value="${request.session.get_csrf_token()}"/>
+              
+              <div tal:repeat="group buttons"
+                   class="${group['type']=='group' and 'btn-group' or 'btn-single'}">
+                <button tal:repeat="button group['buttons']"
+		                tal:attributes="disabled 'btn-sdi-act' not in button['class'] and 'true' or False"
+                        id="${button['id']}"
+                        name="${button['name']}"
+                        class="btn btn-sdi ${button['class']}"
+                        value="${button['value']}"
+                        type="submit"
+                        >
+                  ${button['text']}
+                </button>
+              </div>
+              <input type="hidden" name="item-modify" value="" />
+              
+              <tal:block tal:condition="'tocopy' not in request.session and 'tomove' not in request.session">
+                <div class="btn-group pull-left sdi-add-button" tal:condition="addables">
+                  <a class="btn btn-primary"
+                     href="${request.sdiapi.mgmt_path(context, '@@add')}"><i
              class="glyphicon glyphicon-plus-sign icon-white"></i> Add</a>
-          <a class="btn btn-primary dropdown-toggle"
-              data-toggle="dropdown" href="#"><span class="caret"></span></a>
-          <ul class="dropdown-menu">
-            <li tal:repeat="addable addables">
-               <a href="${addable['url']}"><i
+                  <a class="btn btn-primary dropdown-toggle"
+                     data-toggle="dropdown" href="#"><span class="caret"></span></a>
+                  <ul class="dropdown-menu">
+                    <li tal:repeat="addable addables">
+                      <a href="${addable['url']}"><i
               class="${addable['icon']}"></i> ${addable['type_name']}</a></li>
-          </ul>
-        </div>
-        </tal:block>
-
-      </fieldset>
-        </div>
-        <div class="form-search pull-right sdi-contents-filter">
-          <div class="input-group">
-       	    <input type="text" name="filter." class="input-medium search-query"
-	           placeholder="Type to filter…" tal:attributes="value request.params.get('filter.', '')">
-       	    <button id="sdi-contents-filter-clear" class="btn"><i
-       	    class="glyphicon glyphicon-remove-circle"></i></button>
+                  </ul>
+                </div>
+              </tal:block>
+              
+            </fieldset>
           </div>
+
+          <div class="col-md-3">
+
+            <div class="sdi-contents-filter">
+              <div class="input-group">
+       	        <input type="text"
+                       name="filter."
+                       class="form-control"
+	                   placeholder="Type to filter…"
+                       tal:attributes="value request.params.get('filter.', '')"/>
+                <span class="input-group-btn">
+       	          <button id="sdi-contents-filter-clear" 
+                          type="button"
+                          class="btn btn-default"><i 
+                            class="glyphicon glyphicon-remove-circle"> </i>
+                  </button>
+                </span>
+              </div>
+            </div>
+
+          </div>
+
         </div>
 
-      </div>
-    </div>
+        <metal:slot define-slot="above-grid" />
 
-    <metal:slot define-slot="above-grid" />
-
-    <div class="sdi-sg-header">
-        <span>
+        <div class="sdi-sg-header">
+          <span>
             <span class="sdi-sg-total">&nbsp;</span> total
             <span class="sdi-sg-selected-box" style="display: none">
             (<span class="sdi-sg-selected">&nbsp;</span> selected)
             </span>
-        </span>
-    </div>
+          </span>
+        </div>
 
-    <div id="sdi-contents-table-sg" class="slickgrid-wrapper"></div>
+        <div id="sdi-contents-table-sg" class="slickgrid-wrapper"></div>
 
-    <metal:slot define-slot="below-grid" />
+        <metal:slot define-slot="below-grid" />
 
-    <script type="text/javascript">
-        load_contents_pt({
-            eventSource: "${request.sdiapi.mgmt_path(context, 'auditstream-sse')}",
-            slickgridWrapperOptions: ${structure:slickgrid_wrapper_options}
-        });
-    </script>
+        <script type="text/javascript">
+         load_contents_pt({
+           eventSource: "${request.sdiapi.mgmt_path(context, 'auditstream-sse')}",
+           slickgridWrapperOptions: ${structure:slickgrid_wrapper_options}
+                          });
+        </script>
 
-    <div class="clearfix">
-    </div>
+        <div class="clearfix">
+        </div>
 
-    </div>
+      </div>
     </form>
   </div>
 </div>
