@@ -81,7 +81,7 @@
        	    <input type="text" name="filter." class="input-medium search-query"
 	           placeholder="Type to filter…" tal:attributes="value request.params.get('filter.', '')">
        	    <button id="sdi-contents-filter-clear" class="btn"><i
-       	    class="icon-remove-circle"></i></button>
+       	    class="glyphicon glyphicon-remove-circle"></i></button>
           </div>
         </div>
 
