@@ -7599,7 +7599,7 @@ body {
   display: inline-block;
 }
 .navbar .btn,
-.navbar .btn-group .btn-single {
+.btn-group .btn-single {
   margin-top: 8px;
 }
 textarea {
@@ -7610,4 +7610,7 @@ textarea {
 }
 .nav-tabs {
   margin-top: 10px;
+}
+#sdi-contents-filter-clear {
+  margin-top: 0px;
 }
