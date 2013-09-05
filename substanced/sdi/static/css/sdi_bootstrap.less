@@ -1,8 +1,11 @@
 /** Build from https://github.com/Pylons/sdidev to rebuild this LESS file **/
 
 @import "../../../../../bootstrap/less/bootstrap.less";
+@import "../../../../../bootstrap/less/variables.less";
 
 /** Styling for the Substance D SDI  **/
+
+@white:                 #fff;
 
 body {
   padding-top: 60px;
@@ -32,29 +35,26 @@ a.site-title {
   letter-spacing: -1px;
 }
 
-// @grayLighter:           #eee;
-// @white:                 #fff;
+.breadcrumb {
+  padding: 7px 14px;
+  margin: 18px 0 18px;
 
-// .breadcrumb {
-//   padding: 7px 14px;
-//   margin: 0 0 18px;
+  #gradient > .vertical(@white, @gray-lighter);
+  border-radius: @border-radius-small;
+  border: 1px solid @gray-lighter;
 
-//   #gradient > .vertical(@white, @grayLighter);
-//   .border-radius(3px);
-//   border: 1px solid @grayLighter;
-
-//   li {
-//     display: inline-block;
-//     text-shadow: 0 1px 0 #ffffff;
-//   }
-//   .divider {
-//     padding: 0 5px;
-//     color: #999999;
-//   }
-//   .active a {
-//     color: #333333;
-//   }
-// }
+  li {
+    display: inline-block;
+    text-shadow: 0 1px 0 #ffffff;
+  }
+  .divider {
+    padding: 0 5px;
+    color: #999999;
+  }
+  .active a {
+    color: #333333;
+  }
+}
 
 .btn-single {
   margin: 0 10px;
