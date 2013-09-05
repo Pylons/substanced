@@ -105,7 +105,9 @@ class SystemCatalogFactory(object):
     # name is MODE_ATCOMMIT for next-request folder contents consistency
     name = Field()
 
-    interfaces = Keyword(action_mode=MODE_DEFERRED)
+    # interfaces is MODE_ATCOMMIT because code which creates one may
+    # need to access it immediately.
+    interfaces = Keyword()
 
     # allowed is MODE_ATCOMMIT for next-request folder contents consistency
     allowed = Allowed(
@@ -114,4 +116,6 @@ class SystemCatalogFactory(object):
 
     text = Text(action_mode=MODE_DEFERRED)
 
-    content_type = Field(action_mode=MODE_DEFERRED)
+    # content_type is MODE_ATCOMMIT because code which creates one may
+    # need to access it immediately.
+    content_type = Field()
