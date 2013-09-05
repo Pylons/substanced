@@ -139,8 +139,7 @@ class PermissionsSchemaNode(colander.SchemaNode):
     """ A SchemaNode which represents a set of permissions; uses a widget which
     collects all permissions from the introspection system.  Deserializes to a
     set."""
-    def schema_type(self): 
-        return deform.Set(allow_empty=True)
+    schema_type = colander.Set
 
     def _get_all_permissions(self, registry): # pragma: no cover (testing)
         return get_all_permissions(registry)

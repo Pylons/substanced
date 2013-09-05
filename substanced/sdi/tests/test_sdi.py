@@ -1038,7 +1038,7 @@ class Test_sdiapi(unittest.TestCase):
         inst.mgmt_path = lambda *arg, **kw: '/mg'
         inst.flash_with_undo('message')
         self.assertEqual(request.session['_f_'],
-                         [u('<span>message <a href="/mg" class="btn btn-mini '
+                         [u('<span>message <a href="/mg" class="btn btn-xs '
                             'btn-info">Undo</a></span>\n')])
         self.assertTrue(inst.transaction.notes)
 
