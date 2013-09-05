@@ -15,56 +15,46 @@ from ..util import chunks
 
 default_resources = {
     'jquery': {
-        None:{},
-        },
-    'jqueryui': {
         None:{
-            'js':'deform:static/scripts/jquery-ui-1.8.11.custom.min.js',
-            'css':'deform:static/css/ui-lightness/jquery-ui-1.8.11.custom.css',
+            'js':'deform:static/scripts/jquery-2.0.3.min.js',
             },
         },
     'jquery.form': {
         None:{
-            'js':'deform:static/scripts/jquery.form-3.09.js',
+            'js':('deform:static/scripts/jquery-2.0.3.min.js',
+                  'deform:static/scripts/jquery.form-3.09.js'),
             },
         },
     'jquery.maskedinput': {
         None:{
-            'js':'deform:static/scripts/jquery.maskedinput-1.2.2.min.js',
+            'js':('deform:static/scripts/jquery-2.0.3.min.js',
+                  'deform:static/scripts/jquery.maskedinput-1.3.1.min.js'),
             },
         },
     'jquery.maskMoney': {
         None:{
-            'js':'deform:static/scripts/jquery.maskMoney-1.4.1.js',
-            },
-        },
-    'datetimepicker': {
-        None:{
-            'js':'deform:static/scripts/jquery-ui-timepicker-addon.js',
-            'css':'deform:static/css/jquery-ui-timepicker-addon.css',
+            'js':('deform:static/scripts/jquery-2.0.3.min.js',
+                  'deform:static/scripts/jquery.maskMoney-1.4.1.js'),
             },
         },
     'deform': {
         None:{
-            'js':('deform:static/scripts/jquery.form-3.09.js', 
-                  'deform:static/scripts/deform.js',
-                  'deform_bootstrap:static/deform_bootstrap.js'),
-            'css':'deform:static/css/form.css',
+            'js':('deform:static/scripts/jquery-2.0.3.min.js',
+                  'deform:static/scripts/jquery.form-3.09.js',
+                  'deform:static/scripts/bootstrap.min.js',
+                  'deform:static/scripts/deform.js'),
+            'css':('deform:static/css/bootstrap.min.css',)
             },
         },
-    'bootstrap': {
-        None: {},
-    },
     'tinymce': {
         None:{
-            'js':'deform:static/tinymce/jscripts/tiny_mce/tiny_mce.js',
+            'js':'deform:static/tinymce/tinymce.min.js',
             },
         },
-    'chosen': {
+    'typeahead': {
         None:{
-            'js':'deform_bootstrap:static/jquery_chosen/chosen.jquery.js',
-            'css':('deform_bootstrap:static/chosen_bootstrap.css',
-                   'deform_bootstrap:static/jquery_chosen/chosen.css')
+            'js':'deform:static/scripts/typeahead.min.js',
+            'css':'deform:static/css/typeahead.css'
             },
         },
     'modernizr': {
@@ -72,17 +62,19 @@ default_resources = {
             'js':('deform:static/scripts/modernizr.custom.input-types-and-atts.js',),
             },
         },
+    'pickadate': {
+        None: {
+            'js': (
+                'deform:static/scripts/pickadate.date.min.js',
+                'deform:static/scripts/pickadate.min.js'
+            ),
+            'css': (
+                'deform:static/css/pickadate-classic.date.min.css',
+                'deform:static/css/pickadate-classic.min.css'
+            )
+        }
     }
-
-# NB: don't depend on deform_bootstrap.css, it uses less, and its .less
-# includes 1) the bootstrap css, 2) the datepicker css and 3) the chosen css.
-# We supply chosen requirements above, and we already depend on the bootstrap
-# css sitewide.  We don't yet depend on the datepicker css, but when we do,
-# we'll also just add it sitewide.  Rationale: the deform_bootstrap css when
-# included causes the halfling images to go missing and it makes the CSS harder
-# to debug due to all the repetition with the sitewide-loaded bootstrap CSS.  I
-# should fix at least the halflings images portion of this and submit a patch
-# upstream.
+    }
 
 resource_registry = deform.widget.ResourceRegistry(use_defaults=False)
 resource_registry.registry = default_resources
@@ -121,8 +113,8 @@ class FormView(object):
                                buttons=self.buttons, formid=formid,
                                use_ajax=use_ajax, ajax_options=ajax_options,
                                autocomplete=autocomplete)
-        # XXX override autocomplete; should be part of deform_bootstrap
-        form.widget.template = 'substanced:widget/templates/form.pt' 
+        # XXX override autocomplete; should be part of deform
+        #form.widget.template = 'substanced:widget/templates/form.pt' 
         self.before(form)
         reqts = form.get_widget_resources()
         return form, reqts

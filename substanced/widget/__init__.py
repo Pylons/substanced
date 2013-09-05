@@ -75,11 +75,9 @@ def translator(term): # pragma: no cover
     return get_localizer(get_current_request()).translate(term)
 
 def includeme(config): # pragma: no cover
-    # specify both deform and deform_bootstrap templates as "fallback"
-    # locations; assume user-supplied templates will be specified using asset
-    # specs instead.
+    # specify deform templates as "fallback" locations; assume user-supplied
+    # templates will be specified using asset specs instead.
     deform_dir = resource_filename('deform', 'templates/')
-    deform_bootstrap_dir = resource_filename('deform_bootstrap', 'templates/')
-    search_path = (deform_bootstrap_dir, deform_dir)
+    search_path = (deform_dir,)
     renderer = WidgetRendererFactory(search_path, translator=translator)
     deform.Form.set_default_renderer(renderer)

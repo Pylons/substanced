@@ -585,7 +585,6 @@ def includeme(config): # pragma: no cover
     config.add_request_method(flash_with_undo) # XXX deprecate
     config.add_request_method(user, reify=True)
     config.add_request_method(sdiapi, reify=True)
-    config.include('deform_bootstrap')
     secret = settings.get('substanced.secret')
     if secret is None:
         raise ConfigurationError(
