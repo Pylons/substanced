@@ -13,6 +13,8 @@
       <script src="${request.static_url('substanced.sdi:static/js/slickgrid/plugins/slick.rowselectionmodel.js')}" type="text/javascript"></script>
       <script src="${request.static_url('substanced.sdi:static/js/slickgrid/plugins/slick.checkboxselectcolumn.js')}" type="text/javascript"></script>
       <script src="${request.static_url('substanced.sdi:static/js/slickgrid/plugins/slick.rowmovemanager.js')}" type="text/javascript"></script>
+      <script src="${request.static_url('substanced.sdi:static/js/slick.responsiveness.js')}" type="text/javascript"></script>
+      <script src="${request.static_url('substanced.sdi:static/js/bootstrap-slickgrid.js')}" type="text/javascript"></script>
       <script src="${request.static_url('substanced.sdi:static/js/sdi.grid.remotemodel.js')}" type="text/javascript"></script>
       <script src="${request.static_url('substanced.sdi:static/js/slickgrid-config.js')}" type="text/javascript"></script>
       <link href="${request.static_url('substanced.sdi:static/css/slick.grid.css')}" rel="stylesheet" />
