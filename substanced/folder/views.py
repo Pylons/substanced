@@ -288,7 +288,10 @@ class FolderContents(object):
         name = getattr(resource, '__name__', '')
         icon = get_icon_name(resource, request) or ''
         url = request.sdiapi.mgmt_path(resource, '@@manage_main')
-        value = '<i class="%s"> </i> <a href="%s">%s</a>' % (icon, url, name)
+        value = (
+            '<i class="glyphicon glyph%s"> </i> <a href="%s">%s</a>' %
+                (icon, url, name)
+            )
         columns = [
             {'name': 'Name',
              'value': value,
