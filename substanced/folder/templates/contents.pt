@@ -37,7 +37,24 @@
       <div class="container">
 
         <div class="navbar row">
-          <div class="col-md-9">
+          <div class="col-md-2">
+            <tal:block condition="'tocopy' not in request.session and 'tomove' not in request.session">
+              <div class="btn-group sdi-add-button" tal:condition="addables">
+                <a class="btn btn-primary"
+                   href="${request.sdiapi.mgmt_path(context, '@@add')}"><i
+             class="glyphicon glyphicon-plus-sign icon-white"></i> Add</a>
+                <a class="btn btn-primary dropdown-toggle"
+                   data-toggle="dropdown" href="#"><span class="caret"></span></a>
+                <ul class="dropdown-menu">
+                  <li tal:repeat="addable addables">
+                    <a href="${addable['url']}"><i
+              class="${addable['icon']}"></i> ${addable['type_name']}</a></li>
+                </ul>
+              </div>
+            </tal:block>
+          </div>
+
+          <div class="col-md-6">
 
             <fieldset>
               <input type="hidden" name="csrf_token"
@@ -58,25 +75,10 @@
               </div>
               <input type="hidden" name="item-modify" value="" />
               
-              <tal:block tal:condition="'tocopy' not in request.session and 'tomove' not in request.session">
-                <div class="btn-group pull-left sdi-add-button" tal:condition="addables">
-                  <a class="btn btn-primary"
-                     href="${request.sdiapi.mgmt_path(context, '@@add')}"><i
-             class="glyphicon glyphicon-plus-sign icon-white"></i> Add</a>
-                  <a class="btn btn-primary dropdown-toggle"
-                     data-toggle="dropdown" href="#"><span class="caret"></span></a>
-                  <ul class="dropdown-menu">
-                    <li tal:repeat="addable addables">
-                      <a href="${addable['url']}"><i
-              class="${addable['icon']}"></i> ${addable['type_name']}</a></li>
-                  </ul>
-                </div>
-              </tal:block>
-              
             </fieldset>
           </div>
 
-          <div class="col-md-3">
+          <div class="col-md-4">
 
             <div class="sdi-contents-filter">
               <div class="input-group">
