@@ -42,28 +42,28 @@
 
 <div class="navbar navbar-fixed-top">
     <div class="navbar-inner">
-        <div class="container-fluid">
-            <a class="btn btn-navbar" data-toggle="collapse"
-               data-target=".nav-collapse">
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
+        <div class="container">
+            <a class="btn navbar-btn" data-toggle="collapse"
+               data-target=".navbar-collapse">
+                <span class="glyphicon glyphicon-bar"></span>
+                <span class="glyphicon glyphicon-bar"></span>
+                <span class="glyphicon glyphicon-bar"></span>
             </a>
             <a tal:define="sdititle request.sdiapi.sdi_title()"
-               class="brand"
+               class="navbar-brand"
                href="${home_path}"><img 
                     alt="${sdititle}"
                     src="${request.static_url('substanced.sdi:static/img/capsule-icon-32.png')}"
                     />${sdititle}</a>
 
-            <div class="nav-collapse">
+            <div class="navbar-collapse">
                 <div class="nav pull-right">
                   <img id="sdi-loading-img" src="${request.static_url('substanced.sdi:static/img/progress_bar.gif')}"
                        style="display:none" alt="Loading indicator"/>
                     <div class="btn-group" tal:condition="request.user">
                         <a class="btn btn-primary"
                            href="${request.sdiapi.mgmt_path(request.user)}"><i
-                                class="icon-user icon-white"></i>
+                                class="glyphicon glyphicon-user glyphicon-white"> </i>
                             ${request.user.__name__}</a>
                         <a class="btn btn-primary dropdown-toggle"
                            data-toggle="dropdown" href="#"><span
@@ -71,11 +71,11 @@
                         <ul class="dropdown-menu">
                             <li>
                                 <a href="${request.sdiapi.mgmt_path(request.user, '')}"><i
-                                        class="icon-pencil"></i>
+                                        class="glyphicon glyphicon-pencil"></i>
                                     Account</a></li>
                             <li>
                                 <a href="${request.sdiapi.mgmt_path(request.root, '@@logout')}"><i
-                                        class="icon-stop"></i> Log Out</a>
+                                        class="glyphicon glyphicon-stop"></i> Log Out</a>
                             </li>
                         </ul>
                     </div>
@@ -83,12 +83,12 @@
                           tal:condition="not request.user">Not logged in</span>
                 </div>
             </div>
-            <!--/.nav-collapse -->
+            <!--/.navbar-collapse -->
         </div>
     </div>
 </div>
 
-<div class="container-fluid">
+<div class="container">
 
   <metal:slot metal:define-slot="outer-content">
 
@@ -97,7 +97,7 @@
         tal:condition="breadcrumbs">
         <tal:breadcrumbs repeat="breadcrumb breadcrumbs">
             <li tal:attributes="class breadcrumb['active']">
-                <i class="${breadcrumb['icon']}"> </i>
+                <i class="glyphicon glyph${breadcrumb['icon']}"> </i>
                 <a href="${breadcrumb['url']}">${breadcrumb['name']}</a>
              <span tal:condition="not repeat.breadcrumb.end"
                    class="divider">/</span>
@@ -105,9 +105,9 @@
         </tal:breadcrumbs>
     </ul>
 
-    <div class="row-fluid">
+    <div class="row">
 
-        <div class="span12">
+        <div class="col-md-12">
 
             <ul class="nav nav-tabs"
                 tal:define="tabs request.sdiapi.mgmt_views(context)"

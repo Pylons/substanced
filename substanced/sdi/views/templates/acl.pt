@@ -180,19 +180,19 @@
 
         <div style="margin-left: 40px;">
 
-        <div class="span3">
-          <label class="radio inline">
+        <div class="col-md-3">
+          <label class="radio-inline">
             <input type="radio" id="inherit_enabled" name="inherit" value="enabled"
                    tal:attributes="checked inheriting == 'enabled'"/> Enabled
           </label>
-          <label class="radio inline">
+          <label class="radio-inline">
             <input type="radio" id="inherit_disabled" name="inherit"
                    value="disabled"
                    tal:attributes="checked inheriting == 'disabled'"/> Disabled
           </label>
         </div>
 
-        <div class="span2">
+        <div class="col-md-2">
          <input type="submit" name="form.inherit" value="Update" />
          <input type="hidden" name="csrf_token" 
               value="${request.session.get_csrf_token()}"/>
