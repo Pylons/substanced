@@ -32,6 +32,7 @@ install_requires = [
     'colander>=1.0a1', # subclassable schemanodes
     'deform_bootstrap',
     'pyramid_zodbconn',
+    'pyramid_chameleon',
     'pyramid_mailer',
     'cryptacular',
     'python-magic',
