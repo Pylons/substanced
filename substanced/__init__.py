@@ -4,6 +4,7 @@ root_factory = root_factory
 def include(config): # pragma: no cover
     """ Perform all ``config.include`` tasks required for Substance D and the
     default aspects of the SDI to work."""
+    config.include('pyramid_chameleon')
     config.include('pyramid_zodbconn')
     config.include('pyramid_mailer')
     config.include('.evolution')
