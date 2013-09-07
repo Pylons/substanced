@@ -2,25 +2,27 @@
 
   <div metal:fill-slot="main">
 
-    <div style="text-align:center" tal:condition="batch">
+    <div class="container">
+      <div class="row">
 
-      <div>Batch #: ${batch_num|0}</div>
+    <div tal:condition="batch">
 
-      <a tal:condition="earlier"
-         href="${earlier}"><i class="icon-backward"> </i>Earlier</a>
+      <ul class="pager">
+        <li class="${(not later and 'disabled') or ''}">
+          <a href="${request.view_name}">
+          <i class="glyphicon glyphicon-backward"> </i> Latest</a>
+        </li>
+        <li class="${(not later and 'disabled') or ''}">
+          <a href="${later}">
+          <i class="glyphicon glyphicon-backward"> </i> Later</a>
+        </li>
+        <li class="${(not earlier and 'disabled') or ''}">
+          <a href="${earlier}">
+          <i class="glyphicon glyphicon-forward"> </i> Earlier</a>
+        </li>
+      </ul>
 
-      <!-- <span tal:condition="not earlier">(No Earlier Transactions)</span> -->
-
-      <span tal:condition="later">|</span>
-
-      <a tal:condition="later"
-         href="${later}">Later<i class="icon-forward"> </i></a>
-
-      <!-- <span tal:condition="not later">(No Later Transactions)</span> -->
-
-      <a tal:condition="later" 
-         href="${request.view_name}">Latest<i class="icon-fast-forward"> </i></a>
-
+      <div class="label label-default col-md-2 col-md-offset-5">Page # ${batch_num|0}</div>
 
 
     </div>
@@ -56,6 +58,9 @@
              value="${request.session.get_csrf_token()}"/>
 
     </form>
+
+    </div>
+  </div>
 
   </div>
 
