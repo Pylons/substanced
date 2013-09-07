@@ -103,11 +103,16 @@ class TestUndoViews(unittest.TestCase):
         self.assertEqual(db, conn._db)
 
     def test__undoable_transactions(self):
+        import datetime
         import time
+        from pytz import UTC
         request = testing.DummyRequest()
+        request.user = testing.DummyResource()
+        request.user.timezone = UTC
         context = testing.DummyResource()
         now = time.time()
-        now_ctime = time.ctime(now)[4:][:-5]
+        now_ctime = datetime.datetime.fromtimestamp(now).strftime(
+            '%Y-%m-%d %H:%M:%S UTC')
         record1 = dict(
             time=now,
             description=b'abc',

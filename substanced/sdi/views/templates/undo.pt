@@ -22,7 +22,7 @@
         </li>
       </ul>
 
-      <div class="label label-default col-md-2 col-md-offset-5">Page # ${batch_num|0}</div>
+      <div class="label label-primary col-md-2 col-md-offset-5">Page # ${batch_num|0}</div>
 
 
     </div>
