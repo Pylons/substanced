@@ -16,13 +16,14 @@
   </metal:head-more>
 
   <div metal:fill-slot="main">
-    <h1>${view.title|None}</h1>
-    <div id="form" tal:content="structure form"/>
-    <script type="text/javascript">
-      jQuery(function() {
-         deform.load();
-         });
-    </script>
+
+    <div class="container">
+      <h1>${view.title|None}</h1>
+      <div class="row">
+        <div class="col-lg-4" id="form" tal:content="structure form"/>
+        </div>
+    </div>
+
   </div>
 
 </div>
