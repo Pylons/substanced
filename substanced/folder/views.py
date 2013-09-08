@@ -943,6 +943,7 @@ class FolderContents(object):
         msg = request.sdiapi.get_flash_with_undo_snippet(msg)
         results = {
             'flash': msg,
+            'flash_queue':'success',
             }
         # Generate content update as requested by the client.
         results.update(self._get_json())

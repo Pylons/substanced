@@ -1353,7 +1353,8 @@ class TestFolderContents(unittest.TestCase):
         mockundowrapper.assert_called_once_with('2 rows moved.')
         self.assertEqual(
             result,
-            {'foo': 'bar', 'flash': 'STATUSMESSG<a>Undo</a>'}
+            {'foo': 'bar', 'flash': 'STATUSMESSG<a>Undo</a>',
+             'flash_queue':'success'}
             )
 
     def test_reorder_rows_after_last(self):
@@ -1377,7 +1378,8 @@ class TestFolderContents(unittest.TestCase):
         mockundowrapper.assert_called_once_with('2 rows moved.')
         self.assertEqual(
             result,
-            {'foo': 'bar', 'flash': 'STATUSMESSG<a>Undo</a>'}
+            {'foo': 'bar', 'flash': 'STATUSMESSG<a>Undo</a>',
+             'flash_queue':'success'}
             )
 
     def test__name_sorter_index_is_None(self):
