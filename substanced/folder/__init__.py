@@ -52,7 +52,7 @@ class FolderKeyError(KeyError):
 
 @content(
     'Folder',
-    icon='icon-folder-close',
+    icon='glyphicon glyphicon-folder-close',
     add_view='add_folder',
     )
 @implementer(IFolder)

@@ -47,9 +47,9 @@
     <div class="navbar-header">
       <button type="button" class="navbar-toggle" data-toggle="collapse"
               data-target=".navbar-collapse">
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
+        <span class="glyphicon glyphicon-bar"></span>
+        <span class="glyphicon glyphicon-bar"></span>
+        <span class="glyphicon glyphicon-bar"></span>
       </button>
       <a class="navbar-brand" href="${mp(request.virtual_root)}">
         <img alt="${sdititle}" height="24"
@@ -101,7 +101,7 @@
         tal:condition="breadcrumbs">
         <tal:breadcrumbs repeat="breadcrumb breadcrumbs">
             <li tal:attributes="class breadcrumb['active']">
-                <i class="glyphicon glyph${breadcrumb['icon']}"> </i>
+                <i class="${breadcrumb['icon']}"> </i>
                 <a href="${breadcrumb['url']}">${breadcrumb['name']}</a>
             </li>
         </tal:breadcrumbs>

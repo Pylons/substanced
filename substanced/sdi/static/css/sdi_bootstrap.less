@@ -89,3 +89,24 @@ textarea {
   margin: 0;
   margin-bottom: 5px;
 }
+
+/* substanced sprite icons */
+[class^="subd-"],
+[class*=" subd-"] {
+  display: inline-block;
+  width: 17px;
+  height: 16px;
+  *margin-right: .3em;
+  line-height: 14px;
+  vertical-align: text-top;
+  background-image: url("/sdistatic/img/subd-sprites.png");
+  background-position: 14px 14px;
+  background-repeat: no-repeat;
+}
+[class^="subd-"]:last-child,
+[class*=" subd-"]:last-child {
+  *margin-left: 0;
+}
+
+.subd-capsule{ background-position: 0 0; width: 14px; height: 14px; } 
+.subd-capsule2{ background-position: 0 -19px; width: 14px; height: 14px; }

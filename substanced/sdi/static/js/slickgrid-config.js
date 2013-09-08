@@ -56,7 +56,7 @@
                 var iconName = value.icon || '';
                 var labelUrl = value.url;
                 var label = value.name;
-                var result = '<i class="glyphicon glyph' + iconName + '"> </i> ';
+                var result = '<i class="'+ iconName + '"> </i> ';
                 if (labelUrl) {
                     result += '<a href="' + labelUrl + '">' + label + '</a>';
                 } else {

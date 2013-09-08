@@ -39,7 +39,7 @@ generates content must have these properties:
 - It must have a *type*.  A type acts as a globally unique categorization
   marker, and allows the content to be constructed, enumerated, and
   introspected by various Substance D UI elements such as "add forms", and
-  queries by the management interface for the icon name of a resource.  A
+  queries by the management interface for the icon class of a resource.  A
   type can be any hashable Python object, but it's most often a string.
 
 Here's an example which defines a content resource factory as a class:
@@ -203,8 +203,8 @@ show your content as addable using this name instead of the type name.
 Icons
 -----
 
-You can associate a content type registration with a management view icon by
-passing an ``icon`` keyword argument to ``@content`` or ``add_content_type``.
+You can associate a content type registration with a management view icon class
+by passing an ``icon`` keyword argument to ``@content`` or ``add_content_type``.
 
 .. code-block:: python
 
@@ -213,7 +213,7 @@ passing an ``icon`` keyword argument to ``@content`` or ``add_content_type``.
    from persistent import Persistent
    from substanced.content import content
 
-   @content('Blog Entry', icon='icon-file')
+   @content('Blog Entry', icon='glyphicon glyphicon-file')
    class BlogEntry(Persistent):
        def __init__(self, title='', body=''):
            self.title = title
@@ -221,10 +221,12 @@ passing an ``icon`` keyword argument to ``@content`` or ``add_content_type``.
 
 Once you've done this, content you add to a folder in the sytem will display
 the icon next to it in the contents view of the management interface and in
-the breadcrumb list.  The available icon names are listed at
-http://twitter.github.com/bootstrap/base-css.html#icons .
+the breadcrumb list.  The available icon class names are listed at
+http://getbootstrap.com/components/#glyphicons .  For glyphicon icons, you'll
+need to use two classnames: ``glyphicon`` and ``glyphicon-foo``, separated by 
+a space.
 
-You can also pass a callback as an ``icon`` argument:
+You can also pass a callback as an``icon`` argument:
 
 .. code-block:: python
 
@@ -233,9 +235,9 @@ You can also pass a callback as an ``icon`` argument:
 
    def blogentry_icon(context, request):
        if context.body:
-           return 'icon-file'
+           return 'glyphicon glyphicon-file'
        else:
-           return 'icon-gift'
+           return 'glyphicon glyphicon-gift'
 
    @content('Blog Entry', icon=blogentry_icon)
    class BlogEntry(Persistent):
@@ -246,10 +248,10 @@ You can also pass a callback as an ``icon`` argument:
 A callable used as ``icon`` must accept two arguments: ``context`` and
 ``request``.  ``context`` will be an instance of the type and ``request`` will
 be the current request; your callback will be called at the time the folder
-view is drawn.  The callable should return either an icon name or ``None``.
-For example, the above ``blogentry_icon`` callable tells the SDI to use an icon
-representing a file if the blogentry has a body, otherwise show an icon
-representing gift.
+view is drawn.  The callable should return either an icon class name or
+``None``. For example, the above ``blogentry_icon`` callable tells the SDI to
+use an icon representing a file if the blogentry has a body, otherwise show an
+icon representing gift.
 
 Add Views
 ---------
@@ -311,13 +313,14 @@ Obtaining Metadata About a Content Object's Type
 
 ``request.registry.content.metadata(blogentry, 'icon')``
 
-  Will return the icon for the blogentry's content type or ``None`` if it
-  does not exist.
+  Will return the icon class name for the blogentry's content type or 
+  ``None`` if it does not exist.
 
-``request.registry.content.metadata(blogentry, 'icon', 'icon-file')``
+``request.registry.content.metadata(blogentry, 'icon', 
+                                    'glyphicon glyphicon-file')``
 
-  Will return the icon for the blogentry's content type or ``icon-file`` if
-  it does not exist.
+  Will return the icon for the blogentry's content type or 
+  ``glyphicon glyphicon-file`` if it does not exist.
 
 Affecting Content Creation
 ==========================
@@ -334,7 +337,7 @@ For example:
 
     @content(
         'Document',
-        icon='icon-align-left',
+        icon='glyphicon glyphicon-align-left',
         add_view='add_document',
         propertysheets = (
             ('Basic', DocumentPropertySheet),
@@ -528,7 +531,7 @@ the content type during startup:
     from .views import MyAddFolderView
     config.add_content_type('Folder', Folder,
                             add_view='my_add_folder',
-                            icon='icon-folder-close')
+                            icon='glyphicon glyphicon-folder-close')
 
 This, however, keeps the same content type class. You can also go
 further by overriding the content type definition itself:
@@ -537,7 +540,7 @@ further by overriding the content type definition itself:
 
     @content(
         'Folder',
-        icon='icon-folder-close',
+        icon='glyphicon glyphicon-folder-close',
         add_view='my_add_folder',
     )
     @implementer(IFolder)

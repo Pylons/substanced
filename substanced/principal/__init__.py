@@ -68,7 +68,7 @@ def _gen_random_token():
 @service(
     'Principals',
     service_name='principals',
-    icon='icon-lock',
+    icon='glyphicon glyphicon-lock',
     after_create='after_create',
     add_view='add_principals_service',
     )
@@ -156,7 +156,7 @@ class Principals(Folder):
 
 @content(
     'Users',
-    icon='icon-list-alt'
+    icon='glyphicon glyphicon-list-alt'
     )
 @implementer(IUsers)
 class Users(Folder):
@@ -168,7 +168,7 @@ class Users(Folder):
 
 @content(
     'Groups',
-    icon='icon-list-alt'
+    icon='glyphicon glyphicon-list-alt'
     )
 @implementer(IGroups)
 class Groups(Folder):
@@ -238,7 +238,7 @@ class GroupPropertySheet(PropertySheet):
 
 @content(
     'Group',
-    icon='icon-th-list',
+    icon='glyphicon glyphicon-th-list',
     add_view='add_group',
     tab_order=('properties',),
     propertysheets = (
@@ -331,7 +331,7 @@ class UserPropertySheet(PropertySheet):
 
 @content(
     'User',
-    icon='icon-user',
+    icon='glyphicon glyphicon-user',
     add_view='add_user',
     tab_order=('properties',),
     propertysheets = (
@@ -397,7 +397,7 @@ class User(Folder):
 
 @content(
     'Password Resets',
-    icon='icon-tags'
+    icon='glyphicon glyphicon-tags'
     )
 @implementer(IPasswordResets)
 class PasswordResets(Folder):
@@ -407,7 +407,7 @@ class PasswordResets(Folder):
 
 @content(
     'Password Reset',
-    icon='icon-tag'
+    icon='glyphicon glyphicon-tag'
     )
 @implementer(IPasswordReset)
 class PasswordReset(Persistent):

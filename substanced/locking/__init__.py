@@ -173,7 +173,7 @@ class LockPropertySheet(PropertySheet):
 
 @content(
     'Lock',
-    icon='icon-lock',
+    icon='glyphicon glyphicon-lock',
     add_view='add_lock',
     propertysheets = (
         ('', LockPropertySheet),
@@ -249,7 +249,7 @@ class Lock(Persistent):
 
 @service(
     'Lock Service',
-    icon='icon-briefcase',
+    icon='glyphicon glyphicon-briefcase',
     service_name='locks',
     add_view='add_lock_service',
     )
