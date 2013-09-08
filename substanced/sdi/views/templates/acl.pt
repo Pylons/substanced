@@ -52,7 +52,7 @@
 
      <tal:local condition="local_acl">
 
-       <div class="panel panel-default">
+       <div class="panel panel-primary">
          <div class="panel-heading">Local ACL</div>
          <div class="panel-body">
            <table class="table table-striped">
@@ -81,7 +81,7 @@
                tal:attributes="disabled disabled or None;
                style disabled and 'opacity:0.4' or None"
                name="form.move_up"
-               type="submit">
+               type="submit" class="btn btn-xs btn-primary">
                        <i class="glyphicon glyphicon-arrow-up"> </i>
                      </button>
 
@@ -90,13 +90,13 @@
                tal:attributes="disabled disabled or None;
                style disabled and 'opacity:0.4' or None"
                name="form.move_down"
-               type="submit">
+               type="submit" class="btn btn-xs btn-primary">
                        <i class="glyphicon glyphicon-arrow-down"> </i>
                      </button>
 
                      <button
                 name="form.remove"
-                type="submit">
+                type="submit" class="btn btn-xs btn-danger">
                        <i class="glyphicon glyphicon-remove"> </i>
                      </button>
 
@@ -120,26 +120,29 @@
 
  </metal:local_acl>
 
- <div class="panel panel-default">
+ <div class="panel panel-primary">
    <div class="panel-heading">Add ACE</div>
    <div class="panel-body">
 
      <form action="@@acl_edit" method="post">
 
-       <div class="col-md-2">
-         <label class="radio">
-           <input type="radio" id="allow_add" name="verb" value="Allow" 
-                  checked="true"/> Allow
-         </label>
-         <label class="radio">
-           <input type="radio" id="deny_add" name="verb" value="Deny" /> Deny
-         </label>
+       <div class="col-md-1">
+         <div class="radio">
+           <label>
+             <input type="radio" id="allow_add" name="verb" value="Allow" 
+                    checked="true"/> Allow
+           </label>
+         </div>
+         <div class="radio">
+           <label>
+             <input type="radio" id="deny_add" name="verb" value="Deny" /> Deny
+           </label>
+         </div>
        </div>
 
        <div class="col-md-3">
          <select data-placeholder="Choose a Principal"
-                 name="principal" id="principal">
-           <option value=""></option>
+                 name="principal" class="form-control" id="principal">
            <optgroup label="Groups">
              <option tal:repeat="(group_id, group_name) groups"
                            value="${group_id}">${group_name}</option>
@@ -153,15 +156,14 @@
 
        <div class="col-md-4">
          <select name="permissions" data-placeholder="Choose Permissions"
-                 id="permissions" multiple="multiple">
-           <option value=""></option>
+                 id="permissions" class="form-control" multiple="multiple">
            <option tal:repeat="permission permissions"
                    value="${permission}">${permission}</option>
          </select>
        </div>
 
        <div class="col-md-3">
-         <input type="submit" name="form.add" value="Add" />
+         <input type="submit" name="form.add" class="btn btn-primary" value="Add" />
          <input type="hidden" name="csrf_token" 
                 value="${request.session.get_csrf_token()}"/>
        </div>
@@ -178,40 +180,41 @@
 
      <tal:block condition="context is not request.root">
 
-       <div class="panel panel-default">
+       <div class="panel panel-info">
          <div class="panel-heading">Inherit Parent ACL</div>
          <div class="panel-body">
            
            <div class="row">
              <form action="@@acl_edit" method="post">
                
-               <div style="margin-left: 40px;">
-               
-               <div class="col-md-3">
-                 <label class="radio-inline">
-                   <input type="radio" 
-                          id="inherit_enabled" 
-                          name="inherit"
-                          value="enabled"
-                          tal:attributes="checked inheriting == 'enabled'"/> 
+               <div class="col-md-2">
+                 <div class="radio">
+                   <label>
+                     <input type="radio" 
+                            id="inherit_enabled" 
+                            name="inherit"
+                            value="enabled"
+                            tal:attributes="checked inheriting == 'enabled'"/> 
                       Enabled
-                 </label>
-                 <label class="radio-inline">
-                   <input type="radio" 
-                          id="inherit_disabled"
-                          name="inherit"
-                          value="disabled"
-                          tal:attributes="checked inheriting == 'disabled'"/> 
+                   </label>
+                 </div>
+                 <div class="radio">
+                   <label>
+                     <input type="radio" 
+                            id="inherit_disabled"
+                            name="inherit"
+                            value="disabled"
+                            tal:attributes="checked inheriting == 'disabled'"/> 
                       Disabled
-                 </label>
+                   </label>
+                 </div>
                </div>
                
                <div class="col-md-2">
-                 <input type="submit" name="form.inherit" value="Update" />
+                 <input type="submit" name="form.inherit" value="Update" 
+                        class="btn btn-primary"/>
                  <input type="hidden" name="csrf_token" 
                         value="${request.session.get_csrf_token()}"/>
-               </div>
-               
                </div>
                
              </form>
@@ -225,7 +228,7 @@
 
      <tal:inherited condition="parent_acl">
 
-       <div class="panel panel-default">
+       <div class="panel panel-info">
          <div class="panel-heading">Parent ACL</div>
          <div class="panel-body">
            <table class="table table-striped">
