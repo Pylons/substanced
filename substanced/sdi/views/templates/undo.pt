@@ -7,7 +7,7 @@
 
         <div tal:condition="batch">
 
-          <ul class="pager">
+          <ul class="pager pager-compact">
             <li>
               <div class="label label-primary">Page # ${batch_num+1|1}</div>
             </li>
