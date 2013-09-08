@@ -124,7 +124,7 @@
             </div>
 
             <div id="messages"
-                 class="${request.is_xhr and 'ajax-replace' or ''}">
+                 tal:attributes="class request.is_xhr and 'ajax-replace' or None">
                 <div tal:repeat="queue ('', 'info', 'success', 'warning', 'danger')"
                      tal:omit-tag="">
                     <div class="alert alert-${queue or 'info'}"
