@@ -1422,7 +1422,7 @@ class TestFolderContents(unittest.TestCase):
                 {'sorter': inst._name_sorter, 
                  'name': 'Name',
                  'formatter':'html',
-                 'value':('<i class="glyphicon glyph"> </i> '
+                 'value':('<i class=""> </i> '
                           '<a href="/mgmt_path">fred</a>')},
                 ]
            )
@@ -1440,7 +1440,7 @@ class TestFolderContents(unittest.TestCase):
                 {'sorter': inst._name_sorter, 
                  'name': 'Name',
                  'formatter':'html',
-                 'value':('<i class="glyphicon glyphicon"> </i> '
+                 'value':('<i class="icon"> </i> '
                           '<a href="/mgmt_path">fred</a>')},
                 ]
            )
@@ -1458,7 +1458,7 @@ class TestFolderContents(unittest.TestCase):
                 {'sorter': inst._name_sorter, 
                  'name': 'Name',
                  'formatter':'html',
-                 'value':('<i class="glyphicon glyphicon"> </i> '
+                 'value':('<i class="icon"> </i> '
                           '<a href="/mgmt_path">fred</a>')},
                 ]
            )

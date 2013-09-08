@@ -51,19 +51,25 @@
         <span class="glyphicon glyphicon-bar"></span>
         <span class="glyphicon glyphicon-bar"></span>
       </button>
-      <a class="navbar-brand" href="${mp(request.virtual_root)}">
-        <img alt="${sdititle}" height="24"
-             src="${su('substanced.sdi:static/img/capsule-icon-32.png')}"
-             />
-        ${sdititle}
-      </a>
+    </div>
+    <div class="col-md-10 pull-left breadcrumbs-bounding">
+      <ul class="breadcrumb"
+          tal:define="breadcrumbs request.sdiapi.breadcrumbs()"
+          tal:condition="breadcrumbs">
+        <tal:breadcrumbs repeat="breadcrumb breadcrumbs">
+          <li tal:attributes="class breadcrumb['active']">
+            <i class="${breadcrumb['icon']}"> </i>
+            <a href="${breadcrumb['url']}">${breadcrumb['name']}</a>
+          </li>
+        </tal:breadcrumbs>
+      </ul>
     </div>
 
-    <div class="collapse navbar-collapse">
-      <div class="nav navbar-nav pull-right">
+    <div class="collapse navbar-collapse col-md-2 pull-right user-dropdown-bounding">
+      <div class="nav navbar-nav">
         <img id="sdi-loading-img" 
              src="${su('substanced.sdi:static/img/progress_bar.gif')}"
-             style="display:none" alt="Loading indicator"/>
+             style="display:none; padding-right:20px;" alt="Loading indicator"/>
         <div class="btn-group" tal:condition="request.user">
           <a class="btn btn-primary"
              href="${mp(request.user)}"><i
@@ -95,17 +101,6 @@
 <div class="container">
 
   <metal:slot metal:define-slot="outer-content">
-
-    <ul class="breadcrumb"
-        tal:define="breadcrumbs request.sdiapi.breadcrumbs()"
-        tal:condition="breadcrumbs">
-        <tal:breadcrumbs repeat="breadcrumb breadcrumbs">
-            <li tal:attributes="class breadcrumb['active']">
-                <i class="${breadcrumb['icon']}"> </i>
-                <a href="${breadcrumb['url']}">${breadcrumb['name']}</a>
-            </li>
-        </tal:breadcrumbs>
-    </ul>
 
     <div class="row">
 

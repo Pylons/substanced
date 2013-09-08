@@ -546,7 +546,9 @@ class sdiapi(object):
             if not has_permission('sdi.view', resource, request):
                 return []
             url = request.sdiapi.mgmt_path(resource, '@@manage_main')
-            name = resource.__name__ or 'Home'
+            name = getattr(resource, 'sdi_title', None)
+            if name is None:
+                name = resource.__name__ or 'Home'
             icon = request.registry.content.metadata(resource, 'icon')
             active = resource is request.context and 'active' or None
             breadcrumbs.insert(0, {'url':url, 'name':name, 'active':active,

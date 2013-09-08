@@ -7578,25 +7578,33 @@ td.visible-print {
 }
 /** Styling for the Substance D SDI  **/
 body {
-  padding-top: 66px;
+  padding-top: 60px;
 }
 .breadcrumb {
   margin-bottom: 0px;
-  background-image: -webkit-gradient(linear, left 0%, left 100%, from(#ffffff), to(#eeeeee));
-  background-image: -webkit-linear-gradient(top, #ffffff, 0%, #eeeeee, 100%);
-  background-image: -moz-linear-gradient(top, #ffffff 0%, #eeeeee 100%);
-  background-image: linear-gradient(to bottom, #ffffff 0%, #eeeeee 100%);
-  background-repeat: repeat-x;
-  filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#ffffffff', endColorstr='#ffeeeeee', GradientType=0);
-  border-radius: 3px;
-  border: 1px solid #eeeeee;
+  background-color: transparent;
+  overflow: auto;
+  white-space: nowrap;
+  padding: 15px 0px;
+  padding-bottom: 3px;
 }
 .breadcrumb li {
-  display: inline-block;
+  display: inline;
   text-shadow: 0 1px 0 #ffffff;
+}
+.breadcrumbs-bounding {
+  padding-left: 0px;
+  padding-right: 0px;
+}
+.user-dropdown-bounding {
+  padding-left: 0px;
+  padding-right: 0px;
 }
 .btn-single {
   display: inline-block;
+}
+.navbar-fixed-top {
+  min-height: 60px;
 }
 .navbar .btn,
 .btn-group .btn-single {

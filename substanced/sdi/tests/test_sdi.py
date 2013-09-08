@@ -1138,6 +1138,23 @@ class Test_sdiapi(unittest.TestCase):
                'icon': None}]
             )
 
+    def test_breadcrumbs_with_sdi_title(self):
+        self.config.testing_securitypolicy(permissive=True)
+        resource = testing.DummyResource()
+        resource.sdi_title = 'foo'
+        request = testing.DummyRequest()
+        request.sdiapi = DummySDIAPI()
+        request.context = resource
+        request.registry.content = DummyContent()
+        inst = self._makeOne(request)
+        result = inst.breadcrumbs()
+        self.assertEqual(
+            result,
+             [{'url': '/mgmt_path',
+               'active': 'active',
+               'name': 'foo',
+               'icon': None}]
+            )
     def test_breadcrumbs_with_vroot(self):
         self.config.testing_securitypolicy(permissive=True)
         resource = testing.DummyResource()

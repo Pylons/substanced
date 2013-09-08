@@ -10,23 +10,42 @@
 @white:                 #fff;
 
 body {
-  padding-top: 66px;
+  padding-top: 60px;
 }
 
 .breadcrumb {
   margin-bottom: 0px;
-  #gradient > .vertical(@white, @gray-lighter);
-  border-radius: @border-radius-small;
-  border: 1px solid @gray-lighter;
+  background-color: transparent;
+  // #gradient > .vertical(@white, @gray-lighter);
+  // border-radius: @border-radius-small;
+  // border: 1px solid @gray-lighter;
+  overflow: auto;
+  white-space: nowrap;
+  padding: 15px 0px;
+  padding-bottom: 3px;
 
   li {
-    display: inline-block;
+    display: inline;
     text-shadow: 0 1px 0 #ffffff;
   }
 }
 
+.breadcrumbs-bounding {
+    padding-left: 0px;
+    padding-right: 0px;
+}
+
+.user-dropdown-bounding {
+    padding-left: 0px;
+    padding-right: 0px;
+}
+
 .btn-single {
     display: inline-block;
+}
+
+.navbar-fixed-top {
+    min-height: 60px;
 }
 
 .navbar .btn, .btn-group .btn-single {
