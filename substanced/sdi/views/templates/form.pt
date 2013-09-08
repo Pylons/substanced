@@ -22,12 +22,12 @@
   <div metal:fill-slot="main">
 
     <div class="container">
-      <div class="well">
-        <h1>${view.title|None}</h1>
-        <div class="row">
-          <div class="col-md-6" id="form" tal:content="structure form"/>
-          </div>
-        </div>
+      <div class="panel panel-default">
+        <div class="panel-heading"><b>${view.title|''}</b></div>
+         <div class="panel-body">
+           <div class="col-md-6" id="form" tal:content="structure form"/>
+           </div>
+         </div>
       </div>
 
   </div>
