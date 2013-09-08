@@ -21,18 +21,19 @@
 
   <div metal:fill-slot="main">
 
-    <div class="container">
+    <div class="container" tal:define="tabs view.sheet_names">
       <div class="panel panel-default">
         <div class="panel-heading">
-          <div class="tabbable tabs-top">
+          <div class="tabbable tabs-top" tal:condition="len(tabs) > 1">
             
-            <ul class="nav nav-pills" 
-                tal:define="tabs view.sheet_names"
-                tal:condition="len(tabs) > 1">
+            <ul class="nav nav-pills">
               <li tal:repeat="tab tabs"
-                  tal:attributes="class view.active_sheet_name == tab and 'active' or None"><a href="${request.sdiapi.mgmt_path(request.context, '@@properties', tab)}">${tab}</a>
+                  tal:attributes="class view.active_sheet_name == tab and 'active' or None"><a href="${request.sdiapi.mgmt_path(request.context, '@@properties', tab)}">${tab or 'Basic'}</a>
               </li>
             </ul>
+          </div>
+          <div tal:condition="len(tabs) <= 1">
+            Properties
           </div>
         </div>
         <div class="panel-body">
