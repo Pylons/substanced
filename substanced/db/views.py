@@ -81,8 +81,7 @@ class ManageDatabase(object):
         return HTTPFound(location=self.request.sdiapi.mgmt_path(
             self.context, '@@database'))
 
-    @mgmt_view(request_method='GET',
-               request_param='show_evolve',
+    @mgmt_view(request_param='show_evolve',
                renderer='templates/db_show_evolve.pt',
               )
     def show_evolve(self):
