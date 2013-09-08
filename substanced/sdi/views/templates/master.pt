@@ -3,9 +3,9 @@
       xmlns:metal="http://xml.zope.org/namespaces/metal"
       metal:define-macro="main"
       tal:define="mp request.sdiapi.mgmt_path;
-                  su request.static_url;
-                  sdititle request.sdiapi.sdi_title()">
-<head>
+      su request.static_url;
+      sdititle request.sdiapi.sdi_title()">
+  <head>
     
     <more tal:omit-tag="" metal:define-slot="head-first"></more>
 
@@ -38,81 +38,73 @@
 
     <more tal:omit-tag="" metal:define-slot="head-more"></more>
 
-</head>
+  </head>
 
-<body>
+  <body>
 
-<div class="navbar navbar-fixed-top nav-bordered-bottom">
-  <div class="container">
-    <div class="navbar-header">
-      <button type="button" class="navbar-toggle" data-toggle="collapse"
-              data-target=".navbar-collapse">
-        <span class="glyphicon glyphicon-bar"></span>
-        <span class="glyphicon glyphicon-bar"></span>
-        <span class="glyphicon glyphicon-bar"></span>
-      </button>
-    </div>
-    <div class="col-md-10 pull-left breadcrumbs-bounding">
-      <ul class="breadcrumb"
-          tal:define="breadcrumbs request.sdiapi.breadcrumbs()"
-          tal:condition="breadcrumbs">
-        <tal:breadcrumbs repeat="breadcrumb breadcrumbs">
-          <li tal:attributes="class breadcrumb['active']">
-            <i class="${breadcrumb['icon']}"> </i>
-            <a href="${breadcrumb['url']}">${breadcrumb['name']}</a>
-          </li>
-        </tal:breadcrumbs>
-      </ul>
-    </div>
+    <div class="navbar navbar-fixed-top nav-bordered-bottom">
+      <div class="container">
 
-    <div class="collapse navbar-collapse col-md-2 pull-right user-dropdown-bounding">
-      <div class="nav navbar-nav">
-        <img id="sdi-loading-img" 
-             src="${su('substanced.sdi:static/img/progress_bar.gif')}"
-             style="display:none; padding-right:20px;" alt="Loading indicator"/>
-        <div class="btn-group" tal:condition="request.user">
-          <a class="btn btn-primary"
-             href="${mp(request.user)}"><i
-                    class="glyphicon glyphicon-user glyphicon-white"> </i>
-            ${request.user.__name__}</a>
-          <a class="btn btn-primary dropdown-toggle"
-             data-toggle="dropdown" href="#"><span
-                                class="caret"></span></a>
-          <ul class="dropdown-menu">
-            <li>
-              <a href="${mp(request.user, '')}"><i
-                 class="glyphicon glyphicon-pencil"></i>
-                                    Account</a></li>
-              <li>
-                <a href="${mp(request.root, '@@logout')}"><i
-                        class="glyphicon glyphicon-stop"></i> Log Out</a>
+        <div class="col-md-10 breadcrumbs-bounding">
+          <ul class="breadcrumb"
+              tal:define="breadcrumbs request.sdiapi.breadcrumbs()"
+              tal:condition="breadcrumbs">
+            <tal:breadcrumbs repeat="breadcrumb breadcrumbs">
+              <li tal:attributes="class breadcrumb['active']">
+                <i class="${breadcrumb['icon']}"> </i>
+                <a href="${breadcrumb['url']}">${breadcrumb['name']}</a>
               </li>
+            </tal:breadcrumbs>
           </ul>
         </div>
-        <span class="navbar-text"
-              tal:condition="not request.user">Not logged in</span>
+
+        <div class="col-md-2 user-dropdown-bounding">
+          <div class="pull-right hidden-xs hidden-sm visible-lg visible-md">
+            <img id="sdi-loading-img" 
+                 src="${su('substanced.sdi:static/img/progress_bar.gif')}"
+                 style="display:none; padding-right:20px;" 
+                 alt="Loading indicator"/>
+            <div class="btn-group" tal:condition="request.user">
+              <a class="btn btn-primary"
+                 href="${mp(request.user)}"><i
+                    class="glyphicon glyphicon-user glyphicon-white"> </i>
+                ${request.user.__name__}</a>
+              <a class="btn btn-primary dropdown-toggle"
+                 data-toggle="dropdown" href="#"><span
+                                class="caret"></span></a>
+              <ul class="dropdown-menu">
+                <li>
+                  <a href="${mp(request.user, '')}"><i
+                 class="glyphicon glyphicon-pencil"></i>
+                                    Account</a></li>
+                  <li>
+                    <a href="${mp(request.root, '@@logout')}"><i
+                        class="glyphicon glyphicon-stop"></i> Log Out</a>
+                  </li>
+              </ul>
+            </div>
+            <span class="navbar-text"
+                  tal:condition="not request.user">Not logged in</span>
+          </div>
+        </div>
       </div>
     </div>
-    <!--/.navbar-collapse -->
-  </div>
-  <!--/.container -->
-</div>
 
-<div class="container">
+    <div class="container">
 
-  <metal:slot metal:define-slot="outer-content">
+      <metal:slot metal:define-slot="outer-content">
 
-    <div class="row">
+        <div class="row">
 
-        <div class="col-md-12">
+          <div class="col-md-12">
 
             <ul class="nav nav-tabs"
                 tal:define="tabs request.sdiapi.mgmt_views(context)"
                 tal:condition="tabs">
-                <li tal:repeat="tab_data tabs"
-                    tal:attributes="class tab_data['class']">
-                    <a href="${tab_data['url']}">${tab_data['title']}</a>
-                </li>
+              <li tal:repeat="tab_data tabs"
+                  tal:attributes="class tab_data['class']">
+                <a href="${tab_data['url']}">${tab_data['title']}</a>
+              </li>
             </ul>
 
             <div class="above-content">
@@ -120,36 +112,36 @@
 
             <div id="messages"
                  tal:attributes="class request.is_xhr and 'ajax-replace' or None">
-                <div tal:repeat="queue ('', 'info', 'success', 'warning', 'danger')"
-                     tal:omit-tag="">
-                    <div class="alert alert-${queue or 'info'}"
-                         tal:define="messages request.session.pop_flash(queue)"
-                         tal:condition="messages"
-                         tal:repeat="message messages">
-                      <button type="button" class="close" data-dismiss="alert">&times;</button>
-                      ${structure:message}
-                    </div>
+              <div tal:repeat="queue ('', 'info', 'success', 'warning', 'danger')"
+                   tal:omit-tag="">
+                <div class="alert alert-${queue or 'info'}"
+                     tal:define="messages request.session.pop_flash(queue)"
+                     tal:condition="messages"
+                     tal:repeat="message messages">
+                  <button type="button" class="close" data-dismiss="alert">&times;</button>
+                  ${structure:message}
                 </div>
+              </div>
             </div>
 
             <div class="inner-content">
-                <div metal:define-slot="main">
-                </div>
+              <div metal:define-slot="main">
+              </div>
             </div>
 
             <div class="below-content">
             </div>
 
+          </div>
+
         </div>
+
+      </metal:slot>
 
     </div>
 
-  </metal:slot>
+    <more tal:omit-tag="" metal:define-slot="tail-more"></more>
 
-</div>
-
-<more tal:omit-tag="" metal:define-slot="tail-more"></more>
-
-</body>
+  </body>
 
 </html>
