@@ -122,9 +122,9 @@
 
             <div id="messages"
                  class="${request.is_xhr and 'ajax-replace' or ''}">
-                <div tal:repeat="queue ('info', 'success', 'warning', 'danger')"
+                <div tal:repeat="queue ('', 'info', 'success', 'warning', 'danger')"
                      tal:omit-tag="">
-                    <div class="alert alert-${queue}"
+                    <div class="alert alert-${queue or 'info'}"
                          tal:define="messages request.session.pop_flash(queue)"
                          tal:condition="messages"
                          tal:repeat="message messages">
