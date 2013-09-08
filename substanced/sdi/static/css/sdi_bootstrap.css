@@ -7651,4 +7651,5 @@ textarea {
 }
 .pager-compact {
   margin: 0;
+  margin-bottom: 5px;
 }
