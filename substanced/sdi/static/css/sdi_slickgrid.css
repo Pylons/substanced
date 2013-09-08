@@ -217,3 +217,15 @@ body .slickgrid-wrapper .slick-header-columns .slick-header-column.ui-state-defa
 .badge-success {
   background-color: #5cb85c;
 }
+.badge-warning {
+  background-color: #f0ad4e;
+}
+.badge-danger {
+  background-color: #d9534f;
+}
+.badge-info {
+  background-color: #5bc0de;
+}
+.badge-default {
+  background-color: #ffffff;
+}
