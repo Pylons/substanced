@@ -84,7 +84,7 @@ class TestManageDatabase(unittest.TestCase):
         resp = inst.evolve()
         self.assertEqual(resp.location, '/mgmt_path')
         self.assertEqual(request.sdiapi.flashed,
-                         "3 evolution steps executed")
+                         "3 evolution steps executed successfully")
 
     def test_evolve_empty(self):
         context = testing.DummyResource()
@@ -96,7 +96,7 @@ class TestManageDatabase(unittest.TestCase):
         resp = inst.evolve()
         self.assertEqual(resp.location, '/mgmt_path')
         self.assertEqual(request.sdiapi.flashed,
-                         "No evolution steps executed")
+                         "No evolution steps to execute")
 
     def test_dryrun(self):
         context = testing.DummyResource()
@@ -108,7 +108,7 @@ class TestManageDatabase(unittest.TestCase):
         resp = inst.dryrun()
         self.assertEqual(resp.location, '/mgmt_path')
         self.assertEqual(request.sdiapi.flashed,
-                         "3 evolution steps dry-run")
+                         "3 evolution steps dry-run successfully")
 
     def test_dryrun_empty(self):
         context = testing.DummyResource()
@@ -120,7 +120,7 @@ class TestManageDatabase(unittest.TestCase):
         resp = inst.dryrun()
         self.assertEqual(resp.location, '/mgmt_path')
         self.assertEqual(request.sdiapi.flashed,
-                         "No evolution steps dry-run")
+                         "No evolution steps to dry-run")
 
     def test_evolve_finished(self):
         context = testing.DummyResource()

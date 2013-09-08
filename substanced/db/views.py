@@ -103,9 +103,10 @@ class ManageDatabase(object):
         complete = manager.evolve(commit=False)
         if complete:
             self.request.sdiapi.flash(
-                '%d evolution steps dry-run' % len(complete), 'success')
+                '%d evolution steps dry-run successfully' % len(complete),
+                'success')
         else:
-            self.request.sdiapi.flash('No evolution steps dry-run', 'info')
+            self.request.sdiapi.flash('No evolution steps to dry-run', 'info')
         return HTTPFound(location=self.request.sdiapi.mgmt_path(
             self.context, '@@database'))
 
@@ -118,9 +119,10 @@ class ManageDatabase(object):
         complete = manager.evolve(commit=True)
         if complete:
             self.request.sdiapi.flash(
-                '%d evolution steps executed' % len(complete), 'success')
+                '%d evolution steps executed successfully' % len(complete),
+                'success')
         else:
-            self.request.sdiapi.flash('No evolution steps executed', 'info')
+            self.request.sdiapi.flash('No evolution steps to execute', 'info')
         return HTTPFound(location=self.request.sdiapi.mgmt_path(
             self.context, '@@database'))
 
