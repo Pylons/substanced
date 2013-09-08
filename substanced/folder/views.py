@@ -757,13 +757,13 @@ class FolderContents(object):
                 deleted += 1
         if not deleted:
             msg = 'No items deleted'
-            request.session.flash(msg)
+            request.sdiapi.flash(msg)
         elif deleted == 1:
             msg = 'Deleted 1 item'
-            request.sdiapi.flash_with_undo(msg)
+            request.sdiapi.flash_with_undo(msg, 'success')
         else:
             msg = 'Deleted %s items' % deleted
-            request.sdiapi.flash_with_undo(msg)
+            request.sdiapi.flash_with_undo(msg, 'success')
         return self.get_redirect_response()
 
     def duplicate(self):
@@ -775,13 +775,13 @@ class FolderContents(object):
             context.copy(name, context, newname)
         if not len(toduplicate):
             msg = 'No items duplicated'
-            request.session.flash(msg)
+            request.sdiapi.flash(msg)
         elif len(toduplicate) == 1:
             msg = 'Duplicated 1 item'
-            request.sdiapi.flash_with_undo(msg)
+            request.sdiapi.flash_with_undo(msg, 'success')
         else:
             msg = 'Duplicated %s items' % len(toduplicate)
-            request.sdiapi.flash_with_undo(msg)
+            request.sdiapi.flash_with_undo(msg, 'success')
         return self.get_redirect_response()
 
     def rename(self):
@@ -789,7 +789,7 @@ class FolderContents(object):
         context = self.context
         torename = self.modified_items()
         if not torename:
-            request.session.flash('No items renamed')
+            request.sdiapi.flash('No items renamed', 'warning')
             return self.get_redirect_response()
         return dict(torename=[context.get(name)
                               for name in torename
@@ -800,7 +800,7 @@ class FolderContents(object):
         context = self.context
 
         if self.request.POST.get('form.rename_finish') == "cancel":
-            request.session.flash('No items renamed')
+            request.sdiapi.flash('No items renamed')
             return self.get_redirect_response()
 
         torename = request.POST.getall('item-rename')
@@ -809,15 +809,15 @@ class FolderContents(object):
                 new_name = request.POST.get(old_name)
                 context.rename(old_name, new_name)
         except FolderKeyError as e:
-            self.request.session.flash(e.args[0], 'error')
+            self.request.sdiapi.flash(e.args[0], 'danger')
             raise self.get_redirect_response()
 
         if len(torename) == 1:
             msg = 'Renamed 1 item'
-            request.sdiapi.flash_with_undo(msg)
+            request.sdiapi.flash_with_undo(msg, 'success')
         else:
             msg = 'Renamed %s items' % len(torename)
-            request.sdiapi.flash_with_undo(msg)
+            request.sdiapi.flash_with_undo(msg, 'success')
         return self.get_redirect_response()
 
     def copy(self):
@@ -832,16 +832,16 @@ class FolderContents(object):
                 if obj is not None:
                     l.append(get_oid(obj))
             request.session['tocopy'] = l
-            request.session.flash('Choose where to copy the items:', 'info')
+            request.sdiapi.flash('Choose where to copy the items:', 'info')
         else:
-            request.session.flash('No items to copy')
+            request.sdiapi.flash('No items to copy', 'warning')
 
         return self.get_redirect_response()
 
     def copy_finish_cancel(self):
         request = self.request
         del request.session['tocopy']
-        request.session.flash('No items copied')
+        request.sdiapi.flash('No items copied', 'success')
         return self.get_redirect_response()
 
     def copy_finish(self):
@@ -860,18 +860,18 @@ class FolderContents(object):
                 if copied:
                     num_copied += 1
         except FolderKeyError as e:
-            self.request.session.flash(e.args[0], 'error')
+            self.request.sdiapi.flash(e.args[0], 'danger')
             raise self.get_redirect_response()
 
         if num_copied == 0:
             msg = 'No items copied'
-            request.session.flash(msg)
+            request.sdiapi.flash(msg, 'warning')
         elif num_copied == 1:
             msg = 'Copied 1 item'
-            request.sdiapi.flash_with_undo(msg)
+            request.sdiapi.flash_with_undo(msg, 'success')
         else:
             msg = 'Copied %s items' % num_copied
-            request.sdiapi.flash_with_undo(msg)
+            request.sdiapi.flash_with_undo(msg, 'success')
 
         return self.get_redirect_response()
 
@@ -887,16 +887,16 @@ class FolderContents(object):
                 if obj is not None:
                     l.append(get_oid(obj))
             request.session['tomove'] = l
-            request.session.flash('Choose where to move the items:', 'info')
+            request.sdiapi.flash('Choose where to move the items:', 'info')
         else:
-            request.session.flash('No items to move')
+            request.sdiapi.flash('No items to move', 'warning')
 
         return self.get_redirect_response()
 
     def move_finish_cancel(self):
         request = self.request
         del request.session['tomove']
-        request.session.flash('No items moved')
+        request.sdiapi.flash('No items moved', 'success')
         return self.get_redirect_response()
 
     def move_finish(self):
@@ -915,18 +915,18 @@ class FolderContents(object):
                 if moved:
                     num_moved += 1
         except FolderKeyError as e:
-            self.request.session.flash(e.args[0], 'error')
+            self.request.sdiapi.flash(e.args[0], 'danger')
             raise self.get_redirect_response()
 
         if num_moved == 0:
             msg = 'No items moved'
-            request.session.flash(msg)
+            request.sdiapi.flash(msg, 'warning')
         elif num_moved == 1:
             msg = 'Moved 1 item'
-            request.sdiapi.flash_with_undo(msg)
+            request.sdiapi.flash_with_undo(msg, 'success')
         else:
             msg = 'Moved %s items' % num_moved
-            request.sdiapi.flash_with_undo(msg)
+            request.sdiapi.flash_with_undo(msg, 'success')
 
         return self.get_redirect_response()
 
@@ -969,9 +969,9 @@ class FolderContents(object):
             action = 'copied'
         else:
             action = 'moved'
-        self.request.session.flash(
+        self.request.sdiapi.flash(
             '"%s" is of a type (%s) that is not addable here, not %s' % (
-                obj_name, obj_type, action), 'error'
+                obj_name, obj_type, action), 'danger'
             )
         return False
         
@@ -1100,7 +1100,7 @@ def add_folder_contents_views(
       )
       def button1(context, request):
           # add button functionality here, then go back to contents
-          request.session.flash('Just did what button1 does')
+          request.sdiapi.flash('Just did what button1 does')
           return HTTPFound(request.sdiapi.mgmt_path(context, '@@contents'))
 
     Note that context has to be IFolder for this to work. If you need to

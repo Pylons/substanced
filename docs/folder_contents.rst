@@ -184,14 +184,14 @@ then register a view against this.
         toreindex = request.POST.getall('item-modify')
         if toreindex:
             context.reindex(indexes=toreindex, registry=request.registry)
-            request.session.flash(
+            request.sdiapi.flash(
                 'Reindex of selected indexes succeeded',
                 'success'
                 )
         else:
-            request.session.flash(
+            request.sdiapi.flash(
                 'No indexes selected to reindex',
-                'error'
+                'danger'
                 )
 
         return HTTPFound(request.sdiapi.mgmt_path(context, '@@contents'))

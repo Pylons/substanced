@@ -104,6 +104,7 @@ class TestFormView(unittest.TestCase):
         from . import FormError
         schema = DummySchema()
         request = testing.DummyRequest()
+        request.sdiapi = DummySDIAPI()
         context = testing.DummyResource()
         request.POST['submit'] = True
         inst = self._makeOne(context, request)
@@ -117,8 +118,8 @@ class TestFormView(unittest.TestCase):
         result = inst()
         self.assertEqual(result,
                          {'css_links': (), 'js_links': (), 'form': 'rendered'})
-        self.assertEqual(request.session.peek_flash('error'),
-                         ['<div class="error">Failed: </div>'])
+        self.assertEqual(request.sdiapi.flashed,
+                         '<div class="error">Failed: </div>')
 
 
 class TestFileUploadTempStore(unittest.TestCase):
@@ -296,3 +297,5 @@ class DummySession(dict):
 class DummySDIAPI(object):
     def mgmt_path(self, *arg, **kw):
         return '/mgmt_path'
+    def flash(self, msg, queue='info', allow_duplicate=True):
+        self.flashed = msg

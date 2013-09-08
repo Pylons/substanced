@@ -1013,7 +1013,7 @@ class Test_sdiapi(unittest.TestCase):
         inst.get_connection = lambda *arg: connection
         inst.transaction = DummyTransaction()
         inst.flash_with_undo('message')
-        self.assertEqual(request.session['_f_'], ['message'])
+        self.assertEqual(request.session['_f_info'], ['message'])
         self.assertFalse(inst.transaction.notes)
 
     def test_flash_with_undo_db_doesnt_support_undo(self):
@@ -1024,7 +1024,7 @@ class Test_sdiapi(unittest.TestCase):
         inst.get_connection = lambda *arg: connection
         inst.transaction = DummyTransaction()
         inst.flash_with_undo('message')
-        self.assertEqual(request.session['_f_'], ['message'])
+        self.assertEqual(request.session['_f_info'], ['message'])
         self.assertFalse(inst.transaction.notes)
 
     def test_flash_with_undo_gardenpath(self):
@@ -1037,11 +1037,29 @@ class Test_sdiapi(unittest.TestCase):
         inst.transaction = DummyTransaction()
         inst.mgmt_path = lambda *arg, **kw: '/mg'
         inst.flash_with_undo('message')
-        self.assertEqual(request.session['_f_'],
+        self.assertEqual(request.session['_f_info'],
                          [u('<span>message <a href="/mg" class="btn btn-xs '
                             'btn-info">Undo</a></span>\n')])
         self.assertTrue(inst.transaction.notes)
 
+    def test_flash_gardenpath(self):
+        request = testing.DummyRequest()
+        inst = self._makeOne(request)
+        inst.flash('message')
+        self.assertEqual(request.session['_f_info'], ['message'])
+
+    def test_flash_gardenpath_altqueue(self):
+        request = testing.DummyRequest()
+        inst = self._makeOne(request)
+        inst.flash('message', 'danger')
+        self.assertEqual(request.session['_f_danger'], ['message'])
+
+    def test_flash_error_converted_to_danger(self):
+        request = testing.DummyRequest()
+        inst = self._makeOne(request)
+        inst.flash('message', 'error')
+        self.assertEqual(request.session['_f_danger'], ['message'])
+        
     def test_mgmt_path(self):
         from .. import MANAGE_ROUTE_NAME
         request = testing.DummyRequest()

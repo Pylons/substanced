@@ -510,10 +510,16 @@ class sdiapi(object):
             snippet = button
         return snippet
 
-    def flash_with_undo(self, msg, queue='', allow_duplicate=True):
+    def flash_with_undo(self, msg, queue='info', allow_duplicate=True):
         request = self.request
         snippet = self.get_flash_with_undo_snippet(msg)
         request.session.flash(snippet, queue, allow_duplicate=allow_duplicate)
+
+    def flash(self, msg, queue='info', allow_duplicate=True):
+        if queue == 'error':
+            queue = 'danger' # bw compat for bs3 alert names
+        request = self.request
+        request.session.flash(msg, queue, allow_duplicate=allow_duplicate)
 
     def mgmt_path(self, obj, *arg, **kw):
         """ Return the path of the resource ``obj`` with the ``manage`` path

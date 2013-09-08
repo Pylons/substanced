@@ -87,3 +87,6 @@ class DummyContent(object):
 class DummySDIAPI(object):
     def mgmt_url(self, *arg, **kw):
         return 'http://mgmt_url'
+
+    def flash(self, msg, queue='info'):
+        self.flashed = msg

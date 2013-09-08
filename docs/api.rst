@@ -500,6 +500,9 @@ Other Helpers
 
 .. autoclass:: mgmt_view
 
+.. autoclass:: sdiapi
+   :members:
+
 .. attribute:: LEFT
 
 .. attribute:: MIDDLE

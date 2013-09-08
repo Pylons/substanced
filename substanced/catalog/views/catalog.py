@@ -41,13 +41,13 @@ class ManageCatalog(object):
     @mgmt_view(request_method='POST', request_param='reindex', check_csrf=True)
     def reindex(self):
         self.context.reindex()
-        self.request.session.flash('Catalog reindexed')
+        self.request.sdiapi.flash('Catalog reindexed')
         return HTTPFound(location=self.redir_location)
 
     @mgmt_view(request_method='POST', request_param='update', check_csrf=True)
     def update(self):
         self.context.update_indexes()
-        self.request.session.flash('Catalog index definitions updated')
+        self.request.sdiapi.flash('Catalog index definitions updated')
         return HTTPFound(location=self.redir_location)
 
 @view_defaults(
@@ -83,12 +83,12 @@ class ManageIndex(object):
         catalog  = self.context.__parent__
         if ICatalog.providedBy(catalog):
             catalog.reindex(indexes=[index_name])
-            self.request.session.flash('Index "%s" reindexed' % index_name,
+            self.request.sdiapi.flash('Index "%s" reindexed' % index_name,
                                        'success')
         else:
-            self.request.session.flash(
+            self.request.sdiapi.flash(
                 'Cannot reindex an index unless it is contained in a catalog',
-                'error'
+                'danger'
                 )
         return HTTPFound(location=self.redir_location)
 
@@ -132,14 +132,14 @@ class SearchCatalogView(FormView):
                 self.logger.exception('During search')
                 cls_name = e.__class__.__name__
                 msg = 'Query failed (%s: %s)' % (cls_name, e.args[0])
-                self.request.session.flash(msg, 'error')
+                self.request.sdiapi.flash(msg, 'danger')
             else:
                 objectmap = self.find_objectmap(self.context)
                 resolve = objectmap.object_for
                 searchresults = list([(oid, resolve(oid)) for oid in resultset])
                 if not searchresults:
                     searchresults = [('', 'No results')]
-                self.request.session.flash('Query succeeded', 'success')
+                self.request.sdiapi.flash('Query succeeded', 'success')
         return {
             'searchresults':searchresults,
             'form':form.render(appstruct=appstruct),
@@ -163,14 +163,14 @@ def reindex_indexes(context, request):
     toreindex_fmt = ', '.join(toreindex)
     if toreindex:
         context.reindex(indexes=toreindex, registry=request.registry)
-        request.session.flash(
+        request.sdiapi.flash(
             'Reindex of selected indexes %s succeeded' % (toreindex_fmt,),
             'success'
             )
     else:
-        request.session.flash(
+        request.sdiapi.flash(
             'No indexes selected to reindex',
-            'error'
+            'danger'
             )
         
     return HTTPFound(request.sdiapi.mgmt_path(context, '@@contents'))

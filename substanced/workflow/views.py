@@ -62,10 +62,10 @@ class WorkflowViews(object):
         for workflow in workflows:
             if str(workflow.type) == wfid:
                 workflow.transition(self.context, self.request, transition)
-                self.request.session.flash(
+                self.request.sdiapi.flash(
                     'Transitioned %s using %s' % (
                         workflow.name or workflow.type, transition),
-                    'info',
+                    'success',
                     )
                 break
         return HTTPFound(

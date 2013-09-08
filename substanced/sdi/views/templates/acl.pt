@@ -52,63 +52,67 @@
 
      <tal:local condition="local_acl">
 
-     <h2> Local ACL </h2>
+       <div class="panel panel-default">
+         <div class="panel-heading">Local ACL</div>
+         <div class="panel-body">
+           <table class="table table-striped">
 
-     <table class="table table-striped">
+             <thead>
+               <tr>
+                 <th width="15%">Allow / Deny</th>
+                 <th width="25%">Principal</th>
+                 <th width="40%">Permissions</th>
+                 <th width="15%">Control</th>
+               </tr>
+             </thead>
 
-      <thead>
-       <tr>
-         <th width="15%">Allow / Deny</th>
-         <th width="25%">Principal</th>
-         <th width="40%">Permissions</th>
-         <th width="15%">Control</th>
-       </tr>
-      </thead>
+             <tbody>
 
-      <tbody>
+               <tr tal:repeat="ace local_acl">
+                 <td tal:content="ace[0]">Allow</td>
+                 <td tal:content="ace[1]">PRINCIPAL</td>
+                 <td tal:content="', '.join(ace[2])">PERM1, PERM2</td>
+                 <td>
+                   <form action="@@acl_edit" method="post" onsubmit="return loading_indicator()">
+                     <input type="hidden" name="index" value="${repeat['ace'].index}" />
 
-       <tr tal:repeat="ace local_acl">
-         <td tal:content="ace[0]">Allow</td>
-         <td tal:content="ace[1]">PRINCIPAL</td>
-         <td tal:content="', '.join(ace[2])">PERM1, PERM2</td>
-         <td>
-          <form action="@@acl_edit" method="post" onsubmit="return loading_indicator()">
-           <input type="hidden" name="index" value="${repeat['ace'].index}" />
-
-            <button
+                     <button
                tal:define="disabled repeat['ace'].start"
                tal:attributes="disabled disabled or None;
-                               style disabled and 'opacity:0.4' or None"
+               style disabled and 'opacity:0.4' or None"
                name="form.move_up"
                type="submit">
-              <i class="icon-arrow-up"> </i>
-            </button>
+                       <i class="glyphicon glyphicon-arrow-up"> </i>
+                     </button>
 
-            <button
+                     <button
                tal:define="disabled repeat['ace'].end"
                tal:attributes="disabled disabled or None;
-                               style disabled and 'opacity:0.4' or None"
+               style disabled and 'opacity:0.4' or None"
                name="form.move_down"
                type="submit">
-              <i class="icon-arrow-down"> </i>
-            </button>
+                       <i class="glyphicon glyphicon-arrow-down"> </i>
+                     </button>
 
-            <button
+                     <button
                 name="form.remove"
                 type="submit">
-              <i class="icon-remove"> </i>
-            </button>
+                       <i class="glyphicon glyphicon-remove"> </i>
+                     </button>
 
-           <input type="hidden" name="csrf_token" 
-                  value="${request.session.get_csrf_token()}"/>
+                     <input type="hidden" name="csrf_token" 
+                            value="${request.session.get_csrf_token()}"/>
 
-          </form>
-         </td>
-       </tr>
+                   </form>
+                 </td>
+               </tr>
 
-       </tbody>
+             </tbody>
 
-      </table>
+           </table>
+
+         </div>
+       </div>
 
      </tal:local>
 
@@ -116,120 +120,137 @@
 
  </metal:local_acl>
 
- <h2> Add ACE </h2>
+ <div class="panel panel-default">
+   <div class="panel-heading">Add ACE</div>
+   <div class="panel-body">
 
- <form action="@@acl_edit" method="post">
- <table class="table">
-   <tbody>
-    <tr>
-     <td width="15%">
-      <label class="radio">
-       <input type="radio" id="allow_add" name="verb" value="Allow" 
-            checked="true"/> Allow
-      </label>
-      <label class="radio">
-       <input type="radio" id="deny_add" name="verb" value="Deny" /> Deny
-      </label>
-     </td>
+     <form action="@@acl_edit" method="post">
 
-     <td width="25%">
-      <select data-placeholder="Choose a Principal"
-              name="principal" id="principal">
-       <option value=""></option>
-       <optgroup label="Groups">
-         <option tal:repeat="(group_id, group_name) groups"
-                 value="${group_id}">${group_name}</option>
-       </optgroup>
-       <optgroup label="Users">
-         <option tal:repeat="(user_id, user_name) users"
-                 value="${user_id}">${user_name}</option>
-       </optgroup>
-      </select>
-     </td>
+       <div class="col-md-2">
+         <label class="radio">
+           <input type="radio" id="allow_add" name="verb" value="Allow" 
+                  checked="true"/> Allow
+         </label>
+         <label class="radio">
+           <input type="radio" id="deny_add" name="verb" value="Deny" /> Deny
+         </label>
+       </div>
 
-     <td width="40%">
-       <select name="permissions" data-placeholder="Choose Permissions"
-               id="permissions" multiple="multiple">
-         <option value=""></option>
-         <option tal:repeat="permission permissions"
-                 value="${permission}">${permission}</option>
-       </select>
-     </td>
+       <div class="col-md-3">
+         <select data-placeholder="Choose a Principal"
+                 name="principal" id="principal">
+           <option value=""></option>
+           <optgroup label="Groups">
+             <option tal:repeat="(group_id, group_name) groups"
+                           value="${group_id}">${group_name}</option>
+           </optgroup>
+           <optgroup label="Users">
+             <option tal:repeat="(user_id, user_name) users"
+                     value="${user_id}">${user_name}</option>
+           </optgroup>
+         </select>
+       </div>
 
-     <td width="15%">
-       <input type="submit" name="form.add" value="Add" />
+       <div class="col-md-4">
+         <select name="permissions" data-placeholder="Choose Permissions"
+                 id="permissions" multiple="multiple">
+           <option value=""></option>
+           <option tal:repeat="permission permissions"
+                   value="${permission}">${permission}</option>
+         </select>
+       </div>
 
-       <input type="hidden" name="csrf_token" 
-              value="${request.session.get_csrf_token()}"/>
-     </td>
-    </tr>
+       <div class="col-md-3">
+         <input type="submit" name="form.add" value="Add" />
+         <input type="hidden" name="csrf_token" 
+                value="${request.session.get_csrf_token()}"/>
+       </div>
 
-   </tbody>
-  </table>
- </form>
+     </form>
+   </div>
+
+ </div>
+
 
  <metal:inherited_acl define-macro="inherited_acl">
-
+   
    <div id="inherited_acl">
 
      <tal:block condition="context is not request.root">
 
-     <h2> Inherit ACL </h2>
-     <div class="row">
-      <form action="@@acl_edit" method="post">
-
-        <div style="margin-left: 40px;">
-
-        <div class="col-md-3">
-          <label class="radio-inline">
-            <input type="radio" id="inherit_enabled" name="inherit" value="enabled"
-                   tal:attributes="checked inheriting == 'enabled'"/> Enabled
-          </label>
-          <label class="radio-inline">
-            <input type="radio" id="inherit_disabled" name="inherit"
-                   value="disabled"
-                   tal:attributes="checked inheriting == 'disabled'"/> Disabled
-          </label>
-        </div>
-
-        <div class="col-md-2">
-         <input type="submit" name="form.inherit" value="Update" />
-         <input type="hidden" name="csrf_token" 
-              value="${request.session.get_csrf_token()}"/>
-        </div>
-
-        </div>
-
-      </form>
-     </div>
+       <div class="panel panel-default">
+         <div class="panel-heading">Inherit Parent ACL</div>
+         <div class="panel-body">
+           
+           <div class="row">
+             <form action="@@acl_edit" method="post">
+               
+               <div style="margin-left: 40px;">
+               
+               <div class="col-md-3">
+                 <label class="radio-inline">
+                   <input type="radio" 
+                          id="inherit_enabled" 
+                          name="inherit"
+                          value="enabled"
+                          tal:attributes="checked inheriting == 'enabled'"/> 
+                      Enabled
+                 </label>
+                 <label class="radio-inline">
+                   <input type="radio" 
+                          id="inherit_disabled"
+                          name="inherit"
+                          value="disabled"
+                          tal:attributes="checked inheriting == 'disabled'"/> 
+                      Disabled
+                 </label>
+               </div>
+               
+               <div class="col-md-2">
+                 <input type="submit" name="form.inherit" value="Update" />
+                 <input type="hidden" name="csrf_token" 
+                        value="${request.session.get_csrf_token()}"/>
+               </div>
+               
+               </div>
+               
+             </form>
+             
+           </div>
+           
+         </div>
+       </div>
 
      </tal:block>
 
      <tal:inherited condition="parent_acl">
 
-     <h2> Inherited ACL </h2>
+       <div class="panel panel-default">
+         <div class="panel-heading">Parent ACL</div>
+         <div class="panel-body">
+           <table class="table table-striped">
+             
+             <thead>
+               <tr>
+                 <th width="15%">Allow / Deny</th>
+                 <th width="25%">Principal</th>
+                 <th width="40%">Permissions</th>
+               </tr>
+             </thead>
+             
+             <tbody>
+               
+               <tr tal:repeat="ace parent_acl">
+                 <td tal:content="ace[0]">Allow</td>
+                 <td tal:content="ace[1]">PRINCIPAL</td>
+                 <td tal:content="', '.join(ace[2])">PERM1, PERM2</td>
+               </tr>
+               
+             </tbody>
 
-     <table class="table table-striped">
-
-      <thead>
-       <tr>
-         <th width="15%">Allow / Deny</th>
-         <th width="25%">Principal</th>
-         <th width="40%">Permissions</th>
-       </tr>
-      </thead>
-
-      <tbody>
-
-       <tr tal:repeat="ace parent_acl">
-         <td tal:content="ace[0]">Allow</td>
-         <td tal:content="ace[1]">PRINCIPAL</td>
-         <td tal:content="', '.join(ace[2])">PERM1, PERM2</td>
-       </tr>
-
-      </tbody>
-
-     </table>
+           </table>
+         </div>
+       </div>
 
      </tal:inherited>
 

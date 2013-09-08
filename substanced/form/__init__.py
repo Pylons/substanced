@@ -139,8 +139,8 @@ class FormView(object):
                         result = success_method(validated)
                     except FormError as e:
                         snippet = '<div class="error">Failed: %s</div>' % e
-                        self.request.session.flash(snippet, 'error',
-                                                allow_duplicate=True)
+                        self.request.sdiapi.flash(snippet, 'danger',
+                                                  allow_duplicate=True)
                         result = {'form': form.render(validated)}
                 break
 
