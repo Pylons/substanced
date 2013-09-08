@@ -2,7 +2,7 @@
 
   <div metal:fill-slot="main">
 
-    <div tal:repeat="(catalog,indexes) catalogs" style="margin-top: 20px">
+    <div tal:repeat="(catalog,indexes) catalogs" style="margin-bottom: 20px">
     
       <div class="panel panel-default">
         <div class="panel-heading">

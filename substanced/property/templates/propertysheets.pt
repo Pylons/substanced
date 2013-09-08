@@ -21,7 +21,7 @@
 
   <div metal:fill-slot="main">
 
-    <div class="container" tal:define="tabs view.sheet_names">
+    <div tal:define="tabs view.sheet_names">
       <div class="panel panel-default">
         <div class="panel-heading">
           <div class="tabbable tabs-top" tal:condition="len(tabs) > 1">
