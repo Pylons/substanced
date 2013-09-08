@@ -168,13 +168,13 @@
 
         // Inject flash messages that arrive from the server via ajax.
         gridWrapper.sdiRemoteModelPlugin.onDataLoaded.subscribe(function (evt, args) {
-            if (args.flash) {
+            if (args.flash && args.flash_queue) {
                 // Clear existing messages, and add this one.
                 $('#messages')
                     .empty()
                     .append(
-                        $('<div class="alert"></div>')
-                            .append(args.flash)
+                        $('<div class="alert alert-' + args.flash_queue + '"></div>')
+                            .append(args.flash).append('<button type="button" class="close" data-dismiss="alert">&times;</button>')
                     );
             }
             // Remove previous error status messages, if any.
@@ -192,7 +192,7 @@
                     // Let's display it a status message in case the user clicks cancel.
                     $('#messages')
                         .append(
-                            $('<div class="alert contents-error contents-ajax-unauthorized"></div>')
+                            $('<div class="alert alert-error contents-error contents-ajax-unauthorized"></div>')
                                 .append('It looks like your authentication session has expired.<br>' +
                                 'You can ' +
                                     '<a class="contents-ajax-error-reload" href="#"> reload the page</a>.'
@@ -209,7 +209,7 @@
                 if ($('.contents-ajax-error').length === 0) {
                     $('#messages')
                         .append(
-                            $('<div class="alert contents-error contents-ajax-error"></div>')
+                            $('<div class="alert alert-error contents-error contents-ajax-error"></div>')
                                 .append('Error reaching the server. This is probably a temporary error.<br>' +
                                     'If your network connection resumes, ' +
                                     'the error state should resolve by itself. You can also ' +
