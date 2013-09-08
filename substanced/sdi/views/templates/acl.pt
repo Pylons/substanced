@@ -52,7 +52,7 @@
 
      <tal:local condition="local_acl">
 
-       <div class="panel panel-primary">
+       <div class="panel panel-default">
          <div class="panel-heading">Local ACL</div>
          <div class="panel-body">
            <table class="table table-striped">
@@ -120,7 +120,7 @@
 
  </metal:local_acl>
 
- <div class="panel panel-primary">
+ <div class="panel panel-default">
    <div class="panel-heading">Add ACE</div>
    <div class="panel-body">
 
@@ -180,7 +180,7 @@
 
      <tal:block condition="context is not request.root">
 
-       <div class="panel panel-info">
+       <div class="panel panel-default">
          <div class="panel-heading">Inherit Parent ACL</div>
          <div class="panel-body">
            
@@ -228,7 +228,7 @@
 
      <tal:inherited condition="parent_acl">
 
-       <div class="panel panel-info">
+       <div class="panel panel-default">
          <div class="panel-heading">Parent ACL</div>
          <div class="panel-body">
            <table class="table table-striped">

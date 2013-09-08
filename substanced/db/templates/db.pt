@@ -1,7 +1,7 @@
 <div metal:use-macro="request.sdiapi.main_template">
 
   <div metal:fill-slot="main">
-    <div class="panel panel-primary">
+    <div class="panel panel-default">
       <div class="panel-heading">Manage</div>
       <div class="panel-body">
         <div class="container">
@@ -34,7 +34,7 @@
       </div>
     </div>
 
-    <div class="panel panel-primary">
+    <div class="panel panel-default">
       <div class="panel-heading">Evolve</div>
       <div class="panel-body">
         <div class="container">
