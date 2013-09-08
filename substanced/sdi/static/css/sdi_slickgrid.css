@@ -1,22 +1,5 @@
 /** Build from https://github.com/Pylons/sdidev to rebuild this LESS file **/
 /* Mixins for SlickGrid */
-@keyframes showgridrow {
-  0% {
-    opacity: 0.3;
-  }
-  100% {
-    opacity: 1;
-  }
-}
-@-webkit-keyframes showgridrow {
-  /* Safari and Chrome */
-  0% {
-    opacity: 0.3;
-  }
-  100% {
-    opacity: 1;
-  }
-}
 .slickgrid-wrapper {
   height: 380px;
   width: 100%;
