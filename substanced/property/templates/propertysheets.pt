@@ -9,38 +9,36 @@
       <link rel="stylesheet" 
             href="${request.static_url(reqt)}" 
             type="text/css" />
-     </tal:block>
+    </tal:block>
 
     <!-- JavaScript -->
     <tal:block repeat="reqt js_links|[]">
       <script type="text/javascript"
               src="${request.static_url(reqt)}"
-       ></script>
+              ></script>
     </tal:block>
   </metal:head-first>
 
   <div metal:fill-slot="main">
 
-    <div class="tabbable tabs-top">
-
-      <ul class="nav nav-pills" 
-          tal:define="tabs view.sheet_names"
-          tal:condition="len(tabs) > 1">
-        <li tal:repeat="tab tabs"
-            tal:attributes="class view.active_sheet_name == tab and 'active' or None"><a href="${request.sdiapi.mgmt_path(request.context, '@@properties', tab)}">${tab}</a>
-        </li>
-      </ul>
-      
-    </div>
-
     <div class="container">
       <div class="panel panel-default">
-        <div class="panel-body">
-          <div class="col-md-6" id="form" tal:content="structure form"/>
+        <div class="panel-heading">
+          <div class="tabbable tabs-top">
+            
+            <ul class="nav nav-pills" 
+                tal:define="tabs view.sheet_names"
+                tal:condition="len(tabs) > 1">
+              <li tal:repeat="tab tabs"
+                  tal:attributes="class view.active_sheet_name == tab and 'active' or None"><a href="${request.sdiapi.mgmt_path(request.context, '@@properties', tab)}">${tab}</a>
+              </li>
+            </ul>
           </div>
         </div>
+        <div class="panel-body">
+          <div class="col-md-6" id="form" tal:content="structure form"/>
+        </div>
       </div>
-
     </div>
-
+  </div>
 </div>
