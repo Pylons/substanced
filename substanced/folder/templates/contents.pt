@@ -102,11 +102,17 @@
 
         <metal:slot define-slot="above-grid" />
 
-        <div class="sdi-sg-header">
+        <div class="sdi-sg-header" style="margin-left: 30px;">
           <span>
-            <span class="sdi-sg-total">&nbsp;</span> total
+            <span class="badge badge-primary">
+              <span class="sdi-sg-total">&nbsp;</span> 
+              <span class="badge-text">total</span>
+            </span>
             <span class="sdi-sg-selected-box" style="display: none">
-            (<span class="sdi-sg-selected">&nbsp;</span> selected)
+            <span class="badge badge-success">
+              <span class="sdi-sg-selected">&nbsp;</span>
+              <span class="badge-text">selected</span>
+            </span>
             </span>
           </span>
         </div>
