@@ -4,6 +4,11 @@
 
 /* Mixins for SlickGrid */
 
+// this should be set from js
+.slick-cell, .slick-header-column {
+    min-height: 35px !important;
+}
+
 .slickGrid () {
 
     width: 100%;
@@ -95,6 +100,7 @@
 
             &.ui-state-default {
                 .slickcell-padding ();
+                min-width: 30px;
             }
 
             border-right: 1px solid #FFFFFF;
@@ -257,15 +263,6 @@
   padding: 5px 7.5834px;
   margin-bottom: 1em;
 }
-
-// this should be set from js
-.slick-cell, .slick-header-column {
-    height: 35px !important;
-}
-
-// .slick-header-column.ui-state-default {
-//     width: 30px !important;
-// }
 
 .badge-text {
   background-color: rgba(255,255,255,0.6);
