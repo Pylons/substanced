@@ -7610,6 +7610,7 @@ textarea {
 }
 .nav-tabs {
   margin-top: 10px;
+  margin-bottom: 10px;
 }
 .sdi-contents-filter .btn {
   margin-top: 3px;
@@ -7623,7 +7624,6 @@ textarea {
 }
 .contents-button-bar {
   border: 1px solid #d4d4d4;
-  margin-top: 15px;
   margin-left: 10px;
   margin-right: 10px;
 }

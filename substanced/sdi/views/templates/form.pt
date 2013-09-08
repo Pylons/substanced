@@ -1,22 +1,23 @@
 <div metal:use-macro="request.sdiapi.main_template">
 
-  <metal:head-more fill-slot="head-more">
+  <metal:head-first fill-slot="head-first">
+    <!-- CSS -->
     <link rel="stylesheet" 
           href="${request.static_url('deform:static/css/form.css')}"
           type="text/css"/>
-    <!-- CSS -->
     <tal:block repeat="reqt css_links|[]">
       <link rel="stylesheet" 
             href="${request.static_url(reqt)}" 
             type="text/css" />
      </tal:block>
+
     <!-- JavaScript -->
     <tal:block repeat="reqt js_links|[]">
       <script type="text/javascript"
               src="${request.static_url(reqt)}"
        ></script>
     </tal:block>
-  </metal:head-more>
+  </metal:head-first>
 
   <div metal:fill-slot="main">
 

@@ -6,6 +6,9 @@
                   su request.static_url;
                   sdititle request.sdiapi.sdi_title()">
 <head>
+    
+    <more tal:omit-tag="" metal:define-slot="head-first"></more>
+
     <meta charset="utf-8"/>
     <title metal:define-slot="page-title">${view.title | request.sdiapi.sdi_title()}</title>
     <meta name="viewport"
