@@ -616,4 +616,3 @@ def includeme(config): # pragma: no cover
     config.set_authentication_policy(authn_policy)
     config.set_authorization_policy(authz_policy)
     config.add_permission('sdi.edit-properties') # used by property machinery
-    config.include('.views.folder')
