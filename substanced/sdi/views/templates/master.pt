@@ -42,13 +42,20 @@
 
   <body>
 
+    <img class="loading-indicator"
+         id="sdi-loading-img" 
+         src="${su('substanced.sdi:static/img/progress_bar.gif')}"
+         style="display:none;" 
+         alt="Loading indicator"/>
+
     <div class="navbar navbar-fixed-top nav-bordered-bottom">
       <div class="container">
 
-        <div class="col-md-10 breadcrumbs-bounding">
-          <ul class="breadcrumb"
-              tal:define="breadcrumbs request.sdiapi.breadcrumbs()"
-              tal:condition="breadcrumbs">
+        <div class="col-md-11 breadcrumbs-bounding"
+             tal:define="breadcrumbs request.sdiapi.breadcrumbs()">
+
+          <ul tal:condition="breadcrumbs"
+              class="breadcrumb">
             <tal:breadcrumbs repeat="breadcrumb breadcrumbs">
               <li tal:attributes="class breadcrumb['active']">
                 <i class="${breadcrumb['icon']}"> </i>
@@ -56,35 +63,38 @@
               </li>
             </tal:breadcrumbs>
           </ul>
+
+          <a tal:condition="not breadcrumbs"
+             tal:define="sdititle request.sdiapi.sdi_title();
+                         home_path request.sdiapi.mgmt_path(request.virtual_root)"
+             class="navbar-brand"
+             href="${home_path}"><img 
+                    alt="${sdititle}"
+                    src="${request.static_url('substanced.sdi:static/img/capsule-icon-32.png')}"
+                    />${sdititle}</a>
+
         </div>
 
-        <div class="col-md-2 user-dropdown-bounding">
+        <div class="col-md-1 user-dropdown-bounding">
           <div class="pull-right hidden-xs hidden-sm visible-lg visible-md">
-            <img id="sdi-loading-img" 
-                 src="${su('substanced.sdi:static/img/progress_bar.gif')}"
-                 style="display:none; padding-right:20px;" 
-                 alt="Loading indicator"/>
-            <div class="btn-group" tal:condition="request.user">
-              <a class="btn btn-primary"
-                 href="${mp(request.user)}"><i
-                    class="glyphicon glyphicon-user glyphicon-white"> </i>
-                ${request.user.__name__}</a>
-              <a class="btn btn-primary dropdown-toggle"
-                 data-toggle="dropdown" href="#"><span
-                                class="caret"></span></a>
-              <ul class="dropdown-menu">
+
+            <div tal:condition="request.user">
+              <button type="button" class="btn btn-primary dropdown-toggle" 
+                      data-toggle="dropdown">
+                <i class="glyphicon glyphicon-user" style="margin-right: 5px;"></i>${request.user.__name__}<span class="caret" style="margin-left: 8px;"></span>
+              </button>
+              <ul class="dropdown-menu pull-right">
                 <li>
                   <a href="${mp(request.user, '')}"><i
-                 class="glyphicon glyphicon-pencil"></i>
-                                    Account</a></li>
+            class="glyphicon glyphicon-pencil"></i>
+            Account</a></li>
                   <li>
                     <a href="${mp(request.root, '@@logout')}"><i
-                        class="glyphicon glyphicon-stop"></i> Log Out</a>
+            class="glyphicon glyphicon-stop"></i> Log Out</a>
                   </li>
               </ul>
             </div>
-            <span class="navbar-text"
-                  tal:condition="not request.user">Not logged in</span>
+
           </div>
         </div>
       </div>

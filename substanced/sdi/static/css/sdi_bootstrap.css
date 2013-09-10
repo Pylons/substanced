@@ -7615,6 +7615,8 @@ textarea {
 }
 .navbar-brand {
   text-transform: uppercase;
+  padding: 14px 0px;
+  white-space: nowrap;
 }
 .nav-tabs {
   margin-top: 10px;
@@ -7687,4 +7689,12 @@ textarea {
   background-position: 0 -19px;
   width: 14px;
   height: 14px;
+}
+#sdi-loading-img {
+  position: fixed;
+  right: 0;
+  left: 0;
+  top: 0;
+  margin-top: 10px;
+  z-index: 1050;
 }
