@@ -16,7 +16,7 @@ def include(config): # pragma: no cover
     config.include('.objectmap')
     config.include('.property')
     config.include('.catalog')
-    config.include('.widget')
+    config.include('.form')
     config.include('.workflow')
     config.include('.dump')
     config.include('.locking')
