@@ -1,6 +1,5 @@
 import colander
 import deform.widget
-import deform_bootstrap.widget
 
 from deform.i18n import _ as deform_i18n
 
@@ -149,7 +148,7 @@ class PermissionsSchemaNode(colander.SchemaNode):
         request = self.bindings['request']
         permissions = self._get_all_permissions(request.registry)
         values = [(p, p) for p in permissions]
-        return deform_bootstrap.widget.ChosenMultipleWidget(values=values)
+        return deform.widget.SelectWidget(values=values, multiple=True)
 
     def validator(self, node, value):
         request = self.bindings['request']
@@ -196,4 +195,4 @@ class MultireferenceIdSchemaNode(colander.SchemaNode):
     @property
     def widget(self):
         values = self._get_choices()
-        return deform_bootstrap.widget.ChosenMultipleWidget(values=values)
+        return deform.widget.SelectWidget(values=values, mulitple=True)

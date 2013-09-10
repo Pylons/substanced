@@ -14,7 +14,6 @@ from zope.interface import implementer
 from persistent import Persistent
 
 import colander
-import deform_bootstrap
 import deform.widget
 
 from pyramid.location import lineage
@@ -87,7 +86,7 @@ class LockOwnerSchema(colander.SchemaNode):
         else:
             values = [(get_oid(group), name) for name, group in
                       principals['users'].items()]
-        return deform_bootstrap.widget.ChosenSingleWidget(values=values)
+        return deform.widget.SelectWidget(values=values)
 
     def validator(self, node, value):
         context = self.bindings['context']

@@ -5,7 +5,7 @@ from persistent import Persistent
 from cryptacular.bcrypt import BCRYPTPasswordManager
 
 from zope.interface import implementer
-from deform_bootstrap.widget import ChosenSingleWidget
+import deform.widget
 
 import colander
 import pytz
@@ -298,7 +298,7 @@ _ZONES = pytz.all_timezones
 
 @colander.deferred
 def tzname_widget(node, kw): #pragma NO COVER
-    return ChosenSingleWidget(values=zip(_ZONES, _ZONES))
+    return deform.widget.SelectWidget(values=zip(_ZONES, _ZONES))
 
 class UserSchema(Schema):
     """ Property schema for :class:`substanced.principal.User` objects.

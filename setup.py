@@ -30,7 +30,6 @@ install_requires = [
     'venusian>=1.0a3',  # pyramid wants this too (prefer_finals...)
     'deform>=0.9.6', # retail form rendering capability (for documentability)
     'colander>=1.0a1', # subclassable schemanodes
-    'deform_bootstrap',
     'pyramid_zodbconn',
     'pyramid_chameleon',
     'pyramid_mailer',
