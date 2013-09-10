@@ -3,6 +3,9 @@ import datetime
 import transaction
 import pytz
 
+from ZODB.blob import BlobStorageError
+from ZODB.FileStorage.FileStorage import FileStorageError
+
 from pyramid_zodbconn import get_connection
 
 from pyramid.httpexceptions import HTTPFound
@@ -66,9 +69,13 @@ class ManageDatabase(object):
             raise HTTPFound(location=self.request.sdiapi.mgmt_path(
                 self.context, '@@database'))
         conn = self.get_connection(self.request)
-        conn.db().pack(days=days)
-        self.request.sdiapi.flash('Database packed to %s days' % days,
-                                  'success')
+        try:
+            conn.db().pack(days=days)
+        except (BlobStorageError, FileStorageError):
+            self.request.sdiapi.flash('Already packing', 'danger')
+        else:
+            self.request.sdiapi.flash('Database packed to %s days' % days,
+                                      'success')
         return HTTPFound(location=self.request.sdiapi.mgmt_path(
             self.context, '@@database'))
 
