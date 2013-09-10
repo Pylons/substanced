@@ -38,22 +38,22 @@
            addables and 'tocopy' not in request.session and 'tomove' not in request.session">
 
         <div class="navbar row contents-button-bar">
-          <div class="col-md-2" tal:condition="canadd">
-              <div class="btn-group sdi-add-button">
-                <a class="btn btn-primary"
-                   href="${request.sdiapi.mgmt_path(context, '@@add')}"><i
-             class="glyphicon glyphicon-plus-sign icon-white"></i> Add</a>
-                <a class="btn btn-primary dropdown-toggle"
-                   data-toggle="dropdown" href="#"><span class="caret"></span></a>
-                <ul class="dropdown-menu">
-                  <li tal:repeat="addable addables">
-                    <a href="${addable['url']}"><i
+          <div class="col-md-1">
+
+            <div tal:condition="canadd">
+              <button type="button" class="btn btn-primary dropdown-toggle" 
+                      data-toggle="dropdown">
+                <i class="glyphicon glyphicon-plus-sign" style="margin-right: 5px;"></i>Add <span class="caret" style="margin-left: 5px;"></span>
+              </button>
+              <ul class="dropdown-menu">
+                <li tal:repeat="addable addables">
+                  <a href="${addable['url']}"><i
               class="${addable['icon']}"></i> ${addable['type_name']}</a></li>
-                </ul>
-              </div>
+              </ul>
+            </div>
           </div>
 
-          <div class="${canadd and 'col-md-7' or 'col-md-9'}">
+          <div class="col-md-8">
 
             <fieldset>
               <input type="hidden" name="csrf_token"
@@ -109,10 +109,10 @@
               <span class="badge-text">total</span>
             </span>
             <span class="sdi-sg-selected-box" style="display: none">
-            <span class="badge badge-success">
-              <span class="sdi-sg-selected">&nbsp;</span>
-              <span class="badge-text">selected</span>
-            </span>
+              <span class="badge badge-success">
+                <span class="sdi-sg-selected">&nbsp;</span>
+                <span class="badge-text">selected</span>
+              </span>
             </span>
           </span>
         </div>
