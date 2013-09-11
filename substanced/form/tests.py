@@ -247,7 +247,8 @@ class TestFileUploadTempStore(unittest.TestCase):
 
 class TestDeformRendererFactory(unittest.TestCase):
     def setUp(self):
-        testing.setUp()
+        config = testing.setUp()
+        config.include('pyramid_chameleon')
 
     def tearDown(self):
         testing.tearDown()
