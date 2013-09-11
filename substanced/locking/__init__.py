@@ -86,7 +86,7 @@ class LockOwnerSchema(colander.SchemaNode):
         else:
             values = [(get_oid(group), name) for name, group in
                       principals['users'].items()]
-        return deform.widget.SelectWidget(values=values)
+        return deform.widget.Select2Widget(values=values)
 
     def validator(self, node, value):
         context = self.bindings['context']

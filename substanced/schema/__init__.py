@@ -148,7 +148,7 @@ class PermissionsSchemaNode(colander.SchemaNode):
         request = self.bindings['request']
         permissions = self._get_all_permissions(request.registry)
         values = [(p, p) for p in permissions]
-        return deform.widget.SelectWidget(values=values, multiple=True)
+        return deform.widget.Select2Widget(values=values, multiple=True)
 
     def validator(self, node, value):
         request = self.bindings['request']
@@ -195,4 +195,4 @@ class MultireferenceIdSchemaNode(colander.SchemaNode):
     @property
     def widget(self):
         values = self._get_choices()
-        return deform.widget.SelectWidget(values=values, mulitple=True)
+        return deform.widget.Select2Widget(values=values, mulitple=True)
