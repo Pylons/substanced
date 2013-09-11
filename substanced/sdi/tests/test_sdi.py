@@ -991,6 +991,7 @@ class Test_user(unittest.TestCase):
 class Test_sdiapi(unittest.TestCase):
     def setUp(self):
         self.config = testing.setUp()
+        self.config.include('pyramid_chameleon')
 
     def tearDown(self):
         testing.tearDown()

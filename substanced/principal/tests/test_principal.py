@@ -279,6 +279,7 @@ class Test_groups_choices(unittest.TestCase):
 class TestUser(unittest.TestCase):
     def setUp(self):
         self.config = testing.setUp()
+        self.config.include('pyramid_chameleon')
 
     def tearDown(self):
         testing.tearDown()
