@@ -718,8 +718,9 @@ def reference_sourceid_property(reftype):
 
 def reference_targetid_property(reftype):
     """ Same as :func:`substanced.objectmap.reference_sourceid_property`,
-    except the object upon which the property is defined is the *source* of
-    the reference and any object assigned to the property is the target."""
+    except the object upon which the property is defined is the *target* of
+    the reference and any object assigned to the property is the source.
+    """
     return _reference_property(reftype, resolve=False, orientation='target')
 
 def reference_source_property(reftype):
@@ -764,8 +765,8 @@ def reference_source_property(reftype):
 
 def reference_target_property(reftype):
     """ Same as :func:`substanced.objectmap.reference_source_property`,
-    except the object upon which the property is defined is the *source* of
-    the reference and any object assigned to the property is the target."""
+    except the object upon which the property is defined is the *target* of
+    the reference and any object assigned to the property is the source."""
     return _reference_property(reftype, resolve=True, orientation='target')
 
 def _multireference_property(
