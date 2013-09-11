@@ -195,4 +195,4 @@ class MultireferenceIdSchemaNode(colander.SchemaNode):
     @property
     def widget(self):
         values = self._get_choices()
-        return deform.widget.Select2Widget(values=values, mulitple=True)
+        return deform.widget.Select2Widget(values=values, multiple=True)
