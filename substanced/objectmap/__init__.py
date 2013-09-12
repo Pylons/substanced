@@ -912,7 +912,11 @@ def multireference_sourceid_property(
     ):
     """ Like :func:`substanced.objectmap.reference_sourceid_property`, but
     maintains a :class:`substanced.objectmap.Multireference` rather than an
-    object id."""
+    object id.  If ``ignore_missing`` is ``True``, attempts to connect or
+    disconnect unresolveable object identifiers will not cause an exception.
+    If ``order`` is ``True``, the relative ordering of references in a sequence
+    will be maintained when you assign that sequence to the property and when
+    you use the ``.connect`` method of the property."""
     return _multireference_property(
         reftype,
         ignore_missing=ignore_missing,
@@ -928,7 +932,11 @@ def multireference_source_property(
     ):
     """ Like :func:`substanced.objectmap.reference_source_property`, but
     maintains a :class:`substanced.objectmap.Multireference` rather than a
-    single object reference."""
+    single object reference.  If ``ignore_missing`` is ``True``, attempts to
+    connect or disconnect unresolveable object identifiers will not cause an
+    exception.  If ``order`` is ``True``, the relative ordering of references
+    in a sequence will be maintained when you assign that sequence to the
+    property and when you use the ``.connect`` method of the property."""
     return _multireference_property(
         reftype,
         ignore_missing=ignore_missing,
@@ -944,7 +952,11 @@ def multireference_targetid_property(
     ):
     """ Like :func:`substanced.objectmap.reference_targetid_property`, but
     maintains a :class:`substanced.objectmap.Multireference` rather than an
-    object id."""
+    object id. If ``ignore_missing`` is ``True``, attempts to connect or
+    disconnect unresolveable object identifiers will not cause an exception.
+    If ``order`` is ``True``, the relative ordering of references in a sequence
+    will be maintained when you assign that sequence to the property and when
+    you use the ``.connect`` method of the property."""
     return _multireference_property(
         reftype,
         ignore_missing=ignore_missing,
@@ -960,7 +972,11 @@ def multireference_target_property(
     ):
     """ Like :func:`substanced.objectmap.reference_target_property`, but
     maintains a :class:`substanced.objectmap.Multireference` rather than a
-    single object reference."""
+    single object reference.  If ``ignore_missing`` is ``True``, attempts to
+    connect or disconnect unresolveable object identifiers will not cause an
+    exception.  If ``order`` is ``True``, the relative ordering of references
+    in a sequence will be maintained when you assign that sequence to the
+    property and when you use the ``.connect`` method of the property."""
     return _multireference_property(
         reftype,
         ignore_missing=ignore_missing,
