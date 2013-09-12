@@ -1,5 +1,6 @@
 import random
 
+from persistent.list import PersistentList
 import BTrees
 import colander
 from persistent import Persistent
@@ -20,7 +21,6 @@ from ..util import (
     find_objectmap,
     )
 from .._compat import INT_TYPES
-
 
 """
 Pathindex data structure of object map:
@@ -408,6 +408,29 @@ class ObjectMap(Persistent):
             raise ValueError('oid %s is not in objectmap' % (obj,))
         return oid
 
+    def order_sources(self, targetid, reftype, order=_marker):
+        """ Set the ordering of the source ids of a reference relative to the
+        ``targetid``.  ``order`` should be a tuple or list of oids or objects
+        in the order that they should be kept in the reference map.  If the
+        reftyp+targetid combination has existing reference values, the values
+        in ``order`` must mention all of their oids, or a :exc:`ValueError`
+        will be raised. You can unset an order for this targetid+reftype
+        combination by passing ``None`` as the order."""
+        if order not in (None, _marker):
+            order = [ self._refid_for(x) for x in order ]
+        return self.referencemap.order_sources(targetid, reftype, order)
+
+    def order_targets(self, sourceid, reftype, order=_marker):
+        """ Set the ordering of the target ids of a reference type.  ``order``
+        should be a tuple (or list) of oids or objects in the order that they
+        should be kept in the reference map.  If the reference type has
+        existing reference values, the values in ``order`` must mention all of
+        their oids, or a :exc:`ValueError` will be raised.  You can unset an
+        ordering by passing ``None`` as the order. """
+        if order not in (None, _marker):
+            order = [ self._refid_for(x) for x in order ]
+        return self.referencemap.order_targets(sourceid, reftype, order)
+        
     def connect(self, source, target, reftype):
         """ Connect a source object or objectid to a target object or
         objectid using reference type ``reftype``"""
@@ -432,18 +455,23 @@ class ObjectMap(Persistent):
     #
     #     for group in groups:
     # RuntimeError: the bucket being iterated changed size
+
+    def _oidset(self, maybe_set):
+        if isinstance(maybe_set, ListSet):
+            return ListSet(maybe_set)
+        return self.family.OO.Set(maybe_set)
     
     def sourceids(self, obj, reftype):
         """ Return a set of object identifiers of the objects connected to
         ``obj`` a source using reference type ``reftype``"""
         oid = self._refid_for(obj)
-        return self.family.OO.Set(self.referencemap.sourceids(oid, reftype))
+        return self._oidset(self.referencemap.sourceids(oid, reftype))
 
     def targetids(self, obj, reftype):
         """ Return a set of object identifiers of the objects connected to
         ``obj`` a target using reference type ``reftype``"""
         oid = self._refid_for(obj)
-        return self.family.OO.Set(self.referencemap.targetids(oid, reftype))
+        return self._oidset(self.referencemap.targetids(oid, reftype))
 
     def sources(self, obj, reftype):
         """ Return a generator which will return the objects connected to
@@ -520,6 +548,14 @@ class ReferenceMap(Persistent):
             refmap = self.family.OO.BTree()
         self.refmap = refmap
 
+    def order_sources(self, targetid, reftype, order=_marker):
+        refset = self.refmap.setdefault(reftype, ReferenceSet())
+        return refset.order_sources(targetid, order)
+
+    def order_targets(self, sourceid, reftype, order=_marker):
+        refset = self.refmap.setdefault(reftype, ReferenceSet())
+        return refset.order_targets(sourceid, order)
+        
     def connect(self, source, target, reftype):
         refset = self.refmap.setdefault(reftype, ReferenceSet())
         refset.connect(source, target)
@@ -558,18 +594,29 @@ class ReferenceMap(Persistent):
             refset = self.refmap[reftype]
             return refset.is_target(oid) or refset.is_source(oid)
 
+class ListSet(PersistentList):
+    """ A persistent subclass of the Python list class. It overrides the
+    ``insert`` method to takes a single argument (the value) instead of an
+    index and a value.  ``insert`` works like ``append``."""
+    insert = PersistentList.append
+
+    def __repr__(self):
+        return '<ListSet: %s>' % PersistentList.__repr__(self)
+
 class ReferenceSet(Persistent):
     
     family = BTrees.family64
+    oidset_class = BTrees.family64.OO.Set
+    oidlist_class = ListSet
 
     def __init__(self):
         self.src2target = self.family.OO.BTree()
         self.target2src = self.family.OO.BTree()
 
     def connect(self, source, target):
-        targets = self.src2target.setdefault(source, self.family.OO.TreeSet())
+        targets = self.src2target.setdefault(source, self.oidset_class())
         targets.insert(target)
-        sources = self.target2src.setdefault(target, self.family.OO.TreeSet())
+        sources = self.target2src.setdefault(target, self.oidset_class())
         sources.insert(source)
 
     def disconnect(self, source, target):
@@ -588,13 +635,13 @@ class ReferenceSet(Persistent):
                 pass
 
     def targetids(self, oid):
-        return self.src2target.get(oid, self.family.OO.Set())
+        return self.src2target.get(oid, self.oidset_class())
 
     def is_target(self, oid):
         return oid in self.target2src
 
     def sourceids(self, oid):
-        return self.target2src.get(oid, self.family.OO.Set())
+        return self.target2src.get(oid, self.oidset_class())
 
     def is_source(self, oid):
         return oid in self.src2target
@@ -621,6 +668,48 @@ class ReferenceSet(Persistent):
                         del self.src2target[source]
         return removed
 
+    def order_targets(self, source, order=_marker):
+        if order is _marker:
+            order = []
+        oids = self.src2target.get(source, self.oidset_class())
+        if order is None:
+            if isinstance(oids, self.oidlist_class):
+                oids = self.oidset_class(oids)
+                self.src2target[source] = oids
+            # otherwise we assume it's an OOSet and do nothing
+        else:
+            if set(oids) != set(order):
+                raise ValueError(
+                    'The oids/objects in the order passed must mention each '
+                    'object in the existing set of oids, and may not mention '
+                    'any others.  Order: %s vs. oids %s' % (
+                        order, list(oids))
+                    )
+            oids = self.oidlist_class(order)
+            self.src2target[source] = oids
+        return oids
+
+    def order_sources(self, target, order=_marker):
+        if order is _marker:
+            order = []
+        oids = self.target2src.get(target, self.oidset_class())
+        if order is None:
+            if isinstance(oids, self.oidlist_class):
+                oids = self.oidset_class(oids)
+                self.target2src[target] = oids
+            # otherwise we assume it's an OOSet and do nothing
+        else:
+            if set(oids) != set(order):
+                raise ValueError(
+                    'The oids/objects in the order passed must mention each '
+                    'object in the existing set of oids, and may not mention '
+                    'any others.  Order: %s vs. oids %s' % (
+                        order, list(oids))
+                    )
+            oids = self.oidlist_class(order)
+            self.target2src[target] = oids
+        return oids
+            
 def _reference_property(reftype, resolve, orientation='source'):
     def _get(self, resolve=resolve):
         objectmap = find_objectmap(self)
