@@ -40,17 +40,16 @@
         <div class="navbar row contents-button-bar">
           <div class="col-md-1">
 
-            <div tal:condition="canadd">
-              <button type="button" class="btn btn-primary dropdown-toggle" 
-                      data-toggle="dropdown">
-                <i class="glyphicon glyphicon-plus-sign" style="margin-right: 5px;"></i>Add <span class="caret" style="margin-left: 5px;"></span>
-              </button>
-              <ul class="dropdown-menu">
-                <li tal:repeat="addable addables">
-                  <a href="${addable['url']}"><i
+            <button type="button" 
+                    class="btn btn-primary dropdown-toggle ${not canadd and 'disabled' or ''}" 
+                    data-toggle="dropdown">
+              <i class="glyphicon glyphicon-plus-sign" style="margin-right: 5px;"></i>Add <span class="caret" style="margin-left: 5px;"></span>
+            </button>
+            <ul class="dropdown-menu">
+              <li tal:repeat="addable addables">
+                <a href="${addable['url']}"><i
               class="${addable['icon']}"></i> ${addable['type_name']}</a></li>
-              </ul>
-            </div>
+            </ul>
           </div>
 
           <div class="col-md-8">
