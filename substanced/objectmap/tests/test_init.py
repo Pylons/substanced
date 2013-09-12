@@ -1503,7 +1503,7 @@ class Test_multireference_sourceid_property(unittest.TestCase):
             pass
         self.DummyFolder = DummyFolder
 
-    def _makeInst(self, reftype=None, ignore_missing=False):
+    def _makeInst(self, reftype=None, ignore_missing=False, ordered=False):
         if reftype is None:
             reftype = Dummy
         from .. import multireference_sourceid_property
@@ -1511,6 +1511,7 @@ class Test_multireference_sourceid_property(unittest.TestCase):
             prop = multireference_sourceid_property(
                 reftype,
                 ignore_missing=ignore_missing,
+                ordered=ordered,
                 )
         inst = Inner()
         inst.__oid__ = -1
@@ -1619,6 +1620,15 @@ class Test_multireference_sourceid_property(unittest.TestCase):
         self.assertEqual(objectmap.connected,
                          [(-1, 2, Dummy), (-1, 3, Dummy)])
         self.assertEqual(objectmap.targets_ordered, [(-1, Dummy, None)])
+
+    def test_connect_with_ordering(self):
+        inst = self._makeInst(ordered=True)
+        objectmap = DummyObjectMap(targetids=())
+        inst.__objectmap__ = objectmap
+        inst.prop.connect([2,3])
+        self.assertEqual(objectmap.connected,
+                         [(-1, 2, Dummy), (-1, 3, Dummy)])
+        self.assertEqual(objectmap.targets_ordered, [(-1, Dummy, ())])
         
     def test_connect_missing(self):
         inst = self._makeInst()
@@ -1645,6 +1655,15 @@ class Test_multireference_sourceid_property(unittest.TestCase):
         self.assertEqual(objectmap.disconnected,
                          [(-1, 2, Dummy), (-1, 3, Dummy)])
         self.assertEqual(objectmap.targets_ordered, [(-1, Dummy, None)])
+        
+    def test_disconnect_with_ordering(self):
+        inst = self._makeInst(ordered=True)
+        objectmap = DummyObjectMap(targetids=())
+        inst.__objectmap__ = objectmap
+        inst.prop.disconnect([2,3])
+        self.assertEqual(objectmap.disconnected,
+                         [(-1, 2, Dummy), (-1, 3, Dummy)])
+        self.assertEqual(objectmap.targets_ordered, [(-1, Dummy, ())])
         
     def test_disconnect_missing(self):
         inst = self._makeInst()
@@ -1680,14 +1699,15 @@ class Test_multireference_source_property(unittest.TestCase):
             pass
         self.DummyFolder = DummyFolder
 
-    def _makeInst(self, reftype=None, ignore_missing=False):
+    def _makeInst(self, reftype=None, ignore_missing=False, ordered=False):
         if reftype is None:
             reftype = Dummy
         from .. import multireference_source_property
         class Inner(self.DummyFolder):
             prop = multireference_source_property(
                 reftype,
-                ignore_missing=ignore_missing
+                ignore_missing=ignore_missing,
+                ordered=ordered,
                 )
         inst = Inner()
         inst.__oid__ = -1
@@ -1797,6 +1817,15 @@ class Test_multireference_source_property(unittest.TestCase):
                          [(-1, 2, Dummy), (-1, 3, Dummy)])
         self.assertEqual(objectmap.targets_ordered, [(-1, Dummy, None)])
         
+    def test_connect_with_ordering(self):
+        inst = self._makeInst(ordered=True)
+        objectmap = DummyObjectMap(targetids=())
+        inst.__objectmap__ = objectmap
+        inst.prop.connect([2,3])
+        self.assertEqual(objectmap.connected,
+                         [(-1, 2, Dummy), (-1, 3, Dummy)])
+        self.assertEqual(objectmap.targets_ordered, [(-1, Dummy, ())])
+        
     def test_connect_missing(self):
         inst = self._makeInst()
         objectmap = DummyObjectMap(targetids=(),
@@ -1822,6 +1851,15 @@ class Test_multireference_source_property(unittest.TestCase):
         self.assertEqual(objectmap.disconnected,
                          [(-1, 2, Dummy), (-1, 3, Dummy)])
         self.assertEqual(objectmap.targets_ordered, [(-1, Dummy, None)])
+        
+    def test_disconnect_with_ordering(self):
+        inst = self._makeInst(ordered=True)
+        objectmap = DummyObjectMap(targetids=())
+        inst.__objectmap__ = objectmap
+        inst.prop.disconnect([2,3])
+        self.assertEqual(objectmap.disconnected,
+                         [(-1, 2, Dummy), (-1, 3, Dummy)])
+        self.assertEqual(objectmap.targets_ordered, [(-1, Dummy, ())])
         
     def test_disconnect_missing(self):
         inst = self._makeInst()
@@ -1857,14 +1895,15 @@ class Test_multireference_targetid_property(unittest.TestCase):
             pass
         self.DummyFolder = DummyFolder
 
-    def _makeInst(self, reftype=None, ignore_missing=False):
+    def _makeInst(self, reftype=None, ignore_missing=False, ordered=False):
         if reftype is None:
             reftype = Dummy
         from .. import multireference_targetid_property
         class Inner(self.DummyFolder):
             prop = multireference_targetid_property(
                 reftype,
-                ignore_missing=ignore_missing
+                ignore_missing=ignore_missing,
+                ordered=ordered,
                 )
         inst = Inner()
         inst.__oid__ = -1
@@ -1974,6 +2013,15 @@ class Test_multireference_targetid_property(unittest.TestCase):
                          [(2, -1, Dummy), (3, -1, Dummy)])
         self.assertEqual(objectmap.sources_ordered, [(-1, Dummy, None)])
         
+    def test_connect_with_ordering(self):
+        inst = self._makeInst(ordered=True)
+        objectmap = DummyObjectMap(sourceids=())
+        inst.__objectmap__ = objectmap
+        inst.prop.connect([2,3])
+        self.assertEqual(objectmap.connected,
+                         [(2, -1, Dummy), (3, -1, Dummy)])
+        self.assertEqual(objectmap.sources_ordered, [(-1, Dummy, ())])
+        
     def test_connect_missing(self):
         inst = self._makeInst()
         objectmap = DummyObjectMap(sourceids=(),
@@ -1999,6 +2047,15 @@ class Test_multireference_targetid_property(unittest.TestCase):
         self.assertEqual(objectmap.disconnected,
                          [(2, -1, Dummy), (3, -1, Dummy)])
         self.assertEqual(objectmap.sources_ordered, [(-1, Dummy, None)])
+        
+    def test_disconnect_with_ordering(self):
+        inst = self._makeInst(ordered=True)
+        objectmap = DummyObjectMap(sourceids=())
+        inst.__objectmap__ = objectmap
+        inst.prop.disconnect([2,3])
+        self.assertEqual(objectmap.disconnected,
+                         [(2, -1, Dummy), (3, -1, Dummy)])
+        self.assertEqual(objectmap.sources_ordered, [(-1, Dummy, ())])
         
     def test_disconnect_missing(self):
         inst = self._makeInst()
@@ -2034,14 +2091,15 @@ class Test_multireference_target_property(unittest.TestCase):
             pass
         self.DummyFolder = DummyFolder
 
-    def _makeInst(self, reftype=None, ignore_missing=False):
+    def _makeInst(self, reftype=None, ignore_missing=False, ordered=False):
         if reftype is None:
             reftype = Dummy
         from .. import multireference_target_property
         class Inner(self.DummyFolder):
             prop = multireference_target_property(
                 reftype,
-                ignore_missing=ignore_missing
+                ignore_missing=ignore_missing,
+                ordered=ordered,
                 )
         inst = Inner()
         inst.__oid__ = -1
@@ -2150,6 +2208,15 @@ class Test_multireference_target_property(unittest.TestCase):
                          [(2, -1, Dummy), (3, -1, Dummy)])
         self.assertEqual(objectmap.sources_ordered, [(-1, Dummy, None)])
         
+    def test_connect_with_ordering(self):
+        inst = self._makeInst(ordered=True)
+        objectmap = DummyObjectMap(sourceids=())
+        inst.__objectmap__ = objectmap
+        inst.prop.connect([2,3])
+        self.assertEqual(objectmap.connected,
+                         [(2, -1, Dummy), (3, -1, Dummy)])
+        self.assertEqual(objectmap.sources_ordered, [(-1, Dummy, ())])
+        
     def test_connect_missing(self):
         inst = self._makeInst()
         objectmap = DummyObjectMap(sourceids=(),
@@ -2175,6 +2242,15 @@ class Test_multireference_target_property(unittest.TestCase):
         self.assertEqual(objectmap.disconnected,
                          [(2, -1, Dummy), (3, -1, Dummy)])
         self.assertEqual(objectmap.sources_ordered, [(-1, Dummy, None)])
+        
+    def test_disconnect_with_ordering(self):
+        inst = self._makeInst(ordered=True)
+        objectmap = DummyObjectMap(sourceids=())
+        inst.__objectmap__ = objectmap
+        inst.prop.disconnect([2,3])
+        self.assertEqual(objectmap.disconnected,
+                         [(2, -1, Dummy), (3, -1, Dummy)])
+        self.assertEqual(objectmap.sources_ordered, [(-1, Dummy, ())])
         
     def test_disconnect_missing(self):
         inst = self._makeInst()
