@@ -682,9 +682,13 @@ class ReferenceClass(InterfaceClass):
             attrs = kw.get('attrs', {})
         si = attrs.pop('source_integrity', False)
         ti = attrs.pop('target_integrity', False)
+        so = attrs.pop('source_ordered', False)
+        to = attrs.pop('target_ordered', False)
         InterfaceClass.__init__(self, *arg, **kw)
         self.setTaggedValue('source_integrity', si)
         self.setTaggedValue('target_integrity', ti)
+        self.setTaggedValue('source_ordered', so)
+        self.setTaggedValue('target_ordered', to)
 
 ReferenceType = ReferenceClass(
     "ReferenceType", __module__ = 'substanced.interfaces')
