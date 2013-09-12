@@ -416,7 +416,7 @@ class ObjectMap(Persistent):
         in ``order`` must mention all of their oids, or a :exc:`ValueError`
         will be raised. You can unset an order for this targetid+reftype
         combination by passing ``None`` as the order."""
-        if order not in (None, _marker):
+        if not order in (None, _marker):
             order = [ self._refid_for(x) for x in order ]
         return self.referencemap.order_sources(targetid, reftype, order)
 
@@ -427,7 +427,7 @@ class ObjectMap(Persistent):
         existing reference values, the values in ``order`` must mention all of
         their oids, or a :exc:`ValueError` will be raised.  You can unset an
         ordering by passing ``None`` as the order. """
-        if order not in (None, _marker):
+        if not order in (None, _marker):
             order = [ self._refid_for(x) for x in order ]
         return self.referencemap.order_targets(sourceid, reftype, order)
         
