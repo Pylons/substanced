@@ -32,7 +32,10 @@ def user_added(event):
     # AttributeError.
     set_acl(
         user,
-        [(Allow, user_oid, ('sdi.view', 'sdi.change-password'))],
+        [(Allow, user_oid, ('sdi.view',
+                            'sdi.edit-properties',
+                            'sdi.change-password',
+                           ))],
         registry=event.registry,
         )
     # When set_acl is called, it will end up sending an ACLModified event,

@@ -321,13 +321,24 @@ class UserSchema(Schema):
         widget=tzname_widget,
         validator=colander.OneOf(_ZONES)
         )
+
+class UserPropertySheet(PropertySheet):
+    schema = UserSchema()
+
+class UserGroupsSchema(Schema):
+    """ Restricted schema for :class:`substanced.principal.User` objects.
+    """
     groupids = MultireferenceIdSchemaNode(
         choices_getter=groups_choices,
         title='Groups',
         )
 
-class UserPropertySheet(PropertySheet):
-    schema = UserSchema()
+class UserGroupsPropertySheet(PropertySheet):
+    schema = UserGroupsSchema()
+    permissions = (
+        ('view', 'sdi.manage-user-groups'),
+        ('change', 'sdi.manage-user-groups'),
+        )
 
 @content(
     'User',
@@ -335,7 +346,8 @@ class UserPropertySheet(PropertySheet):
     add_view='add_user',
     tab_order=('properties',),
     propertysheets = (
-        ('', UserPropertySheet),
+        ('Preferences', UserPropertySheet),
+        ('Groups', UserGroupsPropertySheet),
         )
     )
 @implementer(IUser)

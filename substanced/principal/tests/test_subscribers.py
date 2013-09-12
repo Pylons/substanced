@@ -123,8 +123,10 @@ class Test_user_added(unittest.TestCase):
         self._callFUT(event)
         self.assertEqual(
             user.__acl__,
-            [(Allow, 1, ('sdi.view', 'sdi.change-password'))]
-            )
+            [(Allow, 1, ('sdi.view',
+                         'sdi.edit-properties',
+                         'sdi.change-password',
+                        ))])
 
 class Test_acl_maybe_added(unittest.TestCase):
     def _callFUT(self, event):
