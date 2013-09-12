@@ -1536,9 +1536,11 @@ class Test_multireference_sourceid_property(unittest.TestCase):
 
     def test_del_zero(self):
         inst = self._makeInst()
-        inst.__objectmap__ = DummyObjectMap(targetids=())
+        objectmap = DummyObjectMap(targetids=())
+        inst.__objectmap__ = objectmap
         del inst.prop
         self.assertEqual(list(inst.prop), [])
+        self.assertEqual(objectmap.targets_ordered, [(-1, Dummy, None)])
 
     def test_del_one(self):
         inst = self._makeInst()
@@ -1546,6 +1548,7 @@ class Test_multireference_sourceid_property(unittest.TestCase):
         inst.__objectmap__ = objectmap
         del inst.prop
         self.assertEqual(objectmap.disconnected, [(-1, 1, Dummy)])
+        self.assertEqual(objectmap.targets_ordered, [(-1, Dummy, None)])
 
     def test_del_two(self):
         inst = self._makeInst()
@@ -1554,12 +1557,14 @@ class Test_multireference_sourceid_property(unittest.TestCase):
         del inst.prop
         self.assertEqual(objectmap.disconnected,
                          [(-1, 1, Dummy), (-1, 2, Dummy)])
+        self.assertEqual(objectmap.targets_ordered, [(-1, Dummy, None)])
 
     def test_set_None(self):
         inst = self._makeInst()
         objectmap = DummyObjectMap(targetids=())
         inst.__objectmap__ = objectmap
         self.assertRaises(ValueError, inst.__setattr__, 'prop', None)
+        self.assertEqual(objectmap.targets_ordered, [])
 
     def test_set_colander_null(self):
         from colander import null
@@ -1568,6 +1573,7 @@ class Test_multireference_sourceid_property(unittest.TestCase):
         inst.__objectmap__ = objectmap
         inst.prop = null
         self.assertEqual(objectmap.disconnected, [])
+        self.assertEqual(objectmap.targets_ordered, [])
 
     def test_set_zero(self):
         inst = self._makeInst()
@@ -1576,6 +1582,7 @@ class Test_multireference_sourceid_property(unittest.TestCase):
         inst.prop = []
         self.assertEqual(objectmap.disconnected, [(-1, 1, Dummy)])
         self.assertEqual(objectmap.connected, [])
+        self.assertEqual(objectmap.targets_ordered, [(-1, Dummy, None)]*2)
 
     def test_set_one(self):
         inst = self._makeInst()
@@ -1584,6 +1591,7 @@ class Test_multireference_sourceid_property(unittest.TestCase):
         inst.prop = [2]
         self.assertEqual(objectmap.disconnected, [(-1, 1, Dummy)])
         self.assertEqual(objectmap.connected, [(-1, 2, Dummy)])
+        self.assertEqual(objectmap.targets_ordered, [(-1, Dummy, None)]*2)
 
     def test_set_two(self):
         inst = self._makeInst()
@@ -1593,6 +1601,7 @@ class Test_multireference_sourceid_property(unittest.TestCase):
         self.assertEqual(objectmap.disconnected, [(-1, 1, Dummy)])
         self.assertEqual(objectmap.connected,
                          [(-1, 2, Dummy), (-1, 3, Dummy)])
+        self.assertEqual(objectmap.targets_ordered, [(-1, Dummy, None)]*2)
 
     def test_clear(self):
         inst = self._makeInst()
@@ -1600,6 +1609,7 @@ class Test_multireference_sourceid_property(unittest.TestCase):
         inst.__objectmap__ = objectmap
         inst.prop.clear()
         self.assertEqual(objectmap.disconnected, [(-1, 1, Dummy)])
+        self.assertEqual(objectmap.targets_ordered, [(-1, Dummy, None)])
 
     def test_connect(self):
         inst = self._makeInst()
@@ -1608,6 +1618,7 @@ class Test_multireference_sourceid_property(unittest.TestCase):
         inst.prop.connect([2,3])
         self.assertEqual(objectmap.connected,
                          [(-1, 2, Dummy), (-1, 3, Dummy)])
+        self.assertEqual(objectmap.targets_ordered, [(-1, Dummy, None)])
         
     def test_connect_missing(self):
         inst = self._makeInst()
@@ -1615,6 +1626,7 @@ class Test_multireference_sourceid_property(unittest.TestCase):
                                    toraise=ValueError('a'))
         inst.__objectmap__ = objectmap
         self.assertRaises(ValueError, inst.prop.connect, [2,3])
+        self.assertEqual(objectmap.targets_ordered, [(-1, Dummy, None)])
 
     def test_connect_with_ignore_missing(self):
         inst = self._makeInst()
@@ -1623,6 +1635,7 @@ class Test_multireference_sourceid_property(unittest.TestCase):
         inst.__objectmap__ = objectmap
         inst.prop.connect([2,3], ignore_missing=True)
         self.assertEqual(objectmap.connected, [])
+        self.assertEqual(objectmap.targets_ordered, [(-1, Dummy, None)])
 
     def test_disconnect(self):
         inst = self._makeInst()
@@ -1631,6 +1644,7 @@ class Test_multireference_sourceid_property(unittest.TestCase):
         inst.prop.disconnect([2,3])
         self.assertEqual(objectmap.disconnected,
                          [(-1, 2, Dummy), (-1, 3, Dummy)])
+        self.assertEqual(objectmap.targets_ordered, [(-1, Dummy, None)])
         
     def test_disconnect_missing(self):
         inst = self._makeInst()
@@ -1638,6 +1652,7 @@ class Test_multireference_sourceid_property(unittest.TestCase):
                                    toraise=ValueError('a'))
         inst.__objectmap__ = objectmap
         self.assertRaises(ValueError, inst.prop.disconnect, [2,3])
+        self.assertEqual(objectmap.targets_ordered, [(-1, Dummy, None)])
 
     def test_disconnect_with_ignore_missing(self):
         inst = self._makeInst()
@@ -1646,6 +1661,7 @@ class Test_multireference_sourceid_property(unittest.TestCase):
         inst.__objectmap__ = objectmap
         inst.prop.disconnect([2,3], ignore_missing=True)
         self.assertEqual(objectmap.disconnected, [])
+        self.assertEqual(objectmap.targets_ordered, [(-1, Dummy, None)])
 
     def test_ignore_missing_implicit(self):
         inst = self._makeInst(ignore_missing=True)
@@ -1654,6 +1670,7 @@ class Test_multireference_sourceid_property(unittest.TestCase):
         inst.__objectmap__ = objectmap
         inst.prop.disconnect([2,3])
         self.assertEqual(objectmap.disconnected, [])
+        self.assertEqual(objectmap.targets_ordered, [(-1, Dummy, None)])
 
 class Test_multireference_source_property(unittest.TestCase):
     def setUp(self):
@@ -1700,6 +1717,7 @@ class Test_multireference_source_property(unittest.TestCase):
         inst.__objectmap__ = objectmap
         del inst.prop
         self.assertEqual(list(inst.prop), [])
+        self.assertEqual(objectmap.targets_ordered, [(-1, Dummy, None)])
 
     def test_del_one(self):
         inst = self._makeInst()
@@ -1707,6 +1725,7 @@ class Test_multireference_source_property(unittest.TestCase):
         inst.__objectmap__ = objectmap
         del inst.prop
         self.assertEqual(objectmap.disconnected, [(-1, 1, Dummy)])
+        self.assertEqual(objectmap.targets_ordered, [(-1, Dummy, None)])
 
     def test_del_two(self):
         inst = self._makeInst()
@@ -1715,12 +1734,14 @@ class Test_multireference_source_property(unittest.TestCase):
         del inst.prop
         self.assertEqual(objectmap.disconnected,
                          [(-1, 1, Dummy), (-1, 2, Dummy)])
+        self.assertEqual(objectmap.targets_ordered, [(-1, Dummy, None)])
 
     def test_set_None(self):
         inst = self._makeInst()
         objectmap = DummyObjectMap(targetids=())
         inst.__objectmap__ = objectmap
         self.assertRaises(ValueError, inst.__setattr__, 'prop', None)
+        self.assertEqual(objectmap.targets_ordered, [])
 
     def test_set_colander_null(self):
         from colander import null
@@ -1729,6 +1750,7 @@ class Test_multireference_source_property(unittest.TestCase):
         inst.__objectmap__ = objectmap
         inst.prop = null
         self.assertEqual(objectmap.disconnected, [])
+        self.assertEqual(objectmap.targets_ordered, [])
 
     def test_set_zero(self):
         inst = self._makeInst()
@@ -1737,6 +1759,7 @@ class Test_multireference_source_property(unittest.TestCase):
         inst.prop = []
         self.assertEqual(objectmap.disconnected, [(-1, 1, Dummy)])
         self.assertEqual(objectmap.connected, [])
+        self.assertEqual(objectmap.targets_ordered, [(-1, Dummy, None)]*2)
 
     def test_set_one(self):
         inst = self._makeInst()
@@ -1745,6 +1768,7 @@ class Test_multireference_source_property(unittest.TestCase):
         inst.prop = [2]
         self.assertEqual(objectmap.disconnected, [(-1, 1, Dummy)])
         self.assertEqual(objectmap.connected, [(-1, 2, Dummy)])
+        self.assertEqual(objectmap.targets_ordered, [(-1, Dummy, None)]*2)
 
     def test_set_two(self):
         inst = self._makeInst()
@@ -1754,6 +1778,7 @@ class Test_multireference_source_property(unittest.TestCase):
         self.assertEqual(objectmap.disconnected, [(-1, 1, Dummy)])
         self.assertEqual(objectmap.connected,
                          [(-1, 2, Dummy), (-1, 3, Dummy)])
+        self.assertEqual(objectmap.targets_ordered, [(-1, Dummy, None)]*2)
 
     def test_clear(self):
         inst = self._makeInst()
@@ -1761,6 +1786,7 @@ class Test_multireference_source_property(unittest.TestCase):
         inst.__objectmap__ = objectmap
         inst.prop.clear()
         self.assertEqual(objectmap.disconnected, [(-1, 1, Dummy)])
+        self.assertEqual(objectmap.targets_ordered, [(-1, Dummy, None)])
 
     def test_connect(self):
         inst = self._makeInst()
@@ -1769,6 +1795,7 @@ class Test_multireference_source_property(unittest.TestCase):
         inst.prop.connect([2,3])
         self.assertEqual(objectmap.connected,
                          [(-1, 2, Dummy), (-1, 3, Dummy)])
+        self.assertEqual(objectmap.targets_ordered, [(-1, Dummy, None)])
         
     def test_connect_missing(self):
         inst = self._makeInst()
@@ -1776,6 +1803,7 @@ class Test_multireference_source_property(unittest.TestCase):
                                    toraise=ValueError('a'))
         inst.__objectmap__ = objectmap
         self.assertRaises(ValueError, inst.prop.connect, [2,3])
+        self.assertEqual(objectmap.targets_ordered, [(-1, Dummy, None)])
 
     def test_connect_with_ignore_missing(self):
         inst = self._makeInst()
@@ -1784,6 +1812,7 @@ class Test_multireference_source_property(unittest.TestCase):
         inst.__objectmap__ = objectmap
         inst.prop.connect([2,3], ignore_missing=True)
         self.assertEqual(objectmap.connected, [])
+        self.assertEqual(objectmap.targets_ordered, [(-1, Dummy, None)])
 
     def test_disconnect(self):
         inst = self._makeInst()
@@ -1792,6 +1821,7 @@ class Test_multireference_source_property(unittest.TestCase):
         inst.prop.disconnect([2,3])
         self.assertEqual(objectmap.disconnected,
                          [(-1, 2, Dummy), (-1, 3, Dummy)])
+        self.assertEqual(objectmap.targets_ordered, [(-1, Dummy, None)])
         
     def test_disconnect_missing(self):
         inst = self._makeInst()
@@ -1799,6 +1829,7 @@ class Test_multireference_source_property(unittest.TestCase):
                                    toraise=ValueError('a'))
         inst.__objectmap__ = objectmap
         self.assertRaises(ValueError, inst.prop.disconnect, [2,3])
+        self.assertEqual(objectmap.targets_ordered, [(-1, Dummy, None)])
 
     def test_disconnect_with_ignore_missing(self):
         inst = self._makeInst()
@@ -1807,14 +1838,16 @@ class Test_multireference_source_property(unittest.TestCase):
         inst.__objectmap__ = objectmap
         inst.prop.disconnect([2,3], ignore_missing=True)
         self.assertEqual(objectmap.disconnected, [])
+        self.assertEqual(objectmap.targets_ordered, [(-1, Dummy, None)])
 
-    def test_ignore_missing_implicit(self):
+    def test_disconnect_ignore_missing_implicit(self):
         inst = self._makeInst(ignore_missing=True)
         objectmap = DummyObjectMap(targetids=(),
                                    toraise=ValueError('a'))
         inst.__objectmap__ = objectmap
         inst.prop.disconnect([2,3])
         self.assertEqual(objectmap.disconnected, [])
+        self.assertEqual(objectmap.targets_ordered, [(-1, Dummy, None)])
 
 class Test_multireference_targetid_property(unittest.TestCase):
     def setUp(self):
@@ -1861,6 +1894,7 @@ class Test_multireference_targetid_property(unittest.TestCase):
         inst.__objectmap__ = objectmap
         del inst.prop
         self.assertEqual(list(inst.prop), [])
+        self.assertEqual(objectmap.sources_ordered, [(-1, Dummy, None)])
 
     def test_del_one(self):
         inst = self._makeInst()
@@ -1868,6 +1902,7 @@ class Test_multireference_targetid_property(unittest.TestCase):
         inst.__objectmap__ = objectmap
         del inst.prop
         self.assertEqual(objectmap.disconnected, [(1, -1, Dummy)])
+        self.assertEqual(objectmap.sources_ordered, [(-1, Dummy, None)])
 
     def test_del_two(self):
         inst = self._makeInst()
@@ -1876,12 +1911,14 @@ class Test_multireference_targetid_property(unittest.TestCase):
         del inst.prop
         self.assertEqual(objectmap.disconnected,
                          [(1, -1, Dummy), (2, -1, Dummy)])
+        self.assertEqual(objectmap.sources_ordered, [(-1, Dummy, None)])
 
     def test_set_None(self):
         inst = self._makeInst()
         objectmap = DummyObjectMap(sourceids=())
         inst.__objectmap__ = objectmap
         self.assertRaises(ValueError, inst.__setattr__, 'prop', None)
+        self.assertEqual(objectmap.sources_ordered, [])
 
     def test_set_colander_null(self):
         from colander import null
@@ -1890,6 +1927,7 @@ class Test_multireference_targetid_property(unittest.TestCase):
         inst.__objectmap__ = objectmap
         inst.prop = null
         self.assertEqual(objectmap.disconnected, [])
+        self.assertEqual(objectmap.sources_ordered, [])
 
     def test_set_zero(self):
         inst = self._makeInst()
@@ -1898,6 +1936,7 @@ class Test_multireference_targetid_property(unittest.TestCase):
         inst.prop = []
         self.assertEqual(objectmap.disconnected, [(1, -1, Dummy)])
         self.assertEqual(objectmap.connected, [])
+        self.assertEqual(objectmap.sources_ordered, [(-1, Dummy, None)]*2)
 
     def test_set_one(self):
         inst = self._makeInst()
@@ -1906,6 +1945,7 @@ class Test_multireference_targetid_property(unittest.TestCase):
         inst.prop = [2]
         self.assertEqual(objectmap.disconnected, [(1, -1, Dummy)])
         self.assertEqual(objectmap.connected, [(2, -1, Dummy)])
+        self.assertEqual(objectmap.sources_ordered, [(-1, Dummy, None)]*2)
 
     def test_set_two(self):
         inst = self._makeInst()
@@ -1915,6 +1955,7 @@ class Test_multireference_targetid_property(unittest.TestCase):
         self.assertEqual(objectmap.disconnected, [(1, -1, Dummy)])
         self.assertEqual(objectmap.connected,
                          [(2, -1, Dummy), (3, -1, Dummy)])
+        self.assertEqual(objectmap.sources_ordered, [(-1, Dummy, None)]*2)
 
     def test_clear(self):
         inst = self._makeInst()
@@ -1922,6 +1963,7 @@ class Test_multireference_targetid_property(unittest.TestCase):
         inst.__objectmap__ = objectmap
         inst.prop.clear()
         self.assertEqual(objectmap.disconnected, [(1, -1, Dummy)])
+        self.assertEqual(objectmap.sources_ordered, [(-1, Dummy, None)])
 
     def test_connect(self):
         inst = self._makeInst()
@@ -1930,6 +1972,7 @@ class Test_multireference_targetid_property(unittest.TestCase):
         inst.prop.connect([2,3])
         self.assertEqual(objectmap.connected,
                          [(2, -1, Dummy), (3, -1, Dummy)])
+        self.assertEqual(objectmap.sources_ordered, [(-1, Dummy, None)])
         
     def test_connect_missing(self):
         inst = self._makeInst()
@@ -1937,6 +1980,7 @@ class Test_multireference_targetid_property(unittest.TestCase):
                                    toraise=ValueError('a'))
         inst.__objectmap__ = objectmap
         self.assertRaises(ValueError, inst.prop.connect, [2,3])
+        self.assertEqual(objectmap.sources_ordered, [(-1, Dummy, None)])
 
     def test_connect_with_ignore_missing(self):
         inst = self._makeInst()
@@ -1945,6 +1989,7 @@ class Test_multireference_targetid_property(unittest.TestCase):
         inst.__objectmap__ = objectmap
         inst.prop.connect([2,3], ignore_missing=True)
         self.assertEqual(objectmap.connected, [])
+        self.assertEqual(objectmap.sources_ordered, [(-1, Dummy, None)])
 
     def test_disconnect(self):
         inst = self._makeInst()
@@ -1953,6 +1998,7 @@ class Test_multireference_targetid_property(unittest.TestCase):
         inst.prop.disconnect([2,3])
         self.assertEqual(objectmap.disconnected,
                          [(2, -1, Dummy), (3, -1, Dummy)])
+        self.assertEqual(objectmap.sources_ordered, [(-1, Dummy, None)])
         
     def test_disconnect_missing(self):
         inst = self._makeInst()
@@ -1960,6 +2006,7 @@ class Test_multireference_targetid_property(unittest.TestCase):
                                    toraise=ValueError('a'))
         inst.__objectmap__ = objectmap
         self.assertRaises(ValueError, inst.prop.disconnect, [2,3])
+        self.assertEqual(objectmap.sources_ordered, [(-1, Dummy, None)])
 
     def test_disconnect_with_ignore_missing(self):
         inst = self._makeInst()
@@ -1968,14 +2015,16 @@ class Test_multireference_targetid_property(unittest.TestCase):
         inst.__objectmap__ = objectmap
         inst.prop.disconnect([2,3], ignore_missing=True)
         self.assertEqual(objectmap.disconnected, [])
+        self.assertEqual(objectmap.sources_ordered, [(-1, Dummy, None)])
 
-    def test_ignore_missing_implicit(self):
+    def test_disconnect_ignore_missing_implicit(self):
         inst = self._makeInst(ignore_missing=True)
         objectmap = DummyObjectMap(sourceids=(),
                                    toraise=ValueError('a'))
         inst.__objectmap__ = objectmap
         inst.prop.disconnect([2,3])
         self.assertEqual(objectmap.disconnected, [])
+        self.assertEqual(objectmap.sources_ordered, [(-1, Dummy, None)])
 
 class Test_multireference_target_property(unittest.TestCase):
     def setUp(self):
@@ -2022,6 +2071,7 @@ class Test_multireference_target_property(unittest.TestCase):
         inst.__objectmap__ = objectmap
         del inst.prop
         self.assertEqual(list(inst.prop), [])
+        self.assertEqual(objectmap.sources_ordered, [(-1, Dummy, None)])
 
     def test_del_one(self):
         inst = self._makeInst()
@@ -2029,6 +2079,7 @@ class Test_multireference_target_property(unittest.TestCase):
         inst.__objectmap__ = objectmap
         del inst.prop
         self.assertEqual(objectmap.disconnected, [(1, -1, Dummy)])
+        self.assertEqual(objectmap.sources_ordered, [(-1, Dummy, None)])
 
     def test_del_two(self):
         inst = self._makeInst()
@@ -2037,6 +2088,7 @@ class Test_multireference_target_property(unittest.TestCase):
         del inst.prop
         self.assertEqual(objectmap.disconnected,
                          [(1, -1, Dummy), (2, -1, Dummy)])
+        self.assertEqual(objectmap.sources_ordered, [(-1, Dummy, None)])
 
     def test_set_None(self):
         inst = self._makeInst()
@@ -2051,6 +2103,7 @@ class Test_multireference_target_property(unittest.TestCase):
         inst.__objectmap__ = objectmap
         inst.prop = null
         self.assertEqual(objectmap.disconnected, [])
+        self.assertEqual(objectmap.sources_ordered, [])
 
     def test_set_zero(self):
         inst = self._makeInst()
@@ -2059,6 +2112,7 @@ class Test_multireference_target_property(unittest.TestCase):
         inst.prop = []
         self.assertEqual(objectmap.disconnected, [(1, -1, Dummy)])
         self.assertEqual(objectmap.connected, [])
+        self.assertEqual(objectmap.sources_ordered, [(-1, Dummy, None)]*2)
 
     def test_set_one(self):
         inst = self._makeInst()
@@ -2067,6 +2121,7 @@ class Test_multireference_target_property(unittest.TestCase):
         inst.prop = [2]
         self.assertEqual(objectmap.disconnected, [(1, -1, Dummy)])
         self.assertEqual(objectmap.connected, [(2, -1, Dummy)])
+        self.assertEqual(objectmap.sources_ordered, [(-1, Dummy, None)]*2)
 
     def test_set_two(self):
         inst = self._makeInst()
@@ -2076,6 +2131,7 @@ class Test_multireference_target_property(unittest.TestCase):
         self.assertEqual(objectmap.disconnected, [(1, -1, Dummy)])
         self.assertEqual(objectmap.connected,
                          [(2, -1, Dummy), (3, -1, Dummy)])
+        self.assertEqual(objectmap.sources_ordered, [(-1, Dummy, None)]*2)
 
     def test_clear(self):
         inst = self._makeInst()
@@ -2083,6 +2139,7 @@ class Test_multireference_target_property(unittest.TestCase):
         inst.__objectmap__ = objectmap
         inst.prop.clear()
         self.assertEqual(objectmap.disconnected, [(1, -1, Dummy)])
+        self.assertEqual(objectmap.sources_ordered, [(-1, Dummy, None)])
 
     def test_connect(self):
         inst = self._makeInst()
@@ -2091,6 +2148,7 @@ class Test_multireference_target_property(unittest.TestCase):
         inst.prop.connect([2,3])
         self.assertEqual(objectmap.connected,
                          [(2, -1, Dummy), (3, -1, Dummy)])
+        self.assertEqual(objectmap.sources_ordered, [(-1, Dummy, None)])
         
     def test_connect_missing(self):
         inst = self._makeInst()
@@ -2098,6 +2156,7 @@ class Test_multireference_target_property(unittest.TestCase):
                                    toraise=ValueError('a'))
         inst.__objectmap__ = objectmap
         self.assertRaises(ValueError, inst.prop.connect, [2,3])
+        self.assertEqual(objectmap.sources_ordered, [(-1, Dummy, None)])
 
     def test_connect_with_ignore_missing(self):
         inst = self._makeInst()
@@ -2106,6 +2165,7 @@ class Test_multireference_target_property(unittest.TestCase):
         inst.__objectmap__ = objectmap
         inst.prop.connect([2,3], ignore_missing=True)
         self.assertEqual(objectmap.connected, [])
+        self.assertEqual(objectmap.sources_ordered, [(-1, Dummy, None)])
 
     def test_disconnect(self):
         inst = self._makeInst()
@@ -2114,6 +2174,7 @@ class Test_multireference_target_property(unittest.TestCase):
         inst.prop.disconnect([2,3])
         self.assertEqual(objectmap.disconnected,
                          [(2, -1, Dummy), (3, -1, Dummy)])
+        self.assertEqual(objectmap.sources_ordered, [(-1, Dummy, None)])
         
     def test_disconnect_missing(self):
         inst = self._makeInst()
@@ -2121,6 +2182,7 @@ class Test_multireference_target_property(unittest.TestCase):
                                    toraise=ValueError('a'))
         inst.__objectmap__ = objectmap
         self.assertRaises(ValueError, inst.prop.disconnect, [2,3])
+        self.assertEqual(objectmap.sources_ordered, [(-1, Dummy, None)])
 
     def test_disconnect_with_ignore_missing(self):
         inst = self._makeInst()
@@ -2129,14 +2191,16 @@ class Test_multireference_target_property(unittest.TestCase):
         inst.__objectmap__ = objectmap
         inst.prop.disconnect([2,3], ignore_missing=True)
         self.assertEqual(objectmap.disconnected, [])
+        self.assertEqual(objectmap.sources_ordered, [(-1, Dummy, None)])
 
-    def test_ignore_missing_implicit(self):
+    def test_disconnect_ignore_missing_implicit(self):
         inst = self._makeInst(ignore_missing=True)
         objectmap = DummyObjectMap(sourceids=(),
                                            toraise=ValueError('a'))
         inst.__objectmap__ = objectmap
         inst.prop.disconnect([2,3])
         self.assertEqual(objectmap.disconnected, [])
+        self.assertEqual(objectmap.sources_ordered, [(-1, Dummy, None)])
 
 class TestMultireference(unittest.TestCase):
     def _makeOne(
@@ -2149,15 +2213,16 @@ class TestMultireference(unittest.TestCase):
         orientation='source'
         ):
         from .. import Multireference
-        return Multireference(
+        m = Multireference(
             context,
-            oids,
             objectmap,
             'reftype',
             ignore_missing=ignore_missing,
             resolve=resolve,
             orientation=orientation
             )
+        m.get_oids = lambda: oids
+        return m
 
     def _makeContext(self):
         resource = testing.DummyResource()
@@ -2230,7 +2295,8 @@ class TestMultireference(unittest.TestCase):
         inst = self._makeOne(context, [1], objectmap)
         inst.connect([1])
         self.assertEqual(objectmap.connected, [(-1, 1, 'reftype')])
-
+        self.assertEqual(objectmap.targets_ordered, [(-1, 'reftype', None)])
+        
     def test_connect_two(self):
         objectmap = DummyObjectMap()
         context = self._makeContext()
@@ -2240,6 +2306,7 @@ class TestMultireference(unittest.TestCase):
             objectmap.connected,
             [(-1, 1, 'reftype'), (-1, 2, 'reftype')]
             )
+        self.assertEqual(objectmap.targets_ordered, [(-1, 'reftype', None)])
 
     def test_connect_ignore_missing_explicit(self):
         objectmap = DummyObjectMap(toraise=ValueError('a'))
@@ -2247,6 +2314,7 @@ class TestMultireference(unittest.TestCase):
         inst = self._makeOne(context, [1, 2], objectmap)
         inst.connect([1, 2], ignore_missing=True)
         self.assertEqual(objectmap.connected, [])
+        self.assertEqual(objectmap.targets_ordered, [(-1, 'reftype', None)])
 
     def test_connect_ignore_missing_implicit(self):
         objectmap = DummyObjectMap(toraise=ValueError('a'))
@@ -2254,6 +2322,7 @@ class TestMultireference(unittest.TestCase):
         inst = self._makeOne(context, [1, 2], objectmap, ignore_missing=True)
         inst.connect([1, 2])
         self.assertEqual(objectmap.connected, [])
+        self.assertEqual(objectmap.targets_ordered, [(-1, 'reftype', None)])
 
     def test_connect_nonsource(self):
         objectmap = DummyObjectMap()
@@ -2264,6 +2333,7 @@ class TestMultireference(unittest.TestCase):
             objectmap.connected,
             [(1, -1, 'reftype'), (2, -1, 'reftype')]
             )
+        self.assertEqual(objectmap.sources_ordered, [(-1, 'reftype', None)])
 
     def test_disconnect_zero(self):
         objectmap = DummyObjectMap()
@@ -2271,6 +2341,7 @@ class TestMultireference(unittest.TestCase):
         inst = self._makeOne(context, [1], objectmap)
         inst.disconnect([])
         self.assertEqual(objectmap.disconnected, [])
+        self.assertEqual(objectmap.targets_ordered, [(-1, 'reftype', None)])
         
     def test_disconnect_one(self):
         objectmap = DummyObjectMap()
@@ -2278,6 +2349,7 @@ class TestMultireference(unittest.TestCase):
         inst = self._makeOne(context, [1], objectmap)
         inst.disconnect([1])
         self.assertEqual(objectmap.disconnected, [(-1, 1, 'reftype')])
+        self.assertEqual(objectmap.targets_ordered, [(-1, 'reftype', None)])
 
     def test_disconnect_two(self):
         objectmap = DummyObjectMap()
@@ -2288,6 +2360,7 @@ class TestMultireference(unittest.TestCase):
             objectmap.disconnected,
             [(-1, 1, 'reftype'), (-1, 2, 'reftype')]
             )
+        self.assertEqual(objectmap.targets_ordered, [(-1, 'reftype', None)])
 
     def test_disconnect_ignore_missing_explicit(self):
         objectmap = DummyObjectMap(toraise=ValueError('a'))
@@ -2295,13 +2368,15 @@ class TestMultireference(unittest.TestCase):
         inst = self._makeOne(context, [1, 2], objectmap)
         inst.disconnect([1, 2], ignore_missing=True)
         self.assertEqual(objectmap.disconnected, [])
-
+        self.assertEqual(objectmap.targets_ordered, [(-1, 'reftype', None)])
+        
     def test_disconnect_ignore_missing_implicit(self):
         objectmap = DummyObjectMap(toraise=ValueError('a'))
         context = self._makeContext()
         inst = self._makeOne(context, [1, 2], objectmap, ignore_missing=True)
         inst.disconnect([1, 2])
         self.assertEqual(objectmap.disconnected, [])
+        self.assertEqual(objectmap.targets_ordered, [(-1, 'reftype', None)])
 
     def test_disconnect_nonsource(self):
         objectmap = DummyObjectMap()
@@ -2312,6 +2387,7 @@ class TestMultireference(unittest.TestCase):
             objectmap.disconnected,
             [(1, -1, 'reftype'), (2, -1, 'reftype')]
             )
+        self.assertEqual(objectmap.sources_ordered, [(-1, 'reftype', None)])
 
     def test_clear(self):
         objectmap = DummyObjectMap()
@@ -2322,7 +2398,36 @@ class TestMultireference(unittest.TestCase):
             objectmap.disconnected,
             [(-1, 1, 'reftype'), (-1, 2, 'reftype')]
             )
+        self.assertEqual(objectmap.targets_ordered, [(-1, 'reftype', None)])
 
+    def test_set_ordered_as_source(self):
+        objectmap = DummyObjectMap()
+        context = self._makeContext()
+        inst = self._makeOne(context, [1, 2], objectmap, orientation='source')
+        inst.set_ordered(context.__oid__)
+        self.assertEqual(objectmap.targets_ordered,  [(-1, 'reftype', [1, 2])])
+
+    def test_set_ordered_as_target(self):
+        objectmap = DummyObjectMap()
+        context = self._makeContext()
+        inst = self._makeOne(context, [1, 2], objectmap, orientation='target')
+        inst.set_ordered(context.__oid__)
+        self.assertEqual(objectmap.sources_ordered,  [(-1, 'reftype', [1, 2])])
+
+    def test_set_unordered_as_source(self):
+        objectmap = DummyObjectMap()
+        context = self._makeContext()
+        inst = self._makeOne(context, [1, 2], objectmap, orientation='source')
+        inst.set_unordered(context.__oid__)
+        self.assertEqual(objectmap.targets_ordered,  [(-1, 'reftype', None)])
+
+    def test_set_unordered_as_target(self):
+        objectmap = DummyObjectMap()
+        context = self._makeContext()
+        inst = self._makeOne(context, [1, 2], objectmap, orientation='target')
+        inst.set_unordered(context.__oid__)
+        self.assertEqual(objectmap.sources_ordered,  [(-1, 'reftype', None)])
+        
 class Test_ReferencedPredicate(unittest.TestCase):
     def _makeOne(self, val, config):
         from .. import _ReferencedPredicate
@@ -2506,6 +2611,8 @@ def resource(path):
 def split(s):
     return (_BLANK,) + tuple(filter(None, s.split(_SLASH)))
 
+_marker = object()
+
 class DummyObjectMap(object):
     def __init__(self, targetids=(), sourceids=(), result=None, toraise=None,
                  reftypes=()):
@@ -2518,6 +2625,8 @@ class DummyObjectMap(object):
         self._reftypes = reftypes
         self.result = result
         self.toraise = toraise
+        self.sources_ordered = []
+        self.targets_ordered = []
 
     def object_for(self, objectid):
         return self.result
@@ -2547,6 +2656,12 @@ class DummyObjectMap(object):
     def get_reftypes(self):
         return self._reftypes
 
+    def order_sources(self, oid, reftype, order=_marker):
+        self.sources_ordered.append((oid, reftype, order))
+
+    def order_targets(self, oid, reftype, order=_marker):
+        self.targets_ordered.append((oid, reftype, order))
+        
 class DummyTreeSet(set):
     def insert(self, val):
         self.add(val)
