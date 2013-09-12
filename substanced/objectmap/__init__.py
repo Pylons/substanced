@@ -1,5 +1,6 @@
 import random
 
+from persistent.list import PersistentList
 import BTrees
 import colander
 from persistent import Persistent
@@ -20,7 +21,6 @@ from ..util import (
     find_objectmap,
     )
 from .._compat import INT_TYPES
-
 
 """
 Pathindex data structure of object map:
@@ -94,8 +94,8 @@ class ObjectMap(Persistent):
     def __init__(self, root, family=None):
         if family is not None:
             self.family = family
-        self.objectid_to_path = self.family.IO.BTree()
-        self.path_to_objectid = self.family.OI.BTree()
+        self.objectid_to_path = self.family.OO.BTree()
+        self.path_to_objectid = self.family.OO.BTree()
         self.pathindex = self.family.OO.BTree()
         self.referencemap = ReferenceMap()
         self.extentmap = ExtentMap()
@@ -408,6 +408,29 @@ class ObjectMap(Persistent):
             raise ValueError('oid %s is not in objectmap' % (obj,))
         return oid
 
+    def order_sources(self, targetid, reftype, order=_marker):
+        """ Set the ordering of the source ids of a reference relative to the
+        ``targetid``.  ``order`` should be a tuple or list of oids or objects
+        in the order that they should be kept in the reference map.  If the
+        reftyp+targetid combination has existing reference values, the values
+        in ``order`` must mention all of their oids, or a :exc:`ValueError`
+        will be raised. You can unset an order for this targetid+reftype
+        combination by passing ``None`` as the order."""
+        if not order in (None, _marker):
+            order = [ self._refid_for(x) for x in order ]
+        return self.referencemap.order_sources(targetid, reftype, order)
+
+    def order_targets(self, sourceid, reftype, order=_marker):
+        """ Set the ordering of the target ids of a reference type.  ``order``
+        should be a tuple (or list) of oids or objects in the order that they
+        should be kept in the reference map.  If the reference type has
+        existing reference values, the values in ``order`` must mention all of
+        their oids, or a :exc:`ValueError` will be raised.  You can unset an
+        ordering by passing ``None`` as the order. """
+        if not order in (None, _marker):
+            order = [ self._refid_for(x) for x in order ]
+        return self.referencemap.order_targets(sourceid, reftype, order)
+        
     def connect(self, source, target, reftype):
         """ Connect a source object or objectid to a target object or
         objectid using reference type ``reftype``"""
@@ -432,18 +455,23 @@ class ObjectMap(Persistent):
     #
     #     for group in groups:
     # RuntimeError: the bucket being iterated changed size
+
+    def _oidset(self, maybe_set):
+        if isinstance(maybe_set, ListSet):
+            return ListSet(maybe_set)
+        return self.family.OO.Set(maybe_set)
     
     def sourceids(self, obj, reftype):
         """ Return a set of object identifiers of the objects connected to
         ``obj`` a source using reference type ``reftype``"""
         oid = self._refid_for(obj)
-        return self.family.OO.Set(self.referencemap.sourceids(oid, reftype))
+        return self._oidset(self.referencemap.sourceids(oid, reftype))
 
     def targetids(self, obj, reftype):
         """ Return a set of object identifiers of the objects connected to
         ``obj`` a target using reference type ``reftype``"""
         oid = self._refid_for(obj)
-        return self.family.OO.Set(self.referencemap.targetids(oid, reftype))
+        return self._oidset(self.referencemap.targetids(oid, reftype))
 
     def sources(self, obj, reftype):
         """ Return a generator which will return the objects connected to
@@ -520,6 +548,14 @@ class ReferenceMap(Persistent):
             refmap = self.family.OO.BTree()
         self.refmap = refmap
 
+    def order_sources(self, targetid, reftype, order=_marker):
+        refset = self.refmap.setdefault(reftype, ReferenceSet())
+        return refset.order_sources(targetid, order)
+
+    def order_targets(self, sourceid, reftype, order=_marker):
+        refset = self.refmap.setdefault(reftype, ReferenceSet())
+        return refset.order_targets(sourceid, order)
+        
     def connect(self, source, target, reftype):
         refset = self.refmap.setdefault(reftype, ReferenceSet())
         refset.connect(source, target)
@@ -558,18 +594,31 @@ class ReferenceMap(Persistent):
             refset = self.refmap[reftype]
             return refset.is_target(oid) or refset.is_source(oid)
 
+class ListSet(PersistentList):
+    """ A persistent subclass of the Python list class. It overrides the
+    ``insert`` method to takes a single argument (the value) instead of an
+    index and a value.  ``insert`` works like ``append``."""
+    def insert(self, val):
+        if not val in self:
+            self.append(val)
+
+    def __repr__(self):
+        return '<ListSet: %s>' % PersistentList.__repr__(self)
+
 class ReferenceSet(Persistent):
     
     family = BTrees.family64
+    oidset_class = BTrees.family64.OO.Set
+    oidlist_class = ListSet
 
     def __init__(self):
         self.src2target = self.family.OO.BTree()
         self.target2src = self.family.OO.BTree()
 
     def connect(self, source, target):
-        targets = self.src2target.setdefault(source, self.family.OO.TreeSet())
+        targets = self.src2target.setdefault(source, self.oidset_class())
         targets.insert(target)
-        sources = self.target2src.setdefault(target, self.family.OO.TreeSet())
+        sources = self.target2src.setdefault(target, self.oidset_class())
         sources.insert(source)
 
     def disconnect(self, source, target):
@@ -588,13 +637,13 @@ class ReferenceSet(Persistent):
                 pass
 
     def targetids(self, oid):
-        return self.src2target.get(oid, self.family.OO.Set())
+        return self.src2target.get(oid, self.oidset_class())
 
     def is_target(self, oid):
         return oid in self.target2src
 
     def sourceids(self, oid):
-        return self.target2src.get(oid, self.family.OO.Set())
+        return self.target2src.get(oid, self.oidset_class())
 
     def is_source(self, oid):
         return oid in self.src2target
@@ -621,6 +670,58 @@ class ReferenceSet(Persistent):
                         del self.src2target[source]
         return removed
 
+    def order_targets(self, source, order=_marker):
+        if order is _marker:
+            order = []
+        oids = self.src2target.get(source, self.oidset_class())
+        if order is None:
+            if isinstance(oids, self.oidlist_class):
+                # if it's ordered, we unset the order by changing the
+                # class of the oid set to OOSet
+                oids = self.oidset_class(oids)
+                self.src2target[source] = oids
+            # if it's not ordered, we don't need to do anything (prevent
+            # unnecessary database write)
+        else:
+            if set(oids) != set(order):
+                raise ValueError(
+                    'The oids/objects in the order passed must mention each '
+                    'object in the existing set of oids, and may not mention '
+                    'any others.  Order: %s vs. oids %s' % (
+                        order, list(oids))
+                    )
+            newoids = self.oidlist_class(order)
+            if newoids != oids: # prevent an unnecessary database write
+                self.src2target[source] = newoids
+                oids = newoids
+        return oids
+
+    def order_sources(self, target, order=_marker):
+        if order is _marker:
+            order = []
+        oids = self.target2src.get(target, self.oidset_class())
+        if order is None:
+            if isinstance(oids, self.oidlist_class):
+                # if it's ordered, we unset the order by changing the
+                # class of the oid set to OOSet
+                oids = self.oidset_class(oids)
+                self.target2src[target] = oids
+            # if it's not ordered, we don't need to do anything (prevent
+            # unnecessary database write)
+        else:
+            if set(oids) != set(order):
+                raise ValueError(
+                    'The oids/objects in the order passed must mention each '
+                    'object in the existing set of oids, and may not mention '
+                    'any others.  Order: %s vs. oids %s' % (
+                        order, list(oids))
+                    )
+            newoids = self.oidlist_class(order)
+            if newoids != oids: # prevent an unnecessary database write
+                self.target2src[target] = newoids
+                oids = newoids
+        return oids
+            
 def _reference_property(reftype, resolve, orientation='source'):
     def _get(self, resolve=resolve):
         objectmap = find_objectmap(self)
@@ -774,22 +875,19 @@ def _multireference_property(
     ignore_missing,
     resolve,
     orientation,
+    ordered=False,
     ):
 
     def _get(self, resolve=resolve):
         objectmap = find_objectmap(self)
-        if orientation == 'source':
-            oids = objectmap.targetids(self, reftype)
-        else:
-            oids = objectmap.sourceids(self, reftype)
         return Multireference(
             self,
-            oids,
             objectmap,
             reftype,
             ignore_missing,
             resolve,
             orientation,
+            ordered,
             )
 
     def _set(self, oids):
@@ -807,7 +905,11 @@ def _multireference_property(
 
     return property(_get, _set, _del)
 
-def multireference_sourceid_property(reftype, ignore_missing=False):
+def multireference_sourceid_property(
+    reftype,
+    ignore_missing=False,
+    ordered=False
+    ):
     """ Like :func:`substanced.objectmap.reference_sourceid_property`, but
     maintains a :class:`substanced.objectmap.Multireference` rather than an
     object id."""
@@ -815,10 +917,15 @@ def multireference_sourceid_property(reftype, ignore_missing=False):
         reftype,
         ignore_missing=ignore_missing,
         resolve=False,
-        orientation='source'
+        orientation='source',
+        ordered=ordered,
         )
 
-def multireference_source_property(reftype, ignore_missing=False):
+def multireference_source_property(
+    reftype,
+    ignore_missing=False,
+    ordered=False
+    ):
     """ Like :func:`substanced.objectmap.reference_source_property`, but
     maintains a :class:`substanced.objectmap.Multireference` rather than a
     single object reference."""
@@ -826,10 +933,15 @@ def multireference_source_property(reftype, ignore_missing=False):
         reftype,
         ignore_missing=ignore_missing,
         resolve=True,
-        orientation='source'
+        orientation='source',
+        ordered=ordered,
         )
 
-def multireference_targetid_property(reftype, ignore_missing=False):
+def multireference_targetid_property(
+    reftype,
+    ignore_missing=False,
+    ordered=False,
+    ):
     """ Like :func:`substanced.objectmap.reference_targetid_property`, but
     maintains a :class:`substanced.objectmap.Multireference` rather than an
     object id."""
@@ -837,10 +949,15 @@ def multireference_targetid_property(reftype, ignore_missing=False):
         reftype,
         ignore_missing=ignore_missing,
         resolve=False,
-        orientation='target'
+        orientation='target',
+        ordered=ordered,
         )
 
-def multireference_target_property(reftype, ignore_missing=False):
+def multireference_target_property(
+    reftype,
+    ignore_missing=False,
+    ordered=False,
+    ):
     """ Like :func:`substanced.objectmap.reference_target_property`, but
     maintains a :class:`substanced.objectmap.Multireference` rather than a
     single object reference."""
@@ -848,7 +965,8 @@ def multireference_target_property(reftype, ignore_missing=False):
         reftype,
         ignore_missing=ignore_missing,
         resolve=True,
-        orientation='target'
+        orientation='target',
+        ordered=ordered,
         )
 
 class Multireference(object):
@@ -860,30 +978,37 @@ class Multireference(object):
     def __init__(
         self,
         context,
-        oids,
         objectmap,
         reftype,
         ignore_missing,
         resolve,
         orientation,
+        ordered=False,
         ):
         self.context = context
-        self.oids = oids
         self.objectmap = objectmap
         self.reftype = reftype
         self.ignore_missing = ignore_missing
         self.resolve = resolve
         self.orientation = orientation
+        self.ordered = ordered
 
+    def get_oids(self):
+        if self.orientation == 'source':
+            oids = self.objectmap.targetids(self.context, self.reftype)
+        else:
+            oids = self.objectmap.sourceids(self.context, self.reftype)
+        return oids
+            
     def __nonzero__(self):
         """ Returns ``True`` if there are oids associated with this
         multireference, ``False`` if the oid list is empty. """
-        return bool(self.oids)
+        return bool(self.get_oids())
 
     def __getitem__(self, i):
         """ Return the i'th element from the sequence of objects or object
         ids"""
-        oid = self.oids[i]
+        oid = self.get_oids()[i] # will barf if oids is not a ListSet
         if self.resolve:
             return self.objectmap.object_for(oid)
         return oid
@@ -893,58 +1018,86 @@ class Multireference(object):
         by this multireference. """
         if self.resolve:
             object_for = self.objectmap.object_for
-            for oid in self.oids:
+            for oid in self.get_oids():
                 if object_for(oid) == other:
                     return True
             return False
-        return other in self.oids
+        return other in self.get_oids()
 
     def __iter__(self):
         """ Return an iterable of object ids or objects. """
         if self.resolve:
-            return iter((self.objectmap.object_for(oid) for oid in self.oids))
-        return iter(self.oids)
+            return iter((self.objectmap.object_for(oid) for oid in
+                         self.get_oids()))
+        return iter(self.get_oids())
 
     def __len__(self):
         """ Return the length of the sequence of objects implied by this
         multireference"""
-        return len(self.oids)
+        return len(self.get_oids())
+
+    def set_ordered(self, ctx_oid):
+        # intent: the below logic will be called, but it won't cause a write
+        # if the reference is already ordered
+        if self.orientation == 'source':
+            self.objectmap.order_targets(ctx_oid, self.reftype, self.get_oids())
+        else:
+            self.objectmap.order_sources(ctx_oid, self.reftype, self.get_oids())
+
+    def set_unordered(self, ctx_oid):
+        # intent: the below logic will be called, but it won't cause a write
+        # if the reference is already unordered
+        if self.orientation == 'source':
+            self.objectmap.order_targets(ctx_oid, self.reftype, None)
+        else:
+            self.objectmap.order_sources(ctx_oid, self.reftype, None)
 
     def connect(self, objects, ignore_missing=None):
         """ Connect ``objects`` to this reference's relationship. ``objects``
         should be a sequence of content objects or object identifiers."""
+        ctx_oid = get_oid(self.context)
+        if self.ordered:
+            self.set_ordered(ctx_oid)
+        else:
+            self.set_unordered(ctx_oid)
         if ignore_missing is None:
             ignore_missing = self.ignore_missing
-        ctx_oid = get_oid(self.context)
         for obj in objects:
+            oid = get_oid(obj, obj)
             try:
                 if self.orientation == 'source':
-                    self.objectmap.connect(ctx_oid, obj, self.reftype)
+                    self.objectmap.connect(ctx_oid, oid, self.reftype)
                 else:
-                    self.objectmap.connect(obj, ctx_oid, self.reftype)
+                    self.objectmap.connect(oid, ctx_oid, self.reftype)
             except ValueError:
                 if not ignore_missing:
                     raise
 
     def disconnect(self, objects, ignore_missing=None):
-        """ Disonnect ``objects`` to this reference's relationship. ``objects``
-        should be a sequence of content objects or object identifiers."""
+        """ Disconnect ``objects`` from this reference's relationship.
+        ``objects`` should be a sequence of content objects or object
+        identifiers."""
         if ignore_missing is None:
             ignore_missing = self.ignore_missing
         ctx_oid = get_oid(self.context)
+        if self.ordered:
+            self.set_ordered(ctx_oid)
+        else:
+            self.set_unordered(ctx_oid)
         for obj in objects:
+            oid = get_oid(obj, obj)
             try:
                 if self.orientation == 'source':
-                    self.objectmap.disconnect(ctx_oid, obj, self.reftype)
+                    self.objectmap.disconnect(ctx_oid, oid, self.reftype)
                 else:
-                    self.objectmap.disconnect(obj, ctx_oid, self.reftype)
+                    self.objectmap.disconnect(oid, ctx_oid, self.reftype)
             except ValueError:
                 if not ignore_missing:
                     raise
 
     def clear(self):
         """ Clear all references in this relationship. """
-        self.disconnect(self.oids)
+        self.disconnect(self.get_oids())
 
 def has_references(context):
     objectmap = find_objectmap(context)
