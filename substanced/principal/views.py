@@ -2,6 +2,7 @@ import colander
 import deform.widget
 
 from pyramid.httpexceptions import HTTPFound
+from pyramid.security import Allow
 from pyramid.security import NO_PERMISSION_REQUIRED
 
 from ..form import FormView
@@ -18,12 +19,13 @@ from ..sdi import mgmt_view
 
 from . import (
     UserSchema,
+    UserGroupsSchema,
     GroupSchema,
     )
 
 from ..util import find_service
 
-class AddUserSchema(UserSchema):
+class AddUserSchema(UserGroupsSchema, UserSchema):
     password = colander.SchemaNode(
         colander.String(),
         widget = deform.widget.CheckedPasswordWidget(),
