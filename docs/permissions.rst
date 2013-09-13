@@ -51,6 +51,10 @@ sdi.manage-references
   Protects views which allow users to manage the references associated with a
   resource.
 
+sdi.manage-user-groups
+
+  Protects views which allow admin users to update groups for users.
+
 sdi.manage-workflow
 
   Protects the views associated with managing the workflows of an object.
