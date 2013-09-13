@@ -209,7 +209,7 @@
                 if ($('.contents-ajax-error').length === 0) {
                     $('#messages')
                         .append(
-                            $('<div class="alert alert-error contents-error contents-ajax-error"></div>')
+                            $('<div class="alert alert-danger contents-error contents-ajax-error"><button type="button" class="close" data-dismiss="alert">&times;</button></div>')
                                 .append('Error reaching the server. This is probably a temporary error.<br>' +
                                     'If your network connection resumes, ' +
                                     'the error state should resolve by itself. You can also ' +
