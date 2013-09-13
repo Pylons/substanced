@@ -25,7 +25,7 @@
       <div class="panel panel-default">
         <div class="panel-heading"><b>${view.title|''}</b></div>
          <div class="panel-body">
-           <div class="col-md-6" id="form" tal:content="structure form"/>
+           <div class="col-md-1e" id="form" tal:content="structure form"/>
            </div>
          </div>
       </div>
