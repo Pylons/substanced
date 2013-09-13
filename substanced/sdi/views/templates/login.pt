@@ -1,8 +1,12 @@
-<html metal:extend-macro="request.sdiapi.main_template">
+<html metal:define-macro="main"
+      metal:extend-macro="request.sdiapi.main_template">
+
  <head>
     <metal:slot metal:define-slot="head-more" />
  </head>
+
  <body>
+
   <div metal:fill-slot="main">
 
    <metal:slot metal:define-slot="before-login-form" />
