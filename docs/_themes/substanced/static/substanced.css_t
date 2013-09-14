@@ -14,7 +14,7 @@
 /* -- page layout ----------------------------------------------------------- */
 
 body {
-    font-family: 'Crimson Text', serif;
+    font-family: 'Merriweather', serif;
     font-size: 24px;
     background-color: #393939;
     color: #ffffff;
@@ -100,7 +100,6 @@ div.related {
     color: #373839;
     font-size: 12px;
 	background-color: #eee;
-	margin-top: 76px;
 }
 
 div.related a {
@@ -325,7 +324,7 @@ tt {
 }
 
 .viewcode-back {
-    font-family: 'Crimson Text', serif;
+    font-family: 'Merriweather', serif;
 }
 
 div.viewcode-block:target {
@@ -354,7 +353,7 @@ a:hover em.std-term {
 }
 
 .download {
-    font-family: 'Crimson Text', serif;
+    font-family: 'Merriweather', serif;
 	font-weight: normal;
 	font-style: normal;
 }
@@ -377,9 +376,12 @@ span.methodcategory {
 }
 /* OVERRIDE VENERA BLUE THEME */
 p {
-font-family: 'Merriweather', sans-serif;
-/* 
-font-family: 'Crimson Text', sans-serif;
- */
+    font-family: 'Merriweather', sans-serif;
+    margin-bottom: 1em;
 }
-#header {font-family: 'Noto Sans', sans-serif;}
+#header {
+    font-family: 'Noto Sans', sans-serif;
+}
+.navbar-fixed-top, .navbar-fixed-bottom {
+    position: relative;
+}
