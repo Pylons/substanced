@@ -21,24 +21,24 @@
 import sys, os
 
 # Add and use Pylons theme
-if 'sphinx-build' in ' '.join(sys.argv): # protect against dumb importers
-    from subprocess import call, Popen, PIPE
-
-    p = Popen('which git', shell=True, stdout=PIPE)
-    git = p.stdout.read().strip()
-    cwd = os.getcwd()
-    _themes = os.path.join(cwd, '_themes')
-
-    if not os.path.isdir(_themes):
-        call([git, 'clone', 'git://github.com/Pylons/pylons_sphinx_theme.git',
-                '_themes'])
-    else:
-        os.chdir(_themes)
-        call([git, 'checkout', 'master'])
-        call([git, 'pull'])
-        os.chdir(cwd)
-
-    sys.path.append(os.path.abspath('_themes'))
+# if 'sphinx-build' in ' '.join(sys.argv): # protect against dumb importers
+#     from subprocess import call, Popen, PIPE
+#
+#     p = Popen('which git', shell=True, stdout=PIPE)
+#     git = p.stdout.read().strip()
+#     cwd = os.getcwd()
+#     _themes = os.path.join(cwd, '_themes')
+#
+#     if not os.path.isdir(_themes):
+#         call([git, 'clone', 'git://github.com/Pylons/pylons_sphinx_theme.git',
+#                 '_themes'])
+#     else:
+#         os.chdir(_themes)
+#         call([git, 'checkout', 'master'])
+#         call([git, 'pull'])
+#         os.chdir(cwd)
+#
+#     sys.path.append(os.path.abspath('_themes'))
 
 # General configuration
 # ---------------------
@@ -114,9 +114,9 @@ pygments_style = 'sphinx'
 # Options for HTML output
 # -----------------------
 
-# Add and use Pylons theme
+# Add and use SubstanceD theme
 html_theme_path = ['_themes']
-html_theme = 'pylons'
+html_theme = 'substanced'
 html_theme_options = dict(
     github_url='https://github.com/Pylons/substanced',
 #    in_progress='true'
@@ -142,7 +142,7 @@ html_theme_options = dict(
 # The name of an image file (within the static path) to use as favicon of
 # the docs.  This file should be a Windows icon file (.ico) being 16x16 or
 # 32x32 pixels large.
-#html_favicon = None
+html_favicon = '_static/favicon.ico'
 
 # Add any paths that contain custom static files (such as style sheets)
 # here, relative to this directory. They are copied after the builtin
@@ -156,7 +156,7 @@ html_last_updated_fmt = '%b %d, %Y'
 
 # If true, SmartyPants will be used to convert quotes and dashes to
 # typographically correct entities.
-#html_use_smartypants = True
+html_use_smartypants = False
 
 # Custom sidebar templates, maps document names to template names.
 #html_sidebars = {}
