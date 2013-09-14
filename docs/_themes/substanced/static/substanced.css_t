@@ -377,6 +377,9 @@ span.methodcategory {
 }
 /* OVERRIDE VENERA BLUE THEME */
 p {
+font-family: 'Merriweather', sans-serif;
+/* 
 font-family: 'Crimson Text', sans-serif;
+ */
 }
 #header {font-family: 'Noto Sans', sans-serif;}
