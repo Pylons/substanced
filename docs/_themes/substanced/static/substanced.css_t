@@ -15,7 +15,7 @@
 
 body {
     font-family: 'Crimson Text', serif;
-    font-size: 18px;
+    font-size: 24px;
     background-color: #393939;
     color: #ffffff;
     margin: 0;
@@ -100,6 +100,7 @@ div.related {
     color: #373839;
     font-size: 12px;
 	background-color: #eee;
+	margin-top: 76px;
 }
 
 div.related a {
