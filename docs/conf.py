@@ -67,7 +67,7 @@ master_doc = 'index'
 
 # General substitutions.
 project = 'substanced'
-copyright = '2012, Agendaless Consulting <chrism@plope.com>'
+copyright = '2013, <a href="https://agendaless.com/">Agendaless Consulting.</a> All rights reserved.'
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
@@ -114,7 +114,7 @@ pygments_style = 'sphinx'
 # Options for HTML output
 # -----------------------
 
-# Add and use SubstanceD theme
+# Add and use Substance D theme
 html_theme_path = ['_themes']
 html_theme = 'substanced'
 html_theme_options = dict(
@@ -203,7 +203,7 @@ htmlhelp_basename = 'atemplatedoc'
 # (source start file, target name, title,
 #  author, document class [howto/manual]).
 latex_documents = [
-  ('index', 'substanced.tex', 'substanced Documentation',
+  ('index', 'substanced.tex', 'Substance D Documentation',
    'Repoze Developers', 'manual'),
 ]
 
