@@ -13,7 +13,7 @@
             </li>
             <li class="${(not later and 'disabled') or ''}">
               <a href="${request.view_name}">
-                <i class="glyphicon glyphicon-backward"> </i> Latest</a>
+                <i class="glyphicon glyphicon-fast-backward"> </i> Latest</a>
             </li>
             <li class="${(not later and 'disabled') or ''}">
               <a href="${later}">
