@@ -2,7 +2,6 @@ import colander
 import deform.widget
 
 from pyramid.httpexceptions import HTTPFound
-from pyramid.security import Allow
 from pyramid.security import NO_PERMISSION_REQUIRED
 
 from ..form import FormView
