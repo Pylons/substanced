@@ -1,6 +1,8 @@
 <div metal:use-macro="request.sdiapi.main_template">
 
   <div metal:fill-slot="main">
+    <div tal:condition="log_exists"
+         metal:use-macro="request.sdiapi.get_macro('substanced.sdi.views:templates/batching.pt', 'batching')"/>
     <div class="panel panel-default">
       <div class="panel-heading">Audit events</div>
       <div class="panel-body">
@@ -15,7 +17,7 @@
               <th>Payload</th>
             </tr>
           </thead>
-          <tr tal:repeat="(gen, idx, time, event) results">
+          <tr tal:repeat="(gen, idx, time, event) batch">
             <td width="5%">${gen}-${idx}</td>
             
             <td width="15%">${event.name}</td>
