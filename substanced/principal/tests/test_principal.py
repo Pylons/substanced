@@ -298,6 +298,10 @@ class TestUser(unittest.TestCase):
         self.assertTrue(inst.check_password('abc'))
         self.assertFalse(inst.check_password('abcdef'))
 
+    def test_check_password_gt_4096_bytes(self):
+        inst = self._makeOne('abc')
+        self.assertRaises(ValueError, inst.check_password, 'a'*4097)
+        
     def test_set_password(self):
         inst = self._makeOne('abc')
         inst.set_password('abcdef')

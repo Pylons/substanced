@@ -383,6 +383,10 @@ class User(Folder):
         this user's stored, encrypted password.  Returns ``True`` or
         ``False``."""
         statsd_gauge('check_password', 1)
+        if len(password) > 4096:
+            # avoid DOS ala
+            # https://www.djangoproject.com/weblog/2013/sep/15/security/
+            raise ValueError('Not checking password > 4096 bytes')
         return self.pwd_manager.check(self.password, password)
 
     def set_password(self, password):

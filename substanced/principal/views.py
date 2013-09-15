@@ -28,6 +28,7 @@ class AddUserSchema(UserGroupsSchema, UserSchema):
     password = colander.SchemaNode(
         colander.String(),
         widget = deform.widget.CheckedPasswordWidget(),
+        validator=colander.Length(min=3, max=100),
         )
 
 @mgmt_view(
