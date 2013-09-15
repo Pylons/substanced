@@ -1,6 +1,6 @@
 <div metal:use-macro="request.sdiapi.main_template">
 
-  <metal:head-first fill-slot="head-first">
+  <metal:head-more fill-slot="head-more">
     <!-- CSS -->
     <link rel="stylesheet" 
           href="${request.static_url('deform:static/css/form.css')}"
@@ -17,7 +17,7 @@
               src="${request.static_url(reqt)}"
        ></script>
     </tal:block>
-  </metal:head-first>
+  </metal:head-more>
 
   <div metal:fill-slot="main">
 
