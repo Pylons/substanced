@@ -67,7 +67,7 @@ master_doc = 'index'
 
 # General substitutions.
 project = 'substanced'
-copyright = '2013, <a href="https://agendaless.com/">Agendaless Consulting.</a> All rights reserved.'
+copyright = '2013, Agendaless Consulting'
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.

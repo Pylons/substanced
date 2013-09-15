@@ -379,9 +379,13 @@ p {
     font-family: 'Merriweather', sans-serif;
     margin-bottom: 1em;
 }
-#header {
+#header, .deep-footer .copyright, .deep-footer .footer-links {
     font-family: 'Noto Sans', sans-serif;
 }
 .navbar-fixed-top, .navbar-fixed-bottom {
     position: relative;
+}
+
+.deep-footer .copyright, .deep-footer .footer-links {
+    font-size: 15px;
 }
