@@ -43,7 +43,7 @@
             <button type="button" 
                     class="btn btn-primary dropdown-toggle ${not canadd and 'disabled' or ''}" 
                     data-toggle="dropdown">
-              <i class="glyphicon glyphicon-plus-sign" style="margin-right: 5px;"></i>Add <span class="caret" style="margin-left: 5px;"></span>
+              Add <span class="caret" style="margin-left: 5px;"></span>
             </button>
             <ul class="dropdown-menu">
               <li tal:repeat="addable addables">
