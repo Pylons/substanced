@@ -51,7 +51,7 @@
     <div class="navbar navbar-fixed-top nav-bordered-bottom">
       <div class="container">
 
-        <div class="col-md-11 breadcrumbs-bounding"
+        <div class="col-md-10 breadcrumbs-bounding"
              tal:define="breadcrumbs request.sdiapi.breadcrumbs()">
 
           <ul tal:condition="breadcrumbs"
@@ -75,7 +75,7 @@
 
         </div>
 
-        <div class="col-md-1 user-dropdown-bounding">
+        <div class="col-md-2 user-dropdown-bounding">
           <div class="pull-right hidden-xs hidden-sm visible-lg visible-md">
 
             <div tal:condition="request.user">
