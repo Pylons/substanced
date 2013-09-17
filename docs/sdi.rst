@@ -1,5 +1,5 @@
 =====================================
-The Substanced D Management Interface
+The Substance D Management Interface
 =====================================
 
 Substance D's prime directive is to help developers quickly build
@@ -225,7 +225,7 @@ resource.
 References
 ==========
 
-With the built-in support for :doc:`references <references>`, Substanced D
+With the built-in support for :doc:`references <references>`, Substance D
 helps manage relationships between resources. The SDI provides a UI into the
 reference service.
 
