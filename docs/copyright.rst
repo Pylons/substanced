@@ -9,20 +9,8 @@ by Chris McDonough
 
 Copyright |copy| 2011-2013, Agendaless Consulting.
 
-All rights reserved.  This material may be copied or distributed only subject
-to the terms and conditions set forth in the `Creative Commons
-Attribution-Noncommercial-Share Alike 3.0 United States License
-<http://creativecommons.org/licenses/by-nc-sa/3.0/us/>`_.  You must give the
-original author credit.  You may not use this work for commercial purposes.  If
-you alter, transform, or build upon this work, you may distribute the resulting
-work only under the same or similar license to this one.
-
-.. note::
-
-   While the Substance D documentation is offered under the Creative Commons
-   Attribution-Nonconmmercial-Share Alike 3.0 United States License, the
-   Substance D *software* is offered under a `less restrictive (BSD-like)
-   license <http://repoze.org/license.html>`_ .
+All rights reserved.  This documentation is offered under a `(BSD-like) license
+<http://repoze.org/license.html>`_ .
 
 All terms mentioned in this documentation that are known to be trademarks or
 service marks have been appropriately capitalized.  However, use of a term in
