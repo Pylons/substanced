@@ -283,15 +283,17 @@
         <div class="container">
           <div class="row">
             <div class="span6">
-              <div class="copyright">
+              <ul class="footer-links">
+                <li>
     {%- if show_copyright %}
       {%- if hasdoc('copyright') %}
-        {% trans path=pathto('copyright'), copyright=copyright|e %}<a href="{{ path }}">Copyright</a> &copy; {{ copyright }}. All rights reserved.{% endtrans %}
+        {% trans path=pathto('copyright'), copyright=copyright|e %}&copy; <a href="{{ path }}">Copyright</a> {{ copyright }}. All rights reserved.{% endtrans %}
       {%- else %}
-        {% trans copyright=copyright|e %}Copyright &copy; {{ copyright }}. All rights reserved.{% endtrans %}
+        {% trans copyright=copyright|e %}&copy; Copyright {{ copyright }}. All rights reserved.{% endtrans %}
       {%- endif %}
     {%- endif %}
-              </div>
+                </li>
+              </ul>
             </div>
             <div class="span6">
               <ul class="footer-links">

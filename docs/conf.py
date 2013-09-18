@@ -18,7 +18,7 @@
 #sys.path.append(os.path.abspath('some/directory'))
 
 
-import sys, os
+import sys, os, datetime
 
 # Add and use Pylons theme
 # if 'sphinx-build' in ' '.join(sys.argv): # protect against dumb importers
@@ -67,7 +67,8 @@ master_doc = 'index'
 
 # General substitutions.
 project = 'substanced'
-copyright = '2013, Agendaless Consulting'
+thisyear = datetime.datetime.now().year
+copyright = '2011-%s, Agendaless Consulting' % thisyear
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
