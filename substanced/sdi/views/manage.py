@@ -4,8 +4,6 @@ from pyramid.httpexceptions import (
     HTTPForbidden,
     )
 
-from ...interfaces import IFolder
-
 from .. import (
     mgmt_view,
     sdi_mgmt_views,
