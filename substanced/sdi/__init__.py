@@ -521,6 +521,12 @@ class sdiapi(object):
         request = self.request
         request.session.flash(msg, queue, allow_duplicate=allow_duplicate)
 
+    def is_mgmt(self):
+        """ Return true if the current request is for a resource that is under
+        ``/manage`` """
+        matched_route = getattr(self.request, 'matched_route', None)
+        return getattr(matched_route, 'name', None) == MANAGE_ROUTE_NAME
+
     def mgmt_path(self, obj, *arg, **kw):
         """ Return the path of the resource ``obj`` with the ``manage`` path
         prepended.  Accepts all the same arguments as

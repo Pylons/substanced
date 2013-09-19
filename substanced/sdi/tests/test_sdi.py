@@ -1215,6 +1215,25 @@ class Test_sdiapi(unittest.TestCase):
             'substanced.sdi.views:templates/master.pt', 'main')
         self.assertTrue(macro.include)
 
+    def test_is_mgmt_true(self):
+        request = testing.DummyRequest()
+        request.matched_route = Dummy()
+        request.matched_route.name = 'substanced_manage'
+        inst = self._makeOne(request)
+        self.assertTrue(inst.is_mgmt())
+        
+    def test_is_mgmt_false_wrong_name(self):
+        request = testing.DummyRequest()
+        request.matched_route = Dummy()
+        request.matched_route.name = 'not_substanced_manage'
+        inst = self._makeOne(request)
+        self.assertFalse(inst.is_mgmt())
+
+    def test_is_mgmt_false_missing_matched_route(self):
+        request = testing.DummyRequest()
+        inst = self._makeOne(request)
+        self.assertFalse(inst.is_mgmt())
+        
 class Test_mgmt_path(unittest.TestCase):
     def _callFUT(self, *arg, **kw):
         from .. import mgmt_path
