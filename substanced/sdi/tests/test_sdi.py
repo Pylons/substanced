@@ -1135,6 +1135,7 @@ class Test_sdiapi(unittest.TestCase):
             result,
              [{'url': '/mgmt_path',
                'active': 'active',
+               'content_type':'Type',
                'name': 'Home',
                'icon': None}]
             )
@@ -1153,6 +1154,7 @@ class Test_sdiapi(unittest.TestCase):
             result,
              [{'url': '/mgmt_path',
                'active': 'active',
+               'content_type':'Type',
                'name': 'foo',
                'icon': None}]
             )
@@ -1174,6 +1176,7 @@ class Test_sdiapi(unittest.TestCase):
              [{'url': '/mgmt_path',
                'active': 'active',
                'name': 'second',
+               'content_type':'Type',
                'icon': None}]
             )
         
@@ -1301,6 +1304,9 @@ class DummyContent(object):
         
     def metadata(self, context, name, default=None):
         return getattr(self, name, default)
+
+    def typeof(self, resource):
+        return 'Type'
 
 class DummyIntrospector(object):
     def __init__(self, results=()):

@@ -556,9 +556,16 @@ class sdiapi(object):
             if name is None:
                 name = resource.__name__ or 'Home'
             icon = request.registry.content.metadata(resource, 'icon')
+            content_type = request.registry.content.typeof(resource)
             active = resource is request.context and 'active' or None
-            breadcrumbs.insert(0, {'url':url, 'name':name, 'active':active,
-                                   'icon':icon})
+            bcinfo = {
+                'url':url,
+                'name':name,
+                'active':active,
+                'icon':icon,
+                'content_type':content_type,
+                }
+            breadcrumbs.insert(0, bcinfo)
             if resource is request.virtual_root:
                 break
         return breadcrumbs

@@ -57,7 +57,8 @@
           <ul tal:condition="breadcrumbs"
               class="breadcrumb">
             <tal:breadcrumbs repeat="breadcrumb breadcrumbs">
-              <li tal:attributes="class breadcrumb['active']">
+              <li tal:attributes="class breadcrumb['active']"
+                  title="${breadcrumb['content_type']} '${breadcrumb['name']}'">
                 <i class="${breadcrumb['icon']}"> </i>
                 <a href="${breadcrumb['url']}">${breadcrumb['name']}</a>
               </li>
