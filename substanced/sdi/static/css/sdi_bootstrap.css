@@ -7699,3 +7699,6 @@ textarea {
   margin-top: 10px;
   z-index: 1050;
 }
+.mce-fullscreen {
+  z-index: 1050;
+}
