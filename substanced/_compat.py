@@ -80,3 +80,9 @@ except ImportError: # pragma: no cover
                 opfunc.__doc__ = getattr(int, opname).__doc__
                 setattr(cls, opname, opfunc)
         return cls
+
+try:
+    from html import escape # py3
+except ImportError:
+    from cgi import escape
+    

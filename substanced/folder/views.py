@@ -10,6 +10,7 @@ from pyramid.httpexceptions import HTTPFound
 from pyramid.security import has_permission
 from pyramid.util import action_method
 
+from substanced._compat import escape
 from substanced.form import FormView
 from substanced.interfaces import IFolder
 from substanced.objectmap import find_objectmap
@@ -288,9 +289,11 @@ class FolderContents(object):
         name = getattr(resource, '__name__', '')
         icon = get_icon_name(resource, request) or ''
         url = request.sdiapi.mgmt_path(resource, '@@manage_main')
+        ct = self.request.registry.content.typeof(resource) or ''
+        title = "%s '%s'" % (ct, escape(name, True)) # True==quote quotechars
         value = (
-            '<i class="%s"> </i> <a href="%s">%s</a>' %
-                (icon, url, name)
+            '<i class="%s" title="%s"> </i> <a href="%s">%s</a>' %
+                (icon, title, url, name)
             )
         columns = [
             {'name': 'Name',

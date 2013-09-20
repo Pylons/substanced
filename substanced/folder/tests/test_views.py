@@ -1422,7 +1422,7 @@ class TestFolderContents(unittest.TestCase):
                 {'sorter': inst._name_sorter, 
                  'name': 'Name',
                  'formatter':'html',
-                 'value':('<i class=""> </i> '
+                 'value':('<i class="" title="Type \'fred\'"> </i> '
                           '<a href="/mgmt_path">fred</a>')},
                 ]
            )
@@ -1440,7 +1440,7 @@ class TestFolderContents(unittest.TestCase):
                 {'sorter': inst._name_sorter, 
                  'name': 'Name',
                  'formatter':'html',
-                 'value':('<i class="icon"> </i> '
+                 'value':('<i class="icon" title="Type \'fred\'"> </i> '
                           '<a href="/mgmt_path">fred</a>')},
                 ]
            )
@@ -1458,7 +1458,7 @@ class TestFolderContents(unittest.TestCase):
                 {'sorter': inst._name_sorter, 
                  'name': 'Name',
                  'formatter':'html',
-                 'value':('<i class="icon"> </i> '
+                 'value':('<i class="icon" title="Type \'fred\'"> </i> '
                           '<a href="/mgmt_path">fred</a>')},
                 ]
            )
@@ -1717,6 +1717,8 @@ class DummyContent(object):
     def metadata(self, context, name, default=None):
         return getattr(self, name, default)
 
+    def typeof(self, resource):
+        return 'Type'
 
 class DummyPost(dict):
     def __init__(self, getall_result=(), get_result=None):
