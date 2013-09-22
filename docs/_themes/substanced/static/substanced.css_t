@@ -15,7 +15,7 @@
 
 body {
     font-family: 'Merriweather', serif;
-    font-size: 24px;
+    font-size: 20px;
     background-color: #393939;
     color: #ffffff;
     margin: 0;
@@ -107,7 +107,7 @@ div.related a {
 }
 
 div.related ul {
-	padding: 0 150px 0 240px;
+	padding: 5px 150px 0 240px;
 }
 
 div.sphinxsidebar {
@@ -264,6 +264,7 @@ div.admonition p.admonition-title + p {
 
 div.highlight{
     background-color: white;
+    padding-bottom: 20px;
 }
 
 div.note {
@@ -374,6 +375,20 @@ span.methodcategory {
     line-height: 1;
     margin-bottom: 0.75em;
 }
+
+div.related {
+    background-color: #F8F8F8;
+}
+
+div.document {
+    background-color: #F8F8F8;
+}
+
+li.right {
+    padding-top: 5px;
+}
+
+
 /* OVERRIDE VENERA BLUE THEME */
 p {
     font-family: 'Merriweather', sans-serif;
@@ -389,3 +404,10 @@ p {
 .deep-footer .copyright, .deep-footer .footer-links {
     font-size: 15px;
 }
+
+blockquote {
+  -webkit-box-shadow: none;
+  -moz-box-shadow: none;
+  box-shadow: none;
+}
+
