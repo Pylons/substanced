@@ -359,7 +359,7 @@ class FolderContents(object):
         request = self.request
         filter_values = []
         for k, v in request.params.items():
-            if v and k.startswith('filter'):
+            if v is not None and k.startswith('filter'):
                 name = k[6:]
                 if name.startswith('.'):
                     name = name[1:]

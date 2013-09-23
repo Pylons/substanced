@@ -583,6 +583,23 @@ class TestFolderContents(unittest.TestCase):
                 ('bar', 'ghi'),
                 ])
         
+    def test_get_filter_values_with_None_and_empty(self):
+        from substanced.interfaces import IFolder
+        context = DummyFolder(__provides__=IFolder)
+        request = self._makeRequest()
+        request.params = DummyContent()
+        request.params.items = lambda *arg: [
+                ('filter.', 'abc'),
+                ('filter.foo', None),
+                ('filter.bar', ''),
+                ]
+        inst = self._makeOne(context, request)
+        result = inst.get_filter_values()
+        self.assertEqual(result, [
+                ('', 'abc'),
+                ('bar', ''),
+                ])
+        
     def test__folder_contents_folder_is_ordered(self):
         from substanced.interfaces import IFolder
         context = DummyFolder(__provides__=IFolder)
