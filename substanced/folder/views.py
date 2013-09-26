@@ -481,14 +481,11 @@ class FolderContents(object):
             }
    
     def _global_text_filter(self, context, filter_text, q):
-        filter_text_globs = [x for x in filter_text.split() if x]
-        if filter_text_globs:
-            text = self.system_catalog['text']
-            for filter_glob in filter_text_globs:
-                if not filter_glob.endswith('*'):
-                    filter_glob = filter_glob + '*' # glob (prefix) search
-                if text.check_query(filter_glob):
-                    q = q & text.eq(filter_glob)
+        terms = generate_text_filter_terms(filter_text)
+        text = self.system_catalog['text']
+        for term in terms:
+            if text.check_query(term):
+                q = q & text.eq(term)
         return q
     
     def _folder_contents(
@@ -978,6 +975,19 @@ class FolderContents(object):
                 obj_name, obj_type, action), 'danger'
             )
         return False
+
+PHRASE_RE = re.compile(r'"([^"]*)"')
+
+def generate_text_filter_terms(filter_text):
+    terms = ['"%s"' % x for x in PHRASE_RE.findall(filter_text) ]
+    remainder = PHRASE_RE.sub('', filter_text)
+    nonphrases = [x for x in remainder.split() if x.strip()]
+    for word in nonphrases:
+        glob = word
+        if not word.endswith('*'):
+            glob = word + '*'
+        terms.append(glob)
+    return terms
         
 @action_method
 def add_folder_contents_views(

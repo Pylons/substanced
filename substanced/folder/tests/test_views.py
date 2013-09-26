@@ -417,6 +417,21 @@ class TestFolderContents(unittest.TestCase):
         self.assertEqual(length, 1)
         self.assertEqual(len(records), 1)
 
+    def test__folder_contents_with_global_filter_value_with_phrases(self):
+        from substanced.interfaces import IFolder
+        context = DummyFolder(__provides__=IFolder)
+        request = self._makeRequest()
+        context['catalogs'] = self._makeCatalogs(oids=[1])
+        result = testing.DummyResource()
+        result.__name__ = 'fred'
+        context.__objectmap__ = DummyObjectMap(result)
+        inst = self._makeOne(context, request)
+        request.registry.content = DummyContent()
+        info = inst._folder_contents(filter_values=[('', '"abc" def')])
+        length, records = info['length'], info['records']
+        self.assertEqual(length, 1)
+        self.assertEqual(len(records), 1)
+        
     def test__folder_contents_with_global_filter_value_multiple_words(self):
         from substanced.interfaces import IFolder
         context = DummyFolder(__provides__=IFolder)
@@ -1695,6 +1710,26 @@ class Test_add_folder_contents_views(unittest.TestCase):
         class Foo(object): pass
         self._callFUT(config, slamdunk=1)
         self.assertEqual(config.settings[0]['slamdunk'], 1)
+
+class Test_generate_text_filter_terms(unittest.TestCase):
+    def _callFUT(self, filter_text):
+        from substanced.folder.views import generate_text_filter_terms
+        return generate_text_filter_terms(filter_text)
+
+    def test_with_glob_pattern(self):
+        filter_text = 'foo bar*'
+        terms = self._callFUT(filter_text)
+        self.assertEqual(terms, ['foo*', 'bar*'])
+
+    def test_without_glob_pattern(self):
+        filter_text = 'foo bar'
+        terms = self._callFUT(filter_text)
+        self.assertEqual(terms, ['foo*', 'bar*'])
+
+    def test_with_phrase_pattern(self):
+        filter_text = 'foo "bar baz" "bar"'
+        terms = self._callFUT(filter_text)
+        self.assertEqual(terms, ['"bar baz"', '"bar"', 'foo*'])
         
 class DummyContainer(object):
     oid_store = {}
