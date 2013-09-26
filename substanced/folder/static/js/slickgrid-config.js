@@ -135,7 +135,7 @@
             if (this.wrapperOptions.showCheckboxColumn) {
                 this.element.on('click', "." + cbo_class, function (evt) {
                     $(this).find(":checkbox").click();
-                })
+                });
             }
 
             var sortCol = wrapperOptions.sortCol;
