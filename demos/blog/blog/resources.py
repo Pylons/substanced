@@ -125,13 +125,30 @@ class BlogSchema(Schema):
 class BlogPropertySheet(PropertySheet):
     schema = BlogSchema()
 
+def blog_columns(folder, subobject, request, default_columnspec):
+    subobject_name = getattr(subobject, '__name__', str(subobject))
+    pubdate = getattr(subobject, 'pubdate', None)
+    if pubdate is not None:
+        pubdate = pubdate.isoformat()
+
+    return default_columnspec + [
+        {'name': 'Title',
+        'value': getattr(subobject, 'title', subobject_name),
+        },
+        {'name': 'Publication Date',
+        'value': pubdate,
+        'formatter': 'date',
+        },
+        ]
+
 @content(
     'Root',
     icon='icon-home',
     propertysheets = (
         ('', BlogPropertySheet),
         ),
-    after_create= ('after_create', 'after_create2')
+    after_create= ('after_create', 'after_create2'),
+    columns=blog_columns,
     )
 class Blog(Root):
     title = ''
