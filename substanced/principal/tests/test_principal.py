@@ -314,12 +314,14 @@ class TestUser(unittest.TestCase):
         request = testing.DummyRequest()
         request.sdiapi = DummySDIAPI()
         request.virtual_root = site
-        self.config.include('pyramid_mailer.testing')
         inst = self._makeOne('password')
         inst.email = 'foo@example.com'
         principals['users']['user'] = inst
-        inst.email_password_reset(request)
-        self.assertTrue(get_mailer(request).outbox)
+        with testing.testConfig() as config:
+            config.include('pyramid_mailer.testing')
+            config.include('pyramid_chameleon')
+            inst.email_password_reset(request)
+            self.assertTrue(get_mailer(request).outbox)
 
     def test_email_password_user_has_no_email(self):
         from ...testing import make_site

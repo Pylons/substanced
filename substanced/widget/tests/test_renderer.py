@@ -23,7 +23,9 @@ class TestZPTRendererFactory(unittest.TestCase):
     def test_functional_using_assetspec(self):
         from ..._compat import u
         renderer = self._makeOne(())
-        result = renderer('substanced.widget.tests:fixtures/test.pt')
+        with testing.testConfig() as config:
+            config.include('pyramid_chameleon')
+            result = renderer('substanced.widget.tests:fixtures/test.pt')
         self.assertEqual(result.strip(), u('<div>Test</div>'))
 
     def test_it(self):

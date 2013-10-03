@@ -1003,7 +1003,9 @@ class Test_sdiapi(unittest.TestCase):
         self.config.testing_securitypolicy(permissive=False)
         request = testing.DummyRequest()
         inst = self._makeOne(request)
-        self.assertTrue(inst.main_template)
+        with testing.testConfig() as config:
+            config.include('pyramid_chameleon')
+            self.assertTrue(inst.main_template)
 
     def test_flash_with_undo_no_permission(self):
         self.config.testing_securitypolicy(permissive=False)
@@ -1036,7 +1038,9 @@ class Test_sdiapi(unittest.TestCase):
         inst.get_connection = lambda *arg: connection
         inst.transaction = DummyTransaction()
         inst.mgmt_path = lambda *arg, **kw: '/mg'
-        inst.flash_with_undo('message')
+        with testing.testConfig() as config:
+            config.include('pyramid_chameleon')
+            inst.flash_with_undo('message')
         self.assertEqual(request.session['_f_'],
                          [u('<span>message <a href="/mg" class="btn btn-mini '
                             'btn-info">Undo</a></span>\n')])
@@ -1169,14 +1173,18 @@ class Test_sdiapi(unittest.TestCase):
     def test_get_macro_without_name(self):
         request = testing.DummyRequest()
         inst = self._makeOne(request)
-        macro = inst.get_macro('substanced.sdi.views:templates/master.pt')
+        with testing.testConfig() as config:
+            config.include('pyramid_chameleon')
+            macro = inst.get_macro('substanced.sdi.views:templates/master.pt')
         self.assertTrue(macro.macros)
         
     def test_get_macro_with_name(self):
         request = testing.DummyRequest()
         inst = self._makeOne(request)
-        macro = inst.get_macro(
-            'substanced.sdi.views:templates/master.pt', 'main')
+        with testing.testConfig() as config:
+            config.include('pyramid_chameleon')
+            macro = inst.get_macro(
+                'substanced.sdi.views:templates/master.pt', 'main')
         self.assertTrue(macro.include)
 
 class Test_mgmt_path(unittest.TestCase):
