@@ -153,7 +153,7 @@ class PathIndex(SDIndex, hypatia.util.BaseIndexMixin, Persistent):
         return path
 
     def reset(self):
-        self._not_indexed = self.family.IF.Set()
+        self._not_indexed = self.family.IF.TreeSet()
 
     def index_doc(self, docid, obj):
         pass
@@ -250,7 +250,7 @@ class PathIndex(SDIndex, hypatia.util.BaseIndexMixin, Persistent):
         if rs:
             return rs
         else:
-            return self.family.IF.Set()
+            return self.family.IF.TreeSet()
 
     applyEq = apply
 

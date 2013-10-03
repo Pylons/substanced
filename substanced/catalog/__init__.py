@@ -733,3 +733,4 @@ def includeme(config): # pragma: no cover
         deferred.BasicActionProcessor,
         (Interface,), IIndexingActionProcessor
         )
+    config.include('.evolve')

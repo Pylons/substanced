@@ -201,7 +201,7 @@ class ObjectMap(Persistent):
             els = path_tuple[:x+1]
             omap = self.pathindex.setdefault(els, self.family.IO.BTree())
             level = pathlen - len(els)
-            oidset = omap.setdefault(level, self.family.IF.Set())
+            oidset = omap.setdefault(level, self.family.IF.TreeSet())
             oidset.add(objectid)
 
         return objectid
@@ -608,7 +608,7 @@ class ListSet(PersistentList):
 class ReferenceSet(Persistent):
     
     family = BTrees.family64
-    oidset_class = BTrees.family64.OO.Set
+    oidset_class = BTrees.family64.OO.TreeSet
     oidlist_class = ListSet
 
     def __init__(self):
@@ -677,7 +677,7 @@ class ReferenceSet(Persistent):
         if order is None:
             if isinstance(oids, self.oidlist_class):
                 # if it's ordered, we unset the order by changing the
-                # class of the oid set to OOSet
+                # class of the oid set to OOTreeSet
                 oids = self.oidset_class(oids)
                 self.src2target[source] = oids
             # if it's not ordered, we don't need to do anything (prevent
@@ -703,7 +703,7 @@ class ReferenceSet(Persistent):
         if order is None:
             if isinstance(oids, self.oidlist_class):
                 # if it's ordered, we unset the order by changing the
-                # class of the oid set to OOSet
+                # class of the oid set to OOTreeSet
                 oids = self.oidset_class(oids)
                 self.target2src[target] = oids
             # if it's not ordered, we don't need to do anything (prevent
