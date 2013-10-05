@@ -56,8 +56,8 @@ class TestManageIndex(unittest.TestCase):
         result = inst.reindex()
         self.assertEqual(result.location, '/mgmt_path')
         self.assertEqual(
-            request.session['_f_error'],
-            ['Cannot reindex an index unless it is contained in a catalog'])
+            request.sdiapi.flashed,
+            'Cannot reindex an index unless it is contained in a catalog')
 
     def test_reindex_parent_is_icatalog(self):
         from zope.interface import alsoProvides
@@ -72,7 +72,7 @@ class TestManageIndex(unittest.TestCase):
         self.assertEqual(result.location, '/mgmt_path')
         self.assertEqual(catalog.indexes, ['name'])
         self.assertEqual(
-            request.session['_f_success'], ['Index "name" reindexed'])
+            request.sdiapi.flashed, 'Index "name" reindexed')
 
 class TestSearchCatalogView(unittest.TestCase):
     def _makeOne(self, context, request):
@@ -102,6 +102,7 @@ class TestSearchCatalogView(unittest.TestCase):
         context = testing.DummyResource()
         appstruct = {'cqe_expression':"name=='abc'"}
         request.session['catalogsearch.appstruct'] = appstruct
+        request.sdiapi = DummySDIAPI()
         form = DummyForm()
         inst = self._makeOne(context, request)
         q = DummyQuery([])
@@ -115,13 +116,14 @@ class TestSearchCatalogView(unittest.TestCase):
         result = inst.show(form)
         self.assertEqual(result, {'searchresults': [('', 'No results')],
                                   'form':'form'})
-        self.assertEqual(request.session['_f_success'], ['Query succeeded'])
+        self.assertEqual(request.sdiapi.flashed, 'Query succeeded')
 
     def test_show_with_appstruct_and_results(self):
         request = testing.DummyRequest()
         context = testing.DummyResource()
         appstruct = {'cqe_expression':"name=='abc'"}
         request.session['catalogsearch.appstruct'] = appstruct
+        request.sdiapi = DummySDIAPI()
         form = DummyForm()
         inst = self._makeOne(context, request)
         q = DummyQuery([1,2])
@@ -135,10 +137,11 @@ class TestSearchCatalogView(unittest.TestCase):
         result = inst.show(form)
         self.assertEqual(result, {'searchresults': [(1,1), (2,2)],
                                   'form':'form'})
-        self.assertEqual(request.session['_f_success'], ['Query succeeded'])
+        self.assertEqual(request.sdiapi.flashed, 'Query succeeded')
 
     def test_show_with_appstruct_query_exception(self):
         request = testing.DummyRequest()
+        request.sdiapi = DummySDIAPI()
         context = testing.DummyResource()
         appstruct = {'cqe_expression':"name=='abc'"}
         request.session['catalogsearch.appstruct'] = appstruct
@@ -148,8 +151,8 @@ class TestSearchCatalogView(unittest.TestCase):
         result = inst.show(form)
         self.assertEqual(result, {'searchresults': (),
                                   'form':'form'})
-        self.assertEqual(request.session['_f_error'],
-                         ['Query failed (KeyError: name)'])
+        self.assertEqual(request.sdiapi.flashed,
+                         'Query failed (KeyError: name)')
 
 class Test_content_is_an_index(unittest.TestCase):
     def setUp(self):
@@ -192,8 +195,8 @@ class Test_reindex_indexes(unittest.TestCase):
         result = self._callFUT(context, request)
         self.assertEqual(result.location, '/mgmt_path')
         self.assertEqual(
-            request.session['_f_success'],
-            ['Reindex of selected indexes a succeeded'])
+            request.sdiapi.flashed,
+            'Reindex of selected indexes a succeeded')
         self.assertEqual(context.reindexed, ['a'])
 
     def test_without_indexes(self):
@@ -205,8 +208,8 @@ class Test_reindex_indexes(unittest.TestCase):
         result = self._callFUT(context, request)
         self.assertEqual(result.location, '/mgmt_path')
         self.assertEqual(
-            request.session['_f_error'],
-            ['No indexes selected to reindex'])
+            request.sdiapi.flashed,
+            'No indexes selected to reindex')
 
 class DummyContent(object):
     def __init__(self, result):
@@ -267,4 +270,6 @@ class DummyObjectmap(object):
 class DummySDIAPI(object):
     def mgmt_path(self, *arg, **kw):
         return '/mgmt_path'
+    def flash(self, msg, queue='info'):
+        self.flashed = msg
 

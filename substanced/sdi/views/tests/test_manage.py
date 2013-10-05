@@ -33,21 +33,5 @@ class TestManagementViews(unittest.TestCase):
         result = inst.manage_main()
         self.assertEqual(result.location, '/path')
 
-    def test_add_content_no_views(self):
-        context = testing.DummyResource()
-        request = testing.DummyRequest()
-        inst = self._makeOne(context, request)
-        inst.sdi_add_views = lambda *arg: []
-        result = inst.add_content()
-        self.assertEqual(result, {'views':[]})
-        
-    def test_add_content_with_one_view(self):
-        context = testing.DummyResource()
-        request = testing.DummyRequest()
-        inst = self._makeOne(context, request)
-        inst.sdi_add_views = lambda *arg: [{'url':'http://foo'}]
-        result = inst.add_content()
-        self.assertEqual(result.location, 'http://foo')
-
 class Dummy(object):
     pass

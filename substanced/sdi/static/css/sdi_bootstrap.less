@@ -1,65 +1,147 @@
 /** Build from https://github.com/Pylons/sdidev to rebuild this LESS file **/
 
 @import "../../../../../bootstrap/less/bootstrap.less";
-@import "../../../../../bootstrap/less/responsive.less";
+@import "../../../../../bootstrap/less/theme.less";
+@import "../../../../../bootstrap/less/variables.less";
 
 /** Styling for the Substance D SDI  **/
+
+@text-color:            #333333;
+@white:                 #fff;
 
 body {
   padding-top: 60px;
 }
 
-@media (max-width: 980px) {
-  body {
-    padding-top: 0;
-  }
-
-  a.site-title {
-    font-size: 30px;
-  }
-}
-
-.sidebar-nav {
-  padding: 9px 0;
-}
-
-a.site-title {
-  padding-bottom: 18px;
-  font-size: 54px;
-  display: block;
-  color: #333;
-  text-decoration: none;
-  line-height: 1;
-  letter-spacing: -1px;
-}
-
 .breadcrumb {
-  padding: 7px 14px;
-  margin: 0 0 18px;
-
-  #gradient > .vertical(@white, @grayLighter);
-  .border-radius(3px);
-  border: 1px solid @grayLighter;
+  margin-bottom: 0px;
+  background-color: transparent;
+  // #gradient > .vertical(@white, @gray-lighter);
+  // border-radius: @border-radius-small;
+  // border: 1px solid @gray-lighter;
+  overflow: auto;
+  white-space: nowrap;
+  padding: 15px 0px;
+  padding-bottom: 3px;
 
   li {
-    display: inline-block;
+    display: inline;
     text-shadow: 0 1px 0 #ffffff;
+    font-weight: bold;
   }
-  .divider {
-    padding: 0 5px;
-    color: #999999;
-  }
-  .active a {
-    color: #333333;
-  }
+}
+
+.breadcrumbs-bounding {
+    padding-left: 0px;
+    padding-right: 0px;
+}
+
+.user-dropdown-bounding {
+    padding-left: 0px;
+    padding-right: 0px;
 }
 
 .btn-single {
-  margin: 0 10px;
-  vertical-align: top;
-  display: inline-block;
+    display: inline-block;
+}
+
+.navbar-fixed-top {
+    min-height: 60px;
+}
+
+.navbar .btn, .btn-group .btn-single {
+    margin-top: 8px;
 }
 
 textarea {
   width: auto;
+}
+
+.navbar-brand {
+   text-transform: uppercase;
+   padding: 14px 0px;
+   white-space: nowrap;
+}
+
+.nav-tabs {
+   margin-top: 10px;
+   margin-bottom: 10px;
+}
+
+.form-signin {
+  max-width: 500px;
+  padding: 15px;
+  margin: 0 auto;
+}
+.form-signin .form-signin-heading,
+.form-signin #password-reset-link {
+  margin-top: 10px;
+}
+.form-signin .checkbox {
+  font-weight: normal;
+}
+.form-signin .form-control {
+  position: relative;
+  font-size: 16px;
+  height: auto;
+  padding: 10px;
+  -webkit-box-sizing: border-box;
+     -moz-box-sizing: border-box;
+          box-sizing: border-box;
+}
+.form-signin .form-control:focus {
+  z-index: 2;
+}
+.form-signin input[type="text"] {
+  margin-bottom: -1px;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+.form-signin input[type="password"] {
+  margin-bottom: 10px;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+.nav-bordered-bottom {
+  border-bottom: 1px solid @navbar-default-border;
+}
+
+.pager-compact {
+  margin: 0;
+  margin-bottom: 5px;
+}
+
+/* substanced sprite icons */
+[class^="subd-"],
+[class*=" subd-"] {
+  display: inline-block;
+  width: 17px;
+  height: 16px;
+  *margin-right: .3em;
+  line-height: 14px;
+  vertical-align: text-top;
+  background-image: url("/sdistatic/img/subd-sprites.png");
+  background-position: 14px 14px;
+  background-repeat: no-repeat;
+}
+[class^="subd-"]:last-child,
+[class*=" subd-"]:last-child {
+  *margin-left: 0;
+}
+
+.subd-capsule{ background-position: 0 0; width: 14px; height: 14px; } 
+.subd-capsule2{ background-position: 0 -19px; width: 14px; height: 14px; }
+
+#sdi-loading-img {
+    position: fixed;
+    right: 0;
+    left: 0;
+    top: 0;
+    margin-top: 10px;
+    z-index: @zindex-modal;
+}
+
+.mce-fullscreen {
+  z-index: @zindex-modal !important;
 }

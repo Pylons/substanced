@@ -104,6 +104,7 @@ class TestFormView(unittest.TestCase):
         from . import FormError
         schema = DummySchema()
         request = testing.DummyRequest()
+        request.sdiapi = DummySDIAPI()
         context = testing.DummyResource()
         request.POST['submit'] = True
         inst = self._makeOne(context, request)
@@ -117,8 +118,8 @@ class TestFormView(unittest.TestCase):
         result = inst()
         self.assertEqual(result,
                          {'css_links': (), 'js_links': (), 'form': 'rendered'})
-        self.assertEqual(request.session.peek_flash('error'),
-                         ['<div class="error">Failed: </div>'])
+        self.assertEqual(request.sdiapi.flashed,
+                         '<div class="error">Failed: </div>')
 
 
 class TestFileUploadTempStore(unittest.TestCase):
@@ -244,6 +245,48 @@ class TestFileUploadTempStore(unittest.TestCase):
         inst['a'] = {'randid':'abc'}
         inst.clear() # doesn't choke
 
+class TestDeformRendererFactory(unittest.TestCase):
+    def setUp(self):
+        config = testing.setUp()
+        config.include('pyramid_chameleon')
+
+    def tearDown(self):
+        testing.tearDown()
+        
+    def _makeOne(self, dirs, **kw):
+        from . import DeformRendererFactory
+        return DeformRendererFactory(dirs, **kw)
+
+    def test_functional_using_searchpath(self):
+        from pkg_resources import resource_filename
+        from .._compat import u
+        default_dir = resource_filename('substanced.form', 'fixtures/')
+        renderer = self._makeOne((default_dir,))
+        result = renderer('test')
+        self.assertEqual(result.strip(), u('<div>Test</div>'))
+
+    def test_functional_using_assetspec(self):
+        from .._compat import u
+        renderer = self._makeOne(())
+        result = renderer('substanced.form:fixtures/test.pt')
+        self.assertEqual(result.strip(), u('<div>Test</div>'))
+
+    def test_it(self):
+        import os
+        path = os.path.join(os.path.dirname(__file__), 'fixtures')
+        renderer = self._makeOne(
+            (path,),
+            auto_reload=True,
+            debug=True,
+            encoding='utf-16',
+            translator=lambda *arg: 'translation',
+            )
+        template = renderer.load('test')
+        self.assertEqual(template.auto_reload, True)
+        self.assertEqual(template.debug, True)
+        self.assertEqual(template.encoding, 'utf-16')
+        self.assertEqual(template.translate('a'), 'translation')
+        
 class DummyWidget(object):
     pass
 
@@ -296,3 +339,5 @@ class DummySession(dict):
 class DummySDIAPI(object):
     def mgmt_path(self, *arg, **kw):
         return '/mgmt_path'
+    def flash(self, msg, queue='info', allow_duplicate=True):
+        self.flashed = msg

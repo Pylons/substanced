@@ -31,7 +31,7 @@ class DocumentPropertySheet(PropertySheet):
 
 @content(
     'Document',
-    icon='icon-align-left',
+    icon='glyphicon glyphicon-align-left',
     add_view='add_document',
     propertysheets=(
         ('Basic', DocumentPropertySheet),

@@ -99,7 +99,7 @@ class TestChangePasswordView(unittest.TestCase):
         resp = inst.change_success({'password':'password'})
         self.assertEqual(context.password, 'password')
         self.assertEqual(resp.location, '/mgmt_path')
-        self.assertTrue(request.session['_f_success'])
+        self.assertTrue(request.sdiapi.flashed)
 
 class TestRequestResetView(unittest.TestCase):
     def _makeOne(self, context, request):
@@ -191,3 +191,5 @@ class DummyContentRegistry(object):
 class DummySDIAPI(object):
     def mgmt_path(self, *arg, **kw):
         return '/mgmt_path'
+    def flash(self, msg, queue='info'):
+        self.flashed = msg

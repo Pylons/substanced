@@ -1,91 +1,22 @@
 import binascii
 import os
+from pkg_resources import resource_filename
+
+from translationstring import ChameleonTranslate
+
+from pyramid.i18n import get_localizer
+from pyramid.renderers import get_renderer
+from pyramid.threadlocal import get_current_request
 
 import deform
 import deform.form
 import deform.exception
+from deform.template import ZPTTemplateLoader
 import deform.widget
 
 from pyramid.exceptions import ConfigurationError
 
 from ..util import chunks
-
-# assume jquery is already loaded in our widget resource list, use asset
-# specs instead of relative paths
-
-default_resources = {
-    'jquery': {
-        None:{},
-        },
-    'jqueryui': {
-        None:{
-            'js':'deform:static/scripts/jquery-ui-1.8.11.custom.min.js',
-            'css':'deform:static/css/ui-lightness/jquery-ui-1.8.11.custom.css',
-            },
-        },
-    'jquery.form': {
-        None:{
-            'js':'deform:static/scripts/jquery.form-3.09.js',
-            },
-        },
-    'jquery.maskedinput': {
-        None:{
-            'js':'deform:static/scripts/jquery.maskedinput-1.2.2.min.js',
-            },
-        },
-    'jquery.maskMoney': {
-        None:{
-            'js':'deform:static/scripts/jquery.maskMoney-1.4.1.js',
-            },
-        },
-    'datetimepicker': {
-        None:{
-            'js':'deform:static/scripts/jquery-ui-timepicker-addon.js',
-            'css':'deform:static/css/jquery-ui-timepicker-addon.css',
-            },
-        },
-    'deform': {
-        None:{
-            'js':('deform:static/scripts/jquery.form-3.09.js', 
-                  'deform:static/scripts/deform.js',
-                  'deform_bootstrap:static/deform_bootstrap.js'),
-            'css':'deform:static/css/form.css',
-            },
-        },
-    'bootstrap': {
-        None: {},
-    },
-    'tinymce': {
-        None:{
-            'js':'deform:static/tinymce/jscripts/tiny_mce/tiny_mce.js',
-            },
-        },
-    'chosen': {
-        None:{
-            'js':'deform_bootstrap:static/jquery_chosen/chosen.jquery.js',
-            'css':('deform_bootstrap:static/chosen_bootstrap.css',
-                   'deform_bootstrap:static/jquery_chosen/chosen.css')
-            },
-        },
-    'modernizr': {
-        None:{
-            'js':('deform:static/scripts/modernizr.custom.input-types-and-atts.js',),
-            },
-        },
-    }
-
-# NB: don't depend on deform_bootstrap.css, it uses less, and its .less
-# includes 1) the bootstrap css, 2) the datepicker css and 3) the chosen css.
-# We supply chosen requirements above, and we already depend on the bootstrap
-# css sitewide.  We don't yet depend on the datepicker css, but when we do,
-# we'll also just add it sitewide.  Rationale: the deform_bootstrap css when
-# included causes the halfling images to go missing and it makes the CSS harder
-# to debug due to all the repetition with the sitewide-loaded bootstrap CSS.  I
-# should fix at least the halflings images portion of this and submit a patch
-# upstream.
-
-resource_registry = deform.widget.ResourceRegistry(use_defaults=False)
-resource_registry.registry = default_resources
 
 class FormError(Exception):
     """Non-validation-related error.
@@ -94,7 +25,6 @@ class FormError(Exception):
 class Form(deform.form.Form):
     """ Subclass of ``deform.form.Form`` which uses a custom resource
     registry designed for Substance D. XXX point at deform docs. """
-    default_resource_registry = resource_registry
 
 class FormView(object):
     """ A class which can be used as a view which introspects a schema to
@@ -121,8 +51,8 @@ class FormView(object):
                                buttons=self.buttons, formid=formid,
                                use_ajax=use_ajax, ajax_options=ajax_options,
                                autocomplete=autocomplete)
-        # XXX override autocomplete; should be part of deform_bootstrap
-        form.widget.template = 'substanced:widget/templates/form.pt' 
+        # XXX override autocomplete; should be part of deform
+        #form.widget.template = 'substanced:widget/templates/form.pt' 
         self.before(form)
         reqts = form.get_widget_resources()
         return form, reqts
@@ -147,8 +77,8 @@ class FormView(object):
                         result = success_method(validated)
                     except FormError as e:
                         snippet = '<div class="error">Failed: %s</div>' % e
-                        self.request.session.flash(snippet, 'error',
-                                                allow_duplicate=True)
+                        self.request.sdiapi.flash(snippet, 'danger',
+                                                  allow_duplicate=True)
                         result = {'form': form.render(validated)}
                 break
 
@@ -271,3 +201,74 @@ class FileUploadTempStore(object):
             raise KeyError(name)
         return data
 
+class DeformRendererFactory(object):
+    """
+    Construct a custom Chameleon ZPT :term:`renderer` for Deform/Substance D.
+
+    If the template name is an asset spec (ends with a concrete filename
+    extension), use the Pyramid rendering machinery to resolve it.
+    Otherwise, fall back to the Deform rendering (search-path-based)
+    machinery to resolve it.
+
+    This allows users to specify templates without the trouble of needing to
+    add search paths to the deform rendering machinery.
+
+    **Arguments**
+
+    search_path
+      A sequence of strings representing fully qualified filesystem
+      directories containing Deform Chameleon template sources.  The
+      order in which the directories are listed within ``search_path``
+      is the order in which they are checked for the template provided
+      to the renderer.
+
+    auto_reload
+       If true, automatically reload templates when they change (slows
+       rendering).  Default: ``True``.
+
+    debug
+       If true, show nicer tracebacks during Chameleon template rendering
+       errors (slows rendering).  Default: ``True``.
+
+    encoding
+       The encoding that the on-disk representation of the templates
+       and all non-ASCII values passed to the template should be
+       expected to adhere to.  Default: ``utf-8``.
+
+    translator
+       A translation function used for internationalization when the
+       ``i18n:translate`` attribute syntax is used in the Chameleon
+       template is active or a
+       :class:`translationstring.TranslationString` is encountered
+       during output.  It must accept a translation string and return
+       an interpolated translation.  Default: ``None`` (no translation
+       performed).
+    """
+    def __init__(self, search_path, auto_reload=True, debug=False,
+                 encoding='utf-8', translator=None):
+        self.translate = translator
+        loader = ZPTTemplateLoader(search_path=search_path,
+                                   auto_reload=auto_reload,
+                                   debug=debug,
+                                   encoding=encoding,
+                                   translate=ChameleonTranslate(translator))
+        self.loader = loader
+
+    def __call__(self, template_name, **kw):
+        return self.load(template_name)(**kw)
+
+    def load(self, template_name):
+        name, ext = os.path.splitext(template_name)
+        if ext:
+            return get_renderer(template_name).implementation()
+        else:
+            return self.loader.load(template_name + '.pt')
+
+def translator(term): # pragma: no cover
+    return get_localizer(get_current_request()).translate(term)
+
+def includeme(config): # pragma: no cover
+    deform_dir = resource_filename('deform', 'templates/')
+    search_path = (deform_dir,)
+    default_renderer = DeformRendererFactory(search_path, translator=translator)
+    deform.Form.set_default_renderer(default_renderer)

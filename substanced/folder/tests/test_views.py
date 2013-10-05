@@ -104,7 +104,6 @@ class TestFolderContents(unittest.TestCase):
     def _makeRequest(self, **kw):
         request = testing.DummyRequest()
         request.sdiapi = DummySDIAPI()
-        request.sdiapi.flash_with_undo = request.session.flash
         request.registry.content = DummyContent(**kw)
         return request
 
@@ -418,6 +417,21 @@ class TestFolderContents(unittest.TestCase):
         self.assertEqual(length, 1)
         self.assertEqual(len(records), 1)
 
+    def test__folder_contents_with_global_filter_value_with_phrases(self):
+        from substanced.interfaces import IFolder
+        context = DummyFolder(__provides__=IFolder)
+        request = self._makeRequest()
+        context['catalogs'] = self._makeCatalogs(oids=[1])
+        result = testing.DummyResource()
+        result.__name__ = 'fred'
+        context.__objectmap__ = DummyObjectMap(result)
+        inst = self._makeOne(context, request)
+        request.registry.content = DummyContent()
+        info = inst._folder_contents(filter_values=[('', '"abc" def')])
+        length, records = info['length'], info['records']
+        self.assertEqual(length, 1)
+        self.assertEqual(len(records), 1)
+        
     def test__folder_contents_with_global_filter_value_multiple_words(self):
         from substanced.interfaces import IFolder
         context = DummyFolder(__provides__=IFolder)
@@ -582,6 +596,23 @@ class TestFolderContents(unittest.TestCase):
                 ('', 'abc'),
                 ('foo', 'def'),
                 ('bar', 'ghi'),
+                ])
+        
+    def test_get_filter_values_with_None_and_empty(self):
+        from substanced.interfaces import IFolder
+        context = DummyFolder(__provides__=IFolder)
+        request = self._makeRequest()
+        request.params = DummyContent()
+        request.params.items = lambda *arg: [
+                ('filter.', 'abc'),
+                ('filter.foo', None),
+                ('filter.bar', ''),
+                ]
+        inst = self._makeOne(context, request)
+        result = inst.get_filter_values()
+        self.assertEqual(result, [
+                ('', 'abc'),
+                ('bar', ''),
                 ])
         
     def test__folder_contents_folder_is_ordered(self):
@@ -768,7 +799,7 @@ class TestFolderContents(unittest.TestCase):
         request.POST = DummyPost()
         inst = self._makeOne(context, request)
         result = inst.delete()
-        self.assertEqual(request.session['_f_'], ['No items deleted'])
+        self.assertEqual(request.sdiapi.flashed, 'No items deleted')
         self.assertEqual(result.location, '/mgmt_path')
 
     def test_delete_one_deleted(self):
@@ -778,7 +809,7 @@ class TestFolderContents(unittest.TestCase):
         request.POST = DummyPost(None, 'a')
         inst = self._makeOne(context, request)
         result = inst.delete()
-        self.assertEqual(request.session['_f_'], ['Deleted 1 item'])
+        self.assertEqual(request.sdiapi.flashed, 'Deleted 1 item')
         self.assertEqual(result.location, '/mgmt_path')
         self.assertFalse('a' in context)
 
@@ -790,7 +821,7 @@ class TestFolderContents(unittest.TestCase):
         request.POST = DummyPost(None, 'a/b')
         inst = self._makeOne(context, request)
         result = inst.delete()
-        self.assertEqual(request.session['_f_'], ['Deleted 2 items'])
+        self.assertEqual(request.sdiapi.flashed, 'Deleted 2 items')
         self.assertEqual(result.location, '/mgmt_path')
         self.assertFalse('a' in context)
         self.assertFalse('b' in context)
@@ -802,7 +833,7 @@ class TestFolderContents(unittest.TestCase):
         request.POST = DummyPost(None, 'a/b')
         inst = self._makeOne(context, request)
         result = inst.delete()
-        self.assertEqual(request.session['_f_'], ['Deleted 1 item'])
+        self.assertEqual(request.sdiapi.flashed, 'Deleted 1 item')
         self.assertEqual(result.location, '/mgmt_path')
         self.assertFalse('a' in context)
 
@@ -821,7 +852,7 @@ class TestFolderContents(unittest.TestCase):
         mock_rename_duplicated_resource.assert_any_call(context, 'a')
         mock_rename_duplicated_resource.assert_any_call(context, 'b')
         request.sdiapi.flash_with_undo.assert_called_once_with(
-            'Duplicated 2 items')
+            'Duplicated 2 items', 'success')
         request.sdiapi.mgmt_path.called_once_with(context, '@@contents')
         context.copy.assert_any_call('a', context, 'a-1')
         context.copy.assert_any_call('b', context, 'b-1')
@@ -836,7 +867,7 @@ class TestFolderContents(unittest.TestCase):
         inst.duplicate()
 
         self.assertEqual(context.mock_calls, [])
-        request.session.flash.assert_called_once_with('No items duplicated')
+        request.sdiapi.flash.assert_called_once_with('No items duplicated')
         request.sdiapi.mgmt_path.called_once_with(context, '@@contents')
 
     @mock.patch('substanced.folder.views.rename_duplicated_resource')
@@ -853,7 +884,7 @@ class TestFolderContents(unittest.TestCase):
         mock_rename_duplicated_resource.assert_any_call(context, 'a')
         context.copy.assert_any_call('a', context, 'a-1')
         request.sdiapi.flash_with_undo.assert_called_once_with(
-            'Duplicated 1 item')
+            'Duplicated 1 item', 'success')
         request.sdiapi.mgmt_path.called_once_with(context, '@@contents')
 
     def test_rename_one(self):
@@ -893,9 +924,10 @@ class TestFolderContents(unittest.TestCase):
         context['foobar3'] = testing.DummyResource()
         request = self._makeRequest()
         request.POST = DummyPost(None, '')
+        request.sdiapi = DummySDIAPI()
         inst = self._makeOne(context, request)
         result = inst.rename()
-        self.assertEqual(request.session['_f_'], ['No items renamed'])
+        self.assertEqual(request.sdiapi.flashed, 'No items renamed')
         self.assertEqual(result.location, '/mgmt_path')
 
     def test_rename_finish(self):
@@ -911,7 +943,7 @@ class TestFolderContents(unittest.TestCase):
         inst = self._makeOne(context, request)
         inst.rename_finish()
         request.sdiapi.flash_with_undo.assert_called_once_with(
-            'Renamed 1 item')
+            'Renamed 1 item', 'success')
         context.rename.assert_called_once_with('foobar', 'foobar2')
 
     def test_rename_finish_multiple(self):
@@ -929,7 +961,7 @@ class TestFolderContents(unittest.TestCase):
         inst.rename_finish()
 
         request.sdiapi.flash_with_undo.assert_called_once_with(
-            'Renamed 2 items')
+            'Renamed 2 items', 'success')
         context.rename.assert_any_call('foobar', 'foobar0')
         context.rename.assert_any_call('foobar1', 'foobar11')
 
@@ -945,7 +977,7 @@ class TestFolderContents(unittest.TestCase):
         inst = self._makeOne(context, request)
         inst.rename_finish()
 
-        request.session.flash.assert_called_once_with('No items renamed')
+        request.sdiapi.flash.assert_called_once_with('No items renamed')
         self.assertFalse(context.rename.called)
 
     def test_rename_finish_already_exists(self):
@@ -964,7 +996,7 @@ class TestFolderContents(unittest.TestCase):
 
         self.assertRaises(HTTPFound, inst.rename_finish)
         context.rename.assert_any_call('foobar', 'foobar0')
-        request.session.flash.assert_called_once_with(_FOOBAR, 'error')
+        request.sdiapi.flash.assert_called_once_with(_FOOBAR, 'danger')
 
     @mock.patch('substanced.folder.views.get_oid')
     def test_copy_one(self, mock_get_oid):
@@ -978,7 +1010,7 @@ class TestFolderContents(unittest.TestCase):
         inst = self._makeOne(context, request)
         inst.copy()
 
-        request.session.flash.assert_called_once_with(
+        request.sdiapi.flash.assert_called_once_with(
             'Choose where to copy the items:', 'info')
         self.assertEqual(mock_get_oid.mock_calls, [mock.call('foobar')])
         self.assertTrue(request.session.__setitem__.called)
@@ -995,7 +1027,7 @@ class TestFolderContents(unittest.TestCase):
         inst = self._makeOne(context, request)
         inst.copy()
 
-        request.session.flash.assert_called_once_with(
+        request.sdiapi.flash.assert_called_once_with(
             'Choose where to copy the items:', 'info')
         self.assertEqual(mock_get_oid.mock_calls,
                          [mock.call('foobar'), mock.call('foobar1')])
@@ -1012,7 +1044,7 @@ class TestFolderContents(unittest.TestCase):
 
         inst = self._makeOne(context, request)
         inst.copy()
-        request.session.flash.assert_called_once_with(
+        request.sdiapi.flash.assert_called_once_with(
             'Choose where to copy the items:', 'info')
         self.assertEqual(mock_get_oid.mock_calls, [mock.call('foobar')])
         self.assertTrue(request.session.__setitem__.called)
@@ -1027,7 +1059,8 @@ class TestFolderContents(unittest.TestCase):
         inst = self._makeOne(context, request)
         inst.copy()
 
-        request.session.flash.assert_called_once_with('No items to copy')
+        request.sdiapi.flash.assert_called_once_with(
+            'No items to copy', 'warning')
         self.assertFalse(mock_get_oid.called)
 
     def test_copy_finish_cancel(self):
@@ -1040,7 +1073,8 @@ class TestFolderContents(unittest.TestCase):
         inst = self._makeOne(context, request)
         inst.copy_finish_cancel()
 
-        request.session.flash.assert_called_once_with('No items copied')
+        request.sdiapi.flash.assert_called_once_with(
+            'No items copied', 'success')
         self.assertEqual(request.session.__delitem__.call_args,
                          mock.call('tocopy'))
 
@@ -1062,15 +1096,15 @@ class TestFolderContents(unittest.TestCase):
 
         inst.copy_finish()
 
-        call_list = request.session.flash.call_args_list
+        call_list = request.sdiapi.flash.call_args_list
         self.assertEqual(len(call_list), 2)
 
-        request.session.flash.assert_any_call(
-            'No items copied')
-        request.session.flash.assert_any_call(
+        request.sdiapi.flash.assert_any_call(
+            'No items copied', 'warning')
+        request.sdiapi.flash.assert_any_call(
             '"%s" is of a type (%s) that is not addable here, not copied' % (
                 mock.sentinel.name, request.registry.content.typeof(None)
-                ), 'error',
+                ), 'danger',
             )
             
         self.assertEqual(request.session.__delitem__.call_args,
@@ -1094,7 +1128,8 @@ class TestFolderContents(unittest.TestCase):
 
         self.assertEqual(mock_folder.__parent__.copy.call_args,
                          mock.call(mock.sentinel.name, context))
-        request.sdiapi.flash_with_undo.assert_called_once_with('Copied 1 item')
+        request.sdiapi.flash_with_undo.assert_called_once_with(
+            'Copied 1 item', 'success')
         self.assertEqual(request.session.__delitem__.call_args,
                          mock.call('tocopy'))
 
@@ -1120,7 +1155,8 @@ class TestFolderContents(unittest.TestCase):
                         mock_find_objectmap().object_for.mock_calls)
         self.assertEqual(mock_folder.__parent__.copy.call_args,
                          mock.call(mock.sentinel.name, context))
-        request.sdiapi.flash_with_undo.assert_called_once_with('Copied 2 items')
+        request.sdiapi.flash_with_undo.assert_called_once_with(
+            'Copied 2 items', 'success')
         self.assertEqual(request.session.__delitem__.call_args,
                          mock.call('tocopy'))
 
@@ -1141,7 +1177,7 @@ class TestFolderContents(unittest.TestCase):
         ct = request.registry.content.typeof(None)
         inst.sdi_add_views = lambda *arg: [ {'content_type':ct} ]
         self.assertRaises(HTTPFound, inst.copy_finish)
-        request.session.flash.assert_called_once_with(_FOOBAR, 'error')
+        request.sdiapi.flash.assert_called_once_with(_FOOBAR, 'danger')
 
     @mock.patch('substanced.folder.views.get_oid')
     def test_move_one(self, mock_get_oid):
@@ -1155,7 +1191,7 @@ class TestFolderContents(unittest.TestCase):
         inst = self._makeOne(context, request)
         inst.move()
 
-        request.session.flash.assert_called_once_with(
+        request.sdiapi.flash.assert_called_once_with(
             'Choose where to move the items:', 'info')
         self.assertEqual(mock_get_oid.mock_calls, [mock.call('foobar')])
         self.assertTrue(request.session.__setitem__.call_args,
@@ -1172,7 +1208,7 @@ class TestFolderContents(unittest.TestCase):
         inst = self._makeOne(context, request)
         inst.move()
 
-        request.session.flash.assert_called_once_with(
+        request.sdiapi.flash.assert_called_once_with(
             'Choose where to move the items:', 'info')
         self.assertEqual(mock_get_oid.mock_calls,
                          [mock.call('foobar'), mock.call('foobar1')])
@@ -1190,7 +1226,7 @@ class TestFolderContents(unittest.TestCase):
         inst = self._makeOne(context, request)
         inst.move()
 
-        request.session.flash.assert_called_once_with(
+        request.sdiapi.flash.assert_called_once_with(
             'Choose where to move the items:', 'info')
         self.assertEqual(mock_get_oid.mock_calls, [mock.call('foobar')])
         self.assertTrue(request.session.__setitem__.call_args,
@@ -1207,7 +1243,8 @@ class TestFolderContents(unittest.TestCase):
         inst = self._makeOne(context, request)
         inst.move()
 
-        request.session.flash.assert_called_once_with('No items to move')
+        request.sdiapi.flash.assert_called_once_with(
+            'No items to move', 'warning')
         self.assertFalse(mock_get_oid.called)
         self.assertFalse(request.session.__setitem__.called)
 
@@ -1221,7 +1258,8 @@ class TestFolderContents(unittest.TestCase):
         inst = self._makeOne(context, request)
         inst.move_finish_cancel()
 
-        request.session.flash.assert_called_once_with('No items moved')
+        request.sdiapi.flash.assert_called_once_with(
+            'No items moved', 'success')
         self.assertEqual(request.session.__delitem__.call_args,
                          mock.call('tomove'))
 
@@ -1243,15 +1281,15 @@ class TestFolderContents(unittest.TestCase):
 
         inst.move_finish()
 
-        call_list = request.session.flash.call_args_list
+        call_list = request.sdiapi.flash.call_args_list
         self.assertEqual(len(call_list), 2)
 
-        request.session.flash.assert_any_call(
-            'No items moved')
-        request.session.flash.assert_any_call(
+        request.sdiapi.flash.assert_any_call(
+            'No items moved', 'warning')
+        request.sdiapi.flash.assert_any_call(
             '"%s" is of a type (%s) that is not addable here, not moved' % (
                 mock.sentinel.name, request.registry.content.typeof(None)
-                ), 'error',
+                ), 'danger',
             )
             
         self.assertEqual(request.session.__delitem__.call_args,
@@ -1275,7 +1313,8 @@ class TestFolderContents(unittest.TestCase):
 
         self.assertEqual(mock_folder.__parent__.move.call_args,
                          mock.call(mock.sentinel.name, context))
-        request.sdiapi.flash_with_undo.assert_called_once_with('Moved 1 item')
+        request.sdiapi.flash_with_undo.assert_called_once_with(
+            'Moved 1 item', 'success')
         self.assertEqual(request.session.__delitem__.call_args,
                          mock.call('tomove'))
 
@@ -1303,7 +1342,8 @@ class TestFolderContents(unittest.TestCase):
                          mock.call(mock.sentinel.name, context))
         self.assertEqual(request.session.__delitem__.call_args,
                          mock.call('tomove'))
-        request.sdiapi.flash_with_undo.assert_called_once_with('Moved 2 items')
+        request.sdiapi.flash_with_undo.assert_called_once_with(
+            'Moved 2 items', 'success')
 
     @mock.patch('substanced.folder.views.find_objectmap')
     def test_move_finish_already_exists(self, mock_find_objectmap):
@@ -1322,7 +1362,7 @@ class TestFolderContents(unittest.TestCase):
         ct = request.registry.content.typeof(None)
         inst.sdi_add_views = lambda *arg: [ {'content_type':ct} ]
         self.assertRaises(HTTPFound, inst.move_finish)
-        request.session.flash.assert_called_once_with(_FOOBAR, 'error')
+        request.sdiapi.flash.assert_called_once_with(_FOOBAR, 'danger')
 
     def test_reorder_rows(self):
         context = testing.DummyResource()
@@ -1345,7 +1385,8 @@ class TestFolderContents(unittest.TestCase):
         mockundowrapper.assert_called_once_with('2 rows moved.')
         self.assertEqual(
             result,
-            {'foo': 'bar', 'flash': 'STATUSMESSG<a>Undo</a>'}
+            {'foo': 'bar', 'flash': 'STATUSMESSG<a>Undo</a>',
+             'flash_queue':'success'}
             )
 
     def test_reorder_rows_after_last(self):
@@ -1369,7 +1410,8 @@ class TestFolderContents(unittest.TestCase):
         mockundowrapper.assert_called_once_with('2 rows moved.')
         self.assertEqual(
             result,
-            {'foo': 'bar', 'flash': 'STATUSMESSG<a>Undo</a>'}
+            {'foo': 'bar', 'flash': 'STATUSMESSG<a>Undo</a>',
+             'flash_queue':'success'}
             )
 
     def test__name_sorter_index_is_None(self):
@@ -1412,7 +1454,8 @@ class TestFolderContents(unittest.TestCase):
                 {'sorter': inst._name_sorter, 
                  'name': 'Name',
                  'formatter':'html',
-                 'value':'<i class=""> </i> <a href="/mgmt_path">fred</a>'},
+                 'value':('<i class="" title="Type \'fred\'"> </i> '
+                          '<a href="/mgmt_path">fred</a>')},
                 ]
            )
 
@@ -1429,7 +1472,8 @@ class TestFolderContents(unittest.TestCase):
                 {'sorter': inst._name_sorter, 
                  'name': 'Name',
                  'formatter':'html',
-                 'value':'<i class="icon"> </i> <a href="/mgmt_path">fred</a>'},
+                 'value':('<i class="icon" title="Type \'fred\'"> </i> '
+                          '<a href="/mgmt_path">fred</a>')},
                 ]
            )
 
@@ -1446,7 +1490,8 @@ class TestFolderContents(unittest.TestCase):
                 {'sorter': inst._name_sorter, 
                  'name': 'Name',
                  'formatter':'html',
-                 'value':'<i class="icon"> </i> <a href="/mgmt_path">fred</a>'},
+                 'value':('<i class="icon" title="Type \'fred\'"> </i> '
+                          '<a href="/mgmt_path">fred</a>')},
                 ]
            )
         
@@ -1682,6 +1727,26 @@ class Test_add_folder_contents_views(unittest.TestCase):
         class Foo(object): pass
         self._callFUT(config, slamdunk=1)
         self.assertEqual(config.settings[0]['slamdunk'], 1)
+
+class Test_generate_text_filter_terms(unittest.TestCase):
+    def _callFUT(self, filter_text):
+        from substanced.folder.views import generate_text_filter_terms
+        return generate_text_filter_terms(filter_text)
+
+    def test_with_glob_pattern(self):
+        filter_text = 'foo bar*'
+        terms = self._callFUT(filter_text)
+        self.assertEqual(terms, ['foo*', 'bar*'])
+
+    def test_without_glob_pattern(self):
+        filter_text = 'foo bar'
+        terms = self._callFUT(filter_text)
+        self.assertEqual(terms, ['foo*', 'bar*'])
+
+    def test_with_phrase_pattern(self):
+        filter_text = 'foo "bar baz" "bar"'
+        terms = self._callFUT(filter_text)
+        self.assertEqual(terms, ['"bar baz"', '"bar"', 'foo*'])
         
 class DummyContainer(object):
     oid_store = {}
@@ -1704,6 +1769,8 @@ class DummyContent(object):
     def metadata(self, context, name, default=None):
         return getattr(self, name, default)
 
+    def typeof(self, resource):
+        return 'Type'
 
 class DummyPost(dict):
     def __init__(self, getall_result=(), get_result=None):
@@ -1721,6 +1788,9 @@ class DummyPost(dict):
 class DummySDIAPI(object):
     def mgmt_path(self, *arg, **kw):
         return '/mgmt_path'
+    def flash(self, msg, queue='info'):
+        self.flashed = msg
+    flash_with_undo = flash
 
 class DummyFolder(testing.DummyResource):
     def is_ordered(self):

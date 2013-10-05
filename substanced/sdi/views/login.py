@@ -58,7 +58,7 @@ def login(context, request):
         try:
             check_csrf_token(request)
         except:
-            request.session.flash('Failed login (CSRF)', 'error')
+            request.sdiapi.flash('Failed login (CSRF)', 'danger')
         else:
             login = request.params['login']
             password = request.params['password']
@@ -74,7 +74,7 @@ def login(context, request):
                 headers = remember(request, get_oid(user))
                 request.registry.notify(LoggedIn(login, user, context, request))
                 return HTTPFound(location = came_from, headers = headers)
-            request.session.flash('Failed login', 'error')
+            request.sdiapi.flash('Failed login', 'danger')
 
     # Pass this through FBO views (e.g., forbidden) which use its macros.
     template = get_renderer('substanced.sdi.views:templates/login.pt'

@@ -4,8 +4,6 @@ from pyramid.httpexceptions import (
     HTTPForbidden,
     )
 
-from ...interfaces import IFolder
-
 from .. import (
     mgmt_view,
     sdi_mgmt_views,
@@ -43,18 +41,3 @@ class ManagementViews(object):
         return HTTPFound(
             location=request.sdiapi.mgmt_path(request.context, view_name)
             )
-
-    @mgmt_view(
-        context=IFolder,
-        name='add',
-        tab_title='Add', 
-        permission='sdi.manage-contents',
-        renderer='templates/add.pt',
-        tab_condition=False
-        )
-    def add_content(self):
-        views = self.sdi_add_views(self.context, self.request)
-        if len(views) == 1:
-            return HTTPFound(location=views[0]['url'])
-        return {'views':views}
-

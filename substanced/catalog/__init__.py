@@ -86,7 +86,7 @@ def catalog_buttons(context, request, default_buttons):
 
 @content(
     'Catalog',
-    icon='icon-search',
+    icon='glyphicon glyphicon-search',
     service_name='catalog',
     buttons=catalog_buttons,
     )
@@ -411,7 +411,7 @@ class Catalog(Folder):
 @service(
     'Catalogs',
     service_name='catalogs',
-    icon='icon-search',
+    icon='glyphicon glyphicon-search',
     )
 class CatalogsService(Folder):
 
@@ -733,3 +733,4 @@ def includeme(config): # pragma: no cover
         deferred.BasicActionProcessor,
         (Interface,), IIndexingActionProcessor
         )
+    config.include('.evolve')

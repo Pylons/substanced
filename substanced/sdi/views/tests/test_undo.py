@@ -40,7 +40,7 @@ class TestUndoViews(unittest.TestCase):
         context = testing.DummyResource()
         inst = self._makeOne(context, request)
         inst.undo_recent()
-        self.assertEqual(request.session['_f_error'], ['Could not undo, sorry'])
+        self.assertEqual(request.sdiapi.flashed, 'Could not undo, sorry')
         
     def test_undo_recent_with_undo_info_no_match(self):
         record = {'description':'desc', 'id':'abc'}
@@ -53,7 +53,7 @@ class TestUndoViews(unittest.TestCase):
         context = testing.DummyResource()
         inst = self._makeOne(context, request)
         inst.undo_recent()
-        self.assertEqual(request.session['_f_error'], ['Could not undo, sorry'])
+        self.assertEqual(request.sdiapi.flashed, 'Could not undo, sorry')
 
     def test_undo_recent_with_undo_info_match(self):
         record = {'undohash':'abc', 'id':'abc', 'description':'desc'}
@@ -68,8 +68,7 @@ class TestUndoViews(unittest.TestCase):
         transaction = DummyTransaction()
         inst.transaction = transaction
         inst.undo_recent()
-        self.assertEqual(len(request.session['_f_success']), 1)
-        self.assertEqual(len(conn._db.undone), 1)
+        self.assertTrue(request.sdiapi.flashed)
         self.assertEqual(transaction.committed, True)
 
     def test_undo_recent_with_undo_info_POSError(self):
@@ -86,7 +85,7 @@ class TestUndoViews(unittest.TestCase):
         inst = self._makeOne(context, request)
         inst.transaction = transaction
         inst.undo_recent()
-        self.assertEqual(len(request.session['_f_error']), 1)
+        self.assertTrue(request.sdiapi.flashed)
         self.assertEqual(len(conn._db.undone), 0)
         self.assertEqual(transaction.aborted, True)
 
@@ -103,11 +102,16 @@ class TestUndoViews(unittest.TestCase):
         self.assertEqual(db, conn._db)
 
     def test__undoable_transactions(self):
+        import datetime
         import time
+        from pytz import UTC
         request = testing.DummyRequest()
+        request.user = testing.DummyResource()
+        request.user.timezone = UTC
         context = testing.DummyResource()
         now = time.time()
-        now_ctime = time.ctime(now)[4:][:-5]
+        now_ctime = datetime.datetime.fromtimestamp(now).strftime(
+            '%Y-%m-%d %H:%M:%S UTC')
         record1 = dict(
             time=now,
             description=b'abc',
@@ -233,8 +237,8 @@ class TestUndoViews(unittest.TestCase):
         self.assertEqual(result.location, '/mgmt_path')
         self.assertTrue(txn.aborted)
         self.assertEqual(
-            request.session,
-            {'_f_error': ['Could not undo, sorry']}
+            request.sdiapi.flashed,
+            'Could not undo, sorry'
             )
 
     def test_undo_no_transactions(self):
@@ -346,6 +350,8 @@ class DummyConnection(object):
 class DummySDIAPI(object):
     def mgmt_path(self, *arg, **kw):
         return '/mgmt_path'
+    def flash(self, msg, queue='info'):
+        self.flashed = msg
 
 class DummyTransaction(object):
     def commit(self):

@@ -991,6 +991,7 @@ class Test_user(unittest.TestCase):
 class Test_sdiapi(unittest.TestCase):
     def setUp(self):
         self.config = testing.setUp()
+        self.config.include('pyramid_chameleon')
 
     def tearDown(self):
         testing.tearDown()
@@ -1015,7 +1016,7 @@ class Test_sdiapi(unittest.TestCase):
         inst.get_connection = lambda *arg: connection
         inst.transaction = DummyTransaction()
         inst.flash_with_undo('message')
-        self.assertEqual(request.session['_f_'], ['message'])
+        self.assertEqual(request.session['_f_info'], ['message'])
         self.assertFalse(inst.transaction.notes)
 
     def test_flash_with_undo_db_doesnt_support_undo(self):
@@ -1026,7 +1027,7 @@ class Test_sdiapi(unittest.TestCase):
         inst.get_connection = lambda *arg: connection
         inst.transaction = DummyTransaction()
         inst.flash_with_undo('message')
-        self.assertEqual(request.session['_f_'], ['message'])
+        self.assertEqual(request.session['_f_info'], ['message'])
         self.assertFalse(inst.transaction.notes)
 
     def test_flash_with_undo_gardenpath(self):
@@ -1041,11 +1042,29 @@ class Test_sdiapi(unittest.TestCase):
         with testing.testConfig() as config:
             config.include('pyramid_chameleon')
             inst.flash_with_undo('message')
-        self.assertEqual(request.session['_f_'],
-                         [u('<span>message <a href="/mg" class="btn btn-mini '
+        self.assertEqual(request.session['_f_info'],
+                         [u('<span>message <a href="/mg" class="btn btn-xs '
                             'btn-info">Undo</a></span>\n')])
         self.assertTrue(inst.transaction.notes)
 
+    def test_flash_gardenpath(self):
+        request = testing.DummyRequest()
+        inst = self._makeOne(request)
+        inst.flash('message')
+        self.assertEqual(request.session['_f_info'], ['message'])
+
+    def test_flash_gardenpath_altqueue(self):
+        request = testing.DummyRequest()
+        inst = self._makeOne(request)
+        inst.flash('message', 'danger')
+        self.assertEqual(request.session['_f_danger'], ['message'])
+
+    def test_flash_error_converted_to_danger(self):
+        request = testing.DummyRequest()
+        inst = self._makeOne(request)
+        inst.flash('message', 'error')
+        self.assertEqual(request.session['_f_danger'], ['message'])
+        
     def test_mgmt_path(self):
         from .. import MANAGE_ROUTE_NAME
         request = testing.DummyRequest()
@@ -1120,10 +1139,29 @@ class Test_sdiapi(unittest.TestCase):
             result,
              [{'url': '/mgmt_path',
                'active': 'active',
+               'content_type':'Type',
                'name': 'Home',
                'icon': None}]
             )
 
+    def test_breadcrumbs_with_sdi_title(self):
+        self.config.testing_securitypolicy(permissive=True)
+        resource = testing.DummyResource()
+        resource.sdi_title = 'foo'
+        request = testing.DummyRequest()
+        request.sdiapi = DummySDIAPI()
+        request.context = resource
+        request.registry.content = DummyContent()
+        inst = self._makeOne(request)
+        result = inst.breadcrumbs()
+        self.assertEqual(
+            result,
+             [{'url': '/mgmt_path',
+               'active': 'active',
+               'content_type':'Type',
+               'name': 'foo',
+               'icon': None}]
+            )
     def test_breadcrumbs_with_vroot(self):
         self.config.testing_securitypolicy(permissive=True)
         resource = testing.DummyResource()
@@ -1142,6 +1180,7 @@ class Test_sdiapi(unittest.TestCase):
              [{'url': '/mgmt_path',
                'active': 'active',
                'name': 'second',
+               'content_type':'Type',
                'icon': None}]
             )
         
@@ -1187,6 +1226,25 @@ class Test_sdiapi(unittest.TestCase):
                 'substanced.sdi.views:templates/master.pt', 'main')
         self.assertTrue(macro.include)
 
+    def test_is_mgmt_true(self):
+        request = testing.DummyRequest()
+        request.matched_route = Dummy()
+        request.matched_route.name = 'substanced_manage'
+        inst = self._makeOne(request)
+        self.assertTrue(inst.is_mgmt())
+        
+    def test_is_mgmt_false_wrong_name(self):
+        request = testing.DummyRequest()
+        request.matched_route = Dummy()
+        request.matched_route.name = 'not_substanced_manage'
+        inst = self._makeOne(request)
+        self.assertFalse(inst.is_mgmt())
+
+    def test_is_mgmt_false_missing_matched_route(self):
+        request = testing.DummyRequest()
+        inst = self._makeOne(request)
+        self.assertFalse(inst.is_mgmt())
+        
 class Test_mgmt_path(unittest.TestCase):
     def _callFUT(self, *arg, **kw):
         from .. import mgmt_path
@@ -1254,6 +1312,9 @@ class DummyContent(object):
         
     def metadata(self, context, name, default=None):
         return getattr(self, name, default)
+
+    def typeof(self, resource):
+        return 'Type'
 
 class DummyIntrospector(object):
     def __init__(self, results=()):

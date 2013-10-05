@@ -52,7 +52,12 @@ def main():
     env = bootstrap(config_uri)
     root = env['root']
 
-    source = traverse(root, source)['context']
+    traversed = traverse(root, source)
+
+    if traversed['view_name']:
+        parser.error('No dumpable object at %s' % source)
+        
+    source = traversed['context']
 
     dump(source, dest)
 

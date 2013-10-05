@@ -101,6 +101,9 @@ class TestBatch(unittest.TestCase):
                          'http://example.com?batch_num=1&batch_size=3')
         self.assertEqual(inst.last_url,
                          'http://example.com?batch_num=2&batch_size=3')
+        self.assertEqual(inst.startitem, 0)
+        self.assertEqual(inst.enditem, 2)
+        self.assertEqual(inst.seqlen, 7)
 
     def test_it_first_batch_of_3_generator(self):
         def gen():
@@ -124,6 +127,9 @@ class TestBatch(unittest.TestCase):
                          'http://example.com?batch_num=1&batch_size=3')
         self.assertEqual(inst.last_url,
                          'http://example.com?batch_num=2&batch_size=3')
+        self.assertEqual(inst.startitem, 0)
+        self.assertEqual(inst.enditem, 2)
+        self.assertEqual(inst.seqlen, 7)
 
     def test_it_second_batch_of_3(self):
         seq = [1,2,3,4,5,6,7]
@@ -146,6 +152,9 @@ class TestBatch(unittest.TestCase):
                          'http://example.com?batch_num=2&batch_size=3')
         self.assertEqual(inst.last_url,
                          'http://example.com?batch_num=2&batch_size=3')
+        self.assertEqual(inst.startitem, 3)
+        self.assertEqual(inst.enditem, 5)
+        self.assertEqual(inst.seqlen, 7)
 
     def test_it_second_batch_of_3_generator(self):
         def gen():
@@ -171,6 +180,9 @@ class TestBatch(unittest.TestCase):
                          'http://example.com?batch_num=2&batch_size=3')
         self.assertEqual(inst.last_url,
                          'http://example.com?batch_num=2&batch_size=3')
+        self.assertEqual(inst.startitem, 3)
+        self.assertEqual(inst.enditem, 5)
+        self.assertEqual(inst.seqlen, 7)
 
     def test_it_third_batch_of_3(self):
         seq = [1,2,3,4,5,6,7]
@@ -191,6 +203,9 @@ class TestBatch(unittest.TestCase):
                          'http://example.com?batch_num=1&batch_size=3')
         self.assertEqual(inst.next_url, None)
         self.assertEqual(inst.last_url, None)
+        self.assertEqual(inst.startitem, 6)
+        self.assertEqual(inst.enditem, 6)
+        self.assertEqual(inst.seqlen, 7)
 
     def test_it_third_batch_of_3_generator(self):
         def gen():
@@ -214,6 +229,9 @@ class TestBatch(unittest.TestCase):
                          'http://example.com?batch_num=1&batch_size=3')
         self.assertEqual(inst.next_url, None)
         self.assertEqual(inst.last_url, None)
+        self.assertEqual(inst.startitem, 6)
+        self.assertEqual(inst.enditem, 6)
+        self.assertEqual(inst.seqlen, 7)
 
     def test_it_invalid_batch_num(self):
         seq = [1,2,3,4,5,6,7]
@@ -287,6 +305,24 @@ class TestBatch(unittest.TestCase):
         expected = [ [1,2], [3,4], [5,6] ]
         self.assertEqual(cols, expected)
 
+    def test___iter__(self):
+        seq = [1,2,3,4,5,6,7]
+        request = testing.DummyRequest()
+        request.params['batch_num'] = 0
+        request.params['batch_size'] = 3
+        request.url = 'http://example.com'
+        inst = self._makeOne(seq, request)
+        self.assertEqual(list(iter(inst)), [1,2,3])
+
+    def test___len__(self):
+        seq = [1,2,3,4,5,6,7]
+        request = testing.DummyRequest()
+        request.params['batch_num'] = 0
+        request.params['batch_size'] = 3
+        request.url = 'http://example.com'
+        inst = self._makeOne(seq, request)
+        self.assertEqual(len(inst), 3)
+        
 class Test_merge_url_qs(unittest.TestCase):
     def _callFUT(self, url, **kw):
         from . import merge_url_qs

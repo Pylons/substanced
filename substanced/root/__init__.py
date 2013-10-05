@@ -31,7 +31,7 @@ class RootPropertySheet(PropertySheet):
 
 @content(
     'Root',
-    icon='icon-home',
+    icon='subd-capsule',
     propertysheets = (
         ('', RootPropertySheet),
         ),

@@ -56,7 +56,7 @@
                 var iconName = value.icon || '';
                 var labelUrl = value.url;
                 var label = value.name;
-                var result = '<i class="' + iconName + '"> </i> ';
+                var result = '<i class="'+ iconName + '"> </i> ';
                 if (labelUrl) {
                     result += '<a href="' + labelUrl + '">' + label + '</a>';
                 } else {
@@ -135,7 +135,7 @@
             if (this.wrapperOptions.showCheckboxColumn) {
                 this.element.on('click', "." + cbo_class, function (evt) {
                     $(this).find(":checkbox").click();
-                })
+                });
             }
 
             var sortCol = wrapperOptions.sortCol;

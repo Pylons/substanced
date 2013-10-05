@@ -52,7 +52,7 @@ class BlogEntryPropertySheet(PropertySheet):
 
 @content(
     'Blog Entry',
-    icon='icon-book',
+    icon='glyphicon glyphicon-book',
     add_view='add_blog_entry',
     propertysheets=(
         ('Basic', BlogEntryPropertySheet),
@@ -98,7 +98,7 @@ class CommentPropertySheet(PropertySheet):
 
 @content(
     'Comment',
-    icon='icon-comment',
+    icon='glyphicon glyphicon-comment',
     add_view='add_comment',
     propertysheets = (
         ('Basic', CommentPropertySheet),
@@ -143,7 +143,7 @@ def blog_columns(folder, subobject, request, default_columnspec):
 
 @content(
     'Root',
-    icon='icon-home',
+    icon='glyphicon glyphicon-home',
     propertysheets = (
         ('', BlogPropertySheet),
         ),

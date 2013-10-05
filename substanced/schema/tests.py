@@ -228,6 +228,7 @@ class TestMultireferenceIdSchemaNode(unittest.TestCase):
         inst._get_choices = lambda: [1]
         widget = inst.widget
         self.assertEqual(widget.values, [1])
+        self.assertTrue(widget.multiple)
 
 class DummySession(dict):
     def get_csrf_token(self):

@@ -519,6 +519,10 @@ class BasicActionProcessor(object):
                             action.execute()
                         except ResourceNotFound as e:
                             self.logger.info(repr(e))
+                        except (SystemExit, KeyboardInterrupt, Break):
+                            raise
+                        except Exception as e:
+                            self.logger.error(repr(e))
                         else:
                             commit = True
 

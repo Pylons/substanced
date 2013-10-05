@@ -65,7 +65,7 @@ class ACLEditViews(object):
             new = self.acl[:]
             new[index-1], new[index] = new[index], new[index-1]
             self.acl = new
-        self.request.sdiapi.flash_with_undo('ACE moved up')
+        self.request.sdiapi.flash_with_undo('ACE moved up', 'success')
         return self.finish_acl_edit()
 
     @mgmt_view(request_param='form.move_down', tab_title='Security')
@@ -76,7 +76,7 @@ class ACLEditViews(object):
             new = self.acl[:]
             new[index+1], new[index] = new[index], new[index+1]
             self.acl = new
-        self.request.sdiapi.flash_with_undo('ACE moved down')
+        self.request.sdiapi.flash_with_undo('ACE moved down', 'success')
         return self.finish_acl_edit()
 
     @mgmt_view(request_param='form.remove', tab_title='Security')
@@ -86,7 +86,7 @@ class ACLEditViews(object):
         new = self.acl[:]
         del new[index]
         self.acl = new
-        self.request.sdiapi.flash_with_undo('ACE removed')
+        self.request.sdiapi.flash_with_undo('ACE removed', 'success')
         return self.finish_acl_edit()
 
     @mgmt_view(request_param='form.add', tab_title='Security')
@@ -104,14 +104,14 @@ class ACLEditViews(object):
                 principal_id = None
                 
         if principal_id is None:
-            self.request.session.flash('No principal selected', 'error')
+            self.request.sdiapi.flash('No principal selected', 'danger')
             
         else:
             if principal_id not in (Everyone, Authenticated):
                 if objectmap.object_for(principal_id) is None:
-                    self.request.session.flash(
+                    self.request.sdiapi.flash(
                         'Unknown user or group when adding ACE',
-                        'error')
+                        'danger')
                     principal_id = None
                     
             if principal_id is not None:
@@ -123,7 +123,7 @@ class ACLEditViews(object):
                 new = self.acl[:]
                 new.append((verb, principal_id, permissions))
                 self.acl = new
-                self.request.sdiapi.flash_with_undo('New ACE added')
+                self.request.sdiapi.flash_with_undo('New ACE added', 'success')
         return self.finish_acl_edit()
                 
     @mgmt_view(request_param='form.inherit', tab_title='Security')
@@ -133,11 +133,11 @@ class ACLEditViews(object):
         if no_inherit:
             self.epilog = [NO_INHERIT]
             self.request.sdiapi.flash_with_undo(
-                'ACL will *not* inherit from parent')
+                'ACL will *not* inherit from parent', 'success')
         else:
             self.epilog = []
             self.request.sdiapi.flash_with_undo(
-                'ACL will inherit from parent')
+                'ACL will inherit from parent', 'success')
         return self.finish_acl_edit()
 
     def get_principal_name(self, principal_id):

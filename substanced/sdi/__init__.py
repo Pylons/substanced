@@ -510,10 +510,22 @@ class sdiapi(object):
             snippet = button
         return snippet
 
-    def flash_with_undo(self, msg, queue='', allow_duplicate=True):
+    def flash_with_undo(self, msg, queue='info', allow_duplicate=True):
         request = self.request
         snippet = self.get_flash_with_undo_snippet(msg)
         request.session.flash(snippet, queue, allow_duplicate=allow_duplicate)
+
+    def flash(self, msg, queue='info', allow_duplicate=True):
+        if queue == 'error':
+            queue = 'danger' # bw compat for bs3 alert names
+        request = self.request
+        request.session.flash(msg, queue, allow_duplicate=allow_duplicate)
+
+    def is_mgmt(self):
+        """ Return true if the current request is for a resource that is under
+        ``/manage`` """
+        matched_route = getattr(self.request, 'matched_route', None)
+        return getattr(matched_route, 'name', None) == MANAGE_ROUTE_NAME
 
     def mgmt_path(self, obj, *arg, **kw):
         """ Return the path of the resource ``obj`` with the ``manage`` path
@@ -540,11 +552,20 @@ class sdiapi(object):
             if not has_permission('sdi.view', resource, request):
                 return []
             url = request.sdiapi.mgmt_path(resource, '@@manage_main')
-            name = resource.__name__ or 'Home'
+            name = getattr(resource, 'sdi_title', None)
+            if name is None:
+                name = resource.__name__ or 'Home'
             icon = request.registry.content.metadata(resource, 'icon')
+            content_type = request.registry.content.typeof(resource)
             active = resource is request.context and 'active' or None
-            breadcrumbs.insert(0, {'url':url, 'name':name, 'active':active,
-                                   'icon':icon})
+            bcinfo = {
+                'url':url,
+                'name':name,
+                'active':active,
+                'icon':icon,
+                'content_type':content_type,
+                }
+            breadcrumbs.insert(0, bcinfo)
             if resource is request.virtual_root:
                 break
         return breadcrumbs
@@ -585,7 +606,6 @@ def includeme(config): # pragma: no cover
     config.add_request_method(flash_with_undo) # XXX deprecate
     config.add_request_method(user, reify=True)
     config.add_request_method(sdiapi, reify=True)
-    config.include('deform_bootstrap')
     secret = settings.get('substanced.secret')
     if secret is None:
         raise ConfigurationError(
@@ -609,4 +629,3 @@ def includeme(config): # pragma: no cover
     config.set_authentication_policy(authn_policy)
     config.set_authorization_policy(authz_policy)
     config.add_permission('sdi.edit-properties') # used by property machinery
-    config.include('.views.folder')

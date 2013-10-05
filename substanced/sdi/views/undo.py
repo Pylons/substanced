@@ -1,4 +1,4 @@
-import time
+import datetime
 import transaction
 import ZODB.POSException
 
@@ -54,7 +54,7 @@ class UndoViews(object):
                 undo = dict(record)
                 break
         if undo is None:
-            request.session.flash('Could not undo, sorry', 'error')
+            request.sdiapi.flash('Could not undo, sorry', 'danger')
         else:
             tid = undo['id']
             try:
@@ -63,11 +63,11 @@ class UndoViews(object):
                 msg = 'Undid: %s' % undo['description']
                 self.transaction.get().note(msg)
                 self.transaction.commit() 
-                request.session.flash(msg, 'success')
+                request.sdiapi.flash(msg, 'success')
             except ZODB.POSException.POSError:
                 self.transaction.abort()
                 msg = 'Could not undo, sorry'
-                request.session.flash(msg, 'error')
+                request.sdiapi.flash(msg, 'error')
         return HTTPFound(
             request.referrer or request.sdiapi.mgmt_path(request.context)
             )
@@ -104,11 +104,11 @@ class UndoViews(object):
                 self._get_db().undoMultiple(tids)
                 # provoke MultipleUndoErrors exception immediately
                 self.transaction.commit() 
-                request.session.flash(undid, 'success')
+                request.sdiapi.flash(undid, 'success')
             except ZODB.POSException.POSError:
                 self.transaction.abort()
                 msg = 'Could not undo, sorry'
-                request.session.flash(msg, 'error')
+                request.sdiapi.flash(msg, 'error')
 
         return HTTPFound(request.sdiapi.mgmt_path(request.context, 'undo'))
 
@@ -119,8 +119,12 @@ class UndoViews(object):
 
         r = db.undoLog(first, last)
 
+        tz = self.request.user.timezone
+        
         for d in r:
-            d['time'] = time.ctime(d['time'])[4:][:-5]
+            t = datetime.datetime.fromtimestamp(d['time'])
+            t = tz.localize(t).strftime('%Y-%m-%d %H:%M:%S %Z')
+            d['time'] = t
             desc = d['description'] or b''
             tid = d['id']
             un = d['user_name']

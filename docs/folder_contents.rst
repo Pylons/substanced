@@ -53,7 +53,7 @@ mappings conforming to the datagrid's contract. For example:
 
     @content(
         'Binder',
-        icon='icon-book',
+        icon='glyphicon glyphicon-book',
         add_view='add_binder',
         propertysheets = (
             ('Basic', BinderPropertySheet),
@@ -118,7 +118,7 @@ The :py:mod:`substanced.catalog` module's ``@content`` directive has a
 
     @content(
         'Catalog',
-        icon='icon-search',
+        icon='glyphicon glyphicon-search',
         service_name='catalog',
         buttons=catalog_buttons,
         )
@@ -184,14 +184,14 @@ then register a view against this.
         toreindex = request.POST.getall('item-modify')
         if toreindex:
             context.reindex(indexes=toreindex, registry=request.registry)
-            request.session.flash(
+            request.sdiapi.flash(
                 'Reindex of selected indexes succeeded',
                 'success'
                 )
         else:
-            request.session.flash(
+            request.sdiapi.flash(
                 'No indexes selected to reindex',
-                'error'
+                'danger'
                 )
 
         return HTTPFound(request.sdiapi.mgmt_path(context, '@@contents'))
@@ -306,7 +306,7 @@ type declaration:
 
     @content(
         'Binder',
-        icon='icon-book',
+        icon='glyphicon glyphicon-book',
         add_view='add_binder',
         propertysheets = (
             ('Basic', BinderPropertySheet),

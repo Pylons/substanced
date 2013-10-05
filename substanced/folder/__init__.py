@@ -52,7 +52,7 @@ class FolderKeyError(KeyError):
 
 @content(
     'Folder',
-    icon='icon-folder-close',
+    icon='glyphicon glyphicon-folder-close',
     add_view='add_folder',
     )
 @implementer(IFolder)
@@ -912,4 +912,8 @@ def includeme(config): # pragma: no cover
     # database due to __parent__ pointers.
     config.registry.registerAdapter(CopyHook, (IPersistent,), ICopyHook)
     config.hook_zca() # required by zope.copy (it uses a global adapter lkup)
-    
+    YEAR = 86400 * 365
+    config.add_static_view('fcstatic', 'substanced.folder:static',
+                           cache_max_age=YEAR)
+    config.include('.views')
+

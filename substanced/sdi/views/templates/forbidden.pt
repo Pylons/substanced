@@ -7,7 +7,7 @@
   <metal:slot metal:fill-slot="before-login-form">
   <metal:slot metal:define-slot="before-login-form">
 
-    <div class="alert alert-error">
+    <div class="alert alert-danger">
       Sorry, your account is not permitted to perform the requested action.
       You can try to log in using a different account below or you can
       <a onclick="javascript:history.go(-2)">return to where you were</a>.

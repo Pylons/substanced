@@ -129,7 +129,7 @@ class SDIndex(object):
 
 @content(
     'Path Index',
-    icon='icon-search',
+    icon='glyphicon glyphicon-search',
     is_index=True,
     )
 @implementer(hypatia.interfaces.IIndex)
@@ -153,7 +153,7 @@ class PathIndex(SDIndex, hypatia.util.BaseIndexMixin, Persistent):
         return path
 
     def reset(self):
-        self._not_indexed = self.family.IF.Set()
+        self._not_indexed = self.family.IF.TreeSet()
 
     def index_doc(self, docid, obj):
         pass
@@ -250,7 +250,7 @@ class PathIndex(SDIndex, hypatia.util.BaseIndexMixin, Persistent):
         if rs:
             return rs
         else:
-            return self.family.IF.Set()
+            return self.family.IF.TreeSet()
 
     applyEq = apply
 
@@ -293,7 +293,7 @@ class IndexPropertySheet(PropertySheet):
 
 @content(
     'Field Index',
-    icon='icon-search',
+    icon='glyphicon glyphicon-search',
     is_index=True,
     propertysheets = ( ('', IndexPropertySheet), ),
     )
@@ -307,7 +307,7 @@ class FieldIndex(SDIndex, hypatia.field.FieldIndex):
 
 @content(
     'Keyword Index',
-    icon='icon-search',
+    icon='glyphicon glyphicon-search',
     is_index=True,
     propertysheets = ( ('', IndexPropertySheet), ),
     )
@@ -323,7 +323,7 @@ class KeywordIndex(SDIndex, hypatia.keyword.KeywordIndex):
 
 @content(
     'Text Index',
-    icon='icon-search',
+    icon='glyphicon glyphicon-search',
     is_index=True,
     propertysheets = ( ('', IndexPropertySheet), ),
     )
@@ -346,7 +346,7 @@ class TextIndex(SDIndex, hypatia.text.TextIndex):
 
 @content(
     'Facet Index',
-    icon='icon-search',
+    icon='glyphicon glyphicon-search',
     is_index=True,
     propertysheets = ( ('', IndexPropertySheet), ),
     )
@@ -365,7 +365,7 @@ class FacetIndex(SDIndex, hypatia.facet.FacetIndex):
 
 @content(
     'Allowed Index',
-    icon='icon-search',
+    icon='glyphicon glyphicon-search',
     is_index=True,
     propertysheets = ( ('', IndexPropertySheet), ),
     )

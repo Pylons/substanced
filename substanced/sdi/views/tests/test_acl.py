@@ -254,8 +254,7 @@ class TestAdd(unittest.TestCase):
                                              (None, _MARY, (None,))])
         self.assertEqual(resp['permissions'], ['-- ALL --'])
         self.assertEqual(resp['inheriting'], 'enabled')
-        self.assertEqual(request.session['_f_error'],
-                         ['No principal selected'])
+        self.assertEqual(request.sdiapi.flashed, 'No principal selected')
 
     def test_add_unknown_user(self):
         from ....testing import make_site
@@ -289,8 +288,8 @@ class TestAdd(unittest.TestCase):
                                              (None, _MARY, (None,))])
         self.assertEqual(resp['permissions'], ['-- ALL --'])
         self.assertEqual(resp['inheriting'], 'enabled')
-        self.assertEqual(request.session['_f_error'],
-                         ['Unknown user or group when adding ACE'])
+        self.assertEqual(request.sdiapi.flashed,
+                         'Unknown user or group when adding ACE')
 
     def test_add_no_permission(self):
         from ....testing import make_site
@@ -583,6 +582,7 @@ class DummyObjectMap(object):
         return 0
 
 class DummySDIAPI(object):
-    def flash_with_undo(self, message):
-        self.flashed = (message)
+    def flash(self, message, queue='info'):
+        self.flashed = message
+    flash_with_undo = flash
 

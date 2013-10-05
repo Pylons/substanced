@@ -1,6 +1,5 @@
 import colander
 import deform.widget
-import deform_bootstrap.widget
 
 from deform.i18n import _ as deform_i18n
 
@@ -139,8 +138,7 @@ class PermissionsSchemaNode(colander.SchemaNode):
     """ A SchemaNode which represents a set of permissions; uses a widget which
     collects all permissions from the introspection system.  Deserializes to a
     set."""
-    def schema_type(self): 
-        return deform.Set(allow_empty=True)
+    schema_type = colander.Set
 
     def _get_all_permissions(self, registry): # pragma: no cover (testing)
         return get_all_permissions(registry)
@@ -150,7 +148,7 @@ class PermissionsSchemaNode(colander.SchemaNode):
         request = self.bindings['request']
         permissions = self._get_all_permissions(request.registry)
         values = [(p, p) for p in permissions]
-        return deform_bootstrap.widget.ChosenMultipleWidget(values=values)
+        return deform.widget.Select2Widget(values=values, multiple=True)
 
     def validator(self, node, value):
         request = self.bindings['request']
@@ -197,4 +195,4 @@ class MultireferenceIdSchemaNode(colander.SchemaNode):
     @property
     def widget(self):
         values = self._get_choices()
-        return deform_bootstrap.widget.ChosenMultipleWidget(values=values)
+        return deform.widget.Select2Widget(values=values, multiple=True)

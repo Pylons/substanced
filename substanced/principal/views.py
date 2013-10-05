@@ -2,7 +2,6 @@ import colander
 import deform.widget
 
 from pyramid.httpexceptions import HTTPFound
-from pyramid.security import Allow
 from pyramid.security import NO_PERMISSION_REQUIRED
 
 from ..form import FormView
@@ -29,6 +28,7 @@ class AddUserSchema(UserGroupsSchema, UserSchema):
     password = colander.SchemaNode(
         colander.String(),
         widget = deform.widget.CheckedPasswordWidget(),
+        validator=colander.Length(min=3, max=100),
         )
 
 @mgmt_view(
@@ -122,7 +122,7 @@ class ChangePasswordView(FormView):
         user = self.context
         password = appstruct['password']
         user.set_password(password)
-        self.request.session.flash('Password changed', 'success')
+        self.request.sdiapi.flash('Password changed', 'success')
         return HTTPFound(
             self.request.sdiapi.mgmt_path(user, '@@change_password')
             )
@@ -163,7 +163,7 @@ class ResetRequestView(FormView):
         users = principals['users']
         user = users[login]
         user.email_password_reset(request)
-        request.session.flash('Emailed password reset instructions', 'success')
+        request.sdiapi.flash('Emailed password reset instructions', 'success')
         home = request.sdiapi.mgmt_path(request.virtual_root)
         return HTTPFound(location=home)
         
@@ -191,6 +191,6 @@ class ResetView(FormView):
         request = self.request
         context = self.context
         context.reset_password(appstruct['new_password'])
-        request.session.flash('Password reset, you may now log in', 'success')
+        request.sdiapi.flash('Password reset, you may now log in', 'success')
         home = request.sdiapi.mgmt_path(request.virtual_root)
         return HTTPFound(location=home)

@@ -111,7 +111,7 @@ class FileUploadPropertySheet(PropertySheet):
 
 @content(
     'File',
-    icon='icon-file',
+    icon='glyphicon glyphicon-file',
     add_view='add_file',
     # prevent view tab from sorting first (it would display the image when
     # manage_main clicked)
