@@ -1,64 +1,45 @@
-<html xmlns="http://www.w3.org/1999/xhtml"
-      xmlns:tal="http://xml.zope.org/namespaces/tal"
-      xmlns:metal="http://xml.zope.org/namespaces/metal" 
-      metal:use-macro="load: main.pt" >
-<head>
-<title>Repoze Blog</title>
-<metal:slot metal:fill-slot="scripts">
-</metal:slot>
-</head>
-<body>
-
-<metal:slot metal:fill-slot="header-title"><h1>Repoze Blog</h1></metal:slot>
+<html metal:use-macro="load: main.pt" >
 
 <metal:slot metal:fill-slot="content">
- <p id="blog_links">
- [ <a href="${request.application_url}">Home</a>
- | <a href="${request.application_url}/index.rss20">RSS 2.0</a>
- | <a href="${request.application_url}/index.atom">ATOM 1.0</a>
- ]
- </p>
-
- <h2>${pubdate}</h2>
-
-  <h3>${title}</h3>
-
+  <h2>${title}</h2>
+  <p><span class="text-muted">Posted at: ${pubdate}</span> |
+     <a href="${url}">permalink</a></p>
   <div id="entry" tal:content="structure blogentry" />
 
-  <div id="attachment_url"
-       tal:repeat="attachment attachments">
-     Attachment: <a href="${request.resource_url(attachment, 'download.html')}">${attachment.__name__}</a>
-  </div>
-
-  <p>posted at: ${pubdate.strftime('%H:%M')} |
-     <a href="${url}">permalink</a></p>
-
-  <div class="blogentry">
-   <p class="back"><a href="${frontpage_url}">Back to blog</a></p>
-  </div>
-
-  <h3> <a name="comments">Comments</a> </h3>
-
+  <tal:attachments condition="attachments">
+  <h4>Attachments</h4>
+  <ul>
+    <li tal:repeat="attachment attachments">
+      <a href="${request.resource_url(attachment, 'download.html')}">${attachment.__name__}</a>
+    </li>
+  </ul>
+  <tal:if>
+  
+  <h3>Comments</h3>
   <div tal:repeat="comment comments">
-   <div tal:content="comment.text" />
-   <p> posted by <span tal:content="comment.commenter_name" />
-       at <span tal:content="comment.pubdate" /> </p>
+    <div tal:content="comment.text" />
+    <p>
+      Posted by <span tal:content="comment.commenter_name" />
+      at <span tal:content="comment.pubdate" />
+    </p>
   </div>
 
-  <form method="post" action="${url}" enctype="multipart/form-data">
-    <label for="commenter">Name:</label>
-    <input type="text" id="commenter" name="commenter_name"
+  <h3>Post a Comment</h3>
+  <form role="form" method="post" action="${url}" enctype="multipart/form-data">
+    <div class="form-group has-error">${message}</div>
+    <div class="form-group">
+      <label for="commenter">Name</label>
+      <input class="form-control" type="text" id="commenter" name="commenter_name"
            value="${commenter_name}" />
-    <fieldset id="entry">
-      <div>${message}</div>
-      <legend>Post a Comment: </legend>
-      <textarea name="comment_text" rows="5" cols="65"
-      >${comment_text}</textarea>
-    </fieldset>
-    <input type="submit" name="form.submitted" value="Add Comment" />
+    </div>
+    <div class="form-group">
+      <label for="comment_text">Comment</label>
+      <textarea class="form-control" name="comment_text" rows="5" cols="65">${comment_text}</textarea>
+    </div>
+    <button class="btn btn-primary" type="submit" name="form.submitted" value="Add Comment">Submit</button>
     <input type="hidden" name="spambot" id="spambot"/>
   </form>
 
 </metal:slot>
-</body>
+
 </html>

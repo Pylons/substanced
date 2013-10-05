@@ -1,34 +1,12 @@
-<html xmlns="http://www.w3.org/1999/xhtml"
-      xmlns:tal="http://xml.zope.org/namespaces/tal"
-      xmlns:metal="http://xml.zope.org/namespaces/metal" 
-      metal:use-macro="load: main.pt" >
-<head>
-<link rel="stylesheet" href="/static/screen.css" media="screen" type="text/css"/>
-<link href="/static/pygments.css" media="screen" rel="Stylesheet" type="text/css"/>
-<link href="/static/sphinx.css" media="screen" rel="Stylesheet" type="text/css"/>
-<metal:slot metal:fill-slot="scripts">
-</metal:slot>
-</head>
-<body>
-<h1 metal:fill-slot="header-title">Repoze Blog</h1>
+<html metal:use-macro="load: main.pt">
 
 <metal:slot metal:fill-slot="content">
 
-<div class="clr">
-
- <p id="blog_links">
- [ <a href="${request.application_url}">Home</a>
- | <a href="${request.application_url}/rss.xml">RSS 2.0</a>
- | <a href="${request.application_url}/index.atom">ATOM 1.0</a>
- ]
- </p>
-
  <div tal:repeat="day_entry date_entries">
   <h2>${day_entry[0]}</h2>
-
   <div tal:repeat="blogentry day_entry[1]">
-   <h3>${blogentry['title']}</h3>
 
+   <h3>${blogentry['title']}</h3>
    <div tal:content="structure blogentry['body']"></div>
    <p>posted at: ${blogentry['pubdate'].strftime('%H:%M')} |
       <a href="${blogentry['url']}">permalink</a> |
@@ -36,15 +14,10 @@
          href="${blogentry['url']}#comments">${blogentry['numcomments']} comments</a>
       <span tal:condition="not blogentry['numcomments']">No Comments</span>
     </p>
+
   </div>
  </div>
-
-</div>
-
+ 
 </metal:slot>
 
-<!-- end post -->
-<!-- end content -->
-
-</body>
 </html>
