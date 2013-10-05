@@ -28,7 +28,7 @@ install_requires = [
     'ZODB3', 
     'hypatia>=0.1a6', # check_query method of text index
     'venusian>=1.0a3',  # pyramid wants this too (prefer_finals...)
-    'deform>=0.9.6', # retail form rendering capability (for documentability)
+    'deform>=2.0a1', # bootstrap 3
     'colander>=1.0a1', # subclassable schemanodes
     'pyramid_zodbconn',
     'pyramid_chameleon',
