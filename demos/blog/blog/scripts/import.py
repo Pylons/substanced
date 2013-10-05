@@ -11,6 +11,8 @@
 # start looping the files
 # Be able to run the script in "verbose" mode and "dry run" mode
 
+from __future__ import print_function
+
 import os
 import datetime
 import transaction
@@ -36,18 +38,18 @@ def main():
     app = get_app(config, name)
     root, closer = get_root(app)
     for arg in args:
-        print "filename:", arg
+        print("filename:", arg)
         if not os.path.isfile(arg):
-           print 'not a file'
+           print('not a file')
            continue
         path, filename = os.path.split(arg)
         id, ext = os.path.splitext(filename)
-        print "id:", id
+        print("id:", id)
         lines = open(arg, 'r').readlines()
         title = lines[0]
-        print 'title:', title
+        print('title:', title)
         entry = '\n'.join(lines[2:])
-        print 'entry:', entry[:40]
+        print('entry:', entry[:40])
         pieces = id.split('-')
         last = pieces[-1]
         pubdate = None
@@ -65,7 +67,7 @@ def main():
            datestr = datestr.split(' ', 1)[0]
            year, month, day = datestr[0:4], datestr[5:7], datestr[8:10]
            pubdate = datetime.date(int(year), int(month), int(day))
-        print 'pubdate:', pubdate
+        print('pubdate:', pubdate)
         entry = BlogEntry(title.decode('UTF-8'), entry.decode('UTF-8'), 
                           id.decode('UTF-8'), pubdate, 'html', None, None)
         root[id] = entry
