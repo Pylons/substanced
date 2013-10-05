@@ -112,3 +112,5 @@ Contributors
 - Douglas Cerna, 2013/04/02
 
 - Philipp Litzenberger, 2013/10/03
+
+- Luciano Ramalho, 2013/10/05
