@@ -641,6 +641,3 @@ class DummyConfigurator(object):
     def introspectable(self, category, discriminator, single):
         return self.intr
 
-    def set_user_locator(self, cls, **extra):
-        self.user_locator = cls
-
