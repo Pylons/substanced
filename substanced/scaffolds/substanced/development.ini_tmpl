@@ -18,7 +18,7 @@ tm.attempts = 3
 
 substanced.secret = seekri1
 substanced.initial_login = admin
-substanced.initial_password = admin
+substanced.initial_password = {{random_password}}
 substanced.uploads_tempdir = %(here)s/tmp
 substanced.catalogs.autosync = true
 
