@@ -4,7 +4,10 @@ import string
 from persistent import Persistent
 from cryptacular.bcrypt import BCRYPTPasswordManager
 
-from zope.interface import implementer
+from zope.interface import (
+    implementer,
+    Interface,
+    )
 import deform.widget
 
 import colander
@@ -469,6 +472,25 @@ class DefaultUserLocator(object):
             return None
         return user.groupids
 
+def set_user_locator(config, cls):
+    """
+    Directive which sets the user locator for the groupfinder to use. The
+    ``cls`` argument should be a class that implements IUserLocator.
+    """
+    def register():
+        config.registry.registerAdapter(cls, (Interface, Interface),
+                                        IUserLocator)
+
+    discriminator = ('sd-user-locator',)
+    intr = config.introspectable(
+        'sd user locator',
+        discriminator,
+        'sd user locator',
+        )
+    intr['cls'] = cls
+
+    config.action(discriminator, callable=register, introspectables=(intr,))
+
 def groupfinder(userid, request):
     """ A Pyramid authentication policy groupfinder callback that uses the
     Substance D user locator system to find group identifiers."""
@@ -479,3 +501,5 @@ def groupfinder(userid, request):
         adapter = DefaultUserLocator(context, request)
     return adapter.get_groupids(userid)
 
+def includeme(config): # pragma: no cover
+    config.add_directive('set_user_locator', set_user_locator)
