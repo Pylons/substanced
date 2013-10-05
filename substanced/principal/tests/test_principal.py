@@ -527,6 +527,45 @@ class Test_groupfinder(unittest.TestCase):
         result = self._callFUT(1, request)
         self.assertEqual(result, (1, 2))
 
+class Test_set_user_locator(unittest.TestCase):
+    def setUp(self):
+        self.config = testing.setUp()
+
+    def tearDown(self):
+        testing.tearDown()
+
+    def _callFUT(self, config, cls):
+        from .. import set_user_locator
+        return set_user_locator(config, cls)
+
+    def test_it(self):
+        from zope.interface import Interface
+        from substanced.interfaces import IUserLocator
+        config = DummyConfigurator(registry=self.config.registry)
+        class UserLocator(object):
+            def __init__(self, context, request):
+                self.group_ids = ['group1', 'group2']
+            def get_groupids(self, userid):
+                return self.group_ids
+        self._callFUT(config, UserLocator)
+        self.assertEqual(len(config.actions), 1)
+        action = config.actions[0]
+        self.assertEqual(
+            action['discriminator'],
+            ('sd-user-locator',)
+            )
+        self.assertEqual(
+            action['introspectables'], (config.intr,)
+            )
+        self.assertEqual(config.intr['cls'], UserLocator)
+        callable = action['callable']
+        callable()
+        adapter = self.config.registry.getMultiAdapter((Interface, Interface),
+                IUserLocator)
+        self.assertEqual(
+                adapter.get_groupids('user'), ['group1', 'group2']
+            )
+
         
 from ...interfaces import IFolder
 
@@ -576,3 +615,30 @@ class DummyLocator(object):
     def get_groupids(self, userid):
         self._userid = userid
         return self._group_ids
+
+class DummyIntrospectable(dict):
+    pass
+
+class DummyConfigurator(object):
+    _ainfo = None
+    def __init__(self, registry):
+        self.actions = []
+        self.intr = DummyIntrospectable()
+        self.registry = registry
+        self.indexes = []
+
+    def action(self, discriminator, callable, order=None, introspectables=()):
+        self.actions.append(
+            {
+            'discriminator':discriminator,
+            'callable':callable,
+            'order':order,
+            'introspectables':introspectables,
+            })
+
+    def introspectable(self, category, discriminator, single):
+        return self.intr
+
+    def set_user_locator(self, cls, **extra):
+        self.user_locator = cls
+

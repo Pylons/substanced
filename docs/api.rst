@@ -471,6 +471,8 @@ Other Helpers
 
 .. autofunction:: groupfinder
 
+.. autofunction:: set_user_locator
+
 :mod:`substanced.property` API
 --------------------------------
 
