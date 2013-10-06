@@ -23,7 +23,6 @@ from substanced.util import renamer
 def now_default(node, kw):
     return datetime.datetime.now()
 
-
 class BlogEntrySchema(Schema):
     name = NameSchemaNode(
         editing=lambda c, r: r.registry.content.istype(c, 'BlogEntry')
@@ -46,10 +45,8 @@ class BlogEntrySchema(Schema):
        default = now_default,
        )
 
-
 class BlogEntryPropertySheet(PropertySheet):
     schema = BlogEntrySchema()
-
 
 @content(
     'Blog Entry',
@@ -84,7 +81,6 @@ class BlogEntry(Folder):
                 self['comments'][name] = comment
                 break
 
-
 class CommentSchema(Schema):
     commenter = colander.SchemaNode(
        colander.String(),
@@ -97,10 +93,8 @@ class CommentSchema(Schema):
        default = now_default,
        )
 
-
 class CommentPropertySheet(PropertySheet):
     schema = CommentSchema()
-
 
 @content(
     'Comment',
@@ -117,10 +111,22 @@ class Comment(Persistent):
         self.text = text
         self.pubdate = pubdate
 
+def comments_columns(folder, subobject, request, default_columnspec):
+    pubdate = getattr(subobject, 'pubdate', None)
+    if pubdate is not None:
+        pubdate = pubdate.isoformat()
+
+    return default_columnspec + [
+        {'name': 'Publication date',
+        'value': pubdate,
+        'formatter': 'date',
+        },
+        ]
 
 @content(
     'Comments',
-    icon='glyphicon glyphicon-list'
+    icon='glyphicon glyphicon-list',
+    columns=comments_columns,
     )
 class Comments(Folder):
     """ Folder for comments of a blog entry
@@ -128,17 +134,27 @@ class Comments(Folder):
     def __sdi_addable__(self, context, introspectable):
         return introspectable.get('content_type') == 'Comment'
 
+def attachments_columns(folder, subobject, request, default_columnspec):
+    kb_size = None
+    if getattr(subobject, 'get_size', None) and callable(subobject.get_size):
+        kb_size = int(int(subobject.get_size())/1000)
+
+    return default_columnspec + [
+        {'name': 'Size',
+        'value': "%s kB" % kb_size,
+        },
+        ]
 
 @content(
     'Attachments',
-    icon='glyphicon glyphicon-list'
+    icon='glyphicon glyphicon-list',
+    columns=attachments_columns,
     )
 class Attachments(Folder):
     """ Folder for attachments of a blog entry
     """
     def __sdi_addable__(self, context, introspectable):
         return introspectable.get('content_type') == 'File'
-
 
 class BlogSchema(Schema):
     """ The schema representing the blog root. """
@@ -155,14 +171,14 @@ class BlogPropertySheet(PropertySheet):
     schema = BlogSchema()
 
 def blog_columns(folder, subobject, request, default_columnspec):
-    subobject_name = getattr(subobject, '__name__', str(subobject))
+    title = getattr(subobject, 'title', None)
     pubdate = getattr(subobject, 'pubdate', None)
     if pubdate is not None:
         pubdate = pubdate.isoformat()
 
     return default_columnspec + [
         {'name': 'Title',
-        'value': getattr(subobject, 'title', subobject_name),
+        'value': title,
         },
         {'name': 'Publication Date',
         'value': pubdate,
