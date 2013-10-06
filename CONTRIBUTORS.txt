@@ -114,3 +114,6 @@ Contributors
 - Philipp Litzenberger, 2013/10/03
 
 - Luciano Ramalho, 2013/10/05
+
+- Sébastien Verbois, 2013/10/05
+

@@ -4,8 +4,13 @@ import pytz
 from docutils.core import publish_parts
 from webob import Response
 
+from pyramid.decorator import reify
+from pyramid.httpexceptions import HTTPFound
 from pyramid.url import resource_url
-from pyramid.view import view_config
+from pyramid.view import (
+    view_config,
+    view_defaults,
+    )
 from pyramid.security import authenticated_userid
 
 def _getentrybody(format, entry):
@@ -28,77 +33,66 @@ def blogview(context, request):
                  'title': blogentry.title,
                  'body': _getentrybody(blogentry.format, blogentry.entry),
                  'pubdate': blogentry.pubdate,
+                 'attachments': [{'name': a.__name__, 'url': resource_url(a, request, 'download')} 
+                    for a in blogentry['attachments'].values()],
                  'numcomments': len(blogentry['comments'].values()),
                  })
     blogentries.sort(key=lambda x: x['pubdate'].isoformat())
     blogentries.reverse()
-    dates = {}
-    for entry in blogentries:
-        date = entry['pubdate']
-        date = getattr(date, 'date', lambda: date)()
-        d_entries = dates.setdefault(date, [])
-        d_entries.append(entry)
-    date_entries = reversed(sorted(dates.items()))
-    logged_in = authenticated_userid(request)
-    return dict(
-        request = request,
-        logged_in = logged_in,
-        date_entries = date_entries,
-        rss_url = request.application_url + '/' + 'rss.xml',
-        )
+    return dict(blogentries = blogentries)
 
-@view_config(
+@view_defaults(
     content_type='Blog Entry',
     renderer='templates/blogentry.pt',
     )
-def blogentry_view(context, request):
-    commenter_name = ''
-    comment_text = ''
-    spambot = ''
-    message = ''
-    pubdate = ''
-    comments = context['comments'].values()
-    attachments = context['attachments'].values()
+class BlogEntryView(object):
 
-    if 'form.submitted' in request.params:
-        commenter_name = request.params.get('commenter_name')
-        spambot = request.params.get('spambot')
-        comment_text = request.params['comment_text']
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+    
+    @reify
+    def blogentry(self):
+        return _getentrybody(self.context.format, self.context.entry)
+
+    @reify
+    def comments(self):
+        return self.context['comments'].values()
+
+    @reify
+    def attachments(self):
+        return self.context['attachments'].values()
+
+    @view_config(request_method='GET')
+    def view_blogentry(self):
+        return dict(error_message = '')
+
+    @view_config(request_method='POST')
+    def add_comment(self):
+        params = self.request.params
+        commenter_name = params.get('commenter_name')
+        comment_text = params.get('comment_text')
+        spambot = params.get('spambot')
         if spambot:
            message = 'Your comment could not be posted'
+        elif comment_text == '' and commenter_name == '':
+           message = 'Please enter your name and a comment'
         elif comment_text == '':
            message = 'Please enter a comment'
         elif commenter_name == '':
            message = 'Please enter your name'
         else: 
            pubdate = datetime.datetime.now()
-           comment = request.registry.content.create(
+           comment = self.request.registry.content.create(
                'Comment', commenter_name, comment_text, pubdate)
-           context.add_comment(comment)
-
-    body = _getentrybody(context.format, context.entry)
-    logged_in = authenticated_userid(request)
-    return dict(
-        blogentry = body,
-        request = request,
-        message = message,
-        title = context.title,
-        entry = context.entry,
-        format = context.format,
-        pubdate = context.pubdate,
-        url = request.resource_url(context),
-        commenter_name = commenter_name,
-        comment_text = comment_text,
-        comments = comments,
-        attachments = attachments,
-        spambot = spambot,
-        logged_in = logged_in,
-        frontpage_url = request.resource_url(context.__parent__),
-        )
+           self.context.add_comment(comment)
+           return HTTPFound(location=self.request.resource_url(self.context))
+           
+        return dict(error_message=message)
 
 @view_config(
     content_type='File',
-    name='download.html',
+    name='download',
     )
 def download_attachment(context, request):
     f = context.blob.open()
