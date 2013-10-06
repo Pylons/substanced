@@ -7,9 +7,6 @@
         margin-bottom: 20px;
         padding-top: 20px;
     }
-    .blog-entry:first-child {
-        border-top: none;
-    }
     .blog-entry-date {
         font-size: 120%;
         font-weight: bold;
@@ -22,6 +19,9 @@
 </metal:slot>
 
 <metal:slot metal:fill-slot="content">
+<div class="jumbotron">
+    <p>${request.root.description}</p>
+</div>
 <div tal:repeat="blogentry blogentries" class="blog-entry">
     <div class="blog-entry-date">
             ${blogentry['pubdate'].strftime('%Y-%m-%d')}

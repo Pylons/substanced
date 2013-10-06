@@ -197,7 +197,7 @@ def blog_columns(folder, subobject, request, default_columnspec):
     )
 class Blog(Root):
     title = 'Substance D Blog'
-    description = ''
+    description = 'Description of this blog'
 
     def __sdi_addable__(self, context, introspectable):
         return introspectable.get('content_type') == 'Blog Entry'
