@@ -1039,9 +1039,7 @@ class Test_sdiapi(unittest.TestCase):
         inst.get_connection = lambda *arg: connection
         inst.transaction = DummyTransaction()
         inst.mgmt_path = lambda *arg, **kw: '/mg'
-        with testing.testConfig() as config:
-            config.include('pyramid_chameleon')
-            inst.flash_with_undo('message')
+        inst.flash_with_undo('message')
         self.assertEqual(request.session['_f_info'],
                          [u('<span>message <a href="/mg" class="btn btn-xs '
                             'btn-info">Undo</a></span>\n')])

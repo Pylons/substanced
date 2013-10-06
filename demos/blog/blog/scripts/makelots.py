@@ -3,6 +3,14 @@ import datetime
 import transaction
 from optparse import OptionParser
 
+LOREM_IPSUM = """\
+Lorem ipsum dolor sit amet, consectetur adipisicing elit,
+sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris
+nisi ut aliquip ex ea commodo consequat.
+Duis aute irure dolor in reprehenderit in voluptate 
+velit esse cillum dolore eu fugiat nulla pariatur."""
+
 def main():
     from pyramid.paster import bootstrap
     from ..resources import BlogEntry
@@ -26,8 +34,8 @@ def main():
         print ("adding", n)
         entry = registry.content.create(
             'Blog Entry',
-            'title %s' % n,
-            'entry %s' % n,
+            'Title of blog entry %s' % n,
+            LOREM_IPSUM,
             'html',
             datetime.date.today(),
             )
