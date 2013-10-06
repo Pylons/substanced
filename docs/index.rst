@@ -56,7 +56,13 @@ To deploy the demo locally, run ``pcreate -s substanced myproj`` after
 installing Substance D. That creates a ``myproj`` directory and installs
 the ``substanced`` scaffold in it. To run it, change into ``mpyproj`` and
 execute ``pserve development.ini``. The development server listens to 
-requests sent to ``http://0.0.0.0:6543`` by default.
+requests sent to ``http://0.0.0.0:6543`` by default. The initial password 
+for the admin user is generated randomly. Use something like ``grep initial_password *.ini`` 
+in ``myproj`` directory to see the password. Output should looks like::
+
+    $ grep initial_password *.ini
+    development.ini:substanced.initial_password = 4vGhUPuDCr
+    production.ini:substanced.initial_password = 4vGhUPuDCr
 
 Narrative Documentation
 -----------------------
