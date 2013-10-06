@@ -1,43 +1,48 @@
 <html metal:use-macro="load: main.pt" >
 
 <metal:slot metal:fill-slot="content">
-  <h2>${title}</h2>
-  <p><span class="text-muted">Posted at: ${pubdate}</span> |
-     <a href="${url}">permalink</a></p>
-  <div id="entry" tal:content="structure blogentry" />
+  <h2>${context.title}</h2>
+  <p><strong>Posted at ${context.pubdate.strftime('%Y-%m-%d %H:%M')}</strong>
+  <div>${structure: view.blogentry}</div>
 
-  <tal:attachments condition="attachments">
+  <tal:attachments condition="view.attachments">
+  <a name="attachments"></a>
   <h4>Attachments</h4>
   <ul>
-    <li tal:repeat="attachment attachments">
-      <a href="${request.resource_url(attachment, 'download.html')}">${attachment.__name__}</a>
+    <li tal:repeat="attachment view.attachments">
+      <a href="${request.resource_url(attachment, 'download')}">${attachment.__name__}</a>
     </li>
   </ul>
-  <tal:if>
+  </tal:attachments>
   
+  <tal:comments condition="view.comments">
+  <a name="comments"></a>
   <h3>Comments</h3>
-  <div tal:repeat="comment comments">
+  <div tal:repeat="comment view.comments">
     <div tal:content="comment.text" />
     <p>
-      Posted by <span tal:content="comment.commenter_name" />
-      at <span tal:content="comment.pubdate" />
+      <em>Posted by <strong>${comment.commenter_name}</strong>
+      at ${comment.pubdate.strftime('%Y-%m-%d %H:%M')}</em>
     </p>
   </div>
-
+  </tal:comments>
+  
+  
+  <a name="post-comment"></a>
   <h3>Post a Comment</h3>
-  <form role="form" method="post" action="${url}" enctype="multipart/form-data">
-    <div class="form-group has-error">${message}</div>
+  <form role="form" method="post" action="${request.resource_url(context)}" enctype="multipart/form-data">
     <div class="form-group">
       <label for="commenter">Name</label>
-      <input class="form-control" type="text" id="commenter" name="commenter_name"
-           value="${commenter_name}" />
+      <input class="form-control" type="text" name="commenter_name"
+           value="${request.POST.get('commenter_name')}" />
     </div>
     <div class="form-group">
       <label for="comment_text">Comment</label>
-      <textarea class="form-control" name="comment_text" rows="5" cols="65">${comment_text}</textarea>
+      <textarea class="form-control" name="comment_text" rows="5" cols="65">${request.POST.get('comment_text')}</textarea>
     </div>
+    <h4 class="text-danger">${error_message}</h4>
     <button class="btn btn-primary" type="submit" name="form.submitted" value="Add Comment">Submit</button>
-    <input type="hidden" name="spambot" id="spambot"/>
+    <input type="hidden" name="spambot" />
   </form>
 
 </metal:slot>

@@ -1,16 +1,19 @@
 <!DOCTYPE html>
 <html metal:define-macro="main">
 <head>
-  <title>Substanced D blog demo application</title>
+  <metal:block metal:define-slot="title">
+    <title>${request.root.title}</title>
+  </metal:block>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css">
-  <link rel="stylesheet" href="${request.static_url('blog:static/screen.css')}">
+  <link rel="stylesheet" href="${request.static_url('blog:static/styles.css')}">
+  <metal:block metal:define-slot="styles" />
   
 </head>
 <body>
 <div id="body-wrapper">
 
-  <div class="navbar navbar-default navbar-fixed-top">
+  <div class="navbar navbar-default">
         <div class="container">
           <div class="navbar-header">
             <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
@@ -18,7 +21,7 @@
               <span class="icon-bar"></span>
               <span class="icon-bar"></span>
             </button>
-            <a class="navbar-brand" href="${request.application_url}">Blog demo application</a>
+            <a class="navbar-brand" href="${request.application_url}">${request.root.title}</a>
           </div>
           <div class="collapse navbar-collapse">
             <ul class="nav navbar-nav">
@@ -31,10 +34,13 @@
   </div>
 
   <div class="container">
-    <metal:block metal:define-slot="content">
-      <h1>Content Well</h1>
-    </metal:block>
-    <metal:block metal:define-slot="rss" />
+    <div class="row">
+      <div class="col-md-8 col-md-offset-2">
+        <metal:block metal:define-slot="content">
+          <p>Page content</p>
+        </metal:block>
+      </div>
+    </div>
   </div>
 
 </div>
