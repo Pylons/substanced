@@ -1004,7 +1004,9 @@ class Test_sdiapi(unittest.TestCase):
         self.config.testing_securitypolicy(permissive=False)
         request = testing.DummyRequest()
         inst = self._makeOne(request)
-        self.assertTrue(inst.main_template)
+        with testing.testConfig() as config:
+            config.include('pyramid_chameleon')
+            self.assertTrue(inst.main_template)
 
     def test_flash_with_undo_no_permission(self):
         self.config.testing_securitypolicy(permissive=False)
@@ -1208,14 +1210,18 @@ class Test_sdiapi(unittest.TestCase):
     def test_get_macro_without_name(self):
         request = testing.DummyRequest()
         inst = self._makeOne(request)
-        macro = inst.get_macro('substanced.sdi.views:templates/master.pt')
+        with testing.testConfig() as config:
+            config.include('pyramid_chameleon')
+            macro = inst.get_macro('substanced.sdi.views:templates/master.pt')
         self.assertTrue(macro.macros)
         
     def test_get_macro_with_name(self):
         request = testing.DummyRequest()
         inst = self._makeOne(request)
-        macro = inst.get_macro(
-            'substanced.sdi.views:templates/master.pt', 'main')
+        with testing.testConfig() as config:
+            config.include('pyramid_chameleon')
+            macro = inst.get_macro(
+                'substanced.sdi.views:templates/master.pt', 'main')
         self.assertTrue(macro.include)
 
     def test_is_mgmt_true(self):

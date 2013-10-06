@@ -73,10 +73,10 @@ class Workflow(object):
 
         :raises: :exc:`WorkflowError` if state already exists.
 
-        Callback is called with **content** as first argument and **meta**
-        as second. **meta** is a dictionary containing **workflow**,
-        **transition** and **request**. Be aware that methods as
-        :meth:`Workflow.initialize` pass **transition** as empty dictionary.
+        Callback is called with **content** as a single positional argument and
+        the keyword arguments  **workflow**, **transition**, and **request**. Be
+        aware that methods as :meth:`Workflow.initialize` pass **transition**
+        as an empty dictionary.
 
         .. note::
             ``**kw`` must not contain the key
@@ -102,9 +102,8 @@ class Workflow(object):
         :raises: :exc:`WorkflowError` if transition already exists.
         :raises: :exc:`WorkflowError` if from_state or to_state don't exist.
 
-        Callback is called with **content** as first argument and **meta**
-        as second. **meta** is a dictionary containing **workflow**,
-        **transition** and **request**.
+        Callback is called with **content** as a single positional argument and
+        the keyword arguments  **workflow**, **transition**, and **request**.
 
         .. note::
             ``**kw`` must not contain any of the keys ``from_state``, ``name``,
@@ -499,7 +498,7 @@ def is_workflowed(context, registry):
 
 class _WorkflowedPredicate(object):
     is_workflowed = staticmethod(is_workflowed) # for testing
-    
+
     def __init__(self, val, config):
         self.val = bool(val)
         self.registry = config.registry
