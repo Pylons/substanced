@@ -11,6 +11,8 @@
 # start looping the files
 # Be able to run the script in "verbose" mode and "dry run" mode
 
+from __future__ import print_function
+
 import os
 import datetime
 import transaction
