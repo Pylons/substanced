@@ -10,6 +10,9 @@
   position: relative;
   border-bottom: 1px solid #dddddd;
 }
+.slickgrid-wrapper .slick-column-name {
+  float: left;
+}
 .slickgrid-wrapper input[type="checkbox"] {
   vertical-align: baseline;
   margin: 0;
@@ -133,6 +136,9 @@ body .slickgrid-wrapper .slick-header-columns .slick-header-column.ui-state-defa
 }
 .slickgrid-wrapper .slick-header-columns .slick-header-column:hover {
   color: #333333;
+}
+.slickgrid-wrapper .slick-header-columns .slick-header-column .slick-sort-indicator {
+  margin-top: 11px;
 }
 .slickgrid-wrapper .slick-header-columns .slick-header-column .slick-sort-indicator-asc {
   vertical-align: middle;
