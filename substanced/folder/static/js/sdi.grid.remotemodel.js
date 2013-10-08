@@ -283,13 +283,19 @@
                 records = _data.records || [];
             if (from !== undefined) {
                 _data.to = from + records.length;
-                log('loadData', from, _data.to);
+                //log('loadData', from, _data.to);
                 for (var i = from; i < _data.to; i++) {
                     data[i] = records[i - from];
                     if (data[i] !== undefined) {
                         ids_to_data_key[data[i].id] = i;
                     }
                 }
+                // protect against the server returning records=[] and total=N
+                // by error, which would cause polling for ever
+                if (records.length == []) {
+                    _data.total = 0;
+                }
+                //
                 data.length = _data.total;
                 // Update the grid.
                 grid.updateRowCount();
