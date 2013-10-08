@@ -199,8 +199,8 @@
                         document.location.reload();
                     }
                 }
-            } else {
-                // We have a real error. Display a message if it's not already on.
+            } else if ((args.errorThrown !== 'Internal Server Error') && (args.textStatus === 'error')) {
+                // We have a connection problem. Display a message if it's not already on.
                 if ($('.contents-ajax-error').length === 0) {
                     $('#messages')
                         .append(
