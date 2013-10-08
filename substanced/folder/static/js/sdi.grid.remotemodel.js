@@ -292,7 +292,7 @@
                 }
                 // protect against the server returning records=[] and total=N
                 // by error, which would cause polling for ever
-                if (records.length == []) {
+                if (records.length === 0) {
                     _data.total = 0;
                 }
                 //
