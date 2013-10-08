@@ -11,7 +11,10 @@
             type="text/css" />
     </tal:block>
 
-    <!-- JavaScript -->
+    <!-- JavaScript --> 
+    <script type="text/javascript" 
+              src="${request.static_url('deform:static/scripts/angular.js')}"
+            ></script>
     <tal:block repeat="reqt js_links|[]">
       <script type="text/javascript"
               src="${request.static_url(reqt)}"
