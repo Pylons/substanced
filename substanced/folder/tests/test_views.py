@@ -672,7 +672,6 @@ class TestFolderContents(unittest.TestCase):
         self.assertEqual(slickgrid_wrapper_options['url'], '')
         self.assertTrue('items' in slickgrid_wrapper_options)
         self.assertEqual(slickgrid_wrapper_options['items']['from'], 0)
-        self.assertEqual(slickgrid_wrapper_options['items']['to'], 40)
         self.assertEqual(slickgrid_wrapper_options['items']['total'], 1)
         self.assertTrue('records' in slickgrid_wrapper_options['items'])
         records = slickgrid_wrapper_options['items']['records']
@@ -738,7 +737,6 @@ class TestFolderContents(unittest.TestCase):
         self.assertEqual(slickgrid_wrapper_options['url'], '')
         self.assertTrue('items' in slickgrid_wrapper_options)
         self.assertEqual(slickgrid_wrapper_options['items']['from'], 0)
-        self.assertEqual(slickgrid_wrapper_options['items']['to'], 40)
         self.assertEqual(slickgrid_wrapper_options['items']['total'], 1)
         self.assertTrue('records' in slickgrid_wrapper_options['items'])
         records = slickgrid_wrapper_options['items']['records']
@@ -780,7 +778,7 @@ class TestFolderContents(unittest.TestCase):
         result = inst.show_json()
         self.assertEqual(
             result,
-            {'from':1, 'to':2, 'records':folder_contents['records'], 'total':1}
+            {'from':1, 'records':folder_contents['records'], 'total':1}
             )
 
     def test_show_json_no_from(self):

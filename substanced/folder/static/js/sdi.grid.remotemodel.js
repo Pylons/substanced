@@ -280,12 +280,12 @@
 
         function loadData(_data) {
             var from = _data.from,
-                to = _data.to,
-                i;
+                records = _data.records || [];
             if (from !== undefined) {
-                //log('loadData', from, to, to - from);
-                for (i = from; i < to; i++) {
-                    data[i] = _data.records[i - from];
+                _data.to = from + records.length;
+                log('loadData', from, _data.to);
+                for (var i = from; i < _data.to; i++) {
+                    data[i] = records[i - from];
                     if (data[i] !== undefined) {
                         ids_to_data_key[data[i].id] = i;
                     }
