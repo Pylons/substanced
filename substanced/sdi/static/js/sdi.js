@@ -91,13 +91,8 @@
         // grid creation
         // --
 
-        $('#sdi-loading-img')
-            .ajaxStart(function() {
-                $(this).css('display', 'inline');
-            })
-            .ajaxStop(function() {
-                $(this).css('display', 'none');
-            });
+        $(document).ajaxStart(sdi_loading_indicator_on);
+        $(document).ajaxStop(sdi_loading_indicator_off);
 
         var $grid = $('#sdi-contents-table-sg');
         var $filter = $('.sdi-contents-filter input');
