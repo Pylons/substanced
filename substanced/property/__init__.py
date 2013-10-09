@@ -1,12 +1,17 @@
 import colander
 
-from zope.interface import implementer
+from zope.interface import (
+    implementer,
+    Interface,
+    )
 
 from pyramid.threadlocal import get_current_registry
 from pyramid.compat import is_nonstr_iter
+from pyramid.config.util import action_method
 
 from ..interfaces import IPropertySheet
 from ..event import ObjectModified
+from ..content import ContentTypePredicate
 
 _marker = object()
 
@@ -77,5 +82,96 @@ class _PropertiedPredicate(object):
     def __call__(self, context, request):
         return self.is_propertied(context, self.registry) == self.val
 
+@action_method
+def add_propertysheet(config, propsheet, iface=None, **predicates):
+    """Add an a propertysheet for the content types implied by
+    ``iface`` and ``predicates``.
+
+    The ``propsheet`` argument represents a propertysheet class (or a
+    :term:`dotted Python name` which identifies such a class); it will be
+    called with two objects: ``context`` and ``request`` whenever Substance D
+    determines that the propertysheet is necessary to display.  The ``iface``
+    may be an :term:`interface` or a class or a :term:`dotted Python name` to a
+    global object representing an interface or a class.
+
+    Using the default ``iface`` value, ``None`` will cause the propertysheet
+    to be registered for all content types.
+
+    Any number of predicate keyword arguments may be passed in
+    ``**predicates``.  Each predicate named will narrow the set of
+    circumstances in which the propertysheet will be invoked.  Each named
+    predicate must have been registered via
+    :meth:`pyramid.config.Configurator.add_propertysheet_predicate` before it
+    can be used.
+    """
+    dotted = config.maybe_dotted
+    subscriber, iface = dotted(propsheet), dotted(iface)
+    if iface is None:
+        iface = (Interface,)
+    if not isinstance(iface, (tuple, list)):
+        iface = (iface,)
+
+    def register():
+        predlist = config.get_predlist('property sheet')
+        order, preds, phash = predlist.make(config, **predicates)
+        intr.update(
+            {'phash':phash,
+             'order':order,
+             'predicates':preds,
+             }
+            )
+        def wrapper(context, request):
+            if all((predicate(context, request) for predicate in preds)):
+                return propsheet(context, request)
+
+        config.registry.registerAdapter(
+            wrapper,
+            (iface, Interface),
+            IPropertySheet
+            )
+
+    intr = config.introspectable(
+        'property sheets',
+        id(propsheet),
+        config.object_description(propsheet),
+        'property sheet'
+        )
+
+    intr['propshseet'] = propsheet
+    intr['interfaces'] = iface
+
+    config.action(None, register, introspectables=(intr,))
+    return propsheet
+
+@action_method
+def add_propertysheet_predicate(config, name, factory, weighs_more_than=None,
+                                weighs_less_than=None):
+        """
+        Adds a property sheet predicate factory.  The associated property sheet
+        predicate can later be named as a keyword argument to
+        :meth:`pyramid.config.Configurator.add_propertysheet` in the
+        ``**predicates`` anonyous keyword argument dictionary.
+
+        ``name`` should be the name of the predicate.  It must be a valid
+        Python identifier (it will be used as a ``**predicates`` keyword
+        argument to :meth:`~pyramid.config.Configurator.add_propertysheet`).
+
+        ``factory`` should be a :term:`predicate factory` or :term:`dotted
+        Python name` which refers to a predicate factory.
+
+        """
+        config._add_predicate(
+            'property sheet',
+            name,
+            factory,
+            weighs_more_than=weighs_more_than,
+            weighs_less_than=weighs_less_than
+            )
+    
+
 def includeme(config): # pragma: no cover
     config.add_view_predicate('propertied', _PropertiedPredicate)
+    config.add_directive('add_propertysheet', add_propertysheet)
+    config.add_directive('add_propertysheet_predicate',
+                         add_propertysheet_predicate)
+    config.add_propertysheet_predicate('content_type', ContentTypePredicate)
