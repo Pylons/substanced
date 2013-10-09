@@ -3,27 +3,9 @@ from zope.interface import (
     implementer,
     )
 
+from ..interfaces import IEditable
 from ..file import IFile
 from ..util import chunks
-
-class IEditable(Interface):
-    """ Adapter interface for editing content as a file.
-    """
-    def get():
-        """ Return ``(body_iter, mimetype)`` representing the context.
-
-        - ``body_iter`` is an iterable, whose chunks are bytes represenating
-          the context as an editable file.
-
-        - ``mimetype`` is the MIMEType corresponding to ``body_iter``.
-        """
-
-    def put(fileish):
-        """ Update context based on the contents of ``fileish``.
-
-        - ``fileish`` is a file-type object:  its ``read`` method should
-          return the (new) file representation of the context.
-        """
 
 @implementer(IEditable)
 class FileEditable(object):

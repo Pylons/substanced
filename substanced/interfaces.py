@@ -842,3 +842,22 @@ class IUserLocator(Interface):
         the user principal identifier ``userid`` as a sequence.  If no user
         exists under ``userid``, return ``None``."""
     
+class IEditable(Interface):
+    """ Adapter interface for editing content as a file.
+    """
+    def get():
+        """ Return ``(body_iter, mimetype)`` representing the context.
+
+        - ``body_iter`` is an iterable, whose chunks are bytes represenating
+          the context as an editable file.
+
+        - ``mimetype`` is the MIMEType corresponding to ``body_iter``.
+        """
+
+    def put(fileish):
+        """ Update context based on the contents of ``fileish``.
+
+        - ``fileish`` is a file-type object:  its ``read`` method should
+          return the (new) file representation of the context.
+        """
+
