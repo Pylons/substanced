@@ -6,6 +6,7 @@ import os
 import pstats
 import tempfile
 import types
+from ZODB.interfaces import IBroken
 try:
     import cProfile as _profile
 except ImportError: # pragma: no cover (pypy)
@@ -611,6 +612,24 @@ def get_auditlog(context):
     auditlog = root.get('auditlog')
     if auditlog is not None:
         return auditlog
+
+def is_broken(resource):
+    return IBroken.providedBy(resource)
+
+class BrokenWrapper(object):
+    def __init__(self, broken_object):
+        self._broken_object = broken_object
+
+    def __getattr__(self, name):
+        result = self._broken_object.__Broken_state__.get(name, _marker)
+        if result is _marker:
+            raise AttributeError(name)
+        return result
+
+def wrap_if_broken(resource):
+    if is_broken(resource):
+        resource = BrokenWrapper(resource)
+    return resource
 
 def profile(
     cmd,
