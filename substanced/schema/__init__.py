@@ -13,10 +13,25 @@ class CSRFToken(colander.SchemaNode):
 
     schema_type = colander.String
     widget = deform.widget.HiddenWidget()
+
+    def serialize(self, appstruct=colander.null):
+        # NB: if this is an unbound schema, or a schema bound outside of a
+        # FormView, we just drop this node from the output during
+        # serialization
+        if self.bindings is None or self.bindings.get('_csrf_token_') is None:
+            return colander.drop
+        return colander.SchemaNode.serialize(self, appstruct=appstruct)
+
+    def deserialize(self, cstruct=colander.null):
+        # NB: if this is an unbound schema, or a schema bound outside of a
+        # FormView, we just drop this node from the output during
+        # deserialization
+        if self.bindings is None or self.bindings.get('_csrf_token_') is None:
+            return colander.drop
+        return colander.SchemaNode.deserialize(self, cstruct=cstruct)
     
     def validator(self, node, value):
-        request = self.bindings['request']
-        token = request.session.get_csrf_token()
+        token = self.bindings['_csrf_token_']
         if value != token:
             raise colander.Invalid(
                 node,
@@ -25,8 +40,11 @@ class CSRFToken(colander.SchemaNode):
                 )
 
     def after_bind(self, node, kw):
-        token = kw['request'].session.get_csrf_token()
-        self.default = token
+        # don't remove this; it sets default so that the value rendered to the
+        # form is the token.
+        if 'request' in kw:
+            token = kw['request'].session.get_csrf_token()
+            self.default = token
         
 class RemoveCSRFMapping(colander.Mapping):
     def deserialize(self, node, cstruct):
@@ -43,10 +61,10 @@ class Schema(colander.Schema):
 
     .. code-block:: python
 
-      from substanced.schema import Schema
+      from substanced.schema import CSRFSchema
       import colander
 
-      class MySchema(Schema):
+      class MySchema(CSRFSchema):
           my_value = colander.SchemaNode(colander.String())
 
     And in your application code, *bind* the schema, passing the request
