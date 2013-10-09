@@ -122,7 +122,7 @@
         <metal:slot define-slot="below-grid" />
 
         <script type="text/javascript">
-         load_contents_pt({
+         folder.load_contents({
            eventSource: "${request.sdiapi.mgmt_path(context, 'auditstream-sse')}",
            slickgridWrapperOptions: ${structure:slickgrid_wrapper_options}
                           });

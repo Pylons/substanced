@@ -1,7 +1,6 @@
+var folder = function() {
 
-(function($) {   // closure
-
-    window.load_contents_pt = function(options) {
+    load_contents = function(options) {
 
         function redraw(e) {
             var gridWrapper = $('#sdi-contents-table-sg').data('slickgrid');
@@ -78,7 +77,7 @@
         // prevent form submission from happening when enter is pressed
         $form.keypress( function(evt) {
             return !(evt.which==13 && evt.target.type!='textarea');
-         });
+        });
         // this prevents submit also by spacebar (keyCode==32)
         $('#contents_form input[type="submit"]').attr('tabIndex',-1);
 
@@ -169,7 +168,7 @@
                     // are not present.
                     disabled[i] = item.disable;
                     if (i == 1) {
-                       disable_multiple = true;
+                        disable_multiple = true;
                     }
                 }
                 $('.btn-sdi-sel').attr('disabled', false);
@@ -208,16 +207,16 @@
             // out from the response html, if this has happened because our session
             // has expired.
             if (args.textStatus == 'parsererror' &&
-                    args.xhr.responseText.indexOf('Not logged in') != -1) {
+                args.xhr.responseText.indexOf('Not logged in') != -1) {
                 if ($('.contents-ajax-unauthorized').length === 0) {
                     // Let's display it a status message in case the user clicks cancel.
                     $('#messages')
                         .append(
                             $('<div class="alert alert-error contents-error contents-ajax-unauthorized"></div>')
                                 .append('It looks like your authentication session has expired.<br>' +
-                                'You can ' +
-                                    '<a class="contents-ajax-error-reload" href="#"> reload the page</a>.'
-                                    )
+                                        'You can ' +
+                                        '<a class="contents-ajax-error-reload" href="#"> reload the page</a>.'
+                                       )
                         );
                     // Suggest the user to reload the page which will enable her to login.
                     if (confirm('It looks like your authentication session has expired.\n' +
@@ -232,10 +231,10 @@
                         .append(
                             $('<div class="alert alert-danger contents-error contents-ajax-error"><button type="button" class="close" data-dismiss="alert">&times;</button></div>')
                                 .append('Error reaching the server. This is probably a temporary error.<br>' +
-                                    'If your network connection resumes, ' +
-                                    'the error state should resolve by itself. You can also ' +
-                                    '<a class="contents-ajax-error-reload" href="#"> reload the page</a>.'
-                                    )
+                                        'If your network connection resumes, ' +
+                                        'the error state should resolve by itself. You can also ' +
+                                        '<a class="contents-ajax-error-reload" href="#"> reload the page</a>.'
+                                       )
                         );
                 }
             }
@@ -245,6 +244,9 @@
             });
         });
 
-    };            // end load_contents_pt()
+    };            // end load_contents()
 
-})(jQuery);       // end closure
+    return {load_contents:load_contents};
+
+}();
+
