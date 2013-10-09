@@ -1,14 +1,20 @@
+var sdi = function() {
 
-(function($) {   // closure
-
-    window.sdi_loading_indicator_on = function() {
+    loading_indicator_on = function() {
         $('#sdi-loading-img').css('display', 'inline');
         return true;
     };
 
-    window.sdi_loading_indicator_off = function() {
+    loading_indicator_off = function() {
         $('#sdi-loading-img').css('display', 'none');
         return true;
     };
 
-})(jQuery);       // end closure
+    return {loading_indicator_on:loading_indicator_on,
+            loading_indicator_off:loading_indicator_off};
+
+}();
+
+// bw compat
+window.sdi_loading_indicator_on = sdi.loading_indicator_on;
+window.sdi_loading_indicator_off = sdi.loading_indicator_off;

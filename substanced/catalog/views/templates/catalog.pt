@@ -8,7 +8,7 @@
               items in this catalog)
       </div>
       <div class="panel-body">
-        <form action="./manage_catalog" method="POST" onsubmit="return sdi_loading_indicator_on()">
+        <form action="./manage_catalog" method="POST" onsubmit="return sdi.loading_indicator_on()">
           <input type="hidden" value="${request.session.get_csrf_token()}"
                  name="csrf_token"/>
           <div class="container">

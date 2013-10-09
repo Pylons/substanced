@@ -116,8 +116,8 @@ var folder = function() {
         // grid creation
         // --
 
-        $(document).ajaxStart(sdi_loading_indicator_on);
-        $(document).ajaxStop(sdi_loading_indicator_off);
+        $(document).ajaxStart(sdi.loading_indicator_on);
+        $(document).ajaxStop(sdi.loading_indicator_off);
 
         var $grid = $('#sdi-contents-table-sg');
         var $filter = $('.sdi-contents-filter input');
