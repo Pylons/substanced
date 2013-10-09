@@ -1,4 +1,5 @@
 import unittest
+from pyramid import testing
 
 class TestFileEditable(unittest.TestCase):
 
@@ -72,12 +73,10 @@ class TestFileEditable(unittest.TestCase):
 class Test_register_editable_adapter(unittest.TestCase):
 
     def setUp(self):
-        from pyramid.testing import setUp
-        self.config = setUp()
+        self.config = testing.setUp()
 
     def tearDown(self):
-        from pyramid.testing import tearDown
-        tearDown()
+        testing.tearDown()
 
     def _callFUT(self, config, adapter, iface):
         from . import register_editable_adapter
@@ -105,6 +104,38 @@ class Test_register_editable_adapter(unittest.TestCase):
             (ITesting, Interface), IEditable)
         self.assertEqual(config.intr['registered'], wrapper)
 
+class Test_get_editable_adapter(unittest.TestCase):
+
+    def setUp(self):
+        self.config = testing.setUp()
+
+    def tearDown(self):
+        testing.tearDown()
+
+    def _callFUT(self, context, request):
+        from . import get_editable_adapter
+        return get_editable_adapter(context, request)
+
+    def test_it_with_registration(self):
+        from zope.interface import Interface
+        from . import IEditable
+        request = testing.DummyRequest()
+        context = testing.DummyResource()
+        class adapter(object):
+            def __init__(self, context, request):
+                pass
+        request.registry.registerAdapter(adapter, (Interface, Interface),
+                                         IEditable)
+        result = self._callFUT(context, request)
+        self.assertEqual(result.__class__, adapter)
+
+    def test_it_without_registration(self):
+        request = testing.DummyRequest()
+        context = testing.DummyResource()
+        result = self._callFUT(context, request)
+        self.assertEqual(result, None)
+
+    
 class DummyIntrospectable(dict):
     pass
 

@@ -51,6 +51,16 @@ def register_editable_adapter(config, adapter, iface): # pragma: no cover
 
     config.action(discriminator, callable=register, introspectables=(intr,))
 
+def get_editable_adapter(context, request):
+    """ Return an editable adapter for the context, or ``None`` if no editable
+    adapter exists. """
+    adapter = request.registry.queryMultiAdapter(
+        (context, request),
+        IEditable
+        )
+    return adapter
+    
+
 def includeme(config): # pragma: no cover
     config.add_directive('register_editable_adapter', register_editable_adapter)
     config.register_editable_adapter(FileEditable, IFile)
