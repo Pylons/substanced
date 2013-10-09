@@ -206,6 +206,8 @@ Other Helpers
 
 .. autofunction:: register_editable_adapter
 
+.. autofunction:: get_editable_adapter
+
 :mod:`substanced.event` API
 ---------------------------
 

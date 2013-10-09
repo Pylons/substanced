@@ -668,7 +668,6 @@ class FolderContents(object):
 
         items  = {
             'from':start,
-            'to':end,
             'records':records,
             'total':folder_length,
             }
@@ -734,7 +733,6 @@ class FolderContents(object):
 
             items = {
                 'from': start,
-                'to': end,
                 'records': records,
                 'total': folder_length,
                 }

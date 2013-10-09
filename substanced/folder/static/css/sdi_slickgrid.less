@@ -14,6 +14,10 @@
     width: 100%;
     position: relative;
 
+    .slick-column-name {
+        float: left;
+    }
+
     .slickcell-padding () {
         @fontSize: 14px; // ??? should we use some id here?
 
@@ -142,6 +146,10 @@
                 color: @slickgridHoverHeaderColor;
             }
 
+            .slick-sort-indicator {
+                margin-top: 11px;
+            }
+            
             .slick-sort-indicator-asc {
                 vertical-align: middle;
                 &:before {

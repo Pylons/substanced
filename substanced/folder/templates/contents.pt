@@ -17,6 +17,7 @@
       <script src="${request.static_url('substanced.folder:static/js/bootstrap-slickgrid.js')}" type="text/javascript"></script>
       <script src="${request.static_url('substanced.folder:static/js/sdi.grid.remotemodel.js')}" type="text/javascript"></script>
       <script src="${request.static_url('substanced.folder:static/js/slickgrid-config.js')}" type="text/javascript"></script>
+      <script src="${request.static_url('substanced.folder:static/js/folder.js')}" type="text/javascript"></script>
       <link href="${request.static_url('substanced.folder:static/css/slick.grid.css')}" rel="stylesheet" />
       <link href="${request.static_url('substanced.folder:static/css/sdi_slickgrid.css')}" rel="stylesheet" />
     </metal:slot>
@@ -33,7 +34,7 @@
 
   <div metal:fill-slot="main">
     <form id="contents_form" action="@@${request.view_name}" method="POST" class="sdi-contents-actions"
-          onsubmit="return sdi_loading_indicator_on()">
+          onsubmit="return sdi.loading_indicator_on()">
       <div class="container" tal:define="canadd
            addables and 'tocopy' not in request.session and 'tomove' not in request.session">
 
@@ -121,7 +122,7 @@
         <metal:slot define-slot="below-grid" />
 
         <script type="text/javascript">
-         load_contents_pt({
+         folder.load_contents({
            eventSource: "${request.sdiapi.mgmt_path(context, 'auditstream-sse')}",
            slickgridWrapperOptions: ${structure:slickgrid_wrapper_options}
                           });

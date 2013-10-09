@@ -3,27 +3,9 @@ from zope.interface import (
     implementer,
     )
 
+from ..interfaces import IEditable
 from ..file import IFile
 from ..util import chunks
-
-class IEditable(Interface):
-    """ Adapter interface for editing content as a file.
-    """
-    def get():
-        """ Return ``(body_iter, mimetype)`` representing the context.
-
-        - ``body_iter`` is an iterable, whose chunks are bytes represenating
-          the context as an editable file.
-
-        - ``mimetype`` is the MIMEType corresponding to ``body_iter``.
-        """
-
-    def put(fileish):
-        """ Update context based on the contents of ``fileish``.
-
-        - ``fileish`` is a file-type object:  its ``read`` method should
-          return the (new) file representation of the context.
-        """
 
 @implementer(IEditable)
 class FileEditable(object):
@@ -68,6 +50,16 @@ def register_editable_adapter(config, adapter, iface): # pragma: no cover
     intr['adapter'] = adapter
 
     config.action(discriminator, callable=register, introspectables=(intr,))
+
+def get_editable_adapter(context, request):
+    """ Return an editable adapter for the context, or ``None`` if no editable
+    adapter exists. """
+    adapter = request.registry.queryMultiAdapter(
+        (context, request),
+        IEditable
+        )
+    return adapter
+    
 
 def includeme(config): # pragma: no cover
     config.add_directive('register_editable_adapter', register_editable_adapter)

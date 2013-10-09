@@ -45,8 +45,13 @@ class FormView(object):
         method = getattr(self, 'method', 'POST')
         formid = getattr(self, 'formid', 'deform')
         autocomplete = getattr(self, 'autocomplete', None)
+        request = self.request
         self.schema = self.schema.bind(
-            request=self.request, context=self.context)
+            request=request,
+            context=self.context,
+            # see substanced.schema.CSRFToken
+            _csrf_token_=request.session.get_csrf_token(), 
+            )
         form = self.form_class(self.schema, action=action, method=method,
                                buttons=self.buttons, formid=formid,
                                use_ajax=use_ajax, ajax_options=ajax_options,
