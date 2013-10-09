@@ -37,7 +37,8 @@ def blogview(context, request):
              'title': blogentry.title,
              'body': _getentrybody(blogentry.format, blogentry.entry),
              'pubdate': blogentry.pubdate,
-             'attachments': [{'name': a.__name__, 'url': resource_url(a, request, 'download')} 
+             'attachments': [
+                {'name': a.__name__, 'url': resource_url(a, request, 'download')} 
                 for a in blogentry['attachments'].values()],
              'numcomments': len(blogentry['comments'].values()),
              })
@@ -59,7 +60,15 @@ class BlogEntryView(object):
 
     @reify
     def comments(self):
-        return self.context['comments'].values()
+        context = self.context
+        system_catalog = find_catalog(context, 'system')
+        blog_catalog = find_catalog(context, 'blog')
+        content_type = system_catalog['content_type']
+        path = system_catalog['path']
+        comments_path = self.request.resource_path(context['comments'])
+        query = content_type.eq('Comment') & path.eq(comments_path)
+        query_result = query.execute().sort(blog_catalog['pubdate'])
+        return query_result
 
     @reify
     def attachments(self):
