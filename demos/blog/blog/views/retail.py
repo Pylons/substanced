@@ -7,11 +7,11 @@ from webob import Response
 from pyramid.decorator import reify
 from pyramid.httpexceptions import HTTPFound
 from pyramid.url import resource_url
+from substanced.util import find_catalog
 from pyramid.view import (
     view_config,
     view_defaults,
     )
-from pyramid.security import authenticated_userid
 
 def _getentrybody(format, entry):
     if format == 'rst':
@@ -25,18 +25,20 @@ def _getentrybody(format, entry):
     content_type='Root',
     )
 def blogview(context, request):
+    system_catalog = find_catalog(context, 'system')
+    content_type = system_catalog['content_type']
+    query = content_type.eq('Blog Entry')
     blogentries = []
-    for name, blogentry in context.items():
-        if request.registry.content.istype(blogentry, 'Blog Entry'):
-            blogentries.append(
-                {'url': resource_url(blogentry, request),
-                 'title': blogentry.title,
-                 'body': _getentrybody(blogentry.format, blogentry.entry),
-                 'pubdate': blogentry.pubdate,
-                 'attachments': [{'name': a.__name__, 'url': resource_url(a, request, 'download')} 
-                    for a in blogentry['attachments'].values()],
-                 'numcomments': len(blogentry['comments'].values()),
-                 })
+    for blogentry in query.execute():
+        blogentries.append(
+            {'url': resource_url(blogentry, request),
+             'title': blogentry.title,
+             'body': _getentrybody(blogentry.format, blogentry.entry),
+             'pubdate': blogentry.pubdate,
+             'attachments': [{'name': a.__name__, 'url': resource_url(a, request, 'download')} 
+                for a in blogentry['attachments'].values()],
+             'numcomments': len(blogentry['comments'].values()),
+             })
     blogentries.sort(key=lambda x: x['pubdate'].isoformat())
     blogentries.reverse()
     return dict(blogentries = blogentries)
