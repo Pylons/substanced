@@ -26,10 +26,12 @@ def _getentrybody(format, entry):
     )
 def blogview(context, request):
     system_catalog = find_catalog(context, 'system')
+    blog_catalog = find_catalog(context, 'blog')
     content_type = system_catalog['content_type']
     query = content_type.eq('Blog Entry')
+    query_result = query.execute().sort(blog_catalog['pubdate'], reverse=True)
     blogentries = []
-    for blogentry in query.execute():
+    for blogentry in query_result:
         blogentries.append(
             {'url': resource_url(blogentry, request),
              'title': blogentry.title,
@@ -39,8 +41,6 @@ def blogview(context, request):
                 for a in blogentry['attachments'].values()],
              'numcomments': len(blogentry['comments'].values()),
              })
-    blogentries.sort(key=lambda x: x['pubdate'].isoformat())
-    blogentries.reverse()
     return dict(blogentries = blogentries)
 
 @view_defaults(
