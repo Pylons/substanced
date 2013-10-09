@@ -139,11 +139,11 @@ view that lives in your application:
    from pyramid.httpexceptions import HTTPFound
 
    @view_config(name='add_blog_entry', request_method='POST')
-   def add_blogentry(request):
+   def add_blogentry(context, request):
        title = request.POST['title']
        body = request.POST['body']
        entry = request.registry.content.create('Blog Entry', title, body)
-       context['title'] = entry
+       context[title] = entry
        return HTTPFound(request.resource_url(entry))
 
 The arguments passed to ``request.registry.content.create`` must start with

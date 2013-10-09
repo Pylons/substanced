@@ -88,6 +88,7 @@
         validators: {
             //required: requiredFieldValidator
         },
+
         handleCreate: function () {
             // Create a simple grid configuration.
             //
@@ -129,6 +130,28 @@
             }
 
             var grid = this.grid = new Slick.Grid(this.element, [], columns, wrapperOptions.slickgridOptions);
+
+
+            grid.resizer = function () {
+                // For Chris's project, make the grid as tall as the
+                // available vertical space from the top of the grid
+                // down to the bottom of the current viewport.
+
+                var viewport_height=$(window).height();
+                var sdi_sg = $('#sdi-contents-table-sg');
+                var sdi_sg_top = sdi_sg.offset().top;
+                var new_height = viewport_height - sdi_sg_top -5;
+
+                sdi_sg.css({'height': new_height+'px'});
+                grid.resizeCanvas();
+            };
+
+            $(window).on('resize', function () {
+                // XXX This fires on each increment during the resizing.
+                // If a problem, google for setting a timer or using
+                // a "debouncer" from underscore or a jquery plugin
+                grid.resizer();
+            })
 
             // #49, allow clicking on the div around the checkbox
             // to toggle selection
