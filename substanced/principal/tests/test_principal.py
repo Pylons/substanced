@@ -638,6 +638,6 @@ class DummyConfigurator(object):
             'introspectables':introspectables,
             })
 
-    def introspectable(self, category, discriminator, single):
+    def introspectable(self, category, discriminator, title, type_name):
         return self.intr
 

@@ -485,6 +485,7 @@ def set_user_locator(config, cls):
     intr = config.introspectable(
         'sd user locator',
         discriminator,
+        cls.__name__,
         'sd user locator',
         )
     intr['cls'] = cls
