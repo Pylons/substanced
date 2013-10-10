@@ -595,13 +595,6 @@ Other Helpers
 .. autoclass:: Batch
    :members:
 
-:mod:`substanced.widget` API
-----------------------------
-
-.. automodule:: substanced.widget
-
-.. autofunction:: includeme
-
 :mod:`substanced.workflow` API
 ------------------------------
 

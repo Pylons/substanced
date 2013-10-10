@@ -311,16 +311,16 @@ addable in this circumstance.
 Obtaining Metadata About a Content Object's Type
 ------------------------------------------------
 
-``request.registry.content.metadata(blogentry, 'icon')``
+Return the icon class name for the blogentry's content type or 
+``None`` if it does not exist::
 
-  Will return the icon class name for the blogentry's content type or 
-  ``None`` if it does not exist.
+  request.registry.content.metadata(blogentry, 'icon')
 
-``request.registry.content.metadata(blogentry, 'icon', 
-                                    'glyphicon glyphicon-file')``
+Return the icon for the blogentry's content type or 
+``glyphicon glyphicon-file`` if it does not exist::
 
-  Will return the icon for the blogentry's content type or 
-  ``glyphicon glyphicon-file`` if it does not exist.
+  request.registry.content.metadata(blogentry, 'icon', 
+                                    'glyphicon glyphicon-file')
 
 Affecting Content Creation
 ==========================
