@@ -986,7 +986,82 @@ class Test_get_auditlog(unittest.TestCase):
         context._p_jar = DummyConnection(KeyError())
         inst = self._callFUT(context)
         self.assertEqual(inst, None)
-        
+
+
+class Test_is_broken(unittest.TestCase):
+    def _callFUT(self, context):
+        from . import is_broken
+        return is_broken(context)
+
+    def test_with_broken(self):
+        from ZODB.interfaces import IBroken
+        from zope.interface import implementer
+
+        @implementer(IBroken)
+        class Broken(object):
+
+            def __init__(self):
+                pass
+
+        resource = Broken()
+        result = self._callFUT(resource)
+        self.assertTrue(result)
+
+    def test_not_broken(self):
+        resource = DummyContent()
+        result = self._callFUT(resource)
+        self.assertFalse(result)
+
+
+class Test_wrap_if_broken(unittest.TestCase):
+    def _callFUT(self, context):
+        from . import wrap_if_broken
+        return wrap_if_broken(context)
+
+    def test_with_broken(self):
+        from ZODB.interfaces import IBroken
+        from zope.interface import implementer
+
+        @implementer(IBroken)
+        class Broken(object):
+
+            def __init__(self):
+                pass
+
+        resource = Broken()
+        result = self._callFUT(resource)
+
+        from . import BrokenWrapper
+        self.assertTrue(isinstance(result, BrokenWrapper))
+
+    def test_not_broken(self):
+        resource = DummyContent()
+        result = self._callFUT(resource)
+        self.assertTrue(isinstance(result, DummyContent))
+
+
+class Test_BrokenWrapper(unittest.TestCase):
+    def _makeOne(self, context):
+        from . import BrokenWrapper
+        return BrokenWrapper(context)
+
+    def test_getattr(self):
+        from ZODB.interfaces import IBroken
+        from zope.interface import implementer
+
+        @implementer(IBroken)
+        class Broken(object):
+
+            def __init__(self):
+                self.__Broken_state__ = dict(title='title')
+
+        resource = Broken()
+        inst = self._makeOne(resource)
+
+        self.assertEqual(inst.title, 'title')
+        self.assertRaises(AttributeError, inst.__getattr__, 'attribute')
+
+
 class DummyContent(object):
     renamed_from = None
     renamed_to = None

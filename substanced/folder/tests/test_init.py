@@ -498,6 +498,24 @@ class TestFolder(unittest.TestCase):
         folder = self._makeOne()
         self.assertRaises(KeyError, folder.remove, "nonesuch")
 
+    def test_remove_broken(self):
+        from ZODB.interfaces import IBroken
+        from zope.interface import implementer
+        from substanced import util
+
+        @implementer(IBroken)
+        class Broken(object):
+
+            def __init__(self):
+                self.__Broken_state__ = dict(__name__="name",
+                        __parent__="parent")
+
+        resource = Broken()
+        folder = self._makeOne({'broken': resource})
+        result = folder.remove('broken')
+        self.assertTrue(isinstance(result, util.BrokenWrapper))
+        self.assertTrue('broken' not in folder)
+
     def test_remove_returns_object(self):
         dummy = DummyModel()
         dummy.__parent__ = None
@@ -807,6 +825,22 @@ class TestFolder(unittest.TestCase):
         folder[name] = DummyModel()
         self.assertTrue(folder[name])
 
+    def test_get_broken(self):
+        from ZODB.interfaces import IBroken
+        from zope.interface import implementer
+
+        @implementer(IBroken)
+        class Broken(object):
+
+            def __init__(self):
+                pass
+
+        folder = self._makeOne()
+        folder['broken'] = Broken()
+        result = folder.get('broken')
+        from substanced import util
+        self.assertTrue(isinstance(result, util.BrokenWrapper))
+
     def test_find_service_missing(self):
         inst = self._makeOne()
         self.assertEqual(inst.find_service('abc'), None)
@@ -947,8 +981,8 @@ class TestFolder(unittest.TestCase):
         self.assertEqual(list(folder.order), ['c', 'b', 'a'])
         del folder.order
         self.assertEqual(list(folder.order), ['a', 'b', 'c'])
-        
-        
+
+
 
 class TestSequentialAutoNamingFolder(unittest.TestCase):
     def _makeOne(self, d=None, autoname_length=None, autoname_start=None):
@@ -1032,7 +1066,7 @@ class TestRandomAutoNamingFolder(unittest.TestCase):
     def test_next_name_alternate_length(self):
         inst = self._makeOne(autoname_length=5)
         self.assertEqual(len(inst.next_name(None)), 5)
-        
+
     def test_add_next(self):
         ob = DummyModel()
         inst = self._makeOne()
@@ -1096,4 +1130,3 @@ class DummyObjectMap(object):
         self.moving = moving
         self.removed.append(objectid)
         return [objectid]
-
