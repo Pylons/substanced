@@ -137,6 +137,10 @@ view that lives in your application:
    # in a module named blog.views
 
    from pyramid.httpexceptions import HTTPFound
+   from pyramid.view import (
+       view_config,
+       view_defaults,
+       )
 
    @view_config(name='add_blog_entry', request_method='POST')
    def add_blogentry(context, request):
