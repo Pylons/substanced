@@ -102,8 +102,12 @@
 
         <metal:slot define-slot="above-grid" />
 
-        <div class="sdi-sg-header" style="margin-left: 30px;">
+        <div class="sdi-sg-header">
           <span>
+            <a href="../@@contents" class="up-arrow">
+              <i tal:condition="context.__parent__ is not None"
+              class="glyphicon glyphicon-circle-arrow-up"></i>
+            </a>
             <span class="badge badge-primary">
               <span class="sdi-sg-total">&nbsp;</span> 
               <span class="badge-text">total</span>
