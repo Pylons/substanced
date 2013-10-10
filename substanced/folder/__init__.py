@@ -42,6 +42,7 @@ from ..util import (
     postorder,
     find_service,
     find_services,
+    wrap_if_broken,
     )
 from .._compat import STRING_TYPES
 from .._compat import u
@@ -317,7 +318,7 @@ class Folder(Persistent):
         """
         with statsd_timer('folder.get'):
             name = u(name)
-            return self.data[name]
+            return wrap_if_broken(self.data[name])
 
     def get(self, name, default=None):
         """ Return the object named by ``name`` or the default.
@@ -329,7 +330,7 @@ class Folder(Persistent):
         """
         with statsd_timer('folder.get'):
             name = u(name)
-            return self.data.get(name, default)
+            return wrap_if_broken(self.data.get(name, default))
 
     def __contains__(self, name):
         """ Does the container contains an object named by name?
@@ -573,7 +574,7 @@ class Folder(Persistent):
         ``True`` too.
         """
         name = u(name)
-        other = self.data[name]
+        other = wrap_if_broken(self.data[name])
         oid = get_oid(other, None)
 
         if registry is None:
@@ -588,10 +589,18 @@ class Folder(Persistent):
                 self._notify(event, registry)
 
             if hasattr(other, '__parent__'):
-                del other.__parent__
+                try:
+                    del other.__parent__
+                except AttributeError:
+                    # this might be a broken object
+                    pass
 
             if hasattr(other, '__name__'):
-                del other.__name__
+                try:
+                    del other.__name__
+                except AttributeError:
+                    # this might be a broken object
+                    pass
 
             del self.data[name]
             self._num_objects.change(-1)

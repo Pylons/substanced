@@ -396,3 +396,41 @@ clicked, the form is posted with the ``form.reindex`` value in post
 data. You can then make a ``@mgmt_view`` with
 ``request_param='form.reindex'`` in the declaration to handle the form
 post when that button is clicked.
+
+Broken Objects and Class Aliases
+================================
+
+Let's assume that there's an object in your database that is an instance of the
+class ``myapplication.resources.MyCoolResource``.  If that class is
+subsequently renamed to ``myapplication.resources.MySuperVeryCoolResource``,
+the ``MyCoolResource`` object that exists in the database will become broken.
+This is because the ZODB database used by Substance D uses the Python
+``pickle`` persistence format, and ``pickle`` writes the literal class name
+into the record associated with an object instance.  Therefore, if a class is
+renamed or moved, when you come along later and try to deserialize a pickle
+with the old name, it will not work as it used to.
+
+Persistent objects that exist in the database but which have a class that
+cannot be resolved are called "broken objects". If you ask a Substance D folder
+(or the object map) for an object that turns out to be broken in this way, it
+will hand you back an instance of the ``pyramid.util.BrokenWrapper`` class.
+This class tries to behave as much as possible like the original object for
+data that exists in the original objects' ``__dict__`` (it defines a custom
+``__getattr__`` that looks in the broken object's state).  However, you won't
+able to call methods of the original class against a broken object.
+
+You can usually delete broken objects using the SDI folder contents view if
+necessary.
+
+If you must rename or move a class, you can leave a class alias behind for
+backwards compatibility to avoid seeing broken objects in your database.  For
+example:
+
+.. code-block:: python
+
+   class MySuperVeryCoolResource(Persistent):
+       pass
+
+   MyCoolResource = MySuperVeryCoolResource # bw compat alias
+
+

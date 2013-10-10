@@ -19,6 +19,7 @@ from ..util import (
     get_factory_type,
     set_oid,
     find_objectmap,
+    wrap_if_broken,
     )
 from .._compat import INT_TYPES
 
@@ -156,7 +157,8 @@ class ObjectMap(Persistent):
     def _find_resource(self, context, path_tuple): # replaced in tests
         if context is None:
             context = self.root
-        return find_resource(context, path_tuple)
+        resource = find_resource(context, path_tuple)
+        return wrap_if_broken(resource)
 
     def add(self, obj, path_tuple, duplicating=False, moving=False):
         """ Add a new object to the object map at the location specified by
