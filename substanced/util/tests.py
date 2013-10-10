@@ -986,7 +986,27 @@ class Test_get_auditlog(unittest.TestCase):
         context._p_jar = DummyConnection(KeyError())
         inst = self._callFUT(context)
         self.assertEqual(inst, None)
-        
+
+
+class Test_is_broken(unittest.TestCase):
+    def _callFUT(self, context):
+        from . import is_broken
+        return is_broken(context)
+
+    def test_with_broken(self):
+        from ZODB.interfaces import IBroken
+        from zope.interface import implementer
+
+        @implementer(IBroken)
+        class Broken(object):
+
+            def __init__(self):
+                pass
+
+        resource = Broken()
+        result = self._callFUT(resource)
+        self.assertTrue(result)
+
 class DummyContent(object):
     renamed_from = None
     renamed_to = None
