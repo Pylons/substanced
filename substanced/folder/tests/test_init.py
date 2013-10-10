@@ -498,6 +498,24 @@ class TestFolder(unittest.TestCase):
         folder = self._makeOne()
         self.assertRaises(KeyError, folder.remove, "nonesuch")
 
+    def test_remove_broken(self):
+        from ZODB.interfaces import IBroken
+        from zope.interface import implementer
+        from substanced import util
+
+        @implementer(IBroken)
+        class Broken(object):
+
+            def __init__(self):
+                self.__Broken_state__ = dict(__name__="name",
+                        __parent__="parent")
+
+        resource = Broken()
+        folder = self._makeOne({'broken': resource})
+        result = folder.remove('broken')
+        self.assertTrue(isinstance(result, util.BrokenWrapper))
+        self.assertTrue('broken' not in folder)
+
     def test_remove_returns_object(self):
         dummy = DummyModel()
         dummy.__parent__ = None
