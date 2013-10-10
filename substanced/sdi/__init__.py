@@ -87,6 +87,7 @@ def add_mgmt_view(
     tab_before=None,
     tab_after=None,
     tab_near=None,
+    category=None,
     **predicates
     ):
     
@@ -163,7 +164,6 @@ def add_mgmt_view(
     intr = config.introspectable(
         'sdi views', discriminator, view_desc, 'sdi view'
         )
-
     if tab_near is not None:
         if tab_before or tab_after:
             raise ConfigurationError(
@@ -183,6 +183,7 @@ def add_mgmt_view(
                 'tab_near value must be one of LEFT, MIDDLE, RIGHT, or None'
                 )
 
+    intr['category'] = category
     intr['tab_title'] = tab_title
     intr['tab_condition'] = tab_condition
     intr['tab_before'] = tab_before
@@ -226,7 +227,7 @@ class mgmt_view(object):
         settings['_info'] = info.codeinfo # fbo "action_method"
         return wrapped
 
-def sdi_mgmt_views(context, request, names=None):
+def sdi_mgmt_views(context, request, names=None, category=None):
     if not hasattr(context, '__name__'):
         # shortcut if the context doesn't have a name (usually happens if the
         # context is an exception); we do this because mgmt_path uses Pyramid's
@@ -254,6 +255,9 @@ def sdi_mgmt_views(context, request, names=None):
         tab_condition = sdi_intr['tab_condition']
         tab_before = sdi_intr['tab_before']
         tab_after = sdi_intr['tab_after']
+        view_category = sdi_intr['category']
+        if view_category != category:
+            continue
         def is_view(intr):
             return intr.category_name == 'views'
         for view_intr in filter(is_view, related):
