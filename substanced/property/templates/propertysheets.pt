@@ -15,6 +15,9 @@
     <script type="text/javascript" 
               src="${request.static_url('deform:static/scripts/angular.js')}"
             ></script>
+    <script type="text/javascript" 
+              src="${request.static_url('deform:static/scripts/angular-ui-utils.js')}"
+            ></script>
     <tal:block repeat="reqt js_links|[]">
       <script type="text/javascript"
               src="${request.static_url(reqt)}"

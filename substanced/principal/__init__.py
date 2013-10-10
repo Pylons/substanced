@@ -315,7 +315,10 @@ class UserSchema(Schema):
         colander.String(),
         validator=colander.All(
             colander.Email(),
-            colander.Length(max=100)
+            colander.Length(max=100),
+            ),
+        widget=deform.widget.TextInputWidget(
+            type_name="email",
             ),
         )
     tzname = colander.SchemaNode(
