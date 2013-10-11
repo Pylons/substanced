@@ -5,9 +5,7 @@ An application server built upon the Pyramid web framework.  It provides a
 user interface for managing content as well as libraries and utilities which
 make it easy to create applications.
 
-See the documentation at
-http://docs.pylonsproject.org/projects/substanced/en/latest/ for more
-information (docs may be broken while in development).
+Visit the main website is at http://substanced.net for FAQs and documentation.
 
 The mailing list exists at https://groups.google.com/group/substanced-users
 
