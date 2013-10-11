@@ -136,6 +136,8 @@
             </div>
 
             <div class="inner-content">
+              <div metal:define-slot="before_main">
+              </div>
               <div metal:define-slot="main">
               </div>
             </div>

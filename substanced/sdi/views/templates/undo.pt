@@ -1,33 +1,35 @@
-<div metal:use-macro="request.sdiapi.main_template">
+<div metal:use-macro="request.sdiapi.control_panel_template">
 
   <div metal:fill-slot="main">
 
     <div class="container">
-      <div class="row">
 
-        <div tal:condition="batch">
+        <div class="row">
 
-          <ul class="pager pager-compact">
-            <li>
-              <div class="label label-primary">Page # ${batch_num+1|1}</div>
-            </li>
-            <li class="${(not later and 'disabled') or ''}">
-              <a href="${request.view_name}">
-                <i class="glyphicon glyphicon-fast-backward"> </i> Latest</a>
-            </li>
-            <li class="${(not later and 'disabled') or ''}">
-              <a href="${later}">
-                <i class="glyphicon glyphicon-backward"> </i> Later</a>
-            </li>
-            <li class="${(not earlier and 'disabled') or ''}">
-              <a href="${earlier}">
-                <i class="glyphicon glyphicon-forward"> </i> Earlier</a>
-            </li>
-          </ul>
+          <div tal:condition="batch">
+
+            <ul class="pager pager-compact">
+              <li>
+                <div class="label label-primary">Page # ${batch_num+1|1}</div>
+              </li>
+              <li class="${(not later and 'disabled') or ''}">
+                <a href="${request.view_name}">
+                  <i class="glyphicon glyphicon-fast-backward"> </i> Latest</a>
+              </li>
+              <li class="${(not later and 'disabled') or ''}">
+                <a href="${later}">
+                  <i class="glyphicon glyphicon-backward"> </i> Later</a>
+              </li>
+              <li class="${(not earlier and 'disabled') or ''}">
+                <a href="${earlier}">
+                  <i class="glyphicon glyphicon-forward"> </i> Earlier</a>
+              </li>
+            </ul>
 
 
 
-        </div>
+          </div>
+
       </div>
 
       <div class="row">

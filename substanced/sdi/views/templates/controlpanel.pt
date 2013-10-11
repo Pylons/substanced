@@ -1,0 +1,22 @@
+<div metal:define-macro="controlpanel">
+
+  <div class="row">
+    
+    <ul class="nav nav-pills"
+        tal:define="views request.sdiapi.mgmt_views(context, 
+        category='controlpanel')"
+        tal:condition="views">
+      <li tal:repeat="view_data views"
+          tal:attributes="class view_data['class']">
+        <a href="${view_data['url']}">${view_data['title']}</a>
+      </li>
+    </ul>
+    
+  </div>
+
+  <div class="row">
+    <div metal:define-slot="main"></div>
+  </div>
+
+</div>
+

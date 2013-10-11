@@ -488,6 +488,10 @@ class sdiapi(object):
     def main_template(self):
         return self.get_macro('substanced.sdi.views:templates/master.pt')
 
+    @reify
+    def control_panel_template(self):
+        return self.get_macro('substanced.sdi.views:templates/controlpanel.pt')
+    
     def get_macro(self, template, name=None):
         impl = get_renderer(template).implementation()
         if name is None:
@@ -577,8 +581,8 @@ class sdiapi(object):
     def sdi_title(self):
         return acquire(self.request.context, 'sdi_title', 'Substance D')
 
-    def mgmt_views(self, context):
-        return self.sdi_mgmt_views(context, self.request)
+    def mgmt_views(self, context, category=None):
+        return self.sdi_mgmt_views(context, self.request, category=category)
 
 def _bwcompat_kw(kw):
     """ mgmt_path and mgmt_url used to use route_url, and existing packages

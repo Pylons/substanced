@@ -28,7 +28,7 @@ class AuditLogEventStreamView(object):
         tab_title='Auditing',
         renderer='templates/auditing.pt',
         tab_near=RIGHT,
-        physical_path='/',
+        category='controlpanel',
         )
     def auditing(self):
         log = self.get_auditlog(self.context)
@@ -44,7 +44,11 @@ class AuditLogEventStreamView(object):
         batch = Batch(results, self.request, default_size=100)
         return {'batch':batch, 'results':results, 'log_exists':log_exists}
 
-    @mgmt_view(name='auditstream-sse', tab_condition=False)
+    @mgmt_view(
+        name='auditstream-sse',
+        tab_condition=False,
+        category='controlpanel',
+        )
     def auditstream_sse(self):
         """Returns an event stream suitable for driving an HTML5 EventSource.
            The event stream will contain auditing events.

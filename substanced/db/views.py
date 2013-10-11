@@ -17,10 +17,9 @@ from ..evolution import EvolutionManager
 
 
 @view_defaults(
-    physical_path='/',
     name='database',
     renderer='templates/db.pt',
-    permission='sdi.manage-database'
+    permission='sdi.manage-database',
     )
 class ManageDatabase(object):
     get_connection = staticmethod(get_connection)
@@ -30,7 +29,11 @@ class ManageDatabase(object):
         self.context = context
         self.request = request
 
-    @mgmt_view(request_method='GET', tab_title='Database')
+    @mgmt_view(
+        request_method='GET',
+        tab_title='Database',
+        category='controlpanel'
+        )
     def view(self):
         conn = self.get_connection(self.request)
         db = conn.db()
@@ -60,7 +63,12 @@ class ManageDatabase(object):
             data_object_loads=json.dumps(data_object_loads),
             )
 
-    @mgmt_view(request_method='POST', request_param='pack', check_csrf=True)
+    @mgmt_view(
+        request_method='POST',
+        request_param='pack',
+        check_csrf=True,
+        category='controlpanel'
+        )
     def pack(self):
         try:
             days = int(self.request.POST['days'])
@@ -79,8 +87,12 @@ class ManageDatabase(object):
         return HTTPFound(location=self.request.sdiapi.mgmt_path(
             self.context, '@@database'))
 
-    @mgmt_view(request_method='POST', request_param='flush_cache',
-               check_csrf=True)
+    @mgmt_view(
+        request_method='POST',
+        request_param='flush_cache',
+        category='controlpanel',
+        check_csrf=True,
+        )
     def flush_cache(self):
         conn = self.get_connection(self.request)
         conn.db().cacheMinimize()
@@ -88,9 +100,11 @@ class ManageDatabase(object):
         return HTTPFound(location=self.request.sdiapi.mgmt_path(
             self.context, '@@database'))
 
-    @mgmt_view(request_param='show_evolve',
-               renderer='templates/db_show_evolve.pt',
-              )
+    @mgmt_view(
+        request_param='show_evolve',
+        renderer='templates/db_show_evolve.pt',
+        category='controlpanel',
+        )
     def show_evolve(self):
         root = find_root(self.request.context)
         manager = self.EvolutionManager(root, self.request.registry)
@@ -101,9 +115,12 @@ class ManageDatabase(object):
             format_timestamp=_format_timestamp,
             )
 
-    @mgmt_view(request_method='POST',
-               request_param='dryrun',
-               check_csrf=True)
+    @mgmt_view(
+        request_method='POST',
+        request_param='dryrun',
+        check_csrf=True,
+        category='controlpanel'
+        )
     def dryrun(self):
         root = find_root(self.request.context)
         manager = self.EvolutionManager(root, self.request.registry)
@@ -117,9 +134,12 @@ class ManageDatabase(object):
         return HTTPFound(location=self.request.sdiapi.mgmt_path(
             self.context, '@@database'))
 
-    @mgmt_view(request_method='POST',
-               request_param='evolve',
-               check_csrf=True)
+    @mgmt_view(
+        request_method='POST',
+        request_param='evolve',
+        check_csrf=True,
+        category='controlpanel',
+        )
     def evolve(self):
         root = find_root(self.request.context)
         manager = self.EvolutionManager(root, self.request.registry)
@@ -133,9 +153,12 @@ class ManageDatabase(object):
         return HTTPFound(location=self.request.sdiapi.mgmt_path(
             self.context, '@@database'))
 
-    @mgmt_view(request_method='POST',
-               request_param='evolve_finished',
-               check_csrf=True)
+    @mgmt_view(
+        request_method='POST',
+        request_param='evolve_finished',
+        check_csrf=True,
+        category='controlpanel',
+        )
     def evolve_finished(self):
         root = find_root(self.request.context)
         manager = self.EvolutionManager(root, self.request.registry)
@@ -160,9 +183,12 @@ class ManageDatabase(object):
         return HTTPFound(location=self.request.sdiapi.mgmt_path(
             self.context, '@@database', query=dict(show_evolve=True)))
 
-    @mgmt_view(request_method='POST',
-               request_param='evolve_unfinished',
-               check_csrf=True)
+    @mgmt_view(
+        request_method='POST',
+        request_param='evolve_unfinished',
+        check_csrf=True,
+        category='controlpanel',
+        )
     def evolve_unfinished(self):
         root = find_root(self.request.context)
         manager = self.EvolutionManager(root, self.request.registry)

@@ -30,6 +30,7 @@ class UndoViews(object):
         tab_condition=False, 
         check_csrf=True,
         permission='sdi.view',
+        category='controlpanel',
         )
     def undo_recent(self):
         request = self.request
@@ -76,8 +77,8 @@ class UndoViews(object):
         name='undo_multiple',
         tab_condition=False, 
         check_csrf=True,
-        physical_path='/',
         permission='sdi.undo',
+        category='controlpanel',
         )
     def undo_multiple(self):
         request = self.request
@@ -144,8 +145,8 @@ class UndoViews(object):
         name='undo',
         tab_title='Undo',
         renderer='templates/undo.pt',
-        physical_path='/',
         permission='sdi.undo',
+        category='controlpanel',
         )
     def undo(self):
         first = int(self.request.GET.get('first', 0))
