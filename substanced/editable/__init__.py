@@ -34,7 +34,7 @@ def register_editable_adapter(config, adapter, iface): # pragma: no cover
     - ``adapter`` is the adapter factory (a class or other callable taking
       ``(context, request)``).
 
-    - ``iface`` is the interface / class for which the adapter is registerd.
+    - ``iface`` is the interface / class for which the adapter is registered.
     """
     def register():
         intr['registered'] = adapter
@@ -52,8 +52,10 @@ def register_editable_adapter(config, adapter, iface): # pragma: no cover
     config.action(discriminator, callable=register, introspectables=(intr,))
 
 def get_editable_adapter(context, request):
-    """ Return an editable adapter for the context, or ``None`` if no editable
-    adapter exists. """
+    """ Return an editable adapter for the context
+    
+    Return ``None`` if no editable adapter is registered.
+    """
     adapter = request.registry.queryMultiAdapter(
         (context, request),
         IEditable
