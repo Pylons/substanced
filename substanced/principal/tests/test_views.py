@@ -94,12 +94,16 @@ class TestChangePasswordView(unittest.TestCase):
     def test_add_success(self):
         context = DummyPrincipal()
         request = testing.DummyRequest()
+        user = DummyPrincipal()
+        request.user = user
         request.sdiapi = DummySDIAPI()
         inst = self._makeOne(context, request)
-        resp = inst.change_success({'password':'password'})
+        resp = inst.change_success(
+            {'password':'password', 'current_user_password':'abcdef'})
         self.assertEqual(context.password, 'password')
         self.assertEqual(resp.location, '/mgmt_path')
         self.assertTrue(request.sdiapi.flashed)
+        self.assertTrue(user.checked, 'abcdef')
 
 class TestRequestResetView(unittest.TestCase):
     def _makeOne(self, context, request):
@@ -180,6 +184,10 @@ class DummyPrincipal(object):
 
     def email_password_reset(self, request):
         self.emailed_password_reset = True
+
+    def check_password(self, password):
+        self.checked = password
+        return True
 
 class DummyContentRegistry(object):
     def __init__(self, resource):

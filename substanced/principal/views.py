@@ -99,11 +99,16 @@ def password_validator(node, kw):
 
 class UserPasswordSchema(Schema):
     """ The schema for validating password change requests."""
+    current_user_password = colander.SchemaNode(
+        colander.String(),
+        title='Your Current Password',
+        widget = deform.widget.PasswordWidget(redisplay=False),
+        )
     password = colander.SchemaNode(
         colander.String(),
-        title='Password',
-        validator=colander.Length(min=3, max=100),
-        widget = deform.widget.CheckedPasswordWidget(),
+        title='New Password',
+        validator = colander.Length(min=3, max=100),
+        widget = deform.widget.CheckedPasswordWidget(redisplay=False),
         )
 
 @mgmt_view(
@@ -120,9 +125,14 @@ class ChangePasswordView(FormView):
 
     def change_success(self, appstruct):
         user = self.context
-        password = appstruct['password']
-        user.set_password(password)
-        self.request.sdiapi.flash('Password changed', 'success')
+        current_user_password = appstruct['current_user_password']
+        if not self.request.user.check_password(current_user_password):
+            self.request.sdiapi.flash('Incorrect current user password',
+                                      'danger')
+        else:
+            password = appstruct['password']
+            user.set_password(password)
+            self.request.sdiapi.flash('Password changed', 'success')
         return HTTPFound(
             self.request.sdiapi.mgmt_path(user, '@@change_password')
             )
