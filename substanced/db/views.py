@@ -20,7 +20,7 @@ from ..evolution import EvolutionManager
     physical_path='/',
     name='database',
     renderer='templates/db.pt',
-    permission='sdi.manage-database'
+    permission='sdi.manage-database',
     )
 class ManageDatabase(object):
     get_connection = staticmethod(get_connection)
@@ -30,7 +30,7 @@ class ManageDatabase(object):
         self.context = context
         self.request = request
 
-    @mgmt_view(request_method='GET', tab_title='Database')
+    @mgmt_view(request_method='GET', tab_title='Database', group='Site')
     def view(self):
         conn = self.get_connection(self.request)
         db = conn.db()

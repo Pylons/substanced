@@ -77,6 +77,7 @@ class UndoViews(object):
         tab_condition=False, 
         check_csrf=True,
         physical_path='/',
+        group='Site',
         permission='sdi.undo',
         )
     def undo_multiple(self):
@@ -146,6 +147,7 @@ class UndoViews(object):
         renderer='templates/undo.pt',
         physical_path='/',
         permission='sdi.undo',
+        group='Site',
         )
     def undo(self):
         first = int(self.request.GET.get('first', 0))

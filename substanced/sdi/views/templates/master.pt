@@ -114,7 +114,21 @@
                 tal:condition="tabs">
               <li tal:repeat="tab_data tabs"
                   tal:attributes="class tab_data['class']">
-                <a href="${tab_data['url']}">${tab_data['title']}</a>
+                <tal:block define="children tab_data.get('children')">
+                  <a tal:condition="children is None" 
+                     href="${tab_data['url']}">${tab_data['title']}</a>
+                  <a tal:condition="children is not None" 
+                     class="dropdown-toggle" data-toggle="dropdown"
+                     href="#"
+                     >${tab_data['title']} <span class="caret"></span></a>
+                  <ul tal:condition="children is not None"
+                      class="dropdown-menu" role="menu">
+                    <li tal:repeat="child_data children"
+                        tal:attributes="class child_data['class']">
+                      <a href="${child_data['url']}">${child_data['title']}</a>
+                    </li>
+                  </ul>
+                </tal:block>
               </li>
             </ul>
 

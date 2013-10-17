@@ -29,6 +29,7 @@ class AuditLogEventStreamView(object):
         renderer='templates/auditing.pt',
         tab_near=RIGHT,
         physical_path='/',
+        group='Site',
         )
     def auditing(self):
         log = self.get_auditlog(self.context)

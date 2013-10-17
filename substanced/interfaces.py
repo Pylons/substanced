@@ -861,3 +861,6 @@ class IEditable(Interface):
           return the (new) file representation of the context.
         """
 
+class IMgmtViewGroup(Interface):
+    """ An interface representing a grouping of management views
+    (usually rendered as a dropdown in the manage UI tab nav)"""

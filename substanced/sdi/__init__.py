@@ -1,8 +1,12 @@
 import inspect
+import itertools
 import operator
 import transaction
 
 from pyramid_zodbconn import get_connection
+
+from pyramid.interfaces import PHASE2_CONFIG
+
 
 from zope.interface import (
     providedBy,
@@ -43,7 +47,10 @@ from pyramid.util import (
 
 from ..util import acquire
 
-from ..interfaces import IUserLocator
+from ..interfaces import (
+    IUserLocator,
+    IMgmtViewGroup,
+    )
 from ..principal import DefaultUserLocator
 
 LEFT = 'LEFT'
@@ -55,6 +62,8 @@ CENTER2 = Sentinel('CENTER2')
 
 MANAGE_ROUTE_NAME = 'substanced_manage'
 MAX_ORDER = 1 << 30
+
+UNGROUPED = 'viewgroup.ungrouped'
 
 _marker = object()
 
@@ -87,6 +96,7 @@ def add_mgmt_view(
     tab_before=None,
     tab_after=None,
     tab_near=None,
+    group=None,
     **predicates
     ):
     
@@ -95,6 +105,9 @@ def add_mgmt_view(
     containment = config.maybe_dotted(containment)
     mapper = config.maybe_dotted(mapper)
     decorator = config.maybe_dotted(decorator)
+
+    if group is None:
+        group = UNGROUPED
 
     route_name = MANAGE_ROUTE_NAME
 
@@ -134,6 +147,14 @@ def add_mgmt_view(
         view_desc = 'method %r of %s' % (attr, config.object_description(view))
     else:
         view_desc = config.object_description(view)
+
+    def check_group():
+        # cannot name a management view the same name as a view group
+        if config.registry.queryUtility(IMgmtViewGroup, name=name) is not None:
+            raise ConfigurationError(
+                'Management views may not share a name with a mananagement tab '
+                'group ("%s").' % name
+                )
 
     config.add_view(
         view=view,
@@ -188,9 +209,11 @@ def add_mgmt_view(
     intr['tab_before'] = tab_before
     intr['tab_after'] = tab_after
     intr['tab_near'] = tab_near
+    intr['group'] = group
 
     intr.relate('views', view_discriminator)
     config.action(discriminator, introspectables=(intr,))
+    config.action(None, check_group)
 
 class mgmt_view(object):
     """ A class :term:`decorator` which, when applied to a class, will
@@ -226,7 +249,7 @@ class mgmt_view(object):
         settings['_info'] = info.codeinfo # fbo "action_method"
         return wrapped
 
-def sdi_mgmt_views(context, request, names=None):
+def sdi_mgmt_views(context, request, names=None, group=None):
     if not hasattr(context, '__name__'):
         # shortcut if the context doesn't have a name (usually happens if the
         # context is an exception); we do this because mgmt_path uses Pyramid's
@@ -254,6 +277,7 @@ def sdi_mgmt_views(context, request, names=None):
         tab_condition = sdi_intr['tab_condition']
         tab_before = sdi_intr['tab_before']
         tab_after = sdi_intr['tab_after']
+        group = sdi_intr['group']
         def is_view(intr):
             return intr.category_name == 'views'
         for view_intr in filter(is_view, related):
@@ -302,14 +326,18 @@ def sdi_mgmt_views(context, request, names=None):
                     continue
             predicate_order = getattr(derived, '__order__', MAX_ORDER)
             if view_name == request.view_name:
+                active = True
                 css_class = 'active'
             else:
+                active = False
                 css_class = None
             unordered.append(
                 {'view_name': view_name,
                  'tab_before':tab_before,
                  'tab_after':tab_after,
+                 'group':group,
                  'title': tab_title or view_name.capitalize(),
+                 'active':active,
                  'class': css_class,
                  'predicate_order':predicate_order,
                  'sro_index':sro_index,
@@ -390,7 +418,32 @@ def sdi_mgmt_views(context, request, names=None):
         x[1] for x in tsorter.sorted() if x[0] not in (CENTER1, CENTER2)
         ]
 
-    return manually_ordered + topo_ordered
+    ordered_ungrouped = manually_ordered + topo_ordered
+
+    if names is not None:
+        # do not group if the caller is asking for specific names
+        return ordered_ungrouped
+
+    def by_group(view_data):
+        return view_data['group'] or view_data['view_name']
+
+    pregrouped = itertools.groupby(ordered_ungrouped, by_group)
+
+    grouped = []
+    for group_name, pregroup in pregrouped:
+        pregroup = list(pregroup)
+        if group_name is None:
+            grouped.append(pregroup[0])
+        else:
+            tab_group = {}
+            tab_group['children'] = pregroup
+            active_item_in_group = any([g['active'] for g in pregroup])
+            css_class = active_item_in_group and 'dropdown active' or 'dropdown'
+            tab_group['class'] = css_class
+            tab_group['title'] = group_name
+            grouped.append(tab_group)
+
+    return grouped
 
 def default_sdi_addable(context, intr):
     meta = intr['meta']
@@ -588,10 +641,104 @@ def _bwcompat_kw(kw):
             kw[name] = val
     return kw
 
+class MgmtViewGroup(dict):
+    def __init__(self, name, **kw):
+        if kw.get('title') is None:
+            kw['title'] = name.capitalize()
+        dict.__init__(self)
+        self['name'] = name
+        self.update(kw)
+
+def add_mgmt_view_group(
+    config,
+    name,
+    title=None,
+    before=None,
+    after=None,
+    near=None,
+    condition=None,
+    ):
+    """
+    Directive which adds a named management view group (tab group) to the
+    configuration.  A management view group can be used to roll up management
+    views under an SDI dropdown tab.
+    
+    Management views can refer to tab groups by name when they use the
+    ``group`` argument to ``add_mgmt_view`` or the ``@mgmt_view`` decorator.
+    When a management view refers to a group within its management view
+    configuration, the management view will show up grouped under a tab
+    (the tab will be named after the group) in the SDI tab navigation bar.
+
+    ``name``
+       The name of the management view group.
+
+    ``title``
+
+       The display title of the group.  Fefault: ``None``, meaning when
+       displayed as a tab, the tab's title will be the capitalization of the
+       name.
+
+    ``before``
+       The name of another group or another management view name which this
+       group should be shown before in tab order within the SDI.  Default:
+       ``None``.
+
+    ``after``
+       The name of another group or another management view name which this
+       group should be shown after in tab order within the SDI.  Default:
+       ``None``.
+
+    ``near``
+       One of :attr:`~substanced.sdi.LEFT`, :attr:`~substanced.sdi.MIDDLE`,
+       :attr:`~substanced.sdi.RIGHT`, or ``None``.  Cannot be used if
+       ``before`` or ``after`` is also used. Default: ``None``.
+
+    ``condition``
+       One of ``False``, ``True``, ``None``, or a condition function that
+       returns a boolean that will be called when a management view rendering
+       that includes this group is performed.  Default: ``None``.
+
+    Tab groups can also be used to create adhoc groupings of management views
+    to be used within the management interface but outside the tab navigation
+    bar.  To use it this way, register the tab group with ``condition=False``
+    and ask for it by name by passing "group=thegroupname" to
+    :func:`substanced.sdi.sdi_mgmt_views`.
+    """
+    group = MgmtViewGroup(
+            name,
+            title=title,
+            before=before,
+            after=after,
+            near=near,
+            condition=condition,
+            )
+    
+    def register():
+        config.registry.registerUtility(group, IMgmtViewGroup, name=name)
+
+    discriminator = ('sd-mgmt-view-group', name)
+    intr = config.introspectable(
+        'sd mgmt view groups',
+        discriminator,
+        name,
+        'sd mgmt view group'
+        )
+    intr['name'] = name
+    intr['title'] = title
+    intr['before'] = before
+    intr['after'] = after
+    intr['near'] = near
+    intr['condition'] = condition
+
+    config.action(discriminator, callable=register, introspectables=(intr,),
+                  order=PHASE2_CONFIG)
+
 def includeme(config): # pragma: no cover
     settings = config.registry.settings
     YEAR = 86400 * 365
     config.add_directive('add_mgmt_view', add_mgmt_view, action_wrap=False)
+    config.add_directive('add_mgmt_view_group', add_mgmt_view_group)
+    config.add_mgmt_view_group(UNGROUPED, 'Ungrouped')
     config.add_static_view('deformstatic', 'deform:static', cache_max_age=YEAR)
     config.add_static_view('sdistatic', 'substanced.sdi:static',
                            cache_max_age=YEAR)
