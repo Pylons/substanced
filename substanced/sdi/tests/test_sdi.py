@@ -58,19 +58,7 @@ class Test_add_mgmt_view(unittest.TestCase):
         self.assertEqual(config._intr['tab_condition'], 'tab_condition')
         self.assertEqual(config._intr.related['views'].resolve(),
                          ('view', None, '', 'substanced_manage', 'hash'))
-        self.assertEqual(config._intr['category'], None)
 
-    def test_intr_categories(self):
-        config = self._makeConfig()
-        self._callFUT(
-            config,
-            tab_title='tab_title',
-            tab_condition='tab_condition',
-            check_csrf=True,
-            category='controlpanel',
-            )
-        self.assertEqual(config._intr['category'], 'controlpanel')
-        
     def test_with_tab_near_and_tab_before(self):
         from pyramid.exceptions import ConfigurationError
         from .. import MIDDLE
@@ -217,9 +205,9 @@ class Test_sdi_mgmt_views(unittest.TestCase):
     def tearDown(self):
         testing.tearDown()
         
-    def _callFUT(self, context, request, names=None, category=None):
+    def _callFUT(self, context, request, names=None):
         from .. import sdi_mgmt_views
-        return sdi_mgmt_views(context, request, names=names, category=category)
+        return sdi_mgmt_views(context, request, names)
 
     def test_context_has_no_name(self):
         result = self._callFUT(None, None)
@@ -243,7 +231,6 @@ class Test_sdi_mgmt_views(unittest.TestCase):
         intr['tab_condition'] = None
         intr['tab_before'] = None
         intr['tab_after'] = None
-        intr['category'] = None
         intr = DummyIntrospectable(related=(), introspectable=intr)
         request.registry.introspector = DummyIntrospector([(intr,)])
         context = testing.DummyResource()
@@ -266,7 +253,6 @@ class Test_sdi_mgmt_views(unittest.TestCase):
         intr['tab_condition'] = None
         intr['tab_before'] = None
         intr['tab_after'] = None
-        intr['category'] = None
         intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
         request.registry.introspector = DummyIntrospector([(intr,)])
         context = testing.DummyResource()
@@ -277,60 +263,6 @@ class Test_sdi_mgmt_views(unittest.TestCase):
         self.assertEqual(result[0]['class'], 'active')
         self.assertEqual(result[0]['url'], '/mgmt_path')
 
-    def test_no_views_due_to_category(self):
-        request = testing.DummyRequest()
-        request.matched_route = None
-        request.sdiapi = DummySDIAPI()
-        request.registry.content = DummyContent()
-        request.view_name = 'name'
-        view_intr = DummyIntrospectable()
-        view_intr.category_name = 'views'
-        view_intr['name'] = 'name'
-        view_intr['context'] = None
-        view_intr['derived_callable'] = None
-        intr = {}
-        intr['tab_title'] = None
-        intr['tab_condition'] = None
-        intr['tab_before'] = None
-        intr['tab_after'] = None
-        intr['category'] = None
-        intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
-        request.registry.introspector = DummyIntrospector([(intr,)])
-        context = testing.DummyResource()
-        result = self._callFUT(context, request, category='controlpanel')
-        self.assertEqual(result, [])
-
-    def test_views_match_due_to_category(self):
-        request = testing.DummyRequest()
-        request.matched_route = None
-        request.sdiapi = DummySDIAPI()
-        request.registry.content = DummyContent()
-        request.view_name = 'name'
-        view_intr = DummyIntrospectable()
-        view_intr.category_name = 'views'
-        view_intr['name'] = 'name'
-        view_intr['context'] = None
-        view_intr['derived_callable'] = None
-        intr = {}
-        intr['tab_title'] = None
-        intr['tab_condition'] = None
-        intr['tab_before'] = None
-        intr['tab_after'] = None
-        intr['category'] = None
-        intr2 = {}
-        intr2['tab_title'] = 'cp tab'
-        intr2['tab_condition'] = None
-        intr2['tab_before'] = None
-        intr2['tab_after'] = None
-        intr2['category'] = 'controlpanel'
-        intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
-        intr2 = DummyIntrospectable(related=(view_intr,), introspectable=intr2)
-        request.registry.introspector = DummyIntrospector([(intr, intr2)])
-        context = testing.DummyResource()
-        result = self._callFUT(context, request, category='controlpanel')
-        self.assertEqual(len(result), 1)
-        self.assertEqual(result[0]['title'], 'cp tab')
-        
     def test_one_related_view_somecontext_tabcondition_None(self):
         from zope.interface import Interface
         class IFoo(Interface):
@@ -349,7 +281,6 @@ class Test_sdi_mgmt_views(unittest.TestCase):
         intr['tab_condition'] = None
         intr['tab_before'] = None
         intr['tab_after'] = None
-        intr['category'] = None
         intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
         request.registry.introspector = DummyIntrospector([(intr,)])
         context = testing.DummyResource()
@@ -373,7 +304,6 @@ class Test_sdi_mgmt_views(unittest.TestCase):
         intr['tab_condition'] = None
         intr['tab_before'] = None
         intr['tab_after'] = None
-        intr['category'] = None
         intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
         request.registry.introspector = DummyIntrospector([(intr,)])
         context = testing.DummyResource()
@@ -395,7 +325,6 @@ class Test_sdi_mgmt_views(unittest.TestCase):
         intr['tab_condition'] = False
         intr['tab_before'] = None
         intr['tab_after'] = None
-        intr['category'] = None
         intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
         request.registry.introspector = DummyIntrospector([(intr,)])
         context = testing.DummyResource()
@@ -417,7 +346,6 @@ class Test_sdi_mgmt_views(unittest.TestCase):
         intr['tab_condition'] = True
         intr['tab_before'] = None
         intr['tab_after'] = None
-        intr['category'] = None
         intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
         request.registry.introspector = DummyIntrospector([(intr,)])
         context = testing.DummyResource()
@@ -441,7 +369,6 @@ class Test_sdi_mgmt_views(unittest.TestCase):
         intr['tab_condition'] = tabcondition
         intr['tab_before'] = None
         intr['tab_after'] = None
-        intr['category'] = None
         intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
         request.registry.introspector = DummyIntrospector([(intr,)])
         context = testing.DummyResource()
@@ -463,7 +390,6 @@ class Test_sdi_mgmt_views(unittest.TestCase):
         intr['tab_condition'] = None
         intr['tab_before'] = None
         intr['tab_after'] = None
-        intr['category'] = None
         intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
         request.registry.introspector = DummyIntrospector([(intr,)])
         context = testing.DummyResource()
@@ -489,7 +415,6 @@ class Test_sdi_mgmt_views(unittest.TestCase):
         intr['tab_condition'] = None
         intr['tab_before'] = None
         intr['tab_after'] = None
-        intr['category'] = None
         intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
         request.registry.introspector = DummyIntrospector([(intr,)])
         context = testing.DummyResource()
@@ -515,7 +440,6 @@ class Test_sdi_mgmt_views(unittest.TestCase):
         intr['tab_condition'] = None
         intr['tab_before'] = None
         intr['tab_after'] = None
-        intr['category'] = None
         intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
         request.registry.introspector = DummyIntrospector([(intr,)])
         context = testing.DummyResource()
@@ -532,19 +456,16 @@ class Test_sdi_mgmt_views(unittest.TestCase):
         view_intr['name'] = 'name'
         view_intr['context'] = None
         view_intr['derived_callable'] = None
-        view_intr['category'] = None
         intr = {}
         intr['tab_title'] = 'b'
         intr['tab_condition'] = None
         intr['tab_before'] = None
         intr['tab_after'] = None
-        intr['category'] = None
         intr2 = {}
         intr2['tab_title'] = 'a'
         intr2['tab_condition'] = None
         intr2['tab_before'] = None
         intr2['tab_after'] = None
-        intr2['category'] = None
         intr = DummyIntrospectable(related=(view_intr,), introspectable=intr)
         intr2 = DummyIntrospectable(related=(view_intr,), introspectable=intr2)
         request.registry.introspector = DummyIntrospector([(intr, intr2)])
@@ -578,13 +499,11 @@ class Test_sdi_mgmt_views(unittest.TestCase):
         intr['tab_condition'] = None
         intr['tab_before'] = None
         intr['tab_after'] = None
-        intr['category'] = None
         intr2 = {}
         intr2['tab_title'] = 'a'
         intr2['tab_condition'] = None
         intr2['tab_before'] = None
         intr2['tab_after'] = None
-        intr2['category'] = None
         intr = DummyIntrospectable(related=(view_intr1,), introspectable=intr)
         intr2 = DummyIntrospectable(related=(view_intr2,), introspectable=intr2)
         request.registry.introspector = DummyIntrospector([(intr, intr2)])
@@ -621,13 +540,11 @@ class Test_sdi_mgmt_views(unittest.TestCase):
         intr['tab_condition'] = None
         intr['tab_before'] = 'a'
         intr['tab_after'] = None
-        intr['category'] = None
         intr2 = {}
         intr2['tab_title'] = 'a'
         intr2['tab_condition'] = None
         intr2['tab_before'] = None
         intr2['tab_after'] = None
-        intr2['category'] = None
         intr = DummyIntrospectable(related=(view_intr1,), introspectable=intr)
         intr2 = DummyIntrospectable(related=(view_intr2,), introspectable=intr2)
         request.registry.introspector = DummyIntrospector([(intr, intr2)])
@@ -675,25 +592,21 @@ class Test_sdi_mgmt_views(unittest.TestCase):
         intr['tab_condition'] = None
         intr['tab_before'] = CENTER1
         intr['tab_after'] = FIRST
-        intr['category'] = None
         intr2 = {}
         intr2['tab_title'] = 'a'
         intr2['tab_condition'] = None
         intr2['tab_before'] = LAST
         intr2['tab_after'] = CENTER2
-        intr2['category'] = None
         intr3 = {}
         intr3['tab_title'] = 'b'
         intr3['tab_condition'] = None
         intr3['tab_before'] = CENTER2
         intr3['tab_after'] = CENTER1
-        intr3['category'] = None
         intr4 = {}
         intr4['tab_title'] = 'd'
         intr4['tab_condition'] = None
         intr4['tab_before'] = CENTER2
         intr4['tab_after'] = CENTER1
-        intr4['category'] = None
         
         intr = DummyIntrospectable(related=(view_intr1,), introspectable=intr)
         intr2 = DummyIntrospectable(related=(view_intr2,), introspectable=intr2)
@@ -744,7 +657,6 @@ class Test_sdi_mgmt_views(unittest.TestCase):
         intr1['tab_condition'] = None
         intr1['tab_before'] = None
         intr1['tab_after'] = None
-        intr1['category'] = None
         intr1 = DummyIntrospectable(related=(view_intr1,), introspectable=intr1)
         view_intr2 = DummyIntrospectable()
         view_intr2.category_name = 'views'
@@ -756,7 +668,6 @@ class Test_sdi_mgmt_views(unittest.TestCase):
         intr2['tab_condition'] = None
         intr2['tab_before'] = None
         intr2['tab_after'] = None
-        intr2['category'] = None
         intr2 = DummyIntrospectable(related=(view_intr2,), introspectable=intr2)
         request.registry.introspector = DummyIntrospector([(intr1, intr2)])
         context = testing.DummyResource()
@@ -784,7 +695,6 @@ class Test_sdi_mgmt_views(unittest.TestCase):
         intr1['tab_condition'] = None
         intr1['tab_before'] = None
         intr1['tab_after'] = None
-        intr1['category'] = None
         intr1 = DummyIntrospectable(related=(view_intr1,), introspectable=intr1)
         view_intr2 = DummyIntrospectable()
         view_intr2.category_name = 'views'
@@ -796,7 +706,6 @@ class Test_sdi_mgmt_views(unittest.TestCase):
         intr2['tab_condition'] = None
         intr2['tab_before'] = None
         intr2['tab_after'] = None
-        intr2['category'] = None
         intr2 = DummyIntrospectable(related=(view_intr2,), introspectable=intr2)
         request.registry.introspector = DummyIntrospector([(intr1, intr2)])
         context = MoreDirectContext()
@@ -825,7 +734,6 @@ class Test_sdi_mgmt_views(unittest.TestCase):
         intr1['tab_condition'] = None
         intr1['tab_before'] = None
         intr1['tab_after'] = None
-        intr1['category'] = None
         intr1 = DummyIntrospectable(related=(view_intr1,), introspectable=intr1)
         view_intr2 = DummyIntrospectable()
         view_intr2.category_name = 'views'
@@ -837,7 +745,6 @@ class Test_sdi_mgmt_views(unittest.TestCase):
         intr2['tab_condition'] = None
         intr2['tab_before'] = None
         intr2['tab_after'] = None
-        intr2['category'] = None
         intr2 = DummyIntrospectable(related=(view_intr2,), introspectable=intr2)
         request.registry.introspector = DummyIntrospector([(intr1, intr2)])
         context = MoreDirectContext()
@@ -867,7 +774,6 @@ class Test_sdi_mgmt_views(unittest.TestCase):
         intr1['tab_condition'] = None
         intr1['tab_before'] = None
         intr1['tab_after'] = None
-        intr1['category'] = None
         intr1 = DummyIntrospectable(related=(view_intr1,), introspectable=intr1)
         view_intr2 = DummyIntrospectable()
         view_intr2.category_name = 'views'
@@ -879,7 +785,6 @@ class Test_sdi_mgmt_views(unittest.TestCase):
         intr2['tab_condition'] = None
         intr2['tab_before'] = None
         intr2['tab_after'] = None
-        intr2['category'] = None
         intr2 = DummyIntrospectable(related=(view_intr2,), introspectable=intr2)
         request.registry.introspector = DummyIntrospector([(intr1, intr2)])
         context = testing.DummyResource()
@@ -949,7 +854,6 @@ class Test_sdi_add_views(unittest.TestCase):
         intr['tab_condition'] = None
         intr['tab_before'] = None
         intr['tab_after'] = None
-        intr['category'] = None
         intr = DummyIntrospectable(related=(view_intr1,), introspectable=intr)
         request.registry.introspector = DummyIntrospector([(ct_intr,), (intr,)])
         context = testing.DummyResource()
@@ -984,7 +888,6 @@ class Test_sdi_add_views(unittest.TestCase):
         intr['tab_condition'] = None
         intr['tab_before'] = None
         intr['tab_after'] = None
-        intr['category'] = None
         intr = DummyIntrospectable(related=(view_intr1,), introspectable=intr)
         request.registry.introspector = DummyIntrospector([(ct_intr,), (intr,)])
         result = self._callFUT(context, request)
@@ -1011,7 +914,6 @@ class Test_sdi_add_views(unittest.TestCase):
         intr['tab_condition'] = None
         intr['tab_before'] = None
         intr['tab_after'] = None
-        intr['category'] = None
         intr = DummyIntrospectable(related=(view_intr1,), introspectable=intr)
         request.registry.introspector = DummyIntrospector([(ct_intr,), (intr,)])
         result = self._callFUT(context, request)
@@ -1045,7 +947,6 @@ class Test_sdi_add_views(unittest.TestCase):
         intr['tab_condition'] = None
         intr['tab_before'] = None
         intr['tab_after'] = None
-        intr['category'] = None
         intr = DummyIntrospectable(related=(view_intr1,), introspectable=intr)
         request.registry.introspector = DummyIntrospector(
             [(ct_intr, ct2_intr), (intr,)])
