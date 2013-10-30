@@ -22,6 +22,8 @@ class PropertySheet(object):
 
     schema = None
 
+    extra_js_url = None
+
     def __init__(self, context, request):
         self.context = context
         self.request = request

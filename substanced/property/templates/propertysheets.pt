@@ -36,9 +36,11 @@
             Properties
           </div>
         </div>
-        <div class="panel-body">
+        <div class="panel-body panel-outer">
           <div class="col-md-12" id="form" tal:content="structure form"/>
         </div>
+        <script tal:condition="view.active_sheet.extra_js_url"
+                src="${view.active_sheet.extra_js_url}"></script>
       </div>
     </div>
   </div>
