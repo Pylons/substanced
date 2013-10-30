@@ -33,7 +33,7 @@
   -->
 
   <div metal:fill-slot="main">
-    <form id="contents_form" action="@@${request.view_name}" method="POST" class="sdi-contents-actions"
+    <form id="contents_form" action="@@${request.view_name}" method="POST" class="sdi-contents-actions" autocomplete="off"
           onsubmit="return sdi.loading_indicator_on()">
       <div class="container" tal:define="canadd
            addables and 'tocopy' not in request.session and 'tomove' not in request.session">
