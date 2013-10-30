@@ -201,10 +201,13 @@
                 ajaxOpts.data = $.extend({}, ajaxOpts.data, query);
             }
             // make the actual request
-            jqXHR = $.ajax(ajaxOpts)
-                .done(dfd.resolve)
-                .fail(dfd.reject)
-                .then(handleAjaxSuccess, handleAjaxError);
+            // NB: do not try to chain these calls; when doing so we wind up
+            // with a Deferred object instead of the real XMLHTTPRequest
+            // within abortRequest.
+            jqXHR = $.ajax(ajaxOpts);
+            jqXHR.done(dfd.resolve);
+            jqXHR.fail(dfd.reject);
+            jqXHR.then(handleAjaxSuccess, handleAjaxError);
 
             // Remember that this request is now the active one
             activeRequest = jqXHR;
