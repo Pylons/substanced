@@ -115,6 +115,37 @@ To run coverage tests for a single version of Python:
   easiest usage is to simply provide the verbatim name of the test you're 
   working on.
 
+Internalization (adding/updating languages)
+-------------------------------------------
+
+Transifex project should be used for translations: https://www.transifex.com/projects/p/substanced/resource/master/
+
+Before you can do anything related to translations, there is small setup:
+
+- Make sure "transifex-client" Python package is installed
+
+To update transifex with new translations:
+
+- Run ``python setup.py extract_messages`` to populate `substanced.pot`
+
+- Run ``python setup.py update_catalog`` to update translation strings in existing .po files
+
+- Run ``tx push -t -s`` to push translation files to transifex to be translated 
+
+- Notify translators through transifex
+
+To fetch translated files from transifex: 
+
+- Run ``tx pull`` to update .po files with translations
+
+- Run ``python setup.py compile_catalog`` to update .mo files
+
+- Run `git commit -m "Update catalog" substanced/locales` to commit changes (don't forget to submit changes upstream)
+
+To add new language:
+
+- Run ``python setup.py init_catalog -l de``
+
 Test Coverage
 -------------
 

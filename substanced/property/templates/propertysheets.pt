@@ -1,4 +1,4 @@
-<div metal:use-macro="request.sdiapi.main_template">
+<div metal:use-macro="request.sdiapi.main_template" i18n:domain="substanced">
 
   <metal:head-more fill-slot="head-more">
     <!-- CSS -->
@@ -28,11 +28,11 @@
             
             <ul class="nav nav-pills">
               <li tal:repeat="tab tabs"
-                  tal:attributes="class view.active_sheet_name == tab and 'active' or None"><a href="${request.sdiapi.mgmt_path(request.context, '@@properties', tab)}">${tab or 'Basic'}</a>
+                  tal:attributes="class view.active_sheet_name == tab and 'active' or None"><a href="${request.sdiapi.mgmt_path(request.context, '@@properties', tab)}">${request.localizer.translate(tab or 'Basic')}</a>
               </li>
             </ul>
           </div>
-          <div tal:condition="len(tabs) <= 1">
+          <div tal:condition="len(tabs) &lt; 2" i18n:translate="">
             Properties
           </div>
         </div>

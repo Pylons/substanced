@@ -1,4 +1,4 @@
-<div metal:use-macro="request.sdiapi.main_template">
+<div metal:use-macro="request.sdiapi.main_template" i18n:domain="substanced">
 
   <metal:head-more fill-slot="head-more">
     <!-- CSS -->
@@ -19,13 +19,13 @@
     <h1>${view.title|None}</h1>
     <div id="form" tal:content="structure form"/>
 
-    <h3 tal:condition="searchresults|None">Search Results</h3>
+    <h3 tal:condition="searchresults|None" i18n:translate="">Search Results</h3>
     <table tal:condition="searchresults|None" class="table table-striped">
 
       <thead>
        <tr>
-         <th width="15%">Object Id</th>
-         <th width="85%">Repr</th>
+         <th width="15%" i18n:translate="">Object Id</th>
+         <th width="85%" i18n:translate="">Repr</th>
        </tr>
       </thead>
 

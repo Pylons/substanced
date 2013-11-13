@@ -41,6 +41,7 @@ install_requires = [
     'zope.deprecation',
     'statsd',
     'pytz',
+    'Babel',
     ]
 
 docs_extras = ['Sphinx', 'repoze.sphinx.autointerface']
@@ -76,6 +77,12 @@ setup(name='substanced',
       install_requires=install_requires,
       tests_require=install_requires,
       test_suite="substanced",
+      message_extractors={
+          'substanced': [
+              ('**.py', 'python', None),  # babel extractor supports plurals
+              ('**.pt', 'lingua_xml', None),
+          ],
+      },
       entry_points="""
       [console_scripts]
       sd_evolve = substanced.scripts.evolve:main

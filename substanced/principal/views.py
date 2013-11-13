@@ -22,7 +22,7 @@ from . import (
     GroupSchema,
     )
 
-from ..util import find_service
+from ..util import find_service, _
 
 class AddUserSchema(UserGroupsSchema, UserSchema):
     password = colander.SchemaNode(
@@ -114,7 +114,7 @@ class UserPasswordSchema(Schema):
 @mgmt_view(
     context=IUser,
     name='change_password',
-    tab_title='Change Password',
+    tab_title=_('Change Password'),
     permission='sdi.change-password',
     renderer='substanced.sdi:templates/form.pt',
     )

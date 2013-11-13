@@ -41,7 +41,7 @@ from pyramid.util import (
     Sentinel,
     )
 
-from ..util import acquire
+from ..util import acquire, _
 
 from ..interfaces import IUserLocator
 from ..principal import DefaultUserLocator
@@ -309,7 +309,7 @@ def sdi_mgmt_views(context, request, names=None):
                 {'view_name': view_name,
                  'tab_before':tab_before,
                  'tab_after':tab_after,
-                 'title': tab_title or view_name.capitalize(),
+                 'title': _(tab_title or view_name.capitalize()),
                  'class': css_class,
                  'predicate_order':predicate_order,
                  'sro_index':sro_index,
@@ -605,6 +605,7 @@ def includeme(config): # pragma: no cover
     config.add_request_method(mgmt_url) # XXX deprecate
     config.add_request_method(flash_with_undo) # XXX deprecate
     config.add_request_method(user, reify=True)
+    config.set_request_property(lambda r: r.user.locale, name="_LOCALE_")
     config.add_request_method(sdiapi, reify=True)
     secret = settings.get('substanced.secret')
     if secret is None:

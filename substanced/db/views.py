@@ -14,6 +14,7 @@ from pyramid.traversal import find_root
 
 from ..sdi import mgmt_view
 from ..evolution import EvolutionManager
+from ..util import _
 
 
 @view_defaults(
@@ -30,7 +31,7 @@ class ManageDatabase(object):
         self.context = context
         self.request = request
 
-    @mgmt_view(request_method='GET', tab_title='Database')
+    @mgmt_view(request_method='GET', tab_title=_('Database'))
     def view(self):
         conn = self.get_connection(self.request)
         db = conn.db()
@@ -89,6 +90,7 @@ class ManageDatabase(object):
             self.context, '@@database'))
 
     @mgmt_view(request_param='show_evolve',
+               tab_title=_('Database'),
                renderer='templates/db_show_evolve.pt',
               )
     def show_evolve(self):

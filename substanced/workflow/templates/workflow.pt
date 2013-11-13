@@ -1,14 +1,14 @@
-<div metal:use-macro="request.sdiapi.main_template">
+<div metal:use-macro="request.sdiapi.main_template" i18n:domain="substanced">
 
   <div metal:fill-slot="main">
 
     <div tal:repeat="workflow workflows">
 
       <div class="panel panel-default">
-        <div class="panel-heading">
-          <b>${workflow.workflow.name or workflow.workflow.type}</b> 
+        <div class="panel-heading" i18n:translate="">
+          <b i18n:name="workflow type">${workflow.workflow.name or workflow.workflow.type}</b> 
                workflow in state 
-          <b>${workflow.current_state}</b>
+          <b i18n:name="workflow state">${workflow.current_state}</b>
         </div>
         <div class="panel-body">
           <div class="container">
@@ -19,7 +19,7 @@
               <input type="hidden" name="csrf_token" 
                      value="${request.session.get_csrf_token()}"/>
               <div class="row" style="margin-bottom: 20px;">
-                <div class="col-md-8">
+                <div class="col-md-8" i18n:translate="">
                    Transition to another state
                 </div>
                 <div class="col-md-2">
@@ -29,7 +29,7 @@
                   </select>
                 </div>
                 <div class="col-md-2">
-                  <input type="submit" name="submit" value="Transition" 
+                  <input type="submit" name="submit" value="Transition" i18n:attributes="value"
                          class="btn btn-primary form-control"/>
                 </div>
               </div>
