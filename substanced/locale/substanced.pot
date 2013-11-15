@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: substanced 0.0\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-11-13 16:52+0100\n"
+"POT-Creation-Date: 2013-11-15 17:53+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -29,7 +29,7 @@ msgstr ""
 msgid "Id"
 msgstr ""
 
-#: substanced/audit/templates/auditing.pt:16 substanced/folder/views.py:301
+#: substanced/audit/templates/auditing.pt:16 substanced/folder/views.py:300
 msgid "Name"
 msgstr ""
 
@@ -291,63 +291,66 @@ msgstr ""
 msgid "Delete"
 msgstr ""
 
-#: substanced/folder/views.py:763
+#: substanced/folder/views.py:762
 msgid "Deleted ${num} item"
 msgid_plural "Deleted ${num} items"
 msgstr[0] ""
 msgstr[1] ""
 
-#: substanced/folder/views.py:779
+#: substanced/folder/views.py:778
 msgid "Duplicated ${num} item"
 msgid_plural "Duplicated ${num} items"
 msgstr[0] ""
 msgstr[1] ""
 
-#: substanced/folder/views.py:799
+#: substanced/folder/views.py:798
 msgid "No items renamed"
 msgstr ""
 
-#: substanced/folder/views.py:816
+#: substanced/folder/views.py:815
 msgid "Renamed ${num} item"
 msgid_plural "Renamed ${num} items"
 msgstr[0] ""
 msgstr[1] ""
 
-#: substanced/folder/views.py:832
+#: substanced/folder/views.py:831
 msgid "Choose where to copy the items:"
 msgstr ""
 
-#: substanced/folder/views.py:834
+#: substanced/folder/views.py:833
 msgid "No items to copy"
 msgstr ""
 
-#: substanced/folder/views.py:841
+#: substanced/folder/views.py:840
 msgid "No items copied"
 msgstr ""
 
-#: substanced/folder/views.py:868
+#: substanced/folder/views.py:867
 msgid "Copied ${num} item"
 msgid_plural "Copied ${num} items"
 msgstr[0] ""
 msgstr[1] ""
 
-#: substanced/folder/views.py:884
+#: substanced/folder/views.py:883
 msgid "Choose where to move the items:"
 msgstr ""
 
-#: substanced/folder/views.py:886
+#: substanced/folder/views.py:885
 msgid "No items to move"
 msgstr ""
 
-#: substanced/folder/views.py:920
+#: substanced/folder/views.py:892
+msgid "No items moved"
+msgstr ""
+
+#: substanced/folder/views.py:919
 msgid "Moved ${num} item"
 msgid_plural "Moved ${num} items"
 msgstr[0] ""
 msgstr[1] ""
 
-#: substanced/folder/views.py:933
-#, python-format
-msgid "%i rows moved."
+#: substanced/folder/views.py:932
+msgid "${i} rows moved."
 msgstr ""
 
 #: substanced/folder/views.py:961
@@ -356,9 +359,10 @@ msgid ""
 " to copy"
 msgstr ""
 
-#: substanced/folder/views.py:963
-#, python-format
-msgid "\"%s\" is of a type (%s) that is not addable here, refusing to move"
+#: substanced/folder/views.py:964
+msgid ""
+"\"${obj_name}\" is of a type (${obj_type}) that is not addable here, refusing"
+" to move"
 msgstr ""
 
 #: substanced/folder/views.py:990
@@ -397,6 +401,22 @@ msgstr ""
 msgid "Rename all"
 msgstr ""
 
+#: substanced/locking/views.py:67
+msgid "Delete Expired"
+msgstr ""
+
+#: substanced/locking/views.py:92
+msgid "Owner"
+msgstr ""
+
+#: substanced/locking/views.py:95
+msgid "Resource"
+msgstr ""
+
+#: substanced/locking/views.py:98
+msgid "Expires"
+msgstr ""
+
 #: substanced/objectmap/templates/integrityerror.pt:6
 msgid "Integrity Error"
 msgstr ""
@@ -415,6 +435,10 @@ msgstr ""
 
 #: substanced/objectmap/templates/referenced.pt:16
 msgid "Objects"
+msgstr ""
+
+#: substanced/principal/views.py:117
+msgid "Change Password"
 msgstr ""
 
 #: substanced/principal/templates/resetpassword_email.pt:1

@@ -10,8 +10,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: SubstanceD\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-11-13 16:52+0100\n"
-"PO-Revision-Date: 2013-11-13 17:25+0000\n"
+"POT-Creation-Date: 2013-11-15 17:53+0100\n"
+"PO-Revision-Date: 2013-11-15 16:55+0000\n"
 "Last-Translator: iElectric <domen@dev.si>\n"
 "Language-Team: Slovenian (http://www.transifex.com/projects/p/substanced/language/sl/)\n"
 "MIME-Version: 1.0\n"
@@ -33,7 +33,7 @@ msgstr "Reviziraj dogodke"
 msgid "Id"
 msgstr "Id"
 
-#: substanced/audit/templates/auditing.pt:16 substanced/folder/views.py:301
+#: substanced/audit/templates/auditing.pt:16 substanced/folder/views.py:300
 msgid "Name"
 msgstr "Ime"
 
@@ -104,7 +104,7 @@ msgstr "Vrednost"
 
 #: substanced/catalog/views/templates/indexing.pt:32
 msgid "Reindex This Object"
-msgstr ""
+msgstr "Reindeksiraj objekt"
 
 #: substanced/catalog/views/templates/search.pt:22
 msgid "Search Results"
@@ -134,7 +134,7 @@ msgstr ""
 
 #: substanced/db/templates/db.pt:20
 msgid "Pack"
-msgstr ""
+msgstr "Pakiraj"
 
 #: substanced/db/templates/db.pt:25
 msgid "Remove all objects from the ZODB connection cache"
@@ -158,7 +158,7 @@ msgstr ""
 
 #: substanced/db/templates/db.pt:67
 msgid "Show summary"
-msgstr ""
+msgstr "Prikaži povzetek"
 
 #: substanced/db/templates/db.pt:77
 msgid "Details"
@@ -194,15 +194,15 @@ msgstr ""
 
 #: substanced/db/templates/db.pt:107
 msgid "Total number of objects in the database"
-msgstr ""
+msgstr "Skupaj objektov v bazi"
 
 #: substanced/db/templates/db.pt:116
 msgid "Connections"
-msgstr ""
+msgstr "Povezave"
 
 #: substanced/db/templates/db.pt:122
 msgid "Connection"
-msgstr ""
+msgstr "Povezava"
 
 #: substanced/db/templates/db.pt:123
 msgid "Number of non-ghost objects (in total ${db.cacheSize()})"
@@ -214,7 +214,7 @@ msgstr ""
 
 #: substanced/db/templates/db.pt:141
 msgid "Activity"
-msgstr ""
+msgstr "Aktivnost"
 
 #: substanced/db/templates/db.pt:184
 msgid "Database activity monitoring inactive"
@@ -222,11 +222,11 @@ msgstr ""
 
 #: substanced/db/templates/db_show_evolve.pt:5
 msgid "Back"
-msgstr ""
+msgstr "Nazaj"
 
 #: substanced/db/templates/db_show_evolve.pt:8
 msgid "Unfinished steps"
-msgstr ""
+msgstr "Nedokončani koraki"
 
 #: substanced/db/templates/db_show_evolve.pt:11
 msgid "There are no unfinished steps."
@@ -273,7 +273,7 @@ msgstr "Prekliči"
 
 #: substanced/folder/views.py:184
 msgid "Move here"
-msgstr ""
+msgstr "Premakni sem"
 
 #: substanced/folder/views.py:238
 msgid "Rename"
@@ -295,7 +295,7 @@ msgstr "Podvoji"
 msgid "Delete"
 msgstr "Izbriši"
 
-#: substanced/folder/views.py:763
+#: substanced/folder/views.py:762
 msgid "Deleted ${num} item"
 msgid_plural "Deleted ${num} items"
 msgstr[0] "Pobrisan ${num} vnos"
@@ -303,7 +303,7 @@ msgstr[1] "Pobrisana ${num} vnosa"
 msgstr[2] "Pobrisani ${num} vnosi"
 msgstr[3] "Pobrisanih ${num} vnosov"
 
-#: substanced/folder/views.py:779
+#: substanced/folder/views.py:778
 msgid "Duplicated ${num} item"
 msgid_plural "Duplicated ${num} items"
 msgstr[0] "Podvojil ${num} vnos"
@@ -311,11 +311,11 @@ msgstr[1] "Podvojil ${num} vnosa"
 msgstr[2] "Podvojil ${num} vnosov"
 msgstr[3] "Podvojil ${num} vnosov"
 
-#: substanced/folder/views.py:799
+#: substanced/folder/views.py:798
 msgid "No items renamed"
-msgstr ""
+msgstr "Ni preimenovanih vnosov"
 
-#: substanced/folder/views.py:816
+#: substanced/folder/views.py:815
 msgid "Renamed ${num} item"
 msgid_plural "Renamed ${num} items"
 msgstr[0] "Preimenoval ${num} vnos"
@@ -323,19 +323,19 @@ msgstr[1] "Preimenoval ${num} vnosa"
 msgstr[2] "Preimenoval ${num} vnosov"
 msgstr[3] "Preimenoval ${num} vnosov"
 
-#: substanced/folder/views.py:832
+#: substanced/folder/views.py:831
 msgid "Choose where to copy the items:"
 msgstr "Izberi kam skopiram vnose:"
 
-#: substanced/folder/views.py:834
+#: substanced/folder/views.py:833
 msgid "No items to copy"
-msgstr ""
+msgstr "Ni skopiranih vnosov"
 
-#: substanced/folder/views.py:841
+#: substanced/folder/views.py:840
 msgid "No items copied"
-msgstr ""
+msgstr "Ni prekopiral vnosov"
 
-#: substanced/folder/views.py:868
+#: substanced/folder/views.py:867
 msgid "Copied ${num} item"
 msgid_plural "Copied ${num} items"
 msgstr[0] "Kopiral ${num} vnos"
@@ -343,15 +343,19 @@ msgstr[1] "Kopiral ${num} vnosa"
 msgstr[2] "Kopiral ${num} vnosov"
 msgstr[3] "Kopiral ${num} vnosov"
 
-#: substanced/folder/views.py:884
+#: substanced/folder/views.py:883
 msgid "Choose where to move the items:"
 msgstr "Izberi kam skopiram vnose:"
 
-#: substanced/folder/views.py:886
+#: substanced/folder/views.py:885
 msgid "No items to move"
 msgstr "Ni vnosov za premaknit"
 
-#: substanced/folder/views.py:920
+#: substanced/folder/views.py:892
+msgid "No items moved"
+msgstr ""
+
+#: substanced/folder/views.py:919
 msgid "Moved ${num} item"
 msgid_plural "Moved ${num} items"
 msgstr[0] "Premaknil ${num} vnos"
@@ -359,21 +363,21 @@ msgstr[1] "Premaknil ${num} vnosa"
 msgstr[2] "Premaknil ${num} vnosov"
 msgstr[3] "Premaknil ${num} vnosov"
 
-#: substanced/folder/views.py:933
-#, python-format
-msgid "%i rows moved."
-msgstr "%i vrstic premaknjenih."
+#: substanced/folder/views.py:932
+msgid "${i} rows moved."
+msgstr ""
 
 #: substanced/folder/views.py:961
 msgid ""
 "\"${obj_name}\" is of a type (${obj_type}) that is not addable here, "
 "refusing to copy"
-msgstr "\"${obj_name}\" je tipa (${obj_type}), ki se ga ne da dodati tukaj. Zavračam kopiranje."
+msgstr "\"${obj_name}\" je tipa (${obj_type}), ki se ga ne da dodati sem. Zavračam kopiranje."
 
-#: substanced/folder/views.py:963
-#, python-format
-msgid "\"%s\" is of a type (%s) that is not addable here, refusing to move"
-msgstr ""
+#: substanced/folder/views.py:964
+msgid ""
+"\"${obj_name}\" is of a type (${obj_type}) that is not addable here, "
+"refusing to move"
+msgstr "\"${obj_name}\" je tipa (${obj_type}), ki se ga ne da dodati sem. Zavračam premikanje."
 
 #: substanced/folder/views.py:990
 msgid "Contents"
@@ -411,9 +415,25 @@ msgstr "Novo ime"
 msgid "Rename all"
 msgstr "Preimenuj vse"
 
+#: substanced/locking/views.py:67
+msgid "Delete Expired"
+msgstr ""
+
+#: substanced/locking/views.py:92
+msgid "Owner"
+msgstr ""
+
+#: substanced/locking/views.py:95
+msgid "Resource"
+msgstr ""
+
+#: substanced/locking/views.py:98
+msgid "Expires"
+msgstr ""
+
 #: substanced/objectmap/templates/integrityerror.pt:6
 msgid "Integrity Error"
-msgstr ""
+msgstr "Integrity Error"
 
 #: substanced/objectmap/templates/integrityerror.pt:8
 msgid ""
@@ -429,6 +449,10 @@ msgstr ""
 
 #: substanced/objectmap/templates/referenced.pt:16
 msgid "Objects"
+msgstr "Objekti"
+
+#: substanced/principal/views.py:117
+msgid "Change Password"
 msgstr ""
 
 #: substanced/principal/templates/resetpassword_email.pt:1
@@ -463,7 +487,7 @@ msgstr "Varnost"
 
 #: substanced/sdi/views/undo.py:70 substanced/sdi/views/undo.py:111
 msgid "Could not undo, sorry"
-msgstr ""
+msgstr "Žal ni bilo mogoče razveljaviti"
 
 #: substanced/sdi/views/undo.py:146 substanced/sdi/views/templates/undo.pt:64
 #: substanced/sdi/views/templates/undobutton.pt:1
@@ -472,7 +496,7 @@ msgstr "Razveljavi"
 
 #: substanced/sdi/views/templates/acl.pt:61
 msgid "Local ACL"
-msgstr ""
+msgstr "Lokalni seznam za kontrolo dostopa"
 
 #: substanced/sdi/views/templates/acl.pt:70
 #: substanced/sdi/views/templates/acl.pt:266
@@ -515,7 +539,7 @@ msgstr "Dodaj"
 
 #: substanced/sdi/views/templates/acl.pt:209
 msgid "Inherit Parent ACL"
-msgstr ""
+msgstr "Podeduj nadrejen seznam za kontrolo dostopa"
 
 #: substanced/sdi/views/templates/acl.pt:217
 msgid "${button} Enabled"
@@ -531,7 +555,7 @@ msgstr "Posodobi"
 
 #: substanced/sdi/views/templates/acl.pt:260
 msgid "Parent ACL"
-msgstr ""
+msgstr "Nadrejen seznam za kontrolo dostopa"
 
 #: substanced/sdi/views/templates/batching.pt:4
 msgid "${batch.seqlen} entries total"
