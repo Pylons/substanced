@@ -40,6 +40,7 @@ class TestFileEditable(unittest.TestCase):
         iterable, mimetype = inst.get()
         self.assertEqual(mimetype, 'application/foo')
         self.assertEqual(type(next(iterable)), bytes)
+        list(iterable) # comsume to trigger close
 
     def test_get_context_has_no_mimetype(self):
         from pyramid.testing import DummyRequest
@@ -57,6 +58,7 @@ class TestFileEditable(unittest.TestCase):
         iterable, mimetype = inst.get()
         self.assertEqual(mimetype, 'application/octet-stream')
         self.assertEqual(type(next(iterable)), bytes)
+        list(iterable) # comsume to trigger close
 
     def test_put(self):
         from pyramid.testing import DummyRequest
