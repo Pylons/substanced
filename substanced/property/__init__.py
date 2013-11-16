@@ -53,6 +53,13 @@ class PropertySheet(object):
                     changed = True
         return changed
 
+    def before_render(self, form): #pragma NO COVER
+        """ Hook:  allow subclasses to scribble on form.
+
+        Called by ``substanced.property.views.PropertySheetsView.before``,
+        after building the form but before rendering it.
+        """
+
     def after_set(self, changed):
         if changed is not False:
             event = ObjectModified(self.context)

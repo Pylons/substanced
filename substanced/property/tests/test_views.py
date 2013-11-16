@@ -92,6 +92,22 @@ class TestPropertySheetsView(unittest.TestCase):
         self.assertEqual(request.sdiapi.flashed,
                          ('Updated properties', 'success') )
 
+    def test_before(self):
+        request = testing.DummyRequest()
+        request.registry = testing.DummyResource()
+        request.registry.content = DummyContent(
+            [('name', DummyPropertySheet)])
+        resource = testing.DummyResource()
+        request.context = resource
+        inst = self._makeOne(request)
+        _called_with = []
+        def _before_render(form):
+            _called_with.append(form)
+        inst.active_sheet.before_render = _before_render
+        form = DummyForm()
+        inst.before(form)
+        self.assertEqual(_called_with, [form])
+
     def test_show(self):
         request = testing.DummyRequest()
         request.registry = testing.DummyResource()
