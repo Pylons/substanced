@@ -309,16 +309,11 @@ class Batch(object):
 def chunks(stream, chunk_size=10000):
     """ Return a generator that will iterate over a stream (a filelike
     object) ``chunk_size`` bytes at a time."""
-    try:
-        while True:
-            chunk = stream.read(chunk_size)
-            if not chunk:
-                break
-            yield chunk
-    finally:
-        closer = getattr(stream, 'close', None)
-        if closer is not None:
-            closer()
+    while True:
+        chunk = stream.read(chunk_size)
+        if not chunk:
+            break
+        yield chunk
 
 def acquire(resource, name, default=_marker):
     for node in lineage(resource):
