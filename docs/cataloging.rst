@@ -183,9 +183,9 @@ For example:
        def __init__(self, resource):
            self.resource = resource
 
-        @indexview(catalog_name='mycatalog')
-        def freaky(self, default):
-            return getattr(self.resource, 'freaky', default)
+       @indexview(catalog_name='mycatalog')
+       def freaky(self, default):
+           return getattr(self.resource, 'freaky', default)
 
 An index view class should be a class that accepts a single argument,
 (conventionally named ``resource``), in its constructor, and which has one or
@@ -210,13 +210,13 @@ You can attach multiple index views to the same index view class:
        def __init__(self, resource):
            self.resource = resource
 
-        @indexview(catalog_name='mycatalog')
-        def freaky(self, default):
-            return getattr(self.resource, 'freaky', default)
+       @indexview(catalog_name='mycatalog')
+       def freaky(self, default):
+           return getattr(self.resource, 'freaky', default)
 
-        @indexview(catalog_name='mycatalog')
-        def funky(self, default):
-            return getattr(self.resource, 'funky', default)
+       @indexview(catalog_name='mycatalog')
+       def funky(self, default):
+           return getattr(self.resource, 'funky', default)
 
 You can use the "index_name" parameter to ``indexview`` to tell the system that
 the index name is not the same as the method name in the index view:
@@ -229,13 +229,13 @@ the index name is not the same as the method name in the index view:
        def __init__(self, resource):
            self.resource = resource
 
-        @indexview(catalog_name='mycatalog')
-        def freaky(self, default):
-            return getattr(self.resource, 'freaky', default)
+       @indexview(catalog_name='mycatalog')
+       def freaky(self, default):
+           return getattr(self.resource, 'freaky', default)
 
-        @indexview(catalog_name='mycatalog', index_name='funky')
-        def notfunky(self, default):
-            return getattr(self.resource, 'funky', default)
+       @indexview(catalog_name='mycatalog', index_name='funky')
+       def notfunky(self, default):
+           return getattr(self.resource, 'funky', default)
 
 You can use the ``context`` parameter to ``indexview`` to tell the system that
 this particular index view should only be executed when the class of the
@@ -249,13 +249,13 @@ resource (or any of its interfaces) matches the value of the context:
        def __init__(self, resource):
            self.resource = resource
 
-        @indexview(catalog_name='mycatalog', context=HasFreaky)
-        def freaky(self, default):
-            return getattr(self.resource, 'freaky', default)
+       @indexview(catalog_name='mycatalog', context=HasFreaky)
+       def freaky(self, default):
+           return getattr(self.resource, 'freaky', default)
 
-        @indexview(catalog_name='mycatalog', index_name='funky')
-        def notfunky(self, default):
-            return getattr(self.resource, 'funky', default)
+       @indexview(catalog_name='mycatalog', index_name='funky')
+       def notfunky(self, default):
+           return getattr(self.resource, 'funky', default)
 
 You can use the ``indexview_defaults`` class decorator to save typing in each
 ``indexview`` declaration.  Keyword argument names supplied to
@@ -274,13 +274,13 @@ same keyword:
        def __init__(self, resource):
            self.resource = resource
 
-        @indexview()
-        def freaky(self, default):
-            return getattr(self.resource, 'freaky', default)
+       @indexview()
+       def freaky(self, default):
+           return getattr(self.resource, 'freaky', default)
 
-        @indexview()
-        def notfunky(self, default):
-            return getattr(self.resource, 'funky', default)
+       @indexview()
+       def notfunky(self, default):
+           return getattr(self.resource, 'funky', default)
 
 The above configuration is the same as:
 
@@ -292,13 +292,13 @@ The above configuration is the same as:
        def __init__(self, resource):
            self.resource = resource
 
-        @indexview(catalog_name='mycatalog')
-        def freaky(self, default):
-            return getattr(self.resource, 'freaky', default)
+       @indexview(catalog_name='mycatalog')
+       def freaky(self, default):
+           return getattr(self.resource, 'freaky', default)
 
-        @indexview(catalog_name='mycatalog')
-        def notfunky(self, default):
-            return getattr(self.resource, 'funky', default)
+       @indexview(catalog_name='mycatalog')
+       def notfunky(self, default):
+           return getattr(self.resource, 'funky', default)
 
 You can also use the :func:`substanced.catalog.add_indexview` directive to add
 index views imperatively, instead of using the ``@indexview`` decorator.
