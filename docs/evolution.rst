@@ -70,7 +70,7 @@ to use the console script.
 Autoevolve
 ==========
 
-If you add `substanced.autoevolve = true` within your application .ini file,
+If you add ``substanced.autoevolve = true`` within your application .ini file,
 all pending evolution upgrade steps will be run when your application starts.
 Alternately you can use the ``SUBSTANCED_AUTOEVOLVE`` evnironment variable
 (e.g. ``export SUBSTANCED_AUTOEVOLVE=true``) to do the same thing.
