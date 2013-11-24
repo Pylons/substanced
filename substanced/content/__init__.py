@@ -99,7 +99,11 @@ class ContentRegistry(object):
     def find(self, resource, content_type):
         """ Return the first object in the :term:`lineage` of the
         ``resource`` that supplies the ``content_type`` or ``None`` if no
-        such object can be found."""
+        such object can be found.
+
+        See also :func:`pyramid.traversal.find_interface` to find object
+        by an interface or a class.
+        """
         for location in lineage(resource):
             if self.typeof(location) == content_type:
                 return location
