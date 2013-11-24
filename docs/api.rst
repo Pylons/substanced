@@ -38,7 +38,6 @@
 
 .. autoclass:: Catalog
    :members:
-   :inherited-members:
 
    .. automethod:: __setitem__
 
