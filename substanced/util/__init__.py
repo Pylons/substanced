@@ -599,7 +599,7 @@ def get_icon_name(resource, request):
     return icon
 
 def get_auditlog(context):
-    """ Returns the current :class:`pyramid.audit.AuditLog` object or ``None``
+    """ Returns the current :class:`substanced.audit.AuditLog` object or ``None``
     if no audit database is configured """
     conn = context._p_jar
     if conn is None:
