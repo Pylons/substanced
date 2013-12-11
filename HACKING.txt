@@ -122,7 +122,7 @@ Transifex project should be used for translations: https://www.transifex.com/pro
 
 Before you can do anything related to translations, there is small setup:
 
-- Make sure "transifex-client" Python package is installed
+- Run ``bin/python setup.py i18n``
 
 To update transifex with new translations:
 

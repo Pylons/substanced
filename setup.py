@@ -41,11 +41,11 @@ install_requires = [
     'zope.deprecation',
     'statsd',
     'pytz',
-    'Babel',
     ]
 
 docs_extras = ['Sphinx', 'repoze.sphinx.autointerface']
 testing_extras = ['nose', 'coverage', 'mock', 'virtualenv', 'nose-selecttests']
+i18n_extras = ['Babel', 'transifex-client']
 
 setup(name='substanced',
       version='0.0',
@@ -95,5 +95,6 @@ setup(name='substanced',
       extras_require = {
           'testing':testing_extras,
           'docs':docs_extras,
+          'i18n':i18n_extras,
           },
       )

@@ -2,7 +2,6 @@ import random
 import os
 import string
 
-import babel
 from persistent import Persistent
 from cryptacular.bcrypt import BCRYPTPasswordManager
 
@@ -314,8 +313,8 @@ _LOCALES = get_locales()
 
 @colander.deferred
 def locale_widget(node, kw):
-    locale_names = [babel.Locale.parse(locale).english_name for locale in _LOCALES]
-    return deform.widget.Select2Widget(values=zip(_LOCALES, locale_names))
+    # TODO: locale_names = [babel.Locale.parse(locale).english_name for locale in _LOCALES]
+    return deform.widget.Select2Widget(values=zip(_LOCALES, _LOCALES))
 
 @colander.deferred
 def locale_missing(node, kw): #pragma NO COVER
