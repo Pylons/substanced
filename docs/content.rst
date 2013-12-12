@@ -326,6 +326,9 @@ Return the icon for the blogentry's content type or
   request.registry.content.metadata(blogentry, 'icon', 
                                     'glyphicon glyphicon-file')
 
+
+.. _affecting_content_creation:
+
 Affecting Content Creation
 ==========================
 
@@ -396,8 +399,10 @@ event and perform some actions:
 
     @subscribe_created(Root)
     def root_created(event):
+        root = event.object
         catalog = Catalog()
-        event.object.add_service('catalog', catalog)
+        catalogs = root['catalogs']
+        catalogs.add_service('catalog', catalog)
         catalog.update_indexes('system', reindex=True)
         catalog.update_indexes('sdidemo', reindex=True)
 

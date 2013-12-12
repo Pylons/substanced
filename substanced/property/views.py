@@ -96,6 +96,9 @@ class PropertySheetsView(FormView):
         return HTTPFound(self.request.sdiapi.mgmt_path(
             self.context, '@@properties', self.active_sheet_name))
 
+    def before(self, form):
+        self.active_sheet.before_render(form)
+
     def show(self, form):
         readonly = not self.has_permission_to('change', self.active_factory)
         appstruct = self.active_sheet.get()

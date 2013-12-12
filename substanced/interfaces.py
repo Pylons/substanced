@@ -327,7 +327,7 @@ class IFolder(Interface):
         sent will be marked as 'duplicating', which typically has the effect
         that the subobject's object id will be overwritten instead of reused.
         If ``registry`` is passed, it should be a Pyramid registry object;
-        otherwise the ``pyramid.threadlocal.get_current_registry`` function is
+        otherwise the :func:`pyramid.threadlocal.get_current_registry` function is
         used to look up the current registry.
 
         This method returns the name used to place the subobject in the
@@ -605,7 +605,7 @@ class IFile(Interface):
         """ Return a WebOb-compatible response object which uses the blob
         content as the stream data and the mimetype of the file as the
         content type.  The ``**kw`` arguments will be passed to the
-        ``pyramid.response.FileResponse`` constructor as its keyword
+        :class:`pyramid.response.FileResponse` constructor as its keyword
         arguments."""
 
     def get_size(self):
