@@ -1,14 +1,14 @@
-<div metal:use-macro="request.sdiapi.main_template">
+<div metal:use-macro="request.sdiapi.main_template" i18n:domain="substanced">
 
   <div metal:fill-slot="main">
     <form action="./manage_index" method="POST">
       <div class="panel panel-default">
-        <div class="panel-heading">Manage Index</div>
+        <div class="panel-heading" i18n:translate="">Manage Index</div>
         <div class="panel-body">
           <div class="container">
 
             <div class="row">
-              <div class="col-md-10">
+              <div class="col-md-10" i18n:translate="">
                Index type
               </div>
               <div class="col-md-2">
@@ -17,7 +17,7 @@
             </div>
 
             <div class="row">
-              <div class="col-md-10">
+              <div class="col-md-10" i18n:translate="">
                Number of indexed items
               </div>
               <div class="col-md-2">
@@ -26,7 +26,7 @@
             </div>
             
             <div class="row">
-              <div class="col-md-10">
+              <div class="col-md-10" i18n:translate="">
                Number of not-indexed items
               </div>
               <div class="col-md-2">
@@ -34,13 +34,13 @@
               </div>
             </div>
             <div class="row">
-              <div class="col-md-10">
+              <div class="col-md-10" i18n:translate="">
                 Reindex this index
               </div>
               <div class="col-md-2">
                 <input type="hidden" value="${request.session.get_csrf_token()}"
                        name="csrf_token"/>
-                <input type="submit" class="btn btn-primary" 
+                <input type="submit" class="btn btn-primary" i18n:attributes="value"
                        value="Reindex" name="reindex"/>
               </div>
             </div>

@@ -1,4 +1,4 @@
-<html metal:define-macro="main"
+<html metal:define-macro="main" i18n:domain="substanced"
       metal:extend-macro="request.sdiapi.main_template">
 
  <head>
@@ -20,28 +20,28 @@
              metal:define-macro="login-form">
 
          <metal:slot metal:define-slot="login-form-title">
-           <h2 class="form-signin-heading">Log In</h2>
+           <h2 class="form-signin-heading" i18n:translate="">Log In</h2>
          </metal:slot>
 
          <input type="hidden" name="csrf_token"
                 value="${request.session.get_csrf_token()}" />
 
          <input type="text" name="login" class="form-control"
-                autofocus="autofocus" placeholder="Login"
+                autofocus="autofocus" placeholder="Login" i18n:attributes="placeholder"
                 value="${login}" />
 
          <input type="password" name="password" class="form-control"
-                placeholder="Password"
+                placeholder="Password" i18n:attributes="placeholder"
                 value="${password}" />
 
          <input type="submit" name="form.submitted" 
-                class="btn btn-primary btn-block"
+                class="btn btn-primary btn-block" i18n:attributes="value"
                 value="Log In" />
 
          <metal:slot metal:define-slot="password-reset-link">
            <p id="password-reset-link"
               metal:define-macro="password-reset-link">
-             <a href="${request.sdiapi.mgmt_path(request.virtual_root, '@@resetpassword')}"
+             <a href="${request.sdiapi.mgmt_path(request.virtual_root, '@@resetpassword')}" i18n:translate=""
                 >Forgot your password?</a>
            </p>
          </metal:slot>

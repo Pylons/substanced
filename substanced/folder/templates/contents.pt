@@ -1,4 +1,5 @@
 <div metal:define-macro="main"
+     i18n:domain="substanced"
      metal:extend-macro="request.sdiapi.main_template">
 
   <metal:slot fill-slot="head-more">
@@ -42,9 +43,10 @@
           <div class="col-md-1 col-sm-2">
 
             <button type="button" 
+                    i18n:translate=""
                     class="btn btn-primary dropdown-toggle ${not canadd and 'disabled' or ''}" 
                     data-toggle="dropdown">
-              Add <span class="caret" style="margin-left: 5px;"></span>
+              Add <span class="caret" style="margin-left: 5px;" i18n:name="caret"></span>
             </button>
             <ul class="dropdown-menu">
               <li tal:repeat="addable addables">
@@ -84,7 +86,7 @@
        	        <input type="text"
                        name="filter."
                        class="form-control"
-	                   placeholder="Type to filter…"
+	                   placeholder="Type to filter…" i18n:attributes="placeholder"
                        tal:attributes="value request.params.get('filter.', '')"/>
                 <span class="input-group-btn">
        	          <button id="sdi-contents-filter-clear" 
@@ -110,12 +112,12 @@
             </a>-->
             <span class="badge badge-primary">
               <span class="sdi-sg-total">&nbsp;</span> 
-              <span class="badge-text">total</span>
+              <span class="badge-text" i18n:translate="">total</span>
             </span>
             <span class="sdi-sg-selected-box" style="display: none">
               <span class="badge badge-success">
                 <span class="sdi-sg-selected">&nbsp;</span>
-                <span class="badge-text">selected</span>
+                <span class="badge-text" i18n:translate="">selected</span>
               </span>
             </span>
           </span>

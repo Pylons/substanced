@@ -2,6 +2,8 @@
 <html xmlns:tal="http://xml.zope.org/namespaces/tal"
       xmlns:metal="http://xml.zope.org/namespaces/metal"
       metal:define-macro="main"
+      xmlns:i18n="http://xml.zope.org/namespaces/i18n"
+      i18n:domain="substanced"
       tal:define="mp request.sdiapi.mgmt_path;
       su request.static_url;
       sdititle request.sdiapi.sdi_title()">
@@ -75,7 +77,6 @@
                     />${sdititle}</a>
 
         </div>
-
         <div class="col-md-2 user-dropdown-bounding">
           <div class="pull-right hidden-xs hidden-sm visible-lg visible-md">
 
@@ -86,13 +87,13 @@
               </button>
               <ul class="dropdown-menu pull-right">
                 <li>
-                  <a href="${mp(request.user, '')}"><i
-            class="glyphicon glyphicon-pencil"></i>
-            Account</a></li>
-                  <li>
-                    <a href="${mp(request.root, '@@logout')}"><i
-            class="glyphicon glyphicon-stop"></i> Log Out</a>
-                  </li>
+                  <a href="${mp(request.user, '')}" i18n:translate="">
+                    <i i18n:name="icon" class="glyphicon glyphicon-pencil"></i> Account</a>
+                </li>
+                <li>
+                  <a href="${mp(request.root, '@@logout')}" i18n:translate="">
+                    <i i18n:name="icon" class="glyphicon glyphicon-off"></i> Log Out</a>
+                </li>
               </ul>
             </div>
 

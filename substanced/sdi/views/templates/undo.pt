@@ -1,4 +1,4 @@
-<div metal:use-macro="request.sdiapi.main_template">
+<div metal:use-macro="request.sdiapi.main_template" i18n:domain="substanced">
 
   <div metal:fill-slot="main">
 
@@ -9,19 +9,19 @@
 
           <ul class="pager pager-compact">
             <li>
-              <div class="label label-primary">Page # ${batch_num+1|1}</div>
+              <div class="label label-primary" i18n:translate="">Page # ${batch_num+1|1}</div>
             </li>
             <li class="${(not later and 'disabled') or ''}">
-              <a href="${request.view_name}">
-                <i class="glyphicon glyphicon-fast-backward"> </i> Latest</a>
+              <a href="${request.view_name}" i18n:translate="">
+                <i class="glyphicon glyphicon-fast-backward" i18n:name="icon"> </i> Latest</a>
             </li>
             <li class="${(not later and 'disabled') or ''}">
-              <a href="${later}">
-                <i class="glyphicon glyphicon-backward"> </i> Later</a>
+              <a href="${later}" i18n:translate="">
+                <i class="glyphicon glyphicon-backward" i18n:name="icon"> </i> Later</a>
             </li>
             <li class="${(not earlier and 'disabled') or ''}">
-              <a href="${earlier}">
-                <i class="glyphicon glyphicon-forward"> </i> Earlier</a>
+              <a href="${earlier}" i18n:translate="">
+                <i class="glyphicon glyphicon-forward" i18n:name="icon"> </i> Earlier</a>
             </li>
           </ul>
 
@@ -35,7 +35,7 @@
         <form action="${request.sdiapi.mgmt_url(context, '@@undo_multiple')}" 
               method="post">
           <div class="panel panel-default">
-            <div class="panel-heading">Undoable transactions</div>
+            <div class="panel-heading" i18n:translate="">Undoable transactions</div>
             <div class="panel-body">
           
               <table tal:condition="batch|None" class="table table-striped table-condensed">
@@ -43,10 +43,10 @@
                 <thead>
                   <tr>
                     <th width="2%"></th>
-                    <th width="25%">Time</th>
-                    <th width="5%">Size</th>
-                    <th width="10%">User</th>
-                    <th width="58%">Description</th>
+                    <th width="25%" i18n:translate="">Time</th>
+                    <th width="5%" i18n:translate="">Size</th>
+                    <th width="10%" i18n:translate="">User</th>
+                    <th width="58%" i18n:translate="">Description</th>
                   </tr>
                 </thead>
 
@@ -61,7 +61,7 @@
                 </tbody>
               </table>
 
-              <input type="submit" name="form.submitted" value="Undo"
+              <input type="submit" name="form.submitted" value="Undo" i18n:attributes="value"
                      class="btn btn-primary"/>
               <input type="hidden" name="csrf_token" style="margin-left: 20px;"
                      value="${request.session.get_csrf_token()}"/>

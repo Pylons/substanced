@@ -22,6 +22,7 @@ def include(config): # pragma: no cover
     config.include('.locking')
     config.include('.audit')
     config.include('.editable')
+    config.add_translation_dirs('locale/')
 
 def scan(config): # pragma: no cover
     """ Perform all ``config.scan`` tasks required for Substance D and the

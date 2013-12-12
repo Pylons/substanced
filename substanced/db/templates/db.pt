@@ -1,8 +1,8 @@
-<div metal:use-macro="request.sdiapi.main_template">
+<div metal:use-macro="request.sdiapi.main_template" i18n:domain="substanced">
 
   <div metal:fill-slot="main">
     <div class="panel panel-default">
-      <div class="panel-heading">Manage</div>
+      <div class="panel-heading" i18n:translate="">Manage</div>
       <div class="panel-body">
         <div class="container">
     
@@ -10,19 +10,19 @@
           <input type="hidden" value="${request.session.get_csrf_token()}"
                  name="csrf_token"/>
           <div class="row" style="margin-bottom: 20px;">
-            <div class="col-md-8">
+            <div class="col-md-8" i18n:translate="">
                Remove ("pack") previous revisions of objects that are older than this number of days.
             </div>
             <div class="col-md-2">
               <input type="text" value="1" name="days" class="form-control"/>
             </div>
             <div class="col-md-2">
-              <input type="submit" class="btn btn-danger" 
+              <input type="submit" class="btn btn-danger" i18n:attributes="value"
                      value="Pack" name="pack"/>
             </div>
           </div>
           <div class="row">
-            <div class="col-md-10">
+            <div class="col-md-10" i18n:translate="">
                   Remove all objects from the ZODB connection cache
             </div>
             <div class="col-md-2">
@@ -35,14 +35,14 @@
     </div>
 
     <div class="panel panel-default">
-      <div class="panel-heading">Evolve</div>
+      <div class="panel-heading" i18n:translate="">Evolve</div>
       <div class="panel-body">
         <div class="container">
           <form action="./@@database" method="POST" onsubmit="return sdi.loading_indicator_on()">
             <input type="hidden" value="${request.session.get_csrf_token()}"
                    name="csrf_token"/>
             <div class="row" style="margin-bottom: 20px;">
-              <div class="col-md-10">
+              <div class="col-md-10" i18n:translate="">
                 Run evolve steps up to the latest
               </div>
               <div class="col-md-2">
@@ -51,7 +51,7 @@
               </div>
             </div>
             <div class="row" style="margin-bottom: 20px;">
-              <div class="col-md-10">
+              <div class="col-md-10" i18n:translate="">
                 Dry-run evolve steps to latest
               </div>
               <div class="col-md-2">
@@ -60,11 +60,11 @@
               </div>
             </div>
             <div class="row">
-              <div class="col-md-10">
+              <div class="col-md-10" i18n:translate="">
                 Show summary of pending evolve steps (finished/unfinished)
               </div>
               <div class="col-md-2">
-                <input type="submit" class="btn btn-primary" 
+                <input type="submit" class="btn btn-primary" i18n:attributes="value"
                        value="Show summary" name="show_evolve"/>
               </div>
             </div>
@@ -74,37 +74,37 @@
       </div>
     </div>
     <div class="panel panel-default">
-      <div class="panel-heading">Details</div>
+      <div class="panel-heading" i18n:translate="">Details</div>
       <div class="panel-body">
 
         <table class="table">
           <tbody>
             <tr>
-              <td>Location</td>
+              <td i18n:translate="">Location</td>
               <td>${db.getName()}</td>
             </tr>
             <tr>
-              <td>Storage</td>
+              <td i18n:translate="">Storage</td>
               <td>${db.storage}</td>
             </tr>
             <tr>
-              <td>Size</td>
+              <td i18n:translate="">Size</td>
               <td>${'%.1fM' % (db.getSize() / 1024 / 1024)}</td>
             </tr>
             <tr>
-              <td>Number of objects that the connections' cache will try to keep around before LRU pruning</td>
+              <td i18n:translate="">Number of objects that the connections' cache will try to keep around before LRU pruning</td>
               <td>${db.getCacheSize()}</td>
             </tr>
             <tr>
-              <td>Estimated byte size sum of objects that the connections' cache will try to keep around before LRU pruning (0 means unlimited)</td>
+              <td i18n:translate="">Estimated byte size sum of objects that the connections' cache will try to keep around before LRU pruning (0 means unlimited)</td>
               <td>${db.getCacheSizeBytes()}B</td>
             </tr>
             <tr>
-              <td>Connection pool size</td>
+              <td i18n:translate="">Connection pool size</td>
               <td>${db.getPoolSize()}</td>
             </tr>
             <tr>
-              <td>Total number of objects in the database</td>
+              <td i18n:translate="">Total number of objects in the database</td>
               <td>${db.objectCount()}</td>
             </tr>
           </tbody>
@@ -113,15 +113,15 @@
     </div>
 
     <div class="panel panel-default">
-      <div class="panel-heading">Connections</div>
+      <div class="panel-heading" i18n:translate="">Connections</div>
       <div class="panel-body">
 
         <table class="table">
           <thead>
             <tr>
-              <th>Connection</th>
-              <th>Number of non-ghost objects (in total ${db.cacheSize()})</th>
-              <th>Number of ghost objects</th>
+              <th i18n:translate="">Connection</th>
+              <th i18n:translate="">Number of non-ghost objects (in total ${db.cacheSize()})</th>
+              <th i18n:translate="">Number of ghost objects</th>
             </tr>
           </thead>
           <tbody>
@@ -138,7 +138,7 @@
     <!-- TODO: add extreme detailed cache -->
 
     <div class="panel panel-default">
-      <div class="panel-heading">Activity</div>
+      <div class="panel-heading" i18n:translate="">Activity</div>
       <div class="panel-body">
         <div tal:condition="am">
 
@@ -181,7 +181,7 @@
           </script>
         </div>
 
-        <div tal:condition="not am">
+        <div tal:condition="not am" i18n:translate="">
            Database activity monitoring inactive
         </div>
       </div>

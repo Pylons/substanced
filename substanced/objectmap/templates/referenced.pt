@@ -1,4 +1,4 @@
-<div metal:use-macro="request.sdiapi.main_template">
+<div metal:use-macro="request.sdiapi.main_template" i18n:domain="substanced">
 
   <div metal:fill-slot="main"
        tal:define="root_url request.sdiapi.mgmt_url(request.virtual_root)">
@@ -12,8 +12,8 @@
               
               <thead>
                 <tr>
-                  <th>Relationship type</th>
-                  <th>Objects</th>
+                  <th i18n:translate="">Relationship type</th>
+                  <th i18n:translate="">Objects</th>
                 </tr>
               </thead>
               

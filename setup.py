@@ -45,6 +45,7 @@ install_requires = [
 
 docs_extras = ['Sphinx', 'repoze.sphinx.autointerface']
 testing_extras = ['nose', 'coverage', 'mock', 'virtualenv', 'nose-selecttests']
+i18n_extras = ['Babel', 'transifex-client']
 
 setup(name='substanced',
       version='0.0',
@@ -76,6 +77,12 @@ setup(name='substanced',
       install_requires=install_requires,
       tests_require=install_requires,
       test_suite="substanced",
+      message_extractors={
+          'substanced': [
+              ('**.py', 'python', None),  # babel extractor supports plurals
+              ('**.pt', 'lingua_xml', None),
+          ],
+      },
       entry_points="""
       [console_scripts]
       sd_evolve = substanced.scripts.evolve:main
@@ -88,5 +95,6 @@ setup(name='substanced',
       extras_require = {
           'testing':testing_extras,
           'docs':docs_extras,
+          'i18n':i18n_extras,
           },
       )

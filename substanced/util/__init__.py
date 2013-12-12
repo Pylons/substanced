@@ -17,6 +17,7 @@ from zope.interface.declarations import Declaration
 
 from pyramid.location import lineage
 from pyramid.threadlocal import get_current_registry
+from pyramid.i18n import TranslationStringFactory
 
 from ..interfaces import IFolder
 
@@ -27,6 +28,9 @@ from .._compat import (
     STRING_TYPES,
     INT_TYPES,
     )
+
+
+_ = TranslationStringFactory('substanced')
 
 _marker = object()
 

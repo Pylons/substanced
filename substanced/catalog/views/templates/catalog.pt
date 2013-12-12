@@ -1,10 +1,11 @@
-<div metal:use-macro="request.sdiapi.main_template">
+<div metal:use-macro="request.sdiapi.main_template"
+     i18n:domain="substanced">
 
   <div metal:fill-slot="main">
 
     <div class="panel panel-default">
-      <div class="panel-heading">Manage catalog &nbsp;  
-        (<span class="badge badge-primary">${cataloglen}</span> 
+      <div class="panel-heading" i18n:translate="">Manage catalog &nbsp;  
+        (<span class="badge badge-primary" i18n:name="length">${cataloglen}</span> 
               items in this catalog)
       </div>
       <div class="panel-body">
@@ -16,7 +17,7 @@
               <div class="col-md-12">
               </div>
               <div class="row" style="margin-bottom: 20px;">
-                <div class="col-md-10">
+                <div class="col-md-10" i18n:translate="">
                 Reindex all objects in all indexes.
                 </div>
                 <div class="col-md-2">
@@ -25,7 +26,7 @@
                 </div>
               </div>
               <div class="row">
-                <div class="col-md-10">
+                <div class="col-md-10" i18n:translate="">
                 Update all index definitions
                 </div>
                 <div class="col-md-2">

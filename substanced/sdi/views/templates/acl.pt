@@ -1,4 +1,4 @@
-<div metal:use-macro="request.sdiapi.main_template">
+<div metal:use-macro="request.sdiapi.main_template" i18n:domain="substanced">
 
   <div metal:fill-slot="head-more">
 
@@ -40,7 +40,7 @@
      function loading_indicator() {
        result = true;
        if (pathcount > 500) {
-         result = confirm('This operation could take a long time. ${pathcount} objects will be reindexed, are you sure you want to continue?');
+         result = confirm("${request.localizer.translate('This operation could take a long time. ${pathcount} objects will be reindexed, are you sure you want to continue?')}");
        }
        if (result) {
          sdi.loading_indicator_on() // from sdi.js
@@ -58,7 +58,7 @@
   <div metal:fill-slot="main">
 
     <div class="panel panel-default">
-      <div class="panel-heading">Local ACL</div>
+      <div class="panel-heading" i18n:translate="">Local ACL</div>
       <div class="panel-body">
 
         <metal:local_acl define-macro="local_acl">
@@ -67,10 +67,10 @@
 
               <thead>
                 <tr>
-                  <th width="15%">Allow / Deny</th>
-                  <th width="25%">Principal</th>
-                  <th width="40%">Permissions</th>
-                  <th width="15%">Control</th>
+                  <th width="15%" i18n:translate="">Allow / Deny</th>
+                  <th width="25%" i18n:translate="">Principal</th>
+                  <th width="40%" i18n:translate="">Permissions</th>
+                  <th width="15%" i18n:translate="">Control</th>
                 </tr>
               </thead>
 
@@ -132,19 +132,21 @@
 
               <div class="col-md-2">
                 <div class="radio">
-                  <label>
+                  <label i18n:translate="">
                     <input type="radio" 
                            id="allow_add"
                            name="verb" 
                            value="Allow" 
+                           i18n:name="button"
                            checked="true"/> Allow
                   </label>
                 </div>
                 <div class="radio">
-                  <label>
+                  <label i18n:translate="">
                     <input type="radio" 
                            id="deny_add"
                            name="verb"
+                           i18n:name="button"
                            value="Deny" /> Deny
                   </label>
                 </div>
@@ -152,6 +154,7 @@
 
               <div class="col-md-3">
                 <select data-placeholder="Choose a Principal"
+                        i18n:attributes="data-placeholder"
                         name="principal"
                         id="principal"
                         style="width: 100%">
@@ -169,6 +172,7 @@
               <div class="col-md-5">
                 <select name="permissions" 
                         data-placeholder="Choose Permissions"
+                        i18n:attributes="data-placeholder"
                         id="permissions"
                         multiple="multiple"
                         style="width: 100%; border-radius: 4px; border: 1px solid #cccccc;">
@@ -181,6 +185,7 @@
                 <input type="submit" 
                        name="form.add"
                        class="btn btn-primary"
+                       i18n:attributes="value"
                        value="Add" />
                 <input type="hidden"
                        name="csrf_token" 
@@ -201,7 +206,7 @@
         <tal:block condition="context is not request.root">
 
           <div class="panel panel-default">
-            <div class="panel-heading">Inherit Parent ACL</div>
+            <div class="panel-heading" i18n:translate="">Inherit Parent ACL</div>
             <div class="panel-body">
               
               <div class="row">
@@ -209,19 +214,21 @@
                   
                   <div class="col-md-2">
                     <div class="radio">
-                      <label>
+                      <label i18n:translate="">
                         <input type="radio" 
                                id="inherit_enabled" 
                                name="inherit"
+                               i18n:name="button"
                                value="enabled"
                                tal:attributes="checked inheriting == 'enabled'"/> 
                       Enabled
                       </label>
                     </div>
                     <div class="radio">
-                      <label>
+                      <label i18n:translate="">
                         <input type="radio" 
                                id="inherit_disabled"
+                               i18n:name="button"
                                name="inherit"
                                value="disabled"
                                tal:attributes="checked inheriting == 'disabled'"/> 
@@ -232,6 +239,7 @@
                   
                   <div class="col-md-2">
                     <input type="submit" name="form.inherit" value="Update" 
+                           i18n:attributes="value"
                            class="btn btn-primary"/>
                     <input type="hidden" name="csrf_token" 
                            value="${request.session.get_csrf_token()}"/>
@@ -249,15 +257,15 @@
         <tal:inherited condition="parent_acl">
 
           <div class="panel panel-default">
-            <div class="panel-heading">Parent ACL</div>
+            <div class="panel-heading" i18n:translate="">Parent ACL</div>
             <div class="panel-body">
               <table class="table table-striped">
                 
                 <thead>
                   <tr>
-                    <th width="15%">Allow / Deny</th>
-                    <th width="25%">Principal</th>
-                    <th width="40%">Permissions</th>
+                    <th width="15%" i18n:translate="">Allow / Deny</th>
+                    <th width="25%" i18n:translate="">Principal</th>
+                    <th width="40%" i18n:translate="">Permissions</th>
                   </tr>
                 </thead>
                 

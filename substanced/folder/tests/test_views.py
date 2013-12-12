@@ -797,7 +797,7 @@ class TestFolderContents(unittest.TestCase):
         request.POST = DummyPost()
         inst = self._makeOne(context, request)
         result = inst.delete()
-        self.assertEqual(request.sdiapi.flashed, 'No items deleted')
+        self.assertEqual(request.sdiapi.flashed, 'Deleted 0 items')
         self.assertEqual(result.location, '/mgmt_path')
 
     def test_delete_one_deleted(self):
@@ -839,6 +839,7 @@ class TestFolderContents(unittest.TestCase):
     def test_duplicate_multiple(self, mock_rename_duplicated_resource):
         context = mock.Mock()
         request = mock.Mock()
+        request.localizer = testing.DummyRequest().localizer
         request.view_name = 'contents'
         request.params = {}
         request.POST.get.return_value = 'a/b'
@@ -858,6 +859,7 @@ class TestFolderContents(unittest.TestCase):
     def test_duplicate_none(self):
         context = mock.Mock()
         request = mock.Mock()
+        request.localizer = testing.DummyRequest().localizer
         request.view_name = 'contents'
         request.params = {}
         request.POST.get.return_value = ''
@@ -865,7 +867,7 @@ class TestFolderContents(unittest.TestCase):
         inst.duplicate()
 
         self.assertEqual(context.mock_calls, [])
-        request.sdiapi.flash.assert_called_once_with('No items duplicated')
+        request.sdiapi.flash_with_undo.assert_called_once_with('Duplicated 0 items', 'success')
         request.sdiapi.mgmt_path.called_once_with(context, '@@contents')
 
     @mock.patch('substanced.folder.views.rename_duplicated_resource')
@@ -873,6 +875,7 @@ class TestFolderContents(unittest.TestCase):
         mock_rename_duplicated_resource.side_effect = ['a-1']
         context = mock.Mock()
         request = mock.Mock()
+        request.localizer = testing.DummyRequest().localizer
         request.view_name = 'contents'
         request.params = {}
         request.POST.get.return_value = 'a'
@@ -933,6 +936,7 @@ class TestFolderContents(unittest.TestCase):
         request = mock.Mock()
         request.view_name = 'contents'
         request.params = {}
+        request.localizer = testing.DummyRequest().localizer
         request.POST.getall.return_value = ('foobar',)
         request.POST.get.side_effect = lambda x: {
             'foobar': 'foobar2',
@@ -949,6 +953,7 @@ class TestFolderContents(unittest.TestCase):
         request = mock.Mock()
         request.view_name = 'contents'
         request.params = {}
+        request.localizer = testing.DummyRequest().localizer
         request.POST.getall.return_value = ('foobar', 'foobar1')
         request.POST.get.side_effect = lambda x: {
             'foobar': 'foobar0',
@@ -1083,6 +1088,7 @@ class TestFolderContents(unittest.TestCase):
         mock_folder.__parent__ = mock.MagicMock()
         mock_folder.__name__ = mock.sentinel.name
         request = mock.MagicMock()
+        request.localizer = testing.DummyRequest().localizer
         request.session.__getitem__.return_value = [123]
         request.POST.get.side_effect = lambda x: {
             'form.copy_finish': 'copy_finish'}[x]
@@ -1094,13 +1100,10 @@ class TestFolderContents(unittest.TestCase):
 
         inst.copy_finish()
 
-        call_list = request.sdiapi.flash.call_args_list
-        self.assertEqual(len(call_list), 2)
-
-        request.sdiapi.flash.assert_any_call(
-            'No items copied', 'warning')
-        request.sdiapi.flash.assert_any_call(
-            '"%s" is of a type (%s) that is not addable here, not copied' % (
+        request.sdiapi.flash_with_undo.assert_called_once_with(
+            'Copied 0 items', 'success')
+        request.sdiapi.flash.assert_called_once_with(
+            '"%s" is of a type (%s) that is not addable here, refusing to copy' % (
                 mock.sentinel.name, request.registry.content.typeof(None)
                 ), 'danger',
             )
@@ -1115,6 +1118,7 @@ class TestFolderContents(unittest.TestCase):
         mock_folder.__parent__ = mock.MagicMock()
         mock_folder.__name__ = mock.sentinel.name
         request = mock.MagicMock()
+        request.localizer = testing.DummyRequest().localizer
         request.session.__getitem__.return_value = [123]
         request.POST.get.side_effect = lambda x: {
             'form.copy_finish': 'copy_finish'}[x]
@@ -1138,6 +1142,7 @@ class TestFolderContents(unittest.TestCase):
         mock_folder.__parent__ = mock.MagicMock()
         mock_folder.__name__ = mock.sentinel.name
         request = mock.MagicMock()
+        request.localizer = testing.DummyRequest().localizer
         request.session.__getitem__.return_value = [123, 456]
         request.POST.get.side_effect = lambda x: {
             'form.copy_finish': 'copy_finish'}[x]
@@ -1268,6 +1273,7 @@ class TestFolderContents(unittest.TestCase):
         mock_folder.__parent__ = mock.MagicMock()
         mock_folder.__name__ = mock.sentinel.name
         request = mock.MagicMock()
+        request.localizer = testing.DummyRequest().localizer
         request.session.__getitem__.return_value = [123]
         request.POST.get.side_effect = lambda x: {
             'form.move_finish': 'move_finish'}[x]
@@ -1280,12 +1286,11 @@ class TestFolderContents(unittest.TestCase):
         inst.move_finish()
 
         call_list = request.sdiapi.flash.call_args_list
-        self.assertEqual(len(call_list), 2)
 
-        request.sdiapi.flash.assert_any_call(
-            'No items moved', 'warning')
-        request.sdiapi.flash.assert_any_call(
-            '"%s" is of a type (%s) that is not addable here, not moved' % (
+        request.sdiapi.flash_with_undo.assert_called_once_with(
+            'Moved 0 items', 'success')
+        request.sdiapi.flash.assert_called_once_with(
+            '"%s" is of a type (%s) that is not addable here, refusing to move' % (
                 mock.sentinel.name, request.registry.content.typeof(None)
                 ), 'danger',
             )
@@ -1300,6 +1305,7 @@ class TestFolderContents(unittest.TestCase):
         mock_folder.__parent__ = mock.MagicMock()
         mock_folder.__name__ = mock.sentinel.name
         request = mock.MagicMock()
+        request.localizer = testing.DummyRequest().localizer
         request.session.__getitem__.return_value = [123]
         request.POST.get.side_effect = lambda x: {
             'form.move_finish': 'move_finish'}[x]
@@ -1323,6 +1329,7 @@ class TestFolderContents(unittest.TestCase):
         mock_folder.__parent__ = mock.MagicMock()
         mock_folder.__name__ = mock.sentinel.name
         request = mock.MagicMock()
+        request.localizer = testing.DummyRequest().localizer
         request.session.__getitem__.return_value = [123, 456]
         request.POST.get.side_effect = lambda x: {
             'form.move_finish': 'move_finish'}[x]
