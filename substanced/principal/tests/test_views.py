@@ -91,7 +91,7 @@ class TestChangePasswordView(unittest.TestCase):
         from ..views import ChangePasswordView
         return ChangePasswordView(context, request)
 
-    def test_add_success(self):
+    def test_change_success(self):
         context = DummyPrincipal()
         request = testing.DummyRequest()
         user = DummyPrincipal()
@@ -104,6 +104,22 @@ class TestChangePasswordView(unittest.TestCase):
         self.assertEqual(resp.location, '/mgmt_path')
         self.assertTrue(request.sdiapi.flashed)
         self.assertTrue(user.checked, 'abcdef')
+
+    def test_change_check_fail(self):
+        context = DummyPrincipal()
+        request = testing.DummyRequest()
+        user = DummyPrincipal()
+        user.check_password = lambda *arg: False
+        request.user = user
+        request.sdiapi = DummySDIAPI()
+        inst = self._makeOne(context, request)
+        resp = inst.change_success(
+            {'password':'password', 'current_user_password':'abcdef'})
+        self.assertEqual(resp.location, '/mgmt_path')
+        self.assertEqual(
+            request.sdiapi.flashed,
+            'Incorrect current user password'
+            )
 
 class TestRequestResetView(unittest.TestCase):
     def _makeOne(self, context, request):

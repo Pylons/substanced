@@ -3,6 +3,15 @@ from pyramid import testing
 import colander
 from zope.interface import implementer
 
+class Test_locale_widget(unittest.TestCase):
+    def _callFUT(self, node, kw):
+        from substanced.principal import locale_widget
+        return locale_widget(node, kw)
+
+    def test_it(self):
+        result = self._callFUT(None, None)
+        self.assertTrue( ('en', 'en') in result.values)
+
 class TestPrincipals(unittest.TestCase):
     def setUp(self):
         self.config = testing.setUp()
