@@ -14,6 +14,15 @@ import deform.widget
 import colander
 import pytz
 
+try:
+    import babel
+except ImportError:
+    def _parse_babel_locale(locale):
+        return locale
+else:
+    def _parse_babel_locale(locale):
+        return babel.Locale.parse(locale).english_name
+
 from pyramid.renderers import render
 from pyramid.security import (
     Allow,
@@ -313,8 +322,10 @@ _LOCALES = get_locales()
 
 @colander.deferred
 def locale_widget(node, kw):
-    # TODO: locale_names = [babel.Locale.parse(locale).english_name for locale in _LOCALES]
-    return deform.widget.Select2Widget(values=zip(_LOCALES, _LOCALES))
+    locale_names = [_parse_babel_locale(locale) for locale in _LOCALES]
+    locales = zip(_LOCALES, locale_names)
+    sorted_locales = sorted(locales, key=lambda l: l[1])
+    return deform.widget.Select2Widget(values=sorted_locales)
 
 @colander.deferred
 def locale_missing(node, kw): #pragma NO COVER
