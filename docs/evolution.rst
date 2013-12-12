@@ -158,3 +158,5 @@ finished steps in the database.  Substance D, in the root factory, says: "I
 know all the steps participating in evolution, so when I first create the
 root object, I will set all of those steps to finished."
 
+If you wish to perform something after :class:`~substanced.root.Root` was
+created, see :ref:`affecting_content_creation`.
