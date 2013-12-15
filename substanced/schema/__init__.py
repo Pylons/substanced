@@ -61,7 +61,7 @@ class Schema(colander.Schema):
 
     .. code-block:: python
 
-      from substanced.schema import CSRFSchema
+      from substanced.schema import Schema as CSRFSchema
       import colander
 
       class MySchema(CSRFSchema):
