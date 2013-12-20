@@ -91,6 +91,8 @@ class UndoViews(object):
         uid = self.authenticated_userid(request)
 
         for tid in transaction_info:
+            if not isinstance(tid, bytes): #pragma NO COVER Py3k
+                tid = tid.encode('ascii', 'surrogateescape')
             tid = tid.split(b' ', 1)
             if tid:
                 tids.append(decode64(tid[0]))
