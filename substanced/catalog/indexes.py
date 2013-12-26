@@ -134,8 +134,33 @@ class SDIndex(object):
     )
 @implementer(hypatia.interfaces.IIndex)
 class PathIndex(SDIndex, hypatia.util.BaseIndexMixin, Persistent):
-    """ Uses the objectmap to apply a query to retrieve object identifiers at
-    or under a path"""
+    """ Uses the :meth:`substanced.objectmap.ObjectMap.pathlookup` to
+    apply a query to retrieve object identifiers at or under a path.
+
+    `path` can be passed to methods as:
+
+    - resource object
+
+    - tuple of strings (usually returned value of
+      :func:`pyramid.traverse.resource_path_tuple`)
+
+    - a string path (e.g. /foo/bar)
+
+    Query methods accept following parameters:
+
+    - `include_origin` (by default True), see
+      :meth:`substanced.objectmap.ObjectMap.pathlookup` for explanation.
+
+    - `depth` (by default None) see
+      :meth:`substanced.objectmap.ObjectMap.pathlookup` for explanation.
+
+    Query types supported:
+
+    - Eq
+
+    - NotEq
+
+    """
     family = BTrees.family64
     include_origin = True
     depth = None
