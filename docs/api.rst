@@ -152,6 +152,9 @@ Other Helpers
 .. autoclass:: ResultSet
    :members:
 
+.. autointerface:: hypatia.interfaces.IResultSet
+   :members:
+
 :mod:`substanced.content` API
 -----------------------------
 

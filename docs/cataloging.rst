@@ -270,11 +270,12 @@ The :class:`~substanced.catalog.indexes.AllowedIndex` supports an additional
 :meth:`~substanced.catalog.indexes.AllowedIndex.allows()` method.
    
 Query objects support an ``execute`` method.  This method returns a
-ResultSet.  A ResultSet can be iterated over; each iteration returns a
-content object.  ResultSet also has methods like ``one`` and ``first``, which
+:class:`hypatia.util.ResultSet`.  A :class:`hypatia.util.ResultSet` 
+can be iterated over; each iteration returns a content object. 
+:class:`hypatia.util.ResultSet` also has methods like ``one`` and ``first``, which
 return a single content object instead of a set of content objects. A
-ResultSet also has a ``sort`` method which accepts an index object (the sort
-index) and returns another (sorted) ResultSet.
+:class:`hypatia.util.ResultSet` also has a ``sort`` method which accepts an index
+object (the sort index) and returns another (sorted) :class:`hypatia.util.ResultSet`.
 
 .. code-block:: python
 
@@ -287,8 +288,8 @@ index) and returns another (sorted) ResultSet.
    newresultset = resultset.sort(name)
 
 .. note::
-    If you don't call ``sort`` on the ResultSet you get back, the results will
-    not be sorted in any particular order.
+    If you don't call ``sort`` on the :class:`hypatia.util.ResultSet` you get back,
+    the results will not be sorted in any particular order.
 
 Querying Across Catalogs
 ------------------------
