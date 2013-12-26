@@ -279,6 +279,9 @@ class PathIndex(SDIndex, hypatia.util.BaseIndexMixin, Persistent):
 
     applyEq = apply
 
+    def applyNotEq(self, *args, **kw):
+        return self._negate(self.applyEq, *args, **kw)
+
     def eq(self, path, depth=None, include_origin=None):
         val = {'path':path}
         if depth is not None:
@@ -286,6 +289,14 @@ class PathIndex(SDIndex, hypatia.util.BaseIndexMixin, Persistent):
         if include_origin is not None:
             val['include_origin'] = include_origin
         return hypatia.query.Eq(self, val)
+
+    def noteq(self, path, depth=None, include_origin=None):
+        val = {'path':path}
+        if depth is not None:
+            val['depth'] = depth
+        if include_origin is not None:
+            val['include_origin'] = include_origin
+        return hypatia.query.NotEq(self, val)
 
 class IndexSchema(Schema):
     """ The property schema for :class:`substanced.principal.Group`

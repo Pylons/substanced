@@ -415,6 +415,32 @@ class TestPathIndex(unittest.TestCase):
             {'path': '/abc', 'depth': 1}
             )
 
+    def test_noteq_defaults(self):
+        inst = self._makeOne()
+        result = inst.noteq('/abc')
+        self.assertEqual(
+            result._value,
+            {'path': '/abc'}
+            )
+
+    def test_noteq_include_origin_is_False(self):
+        inst = self._makeOne()
+        inst.depth = 10
+        result = inst.noteq('/abc', include_origin=False)
+        self.assertEqual(
+            result._value,
+            {'path': '/abc', 'include_origin': False}
+            )
+
+    def test_eq_include_depth_is_not_None(self):
+        inst = self._makeOne()
+        inst.depth = 10
+        result = inst.noteq('/abc', depth=1)
+        self.assertEqual(
+            result._value,
+            {'path': '/abc', 'depth': 1}
+            )
+
 class TestFieldIndex(unittest.TestCase):
     def _makeOne(self, discriminator=None, family=None, action_mode=None):
         from ..indexes import FieldIndex
