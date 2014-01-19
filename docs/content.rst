@@ -230,7 +230,7 @@ http://getbootstrap.com/components/#glyphicons .  For glyphicon icons, you'll
 need to use two classnames: ``glyphicon`` and ``glyphicon-foo``, separated by 
 a space.
 
-You can also pass a callback as an``icon`` argument:
+You can also pass a callback as an ``icon`` argument:
 
 .. code-block:: python
 
