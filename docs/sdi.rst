@@ -59,7 +59,7 @@ The SDI is for:
 - Administrators to use after deployment, to manage certain Substance D
   or application settings provided by the developer
 
-- Certain power users to use as a behind-the-scenese UI
+- Certain power users to use as a behind-the-scenes UI
 
 The SDI is *not* for:
 
@@ -179,11 +179,11 @@ the catalog:
 
 Catalogues are content, meaning they show up as folder items in the SDI. You
 can visit a a catalog and update its indexes, or see some statistics for those
-index. Finally, you can also use the SDI to reindex the contents of an index,
+indexes. Finally, you can also use the SDI to reindex the contents of an index,
 if you suspect it has gotten out of sync with the content.
 
 The catalog also registers a management view on content resources which
-gain a ``Indexing`` tab:
+gain an ``Indexing`` tab:
 
 .. image:: images/indexing.png
 
