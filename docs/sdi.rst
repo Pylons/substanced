@@ -170,9 +170,9 @@ changed by a later transaction.
 Catalog
 =======
 
-With :doc:`cataloging <cataloging>` developers have a powerful facility
-that can be added to their application. Like other first-class parts of
-Substance D's machinery, this includes an SDI UI for interacting with
+With :doc:`cataloging <cataloging>` developers have a powerful indexing and
+searching facility that can be added to their application. Like other first-class
+parts of Substance D's machinery, it includes an SDI UI for interacting with
 the catalog:
 
 .. image:: images/catalog.png
