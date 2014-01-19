@@ -333,7 +333,7 @@ Affecting Content Creation
 ==========================
 
 In some cases you might want your resource to perform some actions that
-can only take place after it has been seated in its container and but
+can only take place after it has been seated in its container, but
 before the creation events have fired. The ``@content`` decorator and
 ``add_content_type`` method both support an ``after_create`` argument,
 pointed at a callable.
