@@ -182,7 +182,7 @@ can visit a a catalog and update its indexes, or see some statistics for those
 indexes. Finally, you can also use the SDI to reindex the contents of an index,
 if you suspect it has gotten out of sync with the content.
 
-The catalog also registers a management view on content resources which
+The catalog also registers a management view on content resources, which
 gain an ``Indexing`` tab:
 
 .. image:: images/indexing.png
