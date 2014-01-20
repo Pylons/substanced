@@ -558,7 +558,7 @@ further by overriding the content type definition itself:
         def send_email(self):
             pass
 
-The class for the 'Folder' content type has now been replaced. Instead
+The class for the ``Folder`` content type has now been replaced. Instead
 of ``substanced.folder.Folder`` it is ``MyFolder``.
 
 .. note::
