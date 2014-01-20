@@ -62,7 +62,7 @@ protocol for ``_failure``.
 
 ``FormView`` also supports the following methods that can be overridden:
 
-- ``before(self, form)`` is called validation and processing any
+- ``before(self, form)`` is called before validation and processing of any
   ``_success`` or ``_failure`` methods
 
 - ``failure(self, e)`` is called with the exception, if the there is no
