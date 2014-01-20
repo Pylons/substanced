@@ -572,9 +572,12 @@ of ``substanced.folder.Folder`` it is ``MyFolder``.
 Affecting the Tab Order for Management Views
 ============================================
 
-The ``tab_order`` parameter overrides the mgmt_view tab settings,
-for a content type, with a sequence of view names that should be
-ordered (and everything not in the sequence, after.)
+The ``tab_order`` parameter overrides the mgmt_view tab settings
+for a content type. Its value should be a sequence of view names, each
+corresponding to a tab that will appear in the management interface. Any
+registered view names that are omitted from this sequence will be placed
+after the other tabs.
+
 
 Handling Content Events
 =======================
