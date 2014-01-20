@@ -644,7 +644,7 @@ forms result in :func:`substanced.event.add_content_subscriber`.
     in the same transaction.
 
 The ``IACLModified`` event (and ``@subscriber_acl_modified`` subscriber)
-is used internally to Substance D to re-index information the system
+is used internally by Substance D to re-index information in the system
 catalog's ACL index. Substance D also uses this event to maintain
 references between resources and principals. Substance D applications
 can use this in different ways, for example recording a security audit
