@@ -141,8 +141,8 @@ you don't care (or don't know) which view name to use as a ``tab_before`` or
 ``tab_after`` value, use ``tab_near``, which can be any of the sentinel values
 :attr:`~substanced.sdi.MIDDLE`, :attr:`~substanced.sdi.LEFT`, or
 :attr:`~substanced.sdi.RIGHT`, each of which specifies a target "zone" in the
-tab order.  Substance D will make a best effort to do something sane with ``
-tab_near``.
+tab order.  Substance D will make a best effort to do something sane with
+``tab_near``.
 
 As in many cases, an illustration is helpful:
 
