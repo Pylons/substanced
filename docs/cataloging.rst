@@ -44,7 +44,8 @@ Adding a Catalog
 ----------------
 
 The ``system`` catalog won't have enough information to form all the queries you
-need.  You'll have to add a catalog via code related to your application.
+need.  You'll have to add a catalog via code related to your application. The first
+step is adding a catalog factory.
 
 A catalog factory is a collection of index descriptions.  Creating a catalog factory
 doesn't actually add a catalog to your database, but it makes it possible
@@ -66,8 +67,9 @@ Here's an example catalog factory named ``mycatalog``:
        funky = Field()
 
 In order to activate a ``@catalog_factory`` decorator, it must be *scanned* using the
-Pyramid ``config.scan()`` machinery in order to use
-:meth:`substanced.catalog.CatalogsService.add_catalog` using that factory's name:
+Pyramid ``config.scan()`` machinery. This will allow you to use
+:meth:`substanced.catalog.CatalogsService.add_catalog` to add a catalog with that
+factory's name:
 
 .. code-block:: python
 
