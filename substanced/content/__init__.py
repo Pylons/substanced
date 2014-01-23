@@ -334,7 +334,7 @@ def _wrap_factory(factory, factory_type):
     factory_wrapper.__factory__ = factory
     return factory_type, factory_wrapper
 
-class _ContentTypePredicate(object):
+class _ResourceTypePredicate(object):
     def __init__(self, val, config):
         self.val = val
         self.registry = config.registry
@@ -355,4 +355,4 @@ def includeme(config): # pragma: no cover
     config.registry.content = ContentRegistry(config.registry)
     config.add_directive('add_content_type', add_content_type)
     config.add_directive('add_service_type', add_service_type)
-    config.add_view_predicate('content_type', _ContentTypePredicate)
+    config.add_view_predicate('resource_type', _ResourceTypePredicate)
