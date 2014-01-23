@@ -331,10 +331,10 @@ class Test__wrap_factory(unittest.TestCase):
         self.assertTrue(ob is foo)
         self.assertEqual(ob.__factory_type__, 'dummy')
 
-class Test_ContentTypePredicate(unittest.TestCase):
+class Test_ResourceTypePredicate(unittest.TestCase):
     def _makeOne(self, val, config):
-        from . import _ContentTypePredicate
-        return _ContentTypePredicate(val, config)
+        from . import _ResourceTypePredicate
+        return _ResourceTypePredicate(val, config)
 
     def _makeConfig(self, result):
         config = Dummy()
