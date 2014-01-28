@@ -1748,6 +1748,11 @@ class Test_generate_text_filter_terms(unittest.TestCase):
         terms = self._callFUT(filter_text)
         self.assertEqual(terms, ['foo*', 'bar*'])
 
+    def test_without_glob_pattern_term_is_single_letter(self):
+        filter_text = 'foo b'
+        terms = self._callFUT(filter_text)
+        self.assertEqual(terms, ['foo*'])
+        
     def test_with_phrase_pattern(self):
         filter_text = 'foo "bar baz" "bar"'
         terms = self._callFUT(filter_text)

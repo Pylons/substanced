@@ -970,7 +970,9 @@ PHRASE_RE = re.compile(r'"([^"]*)"')
 def generate_text_filter_terms(filter_text):
     terms = ['"%s"' % x for x in PHRASE_RE.findall(filter_text) ]
     remainder = PHRASE_RE.sub('', filter_text)
-    nonphrases = [x for x in remainder.split() if x.strip()]
+    # NB: do not try to glob terms less than 2 characters for performance
+    # reasons
+    nonphrases = [x for x in remainder.split() if len(x.strip()) > 1]
     for word in nonphrases:
         glob = word
         if not word.endswith('*'):
