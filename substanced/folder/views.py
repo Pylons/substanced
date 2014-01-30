@@ -965,7 +965,7 @@ class FolderContents(object):
         self.request.sdiapi.flash(request.localizer.translate(msg), 'danger')
         return False
 
-PHRASE_RE = re.compile(r'"([^"]*)"')
+PHRASE_RE = re.compile(r'"([^"]*)"?')
 
 def generate_text_filter_terms(filter_text):
     terms = ['"%s"' % x for x in PHRASE_RE.findall(filter_text) ]
