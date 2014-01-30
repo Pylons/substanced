@@ -109,7 +109,7 @@
         // the number of requests while typing
         // continually.
         var filterTimer;
-        var filterDelay = 250;       // millis
+        var filterDelay = 500;       // millis
         function delayedAction(inner) {
             if (filterTimer) {
                 clearTimeout(filterTimer);

@@ -1752,6 +1752,16 @@ class Test_generate_text_filter_terms(unittest.TestCase):
         filter_text = 'foo "bar baz" "bar"'
         terms = self._callFUT(filter_text)
         self.assertEqual(terms, ['"bar baz"', '"bar"', 'foo*'])
+
+    def test_with_phrase_pattern_no_end_quote(self):
+        filter_text = 'foo "bar baz bar'
+        terms = self._callFUT(filter_text)
+        self.assertEqual(terms, ['"bar baz bar"', 'foo*'])
+
+    def test_with_phrase_pattern_no_end_quote2(self):
+        filter_text = 'foo "bar baz bar" "ab'
+        terms = self._callFUT(filter_text)
+        self.assertEqual(terms, ['"bar baz bar"', '"ab"', 'foo*'])
         
 class DummyContainer(object):
     oid_store = {}
