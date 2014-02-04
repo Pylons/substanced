@@ -19,7 +19,7 @@ and return its SDI title:
 
    @view_config(content_type='Root')
    def hello(request):
-       html = '<html><head></head><body>Hello from %s!</body></html>'
+       html = u'<html><head></head><body>Hello from %s!</body></html>'
        request.response.text = html % request.context.sdi_title
        return request.response
 
