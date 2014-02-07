@@ -831,7 +831,7 @@ class IUserLocator(Interface):
 
     def get_user_by_userid(userid):
         """ Return an IUser object or ``None`` if no such user exists. The
-        ``login`` argument is the *user id* of the user (usually an oid)."""
+        ``userid`` argument is the *user id* of the user (usually an oid)."""
 
     def get_user_by_email(email):
         """ Return an IUser object or ``None`` if no such user exists. The
