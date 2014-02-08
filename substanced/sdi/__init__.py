@@ -5,6 +5,7 @@ import transaction
 from pyramid_zodbconn import get_connection
 
 from zope.interface import (
+    implementer,
     providedBy,
     Interface,
     )
@@ -44,6 +45,7 @@ from pyramid.util import (
 from ..util import acquire, _
 
 from ..interfaces import IUserLocator
+from ..interfaces import ISDIAPI
 from ..principal import DefaultUserLocator
 
 LEFT = 'LEFT'
@@ -472,6 +474,7 @@ def mgmt_url(request, obj, *arg, **kw): # XXX deprecate
 def flash_with_undo(request, *arg, **kw): # XXX deprecate
     return request.sdiapi.flash_with_undo(*arg, **kw)
 
+@implementer(ISDIAPI)
 class sdiapi(object):
     get_connection = staticmethod(get_connection) # testing
     transaction = transaction # testing
