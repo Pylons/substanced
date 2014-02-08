@@ -1817,7 +1817,11 @@ class DummyFolder(testing.DummyResource):
         return False
 
 class DummyCatalogs(testing.DummyResource):
-    __is_service__ = True
+    def __init__(self):
+        from zope.interface import directlyProvides
+        from ...interfaces import IService
+        super(DummyCatalogs, self).__init__()
+        directlyProvides(self, IService)
 
 class DummyCatalog(object):
     def __init__(self, result=()):

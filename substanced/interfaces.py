@@ -821,6 +821,10 @@ class IRoot(IFolder):
 #
 #   substanced.sdi APIs
 #
+class IService(Interface):
+    """ Marker for items which are showin in the "Services" tab.
+    """
+
 class ISDIAPI(Interface):
     """  Easy access to common templating operations on all views.
     This object is available as ``request.sdiapi``.

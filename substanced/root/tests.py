@@ -56,6 +56,7 @@ class TestRoot(unittest.TestCase):
         return registry
 
     def test_after_create_with_password(self):
+        from ..interfaces import IService
         settings = {
             'substanced.initial_password':'pass',
             'substanced.initial_login':'login',
@@ -68,11 +69,11 @@ class TestRoot(unittest.TestCase):
         self.assertTrue('__objectmap__' in inst.__dict__)
         principals = inst['principals']
         locks = inst['locks']
-        self.assertTrue(principals.__is_service__)
+        self.assertTrue(IService.providedBy(principals))
         self.assertTrue(registry.group.connected)
         self.assertTrue(inst.__acl__)
         self.assertFalse(registry.created.__sdi_deletable__)
-        self.assertTrue(locks.__is_service__)
+        self.assertTrue(IService.providedBy(locks))
 
     def test_after_create_without_password(self):
         from pyramid.exceptions import ConfigurationError

@@ -20,6 +20,7 @@ from pyramid.threadlocal import get_current_registry
 from pyramid.i18n import TranslationStringFactory
 
 from ..interfaces import IFolder
+from ..interfaces import IService
 
 from .._compat import (
     parse_qsl,
@@ -528,7 +529,7 @@ def is_folder(resource):
 
 def is_service(resource):
     """ Returns ``True`` if the resource is a service, ``False`` if not. """
-    return bool(getattr(resource, '__is_service__', False))
+    return IService.providedBy(resource)
 
 def find_catalogs(resource, name=None):
     """ Return all catalogs in the lineage.  If ``name`` is supplied, return

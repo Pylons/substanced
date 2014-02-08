@@ -332,7 +332,6 @@ class _ResourceDumpContext(_ResourceContext):
             'content_type':ct,
             'name':resource.__name__,
             'oid':self.get_oid(resource),
-            'is_service':bool(getattr(resource, '__is_service__', False)),
             }
         return self.dump_yaml(data, RESOURCE_FILENAME)
 
@@ -362,7 +361,6 @@ class _ResourceLoadContext(_ResourceContext):
         data = self.load_yaml(RESOURCE_FILENAME)
         name = data['name']
         oid = data['oid']
-        is_service = data['is_service']
         try:
             resource = registry.content.create(data['content_type'], __oid=oid)
         except:
@@ -372,8 +370,6 @@ class _ResourceLoadContext(_ResourceContext):
             raise
         resource.__name__ = name
         set_oid(resource, oid)
-        if is_service:
-            resource.__is_service__ = True
         return name, resource
 
     def load(self, parent):

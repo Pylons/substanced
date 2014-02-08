@@ -7,6 +7,7 @@ from pyramid import testing
 
 def _makeSite(**kw):
     from ...interfaces import IFolder
+    from ...interfaces import IService
     site = testing.DummyResource(__provides__=kw.pop('__provides__', None))
     alsoProvides(site, IFolder)
     objectmap = kw.pop('objectmap', None)
@@ -15,8 +16,7 @@ def _makeSite(**kw):
     for k, v in kw.items():
         if k == 'catalog':
             catalogs = testing.DummyResource(
-                __provides__=IFolder,
-                __is_service__=True
+                __provides__=(IFolder, IService),
                 )
             site['catalogs'] = catalogs
             catalogs['system'] = v
@@ -306,12 +306,13 @@ class Test_acl_modified(unittest.TestCase):
 
     def test_gardenpath(self):
         from substanced.interfaces import IFolder
+        from substanced.interfaces import IService
         resource = testing.DummyResource(__provides__=IFolder)
         resource.__oid__ = 1
         catalog = DummyCatalog()
         catalog.__name__ = 'catalog'
         catalogs = resource['catalogs'] = testing.DummyResource(
-            __provides__=IFolder, __is_service__=True, __name__='catalogs')
+            __provides__=(IFolder, IService), __name__='catalogs')
         catalogs['catalog'] = catalog
         index = DummyIndex()
         index.__name__ = 'index'
