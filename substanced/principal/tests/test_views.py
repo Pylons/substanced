@@ -9,13 +9,14 @@ class Test_add_principals_service(unittest.TestCase):
 
     def test_it(self):
         context = testing.DummyResource()
+        context.add_service = context.__setitem__
         request = testing.DummyRequest()
         request.sdiapi = DummySDIAPI()
         service = testing.DummyResource()
         request.registry.content = DummyContentRegistry(service)
         result = self._callFUT(context, request)
         self.assertEqual(context['principals'], service)
-        self.assertEqual(result.location, '/mgmt_path')
+        self.assertEqual(result.location, '/mgmt_path/@@services')
 
 class TestAddUserView(unittest.TestCase):
     def _makeOne(self, context, request):
@@ -36,7 +37,7 @@ class TestAddUserView(unittest.TestCase):
         inst = self._makeOne(context, request)
         resp = inst.add_success({'name':'name', 'groupids':(1,)})
         self.assertEqual(context['name'], resource)
-        self.assertEqual(resp.location, '/mgmt_path')
+        self.assertEqual(resp.location, '/mgmt_path/@@contents')
         self.assertEqual(resource.groupids, (1,))
 
 class TestAddGroupView(unittest.TestCase):
@@ -58,7 +59,7 @@ class TestAddGroupView(unittest.TestCase):
         inst = self._makeOne(context, request)
         resp = inst.add_success({'name':'name', 'memberids':(1,)})
         self.assertEqual(context['name'], resource)
-        self.assertEqual(resp.location, '/mgmt_path')
+        self.assertEqual(resp.location, '/mgmt_path/@@contents')
         self.assertEqual(resource.memberids, (1,))
 
 class Test_password_validator(unittest.TestCase):
@@ -101,7 +102,7 @@ class TestChangePasswordView(unittest.TestCase):
         resp = inst.change_success(
             {'password':'password', 'current_user_password':'abcdef'})
         self.assertEqual(context.password, 'password')
-        self.assertEqual(resp.location, '/mgmt_path')
+        self.assertEqual(resp.location, '/mgmt_path/@@change_password')
         self.assertTrue(request.sdiapi.flashed)
         self.assertTrue(user.checked, 'abcdef')
 
@@ -115,7 +116,7 @@ class TestChangePasswordView(unittest.TestCase):
         inst = self._makeOne(context, request)
         resp = inst.change_success(
             {'password':'password', 'current_user_password':'abcdef'})
-        self.assertEqual(resp.location, '/mgmt_path')
+        self.assertEqual(resp.location, '/mgmt_path/@@change_password')
         self.assertEqual(
             request.sdiapi.flashed,
             'Incorrect current user password'
@@ -215,6 +216,6 @@ class DummyContentRegistry(object):
         
 class DummySDIAPI(object):
     def mgmt_path(self, *arg, **kw):
-        return '/mgmt_path'
+        return '/'.join(['/mgmt_path'] + list(arg[1:]))
     def flash(self, msg, queue='info'):
         self.flashed = msg

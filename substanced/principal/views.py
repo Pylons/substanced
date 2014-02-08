@@ -38,8 +38,8 @@ class AddUserSchema(UserGroupsSchema, UserSchema):
     )
 def add_principals_service(context, request):
     service = request.registry.content.create('Principals')
-    context['principals'] = service
-    return HTTPFound(location=request.sdiapi.mgmt_path(context))
+    context.add_service('principals', service)
+    return HTTPFound(location=request.sdiapi.mgmt_path(context, '@@services'))
 
 @mgmt_view(
     context=IUsers,
