@@ -86,6 +86,61 @@ class TestPrincipals(unittest.TestCase):
         self.assertTrue(reset.__acl__)
         self.assertEqual(len(inst), 1)
 
+class TestMultiplePrincipalsServices(unittest.TestCase):
+
+    def _makeSite(self):
+        from ...testing import make_site
+
+        site = make_site()
+        self.l0_principals = site['principals']
+
+        l1 = site['level1'] = DummyFolder()
+        self.l1_principals = l1['principals'] = self._makePrincipals()
+
+        l2 = site['level1']['level2'] = DummyFolder()
+        self.l2_principals = l2['principals'] = self._makePrincipals()
+
+        return site
+
+    def _makePrincipals(self):
+        from .. import Principals
+        from ...interfaces import IFolder
+        from ...interfaces import IService
+        from zope.interface import directlyProvides
+        inst = Principals()
+        directlyProvides(inst, (IFolder, IService))
+        content = DummyContentRegistry()
+        registry = testing.DummyResource()
+        registry.content = content
+        def subscribers(*args):
+            pass
+        registry.subscribers = subscribers
+        inst.after_create(None, registry)
+        return inst
+
+    def _makeUserLocator(self, context=None, request=None):
+        from .. import DefaultUserLocator
+        return DefaultUserLocator(context, request)
+
+    def test_multiple_principals_services(self):
+        from pyramid.testing import DummyModel
+
+        site = self._makeSite()
+        root_phred = self.l0_principals['users']['phred'] = DummyModel()
+        level1_phred = self.l1_principals['users']['phred'] = DummyModel()
+        level2_phred = self.l2_principals['users']['phred'] = DummyModel()
+
+        adapter = self._makeUserLocator(site, testing.DummyRequest())
+        self.assertTrue(adapter.get_user_by_login('phred') is root_phred)
+
+        adapter = self._makeUserLocator(site['level1'], testing.DummyRequest())
+        self.assertTrue(adapter.get_user_by_login('phred') is level1_phred)
+
+        adapter = self._makeUserLocator(site['level1']['level2'], 
+                                        testing.DummyRequest())
+        self.assertTrue(adapter.get_user_by_login('phred') is level2_phred)
+
+
 class TestUsers(unittest.TestCase):
     def _makeOne(self):
         from .. import Users
@@ -610,13 +665,15 @@ class DummyObjectMap(object):
         pass
 
 class DummyContentRegistry(object):
-    def __init__(self, result):
+    def __init__(self, result=None):
         self.result = result
 
     def istype(self, context, type):
         return self.result
 
     def create(self, name, *arg, **kw):
+        if self.result is None:
+            return testing.DummyResource()
         return self.result
     
 class DummySDIAPI(object):
