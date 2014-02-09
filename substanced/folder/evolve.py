@@ -1,4 +1,4 @@
-from zope.interface import directlyProvides
+from zope.interface import alsoProvides
 
 from ..interfaces import IService
 from ..interfaces import MODE_IMMEDIATE
@@ -14,7 +14,7 @@ def convert_services_to_IService(root):
         except AttributeError:
             pass
         else:
-            directlyProvides(val, IService)
+            alsoProvides(val, IService)
             index.reindex_resource(val, action_mode=MODE_IMMEDIATE)
 
 def includeme(config):
