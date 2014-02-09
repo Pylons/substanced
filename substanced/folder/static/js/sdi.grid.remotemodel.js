@@ -319,9 +319,12 @@
             if (query.from !== undefined) {   // query = {}, if there is no need to fetch
 
                 // Prepare the options, include the query for missing data.
+                // By default remove the original query string to prevent
+                // params e.g., 'filter.' from being overridden by existing
+                // url params
                 var ajaxOptions = {
                     type: 'GET',
-                    url: options.url,
+                    url: options.url || document.location.href.split('?')[0],
                     data: query,
                     dataType: 'json'
                 };
