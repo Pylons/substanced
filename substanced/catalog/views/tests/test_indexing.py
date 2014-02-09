@@ -15,8 +15,9 @@ class TestIndexingView(unittest.TestCase):
 
     def _makeCatalogContainer(self):
         from substanced.interfaces import IFolder
+        from substanced.interfaces import IService
         catalogs = testing.DummyResource(
-            __provides__=IFolder, __is_service__=True
+            __provides__=(IFolder, IService)
             )
         return catalogs
 
@@ -61,8 +62,10 @@ class DummyIndex(object):
         return 'repr'
 
 class DummyCatalog(object):
-    __is_service__ = True
     def __init__(self):
+        from zope.interface import directlyProvides
+        from ....interfaces import IService
+        directlyProvides(self, IService)
         self.index = DummyIndex()
 
     def values(self):

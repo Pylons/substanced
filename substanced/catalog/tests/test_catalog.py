@@ -17,6 +17,7 @@ _B = u('b')
 
 def _makeSite(**kw):
     from ...interfaces import IFolder
+    from ...interfaces import IService
     site = testing.DummyResource(__provides__=kw.pop('__provides__', None))
     alsoProvides(site, IFolder)
     objectmap = kw.pop('objectmap', None)
@@ -24,7 +25,7 @@ def _makeSite(**kw):
         site.__objectmap__ = objectmap
     for k, v in kw.items():
         site[k] = v
-        v.__is_service__ = True
+        v.__provides__ = IService
     return site
 
 class TestCatalog(unittest.TestCase):

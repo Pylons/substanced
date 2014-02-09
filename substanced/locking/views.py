@@ -25,7 +25,7 @@ from ..util import _
 def add_lock_service(context, request):
     service = request.registry.content.create('Lock Service')
     context.add_service('locks', service)
-    return HTTPFound(location=request.sdiapi.mgmt_path(context))
+    return HTTPFound(location=request.sdiapi.mgmt_path(context, '@@services'))
 
 @mgmt_view(
     context=ILockService,
