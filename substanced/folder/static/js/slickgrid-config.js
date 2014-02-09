@@ -88,6 +88,7 @@
         validators: {
             //required: requiredFieldValidator
         },
+
         handleCreate: function () {
             // Create a simple grid configuration.
             //

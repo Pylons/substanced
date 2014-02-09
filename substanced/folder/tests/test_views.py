@@ -107,12 +107,6 @@ class TestFolderContents(unittest.TestCase):
         request.registry.content = DummyContent(**kw)
         return request
 
-    def _makeCatalogs(self, oids=()):
-        catalogs = DummyCatalogs()
-        catalog = DummyCatalog(oids)
-        catalogs['system'] = catalog
-        return catalogs
-
     def test_get_buttons_is_None(self):
         context = testing.DummyResource()
         request = self._makeRequest(buttons=None)
@@ -356,7 +350,7 @@ class TestFolderContents(unittest.TestCase):
         from substanced.interfaces import IFolder
         context = DummyFolder(__provides__=IFolder)
         request = self._makeRequest()
-        context['catalogs'] = self._makeCatalogs(oids=[1])
+        context['catalogs'] = _makeCatalogs(oids=[1])
         result = testing.DummyResource()
         result.col1 = 'val1'
         result.col2 = 'val2'
@@ -382,7 +376,7 @@ class TestFolderContents(unittest.TestCase):
         from substanced.interfaces import IFolder
         context = DummyFolder(__provides__=IFolder)
         request = self._makeRequest()
-        context['catalogs'] = self._makeCatalogs(oids=[1])
+        context['catalogs'] = _makeCatalogs(oids=[1])
         result = testing.DummyResource()
         result.col1 = 'val1'
         result.col2 = 'val2'
@@ -406,7 +400,7 @@ class TestFolderContents(unittest.TestCase):
         from substanced.interfaces import IFolder
         context = DummyFolder(__provides__=IFolder)
         request = self._makeRequest()
-        context['catalogs'] = self._makeCatalogs(oids=[1])
+        context['catalogs'] = _makeCatalogs(oids=[1])
         result = testing.DummyResource()
         result.__name__ = 'fred'
         context.__objectmap__ = DummyObjectMap(result)
@@ -421,7 +415,7 @@ class TestFolderContents(unittest.TestCase):
         from substanced.interfaces import IFolder
         context = DummyFolder(__provides__=IFolder)
         request = self._makeRequest()
-        context['catalogs'] = self._makeCatalogs(oids=[1])
+        context['catalogs'] = _makeCatalogs(oids=[1])
         result = testing.DummyResource()
         result.__name__ = 'fred'
         context.__objectmap__ = DummyObjectMap(result)
@@ -436,7 +430,7 @@ class TestFolderContents(unittest.TestCase):
         from substanced.interfaces import IFolder
         context = DummyFolder(__provides__=IFolder)
         request = self._makeRequest()
-        context['catalogs'] = self._makeCatalogs(oids=[1])
+        context['catalogs'] = _makeCatalogs(oids=[1])
         result = testing.DummyResource()
         result.__name__ = 'fred'
         context.__objectmap__ = DummyObjectMap(result)
@@ -451,7 +445,7 @@ class TestFolderContents(unittest.TestCase):
         from substanced.interfaces import IFolder
         context = DummyFolder(__provides__=IFolder)
         request = self._makeRequest()
-        context['catalogs'] = self._makeCatalogs(oids=[1])
+        context['catalogs'] = _makeCatalogs(oids=[1])
         result = testing.DummyResource()
         result.__name__ = 'fred'
         context.__objectmap__ = DummyObjectMap(result)
@@ -475,7 +469,7 @@ class TestFolderContents(unittest.TestCase):
         from substanced.interfaces import IFolder
         context = DummyFolder(__provides__=IFolder)
         request = self._makeRequest()
-        context['catalogs'] = self._makeCatalogs(oids=[1])
+        context['catalogs'] = _makeCatalogs(oids=[1])
         result = testing.DummyResource()
         result.__name__ = 'fred'
         context.__objectmap__ = DummyObjectMap(result)
@@ -507,7 +501,7 @@ class TestFolderContents(unittest.TestCase):
         from substanced.interfaces import IFolder
         context = DummyFolder(__provides__=IFolder)
         request = self._makeRequest()
-        context['catalogs'] = self._makeCatalogs(oids=[1])
+        context['catalogs'] = _makeCatalogs(oids=[1])
         result = testing.DummyResource()
         result.col1 = 'val1'
         result.col2 = 'val2'
@@ -529,7 +523,7 @@ class TestFolderContents(unittest.TestCase):
     def test__folder_contents_button_enabled_for_true(self):
         from substanced.interfaces import IFolder
         context = DummyFolder(__provides__=IFolder)
-        context['catalogs'] = self._makeCatalogs(oids=[1])
+        context['catalogs'] = _makeCatalogs(oids=[1])
         result = testing.DummyResource()
         result.__name__ = 'fred'
         context.__objectmap__ = DummyObjectMap(result)
@@ -547,7 +541,7 @@ class TestFolderContents(unittest.TestCase):
     def test__folder_contents_button_enabled_for_false(self):
         from substanced.interfaces import IFolder
         context = DummyFolder(__provides__=IFolder)
-        context['catalogs'] = self._makeCatalogs(oids=[1])
+        context['catalogs'] = _makeCatalogs(oids=[1])
         result = testing.DummyResource()
         result.__name__ = 'fred'
         context.__objectmap__ = DummyObjectMap(result)
@@ -565,7 +559,7 @@ class TestFolderContents(unittest.TestCase):
     def test__folder_contents_button_enabled_for_non_callable(self):
         from substanced.interfaces import IFolder
         context = DummyFolder(__provides__=IFolder)
-        context['catalogs'] = self._makeCatalogs(oids=[1])
+        context['catalogs'] = _makeCatalogs(oids=[1])
         result = testing.DummyResource()
         result.__name__ = 'fred'
         context.__objectmap__ = DummyObjectMap(result)
@@ -620,7 +614,7 @@ class TestFolderContents(unittest.TestCase):
         context = DummyFolder(__provides__=IFolder)
         context.sort = lambda resultset, **kw: resultset
         request = self._makeRequest()
-        context['catalogs'] = self._makeCatalogs(oids=[1])
+        context['catalogs'] = _makeCatalogs(oids=[1])
         result = testing.DummyResource()
         result.__name__ = 'fred'
         context.__objectmap__ = DummyObjectMap(result)
@@ -797,7 +791,7 @@ class TestFolderContents(unittest.TestCase):
         request.POST = DummyPost()
         inst = self._makeOne(context, request)
         result = inst.delete()
-        self.assertEqual(request.sdiapi.flashed, 'No items deleted')
+        self.assertEqual(request.sdiapi.flashed, 'Deleted 0 items')
         self.assertEqual(result.location, '/mgmt_path')
 
     def test_delete_one_deleted(self):
@@ -839,6 +833,7 @@ class TestFolderContents(unittest.TestCase):
     def test_duplicate_multiple(self, mock_rename_duplicated_resource):
         context = mock.Mock()
         request = mock.Mock()
+        request.localizer = testing.DummyRequest().localizer
         request.view_name = 'contents'
         request.params = {}
         request.POST.get.return_value = 'a/b'
@@ -858,6 +853,7 @@ class TestFolderContents(unittest.TestCase):
     def test_duplicate_none(self):
         context = mock.Mock()
         request = mock.Mock()
+        request.localizer = testing.DummyRequest().localizer
         request.view_name = 'contents'
         request.params = {}
         request.POST.get.return_value = ''
@@ -865,7 +861,7 @@ class TestFolderContents(unittest.TestCase):
         inst.duplicate()
 
         self.assertEqual(context.mock_calls, [])
-        request.sdiapi.flash.assert_called_once_with('No items duplicated')
+        request.sdiapi.flash_with_undo.assert_called_once_with('Duplicated 0 items', 'success')
         request.sdiapi.mgmt_path.called_once_with(context, '@@contents')
 
     @mock.patch('substanced.folder.views.rename_duplicated_resource')
@@ -873,6 +869,7 @@ class TestFolderContents(unittest.TestCase):
         mock_rename_duplicated_resource.side_effect = ['a-1']
         context = mock.Mock()
         request = mock.Mock()
+        request.localizer = testing.DummyRequest().localizer
         request.view_name = 'contents'
         request.params = {}
         request.POST.get.return_value = 'a'
@@ -933,6 +930,7 @@ class TestFolderContents(unittest.TestCase):
         request = mock.Mock()
         request.view_name = 'contents'
         request.params = {}
+        request.localizer = testing.DummyRequest().localizer
         request.POST.getall.return_value = ('foobar',)
         request.POST.get.side_effect = lambda x: {
             'foobar': 'foobar2',
@@ -949,6 +947,7 @@ class TestFolderContents(unittest.TestCase):
         request = mock.Mock()
         request.view_name = 'contents'
         request.params = {}
+        request.localizer = testing.DummyRequest().localizer
         request.POST.getall.return_value = ('foobar', 'foobar1')
         request.POST.get.side_effect = lambda x: {
             'foobar': 'foobar0',
@@ -1083,6 +1082,7 @@ class TestFolderContents(unittest.TestCase):
         mock_folder.__parent__ = mock.MagicMock()
         mock_folder.__name__ = mock.sentinel.name
         request = mock.MagicMock()
+        request.localizer = testing.DummyRequest().localizer
         request.session.__getitem__.return_value = [123]
         request.POST.get.side_effect = lambda x: {
             'form.copy_finish': 'copy_finish'}[x]
@@ -1094,13 +1094,10 @@ class TestFolderContents(unittest.TestCase):
 
         inst.copy_finish()
 
-        call_list = request.sdiapi.flash.call_args_list
-        self.assertEqual(len(call_list), 2)
-
-        request.sdiapi.flash.assert_any_call(
-            'No items copied', 'warning')
-        request.sdiapi.flash.assert_any_call(
-            '"%s" is of a type (%s) that is not addable here, not copied' % (
+        request.sdiapi.flash_with_undo.assert_called_once_with(
+            'Copied 0 items', 'success')
+        request.sdiapi.flash.assert_called_once_with(
+            '"%s" is of a type (%s) that is not addable here, refusing to copy' % (
                 mock.sentinel.name, request.registry.content.typeof(None)
                 ), 'danger',
             )
@@ -1115,6 +1112,7 @@ class TestFolderContents(unittest.TestCase):
         mock_folder.__parent__ = mock.MagicMock()
         mock_folder.__name__ = mock.sentinel.name
         request = mock.MagicMock()
+        request.localizer = testing.DummyRequest().localizer
         request.session.__getitem__.return_value = [123]
         request.POST.get.side_effect = lambda x: {
             'form.copy_finish': 'copy_finish'}[x]
@@ -1138,6 +1136,7 @@ class TestFolderContents(unittest.TestCase):
         mock_folder.__parent__ = mock.MagicMock()
         mock_folder.__name__ = mock.sentinel.name
         request = mock.MagicMock()
+        request.localizer = testing.DummyRequest().localizer
         request.session.__getitem__.return_value = [123, 456]
         request.POST.get.side_effect = lambda x: {
             'form.copy_finish': 'copy_finish'}[x]
@@ -1268,6 +1267,7 @@ class TestFolderContents(unittest.TestCase):
         mock_folder.__parent__ = mock.MagicMock()
         mock_folder.__name__ = mock.sentinel.name
         request = mock.MagicMock()
+        request.localizer = testing.DummyRequest().localizer
         request.session.__getitem__.return_value = [123]
         request.POST.get.side_effect = lambda x: {
             'form.move_finish': 'move_finish'}[x]
@@ -1280,12 +1280,11 @@ class TestFolderContents(unittest.TestCase):
         inst.move_finish()
 
         call_list = request.sdiapi.flash.call_args_list
-        self.assertEqual(len(call_list), 2)
 
-        request.sdiapi.flash.assert_any_call(
-            'No items moved', 'warning')
-        request.sdiapi.flash.assert_any_call(
-            '"%s" is of a type (%s) that is not addable here, not moved' % (
+        request.sdiapi.flash_with_undo.assert_called_once_with(
+            'Moved 0 items', 'success')
+        request.sdiapi.flash.assert_called_once_with(
+            '"%s" is of a type (%s) that is not addable here, refusing to move' % (
                 mock.sentinel.name, request.registry.content.typeof(None)
                 ), 'danger',
             )
@@ -1300,6 +1299,7 @@ class TestFolderContents(unittest.TestCase):
         mock_folder.__parent__ = mock.MagicMock()
         mock_folder.__name__ = mock.sentinel.name
         request = mock.MagicMock()
+        request.localizer = testing.DummyRequest().localizer
         request.session.__getitem__.return_value = [123]
         request.POST.get.side_effect = lambda x: {
             'form.move_finish': 'move_finish'}[x]
@@ -1323,6 +1323,7 @@ class TestFolderContents(unittest.TestCase):
         mock_folder.__parent__ = mock.MagicMock()
         mock_folder.__name__ = mock.sentinel.name
         request = mock.MagicMock()
+        request.localizer = testing.DummyRequest().localizer
         request.session.__getitem__.return_value = [123, 456]
         request.POST.get.side_effect = lambda x: {
             'form.move_finish': 'move_finish'}[x]
@@ -1621,6 +1622,28 @@ class TestFolderContents(unittest.TestCase):
             ]            
             )
 
+    def test_get_default_query(self):
+        from zope.interface import directlyProvides
+        from ...interfaces import IFolder
+        from ...interfaces import IService
+        context = testing.DummyResource()
+        directlyProvides(context, IFolder)
+        context['catalogs'] = _makeCatalogs(oids=[1])
+        request = self._makeRequest()
+        inst = self._makeOne(context, request)
+        query = inst.get_default_query()
+        self.assertTrue(isinstance(query, DummyIndex))
+        self.assertEqual(query.name, 'path')
+        self.assertEqual(query.queried,
+                         ('eq', (context,), {'depth': 1,
+                                             'include_origin': False}))
+        self.assertEqual(query.anded_with[0].name, 'allowed')
+        self.assertEqual(query.anded_with[0].queried,
+                         ('allows', (request, 'sdi.view'), {}))
+        self.assertEqual(query.anded_with[1].name, 'interfaces')
+        self.assertEqual(query.anded_with[1].queried,
+                         ('notany', ([IService],), {}))
+
 class Test_folder_contents_views_decorator(unittest.TestCase):
     def setUp(self):
         testing.setUp()
@@ -1726,6 +1749,91 @@ class Test_add_folder_contents_views(unittest.TestCase):
         self._callFUT(config, slamdunk=1)
         self.assertEqual(config.settings[0]['slamdunk'], 1)
 
+class Test_has_services(unittest.TestCase):
+    def _callFUT(self, context, request):
+        from substanced.folder.views import has_services
+        return has_services(context, request)
+
+    def test_it(self):
+        from zope.interface import directlyProvides
+        from ...interfaces import IFolder
+        context = testing.DummyResource()
+        directlyProvides(context, IFolder)
+        context['catalogs'] = _makeCatalogs(oids=[1])
+        request = testing.DummyRequest()
+        self.assertTrue(self._callFUT(context, request))
+
+class Test_HasServicesPredicate(unittest.TestCase):
+    def _makeOne(self, val, config):
+        from ..views import _HasServicesPredicate
+        return _HasServicesPredicate(val, config)
+
+    def test_text(self):
+        config = Dummy()
+        config.registry = Dummy()
+        inst = self._makeOne(True, config)
+        self.assertEqual(inst.text(), 'has_services = True')
+
+    def test_phash(self):
+        config = Dummy()
+        config.registry = Dummy()
+        inst = self._makeOne(True, config)
+        self.assertEqual(inst.phash(), 'has_services = True')
+
+    def test__call__(self):
+        config = Dummy()
+        config.registry = Dummy()
+        inst = self._makeOne(True, config)
+        _called_with = []
+        def has_services(context, request):
+            _called_with.append((context, request))
+            return True
+        inst.has_services = has_services
+        context = testing.DummyResource()
+        request = testing.DummyRequest()
+        self.assertEqual(inst(context, request), True)
+        self.assertEqual(_called_with, [(context, request)])
+
+class FolderServicesTest(unittest.TestCase):
+    def setUp(self):
+        self.config = testing.setUp()
+
+    def tearDown(self):
+        testing.tearDown()
+
+    def _makeOne(self, context, request):
+        from ..views import FolderServices
+        return FolderServices(context, request)
+
+    def _makeRequest(self, **kw):
+        request = testing.DummyRequest()
+        request.sdiapi = DummySDIAPI()
+        request.registry.content = DummyContent(**kw)
+        return request
+
+    def test_get_default_query(self):
+        from zope.interface import directlyProvides
+        from ...interfaces import IFolder
+        from ...interfaces import IService
+        context = testing.DummyResource()
+        directlyProvides(context, IFolder)
+        context['catalogs'] = _makeCatalogs(oids=[1])
+        request = self._makeRequest()
+        inst = self._makeOne(context, request)
+        query = inst.get_default_query()
+        self.assertTrue(isinstance(query, DummyIndex))
+        self.assertEqual(query.name, 'path')
+        self.assertEqual(query.queried,
+                         ('eq', (context,), {'depth': 1,
+                                             'include_origin': False}))
+        self.assertEqual(query.anded_with[0].name, 'allowed')
+        self.assertEqual(query.anded_with[0].queried,
+                         ('allows', (request, 'sdi.view'), {}))
+        self.assertEqual(query.anded_with[1].name, 'interfaces')
+        self.assertEqual(query.anded_with[1].queried,
+                         ('any', ([IService],), {}))
+
+
 class Test_generate_text_filter_terms(unittest.TestCase):
     def _callFUT(self, filter_text):
         from substanced.folder.views import generate_text_filter_terms
@@ -1741,10 +1849,25 @@ class Test_generate_text_filter_terms(unittest.TestCase):
         terms = self._callFUT(filter_text)
         self.assertEqual(terms, ['foo*', 'bar*'])
 
+    def test_without_glob_pattern_term_is_single_letter(self):
+        filter_text = 'foo b'
+        terms = self._callFUT(filter_text)
+        self.assertEqual(terms, ['foo*'])
+        
     def test_with_phrase_pattern(self):
         filter_text = 'foo "bar baz" "bar"'
         terms = self._callFUT(filter_text)
         self.assertEqual(terms, ['"bar baz"', '"bar"', 'foo*'])
+
+    def test_with_phrase_pattern_no_end_quote(self):
+        filter_text = 'foo "bar baz bar'
+        terms = self._callFUT(filter_text)
+        self.assertEqual(terms, ['"bar baz bar"', 'foo*'])
+
+    def test_with_phrase_pattern_no_end_quote2(self):
+        filter_text = 'foo "bar baz bar" "ab'
+        terms = self._callFUT(filter_text)
+        self.assertEqual(terms, ['"bar baz bar"', '"ab"', 'foo*'])
         
 class DummyContainer(object):
     oid_store = {}
@@ -1795,7 +1918,11 @@ class DummyFolder(testing.DummyResource):
         return False
 
 class DummyCatalogs(testing.DummyResource):
-    __is_service__ = True
+    def __init__(self):
+        from zope.interface import directlyProvides
+        from ...interfaces import IService
+        testing.DummyResource.__init__(self)
+        directlyProvides(self, IService)
 
 class DummyCatalog(object):
     def __init__(self, result=()):
@@ -1806,7 +1933,7 @@ class DummyCatalog(object):
     def __getitem__(self, name):
         result = self.result
         if result is not None:
-            result = DummyIndex(self.result)
+            result = DummyIndex(name, self.result)
         return result
 
     def get(self, name, default=None):
@@ -1823,23 +1950,47 @@ class DummyResultSet(object):
         return len(self.ids)
 
 class DummyIndex(object):
-    def __init__(self, result):
+    def __init__(self, name, result):
+        self.name = name
         self.result = result
+        self.queried = None
+        self.anded_with = []
 
     def execute(self):
         return self.result
         
     def eq(self, *arg, **kw):
+        self.queried = ('eq', arg, kw)
         return self
 
     def allows(self, *arg, **kw):
-        pass
+        self.queried = ('allows', arg, kw)
+        return self
+
+    def notany(self, *arg, **kw):
+        self.queried = ('notany', arg, kw)
+        return self
+
+    def any(self, *arg, **kw):
+        self.queried = ('any', arg, kw)
+        return self
 
     def __and__(self, other):
+        self.anded_with.append(other)
         return self
 
     def check_query(self, querytext):
         return True
+
+def _makeCatalogs(oids=()):
+    from zope.interface import directlyProvides
+    from ...interfaces import IFolder
+    from ...interfaces import IService
+    catalogs = DummyCatalogs()
+    directlyProvides(catalogs, (IFolder, IService))
+    catalog = DummyCatalog(oids)
+    catalogs['system'] = catalog
+    return catalogs
     
 class DummyObjectMap(object):
     def __init__(self, result):
@@ -1881,6 +2032,9 @@ class DummyConfig(object):
     def with_package(self, pkg):
         self.pkg = pkg
         return self
+
+class Dummy(object):
+    pass
 
 class DummyVenusianContext(object):
     def __init__(self):

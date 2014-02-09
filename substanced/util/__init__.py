@@ -6,6 +6,7 @@ import os
 import pstats
 import tempfile
 import types
+from ZODB.interfaces import IBroken
 try:
     import cProfile as _profile
 except ImportError: # pragma: no cover (pypy)
@@ -16,8 +17,10 @@ from zope.interface.declarations import Declaration
 
 from pyramid.location import lineage
 from pyramid.threadlocal import get_current_registry
+from pyramid.i18n import TranslationStringFactory
 
 from ..interfaces import IFolder
+from ..interfaces import IService
 
 from .._compat import (
     parse_qsl,
@@ -26,6 +29,9 @@ from .._compat import (
     STRING_TYPES,
     INT_TYPES,
     )
+
+
+_ = TranslationStringFactory('substanced')
 
 _marker = object()
 
@@ -523,7 +529,7 @@ def is_folder(resource):
 
 def is_service(resource):
     """ Returns ``True`` if the resource is a service, ``False`` if not. """
-    return bool(getattr(resource, '__is_service__', False))
+    return IService.providedBy(resource)
 
 def find_catalogs(resource, name=None):
     """ Return all catalogs in the lineage.  If ``name`` is supplied, return
@@ -598,7 +604,7 @@ def get_icon_name(resource, request):
     return icon
 
 def get_auditlog(context):
-    """ Returns the current :class:`pyramid.audit.AuditLog` object or ``None``
+    """ Returns the current :class:`substanced.audit.AuditLog` object or ``None``
     if no audit database is configured """
     conn = context._p_jar
     if conn is None:
@@ -611,6 +617,24 @@ def get_auditlog(context):
     auditlog = root.get('auditlog')
     if auditlog is not None:
         return auditlog
+
+def is_broken(resource):
+    return IBroken.providedBy(resource)
+
+class BrokenWrapper(object):
+    def __init__(self, broken_object):
+        self._broken_object = broken_object
+
+    def __getattr__(self, name):
+        result = self._broken_object.__Broken_state__.get(name, _marker)
+        if result is _marker:
+            raise AttributeError(name)
+        return result
+
+def wrap_if_broken(resource):
+    if is_broken(resource):
+        resource = BrokenWrapper(resource)
+    return resource
 
 def profile(
     cmd,

@@ -14,6 +14,7 @@ from substanced.folder.views import (
     )
 
 from . import LockSchema
+from ..util import _
 
 @mgmt_view(
     context=IFolder,
@@ -24,7 +25,7 @@ from . import LockSchema
 def add_lock_service(context, request):
     service = request.registry.content.create('Lock Service')
     context.add_service('locks', service)
-    return HTTPFound(location=request.sdiapi.mgmt_path(context))
+    return HTTPFound(location=request.sdiapi.mgmt_path(context, '@@services'))
 
 @mgmt_view(
     context=ILockService,
@@ -63,7 +64,7 @@ class LockServiceFolderContents(FolderContents):
              'name':'form.delete_expired',
              'class':'btn-sdi-act',
              'value':'delete_expired',
-             'text':'Delete Expired'
+             'text': _('Delete Expired')
              },
             ]
         button_groups.append(
@@ -88,13 +89,13 @@ class LockServiceFolderContents(FolderContents):
             expires = tz.localize(expires).strftime('%Y-%m-%d %H:%M:%S %Z')
         
         columns.extend((
-            {'name':'Owner',
+            {'name':_('Owner'),
              'value':owner,
              },
-            {'name':'Resource',
+            {'name':_('Resource'),
              'value':resource,
              },
-            {'name':'Expires',
+            {'name':_('Expires'),
              'value':expires,
              },
             ))

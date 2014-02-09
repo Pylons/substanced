@@ -13,6 +13,7 @@ from pyramid.util import action_method
 from substanced._compat import escape
 from substanced.form import FormView
 from substanced.interfaces import IFolder
+from substanced.interfaces import IService
 from substanced.objectmap import find_objectmap
 from substanced.schema import Schema
 from substanced.util import (
@@ -27,6 +28,7 @@ from ..sdi import (
     mgmt_view,
     sdi_add_views,
     )
+from ..util import _
 
 from . import FolderKeyError
 
@@ -129,7 +131,7 @@ class AddFolderSchema(Schema):
     renderer='substanced.sdi:templates/form.pt'
     )
 class AddFolderView(FormView):
-    title = 'Add Folder'
+    title = _('Add Folder')
     schema = AddFolderSchema()
     buttons = ('add',)
 
@@ -166,12 +168,12 @@ class FolderContents(object):
                   'name': 'form.copy_finish',
                   'class': 'btn-primary btn-sdi-act',
                   'value': 'copy_finish',
-                  'text': 'Copy here'},
+                  'text': _('Copy here')},
                 {'id': 'cancel',
                  'name': 'form.copy_finish_cancel',
                  'class': 'btn-danger btn-sdi-act',
                  'value': 'cancel',
-                 'text': 'Cancel'},
+                 'text': _('Cancel')},
                 ])
 
         if 'tomove' in request.session:
@@ -180,12 +182,12 @@ class FolderContents(object):
                   'name': 'form.move_finish',
                   'class': 'btn-primary btn-sdi-act',
                   'value': 'move_finish',
-                  'text': 'Move here'},
+                  'text': _('Move here')},
                  {'id': 'cancel',
                   'name': 'form.move_finish_cancel',
                   'class': 'btn-danger btn-sdi-act',
                   'value': 'cancel',
-                  'text': 'Cancel'}])
+                  'text': _('Cancel')}])
 
         if finish_buttons:
             buttons.append(
@@ -234,23 +236,23 @@ class FolderContents(object):
                   'class': 'btn-default btn-sdi-sel',
                   'enabled_for':delete_enabled_for,
                   'value': 'rename',
-                  'text': 'Rename'},
+                  'text': _('Rename')},
                   {'id': 'copy',
                   'name': 'form.copy',
                   'class': 'btn-default btn-sdi-sel',
                   'value': 'copy',
-                  'text': 'Copy'},
+                  'text': _('Copy')},
                   {'id': 'move',
                   'name': 'form.move',
                   'class': 'btn-default btn-sdi-sel',
                   'enabled_for':delete_enabled_for,
                   'value': 'move',
-                  'text': 'Move'},
+                  'text': _('Move')},
                   {'id': 'duplicate',
                   'name': 'form.duplicate',
                   'class': 'btn-default btn-sdi-sel',
                   'value': 'duplicate',
-                  'text': 'Duplicate'}
+                  'text': _('Duplicate')}
                   ]
 
             buttons.append({'type': 'group', 'buttons':main_buttons})
@@ -261,7 +263,7 @@ class FolderContents(object):
                    'class': 'btn-danger btn-sdi-sel',
                    'enabled_for':delete_enabled_for,
                    'value': 'delete',
-                   'text': 'Delete'},
+                   'text': _('Delete')},
                    ]
 
             buttons.append({'type': 'group', 'buttons':delete_buttons})
@@ -296,7 +298,7 @@ class FolderContents(object):
                 (icon, title, url, name)
             )
         columns = [
-            {'name': 'Name',
+            {'name': request.localizer.translate(_('Name')),
              'value': value,
              'formatter': 'html',
              'sorter': self._name_sorter}
@@ -340,8 +342,11 @@ class FolderContents(object):
         request = self.request
         path = system_catalog['path']
         allowed = system_catalog['allowed']
+        interfaces = system_catalog['interfaces']
         q = ( path.eq(folder, depth=1, include_origin=False) &
-              allowed.allows(request, 'sdi.view') )
+              allowed.allows(request, 'sdi.view') &
+              interfaces.notany([IService])
+            )
         return q
 
     get_query = get_default_query
@@ -753,15 +758,13 @@ class FolderContents(object):
             if v is not None:
                 del context[name]
                 deleted += 1
-        if not deleted:
-            msg = 'No items deleted'
-            request.sdiapi.flash(msg)
-        elif deleted == 1:
-            msg = 'Deleted 1 item'
-            request.sdiapi.flash_with_undo(msg, 'success')
-        else:
-            msg = 'Deleted %s items' % deleted
-            request.sdiapi.flash_with_undo(msg, 'success')
+        ungettext = request.localizer.pluralize
+        msg = ungettext('Deleted ${num} item',
+                        'Deleted ${num} items',
+                         deleted,
+                         domain="substanced",
+                         mapping=dict(num=deleted))
+        request.sdiapi.flash_with_undo(msg, 'success')
         return self.get_redirect_response()
 
     def duplicate(self):
@@ -771,15 +774,13 @@ class FolderContents(object):
         for name in toduplicate:
             newname = rename_duplicated_resource(context, name)
             context.copy(name, context, newname)
-        if not len(toduplicate):
-            msg = 'No items duplicated'
-            request.sdiapi.flash(msg)
-        elif len(toduplicate) == 1:
-            msg = 'Duplicated 1 item'
-            request.sdiapi.flash_with_undo(msg, 'success')
-        else:
-            msg = 'Duplicated %s items' % len(toduplicate)
-            request.sdiapi.flash_with_undo(msg, 'success')
+        ungettext = request.localizer.pluralize
+        msg = ungettext('Duplicated ${num} item',
+                        'Duplicated ${num} items',
+                         len(toduplicate),
+                         domain="substanced",
+                         mapping=dict(num=len(toduplicate)))
+        request.sdiapi.flash_with_undo(msg, 'success')
         return self.get_redirect_response()
 
     def rename(self):
@@ -798,7 +799,7 @@ class FolderContents(object):
         context = self.context
 
         if self.request.POST.get('form.rename_finish') == "cancel":
-            request.sdiapi.flash('No items renamed')
+            request.sdiapi.flash(_('No items renamed'))
             return self.get_redirect_response()
 
         torename = request.POST.getall('item-rename')
@@ -810,12 +811,13 @@ class FolderContents(object):
             self.request.sdiapi.flash(e.args[0], 'danger')
             raise self.get_redirect_response()
 
-        if len(torename) == 1:
-            msg = 'Renamed 1 item'
-            request.sdiapi.flash_with_undo(msg, 'success')
-        else:
-            msg = 'Renamed %s items' % len(torename)
-            request.sdiapi.flash_with_undo(msg, 'success')
+        ungettext = request.localizer.pluralize
+        msg = ungettext('Renamed ${num} item',
+                        'Renamed ${num} items',
+                         len(torename),
+                         domain="substanced",
+                         mapping=dict(num=len(torename)))
+        request.sdiapi.flash_with_undo(msg, 'success')
         return self.get_redirect_response()
 
     def copy(self):
@@ -830,16 +832,16 @@ class FolderContents(object):
                 if obj is not None:
                     l.append(get_oid(obj))
             request.session['tocopy'] = l
-            request.sdiapi.flash('Choose where to copy the items:', 'info')
+            request.sdiapi.flash(_('Choose where to copy the items:'), 'info')
         else:
-            request.sdiapi.flash('No items to copy', 'warning')
+            request.sdiapi.flash(_('No items to copy'), 'warning')
 
         return self.get_redirect_response()
 
     def copy_finish_cancel(self):
         request = self.request
         del request.session['tocopy']
-        request.sdiapi.flash('No items copied', 'success')
+        request.sdiapi.flash(_('No items copied'), 'success')
         return self.get_redirect_response()
 
     def copy_finish(self):
@@ -861,16 +863,13 @@ class FolderContents(object):
             self.request.sdiapi.flash(e.args[0], 'danger')
             raise self.get_redirect_response()
 
-        if num_copied == 0:
-            msg = 'No items copied'
-            request.sdiapi.flash(msg, 'warning')
-        elif num_copied == 1:
-            msg = 'Copied 1 item'
-            request.sdiapi.flash_with_undo(msg, 'success')
-        else:
-            msg = 'Copied %s items' % num_copied
-            request.sdiapi.flash_with_undo(msg, 'success')
-
+        ungettext = request.localizer.pluralize
+        msg = ungettext('Copied ${num} item',
+                        'Copied ${num} items',
+                         num_copied,
+                         domain="substanced",
+                         mapping=dict(num=num_copied))
+        request.sdiapi.flash_with_undo(msg, 'success')
         return self.get_redirect_response()
 
     def move(self):
@@ -885,16 +884,16 @@ class FolderContents(object):
                 if obj is not None:
                     l.append(get_oid(obj))
             request.session['tomove'] = l
-            request.sdiapi.flash('Choose where to move the items:', 'info')
+            request.sdiapi.flash(_('Choose where to move the items:'), 'info')
         else:
-            request.sdiapi.flash('No items to move', 'warning')
+            request.sdiapi.flash(_('No items to move'), 'warning')
 
         return self.get_redirect_response()
 
     def move_finish_cancel(self):
         request = self.request
         del request.session['tomove']
-        request.sdiapi.flash('No items moved', 'success')
+        request.sdiapi.flash(_('No items moved'), 'success')
         return self.get_redirect_response()
 
     def move_finish(self):
@@ -916,16 +915,13 @@ class FolderContents(object):
             self.request.sdiapi.flash(e.args[0], 'danger')
             raise self.get_redirect_response()
 
-        if num_moved == 0:
-            msg = 'No items moved'
-            request.sdiapi.flash(msg, 'warning')
-        elif num_moved == 1:
-            msg = 'Moved 1 item'
-            request.sdiapi.flash_with_undo(msg, 'success')
-        else:
-            msg = 'Moved %s items' % num_moved
-            request.sdiapi.flash_with_undo(msg, 'success')
-
+        ungettext = request.localizer.pluralize
+        msg = ungettext('Moved ${num} item',
+                        'Moved ${num} items',
+                         num_moved,
+                         domain="substanced",
+                         mapping=dict(num=num_moved))
+        request.sdiapi.flash_with_undo(msg, 'success')
         return self.get_redirect_response()
 
     def reorder_rows(self):
@@ -937,8 +933,8 @@ class FolderContents(object):
             # '' or None means appending after the last item.
             insert_before = None
         context.reorder(item_modify, insert_before)
-        msg = '%i rows moved.' % (len(item_modify), )
-        msg = request.sdiapi.get_flash_with_undo_snippet(msg)
+        msg = _('${i} rows moved.', mapping=dict(i=len(item_modify)))
+        msg = request.sdiapi.get_flash_with_undo_snippet(request.localizer.translate(msg))
         results = {
             'flash': msg,
             'flash_queue':'success',
@@ -965,21 +961,71 @@ class FolderContents(object):
                 obj.__parent__.move(obj_name, context)
             return True
         if copy:
-            action = 'copied'
+            msg = _('"${obj_name}" is of a type (${obj_type}) that is not addable here, refusing to copy',
+                    mapping=dict(obj_name=obj_name, obj_type=obj_type))
         else:
-            action = 'moved'
-        self.request.sdiapi.flash(
-            '"%s" is of a type (%s) that is not addable here, not %s' % (
-                obj_name, obj_type, action), 'danger'
-            )
+            msg = _('"${obj_name}" is of a type (${obj_type}) that is not addable here, refusing to move',
+                    mapping=dict(obj_name=obj_name, obj_type=obj_type))
+        self.request.sdiapi.flash(request.localizer.translate(msg), 'danger')
         return False
 
-PHRASE_RE = re.compile(r'"([^"]*)"')
+def has_services(context, request):
+    system_catalog = find_catalog(context, 'system')
+    path = system_catalog['path']
+    allowed = system_catalog['allowed']
+    interfaces = system_catalog['interfaces']
+    q = ( path.eq(context, depth=1, include_origin=False) &
+            allowed.allows(request, 'sdi.view') &
+            interfaces.any([IService])
+        )
+    resultset = q.execute()
+    return len(resultset) > 0
+
+class _HasServicesPredicate(object):
+    has_services = staticmethod(has_services) # for testing
+
+    def __init__(self, val, config):
+        self.val = bool(val)
+        self.registry = config.registry
+
+    def text(self):
+        return 'has_services = %s' % self.val
+
+    phash = text
+
+    def __call__(self, context, request):
+        return self.has_services(context, request) == self.val
+
+@folder_contents_views(name='services',
+                       tab_title=_('Services'),
+                       has_services=True,
+                      )
+class FolderServices(FolderContents):
+
+    def get_default_query(self):
+        """ The default query function for a folder """
+        system_catalog = self.system_catalog
+        folder = self.context
+        request = self.request
+        path = system_catalog['path']
+        allowed = system_catalog['allowed']
+        interfaces = system_catalog['interfaces']
+        q = ( path.eq(folder, depth=1, include_origin=False) &
+              allowed.allows(request, 'sdi.view') &
+              interfaces.any([IService])
+            )
+        return q
+
+    get_query = get_default_query
+
+PHRASE_RE = re.compile(r'"([^"]*)"?')
 
 def generate_text_filter_terms(filter_text):
     terms = ['"%s"' % x for x in PHRASE_RE.findall(filter_text) ]
     remainder = PHRASE_RE.sub('', filter_text)
-    nonphrases = [x for x in remainder.split() if x.strip()]
+    # NB: do not try to glob terms less than 2 characters for performance
+    # reasons
+    nonphrases = [x for x in remainder.split() if len(x.strip()) > 1]
     for word in nonphrases:
         glob = word
         if not word.endswith('*'):
@@ -996,7 +1042,7 @@ def add_folder_contents_views(
     renderer='substanced.folder:templates/contents.pt', # do not abbreviate
     view_permission='sdi.view',
     manage_contents_permission='sdi.manage-contents',
-    tab_title=None,
+    tab_title=_("Contents"),
     tab_condition=True,
     tab_before=None,
     tab_after=None,
@@ -1330,3 +1376,4 @@ def includeme(config): # pragma: no cover
         add_folder_contents_views,
         action_wrap=False
         )
+    config.add_view_predicate('has_services', _HasServicesPredicate)

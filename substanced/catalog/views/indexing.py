@@ -6,6 +6,7 @@ from substanced.interfaces import MODE_IMMEDIATE
 from substanced.util import (
     get_oid,
     find_catalogs,
+    _,
     )
 
 from substanced.sdi import (
@@ -26,7 +27,7 @@ class IndexingView(object):
     
     @mgmt_view(
         renderer='templates/indexing.pt',
-        tab_title='Indexing',
+        tab_title=_('Indexing'),
         tab_near=RIGHT, # try not to be the default tab, we're too obscure
         )
     def show(self):

@@ -234,3 +234,8 @@ body .slickgrid-wrapper .slick-header-columns .slick-header-column.ui-state-defa
 .badge-default {
   background-color: #ffffff;
 }
+.sdi-sg-header .up-arrow {
+  color: #333333;
+  margin: 0 14px 0 6px;
+  vertical-align: middle;
+}

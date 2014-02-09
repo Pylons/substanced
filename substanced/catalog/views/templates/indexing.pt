@@ -1,11 +1,11 @@
-<div metal:use-macro="request.sdiapi.main_template">
+<div metal:use-macro="request.sdiapi.main_template" i18n:domain="substanced">
 
   <div metal:fill-slot="main">
 
     <div tal:repeat="(catalog,indexes) catalogs" style="margin-bottom: 20px">
     
       <div class="panel panel-default">
-        <div class="panel-heading">
+        <div class="panel-heading" i18n:translate="">
           Catalog service at "${request.resource_path(catalog)}"
         </div>
         <div class="panel-body">
@@ -13,8 +13,8 @@
 
             <thead>
               <tr>
-                <th>Index name</th>
-                <th>Value</th>
+                <th i18n:translate="">Index name</th>
+                <th i18n:translate="">Value</th>
               </tr>
             </thead>
 
@@ -29,7 +29,7 @@
           <form action="@@indexing" method="post" onsubmit="sdi.loading_indicator_on()">
             <input type="hidden" name="csrf_token" 
                    value="${request.session.get_csrf_token()}"/>
-            <input type="submit" name="form.reindex" class="btn btn-primary" value="Reindex This Object"/>
+            <input type="submit" name="form.reindex" class="btn btn-primary" value="Reindex This Object" i18n:attributes="value"/>
           </form>
 
         </div>

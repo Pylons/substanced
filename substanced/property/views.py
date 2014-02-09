@@ -13,6 +13,7 @@ from ..form import FormView
 from ..locking import LockError
 from ..locking import could_lock_resource
 from ..sdi import mgmt_view
+from ..util import _
 
 def has_permission_to_view_any_propertysheet(context, request):
     candidates = request.registry.content.metadata(
@@ -34,12 +35,12 @@ def has_permission_to_view_any_propertysheet(context, request):
     propertied=True,
     name='properties',
     renderer='templates/propertysheets.pt',
-    tab_title='Properties',
+    tab_title=_('Properties'),
     tab_condition=has_permission_to_view_any_propertysheet,
     permission='sdi.view',
     )
 class PropertySheetsView(FormView):
-    buttons = ('save',)
+    buttons = (_('save'),)
 
     def __init__(self, request):
         self.request = request
@@ -94,6 +95,9 @@ class PropertySheetsView(FormView):
         self.request.sdiapi.flash_with_undo('Updated properties', 'success')
         return HTTPFound(self.request.sdiapi.mgmt_path(
             self.context, '@@properties', self.active_sheet_name))
+
+    def before(self, form):
+        self.active_sheet.before_render(form)
 
     def show(self, form):
         readonly = not self.has_permission_to('change', self.active_factory)

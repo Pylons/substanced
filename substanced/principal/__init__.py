@@ -1,4 +1,5 @@
 import random
+import os
 import string
 
 from persistent import Persistent
@@ -303,6 +304,23 @@ _ZONES = pytz.all_timezones
 def tzname_widget(node, kw): #pragma NO COVER
     return deform.widget.Select2Widget(values=zip(_ZONES, _ZONES))
 
+def get_locales():
+    dir_ = os.listdir(os.path.join(os.path.dirname(__file__),
+                                   '..', 'locale'))
+    return list(filter(lambda x: not x.endswith('.pot'), dir_)) + ['en']
+
+_LOCALES = get_locales()
+
+@colander.deferred
+def locale_widget(node, kw):
+    locales = zip(_LOCALES, _LOCALES)
+    sorted_locales = sorted(locales)
+    return deform.widget.Select2Widget(values=sorted_locales)
+
+@colander.deferred
+def locale_missing(node, kw): #pragma NO COVER
+    return kw['request'].locale_name
+
 class UserSchema(Schema):
     """ Property schema for :class:`substanced.principal.User` objects.
     """
@@ -324,6 +342,13 @@ class UserSchema(Schema):
         widget=tzname_widget,
         validator=colander.OneOf(_ZONES)
         )
+    locale = colander.SchemaNode(
+        colander.String(),
+        title='Locale',
+        widget=locale_widget,
+        missing=locale_missing,
+        validator=colander.OneOf(_LOCALES),
+    )
 
 class UserPropertySheet(PropertySheet):
     schema = UserSchema()
@@ -364,7 +389,7 @@ class User(Folder):
     groups = multireference_source_property(UserToGroup)
     name = renamer()
 
-    def __init__(self, password=None, email=None, tzname=None):
+    def __init__(self, password=None, email=None, tzname=None, locale=None):
         Folder.__init__(self)
         if password is not None:
             password = self.pwd_manager.encode(password)
@@ -373,6 +398,9 @@ class User(Folder):
         if tzname is None:
             tzname = 'UTC'
         self.tzname = tzname
+        if locale is None:
+            locale = 'en'
+        self.locale = locale
 
     def __dump__(self):
         return dict(password=self.password)
@@ -485,6 +513,7 @@ def set_user_locator(config, cls):
     intr = config.introspectable(
         'sd user locator',
         discriminator,
+        cls.__name__,
         'sd user locator',
         )
     intr['cls'] = cls

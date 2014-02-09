@@ -5,6 +5,7 @@ import transaction
 from pyramid_zodbconn import get_connection
 
 from zope.interface import (
+    implementer,
     providedBy,
     Interface,
     )
@@ -41,9 +42,10 @@ from pyramid.util import (
     Sentinel,
     )
 
-from ..util import acquire
+from ..util import acquire, _
 
 from ..interfaces import IUserLocator
+from ..interfaces import ISDIAPI
 from ..principal import DefaultUserLocator
 
 LEFT = 'LEFT'
@@ -196,7 +198,7 @@ class mgmt_view(object):
     """ A class :term:`decorator` which, when applied to a class, will
     provide defaults for all view configurations that use the class.  This
     decorator accepts all the arguments accepted by
-    :class:`pyramid.config.view_config`, and each has the same meaning.
+    :class:`pyramid.view.view_config`, and each has the same meaning.
 
     See :ref:`view_defaults` for more information.
     """
@@ -309,7 +311,7 @@ def sdi_mgmt_views(context, request, names=None):
                 {'view_name': view_name,
                  'tab_before':tab_before,
                  'tab_after':tab_after,
-                 'title': tab_title or view_name.capitalize(),
+                 'title': _(tab_title or view_name.capitalize()),
                  'class': css_class,
                  'predicate_order':predicate_order,
                  'sro_index':sro_index,
@@ -472,6 +474,7 @@ def mgmt_url(request, obj, *arg, **kw): # XXX deprecate
 def flash_with_undo(request, *arg, **kw): # XXX deprecate
     return request.sdiapi.flash_with_undo(*arg, **kw)
 
+@implementer(ISDIAPI)
 class sdiapi(object):
     get_connection = staticmethod(get_connection) # testing
     transaction = transaction # testing
@@ -605,6 +608,7 @@ def includeme(config): # pragma: no cover
     config.add_request_method(mgmt_url) # XXX deprecate
     config.add_request_method(flash_with_undo) # XXX deprecate
     config.add_request_method(user, reify=True)
+    config.set_request_property(lambda r: r.user.locale, name="_LOCALE_")
     config.add_request_method(sdiapi, reify=True)
     secret = settings.get('substanced.secret')
     if secret is None:

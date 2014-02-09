@@ -1,4 +1,4 @@
-<div metal:use-macro="request.sdiapi.main_template">
+<div metal:use-macro="request.sdiapi.main_template" i18n:domain="substanced">
 
   <div metal:fill-slot="main">
     <form action="@@${request.view_name}" method="POST">
@@ -8,13 +8,13 @@
                value="${request.session.get_csrf_token()}"/>
 
         <div class="panel panel-default">
-          <div class="panel-heading">Rename Items</div>
+          <div class="panel-heading" i18n:translate="">Rename Items</div>
           <div class="panel-body">
             <table class="table table-striped">
               <thead>
                 <tr>
-                  <th>Old Name</th>
-                  <th>New Name</th>
+                  <th i18n:translate="">Old Name</th>
+                  <th i18n:translate="">New Name</th>
                 </tr>
               </thead>
               <tbody>
@@ -39,14 +39,14 @@
                       type="submit"
                       class="btn btn-primary"
                       value="rename_finish">
-              Rename all
+              <tal:block i18n:translate="">Rename all</tal:block>
               </button>
               <button id="duplicate"
                       name="form.rename_finish"
                       type="submit"
                       class="btn"
                       value="cancel">
-              Cancel
+              <tal:block i18n:translate="">Cancel</tal:block>
               </button>
             </div>
           </div>

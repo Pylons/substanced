@@ -1,0 +1,8 @@
+[main]
+host = https://www.transifex.com
+type = PO
+
+[substanced.master]
+file_filter = substanced/locale/<lang>/LC_MESSAGES/substanced.po
+source_file = substanced/locale/substanced.pot
+source_lang = en

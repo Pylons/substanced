@@ -245,7 +245,7 @@ class TestFileUploadTempStore(unittest.TestCase):
         inst['a'] = {'randid':'abc'}
         inst.clear() # doesn't choke
 
-class TestDeformRendererFactory(unittest.TestCase):
+class TestDeformRenderer(unittest.TestCase):
     def setUp(self):
         config = testing.setUp()
         config.include('pyramid_chameleon')
@@ -253,9 +253,9 @@ class TestDeformRendererFactory(unittest.TestCase):
     def tearDown(self):
         testing.tearDown()
         
-    def _makeOne(self, dirs, **kw):
-        from . import DeformRendererFactory
-        return DeformRendererFactory(dirs, **kw)
+    def _makeOne(self, dirs):
+        from . import get_deform_renderer
+        return get_deform_renderer(dirs)
 
     def test_functional_using_searchpath(self):
         from pkg_resources import resource_filename
@@ -271,22 +271,6 @@ class TestDeformRendererFactory(unittest.TestCase):
         result = renderer('substanced.form:fixtures/test.pt')
         self.assertEqual(result.strip(), u('<div>Test</div>'))
 
-    def test_it(self):
-        import os
-        path = os.path.join(os.path.dirname(__file__), 'fixtures')
-        renderer = self._makeOne(
-            (path,),
-            auto_reload=True,
-            debug=True,
-            encoding='utf-16',
-            translator=lambda *arg: 'translation',
-            )
-        template = renderer.load('test')
-        self.assertEqual(template.auto_reload, True)
-        self.assertEqual(template.debug, True)
-        self.assertEqual(template.encoding, 'utf-16')
-        self.assertEqual(template.translate('a'), 'translation')
-        
 class DummyWidget(object):
     pass
 

@@ -1,20 +1,20 @@
-<div metal:use-macro="request.sdiapi.main_template">
+<div metal:use-macro="request.sdiapi.main_template" i18n:domain="substanced">
 
   <div metal:fill-slot="main">
 
-    <a href="./@@database" class="btn btn-primary" style="margin-bottom: 20px;">Back</a>
+    <a href="./@@database" class="btn btn-primary" style="margin-bottom: 20px;" i18n:translate="">Back</a>
 
     <div class="panel panel-default">
-      <div class="panel-heading">Unfinished steps</div>
+      <div class="panel-heading" i18n:translate="">Unfinished steps</div>
       <div class="panel-body">
 
-        <p tal:condition="not unfinished_steps">There are no unfinished steps.</p>
+        <p tal:condition="not unfinished_steps" i18n:translate="">There are no unfinished steps.</p>
 
         <table tal:condition="unfinished_steps" class="table table-striped">
           <thead>
             <tr>
-              <th>Step name</th>
-              <th>Action</th>
+              <th i18n:translate="">Step name</th>
+              <th i18n:translate="">Action</th>
             </tr>
           </thead>
           <tbody>
@@ -25,7 +25,7 @@
                   <input type="hidden" value="${request.session.get_csrf_token()}"
                          name="csrf_token"/>
                   <input type="hidden" value="${step[0]}" name="step" />
-                  <input type="submit" class="btn btn-primary"
+                  <input type="submit" class="btn btn-primary" i18n:attributes="value"
                          name="evolve_finished" value="Mark as finished"/>
                 </form>  
               </td>
@@ -36,14 +36,14 @@
     </div>
 
     <div class="panel panel-default">
-      <div class="panel-heading">Finished steps</div>
+      <div class="panel-heading" i18n:translate="">Finished steps</div>
       <div class="panel-body">
         <table class="table table-striped">
           <thead>
             <tr>
-              <th>Step name</th>
-              <th>Applied on</th>
-              <th>Action</th>
+              <th i18n:translate="">Step name</th>
+              <th i18n:translate="">Applied on</th>
+              <th i18n:translate="">Action</th>
             </tr>
           </thead>
           <tbody>
@@ -55,7 +55,7 @@
                   <input type="hidden" value="${request.session.get_csrf_token()}"
                          name="csrf_token"/>
                   <input type="hidden" value="${step[1]}" name="step" />
-                  <input type="submit" class="btn btn-primary"
+                  <input type="submit" class="btn btn-primary" i18n:attributes="value"
                          name="evolve_unfinished" value="Mark as unfinished"/>
                 </form>  
               </td>

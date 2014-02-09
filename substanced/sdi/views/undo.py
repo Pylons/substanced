@@ -8,6 +8,7 @@ from pyramid.security import authenticated_userid
 
 from .. import mgmt_view
 from ...objectmap import find_objectmap
+from ...util import _
 
 class UndoViews(object):
     transaction = transaction # for tests
@@ -66,7 +67,7 @@ class UndoViews(object):
                 request.sdiapi.flash(msg, 'success')
             except ZODB.POSException.POSError:
                 self.transaction.abort()
-                msg = 'Could not undo, sorry'
+                msg = _('Could not undo, sorry')
                 request.sdiapi.flash(msg, 'error')
         return HTTPFound(
             request.referrer or request.sdiapi.mgmt_path(request.context)
@@ -90,6 +91,8 @@ class UndoViews(object):
         uid = self.authenticated_userid(request)
 
         for tid in transaction_info:
+            if not isinstance(tid, bytes): #pragma NO COVER Py3k
+                tid = tid.encode('ascii', 'surrogateescape')
             tid = tid.split(b' ', 1)
             if tid:
                 tids.append(decode64(tid[0]))
@@ -107,7 +110,7 @@ class UndoViews(object):
                 request.sdiapi.flash(undid, 'success')
             except ZODB.POSException.POSError:
                 self.transaction.abort()
-                msg = 'Could not undo, sorry'
+                msg = _('Could not undo, sorry')
                 request.sdiapi.flash(msg, 'error')
 
         return HTTPFound(request.sdiapi.mgmt_path(request.context, 'undo'))
@@ -142,7 +145,7 @@ class UndoViews(object):
 
     @mgmt_view(
         name='undo',
-        tab_title='Undo',
+        tab_title=_('Undo'),
         renderer='templates/undo.pt',
         physical_path='/',
         permission='sdi.undo',

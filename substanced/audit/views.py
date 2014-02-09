@@ -9,6 +9,7 @@ from substanced.util import (
     Batch,
     get_oid,
     get_auditlog,
+    _,
     )
 
 @view_defaults(
@@ -25,7 +26,7 @@ class AuditLogEventStreamView(object):
 
     @mgmt_view(
         name='auditing',
-        tab_title='Auditing',
+        tab_title=_('Auditing'),
         renderer='templates/auditing.pt',
         tab_near=RIGHT,
         physical_path='/',

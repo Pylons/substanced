@@ -1,3 +1,6 @@
+#
+#   This file is an always-safe-to-import API for substanced.
+#
 import datetime
 
 from zope.interface.interfaces import IObjectEvent
@@ -9,102 +12,198 @@ from zope.interface import (
 
 from zope.interface.interface import InterfaceClass
 
-class IPropertySheet(Interface):
-    """ Interface for objects with a set of properties defined by a Colander
-    schema.  The class :class:`substanced.property.PropertySheet` (which is
-    meant to be subclassed for specialization) implements this interface."""
-    context = Attribute('The context of the property sheet (a resource)')
-    request = Attribute('The current request')
-    schema = Attribute('The Colander schema instance which defines '
-                       'the fields related to this property sheet')
+#
+#   Interface-like base for defining reference types.
+#
+class ReferenceClass(InterfaceClass):
+    def __init__(self, *arg, **kw):
+        try:
+            attrs = arg[2] or {}
+        except IndexError:
+            attrs = kw.get('attrs', {})
+        si = attrs.pop('source_integrity', False)
+        ti = attrs.pop('target_integrity', False)
+        so = attrs.pop('source_ordered', False)
+        to = attrs.pop('target_ordered', False)
+        InterfaceClass.__init__(self, *arg, **kw)
+        self.setTaggedValue('source_integrity', si)
+        self.setTaggedValue('target_integrity', ti)
+        self.setTaggedValue('source_ordered', so)
+        self.setTaggedValue('target_ordered', to)
 
+ReferenceType = ReferenceClass(
+    "ReferenceType", __module__ = 'substanced.interfaces')
+
+#
+# subtanced.audit APIs
+#
+EARLIEST_DATE = datetime.datetime(1970, 1, 1)
+
+#
+# subtanced.catalog APIs
+#
+class ICatalog(Interface):
+    """ A collection of indices. """
+
+    objectids = Attribute(
+        'a sequence of objectids that are cataloged in this catalog')
+
+    def index_resource(resource, oid=None, action_mode=None):
+        """Register the resource in indexes of this catalog using objectid
+        ``oid``.  If ``oid`` is not supplied, the ``__oid__`` of the
+        ``resource`` will be used.  ``action_mode``, if supplied, should be one
+        of ``None``, :attr:`~substanced.interfaces.MODE_IMMEDIATE`,
+        :attr:`~substanced.interfaces.MODE_ATCOMMIT` or
+        :attr:`~substanced.interfaces.MODE_DEFERRED`."""
+
+    def reindex_resource(resource, oid=None, action_mode=None):
+        """Register the resource in indexes of this catalog using objectid
+        ``oid``.  If ``oid`` is not supplied, the ``__oid__`` of the
+        ``resource`` will be used.  ``action_mode``, if supplied, should be one
+        of ``None``, :attr:`~substanced.interfaces.MODE_IMMEDIATE`,
+        :attr:`~substanced.interfaces.MODE_ATCOMMIT` or
+        :attr:`~substanced.interfaces.MODE_DEFERRED` indicating when the
+        updates should take effect.  The ``action_mode`` value will overrule
+        any action mode that a member index has been configured with.
+
+        The result of calling this method is logically the same as calling
+        ``unindex_resource``, then ``index_resource`` for the same resource/oid
+        combination, but calling those two methods in succession is often more
+        expensive than calling this single method, as member indexes can choose
+        to do smarter things during a reindex than what they would do during an
+        unindex then an index.
+        """
+
+    def unindex_resource(resource_or_oid, action_mode=None):
+        """Deregister the resource in indexes of this catalog using objectid or
+        resource ``resource_or_oid``.  If ``resource_or_oid`` is an integer, it
+        will be used as the oid; if ``resource_or_oid`` is a resource, its
+        ``__oid__`` attribute will be used as the oid.  ``action_mode``, if
+        supplied, should be one of ``None``,
+        :attr:`~substanced.interfaces.MODE_IMMEDIATE`,
+        :attr:`~substanced.interfaces.MODE_ATCOMMIT` or
+        :attr:`~substanced.interfaces.MODE_DEFERRED`."""
+
+    def __getitem__(name):
+        """ Return the index named ``name``"""
+
+    def reset():
+        """ Clear all indexes in this catalog and clear self.objectids. """
+
+    def flush(immediate=True):
+        """ Flush any pending indexing actions for all indexes in this catalog.
+        If ``immediate`` is ``True``, *all* actions will be immediately
+        executed.  If ``immediate`` is ``False``,
+        :attr:`~substanced.interfaces.MODE_DEFERRED` actions will be sent to
+        the actions processor if one is active, and all other actions will be
+        executed immediately."""
+
+    def reindex(dry_run=False, commit_interval=200, indexes=None,
+                path_re=None, output=None):
+        """\
+        Reindex all objects in this collection of indexes.
+
+        If ``dry_run`` is ``True``, do no actual work but send what would be
+        changed to the logger.
+
+        ``commit_interval`` controls the number of objects indexed between
+        each call to ``transaction.commit()`` (to control memory
+        consumption).
+
+        ``indexes``, if not ``None``, should be a list of index names that
+        should be reindexed.  If ``indexes`` is ``None``, all indexes are
+        reindexed.
+
+        ``path_re``, if it is not ``None`` should be a regular expression
+        object that will be matched against each object's path.  If the
+        regular expression matches, the object will be reindexed, if it does
+        not, it won't.
+
+        ``output``, if passed should be one of ``None``, ``False`` or a
+        function.  If it is a function, the function should accept a single
+        message argument that will be used to record the actions taken during
+        the reindex.  If ``False`` is passed, no output is done.  If ``None``
+        is passed (the default), the output will wind up in the
+        ``substanced.catalog`` Python logger output at ``info`` level.
+        """
+
+    def update_indexes(
+        registry=None,
+        dry_run=False,
+        output=None,
+        replace=False,
+        reindex=False,
+        **kw):
+        """ Use the candidate indexes registered via
+        ``config.add_catalog_factory`` to populate this catalog."""
+
+class ICatalogFactory(Interface):
+    def replace(folder, reindex=False):
+        """ Replace all the indexes in ``folder`` with the ones implied by this
+        factory.  Reindex any added indexes if ``reindex`` is true."""
+
+    def sync(folder, reindex=False):
+        """ Synchronize all the indexes in ``folder`` with the ones implied by
+        this factory.  Reindex any added indexes if ``reindex`` is true. """
+
+class IIndexFactory(Interface):
+    """ A factory for an index """
+
+class IIndexView(Interface):
+    def __call__(resource, default):
+        """ Return a result for the index value related to the resource or the
+        default."""
+
+class IIndexingActionProcessor(Interface):
+    """ Processor of deferred indexing/unindexing actions of
+    catalogs in the system"""
+
+# MODE_ sentinels are classes so that when one is pickled, then unpickled, the
+# result can be compared against an imported version using "is".  They are
+# interfaces so they have a stable __hash__ (their __hash__ will be called as a
+# result of substanced.catalog.factory is_stale and other stuff in there).
+
+class MODE_IMMEDIATE(Interface):
+    """ Sentinel indicating that an indexing action should take place as
+    immediately as possible."""
+
+class MODE_ATCOMMIT(Interface):
+    """ Sentinel indicating that an indexing action should take place at the
+    successful end of the current transaction."""
+
+class MODE_DEFERRED(Interface):
+    """ Sentinel indicating that an indexing action should be performed by an
+    external indexing processor (e.g. ``drain_catalog_indexing``) if one is
+    active at the successful end of the current transaction.  If an indexing
+    processor is unavailable at the successful end of the current transaction,
+    this mode will be taken to imply the same thing as
+    :attr:`~substanced.interfaces.MODE_ATCOMMIT`."""
+
+#
+# subtanced.editable APIs
+#
+class IEditable(Interface):
+    """ Adapter interface for editing content as a file.
+    """
     def get():
-        """ Return a dictionary representing the current property state
-        compatible with the schema for serialization"""
+        """ Return ``(body_iter, mimetype)`` representing the context.
 
-    def set(struct, omit=()):
-        """ Accept ``struct`` (a dictionary representing the property state)
-        and persist it to the context, refraining from persisting the keys in
-        the struct that are named in ``omit`` (a sequence of strings or a
-        string).  The data structure will have already been validated against
-        the propertysheet schema.
+        - ``body_iter`` is an iterable, whose chunks are bytes represenating
+          the context as an editable file.
 
-        You can return a value from this method.  It will be passed as
-        ``changed`` into the ``after_set`` method.  It should be ``False`` if
-        your ``set`` implementation *did not* change any persistent data.  Any
-        other return value will be conventionally interpreted as the
-        implementation having changed persistent data.
+        - ``mimetype`` is the MIMEType corresponding to ``body_iter``.
         """
 
-    def after_set(changed):
-        """ Perform operations after a successful set.  ``changed`` is the
-        value returned from the ``set`` method.
+    def put(fileish):
+        """ Update context based on the contents of ``fileish``.
 
-        The default propertysheet implementation sends an ObjectModified event
-        if the ``changed`` value is not ``False.``
+        - ``fileish`` is a file-type object:  its ``read`` method should
+          return the (new) file representation of the context.
         """
 
-class IObjectMap(Interface):
-    """ A map of objects to paths and a reference engine """
-    def objectid_for(obj_or_path_tuple):
-        """ Return the object id for obj_or_path_tuple """
-
-    def path_for(objectid):
-        """ Return the path tuple for objectid """
-
-    def object_for(objectid):
-        """ Return the object associated with ``objectid`` or ``None`` if the
-        object cannot be found."""
-
-    def add(obj):
-        """ Add a new object to the object map.  Assigns a new objectid to
-        obj.__oid__ to the object if it doesn't already have one.  The
-        object's path or objectid must not already exist in the map.  Returns
-        the object id.
-        """
-
-    def remove(obj_objectid_or_path_tuple):
-        """ Removes an object from the object map using the object itself, an
-        object id, or a path tuple.  Returns a set of objectids (children,
-        inclusive) removed as the result of removing this object from the
-        object map."""
-
-    def pathlookup(obj_or_path_tuple, depth=None, include_origin=True):
-        """ Returns an iterator of document ids within
-        obj_or_path_tuple (a traversable object or a path tuple).  If depth
-        is specified, returns only objects at that depth.  If
-        ``include_origin`` is ``True``, returns the docid of the object
-        passed as ``obj_or_path_tuple`` in the returned set, otherwise it
-        omits it."""
-
-    def connect(src, target, reftype):
-        """Connect ``src_object`` to ``target_object`` using the reference
-        type ``reftype``.  ``src`` and ``target`` may be objects or object
-        identifiers."""
-
-    def disconnect(src, target, reftype):
-        """Disonnect ``src_object`` from ``target_object`` using the
-        reference type ``reftype``. ``src`` and ``target`` may be objects or
-        object identifiers"""
-
-    def sources(obj, reftype):
-        """ Return a generator consisting of objects which have ``obj`` as a
-        relationship source using ``reftype``.  ``obj`` can be an object or
-        an object id."""
-
-    def targets(obj, reftype):
-        """ Return a generator consisting of objects which have ``obj`` as a
-        relationship target using ``reftype``. ``obj`` can be an object or an
-        object id."""
-
-    def targetids(obj, reftype):
-        """ Return a set of objectids which have ``obj`` as a relationship
-        target using ``reftype``.  ``obj`` can be an object or an object id."""
-
-    def sourceids(obj, reftype):
-        """ Return a set of objectids which have ``obj`` as a relationship
-        source using ``reftype``.  ``obj`` can be an object or an object id."""
-
+#
+# subtanced.event APIs
+#
 class IObjectWillBeAdded(IObjectEvent):
     """ An event type sent when an before an object is added """
     object = Attribute('The object being added')
@@ -135,8 +234,8 @@ class IObjectWillBeRemoved(IObjectEvent):
     name = Attribute('The name of the object within the folder')
     moving = Attribute('None or the folder to which the object being removed '
                        'will be moved')
-    loading = Attribute('Boolean indicating that this remove is part of a load '
-                        '(during a dump load process)')
+    loading = Attribute('Boolean indicating that this remove is part of a '
+                        'load (during a dump load process)')
 
 class IObjectRemoved(IObjectEvent):
     """ An event type sent when an object is removed """
@@ -145,8 +244,8 @@ class IObjectRemoved(IObjectEvent):
     name = Attribute('The name of the object within the folder')
     moving = Attribute('None or the folder to which the object being removed '
                        'will be moved')
-    loading = Attribute('Boolean indicating that this remove is part of a load '
-                        '(during a dump load process)')
+    loading = Attribute('Boolean indicating that this remove is part of a '
+                        'load (during a dump load process)')
     removed_oids = Attribute('The set of oids removed as the result of '
                              'this object being removed (including the oid '
                              'of the object itself).  This may be any number '
@@ -163,7 +262,7 @@ class IACLModified(IObjectEvent):
     new_acl = Attribute('The object ACL after the modification')
 
 class IContentCreated(Interface):
-    """ An event type sent when a Substance D content object is created 
+    """ An event type sent when a Substance D content object is created
     via ``registry.content.create``"""
     object = Attribute('The freshly created content object.  It will not yet '
                        'have been seated into any folder.')
@@ -184,6 +283,55 @@ class IRootAdded(Interface):
     """ An event type sent when the Substance D root object has a connection to
     the database as its ``_p_jar`` attribute. """
     object = Attribute('The root object')
+
+#
+# subtanced.evolution APIs
+#
+
+class IEvolutionSteps(Interface):
+    """ Utility for obtaining evolution step data """
+
+#
+# subtanced.file APIs
+#
+class IFile(Interface):
+    """ An object representing file content """
+
+    blob = Attribute('The ZODB blob object holding the file content')
+
+    mimetype = Attribute('The mimetype of the file content')
+
+    def upload(stream, mimetype_hint=False):
+        """ Replace the current contents of this file's blob with the
+        contents of ``stream``.  ``mimetype_hint`` can be any of the
+        folliwing:
+
+        - ``None``, meaning don't reset the current mimetype.  This is the
+          default.
+
+        - A string containing a filename with an extension; the mimetype will
+          be derived from the extension in the filename.
+
+        - The constant :attr:`substanced.file.USE_MAGIC`, which will derive the
+          content type using the ``python-magic`` library based on the
+          stream's actual content.
+        """
+
+    def get_response(self, **kw):
+        """ Return a WebOb-compatible response object which uses the blob
+        content as the stream data and the mimetype of the file as the
+        content type.  The ``**kw`` arguments will be passed to the
+        :class:`pyramid.response.FileResponse` constructor as its keyword
+        arguments."""
+
+    def get_size(self):
+        """ Return the size in bytes of the data in the blob associated with
+        the file"""
+
+#
+# subtanced.folder APIs
+#
+marker = object() # default for pop(), etc.
 
 class IFolder(Interface):
     """ A Folder which stores objects using Unicode keys.
@@ -327,8 +475,8 @@ class IFolder(Interface):
         sent will be marked as 'duplicating', which typically has the effect
         that the subobject's object id will be overwritten instead of reused.
         If ``registry`` is passed, it should be a Pyramid registry object;
-        otherwise the ``pyramid.threadlocal.get_current_registry`` function is
-        used to look up the current registry.
+        otherwise the :func:`pyramid.threadlocal.get_current_registry`
+        function is used to look up the current registry.
 
         This method returns the name used to place the subobject in the
         folder (a derivation of ``name``, usually the result of
@@ -457,102 +605,120 @@ class IAutoNamingFolder(IFolder):
         This method returns the name of the subobject.
         """
 
-class ICatalog(Interface):
-    """ A collection of indices. """
+#
+# subtanced.locking APIs
+#
 
-    objectids = Attribute(
-        'a sequence of objectids that are cataloged in this catalog')
+class UserToLock(ReferenceType):
+    """ A reference type which represents the relationship from a user to
+    his set of locks """
 
-    def index_resource(resource, oid=None, action_mode=None):
-        """Register the resource in indexes of this catalog using objectid
-        ``oid``.  If ``oid`` is not supplied, the ``__oid__`` of the
-        ``resource`` will be used.  ``action_mode``, if supplied, should be one
-        of ``None``, :attr:`~substanced.interfaces.MODE_IMMEDIATE`,
-        :attr:`~substanced.interfaces.MODE_ATCOMMIT` or
-        :attr:`~substanced.interfaces.MODE_DEFERRED`."""
+class WriteLock(ReferenceType):
+    """ Represents a DAV-style writelock.  It's a Substance D reference type
+    from resource object to lock object"""
 
-    def reindex_resource(resource, oid=None, action_mode=None):
-        """Register the resource in indexes of this catalog using objectid
-        ``oid``.  If ``oid`` is not supplied, the ``__oid__`` of the
-        ``resource`` will be used.  ``action_mode``, if supplied, should be one
-        of ``None``, :attr:`~substanced.interfaces.MODE_IMMEDIATE`,
-        :attr:`~substanced.interfaces.MODE_ATCOMMIT` or
-        :attr:`~substanced.interfaces.MODE_DEFERRED` indicating when the updates
-        should take effect.  The ``action_mode`` value will overrule any
-        action mode that a member index has been configured with.
-
-        The result of calling this method is logically the same as calling
-        ``unindex_resource``, then ``index_resource`` for the same resource/oid
-        combination, but calling those two methods in succession is often more
-        expensive than calling this single method, as member indexes can choose
-        to do smarter things during a reindex than what they would do during an
-        unindex then an index.
+class ILockService(IAutoNamingFolder):
+    def lock(resource, owner_or_ownerid, timeout=None, locktype=WriteLock):
         """
 
-    def unindex_resource(resource_or_oid, action_mode=None):
-        """Deregister the resource in indexes of this catalog using objectid or
-        resource ``resource_or_oid``.  If ``resource_or_oid`` is an integer, it
-        will be used as the oid; if ``resource_or_oid`` is a resource, its
-        ``__oid__`` attribute will be used as the oid.  ``action_mode``, if
-        supplied, should be one of ``None``,
-        :attr:`~substanced.interfaces.MODE_IMMEDIATE`,
-        :attr:`~substanced.interfaces.MODE_ATCOMMIT` or
-        :attr:`~substanced.interfaces.MODE_DEFERRED`."""
+        Lock a resource using the lock service.  If the resource is already
+        locked by the owner supplied as owner_or_ownerid, calling this method
+        will refresh the lock.  If the resource is not already locked by
+        another user, calling this method will create a new lock.  If the
+        resource is already locked by a different user, a
+        :class:`substanced.locking.LockError` will be raised.
 
-    def __getitem__(name):
-        """ Return the index named ``name``"""
+        .. warning::
 
-    def reset():
-        """ Clear all indexes in this catalog and clear self.objectids. """
+            Callers should assert that the owner has the ``sdi.lock``
+            permission against the resource before calling this function to
+            ensure that a user can't lock a resource he is not permitted to.
 
-    def flush(immediate=True):
-        """ Flush any pending indexing actions for all indexes in this catalog.
-        If ``immediate`` is ``True``, *all* actions will be immediately
-        executed.  If ``immediate`` is ``False``,
-        :attr:`~substanced.interfaces.MODE_DEFERRED` actions will be sent to
-        the actions processor if one is active, and all other actions will be
-        executed immediately."""
+       """
 
-    def reindex(dry_run=False, commit_interval=200, indexes=None, 
-                path_re=None, output=None):
-        """\
-        Reindex all objects in this collection of indexes.
-
-        If ``dry_run`` is ``True``, do no actual work but send what would be
-        changed to the logger.
-
-        ``commit_interval`` controls the number of objects indexed between
-        each call to ``transaction.commit()`` (to control memory
-        consumption).
-
-        ``indexes``, if not ``None``, should be a list of index names that
-        should be reindexed.  If ``indexes`` is ``None``, all indexes are
-        reindexed.
-
-        ``path_re``, if it is not ``None`` should be a regular expression
-        object that will be matched against each object's path.  If the
-        regular expression matches, the object will be reindexed, if it does
-        not, it won't.
-
-        ``output``, if passed should be one of ``None``, ``False`` or a
-        function.  If it is a function, the function should accept a single
-        message argument that will be used to record the actions taken during
-        the reindex.  If ``False`` is passed, no output is done.  If ``None``
-        is passed (the default), the output will wind up in the
-        ``substanced.catalog`` Python logger output at ``info`` level.
+    def unlock(resource, owner_or_ownerid):
         """
 
-    def update_indexes(
-        registry=None,
-        dry_run=False,
-        output=None,
-        replace=False,
-        reindex=False,
-        **kw):
-        """ Use the candidate indexes registered via
-        ``config.add_catalog_factory`` to populate this catalog."""
-                       
-        
+        Unlock a resource using the lock service.  If the resource is already
+        locked by a user other than the owner supplied as owner_or_ownerid or
+        the resource isn't already locked with this lock type, calling this
+        method will raise a :class:`substanced.locking.LockError` exception.
+        Otherwise the lock will be removed.
+
+        .. warning::
+
+           Callers should assert that the owner has the ``sdi.lock`` permission
+           against the resource before calling this function to ensure that a
+           user can't lock a resource he is not permitted to.
+       """
+
+#
+# subtanced.objectmap APIs
+#
+class IObjectMap(Interface):
+    """ A map of objects to paths and a reference engine """
+    def objectid_for(obj_or_path_tuple):
+        """ Return the object id for obj_or_path_tuple """
+
+    def path_for(objectid):
+        """ Return the path tuple for objectid """
+
+    def object_for(objectid):
+        """ Return the object associated with ``objectid`` or ``None`` if the
+        object cannot be found."""
+
+    def add(obj):
+        """ Add a new object to the object map.  Assigns a new objectid to
+        obj.__oid__ to the object if it doesn't already have one.  The
+        object's path or objectid must not already exist in the map.  Returns
+        the object id.
+        """
+
+    def remove(obj_objectid_or_path_tuple):
+        """ Removes an object from the object map using the object itself, an
+        object id, or a path tuple.  Returns a set of objectids (children,
+        inclusive) removed as the result of removing this object from the
+        object map."""
+
+    def pathlookup(obj_or_path_tuple, depth=None, include_origin=True):
+        """ Returns an iterator of document ids within
+        obj_or_path_tuple (a traversable object or a path tuple).  If depth
+        is specified, returns only objects at that depth.  If
+        ``include_origin`` is ``True``, returns the docid of the object
+        passed as ``obj_or_path_tuple`` in the returned set, otherwise it
+        omits it."""
+
+    def connect(src, target, reftype):
+        """Connect ``src_object`` to ``target_object`` using the reference
+        type ``reftype``.  ``src`` and ``target`` may be objects or object
+        identifiers."""
+
+    def disconnect(src, target, reftype):
+        """Disonnect ``src_object`` from ``target_object`` using the
+        reference type ``reftype``. ``src`` and ``target`` may be objects or
+        object identifiers"""
+
+    def sources(obj, reftype):
+        """ Return a generator consisting of objects which have ``obj`` as a
+        relationship source using ``reftype``.  ``obj`` can be an object or
+        an object id."""
+
+    def targets(obj, reftype):
+        """ Return a generator consisting of objects which have ``obj`` as a
+        relationship target using ``reftype``. ``obj`` can be an object or an
+        object id."""
+
+    def targetids(obj, reftype):
+        """ Return a set of objectids which have ``obj`` as a relationship
+        target using ``reftype``.  ``obj`` can be an object or an object id."""
+
+    def sourceids(obj, reftype):
+        """ Return a set of objectids which have ``obj`` as a relationship
+        source using ``reftype``.  ``obj`` can be an object or an object id."""
+
+#
+# subtanced.prinicpal APIs
+#
 class IPrincipal(Interface):
     """ Marker interface representing a user or group """
 
@@ -578,121 +744,6 @@ class IPasswordResets(Interface):
 class IPasswordReset(Interface):
     """ Marker interface represent a password reset request """
 
-class IFile(Interface):
-    """ An object representing file content """
-
-    blob = Attribute('The ZODB blob object holding the file content')
-
-    mimetype = Attribute('The mimetype of the file content')
-
-    def upload(stream, mimetype_hint=False):
-        """ Replace the current contents of this file's blob with the
-        contents of ``stream``.  ``mimetype_hint`` can be any of the
-        folliwing:
-
-        - ``None``, meaning don't reset the current mimetype.  This is the
-          default.
-
-        - A string containing a filename with an extension; the mimetype will
-          be derived from the extension in the filename.
-
-        - The constant :attr:`substanced.file.USE_MAGIC`, which will derive the
-          content type using the ``python-magic`` library based on the
-          stream's actual content.
-        """
-
-    def get_response(self, **kw):
-        """ Return a WebOb-compatible response object which uses the blob
-        content as the stream data and the mimetype of the file as the
-        content type.  The ``**kw`` arguments will be passed to the
-        ``pyramid.response.FileResponse`` constructor as its keyword
-        arguments."""
-
-    def get_size(self):
-        """ Return the size in bytes of the data in the blob associated with
-        the file"""
-
-class IWorkflow(Interface):
-    """ """
-
-    def add_state(name, callback=None, **kw):
-        """ """
-
-    def add_transition(name, from_state, to_state, callback=None, **kw):
-        """ """
-
-    def check():
-        """ """
-
-    def state_of(content):
-        """ """
-
-    def has_state(content):
-        """ """
-
-    def get_states(content, request, from_state=None):
-        """ """
-
-    def initialize(content, request=None):
-        """ """
-
-    def reset(content, request=None):
-        """ """
-
-    def transition(content, request, transition_name):
-        """ """
-    def transition_to_state(content, request, to_state,
-                            skip_same=True):
-        """ """
-
-    def get_transitions(content, request, from_state=None):
-        """ """
-
-class IDefaultWorkflow(Interface):
-    """ Marker interface used internally for workflows that aren't
-    associated with a particular content type"""
-
-class IRoot(IFolder):
-    pass
-
-class ICatalogFactory(Interface):
-    def replace(folder, reindex=False):
-        """ Replace all the indexes in ``folder`` with the ones implied by this
-        factory.  Reindex any added indexes if ``reindex`` is true."""
-
-    def sync(folder, reindex=False):
-        """ Synchronize all the indexes in ``folder`` with the ones implied by
-        this factory.  Reindex any added indexes if ``reindex`` is true. """
-
-class IIndexFactory(Interface):
-    """ A factory for an index """
-
-class IIndexView(Interface):
-    def __call__(resource, default):
-        """ Return a result for the index value related to the resource or the
-        default."""
-
-marker = object()
-
-class ReferenceClass(InterfaceClass):
-    def __init__(self, *arg, **kw):
-        try:
-            attrs = arg[2] or {}
-        except IndexError:
-            attrs = kw.get('attrs', {})
-        si = attrs.pop('source_integrity', False)
-        ti = attrs.pop('target_integrity', False)
-        so = attrs.pop('source_ordered', False)
-        to = attrs.pop('target_ordered', False)
-        InterfaceClass.__init__(self, *arg, **kw)
-        self.setTaggedValue('source_integrity', si)
-        self.setTaggedValue('target_integrity', ti)
-        self.setTaggedValue('source_ordered', so)
-        self.setTaggedValue('target_ordered', to)
-
-ReferenceType = ReferenceClass(
-    "ReferenceType", __module__ = 'substanced.interfaces')
-
 class UserToGroup(ReferenceType):
     pass
 
@@ -701,6 +752,78 @@ class PrincipalToACLBearing(ReferenceType):
 
 class UserToPasswordReset(ReferenceType):
     pass
+
+class IUserLocator(Interface):
+    """ Adapter responsible for returning a user by his login name and/or
+    userid as well as group objects of a user by his userid."""
+
+    def get_user_by_login(login):
+        """ Return an IUser object or ``None`` if no such user exists. The
+        ``login`` argument is the *login name* of the user, not an oid."""
+
+    def get_user_by_userid(userid):
+        """ Return an IUser object or ``None`` if no such user exists. The
+        ``userid`` argument is the *user id* of the user (usually an oid)."""
+
+    def get_user_by_email(email):
+        """ Return an IUser object or ``None`` if no such user exists. The
+        ``email`` argument is the *email address* of the user."""
+
+    def get_groupids(userid):
+        """ Return all the group-related principal identifiers for a user with
+        the user principal identifier ``userid`` as a sequence.  If no user
+        exists under ``userid``, return ``None``."""
+
+#
+# subtanced.property APIs
+#
+class IPropertySheet(Interface):
+    """ Interface for objects with a set of properties defined by a Colander
+    schema.  The class :class:`substanced.property.PropertySheet` (which is
+    meant to be subclassed for specialization) implements this interface."""
+    context = Attribute('The context of the property sheet (a resource)')
+    request = Attribute('The current request')
+    schema = Attribute('The Colander schema instance which defines '
+                       'the fields related to this property sheet')
+
+    def get():
+        """ Return a dictionary representing the current property state
+        compatible with the schema for serialization"""
+
+    def set(struct, omit=()):
+        """ Accept ``struct`` (a dictionary representing the property state)
+        and persist it to the context, refraining from persisting the keys in
+        the struct that are named in ``omit`` (a sequence of strings or a
+        string).  The data structure will have already been validated against
+        the propertysheet schema.
+
+        You can return a value from this method.  It will be passed as
+        ``changed`` into the ``after_set`` method.  It should be ``False`` if
+        your ``set`` implementation *did not* change any persistent data.  Any
+        other return value will be conventionally interpreted as the
+        implementation having changed persistent data.
+        """
+
+    def after_set(changed):
+        """ Perform operations after a successful set.  ``changed`` is the
+        value returned from the ``set`` method.
+
+        The default propertysheet implementation sends an ObjectModified event
+        if the ``changed`` value is not ``False.``
+        """
+
+#
+# subtanced.root APIs
+#
+class IRoot(IFolder):
+    pass
+
+#
+#   substanced.sdi APIs
+#
+class IService(Interface):
+    """ Marker for items which are showin in the "Services" tab.
+    """
 
 class ISDIAPI(Interface):
     """  Easy access to common templating operations on all views.
@@ -748,116 +871,45 @@ class ISDIAPI(Interface):
     def mgmt_views(context):
         """ The list of management views on a resource """
 
-class IEvolutionSteps(Interface):
-    """ Utility for obtaining evolution step data """
+#
+# subtanced.workflow APIs
+#
+class IWorkflow(Interface):
+    """ """
 
-class IIndexingActionProcessor(Interface):
-    """ Processor of deferred indexing/unindexing actions of
-    catalogs in the system"""
+    def add_state(name, callback=None, **kw):
+        """ """
 
-# MODE_ sentinels are classes so that when one is pickled, then unpickled, the
-# result can be compared against an imported version using "is".  They are
-# interfaces so they have a stable __hash__ (their __hash__ will be called as a
-# result of substanced.catalog.factory is_stale and other stuff in there).
+    def add_transition(name, from_state, to_state, callback=None, **kw):
+        """ """
 
-class MODE_IMMEDIATE(Interface):
-    """ Sentinel indicating that an indexing action should take place as
-    immediately as possible."""
+    def check():
+        """ """
 
-class MODE_ATCOMMIT(Interface):
-    """ Sentinel indicating that an indexing action should take place at the
-    successful end of the current transaction."""
+    def state_of(content):
+        """ """
 
-class MODE_DEFERRED(Interface):
-    """ Sentinel indicating that an indexing action should be performed by an
-    external indexing processor (e.g. ``drain_catalog_indexing``) if one is
-    active at the successful end of the current transaction.  If an indexing
-    processor is unavailable at the successful end of the current transaction,
-    this mode will be taken to imply the same thing as
-    :attr:`~substanced.interfaces.MODE_ATCOMMIT`."""
+    def has_state(content):
+        """ """
 
-EARLIEST_DATE = datetime.datetime(1970, 1, 1)
+    def get_states(content, request, from_state=None):
+        """ """
 
-class WriteLock(ReferenceType):
-    """ Represents a DAV-style writelock.  It's a Substance D reference type
-    from resource object to lock object"""
+    def initialize(content, request=None):
+        """ """
 
-class UserToLock(ReferenceType):
-    """ A reference type which represents the relationship from a user to
-    his set of locks """
+    def reset(content, request=None):
+        """ """
 
-class ILockService(IAutoNamingFolder):
-    def lock(resource, owner_or_ownerid, timeout=None, locktype=WriteLock):
-        """
+    def transition(content, request, transition_name):
+        """ """
+    def transition_to_state(content, request, to_state,
+                            skip_same=True):
+        """ """
 
-        Lock a resource using the lock service.  If the resource is already
-        locked by the owner supplied as owner_or_ownerid, calling this method
-        will refresh the lock.  If the resource is not already locked by
-        another user, calling this method will create a new lock.  If the
-        resource is already locked by a different user, a
-        :class:`substanced.locking.LockError` will be raised.
+    def get_transitions(content, request, from_state=None):
+        """ """
 
-        .. warning::
-
-            Callers should assert that the owner has the ``sdi.lock``
-            permission against the resource before calling this function to
-            ensure that a user can't lock a resource he is not permitted to.
-
-       """
-
-    def unlock(resource, owner_or_ownerid):
-        """
-
-        Unlock a resource using the lock service.  If the resource is already
-        locked by a user other than the owner supplied as owner_or_ownerid or
-        the resource isn't already locked with this lock type, calling this
-        method will raise a :class:`substanced.locking.LockError` exception.
-        Otherwise the lock will be removed.
-
-        .. warning::
-
-           Callers should assert that the owner has the ``sdi.lock`` permission
-           against the resource before calling this function to ensure that a
-           user can't lock a resource he is not permitted to.
-       """
-        
-class IUserLocator(Interface):
-    """ Adapter responsible for returning a user by his login name and/or
-    userid as well as group objects of a user by his userid."""
-    
-    def get_user_by_login(login):
-        """ Return an IUser object or ``None`` if no such user exists. The
-        ``login`` argument is the *login name* of the user, not an oid."""
-
-    def get_user_by_userid(userid):
-        """ Return an IUser object or ``None`` if no such user exists. The
-        ``login`` argument is the *user id* of the user (usually an oid)."""
-
-    def get_user_by_email(email):
-        """ Return an IUser object or ``None`` if no such user exists. The
-        ``email`` argument is the *email address* of the user."""
-        
-    def get_groupids(userid):
-        """ Return all the group-related principal identifiers for a user with
-        the user principal identifier ``userid`` as a sequence.  If no user
-        exists under ``userid``, return ``None``."""
-    
-class IEditable(Interface):
-    """ Adapter interface for editing content as a file.
-    """
-    def get():
-        """ Return ``(body_iter, mimetype)`` representing the context.
-
-        - ``body_iter`` is an iterable, whose chunks are bytes represenating
-          the context as an editable file.
-
-        - ``mimetype`` is the MIMEType corresponding to ``body_iter``.
-        """
-
-    def put(fileish):
-        """ Update context based on the contents of ``fileish``.
-
-        - ``fileish`` is a file-type object:  its ``read`` method should
-          return the (new) file representation of the context.
-        """
-
+class IDefaultWorkflow(Interface):
+    """ Marker interface used internally for workflows that aren't
+    associated with a particular content type"""

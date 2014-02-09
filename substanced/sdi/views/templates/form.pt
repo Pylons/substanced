@@ -1,4 +1,4 @@
-<div metal:use-macro="request.sdiapi.main_template">
+<div metal:use-macro="request.sdiapi.main_template" i18n:domain="substanced">
 
   <metal:head-more fill-slot="head-more">
     <!-- CSS -->

@@ -1,4 +1,5 @@
 <div metal:define-macro="main"
+     i18n:domain="substanced"
      metal:extend-macro="request.sdiapi.main_template">
 
   <metal:slot fill-slot="head-more">
@@ -33,18 +34,19 @@
   -->
 
   <div metal:fill-slot="main">
-    <form id="contents_form" action="@@${request.view_name}" method="POST" class="sdi-contents-actions"
+    <form id="contents_form" action="@@${request.view_name}" method="POST" class="sdi-contents-actions" autocomplete="off"
           onsubmit="return sdi.loading_indicator_on()">
       <div class="container" tal:define="canadd
            addables and 'tocopy' not in request.session and 'tomove' not in request.session">
 
         <div class="navbar row contents-button-bar">
-          <div class="col-md-1">
+          <div class="col-md-1 col-sm-2">
 
             <button type="button" 
+                    i18n:translate=""
                     class="btn btn-primary dropdown-toggle ${not canadd and 'disabled' or ''}" 
                     data-toggle="dropdown">
-              Add <span class="caret" style="margin-left: 5px;"></span>
+              Add <span class="caret" style="margin-left: 5px;" i18n:name="caret"></span>
             </button>
             <ul class="dropdown-menu">
               <li tal:repeat="addable addables">
@@ -53,7 +55,7 @@
             </ul>
           </div>
 
-          <div class="col-md-8">
+          <div class="col-md-8 col-sm-7">
 
             <fieldset>
               <input type="hidden" name="csrf_token"
@@ -77,14 +79,14 @@
             </fieldset>
           </div>
 
-          <div class="col-md-3">
+          <div class="col-md-3 col-sm-3">
 
             <div class="sdi-contents-filter">
               <div class="input-group">
        	        <input type="text"
                        name="filter."
                        class="form-control"
-	                   placeholder="Type to filter…"
+	                   placeholder="Type to filter…" i18n:attributes="placeholder"
                        tal:attributes="value request.params.get('filter.', '')"/>
                 <span class="input-group-btn">
        	          <button id="sdi-contents-filter-clear" 
@@ -102,16 +104,20 @@
 
         <metal:slot define-slot="above-grid" />
 
-        <div class="sdi-sg-header" style="margin-left: 30px;">
+        <div class="sdi-sg-header">
           <span>
+            <!-- <a href="../@@contents" class="up-arrow"><i 
+                 tal:condition="context.__parent__ is not None"
+                 class="glyphicon glyphicon-circle-arrow-up"></i>
+            </a>-->
             <span class="badge badge-primary">
               <span class="sdi-sg-total">&nbsp;</span> 
-              <span class="badge-text">total</span>
+              <span class="badge-text" i18n:translate="">total</span>
             </span>
             <span class="sdi-sg-selected-box" style="display: none">
               <span class="badge badge-success">
                 <span class="sdi-sg-selected">&nbsp;</span>
-                <span class="badge-text">selected</span>
+                <span class="badge-text" i18n:translate="">selected</span>
               </span>
             </span>
           </span>

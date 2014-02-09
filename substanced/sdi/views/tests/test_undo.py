@@ -205,6 +205,38 @@ class TestUndoViews(unittest.TestCase):
         self.assertTrue(txn.committed)
         self.assertEqual(txn.user, 1)
 
+    def test_undo_multiple_with_text_in_POST(self):
+        import binascii
+        request = testing.DummyRequest()
+        context = testing.DummyResource()
+        inst = self._makeOne(context, request)
+        conn = DummyConnection()
+        def get_connection(req):
+            self.assertEqual(req, request)
+            return conn
+        inst.get_connection = get_connection
+        def authenticated_userid(req):
+            self.assertEqual(req, request)
+            return 1
+        post = testing.DummyResource()
+        enca = binascii.b2a_base64(b'a').decode('ascii')
+        encb = binascii.b2a_base64(b'b').decode('ascii')
+        info = [enca + ' b', encb + ' f']
+        def getall(n):
+            self.assertEqual(n, 'transaction')
+            return info
+        post.getall = getall
+        request.POST = post
+        request.sdiapi = DummySDIAPI()
+        inst.authenticated_userid = authenticated_userid
+        txn = DummyTransaction()
+        inst.transaction = txn
+        result = inst.undo_multiple()
+        self.assertEqual(result.location, '/mgmt_path')
+        self.assertEqual(conn._db.tids, [b'a', b'b'])
+        self.assertTrue(txn.committed)
+        self.assertEqual(txn.user, 1)
+
     def test_undo_multiple_with_exception(self):
         import binascii
         from ZODB.POSException import POSError

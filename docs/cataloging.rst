@@ -2,7 +2,7 @@ Cataloging
 ==========
 
 Substance D provides application content indexing and querying via a *catalog*.
-A catalog is an object named ``catalog`` which lives in a folder named
+A catalog is an object named ``catalog`` which lives in a service named
 ``catalogs`` within your application's resource tree.  A catalog has a number
 of indexes, each of which keeps a certain kind of information about your
 content.
@@ -11,7 +11,7 @@ The Default Catalog
 -------------------
 
 A default catalog named ``system`` is installed into the root folder's
-``catalogs`` subfolder when you start Pyramid. This ``system`` catalog
+``catalogs`` subfolder when you start Substance D. This ``system`` catalog
 contains a default set of indexes:
 
 - path (a ``path`` index)
@@ -28,7 +28,7 @@ contains a default set of indexes:
 
 - content_type (a ``field`` index)
 
-  Represents the Susbtance D content-type of an object.
+  Represents the Substance D content-type of an object.
 
 - allowed (an ``allowed`` index)
 
@@ -40,92 +40,48 @@ contains a default set of indexes:
   Represents the text searched for when you use the filter box within the
   folder contents view of the SDI.
 
-Querying the Catalog
---------------------
-
-You execute a catalog query using APIs of the catalog's indexes.
-
-.. code-block:: python
-
-   from substanced.util import find_catalog
-
-   catalog = find_catalog(somecontext, 'system')
-   name = catalog['name']
-   path = catalog['path']
-   # find me all the objects that exist under /somepath with the name 'somename'
-   q = name.eq('somename') & path.eq('/somepath')
-   resultset = q.execute()
-   for contentob in resultset:
-       print contentob
-
-The calls to ``name.eq()`` and ``path.eq()`` above each return a query
-object.  Those two queries are ANDed together into a single query via the
-``&`` operator between them (there's also the ``|`` character to OR the
-queries together, but we don't use it above).  Parentheses can be used to
-group query expressions together for the purpose of priority.
-
-Different indexes have different query methods, but most support the ``eq``
-method.  Other methods that are often supported by indexes: ``noteq``,
-``ge``, ``le``, ``gt``, ``any``, ``notany``, ``all``, ``notall``,
-``inrange``, ``notinrange``.  The Allowed index supports an additional
-``allows`` method.
-   
-Query objects support an ``execute`` method.  This method returns a
-ResultSet.  A ResultSet can be iterated over; each iteration returns a
-content object.  ResultSet also has methods like ``one`` and ``first``, which
-return a single content object instead of a set of content objects. A
-ResultSet also has a ``sort`` method which accepts an index object (the sort
-index) and returns another (sorted) ResultSet.
-
-.. code-block:: python
-
-   catalog = find_catalog(somecontext, 'system')
-   name = catalog['name']
-   path = catalog['path']
-   # find me all the objects that exist under /somepath with the name 'somename'
-   q = name.eq('somename') & path.eq('/somepath')
-   resultset = q.execute()
-   newresultset = resultset.sort(name)
-
-If you don't call ``sort`` on the resultset you get back, the results will
-not be sorted in any particular order.
-
 Adding a Catalog
 ----------------
 
-The system index won't have enough information to form all the queries you
-need.  You'll have to add a catalog via code related to your application.
+The ``system`` catalog won't have enough information to form all the queries you
+need.  You'll have to add a catalog via code related to your application. The first
+step is adding a catalog factory.
 
-.. code-block:: python
-
-   catalogs = root['catalogs']
-   catalog = catalogs.add_catalog('mycatalog', update_indexes=True)
-
-This will add a catalog named ``mycatalog`` to your database and it will add
-the indexes related to that catalog type.
-
-However, before you'll be able to do this successfully, the ``mycatalog``
-catalog type must be described by a *catalog factory* in code.  A catalog
-factory is a collection of index descriptions.  Creating a catalog factory or
+A catalog factory is a collection of index descriptions.  Creating a catalog factory
 doesn't actually add a catalog to your database, but it makes it possible
 to add one later.
 
-Here's an example catalog factory:
+Here's an example catalog factory named ``mycatalog``:
 
 .. code-block:: python
 
    from substanced.catalog import (
        catalog_factory,
        Text,
+       Field,
        )
 
    @catalog_factory('mycatalog')
    class MyCatalogFactory(object):
        freaky = Text()
+       funky = Field()
 
-You'll need to *scan* code that contains a ``catalog_factory`` in order to use
-:meth:`substanced.catalog.CatalogsService.add_catalog` using that factory's
-name.
+In order to activate a ``@catalog_factory`` decorator, it must be *scanned* using the
+Pyramid ``config.scan()`` machinery. This will allow you to use
+:meth:`substanced.catalog.CatalogsService.add_catalog` to add a catalog with that
+factory's name:
+
+.. code-block:: python
+
+   # in a module named blog.__init__
+
+   from pyramid.config import Configurator
+
+   def main(global_config, **settings):
+       config = Configurator()
+       config.include('substanced')
+       config.scan('blog.catalogs')
+       # .. and so on ...
 
 Once you've done this, you can then add the catalog to the database in any bit
 of code that has access to the database.  For example, in an event handler when
@@ -141,25 +97,6 @@ the root object is created for the first time.
         root = event.object
         service = root['catalogs']
         service.add_catalog('mycatalog', update_indexes=True)
-
-Querying Across Catalogs
-------------------------
-
-In many cases, you might only have one custom attribute that you need
-indexed, while the ``system`` catalog has everything else you need. You
-thus need an efficient way to combine results from two catalogs,
-before executing the query:
-
-.. code-block:: python
-
-    system_catalog = find_catalog(somecontext, 'system')
-    my_catalog = find_catalog(somecontext, 'my')
-    path = system_catalog['path']
-    funky = my_catalog['funky']
-    # find me all funky objects that exist under /somepath
-    q = funky.eq(True) & path.eq('/somepath')
-    resultset = q.execute()
-    newresultset = resultset.sort(system_catalog['name'])
 
 Object Indexing
 ---------------
@@ -183,9 +120,9 @@ For example:
        def __init__(self, resource):
            self.resource = resource
 
-        @indexview(catalog_name='mycatalog')
-        def freaky(self, default):
-            return getattr(self.resource, 'freaky', default)
+       @indexview(catalog_name='mycatalog')
+       def freaky(self, default):
+           return getattr(self.resource, 'freaky', default)
 
 An index view class should be a class that accepts a single argument,
 (conventionally named ``resource``), in its constructor, and which has one or
@@ -197,7 +134,7 @@ methods on the indexview object matching the ``attr`` passed in to
 method is unable to compute a value for the content object.
 
 Once this is done, whenever an object is added to the system, a value (the
-result of the ``freaky()`` method of the catalog view) will be indexed in the
+result of the ``freaky(default)`` method of the catalog view) will be indexed in the
 ``freaky`` field index.
 
 You can attach multiple index views to the same index view class:
@@ -210,13 +147,13 @@ You can attach multiple index views to the same index view class:
        def __init__(self, resource):
            self.resource = resource
 
-        @indexview(catalog_name='mycatalog')
-        def freaky(self, default):
-            return getattr(self.resource, 'freaky', default)
+       @indexview(catalog_name='mycatalog')
+       def freaky(self, default):
+           return getattr(self.resource, 'freaky', default)
 
-        @indexview(catalog_name='mycatalog')
-        def funky(self, default):
-            return getattr(self.resource, 'funky', default)
+       @indexview(catalog_name='mycatalog')
+       def funky(self, default):
+           return getattr(self.resource, 'funky', default)
 
 You can use the "index_name" parameter to ``indexview`` to tell the system that
 the index name is not the same as the method name in the index view:
@@ -229,13 +166,13 @@ the index name is not the same as the method name in the index view:
        def __init__(self, resource):
            self.resource = resource
 
-        @indexview(catalog_name='mycatalog')
-        def freaky(self, default):
-            return getattr(self.resource, 'freaky', default)
+       @indexview(catalog_name='mycatalog')
+       def freaky(self, default):
+           return getattr(self.resource, 'freaky', default)
 
-        @indexview(catalog_name='mycatalog', index_name='funky')
-        def notfunky(self, default):
-            return getattr(self.resource, 'funky', default)
+       @indexview(catalog_name='mycatalog', index_name='funky')
+       def notfunky(self, default):
+           return getattr(self.resource, 'funky', default)
 
 You can use the ``context`` parameter to ``indexview`` to tell the system that
 this particular index view should only be executed when the class of the
@@ -249,13 +186,13 @@ resource (or any of its interfaces) matches the value of the context:
        def __init__(self, resource):
            self.resource = resource
 
-        @indexview(catalog_name='mycatalog', context=HasFreaky)
-        def freaky(self, default):
-            return getattr(self.resource, 'freaky', default)
+       @indexview(catalog_name='mycatalog', context=FreakyContent)
+       def freaky(self, default):
+           return getattr(self.resource, 'freaky', default)
 
-        @indexview(catalog_name='mycatalog', index_name='funky')
-        def notfunky(self, default):
-            return getattr(self.resource, 'funky', default)
+       @indexview(catalog_name='mycatalog', index_name='funky')
+       def notfunky(self, default):
+           return getattr(self.resource, 'funky', default)
 
 You can use the ``indexview_defaults`` class decorator to save typing in each
 ``indexview`` declaration.  Keyword argument names supplied to
@@ -274,13 +211,13 @@ same keyword:
        def __init__(self, resource):
            self.resource = resource
 
-        @indexview()
-        def freaky(self, default):
-            return getattr(self.resource, 'freaky', default)
+       @indexview()
+       def freaky(self, default):
+           return getattr(self.resource, 'freaky', default)
 
-        @indexview()
-        def notfunky(self, default):
-            return getattr(self.resource, 'funky', default)
+       @indexview()
+       def notfunky(self, default):
+           return getattr(self.resource, 'funky', default)
 
 The above configuration is the same as:
 
@@ -292,16 +229,89 @@ The above configuration is the same as:
        def __init__(self, resource):
            self.resource = resource
 
-        @indexview(catalog_name='mycatalog')
-        def freaky(self, default):
-            return getattr(self.resource, 'freaky', default)
+       @indexview(catalog_name='mycatalog')
+       def freaky(self, default):
+           return getattr(self.resource, 'freaky', default)
 
-        @indexview(catalog_name='mycatalog')
-        def notfunky(self, default):
-            return getattr(self.resource, 'funky', default)
+       @indexview(catalog_name='mycatalog')
+       def notfunky(self, default):
+           return getattr(self.resource, 'funky', default)
 
 You can also use the :func:`substanced.catalog.add_indexview` directive to add
 index views imperatively, instead of using the ``@indexview`` decorator.
+
+Querying the Catalog
+--------------------
+
+You execute a catalog query using APIs of the catalog's indexes.
+
+.. code-block:: python
+
+   from substanced.util import find_catalog
+
+   catalog = find_catalog(resource, 'system')
+   name = catalog['name']
+   path = catalog['path']
+   # find me all the objects that exist under /somepath with the name 'somename'
+   q = name.eq('somename') & path.eq('/somepath')
+   resultset = q.execute()
+   for contentob in resultset:
+       print contentob
+
+The calls to ``name.eq()`` and ``path.eq()`` above each return a query object.
+Those two queries are ANDed together into a single query via the
+``&`` operator between them (there's also the ``|`` character to OR the
+queries together, but we don't use it above).  Parentheses can be used to
+group query expressions together for the purpose of priority.
+
+Different indexes have different query methods, but most support the ``eq``
+method.  Other methods that are often supported by indexes: ``noteq``,
+``ge``, ``le``, ``gt``, ``any``, ``notany``, ``all``, ``notall``,
+``inrange``, ``notinrange``.
+The :class:`~substanced.catalog.indexes.AllowedIndex` supports an additional
+:meth:`~substanced.catalog.indexes.AllowedIndex.allows()` method.
+   
+Query objects support an ``execute`` method.  This method returns a
+:class:`hypatia.util.ResultSet`.  A :class:`hypatia.util.ResultSet` 
+can be iterated over; each iteration returns a content object. 
+:class:`hypatia.util.ResultSet` also has methods like ``one`` and ``first``, which
+return a single content object instead of a set of content objects. A
+:class:`hypatia.util.ResultSet` also has a ``sort`` method which accepts an index
+object (the sort index) and returns another (sorted) :class:`hypatia.util.ResultSet`.
+
+.. code-block:: python
+
+   catalog = find_catalog(resource, 'system')
+   name = catalog['name']
+   path = catalog['path']
+   # find me all the objects that exist under /somepath with the name 'somename'
+   q = name.eq('somename') & path.eq('/somepath')
+   resultset = q.execute()
+   newresultset = resultset.sort(name)
+
+.. note::
+    If you don't call ``sort`` on the :class:`hypatia.util.ResultSet` you get back,
+    the results will not be sorted in any particular order.
+
+Querying Across Catalogs
+------------------------
+
+In many cases, you might only have one custom attribute that you need
+indexed, while the ``system`` catalog has everything else you need. You
+thus need an efficient way to combine results from two catalogs,
+before executing the query:
+
+.. code-block:: python
+
+    system_catalog = find_catalog(resource, 'system')
+    my_catalog = find_catalog(resource, 'mycatalog')
+    path = system_catalog['path']
+    funky = my_catalog['funky']
+    # find me all funky objects that exist under /somepath
+    q = funky.eq(True) & path.eq('/somepath')
+    resultset = q.execute()
+    newresultset = resultset.sort(system_catalog['name'])
+
 
 Allowed Index and Security
 --------------------------
@@ -341,8 +351,8 @@ quickly, the work to extract text from a Word file can be performed
 later, less chance to have a conflict error, etc.
 
 As such, the
-:py:class:`substanced.catalog.system.SystemCatalogFactory`, by default,
-has several indexes that aren't updated immediately when a resource is
+:class:`substanced.catalog.system.SystemCatalogFactory`, by default,
+has indexes that aren't updated immediately when a resource is
 changed. For example:
 
 .. code-block:: python
@@ -351,21 +361,21 @@ changed. For example:
     name = Field()
 
     text = Text(action_mode=MODE_DEFERRED)
-    content_type = Field(action_mode=MODE_DEFERRED)
+    content_type = Field()
 
-The ``Field`` index uses the default of `MODE_ATCOMMIT`. The other two
-override the default and set `MODE_DEFERRED`.
+The ``Field`` indexes use the default of `MODE_ATCOMMIT`. The ``Text``
+overrides the default and set ``action_mode`` to `MODE_DEFERRED`.
 
 There are three such catalog "modes" for indexing:
 
-- :py:class:`substanced.interfaces.MODE_IMMEDIATE` means
+- :class:`substanced.interfaces.MODE_IMMEDIATE` means
   indexing action should take place as immediately as possible.
 
-- :py:class:`substanced.interfaces.MODE_ATCOMMIT` means
+- :class:`substanced.interfaces.MODE_ATCOMMIT` means
   indexing action should take place at the successful end of the
   current transaction.
 
-- :py:class:`substanced.interfaces.MODE_DEFERRED` means
+- :class:`substanced.interfaces.MODE_DEFERRED` means
   indexing action should be performed by an
   external indexing processor (e.g. ``drain_catalog_indexing``) if one is
   active at the successful end of the current transaction.  If an indexing

@@ -19,7 +19,7 @@ and return its SDI title:
 
    @view_config(content_type='Root')
    def hello(request):
-       html = '<html><head></head><body>Hello from %s!</body></html>'
+       html = u'<html><head></head><body>Hello from %s!</body></html>'
        request.response.text = html % request.context.sdi_title
        return request.response
 
@@ -30,7 +30,7 @@ resource via the :term:`SDI`.
 
 To see that code working, create a ``retail`` package within the ``myproj``
 package (that is the inner ``myproj`` folder that contains the
-``__init__.py``, ``resources.py`` and ``views.py`` folders). The package will
+``__init__.py``, ``resources.py`` and ``views.py`` files). The package will
 have two files: an empty ``__init__.py`` and a ``views.py`` with the code
 snippet above. If you now visit ``http://localhost:6543/`` you will see the
 "Hello from..." message.

@@ -83,6 +83,6 @@ except ImportError: # pragma: no cover
 
 try:
     from html import escape # py3
-except ImportError:
+except ImportError: #pragma NO COVER
     from cgi import escape
     

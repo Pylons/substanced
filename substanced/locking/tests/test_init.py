@@ -38,11 +38,11 @@ class TestLockOwnerSchema(unittest.TestCase):
     def test_widget(self):
         from zope.interface import alsoProvides
         from substanced.interfaces import IFolder
+        from substanced.interfaces import IService
         inst = self._makeOne()
         resource = testing.DummyResource()
         alsoProvides(resource, IFolder)
-        principals = testing.DummyResource()
-        principals.__is_service__ = True
+        principals = testing.DummyResource(__provides__=IService)
         resource['principals'] = principals
         principals['users'] = DummyUsers()
         inst.bindings = {}
@@ -795,7 +795,11 @@ class DummyUsers(object):
         yield 'name', ob
 
 class DummyLockService(object):
-    __is_service__ = True
+    def __init__(self):
+        from zope.interface import directlyProvides
+        from ...interfaces import IService
+        directlyProvides(self, IService)
+
     def lock(self, resource, owner,
              timeout=None, comment=None, locktype=None, infinite=False):
         self.resource = resource

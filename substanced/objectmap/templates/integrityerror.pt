@@ -1,16 +1,16 @@
-<div metal:use-macro="request.sdiapi.main_template">
+<div metal:use-macro="request.sdiapi.main_template" i18n:domain="substanced">
 
   <div metal:fill-slot="main"
        tal:define="root_url request.sdiapi.mgmt_url(request.virtual_root)">
 
-    <h1>Integrity Error</h1>
+    <h1 i18n:translate="">Integrity Error</h1>
 
-    <p>
+    <p i18n:translate="">
       Sorry, the object <a 
-      href="${request.sdiapi.mgmt_url(context.obj)}">${request.resource_path(context.obj)}</a>
+      href="${request.sdiapi.mgmt_url(context.obj)}" i18n:name="link">${request.resource_path(context.obj)}</a>
       you've attempted to remove could not 
       be removed due to an integrity error for the reference 
-      type <i>${context.reftype}</i>.  Below is a list of objects that refer to
+      type <i i18n:name="reftype">${context.reftype}</i>.  Below is a list of objects that refer to
       (or are refered to by) the object you're trying to remove.
       Disconnect these references before attempting to delete the
       object.

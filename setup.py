@@ -28,7 +28,7 @@ install_requires = [
     'ZODB3', 
     'hypatia>=0.1a6', # check_query method of text index
     'venusian>=1.0a3',  # pyramid wants this too (prefer_finals...)
-    'deform>=2.0a1', # bootstrap 3
+    'deform>=2.0a2', # asset spec in ZPTRendererFactory
     'colander>=1.0a1', # subclassable schemanodes
     'pyramid_zodbconn',
     'pyramid_chameleon',
@@ -45,6 +45,7 @@ install_requires = [
 
 docs_extras = ['Sphinx', 'repoze.sphinx.autointerface']
 testing_extras = ['nose', 'coverage', 'mock', 'virtualenv', 'nose-selecttests']
+i18n_extras = ['Babel', 'transifex-client']
 
 setup(name='substanced',
       version='0.0',
@@ -76,6 +77,12 @@ setup(name='substanced',
       install_requires=install_requires,
       tests_require=install_requires,
       test_suite="substanced",
+      message_extractors={
+          'substanced': [
+              ('**.py', 'python', None),  # babel extractor supports plurals
+              ('**.pt', 'lingua_xml', None),
+          ],
+      },
       entry_points="""
       [console_scripts]
       sd_evolve = substanced.scripts.evolve:main
@@ -88,5 +95,6 @@ setup(name='substanced',
       extras_require = {
           'testing':testing_extras,
           'docs':docs_extras,
+          'i18n':i18n_extras,
           },
       )

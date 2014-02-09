@@ -9,13 +9,14 @@ class Test_add_principals_service(unittest.TestCase):
 
     def test_it(self):
         context = testing.DummyResource()
+        context.add_service = context.__setitem__
         request = testing.DummyRequest()
         request.sdiapi = DummySDIAPI()
         service = testing.DummyResource()
         request.registry.content = DummyContentRegistry(service)
         result = self._callFUT(context, request)
         self.assertEqual(context['principals'], service)
-        self.assertEqual(result.location, '/mgmt_path')
+        self.assertEqual(result.location, '/mgmt_path/@@services')
 
 class TestAddUserView(unittest.TestCase):
     def _makeOne(self, context, request):
@@ -36,7 +37,7 @@ class TestAddUserView(unittest.TestCase):
         inst = self._makeOne(context, request)
         resp = inst.add_success({'name':'name', 'groupids':(1,)})
         self.assertEqual(context['name'], resource)
-        self.assertEqual(resp.location, '/mgmt_path')
+        self.assertEqual(resp.location, '/mgmt_path/@@contents')
         self.assertEqual(resource.groupids, (1,))
 
 class TestAddGroupView(unittest.TestCase):
@@ -58,7 +59,7 @@ class TestAddGroupView(unittest.TestCase):
         inst = self._makeOne(context, request)
         resp = inst.add_success({'name':'name', 'memberids':(1,)})
         self.assertEqual(context['name'], resource)
-        self.assertEqual(resp.location, '/mgmt_path')
+        self.assertEqual(resp.location, '/mgmt_path/@@contents')
         self.assertEqual(resource.memberids, (1,))
 
 class Test_password_validator(unittest.TestCase):
@@ -91,15 +92,35 @@ class TestChangePasswordView(unittest.TestCase):
         from ..views import ChangePasswordView
         return ChangePasswordView(context, request)
 
-    def test_add_success(self):
+    def test_change_success(self):
         context = DummyPrincipal()
         request = testing.DummyRequest()
+        user = DummyPrincipal()
+        request.user = user
         request.sdiapi = DummySDIAPI()
         inst = self._makeOne(context, request)
-        resp = inst.change_success({'password':'password'})
+        resp = inst.change_success(
+            {'password':'password', 'current_user_password':'abcdef'})
         self.assertEqual(context.password, 'password')
-        self.assertEqual(resp.location, '/mgmt_path')
+        self.assertEqual(resp.location, '/mgmt_path/@@change_password')
         self.assertTrue(request.sdiapi.flashed)
+        self.assertTrue(user.checked, 'abcdef')
+
+    def test_change_check_fail(self):
+        context = DummyPrincipal()
+        request = testing.DummyRequest()
+        user = DummyPrincipal()
+        user.check_password = lambda *arg: False
+        request.user = user
+        request.sdiapi = DummySDIAPI()
+        inst = self._makeOne(context, request)
+        resp = inst.change_success(
+            {'password':'password', 'current_user_password':'abcdef'})
+        self.assertEqual(resp.location, '/mgmt_path/@@change_password')
+        self.assertEqual(
+            request.sdiapi.flashed,
+            'Incorrect current user password'
+            )
 
 class TestRequestResetView(unittest.TestCase):
     def _makeOne(self, context, request):
@@ -153,8 +174,9 @@ class Test_login_validator(unittest.TestCase):
 
     def _makeSite(self):
         from substanced.interfaces import IFolder
+        from substanced.interfaces import IService
         site = testing.DummyResource(__provides__=IFolder)
-        principals = testing.DummyResource(__is_service__=True)
+        principals = testing.DummyResource(__provides__=IService)
         users = testing.DummyResource()
         site['principals'] = principals
         principals['users'] = users
@@ -181,6 +203,10 @@ class DummyPrincipal(object):
     def email_password_reset(self, request):
         self.emailed_password_reset = True
 
+    def check_password(self, password):
+        self.checked = password
+        return True
+
 class DummyContentRegistry(object):
     def __init__(self, resource):
         self.resource = resource
@@ -190,6 +216,6 @@ class DummyContentRegistry(object):
         
 class DummySDIAPI(object):
     def mgmt_path(self, *arg, **kw):
-        return '/mgmt_path'
+        return '/'.join(['/mgmt_path'] + list(arg[1:]))
     def flash(self, msg, queue='info'):
         self.flashed = msg

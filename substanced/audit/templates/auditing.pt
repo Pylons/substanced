@@ -1,20 +1,21 @@
-<div metal:use-macro="request.sdiapi.main_template">
+<div metal:use-macro="request.sdiapi.main_template" 
+     i18n:domain="substanced">
 
   <div metal:fill-slot="main">
     <div tal:condition="log_exists"
          metal:use-macro="request.sdiapi.get_macro('substanced.sdi.views:templates/batching.pt', 'batching')"/>
     <div class="panel panel-default">
-      <div class="panel-heading">Audit events</div>
+      <div class="panel-heading" i18n:translate="">Audit events</div>
       <div class="panel-body">
         <table border="0" 
                class="table table-striped table-condensed"
                tal:condition="log_exists">
           <thead>
             <tr>
-              <th>Id</th>
-              <th>Name</th>
-              <th>Time</th>
-              <th>Payload</th>
+              <th i18n:translate="">Id</th>
+              <th i18n:translate="">Name</th>
+              <th i18n:translate="">Time</th>
+              <th i18n:translate="">Payload</th>
             </tr>
           </thead>
           <tr tal:repeat="(gen, idx, time, event) batch">
@@ -27,7 +28,7 @@
             </td>
           </tr>
         </table>
-        <h2 tal:condition="not log_exists">
+        <h2 tal:condition="not log_exists" i18n:translate="">
       Auditing not configured in this system
         </h2>
       </div>

@@ -3,6 +3,15 @@ from pyramid import testing
 import colander
 from zope.interface import implementer
 
+class Test_locale_widget(unittest.TestCase):
+    def _callFUT(self, node, kw):
+        from substanced.principal import locale_widget
+        return locale_widget(node, kw)
+
+    def test_it(self):
+        result = self._callFUT(None, None)
+        self.assertTrue( ('en', 'en') in result.values)
+
 class TestPrincipals(unittest.TestCase):
     def setUp(self):
         self.config = testing.setUp()
@@ -113,10 +122,11 @@ class Test_groupname_validator(unittest.TestCase):
         return groupname_validator(node, kw)
     
     def _makeKw(self):
+        from ...interfaces import IService
         request = testing.DummyRequest()
         context = DummyFolder()
         principals = DummyFolder()
-        principals.__is_service__ = True
+        principals.__provides__ = IService
         groups = DummyFolder()
         users = DummyFolder()
         context['principals'] = principals
@@ -415,10 +425,11 @@ class TestDefaultUserLocator(unittest.TestCase):
         from pyramid.testing import DummyRequest
         from zope.interface import directlyProvides
         from ...interfaces import IFolder
+        from ...interfaces import IService
         context = DummyModel()
         directlyProvides(context, IFolder)
-        principals = context['principals'] = DummyModel(__is_service__=True)
-        directlyProvides(principals, IFolder)
+        principals = context['principals'] = DummyModel()
+        directlyProvides(principals, (IFolder, IService))
         users = principals['users'] = DummyModel()
         phred = users['phred'] = DummyModel()
         adapter = self._makeOne(context, DummyRequest())
@@ -430,10 +441,11 @@ class TestDefaultUserLocator(unittest.TestCase):
         from pyramid.testing import DummyRequest
         from zope.interface import directlyProvides
         from ...interfaces import IFolder
+        from ...interfaces import IService
         context = DummyModel()
         directlyProvides(context, IFolder)
-        principals = context['principals'] = DummyModel(__is_service__=True)
-        directlyProvides(principals, IFolder)
+        principals = context['principals'] = DummyModel()
+        directlyProvides(principals, (IFolder, IService))
         users = principals['users'] = DummyModel()
         phred = users['phred'] = DummyModel()
         adapter = self._makeOne(context, DummyRequest())
@@ -446,10 +458,11 @@ class TestDefaultUserLocator(unittest.TestCase):
         from pyramid.testing import DummyRequest
         from zope.interface import directlyProvides
         from ...interfaces import IFolder
+        from ...interfaces import IService
         context = DummyModel()
         directlyProvides(context, IFolder)
-        principals = context['principals'] = DummyModel(__is_service__=True)
-        directlyProvides(principals, IFolder)
+        principals = context['principals'] = DummyModel()
+        directlyProvides(principals, (IFolder, IService))
         users = principals['users'] = DummyModel()
         bharney = users['bharney'] = DummyModel(email='bharney@example.com')
         phred = users['phred'] = DummyModel(email='phred@example.com')
@@ -464,9 +477,10 @@ class TestDefaultUserLocator(unittest.TestCase):
         from pyramid.testing import DummyRequest
         from zope.interface import directlyProvides
         from ...interfaces import IFolder
+        from ...interfaces import IService
         context = DummyModel()
         directlyProvides(context, IFolder)
-        principals = context['principals'] = DummyModel(__is_service__=True)
+        principals = context['principals'] = DummyModel(__provides__=IService)
         directlyProvides(principals, IFolder)
         users = principals['users'] = DummyModel()
         phred = users['phred'] = DummyModel()
@@ -638,6 +652,6 @@ class DummyConfigurator(object):
             'introspectables':introspectables,
             })
 
-    def introspectable(self, category, discriminator, single):
+    def introspectable(self, category, discriminator, title, type_name):
         return self.intr
 

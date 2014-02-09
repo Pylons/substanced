@@ -38,7 +38,6 @@
 
 .. autoclass:: Catalog
    :members:
-   :inherited-members:
 
    .. automethod:: __setitem__
 
@@ -151,6 +150,9 @@ Other Helpers
 .. module:: hypatia.util
 
 .. autoclass:: ResultSet
+   :members:
+
+.. autointerface:: hypatia.interfaces.IResultSet
    :members:
 
 :mod:`substanced.content` API
@@ -594,13 +596,6 @@ Other Helpers
 
 .. autoclass:: Batch
    :members:
-
-:mod:`substanced.widget` API
-----------------------------
-
-.. automodule:: substanced.widget
-
-.. autofunction:: includeme
 
 :mod:`substanced.workflow` API
 ------------------------------
