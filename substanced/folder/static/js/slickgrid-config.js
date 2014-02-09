@@ -151,7 +151,7 @@
             // we define a method on the wrapper instance, callable externally:
             this.setSearchString = function (txt) {
                 sdiRemoteModelPlugin.setFilterArgs({
-                    filter: txt
+                    'filter.': txt
                 });
             };
 
@@ -180,9 +180,7 @@
                 reallyAbort: wrapperOptions.reallyAbort,
                 sortCol: wrapperOptions.sortCol,
                 sortDir: wrapperOptions.sortDir,
-                extraQuery: {
-                    filter: ''
-                },
+                extraQuery: {},
                 minimumLoad: wrapperOptions.minimumLoad
             });
             grid.registerPlugin(sdiRemoteModelPlugin);
