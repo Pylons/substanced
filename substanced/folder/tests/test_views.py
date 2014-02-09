@@ -1921,7 +1921,7 @@ class DummyCatalogs(testing.DummyResource):
     def __init__(self):
         from zope.interface import directlyProvides
         from ...interfaces import IService
-        super(DummyCatalogs, self).__init__()
+        testing.DummyResource.__init__(self)
         directlyProvides(self, IService)
 
 class DummyCatalog(object):
