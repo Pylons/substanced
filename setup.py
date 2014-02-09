@@ -89,6 +89,7 @@ setup(name='substanced',
       sd_reindex = substanced.scripts.reindex:main
       sd_drain_indexing = substanced.scripts.drain_indexing:main
       sd_dump = substanced.scripts.dump:main
+      sd_adduser = substanced.scripts.add_user:main
       [pyramid.scaffold]
       substanced=substanced.scaffolds:SubstanceDProjectTemplate
       """,
