@@ -21,7 +21,7 @@ from zope.copy.interfaces import (
 from zope.copy import copy
 from zope.interface import (
     implementer,
-    directlyProvides,
+    alsoProvides,
     )
 
 from ..content import content
@@ -258,7 +258,7 @@ class Folder(Persistent):
             registry = get_current_registry()
         kw['registry'] = registry
         self.add(name, obj, **kw)
-        directlyProvides(obj, IService)
+        alsoProvides(obj, IService)
 
     def keys(self):
         """ Return an iterable sequence of object names present in the folder.

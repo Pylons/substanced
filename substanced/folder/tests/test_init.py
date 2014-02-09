@@ -1,7 +1,10 @@
 import unittest
 from pyramid import testing
 
-from zope.interface import Interface
+from zope.interface import (
+    Interface,
+    directlyProvides
+    )
 from zope.interface.verify import (
     verifyObject,
     verifyClass
@@ -870,9 +873,13 @@ class TestFolder(unittest.TestCase):
         from ...interfaces import IService
         inst = self._makeOne()
         foo = testing.DummyResource()
+        class IFoo(Interface):
+            pass
+        directlyProvides(foo, IFoo)
         inst.add_service('foo', foo)
         self.assertEqual(inst['foo'], foo)
         self.assertTrue(IService.providedBy(foo))
+        self.assertTrue(IFoo.providedBy(foo))
 
     def test_add_service_withregistry(self):
         from ...interfaces import IService
