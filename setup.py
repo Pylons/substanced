@@ -44,7 +44,7 @@ install_requires = [
     ]
 
 docs_extras = ['Sphinx', 'repoze.sphinx.autointerface']
-testing_extras = ['nose', 'coverage', 'mock', 'virtualenv', 'nose-selecttests']
+testing_extras = ['nose', 'coverage', 'mock', 'virtualenv']
 i18n_extras = ['Babel', 'transifex-client']
 
 setup(name='substanced',
