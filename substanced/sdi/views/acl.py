@@ -3,6 +3,7 @@ import logging
 from pyramid.security import (
     NO_PERMISSION_REQUIRED,
     ALL_PERMISSIONS,
+    DENY_ALL,
     Deny,
     Everyone,
     Authenticated,
@@ -121,10 +122,21 @@ class ACLEditViews(object):
                     permissions = ()
                 if '-- ALL --' in permissions:
                     permissions = ALL_PERMISSIONS
-                new = self.acl[:]
-                new.append((verb, principal_id, permissions))
-                self.acl = new
-                self.request.sdiapi.flash_with_undo('New ACE added', 'success')
+                if (verb, principal_id, permissions) == DENY_ALL:
+                    if self.context.__parent__ is not None:
+                        self.request.sdiapi.flash(
+                            'DENY_ALL not supported:  '
+                                'select "Disabled" under "Inherit Parent ACL',
+                                    'danger')
+                    else:
+                        self.request.sdiapi.flash(
+                            'DENY_ALL not supported at the root', 'danger')
+                else:
+                    new = self.acl[:]
+                    new.append((verb, principal_id, permissions))
+                    self.acl = new
+                    self.request.sdiapi.flash_with_undo('New ACE added',
+                                                        'success')
         return self.finish_acl_edit()
                 
     @mgmt_view(request_param='form.inherit', tab_title=_('Security'))
