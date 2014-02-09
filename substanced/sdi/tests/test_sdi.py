@@ -1000,6 +1000,12 @@ class Test_sdiapi(unittest.TestCase):
         from .. import sdiapi
         return sdiapi(request)
 
+    def test_conforms_to_ISDIAPI(self):
+        from zope.interface.verify import verifyClass
+        from ...interfaces import ISDIAPI
+        from .. import sdiapi
+        verifyClass(ISDIAPI, sdiapi)
+
     def test_main_template(self):
         self.config.testing_securitypolicy(permissive=False)
         request = testing.DummyRequest()

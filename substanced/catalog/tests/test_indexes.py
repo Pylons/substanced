@@ -10,12 +10,13 @@ _ABC = u('abc')
 
 def _makeSite(**kw):
     from ...interfaces import IFolder
+    from ...interfaces import IService
     from zope.interface import alsoProvides
     site = testing.DummyResource(__provides__=kw.pop('__provides__', None))
     alsoProvides(site, IFolder)
     for k, v in kw.items():
         site[k] = v
-        v.__is_service__ = True
+        alsoProvides(v, IService)
     return site
 
 class TestSDIndex(unittest.TestCase):

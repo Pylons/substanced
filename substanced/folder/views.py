@@ -13,6 +13,7 @@ from pyramid.util import action_method
 from substanced._compat import escape
 from substanced.form import FormView
 from substanced.interfaces import IFolder
+from substanced.interfaces import IService
 from substanced.objectmap import find_objectmap
 from substanced.schema import Schema
 from substanced.util import (
@@ -341,8 +342,11 @@ class FolderContents(object):
         request = self.request
         path = system_catalog['path']
         allowed = system_catalog['allowed']
+        interfaces = system_catalog['interfaces']
         q = ( path.eq(folder, depth=1, include_origin=False) &
-              allowed.allows(request, 'sdi.view') )
+              allowed.allows(request, 'sdi.view') &
+              interfaces.notany([IService])
+            )
         return q
 
     get_query = get_default_query
@@ -965,12 +969,63 @@ class FolderContents(object):
         self.request.sdiapi.flash(request.localizer.translate(msg), 'danger')
         return False
 
-PHRASE_RE = re.compile(r'"([^"]*)"')
+def has_services(context, request):
+    system_catalog = find_catalog(context, 'system')
+    path = system_catalog['path']
+    allowed = system_catalog['allowed']
+    interfaces = system_catalog['interfaces']
+    q = ( path.eq(context, depth=1, include_origin=False) &
+            allowed.allows(request, 'sdi.view') &
+            interfaces.any([IService])
+        )
+    resultset = q.execute()
+    return len(resultset) > 0
+
+class _HasServicesPredicate(object):
+    has_services = staticmethod(has_services) # for testing
+
+    def __init__(self, val, config):
+        self.val = bool(val)
+        self.registry = config.registry
+
+    def text(self):
+        return 'has_services = %s' % self.val
+
+    phash = text
+
+    def __call__(self, context, request):
+        return self.has_services(context, request) == self.val
+
+@folder_contents_views(name='services',
+                       tab_title=_('Services'),
+                       has_services=True,
+                      )
+class FolderServices(FolderContents):
+
+    def get_default_query(self):
+        """ The default query function for a folder """
+        system_catalog = self.system_catalog
+        folder = self.context
+        request = self.request
+        path = system_catalog['path']
+        allowed = system_catalog['allowed']
+        interfaces = system_catalog['interfaces']
+        q = ( path.eq(folder, depth=1, include_origin=False) &
+              allowed.allows(request, 'sdi.view') &
+              interfaces.any([IService])
+            )
+        return q
+
+    get_query = get_default_query
+
+PHRASE_RE = re.compile(r'"([^"]*)"?')
 
 def generate_text_filter_terms(filter_text):
     terms = ['"%s"' % x for x in PHRASE_RE.findall(filter_text) ]
     remainder = PHRASE_RE.sub('', filter_text)
-    nonphrases = [x for x in remainder.split() if x.strip()]
+    # NB: do not try to glob terms less than 2 characters for performance
+    # reasons
+    nonphrases = [x for x in remainder.split() if len(x.strip()) > 1]
     for word in nonphrases:
         glob = word
         if not word.endswith('*'):
@@ -1321,3 +1376,4 @@ def includeme(config): # pragma: no cover
         add_folder_contents_views,
         action_wrap=False
         )
+    config.add_view_predicate('has_services', _HasServicesPredicate)

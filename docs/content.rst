@@ -230,7 +230,7 @@ http://getbootstrap.com/components/#glyphicons .  For glyphicon icons, you'll
 need to use two classnames: ``glyphicon`` and ``glyphicon-foo``, separated by 
 a space.
 
-You can also pass a callback as an``icon`` argument:
+You can also pass a callback as an ``icon`` argument:
 
 .. code-block:: python
 
@@ -333,7 +333,7 @@ Affecting Content Creation
 ==========================
 
 In some cases you might want your resource to perform some actions that
-can only take place after it has been seated in its container and but
+can only take place after it has been seated in its container, but
 before the creation events have fired. The ``@content`` decorator and
 ``add_content_type`` method both support an ``after_create`` argument,
 pointed at a callable.
@@ -558,7 +558,7 @@ further by overriding the content type definition itself:
         def send_email(self):
             pass
 
-The class for the 'Folder' content type has now been replaced. Instead
+The class for the ``Folder`` content type has now been replaced. Instead
 of ``substanced.folder.Folder`` it is ``MyFolder``.
 
 .. note::
@@ -572,9 +572,12 @@ of ``substanced.folder.Folder`` it is ``MyFolder``.
 Affecting the Tab Order for Management Views
 ============================================
 
-The ``tab_order`` parameter overrides the mgmt_view tab settings,
-for a content type, with a sequence of view names that should be
-ordered (and everything not in the sequence, after.)
+The ``tab_order`` parameter overrides the mgmt_view tab settings
+for a content type. Its value should be a sequence of view names, each
+corresponding to a tab that will appear in the management interface. Any
+registered view names that are omitted from this sequence will be placed
+after the other tabs.
+
 
 Handling Content Events
 =======================
@@ -641,7 +644,7 @@ forms result in :func:`substanced.event.add_content_subscriber`.
     in the same transaction.
 
 The ``IACLModified`` event (and ``@subscriber_acl_modified`` subscriber)
-is used internally to Substance D to re-index information the system
+is used internally by Substance D to re-index information in the system
 catalog's ACL index. Substance D also uses this event to maintain
 references between resources and principals. Substance D applications
 can use this in different ways, for example recording a security audit

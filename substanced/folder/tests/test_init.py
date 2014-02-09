@@ -1,7 +1,10 @@
 import unittest
 from pyramid import testing
 
-from zope.interface import Interface
+from zope.interface import (
+    Interface,
+    directlyProvides
+    )
 from zope.interface.verify import (
     verifyObject,
     verifyClass
@@ -647,14 +650,15 @@ class TestFolder(unittest.TestCase):
         self.assertFalse('a' in folder)
 
     def test_move_is_service(self):
+        from ...interfaces import IService
         folder = self._makeOne()
         other = self._makeOne()
         model = DummyModel()
-        model.__is_service__ = True
+        model.__provides__ = IService
         folder['a'] = model
         folder.move('a', other)
         self.assertEqual(other['a'], model)
-        self.assertTrue(other['a'].__is_service__)
+        self.assertTrue(IService.providedBy(other['a']))
 
     def test_copy_no_newname(self):
         folder = self._makeOne()
@@ -846,9 +850,10 @@ class TestFolder(unittest.TestCase):
         self.assertEqual(inst.find_service('abc'), None)
 
     def test_find_service_found(self):
+        from ...interfaces import IService
         inst = self._makeOne()
         inst2 = self._makeOne()
-        inst2.__is_service__ = True
+        inst2.__provides__ = IService
         inst.add('inst2', inst2)
         self.assertEqual(inst.find_service('inst2'), inst2)
 
@@ -857,25 +862,32 @@ class TestFolder(unittest.TestCase):
         self.assertEqual(inst.find_services('abc'), [])
 
     def test_find_services_found(self):
+        from ...interfaces import IService
         inst = self._makeOne()
         inst2 = self._makeOne()
-        inst2.__is_service__ = True
+        inst2.__provides__ = IService
         inst.add('inst2', inst2)
         self.assertEqual(inst.find_services('inst2'), [inst2])
 
     def test_add_service(self):
+        from ...interfaces import IService
         inst = self._makeOne()
         foo = testing.DummyResource()
+        class IFoo(Interface):
+            pass
+        directlyProvides(foo, IFoo)
         inst.add_service('foo', foo)
         self.assertEqual(inst['foo'], foo)
-        self.assertTrue(foo.__is_service__)
+        self.assertTrue(IService.providedBy(foo))
+        self.assertTrue(IFoo.providedBy(foo))
 
     def test_add_service_withregistry(self):
+        from ...interfaces import IService
         inst = self._makeOne()
         foo = testing.DummyResource()
         inst.add_service('foo', foo, registry=self.config.registry)
         self.assertEqual(inst['foo'], foo)
-        self.assertTrue(foo.__is_service__)
+        self.assertTrue(IService.providedBy(foo))
 
     def test__notify_no_registry(self):
         def f(t, n):

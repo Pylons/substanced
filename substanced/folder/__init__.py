@@ -21,6 +21,7 @@ from zope.copy.interfaces import (
 from zope.copy import copy
 from zope.interface import (
     implementer,
+    alsoProvides,
     )
 
 from ..content import content
@@ -33,6 +34,7 @@ from ..event import (
 from ..interfaces import (
     IFolder,
     IAutoNamingFolder,
+    IService,
     marker,
     )
 from ..objectmap import find_objectmap
@@ -256,7 +258,7 @@ class Folder(Persistent):
             registry = get_current_registry()
         kw['registry'] = registry
         self.add(name, obj, **kw)
-        obj.__is_service__ = True
+        alsoProvides(obj, IService)
 
     def keys(self):
         """ Return an iterable sequence of object names present in the folder.
@@ -925,4 +927,4 @@ def includeme(config): # pragma: no cover
     config.add_static_view('fcstatic', 'substanced.folder:static',
                            cache_max_age=YEAR)
     config.include('.views')
-
+    config.include('.evolve')

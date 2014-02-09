@@ -276,9 +276,11 @@ class DummyLock(object):
         self.comment = comment
 
 class DummyLockService(object):
-    __is_service__ = True
     def __init__(self, can_lock):
+        from zope.interface import directlyProvides
+        from ...interfaces import IService
         self._can_lock = can_lock
+        directlyProvides(self, IService)
 
     def borrow_lock(self, resource, owner, locktype=None):
         from substanced.locking import LockError
