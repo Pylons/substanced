@@ -433,7 +433,7 @@ class TestPathIndex(unittest.TestCase):
             {'path': '/abc', 'include_origin': False}
             )
 
-    def test_eq_include_depth_is_not_None(self):
+    def test_noteq_include_depth_is_not_None(self):
         inst = self._makeOne()
         inst.depth = 10
         result = inst.noteq('/abc', depth=1)
