@@ -335,7 +335,18 @@ class TestPathIndex(unittest.TestCase):
         objectmap.add(obj2, (_BLANK, _A))
         result = inst.apply({'path':obj, 'include_origin':False})
         self.assertEqual(list(result),  [2])
-        
+
+    def test_applyNotEq(self):
+        inst = self._makeOne()
+        catalog = inst.__parent__
+        obj = testing.DummyResource()
+        objectmap = self._acquire(inst, '__objectmap__')
+        objectmap._v_nextid = 1
+        objectmap.add(obj, (_BLANK,))
+        catalog.objectids = catalog.family.IF.TreeSet([1])
+        result = inst.applyNotEq(obj)
+        self.assertEqual(list(result),  [])
+
     def test__parse_path_obj(self):
         inst = self._makeOne()
         obj = testing.DummyResource()
