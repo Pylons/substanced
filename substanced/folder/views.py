@@ -1,5 +1,6 @@
 import functools
 import itertools
+import operator
 import re
 
 import colander
@@ -25,8 +26,9 @@ from substanced.util import (
 from substanced._compat import u
 
 from ..sdi import (
+    default_sdi_addable,
     mgmt_view,
-    sdi_add_views,
+    sdi_mgmt_views,
     )
 from ..util import _
 
@@ -146,7 +148,6 @@ class AddFolderView(FormView):
 class FolderContents(object):
     """ The default folder contents views class """
 
-    sdi_add_views = staticmethod(sdi_add_views) # for testing
     minimum_load = 40
 
     def __init__(self, context, request):
@@ -647,7 +648,7 @@ class FolderContents(object):
 
         buttons = self.get_buttons()
 
-        addables = self.sdi_add_views(context, request)
+        addables = self.sdi_add_views()
 
         # construct the default slickgrid widget options
         slickgrid_options = self.get_options()
@@ -944,7 +945,7 @@ class FolderContents(object):
         return results
 
     def get_addable_content_types(self):
-        add_views = self.sdi_add_views(self.context, self.request)
+        add_views = self.sdi_add_views()
         content_types = set([ x['content_type'] for x in add_views ])
         return content_types
 
@@ -969,38 +970,89 @@ class FolderContents(object):
         self.request.sdiapi.flash(request.localizer.translate(msg), 'danger')
         return False
 
-def has_services(context, request):
-    system_catalog = find_catalog(context, 'system')
-    path = system_catalog['path']
-    allowed = system_catalog['allowed']
-    interfaces = system_catalog['interfaces']
-    q = ( path.eq(context, depth=1, include_origin=False) &
-            allowed.allows(request, 'sdi.view') &
-            interfaces.any([IService])
-        )
-    resultset = q.execute()
-    return len(resultset) > 0
+    def sdi_addable_content(self):
+        registry = self.request.registry
+        introspector = registry.introspector
+        cts = []
 
-class _HasServicesPredicate(object):
-    has_services = staticmethod(has_services) # for testing
+        for data in introspector.get_category('substance d content types'):
+            intr = data['introspectable']
+            meta = intr['meta']
 
-    def __init__(self, val, config):
-        self.val = bool(val)
-        self.registry = config.registry
+            if not meta.get('is_service', None):
+                cts.append(data)
 
-    def text(self):
-        return 'has_services = %s' % self.val
+        return cts
 
-    phash = text
+    def sdi_add_views(self):
+        candidates = {}
 
-    def __call__(self, context, request):
-        return self.has_services(context, request) == self.val
+        for data in self.sdi_addable_content():
+            intr = data['introspectable']
+            meta = intr['meta']
+            content_type = intr['content_type']
+            viewname = meta.get('add_view')
+            if viewname:
+                if callable(viewname):
+                    viewname = viewname(self.context, self.request)
+                    if not viewname:
+                        continue
+                addable_here = getattr(
+                    self.context,
+                    '__sdi_addable__',
+                    default_sdi_addable
+                    )
+                if addable_here is not None:
+                    if callable(addable_here):
+                        if not addable_here(self.context, intr):
+                            continue
+                    else:
+                        if not content_type in addable_here:
+                            continue
+                type_name = meta.get('name', content_type)
+                icon = meta.get('icon', '')
+                data = dict(
+                    type_name=type_name,
+                    icon=icon,
+                    content_type=content_type
+                    )
+                candidates[viewname] = data
+
+        candidate_names = candidates.keys()
+        views = sdi_mgmt_views(self.context, self.request, names=candidate_names)
+
+        L = []
+
+        for view in views:
+            view_name = view['view_name']
+            url = self.request.sdiapi.mgmt_path(self.context, '@@' + view_name)
+            data = candidates[view_name]
+            data['url'] = url
+            L.append(data)
+
+        L.sort(key=operator.itemgetter('type_name'))
+
+        return L
 
 @folder_contents_views(name='services',
                        tab_title=_('Services'),
-                       has_services=True,
+                       view_permission='sdi.view-services',
                       )
 class FolderServices(FolderContents):
+
+    def sdi_addable_content(self):
+        registry = self.request.registry
+        introspector = registry.introspector
+        cts = []
+
+        for data in introspector.get_category('substance d content types'):
+            intr = data['introspectable']
+            meta = intr['meta']
+
+            if meta.get('is_service', None):
+                cts.append(data)
+
+        return cts
 
     def get_default_query(self):
         """ The default query function for a folder """
@@ -1376,4 +1428,3 @@ def includeme(config): # pragma: no cover
         add_folder_contents_views,
         action_wrap=False
         )
-    config.add_view_predicate('has_services', _HasServicesPredicate)
