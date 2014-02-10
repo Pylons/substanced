@@ -335,7 +335,18 @@ class TestPathIndex(unittest.TestCase):
         objectmap.add(obj2, (_BLANK, _A))
         result = inst.apply({'path':obj, 'include_origin':False})
         self.assertEqual(list(result),  [2])
-        
+
+    def test_applyNotEq(self):
+        inst = self._makeOne()
+        catalog = inst.__parent__
+        obj = testing.DummyResource()
+        objectmap = self._acquire(inst, '__objectmap__')
+        objectmap._v_nextid = 1
+        objectmap.add(obj, (_BLANK,))
+        catalog.objectids = catalog.family.IF.TreeSet([1])
+        result = inst.applyNotEq(obj)
+        self.assertEqual(list(result),  [])
+
     def test__parse_path_obj(self):
         inst = self._makeOne()
         obj = testing.DummyResource()
@@ -411,6 +422,32 @@ class TestPathIndex(unittest.TestCase):
         inst = self._makeOne()
         inst.depth = 10
         result = inst.eq('/abc', depth=1)
+        self.assertEqual(
+            result._value,
+            {'path': '/abc', 'depth': 1}
+            )
+
+    def test_noteq_defaults(self):
+        inst = self._makeOne()
+        result = inst.noteq('/abc')
+        self.assertEqual(
+            result._value,
+            {'path': '/abc'}
+            )
+
+    def test_noteq_include_origin_is_False(self):
+        inst = self._makeOne()
+        inst.depth = 10
+        result = inst.noteq('/abc', include_origin=False)
+        self.assertEqual(
+            result._value,
+            {'path': '/abc', 'include_origin': False}
+            )
+
+    def test_noteq_include_depth_is_not_None(self):
+        inst = self._makeOne()
+        inst.depth = 10
+        result = inst.noteq('/abc', depth=1)
         self.assertEqual(
             result._value,
             {'path': '/abc', 'depth': 1}

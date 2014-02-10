@@ -88,6 +88,7 @@ Narrative Documentation
    statistics
    vrooting
    retail
+   scripts
 
 API Documentation
 -----------------
