@@ -1644,6 +1644,145 @@ class TestFolderContents(unittest.TestCase):
         self.assertEqual(query.anded_with[1].queried,
                          ('notany', ([IService],), {}))
 
+    def test_no_content_types(self):
+        request = testing.DummyRequest()
+        request.matched_route = None
+        request.registry.content = DummyContent()
+        request.registry.introspector = DummyIntrospector()
+        inst = self._makeOne(None, request)
+        result = inst.sdi_add_views()
+        self.assertEqual(result, [])  
+
+    def test_one_content_type(self):
+        request = testing.DummyRequest()
+        request.matched_route = None
+        request.registry.content = DummyContent()
+        request.sdiapi = DummySDIAPI()
+        ct_intr = {}
+        ct_intr['meta'] = {'add_view':'abc'}
+        ct_intr['content_type'] = 'Content'
+        ct_intr = DummyIntrospectable(introspectable=ct_intr)
+        view_intr1 = DummyIntrospectable()
+        view_intr1.category_name = 'views'
+        view_intr1['name'] = 'abc'
+        view_intr1['context'] = None
+        view_intr1['derived_callable'] = None
+        intr = {}
+        intr['tab_title'] = 'abc'
+        intr['tab_condition'] = None
+        intr['tab_before'] = None
+        intr['tab_after'] = None
+        intr = DummyIntrospectable(related=(view_intr1,), introspectable=intr)
+        request.registry.introspector = DummyIntrospector([(ct_intr,), (intr,)])
+        context = testing.DummyResource()
+        inst = self._makeOne(context, request) 
+        result = inst.sdi_add_views()
+        self.assertEqual(
+            result,
+            [{
+                    'url': '/mgmt_path',
+                    'type_name': 'Content',
+                    'icon': '',
+                    'content_type':'Content',
+                    }])
+
+    def test_one_content_type_not_addable(self):
+        request = testing.DummyRequest()
+        request.matched_route = None
+        request.registry.content = DummyContent()
+        request.sdiapi = DummySDIAPI()
+        context = testing.DummyResource()
+        context.__sdi_addable__ = ('Not Content',)
+        ct_intr = {}
+        ct_intr['meta'] = {'add_view':'abc'}
+        ct_intr['content_type'] = 'Content'
+        ct_intr = DummyIntrospectable(introspectable=ct_intr)
+        view_intr1 = DummyIntrospectable()
+        view_intr1.category_name = 'views'
+        view_intr1['name'] = 'abc'
+        view_intr1['context'] = None
+        view_intr1['derived_callable'] = None
+        intr = {}
+        intr['tab_title'] = 'abc'
+        intr['tab_condition'] = None
+        intr['tab_before'] = None
+        intr['tab_after'] = None
+        intr = DummyIntrospectable(related=(view_intr1,), introspectable=intr)
+        request.registry.introspector = DummyIntrospector([(ct_intr,), (intr,)])
+        inst = self._makeOne(context, request) 
+        result = inst.sdi_add_views()
+        self.assertEqual(result, [])
+
+    def test_one_content_type_not_addable_callable(self):
+        request = testing.DummyRequest()
+        request.matched_route = None
+        request.registry.content = DummyContent()
+        request.sdiapi = DummySDIAPI()
+        context = testing.DummyResource()
+        context.__sdi_addable__ = lambda *arg: False
+        ct_intr = {}
+        ct_intr['meta'] = {'add_view':'abc'}
+        ct_intr['content_type'] = 'Content'
+        ct_intr = DummyIntrospectable(introspectable=ct_intr)
+        view_intr1 = DummyIntrospectable()
+        view_intr1.category_name = 'views'
+        view_intr1['name'] = 'abc'
+        view_intr1['context'] = None
+        view_intr1['derived_callable'] = None
+        intr = {}
+        intr['tab_title'] = 'abc'
+        intr['tab_condition'] = None
+        intr['tab_before'] = None
+        intr['tab_after'] = None
+        intr = DummyIntrospectable(related=(view_intr1,), introspectable=intr)
+        request.registry.introspector = DummyIntrospector([(ct_intr,), (intr,)])
+        inst = self._makeOne(context, request) 
+        result = inst.sdi_add_views()
+        self.assertEqual(result, [])
+
+    def test_content_type_not_addable_to(self):
+        request = testing.DummyRequest()
+        request.matched_route = None
+        request.registry.content = DummyContent()
+        request.sdiapi = DummySDIAPI()
+        context = testing.DummyResource()
+        context.__content_type__ = 'Foo'
+        ct_intr = {}
+        ct_intr['meta'] = {'add_view':lambda *arg: 'abc'}
+        ct_intr['content_type'] = 'Content'
+        ct_intr = DummyIntrospectable(introspectable=ct_intr)
+        ct2_intr = {}
+        checked = []
+        def check(context, request):
+            checked.append(True)
+        ct2_intr['meta'] = {'add_view':check}
+        ct2_intr['content_type'] = 'Content'
+        ct2_intr = DummyIntrospectable(introspectable=ct2_intr)
+        view_intr1 = DummyIntrospectable()
+        view_intr1.category_name = 'views'
+        view_intr1['name'] = 'abc'
+        view_intr1['context'] = None
+        view_intr1['derived_callable'] = None
+        intr = {}
+        intr['tab_title'] = 'abc'
+        intr['tab_condition'] = None
+        intr['tab_before'] = None
+        intr['tab_after'] = None
+        intr = DummyIntrospectable(related=(view_intr1,), introspectable=intr)
+        request.registry.introspector = DummyIntrospector(
+            [(ct_intr, ct2_intr), (intr,)])
+        inst = self._makeOne(context, request) 
+        result = inst.sdi_add_views()
+        self.assertEqual(checked, [True])
+        self.assertEqual(
+            result,
+            [
+                {'url': '/mgmt_path',
+                 'type_name': 'Content',
+                 'icon': '',
+                 'content_type':'Content',
+                 }])
+
 class Test_folder_contents_views_decorator(unittest.TestCase):
     def setUp(self):
         testing.setUp()
@@ -2046,3 +2185,21 @@ def call_venusian(venusian, context=None):
     for wrapped, callback, category in venusian.attachments:
         callback(context, None, None)
     return context.config
+
+class DummyIntrospector(object):
+    def __init__(self, results=()):
+        self.results = list(results)
+
+    def get_category(self, *arg):
+        if self.results:
+            return self.results.pop(0)
+        return ()
+
+class DummyIntrospectable(dict):
+    def __init__(self, **kw):
+        dict.__init__(self, **kw)
+        self.related = {}
+
+    def relate(self, category, discrim):
+        self.related[category] = discrim
+
