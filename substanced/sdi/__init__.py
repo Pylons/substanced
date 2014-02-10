@@ -402,59 +402,6 @@ def default_sdi_addable(context, intr):
         return not (service_name and service_name in context)
     return True
 
-def sdi_add_views(context, request):
-    registry = request.registry
-    introspector = registry.introspector
-
-    candidates = {}
-    
-    for data in introspector.get_category('substance d content types'): 
-        intr = data['introspectable']
-        meta = intr['meta']
-        content_type = intr['content_type']
-        viewname = meta.get('add_view')
-        if viewname:
-            if callable(viewname):
-                viewname = viewname(context, request)
-                if not viewname:
-                    continue
-            addable_here = getattr(
-                context,
-                '__sdi_addable__',
-                default_sdi_addable
-                )
-            if addable_here is not None:
-                if callable(addable_here):
-                    if not addable_here(context, intr):
-                        continue
-                else:
-                    if not content_type in addable_here:
-                        continue
-            type_name = meta.get('name', content_type)
-            icon = meta.get('icon', '')
-            data = dict(
-                type_name=type_name,
-                icon=icon,
-                content_type=content_type
-                )
-            candidates[viewname] = data
-
-    candidate_names = candidates.keys()
-    views = sdi_mgmt_views(context, request, names=candidate_names)
-
-    L = []
-
-    for view in views:
-        view_name = view['view_name']
-        url = request.sdiapi.mgmt_path(context, '@@' + view_name)
-        data = candidates[view_name]
-        data['url'] = url
-        L.append(data)
-
-    L.sort(key=operator.itemgetter('type_name'))
-
-    return L
-
 def user(request):
     context = request.context
     userid = authenticated_userid(request)
