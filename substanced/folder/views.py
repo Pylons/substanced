@@ -970,13 +970,24 @@ class FolderContents(object):
         self.request.sdiapi.flash(request.localizer.translate(msg), 'danger')
         return False
 
-    def sdi_add_views(self):
+    def sdi_addable_content(self):
         registry = self.request.registry
         introspector = registry.introspector
-
-        candidates = {}
+        cts = []
 
         for data in introspector.get_category('substance d content types'):
+            intr = data['introspectable']
+            meta = intr['meta']
+
+            if not meta.get('is_service', None):
+                cts.append(data)
+
+        return cts
+
+    def sdi_add_views(self):
+        candidates = {}
+
+        for data in self.sdi_addable_content():
             intr = data['introspectable']
             meta = intr['meta']
             content_type = intr['content_type']
@@ -1028,6 +1039,20 @@ class FolderContents(object):
                        view_permission='sdi.view-services',
                       )
 class FolderServices(FolderContents):
+
+    def sdi_addable_content(self):
+        registry = self.request.registry
+        introspector = registry.introspector
+        cts = []
+
+        for data in introspector.get_category('substance d content types'):
+            intr = data['introspectable']
+            meta = intr['meta']
+
+            if meta.get('is_service', None):
+                cts.append(data)
+
+        return cts
 
     def get_default_query(self):
         """ The default query function for a folder """
