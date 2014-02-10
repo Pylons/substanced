@@ -1888,51 +1888,6 @@ class Test_add_folder_contents_views(unittest.TestCase):
         self._callFUT(config, slamdunk=1)
         self.assertEqual(config.settings[0]['slamdunk'], 1)
 
-class Test_has_services(unittest.TestCase):
-    def _callFUT(self, context, request):
-        from substanced.folder.views import has_services
-        return has_services(context, request)
-
-    def test_it(self):
-        from zope.interface import directlyProvides
-        from ...interfaces import IFolder
-        context = testing.DummyResource()
-        directlyProvides(context, IFolder)
-        context['catalogs'] = _makeCatalogs(oids=[1])
-        request = testing.DummyRequest()
-        self.assertTrue(self._callFUT(context, request))
-
-class Test_HasServicesPredicate(unittest.TestCase):
-    def _makeOne(self, val, config):
-        from ..views import _HasServicesPredicate
-        return _HasServicesPredicate(val, config)
-
-    def test_text(self):
-        config = Dummy()
-        config.registry = Dummy()
-        inst = self._makeOne(True, config)
-        self.assertEqual(inst.text(), 'has_services = True')
-
-    def test_phash(self):
-        config = Dummy()
-        config.registry = Dummy()
-        inst = self._makeOne(True, config)
-        self.assertEqual(inst.phash(), 'has_services = True')
-
-    def test__call__(self):
-        config = Dummy()
-        config.registry = Dummy()
-        inst = self._makeOne(True, config)
-        _called_with = []
-        def has_services(context, request):
-            _called_with.append((context, request))
-            return True
-        inst.has_services = has_services
-        context = testing.DummyResource()
-        request = testing.DummyRequest()
-        self.assertEqual(inst(context, request), True)
-        self.assertEqual(_called_with, [(context, request)])
-
 class FolderServicesTest(unittest.TestCase):
     def setUp(self):
         self.config = testing.setUp()

@@ -1023,36 +1023,9 @@ class FolderContents(object):
 
         return L
 
-def has_services(context, request):
-    system_catalog = find_catalog(context, 'system')
-    path = system_catalog['path']
-    allowed = system_catalog['allowed']
-    interfaces = system_catalog['interfaces']
-    q = ( path.eq(context, depth=1, include_origin=False) &
-            allowed.allows(request, 'sdi.view') &
-            interfaces.any([IService])
-        )
-    resultset = q.execute()
-    return len(resultset) > 0
-
-class _HasServicesPredicate(object):
-    has_services = staticmethod(has_services) # for testing
-
-    def __init__(self, val, config):
-        self.val = bool(val)
-        self.registry = config.registry
-
-    def text(self):
-        return 'has_services = %s' % self.val
-
-    phash = text
-
-    def __call__(self, context, request):
-        return self.has_services(context, request) == self.val
-
 @folder_contents_views(name='services',
                        tab_title=_('Services'),
-                       has_services=True,
+                       view_permission='sdi.view-services',
                       )
 class FolderServices(FolderContents):
 
@@ -1430,4 +1403,3 @@ def includeme(config): # pragma: no cover
         add_folder_contents_views,
         action_wrap=False
         )
-    config.add_view_predicate('has_services', _HasServicesPredicate)
