@@ -11,7 +11,7 @@ from pyramid.config.util import action_method
 
 from ..interfaces import IPropertySheet
 from ..event import ObjectModified
-from ..content import ContentTypePredicate
+from ..content import _ContentTypePredicate
 
 _marker = object()
 
@@ -183,4 +183,4 @@ def includeme(config): # pragma: no cover
     config.add_directive('add_propertysheet', add_propertysheet)
     config.add_directive('add_propertysheet_predicate',
                          add_propertysheet_predicate)
-    config.add_propertysheet_predicate('content_type', ContentTypePredicate)
+    config.add_propertysheet_predicate('content_type', _ContentTypePredicate)
