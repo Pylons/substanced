@@ -116,10 +116,7 @@ class FileUploadPropertySheet(PropertySheet):
     # prevent view tab from sorting first (it would display the image when
     # manage_main clicked)
     tab_order = ('properties', 'acl_edit', 'view'),
-    #propertysheets = (
-    #    ('Basic', FilePropertySheet),
-    #    ('Upload', FileUploadPropertySheet),
-    #    ),
+    #propertysheet_order = ('Basic', 'Upload'),
     catalog = True,
     )
 @implementer(IFile)
