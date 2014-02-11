@@ -118,23 +118,23 @@ To run coverage tests for a single version of Python:
 Internalization (adding/updating languages)
 -------------------------------------------
 
-Transifex project should be used for translations: https://www.transifex.com/projects/p/substanced/resource/master/
+The Transifex project should be used for translations: https://www.transifex.com/projects/p/substanced/resource/master/
 
 Before you can do anything related to translations, there is small setup:
 
 - Run ``bin/python setup.py i18n``
 
-To update transifex with new translations:
+To update Transifex with new translations:
 
 - Run ``python setup.py extract_messages`` to populate `substanced.pot`
 
 - Run ``python setup.py update_catalog`` to update translation strings in existing .po files
 
-- Run ``tx push -t -s`` to push translation files to transifex to be translated 
+- Run ``tx push -t -s`` to push translation files to Transifex to be translated 
 
-- Notify translators through transifex
+- Notify translators through Transifex
 
-To fetch translated files from transifex: 
+To fetch translated files from Transifex: 
 
 - Run ``tx pull`` to update .po files with translations
 
@@ -142,7 +142,7 @@ To fetch translated files from transifex:
 
 - Run `git commit -m "Update catalog" substanced/locales` to commit changes (don't forget to submit changes upstream)
 
-To add new language:
+To add a new language:
 
 - Run ``python setup.py init_catalog -l de``
 
