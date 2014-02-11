@@ -6,8 +6,11 @@ from zope.interface import (
     )
 
 from pyramid.threadlocal import get_current_registry
+from pyramid.threadlocal import get_current_request
 from pyramid.compat import is_nonstr_iter
 from pyramid.config.util import action_method
+from walkabout import IPredicateDomain
+from walkabout import PredicateDomain
 
 from ..interfaces import IPropertySheet
 from ..event import ObjectModified
@@ -70,11 +73,12 @@ class PropertySheet(object):
             event = ObjectModified(self.context)
             self.request.registry.subscribers((event, self.context), None)
 
-def is_propertied(resource, registry=None):
-    if registry is None:
-        registry = get_current_registry()
-    sheets = registry.content.metadata(resource, 'propertysheets', None)
-    return sheets is not None
+def is_propertied(context, request):
+    sheets = request.registry.content.metadata(context, 'propertysheets', None)
+    if sheets is None:
+        domain = get_domain(request.registry)
+        sheets = list(domain.all(context, request))
+    return len(sheets) > 0
 
 class _PropertiedPredicate(object):
     is_propertied = staticmethod(is_propertied) # for testing
@@ -89,10 +93,18 @@ class _PropertiedPredicate(object):
     phash = text
 
     def __call__(self, context, request):
-        return self.is_propertied(context, self.registry) == self.val
+        return self.is_propertied(context, request) == self.val
+
+def get_domain(registry):
+    domain = registry.queryUtility(IPredicateDomain, name='propertysheets')
+    if domain is None:
+        domain = PredicateDomain(IPropertySheet, registry)
+        registry.registerUtility(domain, IPredicateDomain,
+                                        name='propertysheets')
+    return domain
 
 @action_method
-def add_propertysheet(config, propsheet, iface=None, **predicates):
+def add_propertysheet(config, name, propsheet, iface=None, **predicates):
     """Add an a propertysheet for the content types implied by
     ``iface`` and ``predicates``.
 
@@ -116,28 +128,12 @@ def add_propertysheet(config, propsheet, iface=None, **predicates):
     dotted = config.maybe_dotted
     subscriber, iface = dotted(propsheet), dotted(iface)
     if iface is None:
-        iface = (Interface,)
-    if not isinstance(iface, (tuple, list)):
-        iface = (iface,)
+        iface = Interface
 
     def register():
-        predlist = config.get_predlist('property sheet')
-        order, preds, phash = predlist.make(config, **predicates)
-        intr.update(
-            {'phash':phash,
-             'order':order,
-             'predicates':preds,
-             }
-            )
-        def wrapper(context, request):
-            if all((predicate(context, request) for predicate in preds)):
-                return propsheet(context, request)
-
-        config.registry.registerAdapter(
-            wrapper,
-            (iface, Interface),
-            IPropertySheet
-            )
+        domain = get_domain(config.registry)
+        domain.add_candidate(propsheet, iface, Interface, name=name,
+                             **predicates)
 
     intr = config.introspectable(
         'property sheets',
@@ -153,8 +149,8 @@ def add_propertysheet(config, propsheet, iface=None, **predicates):
     return propsheet
 
 @action_method
-def add_propertysheet_predicate(config, name, factory, weighs_more_than=None,
-                                weighs_less_than=None):
+def add_propertysheet_predicate(config, name, factory,
+                                before=None, after=None):
         """
         Adds a property sheet predicate factory.  The associated property sheet
         predicate can later be named as a keyword argument to
@@ -169,12 +165,12 @@ def add_propertysheet_predicate(config, name, factory, weighs_more_than=None,
         Python name` which refers to a predicate factory.
 
         """
-        config._add_predicate(
-            'property sheet',
+        domain = get_domain(config.registry)
+        domain.add_predicate(
             name,
             factory,
-            weighs_more_than=weighs_more_than,
-            weighs_less_than=weighs_less_than
+            before=before,
+            after=after
             )
     
 

@@ -116,10 +116,10 @@ class FileUploadPropertySheet(PropertySheet):
     # prevent view tab from sorting first (it would display the image when
     # manage_main clicked)
     tab_order = ('properties', 'acl_edit', 'view'),
-    propertysheets = (
-        ('Basic', FilePropertySheet),
-        ('Upload', FileUploadPropertySheet),
-        ),
+    #propertysheets = (
+    #    ('Basic', FilePropertySheet),
+    #    ('Upload', FileUploadPropertySheet),
+    #    ),
     catalog = True,
     )
 @implementer(IFile)
@@ -262,3 +262,7 @@ class File(Persistent):
             self.blob._p_activate()
             blob = self.blob._p_serial
         return oid_repr(max(mine, blob))
+
+def includeme(config):
+    config.add_propertysheet('Basic', FilePropertySheet, IFile)
+    config.add_propertysheet('Upload', FileUploadPropertySheet, IFile)
