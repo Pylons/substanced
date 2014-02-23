@@ -63,7 +63,7 @@ CENTER2 = Sentinel('CENTER2')
 MANAGE_ROUTE_NAME = 'substanced_manage'
 MAX_ORDER = 1 << 30
 
-UNGROUPED = 'viewgroup.ungrouped'
+UNGROUPED = 'viewgroup/ungrouped'
 
 _marker = object()
 
@@ -643,11 +643,8 @@ def _bwcompat_kw(kw):
 
 class MgmtViewGroup(dict):
     def __init__(self, name, **kw):
-        if kw.get('title') is None:
-            kw['title'] = name.capitalize()
-        dict.__init__(self)
+        dict.__init__(self, **kw)
         self['name'] = name
-        self.update(kw)
 
 def add_mgmt_view_group(
     config,
@@ -661,7 +658,8 @@ def add_mgmt_view_group(
     """
     Directive which adds a named management view group (tab group) to the
     configuration.  A management view group can be used to roll up management
-    views under an SDI dropdown tab.
+    views under an SDI dropdown tab, or it can be used in adhoc management
+    view code to show a listing of related management views.
     
     Management views can refer to tab groups by name when they use the
     ``group`` argument to ``add_mgmt_view`` or the ``@mgmt_view`` decorator.
@@ -670,11 +668,16 @@ def add_mgmt_view_group(
     (the tab will be named after the group) in the SDI tab navigation bar.
 
     ``name``
-       The name of the management view group.
+       The name of the management view group.  For best results, use a
+       ``name`` that contains a slash.  Management view names and group names
+       cannot be the same without conflicting, and adding a slash prevents
+       them from ever conflicting (a view name cannot contain a slash, because
+       it will be present in a URL; a group name is never present in a URL
+       and so may contain slashes).  By convention, use the prefix
+       ``viewgroup/``, e.g. ``viewgroup/workflow``.
 
     ``title``
-
-       The display title of the group.  Fefault: ``None``, meaning when
+       The display title of the group.  Default: ``None``, meaning when
        displayed as a tab, the tab's title will be the capitalization of the
        name.
 
@@ -695,15 +698,20 @@ def add_mgmt_view_group(
 
     ``condition``
        One of ``False``, ``True``, ``None``, or a condition function that
-       returns a boolean that will be called when a management view rendering
-       that includes this group is performed.  Default: ``None``.
+       returns a boolean.  If it's a function, the function will be called
+       when a main nav bar rendering is performed, and a tab will be displayed
+       if the function returns a true value, otherwise the tab will not be
+       displayed.  Default: ``None``.
 
-    Tab groups can also be used to create adhoc groupings of management views
+    Management view groups can also be used to create adhoc groupings 
     to be used within the management interface but outside the tab navigation
     bar.  To use it this way, register the tab group with ``condition=False``
     and ask for it by name by passing "group=thegroupname" to
     :func:`substanced.sdi.sdi_mgmt_views`.
     """
+    if title is None:
+        title = name.capitalize()
+
     group = MgmtViewGroup(
             name,
             title=title,
