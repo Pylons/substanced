@@ -42,7 +42,7 @@ class ManageDatabase(object):
         data_object_loads = []
 
         if am:
-            # we multiply datetime by 1000 to get JavaScript representatin of
+            # we multiply datetime by 1000 to get JavaScript representation of
             # unix timestamp
             # TODO: add timezone support
             for data in am.getActivityAnalysis():
