@@ -7,11 +7,11 @@ API_ROUTE_NAME = 'substanced_api'
 
 @viewdefaults
 @action_method
-def add_api_view(
+def add_jsonapi_view(
     config,
     view=None,
     name="",
-    permission="api.view",
+    permission="jsonapi.view",
     request_type=None,
     request_method=None,
     request_param=None,
@@ -31,14 +31,14 @@ def add_api_view(
     match_param=None,
     **predicates
     ):
-    """ A :term:`configurator` which defines an ``API view``.
+    """ A :term:`configurator` which defines a ``JSON API view``.
 
     This is a thin wrapper around :class:`pyramid.view.view_config`
     and accepts the same arguments.
 
     However it has different defaults. The `route_name` defaults
     to ``substanced_api``, the `renderer` defaults to ``json``,
-    and the `permission` defaults to ``api.view``.
+    and the `permission` defaults to ``jsonapi.view``.
     """
 
     route_name = API_ROUTE_NAME
@@ -69,11 +69,11 @@ def add_api_view(
         )
 
 
-class api_view(object):
+class jsonapi_view(object):
     """ A :term:`decorator` which, when applied to a class or function,
-    will configure it as an :term:`API view`.
+    will configure it as an :term:`JSON API view`.
 
-    This is a thin wrapper around ``substanced.api.add_api_view``
+    This is a thin wrapper around ``substanced.jsonapi.add_jsonapi_view``
     and accepts the same arguments.
     """
     venusian = venusian
@@ -86,10 +86,10 @@ class api_view(object):
         def callback(context, name, ob):
             config = context.config.with_package(info.module)
             # was "substanced.api" included?
-            #add_api_view = getattr(config, 'add_api_view', None)
-            add_api_view = config.add_api_view
-            if add_api_view is not None:
-                add_api_view(view=ob, **settings)
+            #add_jsonapi_view = getattr(config, 'add_jsonapi_view', None)
+            add_jsonapi_view = config.add_jsonapi_view
+            if add_jsonapi_view is not None:
+                add_jsonapi_view(view=ob, **settings)
 
         info = self.venusian.attach(wrapped, callback, category='substanced')
 
@@ -122,9 +122,9 @@ class _IsContentPredicate(object):
 
 def includeme(config):
     settings = config.registry.settings
-    api_prefix = settings.get('substanced.api_prefix', '/sdapi')
+    api_prefix = settings.get('substanced.api_prefix', '/api')
     api_pattern = api_prefix + "*traverse"
     config.add_route(API_ROUTE_NAME, api_pattern)
     config.add_view_predicate('content', _IsContentPredicate)
-    config.add_directive('add_api_view', add_api_view, action_wrap=False)
+    config.add_directive('add_jsonapi_view', add_jsonapi_view, action_wrap=False)
     config.scan()

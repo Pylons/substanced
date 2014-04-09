@@ -51,14 +51,14 @@ Glossary
      ``substanced.manage_prefix`` key in your ``development.ini`` or
      ``production.ini`` configuration files.
 
-   API view
+   JSON API view
      A :term:`view configuration` that is only invoked when a user visits a
-     URL prepended with the :term:`API prefix`.
+     URL prepended with the :term:`JSON API prefix`.
 
-   API prefix
+   JSON API prefix
      The prepended portion of the URL (usually ``/api``) which signifies
      that view lookup should be done only amongst the set of views registered
-     as :term:`API view` types.  This can be changed by setting the
+     as :term:`JSON API view` types.  This can be changed by setting the
      ``substanced.api_prefix`` key in your ``development.ini`` or
      ``production.ini`` configuration files.
 

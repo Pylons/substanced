@@ -11,17 +11,6 @@
 
 .. autofunction:: scan
 
-:mod:`substanced.api` API
--------------------------
-
-.. automodule:: substanced.api
-
-.. autofunction:: add_api_view
-
-.. autofunction:: api_view
-
-.. autofunction:: includeme
-
 :mod:`substanced.audit` API
 ---------------------------
 
@@ -385,6 +374,16 @@ Other Helpers
 .. autoclass:: FileUploadTempStore
    :members:
 
+:mod:`substanced.jsonapi` API
+-----------------------------
+
+.. automodule:: substanced.jsonapi
+
+.. autofunction:: add_jsonapi_view
+
+.. autofunction:: jsonapi_view
+
+.. autofunction:: includeme
 
 :mod:`substanced.locking` API
 -----------------------------

@@ -1,4 +1,4 @@
-from . import api_view
+from . import jsonapi_view
 
 
 class ContentPropertiesAPI(object):
@@ -7,6 +7,6 @@ class ContentPropertiesAPI(object):
         self.context = context
         self.request = request
 
-    @api_view()
+    @jsonapi_view()
     def get(self):
         return {"foo": "Hello World!"}

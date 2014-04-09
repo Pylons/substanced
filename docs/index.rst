@@ -87,7 +87,7 @@ Narrative Documentation
    configuration
    statistics
    vrooting
-   rest_api
+   jsonapi
    retail
    scripts
 
