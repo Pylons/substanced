@@ -1,5 +1,7 @@
+import colander
 import venusian
 
+from pyramid.renderers import JSON
 from pyramid.util import action_method, viewdefaults
 
 API_ROUTE_NAME = 'substanced_api'
@@ -127,4 +129,10 @@ def includeme(config):
     config.add_route(API_ROUTE_NAME, api_pattern)
     config.add_view_predicate('content', _IsContentPredicate)
     config.add_directive('add_jsonapi_view', add_jsonapi_view, action_wrap=False)
+
+    # replace pyramid json renderer with one that knows about colander.null
+    json_renderer = JSON()
+    json_renderer.add_adapter(colander._null, lambda resource, request: None)
+    config.add_renderer('json', json_renderer)
+
     config.scan()
