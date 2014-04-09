@@ -11,7 +11,7 @@ def add_jsonapi_view(
     config,
     view=None,
     name="",
-    permission="jsonapi.view",
+    permission="view",
     request_type=None,
     request_method=None,
     request_param=None,
@@ -122,7 +122,7 @@ class _IsContentPredicate(object):
 
 def includeme(config):
     settings = config.registry.settings
-    api_prefix = settings.get('substanced.api_prefix', '/api')
+    api_prefix = settings.get('substanced.api_prefix', '/sdapi')
     api_pattern = api_prefix + "*traverse"
     config.add_route(API_ROUTE_NAME, api_pattern)
     config.add_view_predicate('content', _IsContentPredicate)

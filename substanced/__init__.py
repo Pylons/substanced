@@ -22,7 +22,7 @@ def include(config): # pragma: no cover
     config.include('.locking')
     config.include('.audit')
     config.include('.editable')
-    config.include('.api')
+    config.include('.jsonapi')
     config.add_translation_dirs('locale/')
 
 def scan(config): # pragma: no cover

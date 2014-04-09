@@ -7,7 +7,7 @@ and deleting :term:`content` resources represented as JSON.
 
 An :term:`JSON API view` is a :term:`view configuration` that applies only
 when the URL is prepended with the :term:`JSON API prefix`. The JSON API prefix
-is usually ``/api``, unless you've changed it from its default by setting
+is usually ``/sdapi``, unless you've changed it from its default by setting
 a custom ``substanced.jsonapi_prefix`` in your application's ``.ini`` file.
 
 This means that views declared as JSON API views will never show up in your
@@ -36,7 +36,7 @@ The former is most convenient, but they are functionally equivalent.
 :term:`scan`.
 
 For example, the following view declaration registers a view
-that will show up when the ``/api/foobar`` URL is visited:
+that will show up when the ``/sdapi/foobar`` URL is visited:
 
 .. code-block:: python
    :linenos:
