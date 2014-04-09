@@ -66,7 +66,6 @@ def add_jsonapi_view(
         http_cache=http_cache,
         match_param=match_param,
         request_type=request_type,
-        content=True,
         **predicates
         )
 
@@ -127,7 +126,7 @@ def includeme(config):  # pragma: no cover
     config.add_directive(
         'add_jsonapi_view', add_jsonapi_view, action_wrap=False)
 
-    # replace pyramid json renderer with one that knows about colander.null
+    # Replace pyramid json renderer with one that knows about colander.null
     json_renderer = JSON()
     json_renderer.add_adapter(colander._null, lambda resource, request: None)
     config.add_renderer('json', json_renderer)
