@@ -51,6 +51,17 @@ Glossary
      ``substanced.manage_prefix`` key in your ``development.ini`` or
      ``production.ini`` configuration files.
 
+   API view
+     A :term:`view configuration` that is only invoked when a user visits a
+     URL prepended with the :term:`API prefix`.
+
+   API prefix
+     The prepended portion of the URL (usually ``/api``) which signifies
+     that view lookup should be done only amongst the set of views registered
+     as :term:`API view` types.  This can be changed by setting the
+     ``substanced.api_prefix`` key in your ``development.ini`` or
+     ``production.ini`` configuration files.
+
    Service
      A persistent object in the :term:`resource tree` that exposes an API to
      application developers.  For example, the ``principals`` service.

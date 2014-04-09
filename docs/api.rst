@@ -11,6 +11,17 @@
 
 .. autofunction:: scan
 
+:mod:`substanced.api` API
+-------------------------
+
+.. automodule:: substanced.api
+
+.. autofunction:: add_api_view
+
+.. autofunction:: api_view
+
+.. autofunction:: includeme
+
 :mod:`substanced.audit` API
 ---------------------------
 

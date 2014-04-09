@@ -87,6 +87,7 @@ Narrative Documentation
    configuration
    statistics
    vrooting
+   rest_api
    retail
    scripts
 

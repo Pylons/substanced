@@ -31,6 +31,15 @@ def add_api_view(
     match_param=None,
     **predicates
     ):
+    """ A :term:`configurator` which defines an ``API view``.
+
+    This is a thin wrapper around :class:`pyramid.view.view_config`
+    and accepts the same arguments.
+
+    However it has different defaults. The `route_name` defaults
+    to ``substanced_api``, the `renderer` defaults to ``json``,
+    and the `permission` defaults to ``api.view``.
+    """
 
     route_name = API_ROUTE_NAME
     config.add_view(
@@ -61,6 +70,12 @@ def add_api_view(
 
 
 class api_view(object):
+    """ A :term:`decorator` which, when applied to a class or function,
+    will configure it as an :term:`API view`.
+
+    This is a thin wrapper around ``substanced.api.add_api_view``
+    and accepts the same arguments.
+    """
     venusian = venusian
     def __init__(self, **settings):
         self.__dict__.update(settings)
