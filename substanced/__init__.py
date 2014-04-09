@@ -22,6 +22,7 @@ def include(config): # pragma: no cover
     config.include('.locking')
     config.include('.audit')
     config.include('.editable')
+    config.include('.api')
     config.add_translation_dirs('locale/')
 
 def scan(config): # pragma: no cover
@@ -40,7 +41,7 @@ def scan(config): # pragma: no cover
     config.scan('.workflow')
     config.scan('.audit')
     config.scan('.locking')
-    
+
 def includeme(config): # pragma: no cover
     """ Do the work of :func:`substanced.include`, then
     :func:`substanced.scan`.  Makes ``config.include(substanced)`` work."""
