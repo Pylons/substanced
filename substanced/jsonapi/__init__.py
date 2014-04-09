@@ -87,11 +87,7 @@ class jsonapi_view(object):
 
         def callback(context, name, ob):
             config = context.config.with_package(info.module)
-            # was "substanced.api" included?
-            #add_jsonapi_view = getattr(config, 'add_jsonapi_view', None)
-            add_jsonapi_view = config.add_jsonapi_view
-            if add_jsonapi_view is not None:
-                add_jsonapi_view(view=ob, **settings)
+            config.add_jsonapi_view(view=ob, **settings)
 
         info = self.venusian.attach(wrapped, callback, category='substanced')
 
@@ -122,13 +118,14 @@ class _IsContentPredicate(object):
         return is_content == self.val
 
 
-def includeme(config):
+def includeme(config):  # pragma: no cover
     settings = config.registry.settings
     api_prefix = settings.get('substanced.api_prefix', '/sdapi')
     api_pattern = api_prefix + "*traverse"
     config.add_route(API_ROUTE_NAME, api_pattern)
     config.add_view_predicate('content', _IsContentPredicate)
-    config.add_directive('add_jsonapi_view', add_jsonapi_view, action_wrap=False)
+    config.add_directive(
+        'add_jsonapi_view', add_jsonapi_view, action_wrap=False)
 
     # replace pyramid json renderer with one that knows about colander.null
     json_renderer = JSON()
