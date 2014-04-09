@@ -13,7 +13,7 @@ def add_jsonapi_view(
     config,
     view=None,
     name="",
-    permission="view",
+    permission="sdi.view",
     request_type=None,
     request_method=None,
     request_param=None,

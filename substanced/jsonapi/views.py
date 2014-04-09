@@ -1,6 +1,9 @@
 from . import jsonapi_view
-from pyramid.httpexceptions import HTTPNoContent
-from substanced.property.views import PropertySheetsView
+from pyramid.httpexceptions import (
+    HTTPNoContent,
+    HTTPForbidden,
+    )
+from pyramid.security import has_permission
 
 
 class ContentPropertiesAPI(object):
@@ -9,16 +12,45 @@ class ContentPropertiesAPI(object):
         self.context = context
         self.request = request
 
+    def _has_permission_to(self, perm, sheet_factory):
+        permissions = getattr(sheet_factory, 'permissions', None)
+        if permissions is not None:
+            permission = dict(permissions).get(perm)
+            if permission:
+                return has_permission(permission, self.context, self.request)
+        return True
+
+    def _sheet_factories(self, action='view'):
+        L = []
+        candidates = self.request.registry.content.metadata(
+            self.context, 'propertysheets', [])
+        for name, factory in candidates:
+            if not self._has_permission_to(action, factory):
+                continue
+            L.append((name, factory))
+        return L
+
     @jsonapi_view()
     def get(self):
         res = {}
-        propview = PropertySheetsView(self.request)
-        for name, factory in propview.viewable_sheet_factories():
+        for name, factory in self._sheet_factories('view'):
             sheet = factory(self.context, self.request)
             appstruct = sheet.get()
             cstruct = sheet.schema.serialize(appstruct)
             res[name] = cstruct
         return res
+
+    @jsonapi_view(request_method='PUT', permission='sdi.edit-properties')
+    def update(self):
+        data = self.request.json_body
+        sheet_factories = dict(self._sheet_factories('change'))
+        for name, cstruct in data.items():
+            if name in sheet_factories:
+                sheet = sheet_factories[name](self.context, self.request)
+                sheet.set(cstruct)
+            else:
+                raise HTTPForbidden('Not allowed to update property sheet.')
+        return HTTPNoContent()
 
     @jsonapi_view(request_method='DELETE', permission='sdi.manage-contents')
     def delete(self):

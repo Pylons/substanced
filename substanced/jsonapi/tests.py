@@ -13,7 +13,7 @@ class Test_add_jsonapi_view(unittest.TestCase):
     def test_default_permission_is_view(self):
         config = self._makeConfig()
         self._callFUT(config)
-        self.assertEqual(config._added['permission'], 'view')
+        self.assertEqual(config._added['permission'], 'sdi.view')
 
     def test_default_route_name_is_substanced_api(self):
         config = self._makeConfig()
