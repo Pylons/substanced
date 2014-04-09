@@ -504,7 +504,7 @@ Other Helpers
 
 .. autofunction:: add_mgmt_view
 
-.. autoclass:: mgmt_view
+.. autofunction:: mgmt_view
 
 .. autoclass:: sdiapi
    :members:

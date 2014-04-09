@@ -195,12 +195,11 @@ def add_mgmt_view(
     config.action(discriminator, introspectables=(intr,))
 
 class mgmt_view(object):
-    """ A class :term:`decorator` which, when applied to a class, will
-    provide defaults for all view configurations that use the class.  This
-    decorator accepts all the arguments accepted by
-    :class:`pyramid.view.view_config`, and each has the same meaning.
+    """ A class :term:`decorator` which, when applied to a class or function,
+    will configure it as a :term:`management view`.
 
-    See :ref:`view_defaults` for more information.
+    This is a thin wrapper around ``substanced.sdi.add_mgmt_view``
+    and accepts the same arguments.
     """
     venusian = venusian
     def __init__(self, **settings):
