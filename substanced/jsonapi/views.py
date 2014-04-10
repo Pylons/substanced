@@ -41,7 +41,7 @@ class ContentPropertiesAPI(object):
             L.append((name, factory))
         return L
 
-    @jsonapi_view()
+    @jsonapi_view(request_method='GET')
     def get(self):
         res = {}
         for name, factory in self._sheet_factories('view'):
