@@ -55,6 +55,40 @@ class TestContentPropertiesAPI(unittest.TestCase):
         view = self._make_one(context, request)
         self.assertEqual(view.get(), {})
 
+    def test_update(self):
+        context = DummyContent(a='foo', b=42, c=Decimal('21.1'), d=False)
+        request = testing.DummyRequest(json_body={
+            'One': {'a': 'bar', 'b': '43'},
+            'Two': {'c': '21.2', 'd': 'true'}
+        })
+        view = self._make_one(context, request)
+        self.assertEqual(view.update().status_int, 204)
+        self.assertEqual(context.a, 'bar')
+        self.assertEqual(context.b, 43)
+        self.assertEqual(context.c, Decimal('21.2'))
+        self.assertEqual(context.d, True)
+
+    def test_update_no_permission(self):
+        from pyramid.httpexceptions import HTTPForbidden
+        self.config.testing_securitypolicy(permissive=False)
+        context = DummyContent(a='foo', b=42, c=Decimal('21.1'), d=False)
+        request = testing.DummyRequest(json_body={
+            'One': {'a': 'bar', 'b': '43'},
+            'Two': {'c': '21.2', 'd': 'true'}
+        })
+        view = self._make_one(context, request)
+        with self.assertRaises(HTTPForbidden):
+            view.update()
+
+    def test_delete(self):
+        root = testing.DummyResource()
+        root['foo'] = context = testing.DummyResource()
+        request = testing.DummyRequest()
+        view = self._make_one(context, request)
+        self.assertEqual(view.delete().status_int, 204)
+        self.assertTrue('foo' not in root)
+
+
 class DummyContent(object):
 
     def __init__(self, **kw):

@@ -58,7 +58,8 @@ class ContentPropertiesAPI(object):
         for name, cstruct in data.items():
             if name in sheet_factories:
                 sheet = sheet_factories[name](self.context, self.request)
-                sheet.set(cstruct)
+                appstruct = sheet.schema.deserialize(cstruct)
+                sheet.set(appstruct)
             else:
                 raise HTTPForbidden('Not allowed to update property sheet.')
         return HTTPNoContent()
