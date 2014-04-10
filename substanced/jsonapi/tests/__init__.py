@@ -1,9 +1,10 @@
 import unittest
 from pyramid import testing
 
+
 class Test_add_jsonapi_view(unittest.TestCase):
     def _callFUT(self, config, **kw):
-        from . import add_jsonapi_view
+        from .. import add_jsonapi_view
         return add_jsonapi_view(config, **kw)
 
     def _makeConfig(self):
@@ -34,12 +35,12 @@ class Test_jsonapi_view(unittest.TestCase):
         testing.tearDown()
 
     def _getTargetClass(self):
-        from . import jsonapi_view
+        from .. import jsonapi_view
         return jsonapi_view
 
     def _makeOne(self, *arg, **kw):
         return self._getTargetClass()(*arg, **kw)
-        
+
     def test_call_function(self):
         decorator = self._makeOne()
         venusian = DummyVenusian()
@@ -85,13 +86,14 @@ class DummyVenusianInfo(object):
     module = None
     def __init__(self, **kw):
         self.__dict__.update(kw)
-    
+
+
 class DummyVenusian(object):
     def __init__(self, info=None):
         if info is None:
             info = DummyVenusianInfo()
         self.info = info
-        
+
     def attach(self, wrapped, callback, category):
         self.wrapped = wrapped
         self.callback = callback
@@ -104,7 +106,7 @@ class DummyConfigurator(object):
     def __init__(self):
         self._actions = []
         self._added = None
-        
+
     def maybe_dotted(self, thing):
         return thing
 
