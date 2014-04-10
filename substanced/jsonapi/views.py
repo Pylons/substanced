@@ -3,19 +3,17 @@ from pyramid.httpexceptions import (
     HTTPNoContent,
     HTTPForbidden,
     )
-from pyramid.response import Response
 from pyramid.security import (
     has_permission,
     NO_PERMISSION_REQUIRED,
     )
 from pyramid.view import view_defaults
-import json
 
 
 @jsonapi_view(context=Exception, permission=NO_PERMISSION_REQUIRED)
 def jsonapi_exception_view(exc, request):
-    return Response(json.dumps(
-        {'error': str(exc)}), status=500, content_type='application/json')
+    request.response.status_int = 500
+    return {'error': str(exc)}
 
 
 @view_defaults(content=True)
