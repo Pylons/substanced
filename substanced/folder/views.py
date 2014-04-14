@@ -1421,7 +1421,22 @@ def add_folder_contents_views(
         check_csrf=True,
         attr='reorder_rows',
         )
-        
+
+@mgmt_view(
+    context=IFolder,
+    name='upload',
+    tab_title='Upload',
+    tab_condition=True,
+    tab_after='properties',
+    permission='sdi.add-content',
+    renderer='substanced.sdi:templates/multiupload.pt'
+    )
+def multi_upload(context, request):
+    print "in multi_upload"
+    return {
+
+    }
+
 def includeme(config): # pragma: no cover
     config.add_directive(
         'add_folder_contents_views',
