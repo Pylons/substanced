@@ -72,11 +72,12 @@
               url: url,
               dataType: 'json',
               autoUpload: false,
-              acceptFileTypes: /(\.|\/)(gif|jpe?g|png)$/i,
-              maxFileSize: 5000000, // 5 MB
+              //acceptFileTypes: /(\.|\/)(gif|jpe?g|png)$/i,
+              //maxFileSize: 5000000, // 5 MB
               // Enable image resizing, except for Android and Opera,
               // which actually support image resizing, but fail to
-              // send Blob objects via XHR requests:
+              // send Blob objects via XHR requests.
+              // By default images are resized to FullHD (1920x1080).
               disableImageResize: /Android(?!.*Chrome)|Opera/
                   .test(window.navigator.userAgent),
               previewMaxWidth: 100,
