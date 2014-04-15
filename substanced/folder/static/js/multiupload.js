@@ -1,13 +1,12 @@
 /*jslint unparam: true, regexp: true */
 /*global window, $ */
-$(function () {
++(function($) {
     'use strict';
     // Change this to the location of your server-side upload handler:
     var url = './@@upload-submit',
         uploadButton = $('<button/>')
             .addClass('btn btn-primary')
             .prop('disabled', true)
-            .text('Processing...')
             .on('click', function () {
                 var $this = $(this),
                     data = $this.data();
@@ -42,13 +41,13 @@ $(function () {
         $.each(data.files, function (index, file) {
             var node = $('<p/>')
                     .append($('<span/>').text(file.name));
-            if (!index) {
+            if (index !== 0) {
                 node
-                    .append('<br>')
-                    .append(uploadButton.clone(true).data(data));
+                    .append('<br>');
             }
             node.appendTo(data.context);
         });
+        $('#fileupload-wrapper').append(uploadButton.clone(true).data(data));
     }).on('fileuploadprocessalways', function (e, data) {
         var index = data.index,
             file = data.files[index],
@@ -80,8 +79,9 @@ $(function () {
       $('#messages')
          .empty()
          .append(
-             $('<div class="alert alert-notice"></div>')
-                 .append('1 file uploaded').append('<button type="button" class="close" data-dismiss="alert">&times;</button>')
+             $('<div class="alert alert-success"></div>')
+                 .append('1 file uploaded')
+                 .append('<button type="button" class="btn btn-primary" data-dismiss="alert">&times;</button>')
          );
         $.each(data.result.files, function (index, file) {
             console.log('DONE file:', index, file);
@@ -91,4 +91,4 @@ $(function () {
       console.log('FAIL', data);
     }).prop('disabled', !$.support.fileInput)
         .parent().addClass($.support.fileInput ? undefined : 'disabled');
-});
+})(jQuery);
