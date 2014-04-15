@@ -1468,7 +1468,7 @@ def _makeob(request, stream, title, mimetype):
     )
 def multi_upload_submit(context, request):
     print('in multi_upload_submit')
-
+    result = {'files': []};
     for filedata in request.params.values():
         mimetype = filedata.type or USE_MAGIC
         filename = filedata.filename
@@ -1484,12 +1484,13 @@ def multi_upload_submit(context, request):
         title = name
         fileob = _makeob(request, stream, title, mimetype)
         context[name] = fileob
-        return {
+        # produce data for the client
+        result['files'].append({
             'name': name,
             'size': size,
-            # url: file_url,
-            # thumbnail: thumbnail_url
-        }
+            #' url': resou,
+        })
+    return result
 
 def includeme(config): # pragma: no cover
     config.add_directive(
