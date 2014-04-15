@@ -1,8 +1,8 @@
 /*jslint unparam: true, regexp: true */
-/*global window, $ */
+/*global window, jQuery */
+
 +(function($) {
     'use strict';
-    // Change this to the location of your server-side upload handler:
     var url = './@@upload-submit',
         uploadButton = $('<button/>')
             .addClass('btn btn-primary')
