@@ -48,8 +48,7 @@
       $(function () {
           'use strict';
           // Change this to the location of your server-side upload handler:
-          var url = window.location.hostname === 'blueimp.github.io' ?
-                      '//jquery-file-upload.appspot.com/' : 'server/php/',
+          var url = './@@upload-submit',
               uploadButton = $('<button/>')
                   .addClass('btn btn-primary')
                   .prop('disabled', true)
@@ -121,6 +120,7 @@
                   progress + '%'
               );
           }).on('fileuploaddone', function (e, data) {
+              console.log('DONE', data);
               $.each(data.result.files, function (index, file) {
                   if (file.url) {
                       var link = $('<a>')
