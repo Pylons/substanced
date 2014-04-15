@@ -1432,7 +1432,7 @@ def add_folder_contents_views(
     renderer='substanced.sdi:templates/multiupload.pt'
     )
 def multi_upload(context, request):
-    print "in multi_upload"
+    print("in multi_upload")
     return {
 
     }
