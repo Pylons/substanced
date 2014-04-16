@@ -4,7 +4,7 @@
 +(function($) {
     'use strict';
     var url = './@@upload-submit',
-        uploadButton = $('<button/>')
+        uploadButton = $('<button class="upload-button" />')
             .addClass('btn btn-primary')
             .prop('disabled', true)
             .on('click', function () {
@@ -38,16 +38,46 @@
         previewCrop: true
     }).on('fileuploadadd', function (e, data) {
         data.context = $('<div/>').appendTo('#files');
+        // add a global upload button
+        // is there already one?
+        var button = $('#fileupload-wrapper').find('.upload-button');
+        if (button.length === 0) {
+            // add a new one
+            button = uploadButton
+                .clone(true)
+                .data({
+                    // dataItems aggregates all individual upload instances
+                    dataItems: [],
+                    submit: function() {
+                        var all = [];
+                        $.each(this.dataItems, function (index, dataItem) {
+                            console.log('iter', dataItem.done, dataItem);
+                            if (!dataItem.done) {
+                                all.push(dataItem.submit());
+                            }
+                        });
+                        return $.when.apply(null, all);
+                    }
+                })
+                .text('Upload')
+                .prop('disabled', false)
+                .appendTo('#fileupload-wrapper');
+        }
+        var globalData = button.data();
+        // Add individual upload buttons
         $.each(data.files, function (index, file) {
             var node = $('<p/>')
-                    .append($('<span/>').text(file.name));
-            if (index !== 0) {
+                .append($('<span/>').text(file.name));
+            if (index === 0) {
                 node
                     .append('<br>');
+                    // TODO individal buttons
+                    //.append(uploadButton.clone(true).data(data));
             }
             node.appendTo(data.context);
+            // Add the files to the global button
+            globalData.dataItems = globalData.dataItems.concat(data);
         });
-        $('#fileupload-wrapper').append(uploadButton.clone(true).data(data));
     }).on('fileuploadprocessalways', function (e, data) {
         var index = data.index,
             file = data.files[index],
@@ -81,14 +111,19 @@
          .append(
              $('<div class="alert alert-success"></div>')
                  .append('1 file uploaded')
-                 .append('<button type="button" class="btn btn-primary" data-dismiss="alert">&times;</button>')
+                 .append('<button type="button" class="close" data-dismiss="alert">&times;</button>')
          );
         $.each(data.result.files, function (index, file) {
             console.log('DONE file:', index, file);
 
         });
     }).on('fileuploadfail', function (e, data) {
-      console.log('FAIL', data);
+        $.each(data.result.files, function (index, file) {
+            //result.done = true;
+            //result.error = true;
+            console.log('FAIL file', index, file);
+        });
+
     }).prop('disabled', !$.support.fileInput)
         .parent().addClass($.support.fileInput ? undefined : 'disabled');
 })(jQuery);
