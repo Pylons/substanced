@@ -14,16 +14,23 @@
             // If not, create it.
             flashBox = $('<div class="alert alert-' + alertType +
                       ' alert-fileupload-' + alertType + '"></div>')
-                .append({
-                    success: '<span class="nr">0</span> file(s) uploaded',
-                    error: 'Upload failed for <span class="nr">0</span> file(s)'
-                }[alertType])
+                .append('<span class="status"></span>')
                 .append('<button type="button" class="close" data-dismiss="alert">&times;</button>')
                 .data({
                     nr: 0,
                     increment: function(diff) {
                         this.nr += diff;
-                        flashBox.find('.nr').text(this.nr);
+                        flashBox.find('.status').text(
+                            ((this.nr < 2) ? {
+                                // singular
+                                success: '' + this.nr + ' file uploaded',
+                                error: 'Upload failed for ' + this.nr + ' file'
+                            } : {
+                                // plural
+                                success: '' + this.nr + ' files uploaded',
+                                error: 'Upload failed for ' + this.nr + ' files'
+                            })[alertType]
+                        );
                     }
                 })
                 .appendTo('#messages');

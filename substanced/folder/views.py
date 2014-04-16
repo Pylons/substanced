@@ -1,3 +1,6 @@
+
+from __future__ import print_function
+
 import functools
 import itertools
 import operator
@@ -1480,10 +1483,11 @@ def multi_upload_submit(context, request):
             stream = None
         # convert filename to a readable, unique name
         name = slugify_in_context(context, filename)
-        print('multi_upload name', name, size)
+        print('multi_upload', name, size)
+        # create the title, defaulting to name
         title = name
-        fileob = _makeob(request, stream, title, mimetype)
-        context[name] = fileob
+        # creare and store the File content object
+        context[name] = _makeob(request, stream, title, mimetype)
         # produce data for the client
         result['files'].append({
             'name': name,
