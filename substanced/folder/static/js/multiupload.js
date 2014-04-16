@@ -39,23 +39,58 @@
         flashBox.data().increment(diff);
     }
 
+    function wrapMethod(button, name) {
+        // patches the method to call the global _and_ the individual
+        // button's corresponding method. Used if called from global button.
+        var data = button.data();
+        var old = data[name];
+        data[name] = function() {
+            old.apply(this, arguments);
+            var singleButton = data.uploadButton;
+            singleButton.data()[name].apply(singleButton, arguments);
+        };
+    }
+
     var url = './@@upload-submit',
         uploadButton = $('<button class="upload-button" />')
             .addClass('btn btn-primary')
             .prop('disabled', true)
             .on('click', function () {
-                var $this = $(this),
-                    data = $this.data();
-                $this
-                    .off('click')
-                    .text('Abort')
-                    .on('click', function () {
-                        $this.remove();
-                        data.abort();
-                    });
-                data.submit().always(function () {
-                    $this.remove();
+                var data = $(this).data();
+                data.uploadState();
+                data.self.on('click', function () {
+                    data.finishedState();
+                    data.abort();
                 });
+                data.submit().always(function () {
+                    data.finishedState();
+                });
+            })
+            .data({
+                clone: function() {
+                    // create a fresh new clone of the button
+                    // also call initialState
+                    var self = uploadButton.clone(true);
+                    var data = self.data();
+                    data.self = self;
+                    // set initial state
+                    data.initialState();
+                    // and return it
+                    return self;
+                },
+                initialState: function() {
+                    this.self
+                        .text('Upload')
+                        .prop('disabled', !!(this.files || []).error);
+                },
+                uploadState: function() {
+                    this.self
+                        .off('click')
+                        .text('Abort');
+                },
+                finishedState: function() {
+                    this.self.remove();
+                }
             });
     $('#fileupload').fileupload({
         url: url,
@@ -83,9 +118,9 @@
         var button = $('#fileupload-wrapper').find('.upload-button');
         if (button.length === 0) {
             // add a new one
-            button = uploadButton
-                .clone(true)
+            button = uploadButton.data().clone()
                 .data({
+                    // make this into a global button
                     // dataItems aggregates all individual upload instances
                     dataItems: [],
                     submit: function() {
@@ -98,22 +133,23 @@
                         return $.when.apply(null, all);
                     }
                 })
-                .text('Upload')
-                .prop('disabled', false)
                 .appendTo('#fileupload-wrapper');
+            // wrap state changes to also act on individual buttons
+            //wrapMethod(button, 'uploadState');
+            //wrapMethod(button, 'finishedState');
         }
         var globalData = button.data();
-        // Add individual upload buttons
+        // Construct the file's upload info bar
         $.each(data.files, function (index, file) {
-            var node = $('<p/>')
-                .append($('<span/>').text(file.name));
-            if (index === 0) {
-                node
-                    .append('<br>');
-                    // TODO individal buttons
-                    //.append(uploadButton.clone(true).data(data));
-            }
-            node.appendTo(data.context);
+            $('<p/>')
+                .append($('<span/>').text(file.name))
+                .append('<br>')
+                // Add individual upload button
+                .append(uploadButton.data().clone().data(data))
+                .appendTo(data.context);
+            // store individual buttons, so global actions
+            // can change their state appropriately.
+            data.uploadButton = uploadButton;
             // Add the files to the global button
             globalData.dataItems = globalData.dataItems.concat(data);
         });
@@ -134,6 +170,7 @@
                 .append($('<span class="text-danger"/>').text(file.error));
         }
         if (index + 1 === data.files.length) {
+            // XXX
             data.context.find('button')
                 .text('Upload')
                 .prop('disabled', !!data.files.error);
