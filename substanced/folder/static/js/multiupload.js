@@ -3,6 +3,35 @@
 
 +(function($) {
     'use strict';
+
+    function flash(alertType, diff) {
+        // Alert type is either 'success' or 'error'.
+        // Diff is (sensibly) positive.
+        //
+        // is there already a flash for this alert type?
+        var flashBox = $('#messages').find('.alert-fileupload-' + alertType).last();
+        if (flashBox.length === 0) {
+            // If not, create it.
+            flashBox = $('<div class="alert alert-' + alertType +
+                      ' alert-fileupload-' + alertType + '"></div>')
+                .append({
+                    success: '<span class="nr">0</span> file(s) uploaded',
+                    error: 'Upload failed for <span class="nr">0</span> file(s)'
+                }[alertType])
+                .append('<button type="button" class="close" data-dismiss="alert">&times;</button>')
+                .data({
+                    nr: 0,
+                    increment: function(diff) {
+                        this.nr += diff;
+                        flashBox.find('.nr').text(this.nr);
+                    }
+                })
+                .appendTo('#messages');
+        }
+        // Increment the counter with the diff specified.
+        flashBox.data().increment(diff);
+    }
+
     var url = './@@upload-submit',
         uploadButton = $('<button class="upload-button" />')
             .addClass('btn btn-primary')
@@ -35,7 +64,11 @@
             .test(window.navigator.userAgent),
         previewMaxWidth: 100,
         previewMaxHeight: 100,
-        previewCrop: true
+        previewCrop: true,
+        // enable multi file uploads, while limiting it with
+        // a size (exceeding this a new request will be made)
+        singleFileUploads: false,
+        limitMultiFileUploadSize: 5 * 1000 * 1000    // 5MB
     }).on('fileuploadadd', function (e, data) {
         data.context = $('<div/>').appendTo('#files');
         // add a global upload button
@@ -51,7 +84,6 @@
                     submit: function() {
                         var all = [];
                         $.each(this.dataItems, function (index, dataItem) {
-                            console.log('iter', dataItem.done, dataItem);
                             if (!dataItem.done) {
                                 all.push(dataItem.submit());
                             }
@@ -78,6 +110,8 @@
             // Add the files to the global button
             globalData.dataItems = globalData.dataItems.concat(data);
         });
+        // reset progress
+        $('#progress .progress-bar').css('width', 0);
     }).on('fileuploadprocessalways', function (e, data) {
         var index = data.index,
             file = data.files[index],
@@ -99,31 +133,19 @@
         }
     }).on('fileuploadprogressall', function (e, data) {
         var progress = parseInt(data.loaded / data.total * 100, 10);
-        $('#progress .progress-bar').css(
-            'width',
-            progress + '%'
-        );
+        $('#progress .progress-bar').css('width', progress + '%');
     }).on('fileuploaddone', function (e, data) {
-      console.log('DONE', data.result);
-      // Let's display it a status message in case the user clicks cancel.
-      $('#messages')
-         .empty()
-         .append(
-             $('<div class="alert alert-success"></div>')
-                 .append('1 file uploaded')
-                 .append('<button type="button" class="close" data-dismiss="alert">&times;</button>')
-         );
+        // status for the user
+        flash('success', data.result.files.length);
         $.each(data.result.files, function (index, file) {
             console.log('DONE file:', index, file);
-
         });
     }).on('fileuploadfail', function (e, data) {
+        // status for the user
+        flash('error', data.result.files.length);
         $.each(data.result.files, function (index, file) {
-            //result.done = true;
-            //result.error = true;
-            console.log('FAIL file', index, file);
+            console.log('ERROR file:', index, file);
         });
-
     }).prop('disabled', !$.support.fileInput)
         .parent().addClass($.support.fileInput ? undefined : 'disabled');
 })(jQuery);

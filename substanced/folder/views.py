@@ -1468,7 +1468,7 @@ def _makeob(request, stream, title, mimetype):
     )
 def multi_upload_submit(context, request):
     print('in multi_upload_submit')
-    result = {'files': []};
+    result = {'files': []}
     for filedata in request.params.values():
         mimetype = filedata.type or USE_MAGIC
         filename = filedata.filename
@@ -1480,7 +1480,7 @@ def multi_upload_submit(context, request):
             stream = None
         # convert filename to a readable, unique name
         name = slugify_in_context(context, filename)
-        print('multi_upload name', name)
+        print('multi_upload name', name, size)
         title = name
         fileob = _makeob(request, stream, title, mimetype)
         context[name] = fileob
@@ -1488,7 +1488,6 @@ def multi_upload_submit(context, request):
         result['files'].append({
             'name': name,
             'size': size,
-            #' url': resou,
         })
     return result
 
