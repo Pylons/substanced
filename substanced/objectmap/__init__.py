@@ -5,6 +5,7 @@ import BTrees
 import colander
 from persistent import Persistent
 from pyramid.compat import is_nonstr_iter
+from pyramid.security import Allow
 from pyramid.traversal import (
     resource_path_tuple,
     find_resource,
@@ -16,6 +17,7 @@ from ..event import subscribe_will_be_removed
 from ..interfaces import IObjectMap
 from ..util import (
     get_oid,
+    get_acl,
     get_factory_type,
     set_oid,
     find_objectmap,
@@ -89,6 +91,7 @@ class ObjectMap(Persistent):
     
     _v_nextid = None
     _randrange = random.randrange
+    path_to_acl = None # b/c
 
     family = BTrees.family64
 
@@ -97,6 +100,7 @@ class ObjectMap(Persistent):
             self.family = family
         self.objectid_to_path = self.family.OO.BTree()
         self.path_to_objectid = self.family.OO.BTree()
+        self.path_to_acl = self.family.OO.BTree()
         self.pathindex = self.family.OO.BTree()
         self.referencemap = ReferenceMap()
         self.extentmap = ExtentMap()
@@ -123,13 +127,20 @@ class ObjectMap(Persistent):
 
             self._v_nextid = None
 
+    def _get_path_tuple(self, obj_objectid_or_path_tuple):
+        path_tuple = None
+        if hasattr(obj_objectid_or_path_tuple, '__parent__'):
+            path_tuple = resource_path_tuple(obj_objectid_or_path_tuple)
+        elif isinstance(obj_objectid_or_path_tuple, INT_TYPES):
+            path_tuple = self.objectid_to_path.get(obj_objectid_or_path_tuple)
+        elif isinstance(obj_objectid_or_path_tuple, tuple):
+            path_tuple = obj_objectid_or_path_tuple
+        return path_tuple
+
     def objectid_for(self, obj_or_path_tuple):
         """ Returns an objectid or ``None``, given an object or a path tuple"""
-        if isinstance(obj_or_path_tuple, tuple):
-            path_tuple = obj_or_path_tuple
-        elif hasattr(obj_or_path_tuple, '__parent__'):
-            path_tuple = resource_path_tuple(obj_or_path_tuple)
-        else:
+        path_tuple = self._get_path_tuple(obj_or_path_tuple)
+        if path_tuple is None:
             raise ValueError(
                 'objectid_for accepts a traversable object or a path tuple, '
                 'got %s' % (obj_or_path_tuple,))
@@ -141,12 +152,7 @@ class ObjectMap(Persistent):
 
     def object_for(self, objectid_or_path_tuple, context=None):
         """ Returns an object or ``None`` given an object id or a path tuple"""
-        if isinstance(objectid_or_path_tuple, INT_TYPES):
-            path_tuple = self.objectid_to_path.get(objectid_or_path_tuple)
-        elif isinstance(objectid_or_path_tuple, tuple):
-            path_tuple = objectid_or_path_tuple
-        else:
-            raise ValueError('Unknown input %s' % (objectid_or_path_tuple,))
+        path_tuple = self._get_path_tuple(objectid_or_path_tuple)
         if path_tuple is None:
             return None
         try:
@@ -206,6 +212,11 @@ class ObjectMap(Persistent):
             oidset = omap.setdefault(level, self.family.IF.TreeSet())
             oidset.add(objectid)
 
+        acl = get_acl(obj, None)
+        
+        if acl is not None:
+            self.path_to_acl[path_tuple] = tuple(acl)
+
         return objectid
 
     def remove(self, obj_objectid_or_path_tuple, moving=False):
@@ -217,13 +228,8 @@ class ObjectMap(Persistent):
         Return a set of removed oids (including the oid related to the object
         passed).
         """
-        if hasattr(obj_objectid_or_path_tuple, '__parent__'):
-            path_tuple = resource_path_tuple(obj_objectid_or_path_tuple)
-        elif isinstance(obj_objectid_or_path_tuple, INT_TYPES):
-            path_tuple = self.objectid_to_path[obj_objectid_or_path_tuple]
-        elif isinstance(obj_objectid_or_path_tuple, tuple):
-            path_tuple = obj_objectid_or_path_tuple
-        else:
+        path_tuple = self._get_path_tuple(obj_objectid_or_path_tuple)
+        if path_tuple is None:
             raise ValueError(
                 'Value passed to remove must be a traversable '
                 'object, an object id, or a path tuple, got %s' % (
@@ -257,6 +263,8 @@ class ObjectMap(Persistent):
 
         for k in removepaths:
             del self.pathindex[k]
+            if k in self.path_to_acl:
+                del self.path_to_acl[k]
 
         for x in range(pathlen-1):
 
@@ -287,19 +295,12 @@ class ObjectMap(Persistent):
 
         return removed
 
-    def _get_path_tuple(self, obj_or_path_tuple):
-        if hasattr(obj_or_path_tuple, '__parent__'):
-            path_tuple = resource_path_tuple(obj_or_path_tuple)
-        elif isinstance(obj_or_path_tuple, tuple):
-            path_tuple = obj_or_path_tuple
-        else:
+    def navgen(self, obj_or_path_tuple, depth=1):
+        path_tuple = self._get_path_tuple(obj_or_path_tuple)
+        if path_tuple is None:
             raise ValueError(
                 'must provide a traversable object or a '
                 'path tuple, got %s' % (obj_or_path_tuple,))
-        return path_tuple
-    
-    def navgen(self, obj_or_path_tuple, depth=1):
-        path_tuple = self._get_path_tuple(obj_or_path_tuple)
         return self._navgen(path_tuple, depth)
 
     def _navgen(self, path_tuple, depth):
@@ -329,6 +330,11 @@ class ObjectMap(Persistent):
         If ``include_origin`` is ``True``, count the object identifier of the
         object that was passed, otherwise omit it."""
         path_tuple = self._get_path_tuple(obj_or_path_tuple)
+        if path_tuple is None:
+            raise ValueError(
+                'must provide a traversable object or a '
+                'path tuple, got %s' % (obj_or_path_tuple,))
+            
         omap = self.pathindex.get(path_tuple)
 
         result = 0
@@ -366,6 +372,11 @@ class ObjectMap(Persistent):
         ``include_origin`` is ``True``, include the object identifier of the
         object that was passed, otherwise omit it from the returned set."""
         path_tuple = self._get_path_tuple(obj_or_path_tuple)
+        if path_tuple is None:
+            raise ValueError(
+                'must provide a traversable object or a '
+                'path tuple, got %s' % (obj_or_path_tuple,))
+            
         omap = self.pathindex.get(path_tuple)
 
         result = self.family.IF.Set()
@@ -503,6 +514,36 @@ class ObjectMap(Persistent):
         entirely of oids.  If no extent exist by this name, this will return
         the value of ``default``."""
         return self.extentmap.get(name, default)
+
+    def set_acl(self, obj_objectid_or_path_tuple, acl):
+        path_tuple = self._get_path_tuple(obj_objectid_or_path_tuple)
+        self.path_to_acl[path_tuple] = acl
+
+    def allowed(self, oids, principals, permission):
+        for oid in oids:
+            path_tuple = self.objectid_to_path.get(oid)
+            if path_tuple is None:
+                continue
+        
+            try:
+                for idx in reversed(range(len(path_tuple))):
+                    acl = self.path_to_acl.get(path_tuple[:idx+1])
+                    if acl is None:
+                        continue
+                    for ace in acl:
+                        ace_action, ace_principal, ace_permissions = ace
+                        if ace_principal in principals:
+                            if not is_nonstr_iter(ace_permissions):
+                                ace_permissions = [ace_permissions]
+                            if permission in ace_permissions:
+                                if ace_action == Allow:
+                                    yield oid
+                                raise _Break()
+            except _Break:
+                pass
+
+class _Break(Exception):
+    pass
 
 class ExtentMap(Persistent):
 

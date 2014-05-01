@@ -340,17 +340,23 @@ class FolderContents(object):
         """ The default query function for a folder """
         system_catalog = self.system_catalog
         folder = self.context
-        request = self.request
         path = system_catalog['path']
-        allowed = system_catalog['allowed']
         interfaces = system_catalog['interfaces']
         q = ( path.eq(folder, depth=1, include_origin=False) &
-              allowed.allows(request, 'sdi.view') &
               interfaces.notany([IService])
             )
         return q
 
     get_query = get_default_query
+
+    def default_allowed_filter(self, resultset, request):
+        oids = resultset.ids
+        principals = request.effective_principals
+        objectmap = find_objectmap(self.context)
+        oids = objectmap.allowed(oids, principals, permission='sdi.view')
+        return list(oids)
+
+    allowed_filter = default_allowed_filter
 
     @reify
     def system_catalog(self):
@@ -574,8 +580,6 @@ class FolderContents(object):
         resultset = q.execute()
         # NB: must take snapshot of folder_length before limiting the length
         # of the resultset via any sort
-        folder_length = len(resultset)
-
         sort_info = self._sort_info(
             columns,
             sort_column_name=sort_column_name,
@@ -594,7 +598,8 @@ class FolderContents(object):
                 folder, resultset, reverse=reverse, limit=end
                 )
 
-        ids = resultset.ids
+        ids = self.allowed_filter(resultset, request)
+        folder_length = len(ids)
 
         buttons = self.get_buttons()
         show_checkbox_column = self.show_checkbox_column(
@@ -1058,12 +1063,9 @@ class FolderServices(FolderContents):
         """ The default query function for a folder """
         system_catalog = self.system_catalog
         folder = self.context
-        request = self.request
         path = system_catalog['path']
-        allowed = system_catalog['allowed']
         interfaces = system_catalog['interfaces']
         q = ( path.eq(folder, depth=1, include_origin=False) &
-              allowed.allows(request, 'sdi.view') &
               interfaces.any([IService])
             )
         return q

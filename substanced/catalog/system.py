@@ -109,11 +109,6 @@ class SystemCatalogFactory(object):
     # need to access it immediately.
     interfaces = Keyword()
 
-    # allowed is MODE_ATCOMMIT for next-request folder contents consistency
-    allowed = Allowed(
-        permissions=('sdi.view', 'view'),
-        )
-
     text = Text(action_mode=MODE_DEFERRED)
 
     # content_type is MODE_ATCOMMIT because code which creates one may
