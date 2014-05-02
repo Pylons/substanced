@@ -2127,9 +2127,6 @@ class DummyResultSet(object):
     def sort(self, *arg, **kw):
         return self
 
-    def __len__(self):
-        return len(self.ids)
-
 class DummyIndex(object):
     def __init__(self, name, result):
         self.name = name
@@ -2142,10 +2139,6 @@ class DummyIndex(object):
         
     def eq(self, *arg, **kw):
         self.queried = ('eq', arg, kw)
-        return self
-
-    def allows(self, *arg, **kw):
-        self.queried = ('allows', arg, kw)
         return self
 
     def notany(self, *arg, **kw):
