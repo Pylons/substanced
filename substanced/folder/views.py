@@ -29,6 +29,7 @@ from ..sdi import (
     default_sdi_addable,
     mgmt_view,
     sdi_mgmt_views,
+    RIGHT,
     )
 from ..util import _
 
@@ -1036,6 +1037,7 @@ class FolderContents(object):
 
 @folder_contents_views(name='services',
                        tab_title=_('Services'),
+                       tab_near=RIGHT,
                        view_permission='sdi.view-services',
                       )
 class FolderServices(FolderContents):
