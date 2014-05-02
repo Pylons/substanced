@@ -1637,11 +1637,8 @@ class TestFolderContents(unittest.TestCase):
         self.assertEqual(query.queried,
                          ('eq', (context,), {'depth': 1,
                                              'include_origin': False}))
-        self.assertEqual(query.anded_with[0].name, 'allowed')
+        self.assertEqual(query.anded_with[0].name, 'interfaces')
         self.assertEqual(query.anded_with[0].queried,
-                         ('allows', (request, 'sdi.view'), {}))
-        self.assertEqual(query.anded_with[1].name, 'interfaces')
-        self.assertEqual(query.anded_with[1].queried,
                          ('notany', ([IService],), {}))
 
     def test_no_content_types(self):
@@ -1946,11 +1943,8 @@ class FolderServicesTest(unittest.TestCase):
         self.assertEqual(query.queried,
                          ('eq', (context,), {'depth': 1,
                                              'include_origin': False}))
-        self.assertEqual(query.anded_with[0].name, 'allowed')
+        self.assertEqual(query.anded_with[0].name, 'interfaces')
         self.assertEqual(query.anded_with[0].queried,
-                         ('allows', (request, 'sdi.view'), {}))
-        self.assertEqual(query.anded_with[1].name, 'interfaces')
-        self.assertEqual(query.anded_with[1].queried,
                          ('any', ([IService],), {}))
 
     def test_no_content_types(self):
@@ -2184,6 +2178,8 @@ class DummyObjectMap(object):
         self.result = result
     def object_for(self, oid):
         return self.result
+    def allowed(self, oids, principals, permission):
+        return oids
 
 class DummyVenusianInfo(object):
     scope = 'notaclass'

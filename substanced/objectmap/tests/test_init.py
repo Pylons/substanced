@@ -110,10 +110,6 @@ class TestObjectMap(unittest.TestCase):
         inst._find_resource = lambda *arg: a
         self.assertEqual(inst.object_for((_BLANK,)), a)
 
-    def test_object_for_unknown(self):
-        inst = self._makeOne()
-        self.assertRaises(ValueError, inst.object_for, None)
-
     def test_object_for_cantbefound(self):
         inst = self._makeOne()
         inst.objectid_to_path[1] = 'abc'
