@@ -1,5 +1,18 @@
 import BTrees
 
+from substanced._compat import u
+
+from logging import getLogger
+
+from substanced.util import (
+    get_acl,
+    postorder,
+    )
+
+_SLASH = u('/')
+
+logger = getLogger(__name__)
+
 def oobtreeify_referencemap(root): # pragma: no cover
     objectmap = root.__objectmap__
     refmap = objectmap.referencemap.refmap
@@ -34,9 +47,25 @@ def treesetify_referencesets(root): # pragma: no cover
             if oidset.__class__ != refset.oidset_class:
                 refset.target2src[reftype] = refset.oidset_class(oidset)
 
+def add_path_to_acl_to_objectmap(root):
+    objectmap = root.__objectmap__
+    objectmap.path_to_acl = objectmap.family.OO.BTree()
+    logger.info('Populating path_to_acl in objectmap (expensive evolve step)')
+    for obj in postorder(root):
+        oid = objectmap.objectid_for(obj)
+        path = objectmap.path_for(oid)
+        upath = _SLASH.join(path)
+        acl = get_acl(obj, None)
+        suffix = '(no acl)'
+        if acl is not None:
+            objectmap.set_acl(obj, acl)
+            suffix = '(indexed acl)'
+        logger.info('%s %s' % (upath, suffix))
+
 def includeme(config): # pragma: no cover
     config.add_evolution_step(oobtreeify_referencemap)
     config.add_evolution_step(oobtreeify_object_to_path)
     config.add_evolution_step(treesetify_objectmap_pathindex)
     config.add_evolution_step(treesetify_referencesets)
+    config.add_evolution_step(add_path_to_acl_to_objectmap)
     
