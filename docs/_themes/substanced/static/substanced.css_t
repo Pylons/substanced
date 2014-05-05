@@ -394,8 +394,8 @@ p {
     font-family: 'Merriweather', sans-serif;
     margin-bottom: 1em;
 }
-#header, .deep-footer .copyright, .deep-footer .footer-links {
-    font-family: 'Noto Sans', sans-serif;
+#header, .deep-footer .copyright, .deep-footer .footer-links, footer, p.tweet {
+    font-family: "Oswald", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 .navbar-fixed-top, .navbar-fixed-bottom {
     position: relative;
@@ -411,3 +411,7 @@ blockquote {
   box-shadow: none;
 }
 
+p.tweet {
+    color: #005f6b;
+    font-size: 15px;
+}

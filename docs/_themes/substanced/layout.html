@@ -17,11 +17,12 @@
 {%- set url_root = pathto('', 1) %}
 {% set script_files = ['_static/assets/js/jquery-1.10.1.min.js',
         '_static/assets/js/bootstrap.js',
+        '_static/assets/js/prettify.js',
         '_static/assets/js/lightbox.js',
         '_static/assets/js/main.js',
-        '_static/assets/js/prettify.js',
         '_static/underscore.js',
-        '_static/doctools.js'] %}
+        '_static/doctools.js',
+        '_static/twitter.js'] %}
 
 {%- macro script() %}
     <script type="text/javascript">
@@ -279,6 +280,57 @@
 
 {%- block footer %}
     <footer>
+      <div class='pre-footer'>
+        <div class='container'>
+          <div class='row'>
+            <div class='span6'>
+              <div class='blog-recent-tweets widget-tp'>
+                <h5 class="footer-header">
+                  <i class='icon-twitter-sign'></i>
+                          Recent Tweets
+                </h5>
+                <div id="substanced-tweets">
+                </div>
+              </div>
+            </div>
+            <div class='span6'>
+              <h5 class='footer-header'>Substance D Developers</h5>
+              <ul class='footer-img-list thumbnails'>
+                <li class='span1'>
+                  <a class='thumbnail'>
+                    <img alt="Chris McDonough" title="Chris McDonough" src="{{ pathto('_static/mcdonc.jpg', 1) }}" />
+                  </a>
+                </li>
+                <li class='span1'>
+                  <a class='thumbnail'>
+                    <img alt="Paul Everitt" title="Paul Everitt" src="{{ pathto('_static/repaul.jpg', 1) }}" />
+                  </a>
+                </li>
+                <li class='span1'>
+                  <a class='thumbnail'>
+                    <img alt="Tres Seaver" title="Tres Seaver" src="{{ pathto('_static/tresequis.jpg', 1) }}" />
+                  </a>
+                </li>
+                <li class='span1'>
+                  <a class='thumbnail'>
+                    <img alt="Domen Kožar" title="Domen Kožar" src="{{ pathto('_static/ielectric.jpg', 1) }}" />
+                  </a>
+                </li>
+                <li class='span1'>
+                  <a class='thumbnail'>
+                    <img alt="Balázs Reé" title="Balázs Reé"  src="{{ pathto('_static/ree.png', 1) }}" />
+                  </a>
+                </li>
+                <li class='span1'>
+                  <a class='thumbnail'>
+                    <img alt="Carlos de la Guardia" title="Carlos de la Guardia" src="{{ pathto('_static/cguardia.jpg', 1) }}" />
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
       <div class="deep-footer">
         <div class="container">
           <div class="row">
@@ -287,9 +339,9 @@
                 <li>
     {%- if show_copyright %}
       {%- if hasdoc('copyright') %}
-        {% trans path=pathto('copyright'), copyright=copyright|e %}&copy; <a href="{{ path }}">Copyright</a> {{ copyright }}. All rights reserved.{% endtrans %}
+        {% trans path=pathto('copyright'), copyright=copyright|e %}<a href="{{ path }}">Copyright</a> &copy; {{ copyright }}. All rights reserved.{% endtrans %}
       {%- else %}
-        {% trans copyright=copyright|e %}&copy; Copyright {{ copyright }}. All rights reserved.{% endtrans %}
+        {% trans copyright=copyright|e %}Copyright &copy; {{ copyright }}. All rights reserved.{% endtrans %}
       {%- endif %}
     {%- endif %}
                 </li>
@@ -316,6 +368,21 @@
     </footer>
 {%- endblock %}
 {%- block script %}{{ script() }}{% endblock %}
+    <script type="text/javascript">
+     function handleTweets(tweets){
+       var x = tweets.length;
+       var n = 0;
+       var element = document.getElementById('substanced-tweets');
+       var html = '<ul>';
+       while(n < x) {
+         html += '<li>' + tweets[n] + '</li>';
+         n++;
+       }
+       html += '</ul>';
+       element.innerHTML = html;
+     }
+     twitterFetcher.fetch('374572305348706306', '', 3, true, true, true, '', false, handleTweets, false);
+    </script>
   </body>
 </html>
 
