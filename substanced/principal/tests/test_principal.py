@@ -3,6 +3,15 @@ from pyramid import testing
 import colander
 from zope.interface import implementer
 
+class Test_locale_widget(unittest.TestCase):
+    def _callFUT(self, node, kw):
+        from substanced.principal import locale_widget
+        return locale_widget(node, kw)
+
+    def test_it(self):
+        result = self._callFUT(None, None)
+        self.assertTrue( ('en', 'en') in result.values)
+
 class TestPrincipals(unittest.TestCase):
     def setUp(self):
         self.config = testing.setUp()
@@ -77,6 +86,61 @@ class TestPrincipals(unittest.TestCase):
         self.assertTrue(reset.__acl__)
         self.assertEqual(len(inst), 1)
 
+class TestMultiplePrincipalsServices(unittest.TestCase):
+
+    def _makeSite(self):
+        from ...testing import make_site
+
+        site = make_site()
+        self.l0_principals = site['principals']
+
+        l1 = site['level1'] = DummyFolder()
+        self.l1_principals = l1['principals'] = self._makePrincipals()
+
+        l2 = site['level1']['level2'] = DummyFolder()
+        self.l2_principals = l2['principals'] = self._makePrincipals()
+
+        return site
+
+    def _makePrincipals(self):
+        from .. import Principals
+        from ...interfaces import IFolder
+        from ...interfaces import IService
+        from zope.interface import directlyProvides
+        inst = Principals()
+        directlyProvides(inst, (IFolder, IService))
+        content = DummyContentRegistry()
+        registry = testing.DummyResource()
+        registry.content = content
+        def subscribers(*args):
+            pass
+        registry.subscribers = subscribers
+        inst.after_create(None, registry)
+        return inst
+
+    def _makeUserLocator(self, context=None, request=None):
+        from .. import DefaultUserLocator
+        return DefaultUserLocator(context, request)
+
+    def test_multiple_principals_services(self):
+        from pyramid.testing import DummyModel
+
+        site = self._makeSite()
+        root_phred = self.l0_principals['users']['phred'] = DummyModel()
+        level1_phred = self.l1_principals['users']['phred'] = DummyModel()
+        level2_phred = self.l2_principals['users']['phred'] = DummyModel()
+
+        adapter = self._makeUserLocator(site, testing.DummyRequest())
+        self.assertTrue(adapter.get_user_by_login('phred') is root_phred)
+
+        adapter = self._makeUserLocator(site['level1'], testing.DummyRequest())
+        self.assertTrue(adapter.get_user_by_login('phred') is level1_phred)
+
+        adapter = self._makeUserLocator(site['level1']['level2'], 
+                                        testing.DummyRequest())
+        self.assertTrue(adapter.get_user_by_login('phred') is level2_phred)
+
+
 class TestUsers(unittest.TestCase):
     def _makeOne(self):
         from .. import Users
@@ -113,10 +177,11 @@ class Test_groupname_validator(unittest.TestCase):
         return groupname_validator(node, kw)
     
     def _makeKw(self):
+        from ...interfaces import IService
         request = testing.DummyRequest()
         context = DummyFolder()
         principals = DummyFolder()
-        principals.__is_service__ = True
+        principals.__provides__ = IService
         groups = DummyFolder()
         users = DummyFolder()
         context['principals'] = principals
@@ -279,6 +344,7 @@ class Test_groups_choices(unittest.TestCase):
 class TestUser(unittest.TestCase):
     def setUp(self):
         self.config = testing.setUp()
+        self.config.include('pyramid_chameleon')
 
     def tearDown(self):
         testing.tearDown()
@@ -297,6 +363,10 @@ class TestUser(unittest.TestCase):
         self.assertTrue(inst.check_password('abc'))
         self.assertFalse(inst.check_password('abcdef'))
 
+    def test_check_password_gt_4096_bytes(self):
+        inst = self._makeOne('abc')
+        self.assertRaises(ValueError, inst.check_password, 'a'*4097)
+        
     def test_set_password(self):
         inst = self._makeOne('abc')
         inst.set_password('abcdef')
@@ -314,12 +384,14 @@ class TestUser(unittest.TestCase):
         request = testing.DummyRequest()
         request.sdiapi = DummySDIAPI()
         request.virtual_root = site
-        self.config.include('pyramid_mailer.testing')
         inst = self._makeOne('password')
         inst.email = 'foo@example.com'
         principals['users']['user'] = inst
-        inst.email_password_reset(request)
-        self.assertTrue(get_mailer(request).outbox)
+        with testing.testConfig() as config:
+            config.include('pyramid_mailer.testing')
+            config.include('pyramid_chameleon')
+            inst.email_password_reset(request)
+            self.assertTrue(get_mailer(request).outbox)
 
     def test_email_password_user_has_no_email(self):
         from ...testing import make_site
@@ -408,10 +480,11 @@ class TestDefaultUserLocator(unittest.TestCase):
         from pyramid.testing import DummyRequest
         from zope.interface import directlyProvides
         from ...interfaces import IFolder
+        from ...interfaces import IService
         context = DummyModel()
         directlyProvides(context, IFolder)
-        principals = context['principals'] = DummyModel(__is_service__=True)
-        directlyProvides(principals, IFolder)
+        principals = context['principals'] = DummyModel()
+        directlyProvides(principals, (IFolder, IService))
         users = principals['users'] = DummyModel()
         phred = users['phred'] = DummyModel()
         adapter = self._makeOne(context, DummyRequest())
@@ -423,10 +496,11 @@ class TestDefaultUserLocator(unittest.TestCase):
         from pyramid.testing import DummyRequest
         from zope.interface import directlyProvides
         from ...interfaces import IFolder
+        from ...interfaces import IService
         context = DummyModel()
         directlyProvides(context, IFolder)
-        principals = context['principals'] = DummyModel(__is_service__=True)
-        directlyProvides(principals, IFolder)
+        principals = context['principals'] = DummyModel()
+        directlyProvides(principals, (IFolder, IService))
         users = principals['users'] = DummyModel()
         phred = users['phred'] = DummyModel()
         adapter = self._makeOne(context, DummyRequest())
@@ -439,10 +513,11 @@ class TestDefaultUserLocator(unittest.TestCase):
         from pyramid.testing import DummyRequest
         from zope.interface import directlyProvides
         from ...interfaces import IFolder
+        from ...interfaces import IService
         context = DummyModel()
         directlyProvides(context, IFolder)
-        principals = context['principals'] = DummyModel(__is_service__=True)
-        directlyProvides(principals, IFolder)
+        principals = context['principals'] = DummyModel()
+        directlyProvides(principals, (IFolder, IService))
         users = principals['users'] = DummyModel()
         bharney = users['bharney'] = DummyModel(email='bharney@example.com')
         phred = users['phred'] = DummyModel(email='phred@example.com')
@@ -457,9 +532,10 @@ class TestDefaultUserLocator(unittest.TestCase):
         from pyramid.testing import DummyRequest
         from zope.interface import directlyProvides
         from ...interfaces import IFolder
+        from ...interfaces import IService
         context = DummyModel()
         directlyProvides(context, IFolder)
-        principals = context['principals'] = DummyModel(__is_service__=True)
+        principals = context['principals'] = DummyModel(__provides__=IService)
         directlyProvides(principals, IFolder)
         users = principals['users'] = DummyModel()
         phred = users['phred'] = DummyModel()
@@ -522,6 +598,45 @@ class Test_groupfinder(unittest.TestCase):
         result = self._callFUT(1, request)
         self.assertEqual(result, (1, 2))
 
+class Test_set_user_locator(unittest.TestCase):
+    def setUp(self):
+        self.config = testing.setUp()
+
+    def tearDown(self):
+        testing.tearDown()
+
+    def _callFUT(self, config, cls):
+        from .. import set_user_locator
+        return set_user_locator(config, cls)
+
+    def test_it(self):
+        from zope.interface import Interface
+        from substanced.interfaces import IUserLocator
+        config = DummyConfigurator(registry=self.config.registry)
+        class UserLocator(object):
+            def __init__(self, context, request):
+                self.group_ids = ['group1', 'group2']
+            def get_groupids(self, userid):
+                return self.group_ids
+        self._callFUT(config, UserLocator)
+        self.assertEqual(len(config.actions), 1)
+        action = config.actions[0]
+        self.assertEqual(
+            action['discriminator'],
+            ('sd-user-locator',)
+            )
+        self.assertEqual(
+            action['introspectables'], (config.intr,)
+            )
+        self.assertEqual(config.intr['cls'], UserLocator)
+        callable = action['callable']
+        callable()
+        adapter = self.config.registry.getMultiAdapter((Interface, Interface),
+                IUserLocator)
+        self.assertEqual(
+                adapter.get_groupids('user'), ['group1', 'group2']
+            )
+
         
 from ...interfaces import IFolder
 
@@ -550,13 +665,15 @@ class DummyObjectMap(object):
         pass
 
 class DummyContentRegistry(object):
-    def __init__(self, result):
+    def __init__(self, result=None):
         self.result = result
 
     def istype(self, context, type):
         return self.result
 
     def create(self, name, *arg, **kw):
+        if self.result is None:
+            return testing.DummyResource()
         return self.result
     
 class DummySDIAPI(object):
@@ -571,3 +688,27 @@ class DummyLocator(object):
     def get_groupids(self, userid):
         self._userid = userid
         return self._group_ids
+
+class DummyIntrospectable(dict):
+    pass
+
+class DummyConfigurator(object):
+    _ainfo = None
+    def __init__(self, registry):
+        self.actions = []
+        self.intr = DummyIntrospectable()
+        self.registry = registry
+        self.indexes = []
+
+    def action(self, discriminator, callable, order=None, introspectables=()):
+        self.actions.append(
+            {
+            'discriminator':discriminator,
+            'callable':callable,
+            'order':order,
+            'introspectables':introspectables,
+            })
+
+    def introspectable(self, category, discriminator, title, type_name):
+        return self.intr
+

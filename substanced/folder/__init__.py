@@ -21,6 +21,7 @@ from zope.copy.interfaces import (
 from zope.copy import copy
 from zope.interface import (
     implementer,
+    alsoProvides,
     )
 
 from ..content import content
@@ -33,6 +34,7 @@ from ..event import (
 from ..interfaces import (
     IFolder,
     IAutoNamingFolder,
+    IService,
     marker,
     )
 from ..objectmap import find_objectmap
@@ -42,6 +44,7 @@ from ..util import (
     postorder,
     find_service,
     find_services,
+    wrap_if_broken,
     )
 from .._compat import STRING_TYPES
 from .._compat import u
@@ -52,7 +55,7 @@ class FolderKeyError(KeyError):
 
 @content(
     'Folder',
-    icon='icon-folder-close',
+    icon='glyphicon glyphicon-folder-close',
     add_view='add_folder',
     )
 @implementer(IFolder)
@@ -255,7 +258,7 @@ class Folder(Persistent):
             registry = get_current_registry()
         kw['registry'] = registry
         self.add(name, obj, **kw)
-        obj.__is_service__ = True
+        alsoProvides(obj, IService)
 
     def keys(self):
         """ Return an iterable sequence of object names present in the folder.
@@ -317,7 +320,7 @@ class Folder(Persistent):
         """
         with statsd_timer('folder.get'):
             name = u(name)
-            return self.data[name]
+            return wrap_if_broken(self.data[name])
 
     def get(self, name, default=None):
         """ Return the object named by ``name`` or the default.
@@ -329,7 +332,7 @@ class Folder(Persistent):
         """
         with statsd_timer('folder.get'):
             name = u(name)
-            return self.data.get(name, default)
+            return wrap_if_broken(self.data.get(name, default))
 
     def __contains__(self, name):
         """ Does the container contains an object named by name?
@@ -573,7 +576,7 @@ class Folder(Persistent):
         ``True`` too.
         """
         name = u(name)
-        other = self.data[name]
+        other = wrap_if_broken(self.data[name])
         oid = get_oid(other, None)
 
         if registry is None:
@@ -588,10 +591,18 @@ class Folder(Persistent):
                 self._notify(event, registry)
 
             if hasattr(other, '__parent__'):
-                del other.__parent__
+                try:
+                    del other.__parent__
+                except AttributeError:
+                    # this might be a broken object
+                    pass
 
             if hasattr(other, '__name__'):
-                del other.__name__
+                try:
+                    del other.__name__
+                except AttributeError:
+                    # this might be a broken object
+                    pass
 
             del self.data[name]
             self._num_objects.change(-1)
@@ -912,4 +923,8 @@ def includeme(config): # pragma: no cover
     # database due to __parent__ pointers.
     config.registry.registerAdapter(CopyHook, (IPersistent,), ICopyHook)
     config.hook_zca() # required by zope.copy (it uses a global adapter lkup)
-    
+    YEAR = 86400 * 365
+    config.add_static_view('fcstatic', 'substanced.folder:static',
+                           cache_max_age=YEAR)
+    config.include('.views')
+    config.include('.evolve')

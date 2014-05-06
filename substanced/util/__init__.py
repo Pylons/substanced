@@ -6,6 +6,7 @@ import os
 import pstats
 import tempfile
 import types
+from ZODB.interfaces import IBroken
 try:
     import cProfile as _profile
 except ImportError: # pragma: no cover (pypy)
@@ -16,8 +17,10 @@ from zope.interface.declarations import Declaration
 
 from pyramid.location import lineage
 from pyramid.threadlocal import get_current_registry
+from pyramid.i18n import TranslationStringFactory
 
 from ..interfaces import IFolder
+from ..interfaces import IService
 
 from .._compat import (
     parse_qsl,
@@ -26,6 +29,9 @@ from .._compat import (
     STRING_TYPES,
     INT_TYPES,
     )
+
+
+_ = TranslationStringFactory('substanced')
 
 _marker = object()
 
@@ -103,6 +109,9 @@ class Batch(object):
       zero if such a key does not exist in ``request.params`` or the
       ``batch_num`` key could not successfully be converted to a positive
       integer.
+
+      This value can be iterated over via the ``__iter__`` of the batch
+      object.
 
     ``size``
 
@@ -188,12 +197,22 @@ class Batch(object):
 
       The text to display on the multi-column/single column toggle.
 
-    The ``seq`` passed must define ``__len__`` and ``__slice__`` methods.
-
     ``make_columns``
 
-    A method to split ``items`` into a nested list representing columns.
+      A method to split ``items`` into a nested list representing columns.
     
+    ``seqlen``
+
+      This is total length of the sequence (across all batches).
+      
+    ``startitem``
+
+      The item number that starts this batch (indexed from zero).
+
+    ``enditem``
+
+      The item number that ends this batch (indexed from zero).
+      
     """
     def __init__(self, seq, request, url=None, default_size=10, toggle_size=40,
                  seqlen=None):
@@ -225,13 +244,15 @@ class Batch(object):
             toggle_num = size * num / toggle_size
             toggle_text = 'Multi-column'
 
-        start = num * size
-        end = start + size
-        items = list(itertools.islice(seq, start, end))
-        length = len(items)
         if seqlen is None:
             # won't work if seq is a generator
             seqlen = len(seq)
+        start = num * size
+        end = start + size
+        if end > seqlen:
+            end = seqlen
+        items = list(itertools.islice(seq, start, end))
+        length = len(items)
         last = int(math.ceil(seqlen / float(size)) - 1)
 
         first_url = None
@@ -257,6 +278,10 @@ class Batch(object):
                 multicolumn=not multicolumn,
                 )
 
+        self.startitem = start
+        self.enditem = end - 1
+        self.last = last
+        self.seqlen = seqlen
         self.items = items
         self.num = num
         self.size = size
@@ -269,7 +294,6 @@ class Batch(object):
         self.prev_url = prev_url
         self.next_url = next_url
         self.last_url = last_url
-        self.last = last
 
     def make_columns(self, column_size=10, num_columns=4):
         """ Break ``self.items`` into a nested list representing columns."""
@@ -280,6 +304,12 @@ class Batch(object):
             part = self.items[start:end]
             columns.append(part)
         return columns
+
+    def __iter__(self):
+        return iter(self.items)
+
+    def __len__(self):
+        return self.length
 
 def chunks(stream, chunk_size=10000):
     """ Return a generator that will iterate over a stream (a filelike
@@ -499,7 +529,7 @@ def is_folder(resource):
 
 def is_service(resource):
     """ Returns ``True`` if the resource is a service, ``False`` if not. """
-    return bool(getattr(resource, '__is_service__', False))
+    return IService.providedBy(resource)
 
 def find_catalogs(resource, name=None):
     """ Return all catalogs in the lineage.  If ``name`` is supplied, return
@@ -574,7 +604,7 @@ def get_icon_name(resource, request):
     return icon
 
 def get_auditlog(context):
-    """ Returns the current :class:`pyramid.audit.AuditLog` object or ``None``
+    """ Returns the current :class:`substanced.audit.AuditLog` object or ``None``
     if no audit database is configured """
     conn = context._p_jar
     if conn is None:
@@ -587,6 +617,24 @@ def get_auditlog(context):
     auditlog = root.get('auditlog')
     if auditlog is not None:
         return auditlog
+
+def is_broken(resource):
+    return IBroken.providedBy(resource)
+
+class BrokenWrapper(object):
+    def __init__(self, broken_object):
+        self._broken_object = broken_object
+
+    def __getattr__(self, name):
+        result = self._broken_object.__Broken_state__.get(name, _marker)
+        if result is _marker:
+            raise AttributeError(name)
+        return result
+
+def wrap_if_broken(resource):
+    if is_broken(resource):
+        resource = BrokenWrapper(resource)
+    return resource
 
 def profile(
     cmd,

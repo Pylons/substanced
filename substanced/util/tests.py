@@ -101,6 +101,9 @@ class TestBatch(unittest.TestCase):
                          'http://example.com?batch_num=1&batch_size=3')
         self.assertEqual(inst.last_url,
                          'http://example.com?batch_num=2&batch_size=3')
+        self.assertEqual(inst.startitem, 0)
+        self.assertEqual(inst.enditem, 2)
+        self.assertEqual(inst.seqlen, 7)
 
     def test_it_first_batch_of_3_generator(self):
         def gen():
@@ -124,6 +127,9 @@ class TestBatch(unittest.TestCase):
                          'http://example.com?batch_num=1&batch_size=3')
         self.assertEqual(inst.last_url,
                          'http://example.com?batch_num=2&batch_size=3')
+        self.assertEqual(inst.startitem, 0)
+        self.assertEqual(inst.enditem, 2)
+        self.assertEqual(inst.seqlen, 7)
 
     def test_it_second_batch_of_3(self):
         seq = [1,2,3,4,5,6,7]
@@ -146,6 +152,9 @@ class TestBatch(unittest.TestCase):
                          'http://example.com?batch_num=2&batch_size=3')
         self.assertEqual(inst.last_url,
                          'http://example.com?batch_num=2&batch_size=3')
+        self.assertEqual(inst.startitem, 3)
+        self.assertEqual(inst.enditem, 5)
+        self.assertEqual(inst.seqlen, 7)
 
     def test_it_second_batch_of_3_generator(self):
         def gen():
@@ -171,6 +180,9 @@ class TestBatch(unittest.TestCase):
                          'http://example.com?batch_num=2&batch_size=3')
         self.assertEqual(inst.last_url,
                          'http://example.com?batch_num=2&batch_size=3')
+        self.assertEqual(inst.startitem, 3)
+        self.assertEqual(inst.enditem, 5)
+        self.assertEqual(inst.seqlen, 7)
 
     def test_it_third_batch_of_3(self):
         seq = [1,2,3,4,5,6,7]
@@ -191,6 +203,9 @@ class TestBatch(unittest.TestCase):
                          'http://example.com?batch_num=1&batch_size=3')
         self.assertEqual(inst.next_url, None)
         self.assertEqual(inst.last_url, None)
+        self.assertEqual(inst.startitem, 6)
+        self.assertEqual(inst.enditem, 6)
+        self.assertEqual(inst.seqlen, 7)
 
     def test_it_third_batch_of_3_generator(self):
         def gen():
@@ -214,6 +229,9 @@ class TestBatch(unittest.TestCase):
                          'http://example.com?batch_num=1&batch_size=3')
         self.assertEqual(inst.next_url, None)
         self.assertEqual(inst.last_url, None)
+        self.assertEqual(inst.startitem, 6)
+        self.assertEqual(inst.enditem, 6)
+        self.assertEqual(inst.seqlen, 7)
 
     def test_it_invalid_batch_num(self):
         seq = [1,2,3,4,5,6,7]
@@ -287,6 +305,24 @@ class TestBatch(unittest.TestCase):
         expected = [ [1,2], [3,4], [5,6] ]
         self.assertEqual(cols, expected)
 
+    def test___iter__(self):
+        seq = [1,2,3,4,5,6,7]
+        request = testing.DummyRequest()
+        request.params['batch_num'] = 0
+        request.params['batch_size'] = 3
+        request.url = 'http://example.com'
+        inst = self._makeOne(seq, request)
+        self.assertEqual(list(iter(inst)), [1,2,3])
+
+    def test___len__(self):
+        seq = [1,2,3,4,5,6,7]
+        request = testing.DummyRequest()
+        request.params['batch_num'] = 0
+        request.params['batch_size'] = 3
+        request.url = 'http://example.com'
+        inst = self._makeOne(seq, request)
+        self.assertEqual(len(inst), 3)
+        
 class Test_merge_url_qs(unittest.TestCase):
     def _callFUT(self, url, **kw):
         from . import merge_url_qs
@@ -525,24 +561,26 @@ class Test_find_service(unittest.TestCase):
         
     def test_found(self):
         from ..interfaces import IFolder
+        from ..interfaces import IService
         site = testing.DummyResource(__provides__=IFolder)
-        catalog = testing.DummyResource(__is_service__=True)
+        catalog = testing.DummyResource(__provides__=IService)
         site['catalog'] = catalog
         self.assertEqual(self._callFUT(site, 'catalog'), catalog)
 
     def test_unfound_with_subnames(self):
         from ..interfaces import IFolder
+        from ..interfaces import IService
         site = testing.DummyResource(__provides__=IFolder)
-        catalog = testing.DummyResource(__is_service__=True)
+        catalog = testing.DummyResource(__provides__=IService)
         site['catalog'] = catalog
         result = self._callFUT(site, 'catalog', 'a', 'b')
         self.assertEqual(result, None)
 
     def test_unfound_with_subnames_inner_not_folder(self):
         from ..interfaces import IFolder
+        from ..interfaces import IService
         site = testing.DummyResource(__provides__=IFolder)
-        catalog = testing.DummyResource(__is_service__=True,
-                                        __provides__=IFolder)
+        catalog = testing.DummyResource(__provides__=(IService, IFolder))
         site['catalog'] = catalog
         catalog['a'] = testing.DummyResource()
         result = self._callFUT(site, 'catalog', 'a', 'b')
@@ -550,9 +588,9 @@ class Test_find_service(unittest.TestCase):
 
     def test_found_with_subnames_missing(self):
         from ..interfaces import IFolder
+        from ..interfaces import IService
         site = testing.DummyResource(__provides__=IFolder)
-        catalog = testing.DummyResource(__is_service__=True,
-                                        __provides__=IFolder)
+        catalog = testing.DummyResource(__provides__=(IService, IFolder))
         site['catalog'] = catalog
         catalog['a'] = testing.DummyResource(__provides__=IFolder)
         catalog['a']['b'] = testing.DummyResource()
@@ -561,9 +599,9 @@ class Test_find_service(unittest.TestCase):
 
     def test_found_with_subnames(self):
         from ..interfaces import IFolder
+        from ..interfaces import IService
         site = testing.DummyResource(__provides__=IFolder)
-        catalog = testing.DummyResource(__is_service__=True,
-                                        __provides__=IFolder)
+        catalog = testing.DummyResource(__provides__=(IService, IFolder))
         site['catalog'] = catalog
         catalog['a'] = testing.DummyResource(__provides__=IFolder)
         catalog['a']['b'] = testing.DummyResource()
@@ -578,18 +616,20 @@ class Test_find_services(unittest.TestCase):
     
     def test_one_found(self):
         from ..interfaces import IFolder
+        from ..interfaces import IService
         site = testing.DummyResource(__provides__=IFolder)
-        catalog = testing.DummyResource(__is_service__=True)
+        catalog = testing.DummyResource(__provides__=IService)
         site['catalog'] = catalog
         self.assertEqual(self._callFUT(site, 'catalog'), [catalog])
         
     def test_two_found(self):
         from ..interfaces import IFolder
+        from ..interfaces import IService
         folder = testing.DummyResource(__provides__=IFolder)
-        catalog1 = testing.DummyResource(__is_service__=True)
+        catalog1 = testing.DummyResource(__provides__=IService)
         folder['catalog'] = catalog1
         site = testing.DummyResource(__provides__=IFolder)
-        catalog2 = testing.DummyResource(__is_service__=True)
+        catalog2 = testing.DummyResource(__provides__=IService)
         site['catalog'] = catalog2
         site['folder'] = folder
         self.assertEqual(self._callFUT(folder, 'catalog'), [catalog1, catalog2])
@@ -606,17 +646,18 @@ class Test_find_services(unittest.TestCase):
 
     def test_unfound_with_subnames(self):
         from ..interfaces import IFolder
+        from ..interfaces import IService
         site = testing.DummyResource(__provides__=IFolder)
-        catalog = testing.DummyResource(__is_service__=True)
+        catalog = testing.DummyResource(__provides__=IService)
         site['catalog'] = catalog
         result = self._callFUT(site, 'catalog', 'a', 'b')
         self.assertEqual(result, [])
 
     def test_unfound_with_subnames_inner_not_folder(self):
         from ..interfaces import IFolder
+        from ..interfaces import IService
         site = testing.DummyResource(__provides__=IFolder)
-        catalog = testing.DummyResource(__is_service__=True,
-                                        __provides__=IFolder)
+        catalog = testing.DummyResource(__provides__=(IFolder, IService))
         site['catalog'] = catalog
         catalog['a'] = testing.DummyResource()
         result = self._callFUT(site, 'catalog', 'a', 'b')
@@ -624,9 +665,9 @@ class Test_find_services(unittest.TestCase):
 
     def test_found_with_subnames_missing(self):
         from ..interfaces import IFolder
+        from ..interfaces import IService
         site = testing.DummyResource(__provides__=IFolder)
-        catalog = testing.DummyResource(__is_service__=True,
-                                        __provides__=IFolder)
+        catalog = testing.DummyResource(__provides__=(IFolder, IService))
         site['catalog'] = catalog
         catalog['a'] = testing.DummyResource(__provides__=IFolder)
         catalog['a']['b'] = testing.DummyResource()
@@ -635,9 +676,9 @@ class Test_find_services(unittest.TestCase):
 
     def test_found_with_subnames(self):
         from ..interfaces import IFolder
+        from ..interfaces import IService
         site = testing.DummyResource(__provides__=IFolder)
-        catalog = testing.DummyResource(__is_service__=True,
-                                        __provides__=IFolder)
+        catalog = testing.DummyResource(__provides__=(IFolder, IService))
         site['catalog'] = catalog
         catalog['a'] = testing.DummyResource(__provides__=IFolder)
         catalog['a']['b'] = testing.DummyResource()
@@ -694,14 +735,16 @@ class Test_find_catalogs(unittest.TestCase):
 
     def _makeTree(self):
         from substanced.interfaces import IFolder
+        from substanced.interfaces import IService
         root = testing.DummyResource(__provides__=IFolder)
         catalogs1 = root['catalogs'] = testing.DummyResource(
-            __is_service__=True)
+            __provides__=IService)
         catalog1 = testing.DummyResource()
         catalogs1['catalog1'] = catalog1
         sub = testing.DummyResource(__provides__=IFolder)
         root['sub'] = sub
-        catalogs2 = sub['catalogs'] = testing.DummyResource(__is_service__=True)
+        catalogs2 = sub['catalogs'] = testing.DummyResource(
+                                        __provides__=IService)
         catalog2 = testing.DummyResource()
         catalog1_2 = testing.DummyResource()
         sub['catalogs'] = catalogs2
@@ -752,14 +795,16 @@ class Test_find_catalog(unittest.TestCase):
 
     def _makeTree(self):
         from substanced.interfaces import IFolder
+        from substanced.interfaces import IService
         root = testing.DummyResource(__provides__=IFolder)
         catalogs1 = root['catalogs'] = testing.DummyResource(
-            __is_service__=True)
+            __provides__=IService)
         catalog1 = testing.DummyResource()
         catalogs1['catalog1'] = catalog1
         sub = testing.DummyResource(__provides__=IFolder)
         root['sub'] = sub
-        catalogs2 = sub['catalogs'] = testing.DummyResource(__is_service__=True)
+        catalogs2 = sub['catalogs'] = testing.DummyResource(
+                                        __provides__=IService)
         catalog2 = testing.DummyResource()
         catalog1_2 = testing.DummyResource()
         sub['catalogs'] = catalogs2
@@ -800,14 +845,16 @@ class Test_find_index(unittest.TestCase):
 
     def _makeTree(self):
         from substanced.interfaces import IFolder
+        from substanced.interfaces import IService
         root = testing.DummyResource(__provides__=IFolder)
         catalogs1 = root['catalogs'] = testing.DummyResource(
-            __is_service__=True)
+            __provides__=IService)
         catalog1 = testing.DummyResource()
         catalogs1['catalog1'] = catalog1
         sub = testing.DummyResource(__provides__=IFolder)
         root['sub'] = sub
-        catalogs2 = sub['catalogs'] = testing.DummyResource(__is_service__=True)
+        catalogs2 = sub['catalogs'] = testing.DummyResource(
+                                            __provides__=IService)
         catalog2 = testing.DummyResource()
         catalog1_2 = testing.DummyResource()
         sub['catalogs'] = catalogs2
@@ -950,7 +997,82 @@ class Test_get_auditlog(unittest.TestCase):
         context._p_jar = DummyConnection(KeyError())
         inst = self._callFUT(context)
         self.assertEqual(inst, None)
-        
+
+
+class Test_is_broken(unittest.TestCase):
+    def _callFUT(self, context):
+        from . import is_broken
+        return is_broken(context)
+
+    def test_with_broken(self):
+        from ZODB.interfaces import IBroken
+        from zope.interface import implementer
+
+        @implementer(IBroken)
+        class Broken(object):
+
+            def __init__(self):
+                pass
+
+        resource = Broken()
+        result = self._callFUT(resource)
+        self.assertTrue(result)
+
+    def test_not_broken(self):
+        resource = DummyContent()
+        result = self._callFUT(resource)
+        self.assertFalse(result)
+
+
+class Test_wrap_if_broken(unittest.TestCase):
+    def _callFUT(self, context):
+        from . import wrap_if_broken
+        return wrap_if_broken(context)
+
+    def test_with_broken(self):
+        from ZODB.interfaces import IBroken
+        from zope.interface import implementer
+
+        @implementer(IBroken)
+        class Broken(object):
+
+            def __init__(self):
+                pass
+
+        resource = Broken()
+        result = self._callFUT(resource)
+
+        from . import BrokenWrapper
+        self.assertTrue(isinstance(result, BrokenWrapper))
+
+    def test_not_broken(self):
+        resource = DummyContent()
+        result = self._callFUT(resource)
+        self.assertTrue(isinstance(result, DummyContent))
+
+
+class Test_BrokenWrapper(unittest.TestCase):
+    def _makeOne(self, context):
+        from . import BrokenWrapper
+        return BrokenWrapper(context)
+
+    def test_getattr(self):
+        from ZODB.interfaces import IBroken
+        from zope.interface import implementer
+
+        @implementer(IBroken)
+        class Broken(object):
+
+            def __init__(self):
+                self.__Broken_state__ = dict(title='title')
+
+        resource = Broken()
+        inst = self._makeOne(resource)
+
+        self.assertEqual(inst.title, 'title')
+        self.assertRaises(AttributeError, inst.__getattr__, 'attribute')
+
+
 class DummyContent(object):
     renamed_from = None
     renamed_to = None

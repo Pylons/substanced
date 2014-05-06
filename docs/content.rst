@@ -39,7 +39,7 @@ generates content must have these properties:
 - It must have a *type*.  A type acts as a globally unique categorization
   marker, and allows the content to be constructed, enumerated, and
   introspected by various Substance D UI elements such as "add forms", and
-  queries by the management interface for the icon name of a resource.  A
+  queries by the management interface for the icon class of a resource.  A
   type can be any hashable Python object, but it's most often a string.
 
 Here's an example which defines a content resource factory as a class:
@@ -137,13 +137,17 @@ view that lives in your application:
    # in a module named blog.views
 
    from pyramid.httpexceptions import HTTPFound
+   from pyramid.view import (
+       view_config,
+       view_defaults,
+       )
 
    @view_config(name='add_blog_entry', request_method='POST')
-   def add_blogentry(request):
+   def add_blogentry(context, request):
        title = request.POST['title']
        body = request.POST['body']
        entry = request.registry.content.create('Blog Entry', title, body)
-       context['title'] = entry
+       context[title] = entry
        return HTTPFound(request.resource_url(entry))
 
 The arguments passed to ``request.registry.content.create`` must start with
@@ -203,8 +207,8 @@ show your content as addable using this name instead of the type name.
 Icons
 -----
 
-You can associate a content type registration with a management view icon by
-passing an ``icon`` keyword argument to ``@content`` or ``add_content_type``.
+You can associate a content type registration with a management view icon class
+by passing an ``icon`` keyword argument to ``@content`` or ``add_content_type``.
 
 .. code-block:: python
 
@@ -213,7 +217,7 @@ passing an ``icon`` keyword argument to ``@content`` or ``add_content_type``.
    from persistent import Persistent
    from substanced.content import content
 
-   @content('Blog Entry', icon='icon-file')
+   @content('Blog Entry', icon='glyphicon glyphicon-file')
    class BlogEntry(Persistent):
        def __init__(self, title='', body=''):
            self.title = title
@@ -221,8 +225,10 @@ passing an ``icon`` keyword argument to ``@content`` or ``add_content_type``.
 
 Once you've done this, content you add to a folder in the sytem will display
 the icon next to it in the contents view of the management interface and in
-the breadcrumb list.  The available icon names are listed at
-http://twitter.github.com/bootstrap/base-css.html#icons .
+the breadcrumb list.  The available icon class names are listed at
+http://getbootstrap.com/components/#glyphicons .  For glyphicon icons, you'll
+need to use two classnames: ``glyphicon`` and ``glyphicon-foo``, separated by 
+a space.
 
 You can also pass a callback as an ``icon`` argument:
 
@@ -233,9 +239,9 @@ You can also pass a callback as an ``icon`` argument:
 
    def blogentry_icon(context, request):
        if context.body:
-           return 'icon-file'
+           return 'glyphicon glyphicon-file'
        else:
-           return 'icon-gift'
+           return 'glyphicon glyphicon-gift'
 
    @content('Blog Entry', icon=blogentry_icon)
    class BlogEntry(Persistent):
@@ -246,10 +252,10 @@ You can also pass a callback as an ``icon`` argument:
 A callable used as ``icon`` must accept two arguments: ``context`` and
 ``request``.  ``context`` will be an instance of the type and ``request`` will
 be the current request; your callback will be called at the time the folder
-view is drawn.  The callable should return either an icon name or ``None``.
-For example, the above ``blogentry_icon`` callable tells the SDI to use an icon
-representing a file if the blogentry has a body, otherwise show an icon
-representing gift.
+view is drawn.  The callable should return either an icon class name or
+``None``. For example, the above ``blogentry_icon`` callable tells the SDI to
+use an icon representing a file if the blogentry has a body, otherwise show an
+icon representing gift.
 
 Add Views
 ---------
@@ -309,21 +315,25 @@ addable in this circumstance.
 Obtaining Metadata About a Content Object's Type
 ------------------------------------------------
 
-``request.registry.content.metadata(blogentry, 'icon')``
+Return the icon class name for the blogentry's content type or 
+``None`` if it does not exist::
 
-  Will return the icon for the blogentry's content type or ``None`` if it
-  does not exist.
+  request.registry.content.metadata(blogentry, 'icon')
 
-``request.registry.content.metadata(blogentry, 'icon', 'icon-file')``
+Return the icon for the blogentry's content type or 
+``glyphicon glyphicon-file`` if it does not exist::
 
-  Will return the icon for the blogentry's content type or ``icon-file`` if
-  it does not exist.
+  request.registry.content.metadata(blogentry, 'icon', 
+                                    'glyphicon glyphicon-file')
+
+
+.. _affecting_content_creation:
 
 Affecting Content Creation
 ==========================
 
 In some cases you might want your resource to perform some actions that
-can only take place after it has been seated in its container and but
+can only take place after it has been seated in its container, but
 before the creation events have fired. The ``@content`` decorator and
 ``add_content_type`` method both support an ``after_create`` argument,
 pointed at a callable.
@@ -334,7 +344,7 @@ For example:
 
     @content(
         'Document',
-        icon='icon-align-left',
+        icon='glyphicon glyphicon-align-left',
         add_view='add_document',
         propertysheets = (
             ('Basic', DocumentPropertySheet),
@@ -389,8 +399,10 @@ event and perform some actions:
 
     @subscribe_created(Root)
     def root_created(event):
+        root = event.object
         catalog = Catalog()
-        event.object.add_service('catalog', catalog)
+        catalogs = root['catalogs']
+        catalogs.add_service('catalog', catalog)
         catalog.update_indexes('system', reindex=True)
         catalog.update_indexes('sdidemo', reindex=True)
 
@@ -528,7 +540,7 @@ the content type during startup:
     from .views import MyAddFolderView
     config.add_content_type('Folder', Folder,
                             add_view='my_add_folder',
-                            icon='icon-folder-close')
+                            icon='glyphicon glyphicon-folder-close')
 
 This, however, keeps the same content type class. You can also go
 further by overriding the content type definition itself:
@@ -537,7 +549,7 @@ further by overriding the content type definition itself:
 
     @content(
         'Folder',
-        icon='icon-folder-close',
+        icon='glyphicon glyphicon-folder-close',
         add_view='my_add_folder',
     )
     @implementer(IFolder)
@@ -546,7 +558,7 @@ further by overriding the content type definition itself:
         def send_email(self):
             pass
 
-The class for the 'Folder' content type has now been replaced. Instead
+The class for the ``Folder`` content type has now been replaced. Instead
 of ``substanced.folder.Folder`` it is ``MyFolder``.
 
 .. note::
@@ -560,9 +572,12 @@ of ``substanced.folder.Folder`` it is ``MyFolder``.
 Affecting the Tab Order for Management Views
 ============================================
 
-The ``tab_order`` parameter overrides the mgmt_view tab settings,
-for a content type, with a sequence of view names that should be
-ordered (and everything not in the sequence, after.)
+The ``tab_order`` parameter overrides the mgmt_view tab settings
+for a content type. Its value should be a sequence of view names, each
+corresponding to a tab that will appear in the management interface. Any
+registered view names that are omitted from this sequence will be placed
+after the other tabs.
+
 
 Handling Content Events
 =======================
@@ -629,7 +644,7 @@ forms result in :func:`substanced.event.add_content_subscriber`.
     in the same transaction.
 
 The ``IACLModified`` event (and ``@subscriber_acl_modified`` subscriber)
-is used internally to Substance D to re-index information the system
+is used internally by Substance D to re-index information in the system
 catalog's ACL index. Substance D also uses this event to maintain
 references between resources and principals. Substance D applications
 can use this in different ways, for example recording a security audit

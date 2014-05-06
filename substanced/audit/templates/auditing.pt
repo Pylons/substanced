@@ -1,26 +1,38 @@
-<div metal:use-macro="request.sdiapi.main_template">
+<div metal:use-macro="request.sdiapi.main_template" 
+     i18n:domain="substanced">
 
   <div metal:fill-slot="main">
-    <table border="0" class="table table-striped" tal:condition="log_exists">
-      <thead>
-        <tr>
-          <th>Id</th>
-          <th>Name</th>
-          <th>Time</th>
-          <th>Payload</th>
-        </tr>
-      </thead>
-      <tr tal:repeat="(gen, idx, time, event) results">
-        <td width="10%">${gen}-${idx}</td>
-        
-        <td width="20%">${event.name}</td>
-        <td width="20%">${time}</td>
-        <td width="50%">${event.payload}</td>
-      </tr>
-    </table>
-    <h2 tal:condition="not log_exists">
+    <div tal:condition="log_exists"
+         metal:use-macro="request.sdiapi.get_macro('substanced.sdi.views:templates/batching.pt', 'batching')"/>
+    <div class="panel panel-default">
+      <div class="panel-heading" i18n:translate="">Audit events</div>
+      <div class="panel-body">
+        <table border="0" 
+               class="table table-striped table-condensed"
+               tal:condition="log_exists">
+          <thead>
+            <tr>
+              <th i18n:translate="">Id</th>
+              <th i18n:translate="">Name</th>
+              <th i18n:translate="">Time</th>
+              <th i18n:translate="">Payload</th>
+            </tr>
+          </thead>
+          <tr tal:repeat="(gen, idx, time, event) batch">
+            <td width="5%">${gen}-${idx}</td>
+            
+            <td width="15%">${event.name}</td>
+            <td width="25%">${time}</td>
+            <td width="55%" style="max-width: 500px;">
+                ${event.payload}
+            </td>
+          </tr>
+        </table>
+        <h2 tal:condition="not log_exists" i18n:translate="">
       Auditing not configured in this system
-    </h2>
+        </h2>
+      </div>
+    </div>
   </div>
 
 </div>

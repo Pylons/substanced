@@ -23,7 +23,7 @@ class Test_add_lock_service(unittest.TestCase):
         content = DummyContentRegistry(service)
         request.registry.content = content
         response = self._callFUT(context, request)
-        self.assertEqual(response.location, '/foo')
+        self.assertEqual(response.location, '/foo/@@services')
         self.assertEqual(context['locks'], service)
 
 class TestAddLockView(unittest.TestCase):
@@ -57,7 +57,7 @@ class TestAddLockView(unittest.TestCase):
         response = inst.add_success(appstruct)
         self.assertEqual(lock.ownerid, 1)
         self.assertEqual(lock.resource, context)
-        self.assertEqual(response.location, '/foo')
+        self.assertEqual(response.location, '/foo/@@contents')
 
 class TestLockServiceFolderContents(unittest.TestCase):
     def _makeOne(self, context, request):
@@ -134,7 +134,7 @@ class TestLockServiceFolderContents(unittest.TestCase):
         context['lock1'] = lock
         inst = self._makeOne(context, request)
         response = inst.delete_expired()
-        self.assertEqual(response.location, '/foo')
+        self.assertEqual(response.location, '/foo/@@')
         self.assertTrue(lock.suicided)
         
         
@@ -150,5 +150,5 @@ class DummySDIAPI(object):
         self.result = result
 
     def mgmt_path(self, *arg, **kw):
-        return self.result
+        return '/'.join([self.result] + list(arg[1:]))
     

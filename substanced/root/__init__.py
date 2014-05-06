@@ -17,12 +17,14 @@ from ..schema import Schema
 from ..util import (
     get_oid,
     set_acl,
+    _,
     )
 
 class RootSchema(Schema):
     """ The schema representing site properties. """
     sdi_title = colander.SchemaNode(
         colander.String(),
+        title=_("Sdi Title"),
         missing='',
         )
 
@@ -31,7 +33,7 @@ class RootPropertySheet(PropertySheet):
 
 @content(
     'Root',
-    icon='icon-home',
+    icon='subd-capsule',
     propertysheets = (
         ('', RootPropertySheet),
         ),

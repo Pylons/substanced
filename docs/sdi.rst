@@ -59,7 +59,7 @@ The SDI is for:
 - Administrators to use after deployment, to manage certain Substance D
   or application settings provided by the developer
 
-- Certain power users to use as a behind-the-scenese UI
+- Certain power users to use as a behind-the-scenes UI
 
 The SDI is *not* for:
 
@@ -170,20 +170,20 @@ changed by a later transaction.
 Catalog
 =======
 
-With :doc:`cataloging <cataloging>` developers have a powerful facility
-that can be added to their application. Like other first-class parts of
-Substance D's machinery, this includes an SDI UI for interacting with
+With :doc:`cataloging <cataloging>` developers have a powerful indexing and
+searching facility that can be added to their application. Like other first-class
+parts of Substance D's machinery, it includes an SDI UI for interacting with
 the catalog:
 
 .. image:: images/catalog.png
 
 Catalogues are content, meaning they show up as folder items in the SDI. You
 can visit a a catalog and update its indexes, or see some statistics for those
-index. Finally, you can also use the SDI to reindex the contents of an index,
+indexes. Finally, you can also use the SDI to reindex the contents of an index,
 if you suspect it has gotten out of sync with the content.
 
-The catalog also registers a management view on content resources which
-gain a ``Indexing`` tab:
+The catalog also registers a management view on content resources, which
+gain an ``Indexing`` tab:
 
 .. image:: images/indexing.png
 
@@ -225,7 +225,7 @@ resource.
 References
 ==========
 
-With the built-in support for :doc:`references <references>`, Substanced D
+With the built-in support for :doc:`references <references>`, Substance D
 helps manage relationships between resources. The SDI provides a UI into the
 reference service.
 

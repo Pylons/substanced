@@ -2,7 +2,6 @@ import colander
 import deform.widget
 
 from pyramid.httpexceptions import HTTPFound
-from pyramid.security import Allow
 from pyramid.security import NO_PERMISSION_REQUIRED
 
 from ..form import FormView
@@ -23,12 +22,13 @@ from . import (
     GroupSchema,
     )
 
-from ..util import find_service
+from ..util import find_service, _
 
 class AddUserSchema(UserGroupsSchema, UserSchema):
     password = colander.SchemaNode(
         colander.String(),
         widget = deform.widget.CheckedPasswordWidget(),
+        validator=colander.Length(min=3, max=100),
         )
 
 @mgmt_view(
@@ -38,8 +38,8 @@ class AddUserSchema(UserGroupsSchema, UserSchema):
     )
 def add_principals_service(context, request):
     service = request.registry.content.create('Principals')
-    context['principals'] = service
-    return HTTPFound(location=request.sdiapi.mgmt_path(context))
+    context.add_service('principals', service)
+    return HTTPFound(location=request.sdiapi.mgmt_path(context, '@@services'))
 
 @mgmt_view(
     context=IUsers,
@@ -99,17 +99,22 @@ def password_validator(node, kw):
 
 class UserPasswordSchema(Schema):
     """ The schema for validating password change requests."""
+    current_user_password = colander.SchemaNode(
+        colander.String(),
+        title='Your Current Password',
+        widget = deform.widget.PasswordWidget(redisplay=False),
+        )
     password = colander.SchemaNode(
         colander.String(),
-        title='Password',
-        validator=colander.Length(min=3, max=100),
-        widget = deform.widget.CheckedPasswordWidget(),
+        title='New Password',
+        validator = colander.Length(min=3, max=100),
+        widget = deform.widget.CheckedPasswordWidget(redisplay=False),
         )
 
 @mgmt_view(
     context=IUser,
     name='change_password',
-    tab_title='Change Password',
+    tab_title=_('Change Password'),
     permission='sdi.change-password',
     renderer='substanced.sdi:templates/form.pt',
     )
@@ -120,9 +125,14 @@ class ChangePasswordView(FormView):
 
     def change_success(self, appstruct):
         user = self.context
-        password = appstruct['password']
-        user.set_password(password)
-        self.request.session.flash('Password changed', 'success')
+        current_user_password = appstruct['current_user_password']
+        if not self.request.user.check_password(current_user_password):
+            self.request.sdiapi.flash('Incorrect current user password',
+                                      'danger')
+        else:
+            password = appstruct['password']
+            user.set_password(password)
+            self.request.sdiapi.flash('Password changed', 'success')
         return HTTPFound(
             self.request.sdiapi.mgmt_path(user, '@@change_password')
             )
@@ -163,7 +173,7 @@ class ResetRequestView(FormView):
         users = principals['users']
         user = users[login]
         user.email_password_reset(request)
-        request.session.flash('Emailed password reset instructions', 'success')
+        request.sdiapi.flash('Emailed password reset instructions', 'success')
         home = request.sdiapi.mgmt_path(request.virtual_root)
         return HTTPFound(location=home)
         
@@ -191,6 +201,6 @@ class ResetView(FormView):
         request = self.request
         context = self.context
         context.reset_password(appstruct['new_password'])
-        request.session.flash('Password reset, you may now log in', 'success')
+        request.sdiapi.flash('Password reset, you may now log in', 'success')
         home = request.sdiapi.mgmt_path(request.virtual_root)
         return HTTPFound(location=home)

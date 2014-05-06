@@ -341,11 +341,13 @@ class Test_ResourceDumpContext(unittest.TestCase):
             )
 
     def test_dump_resource(self):
+        from zope.interface import directlyProvides
+        from ..interfaces import IService
         registry = {}
         inst = self._makeOne(None, registry, None, None, None)
         resource = testing.DummyResource()
         resource.__name__ = 'foo'
-        resource.__is_service__ = True
+        directlyProvides(resource, IService)
         def get_content_type(rsrc, reg):
             self.assertEqual(rsrc, resource)
             self.assertEqual(reg, registry)
@@ -356,7 +358,6 @@ class Test_ResourceDumpContext(unittest.TestCase):
             self.assertEqual(data['content_type'], 'ct')
             self.assertEqual(data['name'], resource.__name__)
             self.assertEqual(data['oid'], 'oid')
-            self.assertEqual(data['is_service'], True)
             return 'dumped'
         inst.get_content_type = get_content_type
         inst.get_oid = get_oid
@@ -396,6 +397,7 @@ class Test_ResourceLoadContext(unittest.TestCase):
     def test_load_resource(self):
         import datetime
         from . import RESOURCE_FILENAME
+        from ..interfaces import IService
         registry = self.config.registry
         resource = testing.DummyResource()
         content = DummyContentRegistry(resource)
@@ -405,7 +407,6 @@ class Test_ResourceLoadContext(unittest.TestCase):
             'name':'name',
             'oid':1,
             'created':now,
-            'is_service':True,
             'content_type':'content_type',
             }
         def load_yaml(fn):
@@ -418,7 +419,6 @@ class Test_ResourceLoadContext(unittest.TestCase):
         self.assertEqual(result, resource)
         self.assertEqual(resource.__name__, 'name')
         self.assertEqual(resource.__oid__, 1)
-        self.assertTrue(resource.__is_service__)
         self.assertEqual(content.content_type, 'content_type')
         self.assertEqual(content.oid, 1)
 
@@ -434,7 +434,6 @@ class Test_ResourceLoadContext(unittest.TestCase):
             'name':'name',
             'oid':1,
             'created':now,
-            'is_service':True,
             'content_type':'content_type',
             }
         def load_yaml(fn):

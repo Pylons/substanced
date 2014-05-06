@@ -111,7 +111,7 @@ class FileUploadPropertySheet(PropertySheet):
 
 @content(
     'File',
-    icon='icon-file',
+    icon='glyphicon glyphicon-file',
     add_view='add_file',
     # prevent view tab from sorting first (it would display the image when
     # manage_main clicked)
@@ -189,7 +189,7 @@ class File(Persistent):
           ``mimetypes`` module, and the result will be set as the mimetype
           attribute of this object.
 
-        - The constant :attr:`pyramid.file.USE_MAGIC`, which will derive
+        - The constant :attr:`substanced.file.USE_MAGIC`, which will derive
           the mimetype using the ``python-magic`` library based on the
           stream's actual content.  The result will be set as the mimetype
           attribute of this object.
@@ -239,7 +239,7 @@ class File(Persistent):
         """ Return a WebOb-compatible response object which uses the blob
         content as the stream data and the mimetype of the file as the
         content type.  The ``**kw`` arguments will be passed to the
-        ``pyramid.response.FileResponse`` constructor as its keyword
+        :class:`pyramid.response.FileResponse` constructor as its keyword
         arguments."""
         if not 'content_type' in kw:
             kw['content_type'] = str(self.mimetype)

@@ -1,0 +1,317 @@
+/** Build from https://github.com/Pylons/sdidev to rebuild this LESS file **/
+
+@import "../../../../../bootstrap/less/variables.less";
+
+/* Mixins for SlickGrid */
+
+// this should be set from js
+.slick-cell, .slick-header-column {
+    min-height: 35px !important;
+}
+
+.slickGrid () {
+
+    width: 100%;
+    position: relative;
+
+    .slick-column-name {
+        float: left;
+    }
+
+    .slickcell-padding () {
+        @fontSize: 14px; // ??? should we use some id here?
+
+        padding: 5px 7.5834px;
+        font-size: @fontSize;
+        td {
+            font-size: @fontSize;
+        }
+        body & {
+            line-height: 20px;
+        }
+    }
+
+    // Reset the margin of the checkboxes. The grid
+    // needs a selection checbkx column. Bootstrap gives
+    // these elements a 4px top margin, which we have to reset
+    // by aligning to baseline.
+    input[type="checkbox"] {
+        vertical-align: baseline;
+        margin: 0;   // paranoid
+    }
+
+    .slick-viewport {
+        // Add a top border to visually separate the headers.
+        border-top: 1px solid @table-border-color;
+    }
+
+    .grid-canvas {
+        .slick-row {
+            border: 0 none;
+            position: absolute;
+        }
+        .slick-cell, .slick-headerrow-column {
+            border-top: 0;
+            border-bottom: 1px solid @table-border-color;
+            border-left: 0;
+            border-right: 0;
+        }
+        .even {
+            background: @table-bg-accent;
+        }
+        
+
+        /* XXX ... needed ? */
+        .slick-cell {
+            .slickcell-padding ();
+            a, a:visited, .ui-widget-content a, .ui-widget-content a:visited {
+                color: @link-color;
+                text-decoration: none;
+            }
+            a:hover, .ui-widget-content a:hover {
+                color: lighten(@link-color, 20%);
+                text-decoration: none;
+                border-bottom: none;
+            }
+            table {
+                height: 100%;
+                border: 0 none;
+                padding: 0;
+                background: none;
+            }
+            td {
+                border: 0 none;
+                padding: 0;
+                vertical-align: middle;
+                text-align: left;
+            }
+        }
+    }
+ 
+    .slick-header {
+        border-top: 0;
+        border-bottom: 0;
+    }
+
+    .slick-header-columns {
+        background: @table-bg;
+
+        .slick-header-column {
+            height: 20px;
+            line-height: 20px;
+
+            margin: 0;
+
+            &.ui-state-default {
+                .slickcell-padding ();
+                min-width: 30px;
+            }
+
+            border-right: 1px solid #FFFFFF;
+            border-left: 0px;
+            border-top: 0px;
+            border-bottom: 0px;
+
+            //@slickgridHoverHeaderColor: lighten(@text-color, 20%);   // XXX
+            //@slickgridSortingHeaderColor: lighten(@text-color, 20%);   // XXX
+
+            @slickgridHoverHeaderColor: @text-color;
+            @slickgridSortingHeaderColor: @text-color;
+            
+            .reset-columns () {
+                /* like TH  */
+                background: @table-bg;
+                font-family: @font-family-sans-serif;
+                color: @text-color;
+                font-weight: bold;
+                text-shadow: 0 -1px 0 rgba(0,0,0,.4);
+                a, a:visited {
+                    color: @text-color;
+                }
+                a:hover {
+                    color: @slickgridHoverHeaderColor;
+                }    
+            }
+ 
+            .reset-columns ();
+            &.ui-state-default {
+                .reset-columns ();
+            }
+           
+            &.slick-header-column-sorted {
+                font-style: normal;
+                color: @slickgridSortingHeaderColor;
+            }
+            &:hover {
+                color: @slickgridHoverHeaderColor;
+            }
+
+            .slick-sort-indicator {
+                margin-top: 11px;
+            }
+            
+            .slick-sort-indicator-asc {
+                vertical-align: middle;
+                &:before {
+                    border-top: 0;
+                    border-bottom: .266666667em solid #fff;
+                }
+            }
+
+            .slick-sort-indicator-desc {
+                vertical-align: middle;
+            }
+           
+        }
+    }
+
+}
+
+
+// uncomment the below to get back the fade-rowdata-in behavior (it seems
+// annoying to me so i commented it out)
+
+// @keyframes showgridrow {
+//   0%   {
+//     opacity: 0.3;
+//   }
+//   100% {
+//     opacity: 1;
+//   }
+// }
+
+// @-webkit-keyframes showgridrow { /* Safari and Chrome */
+//   0%   {
+//     opacity: 0.3;
+//   }
+//   100% {
+//     opacity: 1;
+//   }
+// }
+
+
+.slickgrid-wrapper {
+  height: 380px; // for 10 rows x 35px
+  width: 100%;
+  .slickGrid();
+  // Add a bottom border to the grid.
+  border-bottom: 1px solid @table-border-color;
+
+  .cell-reorder {
+    cursor: move;
+    background: url("images/drag-handle.png") no-repeat center center;
+  }
+
+  .cell-selection {
+    border-right-color: silver;
+    border-right-style: solid;
+    background: #f5f5f5;
+    color: gray;
+    text-align: right;
+    font-size: 10px;
+  }
+  .slick-row.selected .cell-selection {
+    background-color: transparent; // show default selected row background
+  }
+
+  // cell class for multiline paragraphs
+  .cell-multiline {
+    white-space: normal;
+  }
+
+  .slick-row {
+    animation: showgridrow 0.5s;
+    -webkit-animation: showgridrow 0.5s; /* Safari and Chrome */
+  }
+
+}
+
+// 
+// Styling of other elements on the same page with slickgrid
+//
+
+.sdi-contents-filter {
+  margin-top: 5px;
+}
+
+.sdi-contents-filter .btn {
+    margin-top: 3px;
+    margin-bottom: 5px;
+    border-radius: 0 14px 14px 0;
+}
+
+.sdi-contents-filter .form-control {
+    margin-top: 3px;
+    margin-bottom: 5px;
+    border-radius: 14px 0 0 14px;
+}
+
+.contents-button-bar {
+    border: 1px solid #d4d4d4;
+    // margin-left: 10px;
+    // margin-right: 10px;
+    margin-bottom: 10px;
+}
+
+
+.sdi-contents-actions {
+  margin: 0;
+}
+
+.sdi-add-button {
+  margin-right: 10px;
+}
+
+.slickgrid-header {
+  width: 100%;
+  background: @table-bg;
+  font-family: @font-family-sans-serif;
+  //color: @lightGray;    // XXX ???
+  color: #555555;
+  padding: 5px 7.5834px;
+  margin-bottom: 1em;
+}
+
+.badge-text {
+  background-color: rgba(255,255,255,0.6);
+  color: @text-color;
+  text-shadow: none;
+  display: inline-block;
+  margin-right: -3px;
+  margin-left: 3px;
+  padding: 0 5px 0 3px;
+  border-top-right-radius: 9px;
+  border-bottom-right-radius: 9px;
+}
+
+.badge-primary {
+    background-color: @btn-primary-bg;
+}
+
+.badge-success {
+    background-color: @btn-success-bg;
+}
+
+.badge-warning {
+    background-color: @btn-warning-bg;
+}
+
+.badge-danger {
+    background-color: @btn-danger-bg;
+}
+
+.badge-info {
+    background-color: @btn-info-bg;
+}
+
+.badge-default {
+    background-color: @btn-default-bg;
+}
+
+.sdi-sg-header {
+    .up-arrow {
+        color: @text-color;
+        margin: 0 14px 0 6px;
+        vertical-align: middle;
+    }
+}

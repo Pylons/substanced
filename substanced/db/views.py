@@ -3,6 +3,9 @@ import datetime
 import transaction
 import pytz
 
+from ZODB.blob import BlobStorageError
+from ZODB.FileStorage.FileStorage import FileStorageError
+
 from pyramid_zodbconn import get_connection
 
 from pyramid.httpexceptions import HTTPFound
@@ -11,6 +14,7 @@ from pyramid.traversal import find_root
 
 from ..sdi import mgmt_view
 from ..evolution import EvolutionManager
+from ..util import _
 
 
 @view_defaults(
@@ -27,7 +31,7 @@ class ManageDatabase(object):
         self.context = context
         self.request = request
 
-    @mgmt_view(request_method='GET', tab_title='Database')
+    @mgmt_view(request_method='GET', tab_title=_('Database'))
     def view(self):
         conn = self.get_connection(self.request)
         db = conn.db()
@@ -38,7 +42,7 @@ class ManageDatabase(object):
         data_object_loads = []
 
         if am:
-            # we multiply datetime by 1000 to get JavaScript representatin of
+            # we multiply datetime by 1000 to get JavaScript representation of
             # unix timestamp
             # TODO: add timezone support
             for data in am.getActivityAnalysis():
@@ -62,12 +66,17 @@ class ManageDatabase(object):
         try:
             days = int(self.request.POST['days'])
         except:
-            self.request.session.flash('Invalid number of days', 'error')
+            self.request.sdiapi.flash('Invalid number of days', 'danger')
             raise HTTPFound(location=self.request.sdiapi.mgmt_path(
                 self.context, '@@database'))
         conn = self.get_connection(self.request)
-        conn.db().pack(days=days)
-        self.request.session.flash('Database packed to %s days' % days)
+        try:
+            conn.db().pack(days=days)
+        except (BlobStorageError, FileStorageError):
+            self.request.sdiapi.flash('Already packing', 'danger')
+        else:
+            self.request.sdiapi.flash('Database packed to %s days' % days,
+                                      'success')
         return HTTPFound(location=self.request.sdiapi.mgmt_path(
             self.context, '@@database'))
 
@@ -76,12 +85,12 @@ class ManageDatabase(object):
     def flush_cache(self):
         conn = self.get_connection(self.request)
         conn.db().cacheMinimize()
-        self.request.session.flash('Database flushed cache')
+        self.request.sdiapi.flash('Database flushed cache', 'success')
         return HTTPFound(location=self.request.sdiapi.mgmt_path(
             self.context, '@@database'))
 
-    @mgmt_view(request_method='GET',
-               request_param='show_evolve',
+    @mgmt_view(request_param='show_evolve',
+               tab_title=_('Database'),
                renderer='templates/db_show_evolve.pt',
               )
     def show_evolve(self):
@@ -102,9 +111,11 @@ class ManageDatabase(object):
         manager = self.EvolutionManager(root, self.request.registry)
         complete = manager.evolve(commit=False)
         if complete:
-            self.request.session.flash('%d evolution steps dry-run' % len(complete))
+            self.request.sdiapi.flash(
+                '%d evolution steps dry-run successfully' % len(complete),
+                'success')
         else:
-            self.request.session.flash('No evolution steps dry-run')
+            self.request.sdiapi.flash('No evolution steps to dry-run', 'info')
         return HTTPFound(location=self.request.sdiapi.mgmt_path(
             self.context, '@@database'))
 
@@ -116,9 +127,11 @@ class ManageDatabase(object):
         manager = self.EvolutionManager(root, self.request.registry)
         complete = manager.evolve(commit=True)
         if complete:
-            self.request.session.flash('%d evolution steps executed' % len(complete))
+            self.request.sdiapi.flash(
+                '%d evolution steps executed successfully' % len(complete),
+                'success')
         else:
-            self.request.session.flash('No evolution steps executed')
+            self.request.sdiapi.flash('No evolution steps to execute', 'info')
         return HTTPFound(location=self.request.sdiapi.mgmt_path(
             self.context, '@@database'))
 
@@ -134,15 +147,18 @@ class ManageDatabase(object):
         unfinished_steps = dict(manager.get_unfinished_steps())
 
         if step in finished_steps:
-            self.request.session.flash('Step %s already marked as finished' % step)
+            self.request.sdiapi.flash(
+                'Step %s already marked as finished' % step, 'warning')
         else:
             if step in unfinished_steps:
                 manager.add_finished_step(step)
-                self.request.session.flash('Step %s marked as finished' % step)
+                self.request.sdiapi.flash('Step %s marked as finished' % step,
+                                          'success')
                 t = transaction.get()
                 t.note('Marked %s evolution step as finished' % step)
             else:
-                self.request.session.flash('Unknown step %s, not marking as finished' % step)
+                self.request.sdiapi.flash(
+                    'Unknown step %s, not marking as finished' % step, 'danger')
         return HTTPFound(location=self.request.sdiapi.mgmt_path(
             self.context, '@@database', query=dict(show_evolve=True)))
 
@@ -159,14 +175,18 @@ class ManageDatabase(object):
 
         if step in finished_steps:
             manager.remove_finished_step(step)
-            self.request.session.flash('Step %s marked as unfinished' % step)
+            self.request.sdiapi.flash(
+                'Step %s marked as unfinished' % step, 'success')
             t = transaction.get()
             t.note('Marked %s evolution step as unfinished' % step)
         else:
             if step in unfinished_steps:
-                self.request.session.flash('Step %s already marked as unfinished' % step)
+                self.request.sdiapi.flash(
+                    'Step %s already marked as unfinished' % step, 'warning')
             else:
-                self.request.session.flash('Unknown step %s, not marking as unfinished' % step)
+                self.request.sdiapi.flash(
+                    'Unknown step %s, not marking as unfinished' % step,
+                    'danger')
         return HTTPFound(location=self.request.sdiapi.mgmt_path(
             self.context, '@@database', query=dict(show_evolve=True)))
 

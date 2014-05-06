@@ -194,7 +194,7 @@ class TestAdd(unittest.TestCase):
         request.POST = DummyPost(getall_result=('test',))
         token = request.session.get_csrf_token()
         request.params['csrf_token'] = token
-        request.POST['verb'] = 'allow'
+        request.POST['verb'] = 'Allow'
         request.POST['principal'] = '1'
         request.POST['permissions'] = 'test'
         site = make_site()
@@ -217,7 +217,7 @@ class TestAdd(unittest.TestCase):
                                           'system.Authenticated')])
         self.assertEqual(resp['local_acl'], [(None, _JOHN, (None,)),
                                              (None, _MARY, (None,)),
-                                             ('allow', _JOHN, ('test',))])
+                                             ('Allow', _JOHN, ('test',))])
         self.assertEqual(resp['permissions'], ['-- ALL --'])
         self.assertEqual(resp['inheriting'], 'enabled')
         self.assertEqual(request.sdiapi.flashed, 'New ACE added')
@@ -229,7 +229,7 @@ class TestAdd(unittest.TestCase):
         request.POST = DummyPost(getall_result=('test',))
         token = request.session.get_csrf_token()
         request.params['csrf_token'] = token
-        request.POST['verb'] = 'allow'
+        request.POST['verb'] = 'Allow'
         request.POST['principal'] = ''
         request.POST['permissions'] = 'test'
         site = make_site()
@@ -254,8 +254,75 @@ class TestAdd(unittest.TestCase):
                                              (None, _MARY, (None,))])
         self.assertEqual(resp['permissions'], ['-- ALL --'])
         self.assertEqual(resp['inheriting'], 'enabled')
-        self.assertEqual(request.session['_f_error'],
-                         ['No principal selected'])
+        self.assertEqual(request.sdiapi.flashed, 'No principal selected')
+
+    def test_add_puns_DENY_ALL_root(self):
+        from ....testing import make_site
+        request = testing.DummyRequest()
+        request.sdiapi = DummySDIAPI()
+        request.POST = DummyPost(getall_result=('-- ALL --',))
+        token = request.session.get_csrf_token()
+        request.params['csrf_token'] = token
+        request.POST['verb'] = 'Deny'
+        request.POST['principal'] = 'system.Everyone'
+        request.POST['permissions'] = '-- ALL --'
+        site = make_site()
+        site.__acl__ = [(None, 1, (None,)),
+                           (None, 2, (None,))]
+        user = DummyUser(1, _JOHN)
+        user2 = DummyUser(2, _MARY)
+        site['principals']['users']['john'] = user
+        site.__objectmap__ = DummyObjectMap({1:user, 2:user2})
+        inst = self._makeOne(site, request)
+        resp = inst()
+        self.assertEqual(resp['parent_acl'], ())
+        self.assertEqual(resp['users'], [(1, _JOHN)])
+        self.assertEqual(resp['groups'], [('system.Everyone',
+                                          'system.Everyone'),
+                                          ('system.Authenticated',
+                                          'system.Authenticated')])
+        self.assertEqual(resp['local_acl'], [(None, _JOHN, (None,)),
+                                             (None, _MARY, (None,))])
+        self.assertEqual(resp['permissions'], ['-- ALL --'])
+        self.assertEqual(resp['inheriting'], 'enabled')
+        self.assertEqual(request.sdiapi.flashed,
+                         'DENY_ALL not supported at the root')
+
+    def test_add_puns_DENY_ALL_non_root(self):
+        from ....testing import make_site
+        request = testing.DummyRequest()
+        request.sdiapi = DummySDIAPI()
+        request.POST = DummyPost(getall_result=('-- ALL --',))
+        token = request.session.get_csrf_token()
+        request.params['csrf_token'] = token
+        request.POST['verb'] = 'Deny'
+        request.POST['principal'] = 'system.Everyone'
+        request.POST['permissions'] = '-- ALL --'
+        site = make_site()
+        site['page'] = context = testing.DummyResource()
+        site.__acl__ = [(None, 1, (None,))]
+        context.__acl__ = [(None, 1, (None,)),
+                           (None, 2, (None,))]
+        context.__oid__ = 5
+        user = DummyUser(1, _JOHN)
+        user2 = DummyUser(2, _MARY)
+        site['principals']['users']['john'] = user
+        site.__objectmap__ = DummyObjectMap({1:user, 2:user2})
+        inst = self._makeOne(context, request)
+        resp = inst()
+        self.assertEqual(resp['parent_acl'], [(None, _JOHN, (None,))])
+        self.assertEqual(resp['users'], [(1, _JOHN)])
+        self.assertEqual(resp['groups'], [('system.Everyone',
+                                          'system.Everyone'),
+                                          ('system.Authenticated',
+                                          'system.Authenticated')])
+        self.assertEqual(resp['local_acl'], [(None, _JOHN, (None,)),
+                                             (None, _MARY, (None,))])
+        self.assertEqual(resp['permissions'], ['-- ALL --'])
+        self.assertEqual(resp['inheriting'], 'enabled')
+        self.assertEqual(request.sdiapi.flashed,
+                         'DENY_ALL not supported:  '
+                                'select "Disabled" under "Inherit Parent ACL')
 
     def test_add_unknown_user(self):
         from ....testing import make_site
@@ -264,7 +331,7 @@ class TestAdd(unittest.TestCase):
         request.POST = DummyPost(getall_result=('test',))
         token = request.session.get_csrf_token()
         request.params['csrf_token'] = token
-        request.POST['verb'] = 'allow'
+        request.POST['verb'] = 'Allow'
         request.POST['principal'] = '3'
         request.POST['permissions'] = 'test'
         site = make_site()
@@ -289,8 +356,8 @@ class TestAdd(unittest.TestCase):
                                              (None, _MARY, (None,))])
         self.assertEqual(resp['permissions'], ['-- ALL --'])
         self.assertEqual(resp['inheriting'], 'enabled')
-        self.assertEqual(request.session['_f_error'],
-                         ['Unknown user or group when adding ACE'])
+        self.assertEqual(request.sdiapi.flashed,
+                         'Unknown user or group when adding ACE')
 
     def test_add_no_permission(self):
         from ....testing import make_site
@@ -299,7 +366,7 @@ class TestAdd(unittest.TestCase):
         request.POST = DummyPost(getall_result=None)
         token = request.session.get_csrf_token()
         request.params['csrf_token'] = token
-        request.POST['verb'] = 'allow'
+        request.POST['verb'] = 'Allow'
         request.POST['principal'] = '1'
         request.POST['permissions'] = 'test'
         site = make_site()
@@ -313,7 +380,7 @@ class TestAdd(unittest.TestCase):
         site.__objectmap__ = DummyObjectMap({1:user})
         inst = self._makeOne(context, request)
         resp = inst()
-        self.assertEqual(context.__acl__[-1], ('allow', 1, ()))
+        self.assertEqual(context.__acl__[-1], ('Allow', 1, ()))
         self.assertEqual(resp['inheriting'], 'enabled')
         self.assertEqual(request.sdiapi.flashed, 'New ACE added')
 
@@ -325,7 +392,7 @@ class TestAdd(unittest.TestCase):
         request.POST = DummyPost(getall_result=('-- ALL --,'))
         token = request.session.get_csrf_token()
         request.params['csrf_token'] = token
-        request.POST['verb'] = 'allow'
+        request.POST['verb'] = 'Allow'
         request.POST['principal'] = '1'
         request.POST['permissions'] = 'test'
         site = make_site()
@@ -339,7 +406,7 @@ class TestAdd(unittest.TestCase):
         site.__objectmap__ = DummyObjectMap({1:user})
         inst = self._makeOne(context, request)
         resp = inst()
-        self.assertEqual(context.__acl__[-1], ('allow', 1, ALL_PERMISSIONS))
+        self.assertEqual(context.__acl__[-1], ('Allow', 1, ALL_PERMISSIONS))
         self.assertEqual(resp['inheriting'], 'enabled')
         self.assertEqual(request.sdiapi.flashed, 'New ACE added')
 
@@ -351,7 +418,7 @@ class TestAdd(unittest.TestCase):
         request.POST = DummyPost(getall_result=('view'))
         token = request.session.get_csrf_token()
         request.params['csrf_token'] = token
-        request.POST['verb'] = 'allow'
+        request.POST['verb'] = 'Allow'
         request.POST['principal'] = Everyone
         request.POST['permissions'] = 'test'
         site = make_site()
@@ -361,7 +428,7 @@ class TestAdd(unittest.TestCase):
         context.__objectmap__ = DummyObjectMap({})
         inst = self._makeOne(context, request)
         resp = inst()
-        self.assertEqual(context.__acl__[-1], ('allow', Everyone, 'view'))
+        self.assertEqual(context.__acl__[-1], ('Allow', Everyone, 'view'))
         self.assertEqual(resp['inheriting'], 'enabled')
         self.assertEqual(request.sdiapi.flashed, 'New ACE added')
 
@@ -583,6 +650,7 @@ class DummyObjectMap(object):
         return 0
 
 class DummySDIAPI(object):
-    def flash_with_undo(self, message):
-        self.flashed = (message)
+    def flash(self, message, queue='info'):
+        self.flashed = message
+    flash_with_undo = flash
 

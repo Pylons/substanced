@@ -1,7 +1,10 @@
 import unittest
 from pyramid import testing
 
-from zope.interface import Interface
+from zope.interface import (
+    Interface,
+    directlyProvides
+    )
 from zope.interface.verify import (
     verifyObject,
     verifyClass
@@ -498,6 +501,24 @@ class TestFolder(unittest.TestCase):
         folder = self._makeOne()
         self.assertRaises(KeyError, folder.remove, "nonesuch")
 
+    def test_remove_broken(self):
+        from ZODB.interfaces import IBroken
+        from zope.interface import implementer
+        from substanced import util
+
+        @implementer(IBroken)
+        class Broken(object):
+
+            def __init__(self):
+                self.__Broken_state__ = dict(__name__="name",
+                        __parent__="parent")
+
+        resource = Broken()
+        folder = self._makeOne({'broken': resource})
+        result = folder.remove('broken')
+        self.assertTrue(isinstance(result, util.BrokenWrapper))
+        self.assertTrue('broken' not in folder)
+
     def test_remove_returns_object(self):
         dummy = DummyModel()
         dummy.__parent__ = None
@@ -629,14 +650,15 @@ class TestFolder(unittest.TestCase):
         self.assertFalse('a' in folder)
 
     def test_move_is_service(self):
+        from ...interfaces import IService
         folder = self._makeOne()
         other = self._makeOne()
         model = DummyModel()
-        model.__is_service__ = True
+        model.__provides__ = IService
         folder['a'] = model
         folder.move('a', other)
         self.assertEqual(other['a'], model)
-        self.assertTrue(other['a'].__is_service__)
+        self.assertTrue(IService.providedBy(other['a']))
 
     def test_copy_no_newname(self):
         folder = self._makeOne()
@@ -807,14 +829,31 @@ class TestFolder(unittest.TestCase):
         folder[name] = DummyModel()
         self.assertTrue(folder[name])
 
+    def test_get_broken(self):
+        from ZODB.interfaces import IBroken
+        from zope.interface import implementer
+
+        @implementer(IBroken)
+        class Broken(object):
+
+            def __init__(self):
+                pass
+
+        folder = self._makeOne()
+        folder['broken'] = Broken()
+        result = folder.get('broken')
+        from substanced import util
+        self.assertTrue(isinstance(result, util.BrokenWrapper))
+
     def test_find_service_missing(self):
         inst = self._makeOne()
         self.assertEqual(inst.find_service('abc'), None)
 
     def test_find_service_found(self):
+        from ...interfaces import IService
         inst = self._makeOne()
         inst2 = self._makeOne()
-        inst2.__is_service__ = True
+        inst2.__provides__ = IService
         inst.add('inst2', inst2)
         self.assertEqual(inst.find_service('inst2'), inst2)
 
@@ -823,25 +862,32 @@ class TestFolder(unittest.TestCase):
         self.assertEqual(inst.find_services('abc'), [])
 
     def test_find_services_found(self):
+        from ...interfaces import IService
         inst = self._makeOne()
         inst2 = self._makeOne()
-        inst2.__is_service__ = True
+        inst2.__provides__ = IService
         inst.add('inst2', inst2)
         self.assertEqual(inst.find_services('inst2'), [inst2])
 
     def test_add_service(self):
+        from ...interfaces import IService
         inst = self._makeOne()
         foo = testing.DummyResource()
+        class IFoo(Interface):
+            pass
+        directlyProvides(foo, IFoo)
         inst.add_service('foo', foo)
         self.assertEqual(inst['foo'], foo)
-        self.assertTrue(foo.__is_service__)
+        self.assertTrue(IService.providedBy(foo))
+        self.assertTrue(IFoo.providedBy(foo))
 
     def test_add_service_withregistry(self):
+        from ...interfaces import IService
         inst = self._makeOne()
         foo = testing.DummyResource()
         inst.add_service('foo', foo, registry=self.config.registry)
         self.assertEqual(inst['foo'], foo)
-        self.assertTrue(foo.__is_service__)
+        self.assertTrue(IService.providedBy(foo))
 
     def test__notify_no_registry(self):
         def f(t, n):
@@ -947,8 +993,8 @@ class TestFolder(unittest.TestCase):
         self.assertEqual(list(folder.order), ['c', 'b', 'a'])
         del folder.order
         self.assertEqual(list(folder.order), ['a', 'b', 'c'])
-        
-        
+
+
 
 class TestSequentialAutoNamingFolder(unittest.TestCase):
     def _makeOne(self, d=None, autoname_length=None, autoname_start=None):
@@ -1032,7 +1078,7 @@ class TestRandomAutoNamingFolder(unittest.TestCase):
     def test_next_name_alternate_length(self):
         inst = self._makeOne(autoname_length=5)
         self.assertEqual(len(inst.next_name(None)), 5)
-        
+
     def test_add_next(self):
         ob = DummyModel()
         inst = self._makeOne()
@@ -1096,4 +1142,3 @@ class DummyObjectMap(object):
         self.moving = moving
         self.removed.append(objectid)
         return [objectid]
-

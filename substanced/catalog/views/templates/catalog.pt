@@ -1,22 +1,45 @@
-<div metal:use-macro="request.sdiapi.main_template">
+<div metal:use-macro="request.sdiapi.main_template"
+     i18n:domain="substanced">
 
   <div metal:fill-slot="main">
 
-    <h2>Manage Catalog</h2>
-
-    <div># of items in catalog: ${cataloglen}</div>
-
-     <form action="./manage_catalog" method="POST">
-       <input type="hidden" value="${request.session.get_csrf_token()}"
-              name="csrf_token"/>
-       <div class="form-actions">
-           <input type="submit" class="btn btn-primary" 
-                  value="Reindex all objects in all indexes" name="reindex"/>
-           <input type="submit" class="btn btn-primary" 
-                  value="Update all index definitions" name="update"/>
-       </div>
-     </form>
-
-   </div>
-
+    <div class="panel panel-default">
+      <div class="panel-heading" i18n:translate="">Manage catalog &nbsp;  
+        (<span class="badge badge-primary" i18n:name="length">${cataloglen}</span> 
+              items in this catalog)
+      </div>
+      <div class="panel-body">
+        <form action="./manage_catalog" method="POST" onsubmit="return sdi.loading_indicator_on()">
+          <input type="hidden" value="${request.session.get_csrf_token()}"
+                 name="csrf_token"/>
+          <div class="container">
+            <div class="row" style="margin-bottom: 20px;">
+              <div class="col-md-12">
+              </div>
+              <div class="row" style="margin-bottom: 20px;">
+                <div class="col-md-10" i18n:translate="">
+                Reindex all objects in all indexes.
+                </div>
+                <div class="col-md-2">
+                  <input type="submit" class="btn btn-danger" 
+                         value="Reindex" name="reindex"/>
+                </div>
+              </div>
+              <div class="row">
+                <div class="col-md-10" i18n:translate="">
+                Update all index definitions
+                </div>
+                <div class="col-md-2">
+                  <input type="submit" class="btn btn-primary" 
+                         value="Update" name="update"/>
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+    
+  </div>
+  
 </div>

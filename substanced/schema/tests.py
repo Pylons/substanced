@@ -2,6 +2,48 @@ import unittest
 from pyramid import testing
 import colander
 
+class TestCSRFToken(unittest.TestCase):
+    def _getTargetClass(self):
+        from . import CSRFToken
+        return CSRFToken
+
+    def _makeOne(self):
+        return self._getTargetClass()()
+
+    def test_serialize_no_bindings(self):
+        inst = self._makeOne()
+        result = inst.serialize()
+        self.assertEqual(result, colander.drop)
+
+    def test_serialize_bindings_dont_contain_token(self):
+        inst = self._makeOne()
+        inst.bindings = {}
+        result = inst.serialize()
+        self.assertEqual(result, colander.drop)
+
+    def test_serialize_bindings_contains_token(self):
+        inst = self._makeOne()
+        inst.bindings = {'_csrf_token_':'123'}
+        result = inst.serialize()
+        self.assertEqual(result, colander.null)
+
+    def test_deserialize_no_bindings(self):
+        inst = self._makeOne()
+        result = inst.deserialize()
+        self.assertEqual(result, colander.drop)
+
+    def test_deserialize_bindings_dont_contain_token(self):
+        inst = self._makeOne()
+        inst.bindings = {}
+        result = inst.deserialize()
+        self.assertEqual(result, colander.drop)
+
+    def test_deserialize_bindings_contains_token(self):
+        inst = self._makeOne()
+        inst.bindings = {'_csrf_token_':'123'}
+        result = inst.deserialize('123')
+        self.assertEqual(result, '123')
+        
 class TestSchema(unittest.TestCase):
     def _getTargetClass(self):
         from . import Schema
@@ -14,21 +56,23 @@ class TestSchema(unittest.TestCase):
         from colander import Invalid
         inst = self._makeOne()
         request = DummyRequest()
-        inst2 = inst.bind(request=request)
+        inst2 = inst.bind(_csrf_token_='123', request=request)
+        self.assertEqual(inst2['_csrf_token_'].default, 'csrf_token')
         self.assertRaises(Invalid, inst2.deserialize, {'_csrf_token_':'wrong'})
 
     def test_validate_missing(self):
         from colander import Invalid
         inst = self._makeOne()
         request = DummyRequest()
-        inst2 = inst.bind(request=request)
+        inst2 = inst.bind(_csrf_token_='123', request=request)
+        self.assertEqual(inst2['_csrf_token_'].default, 'csrf_token')
         self.assertRaises(Invalid, inst2.deserialize, {})
 
     def test_validate_success(self):
         inst = self._makeOne()
         request = DummyRequest()
-        inst2 = inst.bind(request=request)
-        self.assertEqual(inst2.deserialize({'_csrf_token_':'csrf_token'}),{})
+        inst2 = inst.bind(request=request, _csrf_token_='123')
+        self.assertEqual(inst2.deserialize({'_csrf_token_':'123'}),{})
 
 class TestRemoveCSRFMapping(unittest.TestCase):
     def _makeOne(self):
@@ -228,6 +272,7 @@ class TestMultireferenceIdSchemaNode(unittest.TestCase):
         inst._get_choices = lambda: [1]
         widget = inst.widget
         self.assertEqual(widget.values, [1])
+        self.assertTrue(widget.multiple)
 
 class DummySession(dict):
     def get_csrf_token(self):

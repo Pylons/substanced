@@ -3,6 +3,7 @@ import logging
 from pyramid.security import (
     NO_PERMISSION_REQUIRED,
     ALL_PERMISSIONS,
+    DENY_ALL,
     Deny,
     Everyone,
     Authenticated,
@@ -20,6 +21,7 @@ from ...util import (
     find_service,
     )
 from ..._compat import STRING_TYPES
+from ...util import _
 
 from .. import mgmt_view
 
@@ -43,7 +45,7 @@ class ACLEditViews(object):
         else:
             self.epilog = []
 
-    @mgmt_view(tab_title='Security')
+    @mgmt_view(tab_title=_('Security'))
     def acl_view(self):
         return self.finish_acl_edit()
 
@@ -52,12 +54,12 @@ class ACLEditViews(object):
     def inherited_acl(self):
         return self.finish_acl_edit()
 
-    @mgmt_view(tab_condition=False, name='local_acl',
+    @mgmt_view(tab_condition=False, name='local_acl', tab_title=_('Security'),
                renderer='templates/acl#local_acl.pt')
     def local_acl(self):
         return self.finish_acl_edit()
     
-    @mgmt_view(request_param='form.move_up', tab_title='Security')
+    @mgmt_view(request_param='form.move_up', tab_title=_('Security'))
     def move_up(self):
         check_csrf_token(self.request)
         index = int(self.request.POST['index'])
@@ -65,10 +67,10 @@ class ACLEditViews(object):
             new = self.acl[:]
             new[index-1], new[index] = new[index], new[index-1]
             self.acl = new
-        self.request.sdiapi.flash_with_undo('ACE moved up')
+        self.request.sdiapi.flash_with_undo('ACE moved up', 'success')
         return self.finish_acl_edit()
 
-    @mgmt_view(request_param='form.move_down', tab_title='Security')
+    @mgmt_view(request_param='form.move_down', tab_title=_('Security'))
     def move_down(self):
         check_csrf_token(self.request)
         index = int(self.request.POST['index'])
@@ -76,20 +78,20 @@ class ACLEditViews(object):
             new = self.acl[:]
             new[index+1], new[index] = new[index], new[index+1]
             self.acl = new
-        self.request.sdiapi.flash_with_undo('ACE moved down')
+        self.request.sdiapi.flash_with_undo('ACE moved down', 'success')
         return self.finish_acl_edit()
 
-    @mgmt_view(request_param='form.remove', tab_title='Security')
+    @mgmt_view(request_param='form.remove', tab_title=_('Security'))
     def remove(self):
         check_csrf_token(self.request)
         index = int(self.request.POST['index'])
         new = self.acl[:]
         del new[index]
         self.acl = new
-        self.request.sdiapi.flash_with_undo('ACE removed')
+        self.request.sdiapi.flash_with_undo('ACE removed', 'success')
         return self.finish_acl_edit()
 
-    @mgmt_view(request_param='form.add', tab_title='Security')
+    @mgmt_view(request_param='form.add', tab_title=_('Security'))
     def add(self):
         check_csrf_token(self.request)
         objectmap = find_objectmap(self.context)
@@ -104,14 +106,14 @@ class ACLEditViews(object):
                 principal_id = None
                 
         if principal_id is None:
-            self.request.session.flash('No principal selected', 'error')
+            self.request.sdiapi.flash('No principal selected', 'danger')
             
         else:
             if principal_id not in (Everyone, Authenticated):
                 if objectmap.object_for(principal_id) is None:
-                    self.request.session.flash(
+                    self.request.sdiapi.flash(
                         'Unknown user or group when adding ACE',
-                        'error')
+                        'danger')
                     principal_id = None
                     
             if principal_id is not None:
@@ -120,24 +122,35 @@ class ACLEditViews(object):
                     permissions = ()
                 if '-- ALL --' in permissions:
                     permissions = ALL_PERMISSIONS
-                new = self.acl[:]
-                new.append((verb, principal_id, permissions))
-                self.acl = new
-                self.request.sdiapi.flash_with_undo('New ACE added')
+                if (verb, principal_id, permissions) == DENY_ALL:
+                    if self.context.__parent__ is not None:
+                        self.request.sdiapi.flash(
+                            'DENY_ALL not supported:  '
+                                'select "Disabled" under "Inherit Parent ACL',
+                                    'danger')
+                    else:
+                        self.request.sdiapi.flash(
+                            'DENY_ALL not supported at the root', 'danger')
+                else:
+                    new = self.acl[:]
+                    new.append((verb, principal_id, permissions))
+                    self.acl = new
+                    self.request.sdiapi.flash_with_undo('New ACE added',
+                                                        'success')
         return self.finish_acl_edit()
                 
-    @mgmt_view(request_param='form.inherit', tab_title='Security')
+    @mgmt_view(request_param='form.inherit', tab_title=_('Security'))
     def inherit(self):
         check_csrf_token(self.request)
         no_inherit = self.request.POST['inherit'] == 'disabled'
         if no_inherit:
             self.epilog = [NO_INHERIT]
             self.request.sdiapi.flash_with_undo(
-                'ACL will *not* inherit from parent')
+                'ACL will *not* inherit from parent', 'success')
         else:
             self.epilog = []
             self.request.sdiapi.flash_with_undo(
-                'ACL will inherit from parent')
+                'ACL will inherit from parent', 'success')
         return self.finish_acl_edit()
 
     def get_principal_name(self, principal_id):

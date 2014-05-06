@@ -17,6 +17,9 @@ gives Substance D developers full control over the data updating process:
 
 - Console script and SDI GUI that can be run to "evolve" a database
 
+
+.. _sd_evolve-narrative:
+
 Running an Evolution from the Command Line
 ==========================================
 
@@ -70,7 +73,7 @@ to use the console script.
 Autoevolve
 ==========
 
-If you add `substanced.autoevolve = true` within your application .ini file,
+If you add ``substanced.autoevolve = true`` within your application .ini file,
 all pending evolution upgrade steps will be run when your application starts.
 Alternately you can use the ``SUBSTANCED_AUTOEVOLVE`` evnironment variable
 (e.g. ``export SUBSTANCED_AUTOEVOLVE=true``) to do the same thing.
@@ -158,3 +161,5 @@ finished steps in the database.  Substance D, in the root factory, says: "I
 know all the steps participating in evolution, so when I first create the
 root object, I will set all of those steps to finished."
 
+If you wish to perform something after :class:`~substanced.root.Root` was
+created, see :ref:`affecting_content_creation`.

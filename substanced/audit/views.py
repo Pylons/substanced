@@ -6,8 +6,10 @@ from pyramid.httpexceptions import HTTPPreconditionFailed
 from pyramid.compat import PY3, text_type
 from substanced.sdi import mgmt_view, RIGHT
 from substanced.util import (
+    Batch,
     get_oid,
     get_auditlog,
+    _,
     )
 
 @view_defaults(
@@ -24,7 +26,7 @@ class AuditLogEventStreamView(object):
 
     @mgmt_view(
         name='auditing',
-        tab_title='Auditing',
+        tab_title=_('Auditing'),
         renderer='templates/auditing.pt',
         tab_near=RIGHT,
         physical_path='/',
@@ -40,7 +42,8 @@ class AuditLogEventStreamView(object):
                 dt = datetime.datetime.fromtimestamp(event.timestamp, tz)
                 time = dt.strftime('%Y-%m-%d %H:%M:%S %Z')
                 results.insert(0, (gen, idx, time, event))
-        return {'results':results, 'log_exists':log_exists}
+        batch = Batch(results, self.request, default_size=100)
+        return {'batch':batch, 'results':results, 'log_exists':log_exists}
 
     @mgmt_view(name='auditstream-sse', tab_condition=False)
     def auditstream_sse(self):

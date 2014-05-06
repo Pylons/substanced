@@ -1,11 +1,15 @@
 import random
+import os
 import string
 
 from persistent import Persistent
 from cryptacular.bcrypt import BCRYPTPasswordManager
 
-from zope.interface import implementer
-from deform_bootstrap.widget import ChosenSingleWidget
+from zope.interface import (
+    implementer,
+    Interface,
+    )
+import deform.widget
 
 import colander
 import pytz
@@ -68,7 +72,7 @@ def _gen_random_token():
 @service(
     'Principals',
     service_name='principals',
-    icon='icon-lock',
+    icon='glyphicon glyphicon-lock',
     after_create='after_create',
     add_view='add_principals_service',
     )
@@ -156,7 +160,7 @@ class Principals(Folder):
 
 @content(
     'Users',
-    icon='icon-list-alt'
+    icon='glyphicon glyphicon-list-alt'
     )
 @implementer(IUsers)
 class Users(Folder):
@@ -168,7 +172,7 @@ class Users(Folder):
 
 @content(
     'Groups',
-    icon='icon-list-alt'
+    icon='glyphicon glyphicon-list-alt'
     )
 @implementer(IGroups)
 class Groups(Folder):
@@ -238,7 +242,7 @@ class GroupPropertySheet(PropertySheet):
 
 @content(
     'Group',
-    icon='icon-th-list',
+    icon='glyphicon glyphicon-th-list',
     add_view='add_group',
     tab_order=('properties',),
     propertysheets = (
@@ -298,7 +302,24 @@ _ZONES = pytz.all_timezones
 
 @colander.deferred
 def tzname_widget(node, kw): #pragma NO COVER
-    return ChosenSingleWidget(values=zip(_ZONES, _ZONES))
+    return deform.widget.Select2Widget(values=zip(_ZONES, _ZONES))
+
+def get_locales():
+    dir_ = os.listdir(os.path.join(os.path.dirname(__file__),
+                                   '..', 'locale'))
+    return list(filter(lambda x: not x.endswith('.pot'), dir_)) + ['en']
+
+_LOCALES = get_locales()
+
+@colander.deferred
+def locale_widget(node, kw):
+    locales = zip(_LOCALES, _LOCALES)
+    sorted_locales = sorted(locales)
+    return deform.widget.Select2Widget(values=sorted_locales)
+
+@colander.deferred
+def locale_missing(node, kw): #pragma NO COVER
+    return kw['request'].locale_name
 
 class UserSchema(Schema):
     """ Property schema for :class:`substanced.principal.User` objects.
@@ -321,6 +342,13 @@ class UserSchema(Schema):
         widget=tzname_widget,
         validator=colander.OneOf(_ZONES)
         )
+    locale = colander.SchemaNode(
+        colander.String(),
+        title='Locale',
+        widget=locale_widget,
+        missing=locale_missing,
+        validator=colander.OneOf(_LOCALES),
+    )
 
 class UserPropertySheet(PropertySheet):
     schema = UserSchema()
@@ -342,7 +370,7 @@ class UserGroupsPropertySheet(PropertySheet):
 
 @content(
     'User',
-    icon='icon-user',
+    icon='glyphicon glyphicon-user',
     add_view='add_user',
     tab_order=('properties',),
     propertysheets = (
@@ -361,7 +389,7 @@ class User(Folder):
     groups = multireference_source_property(UserToGroup)
     name = renamer()
 
-    def __init__(self, password=None, email=None, tzname=None):
+    def __init__(self, password=None, email=None, tzname=None, locale=None):
         Folder.__init__(self)
         if password is not None:
             password = self.pwd_manager.encode(password)
@@ -370,6 +398,9 @@ class User(Folder):
         if tzname is None:
             tzname = 'UTC'
         self.tzname = tzname
+        if locale is None:
+            locale = 'en'
+        self.locale = locale
 
     def __dump__(self):
         return dict(password=self.password)
@@ -383,6 +414,10 @@ class User(Folder):
         this user's stored, encrypted password.  Returns ``True`` or
         ``False``."""
         statsd_gauge('check_password', 1)
+        if len(password) > 4096:
+            # avoid DOS ala
+            # https://www.djangoproject.com/weblog/2013/sep/15/security/
+            raise ValueError('Not checking password > 4096 bytes')
         return self.pwd_manager.check(self.password, password)
 
     def set_password(self, password):
@@ -409,7 +444,7 @@ class User(Folder):
 
 @content(
     'Password Resets',
-    icon='icon-tags'
+    icon='glyphicon glyphicon-tags'
     )
 @implementer(IPasswordResets)
 class PasswordResets(Folder):
@@ -419,7 +454,7 @@ class PasswordResets(Folder):
 
 @content(
     'Password Reset',
-    icon='icon-tag'
+    icon='glyphicon glyphicon-tag'
     )
 @implementer(IPasswordReset)
 class PasswordReset(Persistent):
@@ -465,6 +500,26 @@ class DefaultUserLocator(object):
             return None
         return user.groupids
 
+def set_user_locator(config, cls):
+    """
+    Directive which sets the user locator for the groupfinder to use. The
+    ``cls`` argument should be a class that implements IUserLocator.
+    """
+    def register():
+        config.registry.registerAdapter(cls, (Interface, Interface),
+                                        IUserLocator)
+
+    discriminator = ('sd-user-locator',)
+    intr = config.introspectable(
+        'sd user locator',
+        discriminator,
+        cls.__name__,
+        'sd user locator',
+        )
+    intr['cls'] = cls
+
+    config.action(discriminator, callable=register, introspectables=(intr,))
+
 def groupfinder(userid, request):
     """ A Pyramid authentication policy groupfinder callback that uses the
     Substance D user locator system to find group identifiers."""
@@ -475,3 +530,5 @@ def groupfinder(userid, request):
         adapter = DefaultUserLocator(context, request)
     return adapter.get_groupids(userid)
 
+def includeme(config): # pragma: no cover
+    config.add_directive('set_user_locator', set_user_locator)

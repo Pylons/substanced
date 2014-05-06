@@ -16,12 +16,13 @@ def include(config): # pragma: no cover
     config.include('.objectmap')
     config.include('.property')
     config.include('.catalog')
-    config.include('.widget')
+    config.include('.form')
     config.include('.workflow')
     config.include('.dump')
     config.include('.locking')
     config.include('.audit')
     config.include('.editable')
+    config.add_translation_dirs('locale/')
 
 def scan(config): # pragma: no cover
     """ Perform all ``config.scan`` tasks required for Substance D and the

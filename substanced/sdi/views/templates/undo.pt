@@ -1,63 +1,78 @@
-<div metal:use-macro="request.sdiapi.main_template">
+<div metal:use-macro="request.sdiapi.main_template" i18n:domain="substanced">
 
   <div metal:fill-slot="main">
 
-    <div style="text-align:center" tal:condition="batch">
+    <div class="container">
+      <div class="row">
 
-      <div>Batch #: ${batch_num|0}</div>
+        <div tal:condition="batch">
 
-      <a tal:condition="earlier"
-         href="${earlier}"><i class="icon-backward"> </i>Earlier</a>
+          <ul class="pager pager-compact">
+            <li>
+              <div class="label label-primary" i18n:translate="">Page # ${batch_num+1|1}</div>
+            </li>
+            <li class="${(not later and 'disabled') or ''}">
+              <a href="${request.view_name}" i18n:translate="">
+                <i class="glyphicon glyphicon-fast-backward" i18n:name="icon"> </i> Latest</a>
+            </li>
+            <li class="${(not later and 'disabled') or ''}">
+              <a href="${later}" i18n:translate="">
+                <i class="glyphicon glyphicon-backward" i18n:name="icon"> </i> Later</a>
+            </li>
+            <li class="${(not earlier and 'disabled') or ''}">
+              <a href="${earlier}" i18n:translate="">
+                <i class="glyphicon glyphicon-forward" i18n:name="icon"> </i> Earlier</a>
+            </li>
+          </ul>
 
-      <!-- <span tal:condition="not earlier">(No Earlier Transactions)</span> -->
-
-      <span tal:condition="later">|</span>
-
-      <a tal:condition="later"
-         href="${later}">Later<i class="icon-forward"> </i></a>
-
-      <!-- <span tal:condition="not later">(No Later Transactions)</span> -->
-
-      <a tal:condition="later" 
-         href="${request.view_name}">Latest<i class="icon-fast-forward"> </i></a>
 
 
+        </div>
+      </div>
 
+      <div class="row">
+
+        <form action="${request.sdiapi.mgmt_url(context, '@@undo_multiple')}" 
+              method="post">
+          <div class="panel panel-default">
+            <div class="panel-heading" i18n:translate="">Undoable transactions</div>
+            <div class="panel-body">
+          
+              <table tal:condition="batch|None" class="table table-striped table-condensed">
+
+                <thead>
+                  <tr>
+                    <th width="2%"></th>
+                    <th width="25%" i18n:translate="">Time</th>
+                    <th width="5%" i18n:translate="">Size</th>
+                    <th width="10%" i18n:translate="">User</th>
+                    <th width="58%" i18n:translate="">Description</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  <tr tal:repeat="item batch">
+                    <td><input type="checkbox" name="transaction" value="${item.id}"/></td>
+                    <td>${item.time}</td>
+                    <td>${item.size}</td>
+                    <td>${item.user_name}</td>
+                    <td>${item.description}</td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <input type="submit" name="form.submitted" value="Undo" i18n:attributes="value"
+                     class="btn btn-primary"/>
+              <input type="hidden" name="csrf_token" style="margin-left: 20px;"
+                     value="${request.session.get_csrf_token()}"/>
+            </div>
+          </div>
+
+        </form>
+
+      </div>
     </div>
 
-    <form action="${request.sdiapi.mgmt_url(context, '@@undo_multiple')}" 
-          method="post">
-      <table tal:condition="batch|None" class="table table-striped">
-
-        <thead>
-         <tr>
-           <th width="3%"></th>
-           <th width="12%">Time</th>
-           <th width="5%">Size</th>
-           <th width="10%">User</th>
-           <th width="70%">Description</th>
-         </tr>
-        </thead>
-
-        <tbody>
-          <tr tal:repeat="item batch">
-             <td><input type="checkbox" name="transaction" value="${item.id}"/></td>
-             <td>${item.time}</td>
-             <td>${item.size}</td>
-             <td>${item.user_name}</td>
-             <td>${item.description}</td>
-          </tr>
-        </tbody>
-      </table>
-
-      <input type="submit" name="form.submitted" value="Undo"
-             class="btn btn-primary"/>
-      <input type="hidden" name="csrf_token"
-             value="${request.session.get_csrf_token()}"/>
-
-    </form>
-
   </div>
-
 </div>
 
