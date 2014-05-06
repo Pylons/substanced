@@ -1,6 +1,5 @@
 import unittest
 from pyramid import testing
-import mock
 
 class TestManageDatabase(unittest.TestCase):
     def _makeOne(self, context, request):
@@ -53,6 +52,20 @@ class TestManageDatabase(unittest.TestCase):
         request.sdiapi = DummySDIAPI()
         self.assertRaises(HTTPFound, inst.pack)
 
+    def test_pack_blobstorage_error(self):
+        from ZODB.blob import BlobStorageError
+        context = testing.DummyResource()
+        request = testing.DummyRequest()
+        inst = self._makeOne(context, request)
+        conn = DummyConnection(am=None, packraises=BlobStorageError)
+        inst.get_connection = lambda *arg: conn
+        request.POST['days'] = '5'
+        request.sdiapi = DummySDIAPI()
+        resp = inst.pack()
+        self.assertEqual(conn._db.packed, 5)
+        self.assertEqual(resp.location, '/mgmt_path')
+        self.assertEqual(request.sdiapi.flashed, 'Already packing')
+        
     def test_flush_cache(self):
         context = testing.DummyResource()
         request = testing.DummyRequest()
@@ -72,146 +85,138 @@ class TestManageDatabase(unittest.TestCase):
         inst.EvolutionManager = DummyEvolutionManager()
 
         resp = inst.show_evolve()
-        self.assertEqual(resp['finished_steps'], ["1", "2", "3"])
-        self.assertEqual(resp['unfinished_steps'], [('4', '4'), ('5', '5'), ('6', '6')])
+        self.assertEqual(
+            resp['finished_steps'], ["1", "2", "3"])
+        self.assertEqual(
+            resp['unfinished_steps'], [('4', '4'), ('5', '5'), ('6', '6')])
 
     def test_evolve(self):
         context = testing.DummyResource()
         request = testing.DummyRequest()
         request.sdiapi = DummySDIAPI()
-        request.session.flash = DummyFlash()
         inst = self._makeOne(context, request)
         inst.EvolutionManager = DummyEvolutionManager()
 
         resp = inst.evolve()
         self.assertEqual(resp.location, '/mgmt_path')
-        self.assertEqual(request.session.flash.messages,
-                         ["3 evolution steps executed"])
+        self.assertEqual(request.sdiapi.flashed,
+                         "3 evolution steps executed successfully")
 
     def test_evolve_empty(self):
         context = testing.DummyResource()
         request = testing.DummyRequest()
         request.sdiapi = DummySDIAPI()
-        request.session.flash = DummyFlash()
         inst = self._makeOne(context, request)
         inst.EvolutionManager = DummyEvolutionManager([])
 
         resp = inst.evolve()
         self.assertEqual(resp.location, '/mgmt_path')
-        self.assertEqual(request.session.flash.messages,
-                         ["No evolution steps executed"])
+        self.assertEqual(request.sdiapi.flashed,
+                         "No evolution steps to execute")
 
     def test_dryrun(self):
         context = testing.DummyResource()
         request = testing.DummyRequest()
         request.sdiapi = DummySDIAPI()
-        request.session.flash = DummyFlash()
         inst = self._makeOne(context, request)
         inst.EvolutionManager = DummyEvolutionManager()
 
         resp = inst.dryrun()
         self.assertEqual(resp.location, '/mgmt_path')
-        self.assertEqual(request.session.flash.messages,
-                         ["3 evolution steps dry-run"])
+        self.assertEqual(request.sdiapi.flashed,
+                         "3 evolution steps dry-run successfully")
 
     def test_dryrun_empty(self):
         context = testing.DummyResource()
         request = testing.DummyRequest()
         request.sdiapi = DummySDIAPI()
-        request.session.flash = DummyFlash()
         inst = self._makeOne(context, request)
         inst.EvolutionManager = DummyEvolutionManager([])
 
         resp = inst.dryrun()
         self.assertEqual(resp.location, '/mgmt_path')
-        self.assertEqual(request.session.flash.messages,
-                         ["No evolution steps dry-run"])
+        self.assertEqual(request.sdiapi.flashed,
+                         "No evolution steps to dry-run")
 
     def test_evolve_finished(self):
         context = testing.DummyResource()
         request = testing.DummyRequest()
         request.sdiapi = DummySDIAPI()
-        request.session.flash = DummyFlash()
         request.POST['step'] = '4'
         inst = self._makeOne(context, request)
         inst.EvolutionManager = DummyEvolutionManager()
 
         resp = inst.evolve_finished()
         self.assertEqual(resp.location, '/mgmt_path')
-        self.assertEqual(request.session.flash.messages,
-                         ["Step 4 marked as finished"])
+        self.assertEqual(request.sdiapi.flashed,
+                         "Step 4 marked as finished")
         self.assertEqual(inst.EvolutionManager.finished_steps, ["4"])
 
     def test_evolve_finished_unknown(self):
         context = testing.DummyResource()
         request = testing.DummyRequest()
         request.sdiapi = DummySDIAPI()
-        request.session.flash = DummyFlash()
         request.POST['step'] = '4'
         inst = self._makeOne(context, request)
         inst.EvolutionManager = DummyEvolutionManager([])
 
         resp = inst.evolve_finished()
         self.assertEqual(resp.location, '/mgmt_path')
-        self.assertEqual(request.session.flash.messages,
-                         ["Unknown step 4, not marking as finished"])
+        self.assertEqual(request.sdiapi.flashed,
+                         "Unknown step 4, not marking as finished")
 
     def test_evolve_finished_already(self):
         context = testing.DummyResource()
         request = testing.DummyRequest()
         request.sdiapi = DummySDIAPI()
-        request.session.flash = DummyFlash()
         request.POST['step'] = '1'
         inst = self._makeOne(context, request)
         inst.EvolutionManager = DummyEvolutionManager()
 
         resp = inst.evolve_finished()
         self.assertEqual(resp.location, '/mgmt_path')
-        self.assertEqual(request.session.flash.messages,
-                         ["Step 1 already marked as finished"])
+        self.assertEqual(request.sdiapi.flashed,
+                         "Step 1 already marked as finished")
 
     def test_evolve_unfinished(self):
         context = testing.DummyResource()
         request = testing.DummyRequest()
         request.sdiapi = DummySDIAPI()
-        request.session.flash = DummyFlash()
         request.POST['step'] = '1'
         inst = self._makeOne(context, request)
         inst.EvolutionManager = DummyEvolutionManager()
 
         resp = inst.evolve_unfinished()
         self.assertEqual(resp.location, '/mgmt_path')
-        self.assertEqual(request.session.flash.messages,
-                         ["Step 1 marked as unfinished"])
+        self.assertEqual(request.sdiapi.flashed,
+                         "Step 1 marked as unfinished")
         self.assertEqual(inst.EvolutionManager.removed_finished_steps, ["1"])
 
     def test_evolve_unfinished_unknown(self):
         context = testing.DummyResource()
         request = testing.DummyRequest()
         request.sdiapi = DummySDIAPI()
-        request.session.flash = DummyFlash()
         request.POST['step'] = '9'
         inst = self._makeOne(context, request)
         inst.EvolutionManager = DummyEvolutionManager()
 
         resp = inst.evolve_unfinished()
         self.assertEqual(resp.location, '/mgmt_path')
-        self.assertEqual(request.session.flash.messages,
-                         ["Unknown step 9, not marking as unfinished"])
+        self.assertEqual(request.sdiapi.flashed,
+                         "Unknown step 9, not marking as unfinished")
 
     def test_evolve_unfinished_already(self):
         context = testing.DummyResource()
         request = testing.DummyRequest()
         request.sdiapi = DummySDIAPI()
-        request.session.flash = DummyFlash()
         request.POST['step'] = '4'
         inst = self._makeOne(context, request)
         inst.EvolutionManager = DummyEvolutionManager()
 
         resp = inst.evolve_unfinished()
         self.assertEqual(resp.location, '/mgmt_path')
-        self.assertEqual(request.session.flash.messages,
-                         ["Step 4 already marked as unfinished"])
+        self.assertEqual(request.sdiapi.flashed,
+                         "Step 4 already marked as unfinished")
 
 
     def test_format_timestamp(self):
@@ -221,14 +226,17 @@ class TestManageDatabase(unittest.TestCase):
 
 
 class DummyDB(object):
-    def __init__(self, am=None):
+    def __init__(self, am=None, packraises=None):
         self.am = am
+        self.packraises = packraises
 
     def getActivityMonitor(self):
         return self.am
 
     def pack(self, days=None):
         self.packed = days
+        if self.packraises:
+            raise self.packraises
 
     def cacheMinimize(self):
         self.minimized = True
@@ -238,8 +246,8 @@ class DummyActivityMonitor(object):
         return [{'end':1, 'connections':1, 'stores':1, 'loads':1}]*2
 
 class DummyConnection(object):
-    def __init__(self, am=None):
-        self._db = DummyDB(am=am)
+    def __init__(self, am=None, packraises=None):
+        self._db = DummyDB(am=am, packraises=packraises)
 
     def db(self):
         return self._db
@@ -247,6 +255,8 @@ class DummyConnection(object):
 class DummySDIAPI(object):
     def mgmt_path(self, *arg, **kw):
         return '/mgmt_path'
+    def flash(self, msg, queue='info'):
+        self.flashed = msg
 
 class DummyEvolutionManager(object):
 
@@ -281,10 +291,3 @@ class DummyEvolutionManager(object):
     def remove_finished_step(self, step):
         self.removed_finished_steps.append(step)
 
-class DummyFlash(object):
-
-    def __init__(self):
-        self.messages = []
-
-    def __call__(self, msg):
-        self.messages.append(msg)

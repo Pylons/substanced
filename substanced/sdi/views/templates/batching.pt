@@ -1,0 +1,39 @@
+<div metal:define-macro="batching" i18n:domain="substanced">
+  <ul tal:condition="not batch.required"
+      class="pager pager-compact">
+      <li i18n:translate="">${batch.seqlen} entries total</li>
+  </ul>
+
+  <div tal:condition="batch.required" 
+       class="text-center">
+    <div class="label label-primary" i18n:translate="">
+      Page # ${batch.num+1}
+         (${'%d-%d of %d' % (batch.startitem+1, batch.enditem+1, batch.seqlen)})
+    </div>
+  </div>
+
+  <ul tal:condition="batch.required"
+      class="pager pager-compact" style="padding-top: 10px;">
+    <li class="${(not batch.first_url and 'disabled') or ''}">
+      <a href="${batch.first_url}">
+        <i class="glyphicon glyphicon-fast-backward"> </i> 
+            ${first_batch_label|request.localizer.translate('First')}</a>
+    </li>
+    <li class="${(not batch.prev_url and 'disabled') or ''}">
+      <a href="${batch.prev_url}">
+        <i class="glyphicon glyphicon-backward"> </i>
+            ${prev_batch_label|request.localizer.translate('Previous')}</a>
+    </li>
+    <li class="${(not batch.next_url and 'disabled') or ''}">
+      <a href="${batch.next_url}">
+        <i class="glyphicon glyphicon-forward"> </i>
+            ${next_batch_label|request.localizer.translate('Next')}</a>
+    </li>
+    <li class="${(not batch.last_url and 'disabled') or ''}">
+      <a href="${batch.last_url}">
+        <i class="glyphicon glyphicon-fast-forward"> </i>
+            ${last_batch_label|request.localizer.translate('Last')}</a>
+    </li>
+  </ul>
+</div>
+

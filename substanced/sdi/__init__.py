@@ -5,6 +5,7 @@ import transaction
 from pyramid_zodbconn import get_connection
 
 from zope.interface import (
+    implementer,
     providedBy,
     Interface,
     )
@@ -41,9 +42,10 @@ from pyramid.util import (
     Sentinel,
     )
 
-from ..util import acquire
+from ..util import acquire, _
 
 from ..interfaces import IUserLocator
+from ..interfaces import ISDIAPI
 from ..principal import DefaultUserLocator
 
 LEFT = 'LEFT'
@@ -193,12 +195,11 @@ def add_mgmt_view(
     config.action(discriminator, introspectables=(intr,))
 
 class mgmt_view(object):
-    """ A class :term:`decorator` which, when applied to a class, will
-    provide defaults for all view configurations that use the class.  This
-    decorator accepts all the arguments accepted by
-    :class:`pyramid.config.view_config`, and each has the same meaning.
+    """ A class :term:`decorator` which, when applied to a class or function,
+    will configure it as a :term:`management view`.
 
-    See :ref:`view_defaults` for more information.
+    This is a thin wrapper around ``substanced.sdi.add_mgmt_view``
+    and accepts the same arguments.
     """
     venusian = venusian
     def __init__(self, **settings):
@@ -309,7 +310,7 @@ def sdi_mgmt_views(context, request, names=None):
                 {'view_name': view_name,
                  'tab_before':tab_before,
                  'tab_after':tab_after,
-                 'title': tab_title or view_name.capitalize(),
+                 'title': _(tab_title or view_name.capitalize()),
                  'class': css_class,
                  'predicate_order':predicate_order,
                  'sro_index':sro_index,
@@ -400,59 +401,6 @@ def default_sdi_addable(context, intr):
         return not (service_name and service_name in context)
     return True
 
-def sdi_add_views(context, request):
-    registry = request.registry
-    introspector = registry.introspector
-
-    candidates = {}
-    
-    for data in introspector.get_category('substance d content types'): 
-        intr = data['introspectable']
-        meta = intr['meta']
-        content_type = intr['content_type']
-        viewname = meta.get('add_view')
-        if viewname:
-            if callable(viewname):
-                viewname = viewname(context, request)
-                if not viewname:
-                    continue
-            addable_here = getattr(
-                context,
-                '__sdi_addable__',
-                default_sdi_addable
-                )
-            if addable_here is not None:
-                if callable(addable_here):
-                    if not addable_here(context, intr):
-                        continue
-                else:
-                    if not content_type in addable_here:
-                        continue
-            type_name = meta.get('name', content_type)
-            icon = meta.get('icon', '')
-            data = dict(
-                type_name=type_name,
-                icon=icon,
-                content_type=content_type
-                )
-            candidates[viewname] = data
-
-    candidate_names = candidates.keys()
-    views = sdi_mgmt_views(context, request, names=candidate_names)
-
-    L = []
-
-    for view in views:
-        view_name = view['view_name']
-        url = request.sdiapi.mgmt_path(context, '@@' + view_name)
-        data = candidates[view_name]
-        data['url'] = url
-        L.append(data)
-
-    L.sort(key=operator.itemgetter('type_name'))
-
-    return L
-
 def user(request):
     context = request.context
     userid = authenticated_userid(request)
@@ -472,6 +420,7 @@ def mgmt_url(request, obj, *arg, **kw): # XXX deprecate
 def flash_with_undo(request, *arg, **kw): # XXX deprecate
     return request.sdiapi.flash_with_undo(*arg, **kw)
 
+@implementer(ISDIAPI)
 class sdiapi(object):
     get_connection = staticmethod(get_connection) # testing
     transaction = transaction # testing
@@ -510,10 +459,22 @@ class sdiapi(object):
             snippet = button
         return snippet
 
-    def flash_with_undo(self, msg, queue='', allow_duplicate=True):
+    def flash_with_undo(self, msg, queue='info', allow_duplicate=True):
         request = self.request
         snippet = self.get_flash_with_undo_snippet(msg)
         request.session.flash(snippet, queue, allow_duplicate=allow_duplicate)
+
+    def flash(self, msg, queue='info', allow_duplicate=True):
+        if queue == 'error':
+            queue = 'danger' # bw compat for bs3 alert names
+        request = self.request
+        request.session.flash(msg, queue, allow_duplicate=allow_duplicate)
+
+    def is_mgmt(self):
+        """ Return true if the current request is for a resource that is under
+        ``/manage`` """
+        matched_route = getattr(self.request, 'matched_route', None)
+        return getattr(matched_route, 'name', None) == MANAGE_ROUTE_NAME
 
     def mgmt_path(self, obj, *arg, **kw):
         """ Return the path of the resource ``obj`` with the ``manage`` path
@@ -540,11 +501,20 @@ class sdiapi(object):
             if not has_permission('sdi.view', resource, request):
                 return []
             url = request.sdiapi.mgmt_path(resource, '@@manage_main')
-            name = resource.__name__ or 'Home'
+            name = getattr(resource, 'sdi_title', None)
+            if name is None:
+                name = resource.__name__ or 'Home'
             icon = request.registry.content.metadata(resource, 'icon')
+            content_type = request.registry.content.typeof(resource)
             active = resource is request.context and 'active' or None
-            breadcrumbs.insert(0, {'url':url, 'name':name, 'active':active,
-                                   'icon':icon})
+            bcinfo = {
+                'url':url,
+                'name':name,
+                'active':active,
+                'icon':icon,
+                'content_type':content_type,
+                }
+            breadcrumbs.insert(0, bcinfo)
             if resource is request.virtual_root:
                 break
         return breadcrumbs
@@ -584,8 +554,8 @@ def includeme(config): # pragma: no cover
     config.add_request_method(mgmt_url) # XXX deprecate
     config.add_request_method(flash_with_undo) # XXX deprecate
     config.add_request_method(user, reify=True)
+    config.set_request_property(lambda r: r.user.locale, name="_LOCALE_")
     config.add_request_method(sdiapi, reify=True)
-    config.include('deform_bootstrap')
     secret = settings.get('substanced.secret')
     if secret is None:
         raise ConfigurationError(
@@ -609,4 +579,3 @@ def includeme(config): # pragma: no cover
     config.set_authentication_policy(authn_policy)
     config.set_authorization_policy(authz_policy)
     config.add_permission('sdi.edit-properties') # used by property machinery
-    config.include('.views.folder')

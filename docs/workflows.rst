@@ -127,8 +127,8 @@ Typically you will want to define custom actions when transition is executed
 or when content enters a specific state. Let's define a transition with
 a callback::
 
-    >>> def cb(context, meta):
-    ...     print "meta: ", meta
+    >>> def cb(context, **kw):
+    ...     print "keywords: ", meta
 
     >>> workflow.add_transition('to_publish_with_callback',
     ...                         from_state='draft',
@@ -139,7 +139,7 @@ a callback::
 When you execute the transition, callback is called::
 
     >>> workflow.transition(context, request, 'to_publish_with_callback')
-    meta: {'workflow': <Workflow ...>, 'transition': {'to_state': 'published', 'from_state': 'draft', ...}, request=<Request ...>}
+    keywords: {'workflow': <Workflow ...>, 'transition': {'to_state': 'published', 'from_state': 'draft', ...}, request=<Request ...>}
 
 To know more about callback parameters, read
 :meth:`~substanced.workflow.Workflow.add_transition` signature.

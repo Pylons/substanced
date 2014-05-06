@@ -1,11 +1,9 @@
 import colander
 import datetime
 import time
-
 import deform.widget
 
 from persistent import Persistent
-
 from pyramid.security import (
     Allow,
     Everyone,
@@ -23,7 +21,7 @@ from substanced.util import renamer
 
 @colander.deferred
 def now_default(node, kw):
-    return datetime.date.today()
+    return datetime.datetime.now()
 
 class BlogEntrySchema(Schema):
     name = NameSchemaNode(
@@ -52,10 +50,10 @@ class BlogEntryPropertySheet(PropertySheet):
 
 @content(
     'Blog Entry',
-    icon='icon-book',
+    icon='glyphicon glyphicon-book',
     add_view='add_blog_entry',
     propertysheets=(
-        ('Basic', BlogEntryPropertySheet),
+        ('', BlogEntryPropertySheet),
         ),
     catalog=True,
     tab_order=('properties', 'contents', 'acl_edit'),
@@ -66,13 +64,15 @@ class BlogEntry(Folder):
 
     def __init__(self, title, entry, format, pubdate):
         Folder.__init__(self)
-        self.modified = datetime.datetime.utcnow()
         self.title = title
         self.entry = entry
-        self.pubdate = pubdate
         self.format = format
-        self['attachments'] = Folder()
-        self['comments'] = Folder()
+        self.pubdate = pubdate
+        self['attachments'] = Attachments()
+        self['comments'] = Comments()
+
+    def __sdi_addable__(self, context, introspectable):
+        return False
 
     def add_comment(self, comment):
         while 1:
@@ -98,10 +98,10 @@ class CommentPropertySheet(PropertySheet):
 
 @content(
     'Comment',
-    icon='icon-comment',
+    icon='glyphicon glyphicon-comment',
     add_view='add_comment',
     propertysheets = (
-        ('Basic', CommentPropertySheet),
+        ('', CommentPropertySheet),
         ),
     catalog = True,
     )
@@ -110,6 +110,51 @@ class Comment(Persistent):
         self.commenter_name = commenter_name
         self.text = text
         self.pubdate = pubdate
+
+def comments_columns(folder, subobject, request, default_columnspec):
+    pubdate = getattr(subobject, 'pubdate', None)
+    if pubdate is not None:
+        pubdate = pubdate.isoformat()
+
+    return default_columnspec + [
+        {'name': 'Publication date',
+        'value': pubdate,
+        'formatter': 'date',
+        },
+        ]
+
+@content(
+    'Comments',
+    icon='glyphicon glyphicon-list',
+    columns=comments_columns,
+    )
+class Comments(Folder):
+    """ Folder for comments of a blog entry
+    """
+    def __sdi_addable__(self, context, introspectable):
+        return introspectable.get('content_type') == 'Comment'
+
+def attachments_columns(folder, subobject, request, default_columnspec):
+    kb_size = None
+    if getattr(subobject, 'get_size', None) and callable(subobject.get_size):
+        kb_size = int(int(subobject.get_size())/1000)
+
+    return default_columnspec + [
+        {'name': 'Size',
+        'value': "%s kB" % kb_size,
+        },
+        ]
+
+@content(
+    'Attachments',
+    icon='glyphicon glyphicon-list',
+    columns=attachments_columns,
+    )
+class Attachments(Folder):
+    """ Folder for attachments of a blog entry
+    """
+    def __sdi_addable__(self, context, introspectable):
+        return introspectable.get('content_type') == 'File'
 
 class BlogSchema(Schema):
     """ The schema representing the blog root. """
@@ -125,17 +170,37 @@ class BlogSchema(Schema):
 class BlogPropertySheet(PropertySheet):
     schema = BlogSchema()
 
+def blog_columns(folder, subobject, request, default_columnspec):
+    title = getattr(subobject, 'title', None)
+    pubdate = getattr(subobject, 'pubdate', None)
+    if pubdate is not None:
+        pubdate = pubdate.isoformat()
+
+    return default_columnspec + [
+        {'name': 'Title',
+        'value': title,
+        },
+        {'name': 'Publication Date',
+        'value': pubdate,
+        'formatter': 'date',
+        },
+        ]
+
 @content(
     'Root',
-    icon='icon-home',
+    icon='glyphicon glyphicon-home',
     propertysheets = (
         ('', BlogPropertySheet),
         ),
-    after_create= ('after_create', 'after_create2')
+    after_create= ('after_create', 'after_create_blog'),
+    columns=blog_columns,
     )
 class Blog(Root):
-    title = ''
-    description = ''
+    title = 'Substance D Blog'
+    description = 'Description of this blog'
+
+    def __sdi_addable__(self, context, introspectable):
+        return introspectable.get('content_type') == 'Blog Entry'
 
     @property
     def sdi_title(self):
@@ -145,7 +210,7 @@ class Blog(Root):
     def sdi_title(self, value):
         self.title = value
     
-    def after_create2(self, inst, registry):
+    def after_create_blog(self, inst, registry):
         acl = getattr(self, '__acl__', [])
         acl.append((Allow, Everyone, 'view'))
         self.__acl__ = acl

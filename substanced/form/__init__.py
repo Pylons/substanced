@@ -1,91 +1,19 @@
 import binascii
 import os
+from pkg_resources import resource_filename
+
+from pyramid.i18n import get_localizer
+from pyramid.threadlocal import get_current_request
 
 import deform
 import deform.form
 import deform.exception
+from deform.template import ZPTRendererFactory
 import deform.widget
 
 from pyramid.exceptions import ConfigurationError
 
 from ..util import chunks
-
-# assume jquery is already loaded in our widget resource list, use asset
-# specs instead of relative paths
-
-default_resources = {
-    'jquery': {
-        None:{},
-        },
-    'jqueryui': {
-        None:{
-            'js':'deform:static/scripts/jquery-ui-1.8.11.custom.min.js',
-            'css':'deform:static/css/ui-lightness/jquery-ui-1.8.11.custom.css',
-            },
-        },
-    'jquery.form': {
-        None:{
-            'js':'deform:static/scripts/jquery.form-3.09.js',
-            },
-        },
-    'jquery.maskedinput': {
-        None:{
-            'js':'deform:static/scripts/jquery.maskedinput-1.2.2.min.js',
-            },
-        },
-    'jquery.maskMoney': {
-        None:{
-            'js':'deform:static/scripts/jquery.maskMoney-1.4.1.js',
-            },
-        },
-    'datetimepicker': {
-        None:{
-            'js':'deform:static/scripts/jquery-ui-timepicker-addon.js',
-            'css':'deform:static/css/jquery-ui-timepicker-addon.css',
-            },
-        },
-    'deform': {
-        None:{
-            'js':('deform:static/scripts/jquery.form-3.09.js', 
-                  'deform:static/scripts/deform.js',
-                  'deform_bootstrap:static/deform_bootstrap.js'),
-            'css':'deform:static/css/form.css',
-            },
-        },
-    'bootstrap': {
-        None: {},
-    },
-    'tinymce': {
-        None:{
-            'js':'deform:static/tinymce/jscripts/tiny_mce/tiny_mce.js',
-            },
-        },
-    'chosen': {
-        None:{
-            'js':'deform_bootstrap:static/jquery_chosen/chosen.jquery.js',
-            'css':('deform_bootstrap:static/chosen_bootstrap.css',
-                   'deform_bootstrap:static/jquery_chosen/chosen.css')
-            },
-        },
-    'modernizr': {
-        None:{
-            'js':('deform:static/scripts/modernizr.custom.input-types-and-atts.js',),
-            },
-        },
-    }
-
-# NB: don't depend on deform_bootstrap.css, it uses less, and its .less
-# includes 1) the bootstrap css, 2) the datepicker css and 3) the chosen css.
-# We supply chosen requirements above, and we already depend on the bootstrap
-# css sitewide.  We don't yet depend on the datepicker css, but when we do,
-# we'll also just add it sitewide.  Rationale: the deform_bootstrap css when
-# included causes the halfling images to go missing and it makes the CSS harder
-# to debug due to all the repetition with the sitewide-loaded bootstrap CSS.  I
-# should fix at least the halflings images portion of this and submit a patch
-# upstream.
-
-resource_registry = deform.widget.ResourceRegistry(use_defaults=False)
-resource_registry.registry = default_resources
 
 class FormError(Exception):
     """Non-validation-related error.
@@ -94,7 +22,6 @@ class FormError(Exception):
 class Form(deform.form.Form):
     """ Subclass of ``deform.form.Form`` which uses a custom resource
     registry designed for Substance D. XXX point at deform docs. """
-    default_resource_registry = resource_registry
 
 class FormView(object):
     """ A class which can be used as a view which introspects a schema to
@@ -115,14 +42,19 @@ class FormView(object):
         method = getattr(self, 'method', 'POST')
         formid = getattr(self, 'formid', 'deform')
         autocomplete = getattr(self, 'autocomplete', None)
+        request = self.request
         self.schema = self.schema.bind(
-            request=self.request, context=self.context)
+            request=request,
+            context=self.context,
+            # see substanced.schema.CSRFToken
+            _csrf_token_=request.session.get_csrf_token(), 
+            )
         form = self.form_class(self.schema, action=action, method=method,
                                buttons=self.buttons, formid=formid,
                                use_ajax=use_ajax, ajax_options=ajax_options,
                                autocomplete=autocomplete)
-        # XXX override autocomplete; should be part of deform_bootstrap
-        form.widget.template = 'substanced:widget/templates/form.pt' 
+        # XXX override autocomplete; should be part of deform
+        #form.widget.template = 'substanced:widget/templates/form.pt' 
         self.before(form)
         reqts = form.get_widget_resources()
         return form, reqts
@@ -147,8 +79,8 @@ class FormView(object):
                         result = success_method(validated)
                     except FormError as e:
                         snippet = '<div class="error">Failed: %s</div>' % e
-                        self.request.session.flash(snippet, 'error',
-                                                allow_duplicate=True)
+                        self.request.sdiapi.flash(snippet, 'danger',
+                                                  allow_duplicate=True)
                         result = {'form': form.render(validated)}
                 break
 
@@ -271,3 +203,13 @@ class FileUploadTempStore(object):
             raise KeyError(name)
         return data
 
+def translator(term): # pragma: no cover
+    return get_localizer(get_current_request()).translate(term)
+
+def get_deform_renderer(search_paths):
+    return ZPTRendererFactory(search_paths, translator=translator)
+
+def includeme(config): # pragma: no cover
+    deform_dir = resource_filename('deform', 'templates/')
+    deform_renderer = get_deform_renderer((deform_dir,))
+    deform.Form.set_default_renderer(deform_renderer)

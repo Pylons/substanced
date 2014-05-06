@@ -93,7 +93,7 @@ class Test_login(unittest.TestCase):
         self.assertEqual(result['came_from'], 'http://example.com')
         self.assertEqual(result['login'], '')
         self.assertEqual(result['password'], '')
-        self.assertEqual(request.session['_f_error'], ['Failed login (CSRF)'])
+        self.assertEqual(request.sdiapi.flashed, 'Failed login (CSRF)')
         self.assertEqual(request.session['sdi.came_from'], 'http://example.com')
         
     def test_form_submitted_failed_login_no_user(self):
@@ -114,7 +114,7 @@ class Test_login(unittest.TestCase):
         self.assertEqual(result['came_from'], 'http://example.com')
         self.assertEqual(result['login'], 'login')
         self.assertEqual(result['password'], 'password')
-        self.assertEqual(request.session['_f_error'], ['Failed login'])
+        self.assertEqual(request.sdiapi.flashed, 'Failed login')
         self.assertEqual(request.session['sdi.came_from'], 'http://example.com')
 
     def test_form_submitted_failed_login_wrong_password(self):
@@ -136,7 +136,7 @@ class Test_login(unittest.TestCase):
         self.assertEqual(result['came_from'], 'http://example.com')
         self.assertEqual(result['login'], 'login')
         self.assertEqual(result['password'], 'password')
-        self.assertEqual(request.session['_f_error'], ['Failed login'])
+        self.assertEqual(request.sdiapi.flashed, 'Failed login')
         self.assertEqual(request.session['sdi.came_from'], 'http://example.com')
 
     def test_form_submitted_success_w_locator_adapter(self):
@@ -197,6 +197,8 @@ class DummyUser(object):
 class DummySDIAPI(object):
     def mgmt_path(self, *arg, **kw):
         return '/mgmt_path'
+    def flash(self, msg, queue='info'):
+        self.flashed = msg
 
 class DummyLocator(object):
     def __init__(self, user=None):

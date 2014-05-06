@@ -869,6 +869,64 @@ class TestBasicActionProcessor(unittest.TestCase):
              'stopping basic action processor']
             )
 
+    def test_process_execute_raises_Break(self):
+        from ..deferred import Break
+        context = testing.DummyResource()
+        inst = self._makeOne(context)
+        transaction = DummyTransaction()
+        inst.transaction = transaction
+        logger = DummyLogger()
+        inst.logger = logger
+        inst.engage = lambda *arg, **kw: False
+        inst.disengage = lambda *arg, **kw: False
+        a1 = DummyAction(1)
+        a1.raises = Break(1)
+        queue = DummyQueue([a1])
+        root = {inst.queue_name:queue}
+        jar = DummyJar(root)
+        context._p_jar = jar
+        inst.process(once=True)
+        self.assertTrue(jar.synced)
+        self.assertEqual(queue.result, [])
+        self.assertFalse(a1.executed)
+        self.assertTrue(transaction.begun)
+        self.assertFalse(transaction.committed)
+        self.assertEqual(
+            logger.messages,
+            ['starting basic action processor',
+             'executing action 1',
+             'stopping basic action processor']
+            )
+
+    def test_process_execute_raises_user_error(self):
+        context = testing.DummyResource()
+        inst = self._makeOne(context)
+        transaction = DummyTransaction()
+        inst.transaction = transaction
+        logger = DummyLogger()
+        inst.logger = logger
+        inst.engage = lambda *arg, **kw: False
+        inst.disengage = lambda *arg, **kw: False
+        a1 = DummyAction(1)
+        a1.raises = ValueError()
+        queue = DummyQueue([a1])
+        root = {inst.queue_name:queue}
+        jar = DummyJar(root)
+        context._p_jar = jar
+        inst.process(once=True)
+        self.assertTrue(jar.synced)
+        self.assertEqual(queue.result, [])
+        self.assertFalse(a1.executed)
+        self.assertTrue(transaction.begun)
+        self.assertFalse(transaction.committed)
+        self.assertEqual(
+            logger.messages,
+            ['starting basic action processor',
+             'executing action 1',
+             'ValueError()',
+             'stopping basic action processor']
+            )
+        
 class TestIndexActionSavepoint(unittest.TestCase):
     def _makeOne(self, tm):
         from ..deferred import IndexActionSavepoint
@@ -1197,6 +1255,7 @@ class DummyLogger(object):
     def info(self, msg):
         self.messages.append(msg)
     debug = info
+    error = info
         
 
 class DummyJar(object):

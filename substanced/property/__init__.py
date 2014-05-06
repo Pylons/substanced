@@ -22,6 +22,8 @@ class PropertySheet(object):
 
     schema = None
 
+    extra_js_url = None
+
     def __init__(self, context, request):
         self.context = context
         self.request = request
@@ -50,6 +52,13 @@ class PropertySheet(object):
                     setattr(self.context, name, new_val)
                     changed = True
         return changed
+
+    def before_render(self, form): #pragma NO COVER
+        """ Hook:  allow subclasses to scribble on form.
+
+        Called by ``substanced.property.views.PropertySheetsView.before``,
+        after building the form but before rendering it.
+        """
 
     def after_set(self, changed):
         if changed is not False:

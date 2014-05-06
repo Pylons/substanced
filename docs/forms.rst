@@ -8,7 +8,7 @@ views and for the management views that you plug into the SDI.
 
 For the built-in content types and management views,
 you will see that Substance D has standardized on :term:`Colander` and
-:term:`Deform` (along with ``deform_bootstrap``) for schemas and forms.
+:term:`Deform` for schemas and forms.
 Additionally, Substance D defines a :py:class:`substanced.form.FormView`
 class, discussed below.
 
@@ -62,7 +62,7 @@ protocol for ``_failure``.
 
 ``FormView`` also supports the following methods that can be overridden:
 
-- ``before(self, form)`` is called validation and processing any
+- ``before(self, form)`` is called before validation and processing of any
   ``_success`` or ``_failure`` methods
 
 - ``failure(self, e)`` is called with the exception, if the there is no

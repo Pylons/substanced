@@ -129,13 +129,38 @@ class SDIndex(object):
 
 @content(
     'Path Index',
-    icon='icon-search',
+    icon='glyphicon glyphicon-search',
     is_index=True,
     )
 @implementer(hypatia.interfaces.IIndex)
 class PathIndex(SDIndex, hypatia.util.BaseIndexMixin, Persistent):
-    """ Uses the objectmap to apply a query to retrieve object identifiers at
-    or under a path"""
+    """ Uses the :meth:`substanced.objectmap.ObjectMap.pathlookup` to
+    apply a query to retrieve object identifiers at or under a path.
+
+    `path` can be passed to methods as:
+
+    - resource object
+
+    - tuple of strings (usually returned value of
+      :func:`pyramid.traverse.resource_path_tuple`)
+
+    - a string path (e.g. /foo/bar)
+
+    Query methods accept following parameters:
+
+    - `include_origin` (by default True), see
+      :meth:`substanced.objectmap.ObjectMap.pathlookup` for explanation.
+
+    - `depth` (by default None) see
+      :meth:`substanced.objectmap.ObjectMap.pathlookup` for explanation.
+
+    Query types supported:
+
+    - Eq
+
+    - NotEq
+
+    """
     family = BTrees.family64
     include_origin = True
     depth = None
@@ -153,7 +178,7 @@ class PathIndex(SDIndex, hypatia.util.BaseIndexMixin, Persistent):
         return path
 
     def reset(self):
-        self._not_indexed = self.family.IF.Set()
+        self._not_indexed = self.family.IF.TreeSet()
 
     def index_doc(self, docid, obj):
         pass
@@ -250,9 +275,12 @@ class PathIndex(SDIndex, hypatia.util.BaseIndexMixin, Persistent):
         if rs:
             return rs
         else:
-            return self.family.IF.Set()
+            return self.family.IF.TreeSet()
 
     applyEq = apply
+
+    def applyNotEq(self, *args, **kw):
+        return self._negate(self.applyEq, *args, **kw)
 
     def eq(self, path, depth=None, include_origin=None):
         val = {'path':path}
@@ -261,6 +289,14 @@ class PathIndex(SDIndex, hypatia.util.BaseIndexMixin, Persistent):
         if include_origin is not None:
             val['include_origin'] = include_origin
         return hypatia.query.Eq(self, val)
+
+    def noteq(self, path, depth=None, include_origin=None):
+        val = {'path':path}
+        if depth is not None:
+            val['depth'] = depth
+        if include_origin is not None:
+            val['include_origin'] = include_origin
+        return hypatia.query.NotEq(self, val)
 
 class IndexSchema(Schema):
     """ The property schema for :class:`substanced.principal.Group`
@@ -293,7 +329,7 @@ class IndexPropertySheet(PropertySheet):
 
 @content(
     'Field Index',
-    icon='icon-search',
+    icon='glyphicon glyphicon-search',
     is_index=True,
     propertysheets = ( ('', IndexPropertySheet), ),
     )
@@ -307,7 +343,7 @@ class FieldIndex(SDIndex, hypatia.field.FieldIndex):
 
 @content(
     'Keyword Index',
-    icon='icon-search',
+    icon='glyphicon glyphicon-search',
     is_index=True,
     propertysheets = ( ('', IndexPropertySheet), ),
     )
@@ -323,7 +359,7 @@ class KeywordIndex(SDIndex, hypatia.keyword.KeywordIndex):
 
 @content(
     'Text Index',
-    icon='icon-search',
+    icon='glyphicon glyphicon-search',
     is_index=True,
     propertysheets = ( ('', IndexPropertySheet), ),
     )
@@ -346,7 +382,7 @@ class TextIndex(SDIndex, hypatia.text.TextIndex):
 
 @content(
     'Facet Index',
-    icon='icon-search',
+    icon='glyphicon glyphicon-search',
     is_index=True,
     propertysheets = ( ('', IndexPropertySheet), ),
     )
@@ -365,7 +401,7 @@ class FacetIndex(SDIndex, hypatia.facet.FacetIndex):
 
 @content(
     'Allowed Index',
-    icon='icon-search',
+    icon='glyphicon glyphicon-search',
     is_index=True,
     propertysheets = ( ('', IndexPropertySheet), ),
     )

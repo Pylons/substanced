@@ -38,7 +38,6 @@
 
 .. autoclass:: Catalog
    :members:
-   :inherited-members:
 
    .. automethod:: __setitem__
 
@@ -153,6 +152,9 @@ Other Helpers
 .. autoclass:: ResultSet
    :members:
 
+.. autointerface:: hypatia.interfaces.IResultSet
+   :members:
+
 :mod:`substanced.content` API
 -----------------------------
 
@@ -205,6 +207,8 @@ Other Helpers
 .. autoclass:: FileEditable
 
 .. autofunction:: register_editable_adapter
+
+.. autofunction:: get_editable_adapter
 
 :mod:`substanced.event` API
 ---------------------------
@@ -471,6 +475,8 @@ Other Helpers
 
 .. autofunction:: groupfinder
 
+.. autofunction:: set_user_locator
+
 :mod:`substanced.property` API
 --------------------------------
 
@@ -498,7 +504,10 @@ Other Helpers
 
 .. autofunction:: add_mgmt_view
 
-.. autoclass:: mgmt_view
+.. autofunction:: mgmt_view
+
+.. autoclass:: sdiapi
+   :members:
 
 .. attribute:: LEFT
 
@@ -587,13 +596,6 @@ Other Helpers
 
 .. autoclass:: Batch
    :members:
-
-:mod:`substanced.widget` API
-----------------------------
-
-.. automodule:: substanced.widget
-
-.. autofunction:: includeme
 
 :mod:`substanced.workflow` API
 ------------------------------
