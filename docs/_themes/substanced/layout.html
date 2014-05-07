@@ -185,7 +185,7 @@
     <div class="ribbon">
         <a href="#" title="Software Available only From Version Control">Pre-release</a>
     </div>
-    {%- block header %}
+{%- block header %}
     <header id="header">
       <div class="navbar navbar-fixed-top">
         <div class="navbar-inner">
@@ -253,34 +253,64 @@
     <a href="https://github.com/{{ github_user }}/{{ github_repo }}/blob/{{ github_version }}{{ conf_py_path }}{{ pagename }}.rst"><img style="position: absolute; top: 0; right: 0; border: 0;" src="{{ pathto('_static/edit-me-on-github.png', 1) }}" alt="Edit me on GitHub"></a>
     {% endif %}
 {% endblock %}
-
+    <div class="container">
+        <div class="row">
+            <div class="span12">
 {%- block relbar1 %}{{ relbar() }}{% endblock %}
-
-{%- block content %}
-  {%- block sidebar1 %} {# possible location for sidebar #} {% endblock %}
-
-    <div class="document">
-  {%- block document %}
-      <div class="documentwrapper">
-      {%- if render_sidebar %}
-        <div class="bodywrapper">
-      {%- endif %}
-          <div class="body">
-            {% block body %} {% endblock %}
-          </div>
-      {%- if render_sidebar %}
+            </div>
         </div>
+
+        <div class="row">
+{%- block content %}
+            <div class="span3">
+  {%- block sidebar1 %}{{ sidebar() }}{% endblock %}
+            </div>
+            <div class="span9">
+<!--
+    <div class="document">
+-->
+  {%- block document %}
+<!--
+      <div class="documentwrapper">
+-->
+      {%- if render_sidebar %}
+<!--
+        <div class="bodywrapper">
+-->
       {%- endif %}
+<!--
+          <div class="body">
+-->
+            {% block body %} {% endblock %}
+<!--
+          </div>
+-->
+      {%- if render_sidebar %}
+<!--
+        </div>
+-->
+      {%- endif %}
+<!--
       </div>
+-->
   {%- endblock %}
-
-  {%- block sidebar2 %}{{ sidebar() }}{% endblock %}
+            </div>
+  {%- block sidebar2 %}{# possible location for sidebar #}{% endblock %}
+<!--
       <div class="clearer"></div>
+            </div>
+        </div>
     </div>
+-->
 {%- endblock %}
+        </div>
 
+        <div class="row">
+            <div class="span12">
 {%- block relbar2 %}{{ relbar() }}{% endblock %}
-
+            </div>
+        </div>
+    </div>
 {%- block footer %}
     <footer>
       <div class='pre-footer'>
