@@ -3,21 +3,24 @@
  * ~~~~~~~~~~~~
  *
  * Sphinx stylesheet -- substanced theme.
+ * modified from pylons.css_t
  *
  * :copyright: Copyright 2007-2010 by the Sphinx team, see AUTHORS.
  * :license: BSD, see LICENSE for details.
  *
  */
 
+/*
 @import url("basic.css");
+*/
 
 /* -- page layout ----------------------------------------------------------- */
 
+/*
 body {
     font-family: 'Merriweather', serif;
     font-size: 20px;
-    background-color: #393939;
-    color: #ffffff;
+    background-color: #ffffff;
     margin: 0;
     padding: 0;
 }
@@ -67,9 +70,6 @@ div.body {
     background-color: #ffffff;
     color: #3E4349;
     padding: 0 30px 30px 30px;
-/*
-    font-size: 14px;
- */
 	border: 2px solid #ddd;
 	border-right-style: none;
 	overflow: auto;
@@ -159,18 +159,17 @@ div.sphinxsidebar a {
 
 div.sphinxsidebar input {
     border: 1px solid #ccc;
-/*
-    font-family: sans-serif;
- */
     font-size: 1em;
 }
 
 div.sphinxsidebar input[type=text]{
     margin-left: 20px;
 }
+*/
 
 /* -- sidebars -------------------------------------------------------------- */
 
+/*
 div.sidebar {
     margin: 0 0 0.5em 1em;
     border: 2px solid #c6d880;
@@ -185,9 +184,11 @@ div.sidebar {
 p.sidebar-title {
     font-weight: bold;
 }
+*/
 
 /* -- body styles ----------------------------------------------------------- */
 
+/*
 a, a .pre {
     color: #1b61d6;
     text-decoration: none;
@@ -387,9 +388,11 @@ div.document {
 li.right {
     padding-top: 5px;
 }
+*/
 
 
 /* OVERRIDE VENERA BLUE THEME */
+/*
 p {
     font-family: 'Merriweather', sans-serif;
     margin-bottom: 1em;
@@ -414,4 +417,58 @@ blockquote {
 p.tweet {
     color: #005f6b;
     font-size: 15px;
+}
+*/
+
+.ribbon {
+    background-color: #a00;
+    overflow: hidden;
+    /* top right corner */
+    position: fixed;
+    left: -3em;
+    top: 1.5em;
+    z-index: 1000000;
+    /* 45 deg ccw rotation */
+    -moz-transform: rotate(-45deg);
+    -webkit-transform: rotate(-45deg);
+    /* shadow */
+    -moz-box-shadow: 0 0 1em #888;
+    -webkit-box-shadow: 0 0 1em #888;
+}
+
+.ribbon a {
+    border: 1px solid #faa;
+    color: #fff;
+    display: block;
+    font: bold 81.25% 'Helvetiva Neue', Helvetica, Arial, sans-serif;
+    margin: 0.05em 0 0.075em 0;
+    padding: 0.5em 3.5em;
+    text-align: center;
+    text-decoration: none;
+    /* shadow */
+    text-shadow: 0 0 0.5em #444;
+}
+
+.deep-footer .footer-links li {
+    color: #ffffff;
+}
+
+/* Tweets */
+.user {
+    float: left;
+    margin-right: 20px;
+}
+.user a img {
+    margin-left: 15px;
+}
+.user a > span {
+    display: block;
+    font-size: 11px;
+    font-weight: bold;
+}
+.user a > span span {
+    display: none;
+}
+.timePosted {
+    font-size: 11px;
 }
