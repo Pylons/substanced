@@ -15,7 +15,7 @@
 {%- set render_sidebar = (not embedded) and (not theme_nosidebar|tobool) and
                          (sidebars != []) %}
 {%- set url_root = pathto('', 1) %}
-{% set script_files = ['_static/assets/js/jquery-1.10.1.min.js',
+{%- set script_files = ['_static/assets/js/jquery-1.10.1.min.js',
         '_static/assets/js/bootstrap.js',
         '_static/assets/js/prettify.js',
         '_static/assets/js/lightbox.js',
@@ -23,7 +23,6 @@
         '_static/underscore.js',
         '_static/doctools.js',
         '_static/twitter.js'] %}
-
 {%- macro script() %}
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
@@ -39,7 +38,6 @@
     {%- endfor %}
     <script type="text/javascript">$('#searchbox').show(0);</script>
 {%- endmacro %}
-
 {# XXX necessary? #}
 {%- if url_root == '#' %}{% set url_root = '' %}{% endif %}
 {%- if not embedded and docstitle %}
@@ -48,26 +46,31 @@
   {%- set titlesuffix = "" %}
 {%- endif %}
 {%- macro relbar() %}
-    <div class="related">
-      <h3>{{ _('Navigation') }}</h3>
-      <ul>
-        {%- for rellink in rellinks %}
-        <li class="right" {% if loop.first %}style="margin-right: 10px"{% endif %}>
-          <a href="{{ pathto(rellink[0]) }}" title="{{ rellink[1]|striptags|e }}"
-             {{ accesskey(rellink[2]) }}>{{ rellink[3] }}</a>
-          {%- if not loop.first %}{{ reldelim2 }}{% endif %}</li>
-        {%- endfor %}
+        <div class="row relbar">
+            <div class="span12">
+                <div class="pull-left">
         {%- block rootrellink %}
-        <li><a href="{{ pathto(master_doc) }}">{{ shorttitle|e }}</a>{{ reldelim1 }}</li>
+                    <a class="btn btn-small" href="{{ pathto(master_doc) }}"><i class="icon-home"></i> {{ shorttitle|e }}</a>
+                </div>
         {%- endblock %}
+                <div class="pull-right">
+        {%- for rellink in rellinks|reverse %}
+                    <a class="btn btn-small" href="{{ pathto(rellink[0]) }}" title="{{ rellink[1]|striptags|e }}" {{ accesskey(rellink[2]) }}>
+                        {%- if rellink[3] == 'previous' %}<i class="icon-backward"></i> {% endif %}
+                        {%- if rellink[3] == 'index' %}<i class="icon-info"></i> {% endif %}
+                        {%- if rellink[3] == 'modules' %}<i class="icon-gears"></i> {% endif %}
+                        {{ rellink[3] }}
+                        {%- if rellink[3] == 'next' %} <i class="icon-forward"></i>{% endif %}
+                    </a>
+        {%- endfor %}
         {%- for parent in parents %}
-          <li><a href="{{ parent.link|e }}" {% if loop.last %}{{ accesskey("U") }}{% endif %}>{{ parent.title }}</a>{{ reldelim1 }}</li>
+                    <a class="btn btn-small" href="{{ parent.link|e }}" {% if loop.last %}{{ accesskey("U") }}{% endif %}>{{ parent.title }}</a>
         {%- endfor %}
         {%- block relbaritems %} {% endblock %}
-      </ul>
-    </div>
+                </div>
+            </div>
+        </div>
 {%- endmacro %}
-
 {%- macro sidebar() %}
       {%- if render_sidebar %}
       <div class="sphinxsidebar">
@@ -106,16 +109,14 @@
       </div>
       {%- endif %}
 {%- endmacro %}
-
 {%- macro css() %}
-{% set css_files = ['_static/assets/css/theme_venera_blue.css',
+{%- set css_files = ['_static/assets/css/theme_venera_blue.css',
                     '_static/pygments.css',
                     '_static/substanced.css'] %}
     {%- for cssfile in css_files %}
     <link rel="stylesheet" href="{{ pathto(cssfile, 1) }}" type="text/css" />
     {%- endfor %}
 {%- endmacro %}
-
 <!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
 <!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
 <!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
@@ -166,10 +167,7 @@
 {%- block extrahead %}
     <meta name="description" content="Substance D is an application server built using the Pyramid web framework. Use Substance D to build a blog, a shopping cart or ecommerce application, a scheduling application, or any other web app that requires both an administration and a retail interface.">
     <meta name="keywords" content="substance d, pyramid, python, web, framework, documentation, ">
-    <link href='http://fonts.googleapis.com/css?family=Merriweather:400,400italic,700|Noto+Sans:400,700' rel='stylesheet' type='text/css'>
-<!-- 
-    <link href='http://fonts.googleapis.com/css?family=Noto+Sans:400,700|Crimson+Text:400,700,400italic' rel='stylesheet' type='text/css'>
- -->
+    <link href='//fonts.googleapis.com/css?family=Merriweather:400,400italic,700|Noto+Sans:400,700' rel='stylesheet' type='text/css'>
     {%- if theme_favicon %}
     <link rel="shortcut icon" href="{{ pathto('_static/'+theme_favicon, 1) }}" />
     {%- endif %}
@@ -254,11 +252,8 @@
     {% endif %}
 {% endblock %}
     <div class="container">
-        <div class="row">
-            <div class="span12">
+
 {%- block relbar1 %}{{ relbar() }}{% endblock %}
-            </div>
-        </div>
 
         <div class="row">
 {%- block content %}
@@ -305,11 +300,8 @@
 {%- endblock %}
         </div>
 
-        <div class="row">
-            <div class="span12">
 {%- block relbar2 %}{{ relbar() }}{% endblock %}
-            </div>
-        </div>
+
     </div>
 {%- block footer %}
     <footer>

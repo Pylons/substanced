@@ -419,7 +419,13 @@ p.tweet {
     font-size: 15px;
 }
 */
-
+body {
+    padding-top: 72px;
+}
+.relbar {
+    margin-top: 1em;
+    margin-bottom: 1em;
+}
 .ribbon {
     background-color: #a00;
     overflow: hidden;
