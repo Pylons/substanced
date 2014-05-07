@@ -478,3 +478,24 @@ body {
 .timePosted {
     font-size: 11px;
 }
+#main-content p {
+    font-family: 'Merriweather', serif;
+}
+div.admonition {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    padding: 7px;
+}
+p.admonition-title {
+    display: none;
+}
+div.warning {
+    background: #fbe3e4 url(dialog-warning.png) no-repeat 10px 8px;
+    border: 2px solid #fbc2c4;
+    border-right-style: none;
+    border-left-style: none;
+    padding: 10px 20px 10px 60px;
+}
+.admonition p.last {
+    margin-bottom: 0px;
+}
