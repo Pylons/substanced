@@ -525,7 +525,9 @@ class ObjectMap(Persistent):
     def allowed(self, oids, principals, permission):
         """ For the set of oids present in ``oids``, return a sequence of oids
         that are permitted ``permission`` against each oid if the implied user
-        is a member of the set of principals implied by ``principals``.  """
+        is a member of the set of principals implied by ``principals``.  This
+        method uses the data collected via the ``set_acl`` method of this
+        class."""
         
         for oid in oids:
             path_tuple = self.objectid_to_path.get(oid)
