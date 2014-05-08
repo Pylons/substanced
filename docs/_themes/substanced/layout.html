@@ -73,8 +73,8 @@
 {%- endmacro %}
 {%- macro sidebar() %}
       {%- if render_sidebar %}
-      <div class="sphinxsidebar">
-        <div class="sphinxsidebarwrapper">
+<div class="span3 bs-docs-sidebar">
+    <div class="nav nav-list bs-docs-sidenav affix-top" data-spy="affix" data-offset-top="30">
           {%- block sidebarlogo %}
           {%- if logo %}
             <p class="logo"><a href="{{ pathto(master_doc) }}">
@@ -105,8 +105,8 @@
             {%- include "searchbox.html" %}
             {%- endblock %}
           {%- endif %}
-        </div>
-      </div>
+    </div>
+</div>
       {%- endif %}
 {%- endmacro %}
 {%- macro css() %}
@@ -257,9 +257,7 @@
 
         <div class="row">
 {%- block content %}
-            <div class="span3">
   {%- block sidebar1 %}{{ sidebar() }}{% endblock %}
-            </div>
             <div id="main-content" class="span9">
 <!--
     <div class="document">

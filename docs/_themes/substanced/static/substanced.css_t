@@ -481,9 +481,13 @@ body {
 #main-content p {
     font-family: 'Merriweather', serif;
 }
+div.highlight-python, div.highlight-bash {
+    margin-top: 1em;
+    margin-bottom: 1em;
+}
 div.admonition {
-    margin-top: 10px;
-    margin-bottom: 10px;
+    margin-top: 1em;
+    margin-bottom: 1em;
     padding: 7px;
 }
 p.admonition-title {
@@ -491,11 +495,139 @@ p.admonition-title {
 }
 div.warning {
     background: #fbe3e4 url(dialog-warning.png) no-repeat 10px 8px;
-    border: 2px solid #fbc2c4;
-    border-right-style: none;
-    border-left-style: none;
+    border-top: 2px solid #fbc2c4;
+    border-bottom: 2px solid #fbc2c4;
+}
+div.note {
+    background: #e1ecfe url(dialog-note.png) no-repeat 10px 8px;
+    border-top: 2px solid #7a9eec;
+    border-bottom: 2px solid #7a9eec;
+}
+div.warning, div.note {
     padding: 10px 20px 10px 60px;
 }
-.admonition p.last {
+#main-content .admonition p.last {
     margin-bottom: 0px;
+}
+.bs-docs-sidenav ul {
+    list-style-type: none;
+}
+.bs-docs-sidenav ul ul, .bs-docs-sidenav ol ul {
+    list-style-type: disc;
+    padding-left: 20px;
+}
+.bs-docs-sidenav ul, .bs-docs-sidenav ol {
+    margin-left: 0;
+}
+.bs-docs-sidenav li a {
+    font-size: 14px;
+    padding-right: 0px;
+    padding-left: 0px;
+}
+.bs-docs-sidenav h4 a:hover, .bs-docs-sidenav h4 a:active, .bs-docs-sidenav h4 a:focus,
+.bs-docs-sidenav p a:hover, .bs-docs-sidenav p a:active, .bs-docs-sidenav p a:focus,
+.bs-docs-sidenav li.active a, .bs-docs-sidenav li a:hover {
+    background-color: transparent;
+    color: #3599F5;
+}
+.bs-docs-sidenav.affix {
+    top: 100px;
+}
+.bs-docs-sidenav h1, .bs-docs-sidenav h2, .bs-docs-sidenav h3, .bs-docs-sidenav h4, .bs-docs-sidenav h5, .bs-docs-sidenav h6 {
+    margin-top: 0;
+}
+.bs-docs-sidenav input {
+    width: 85%;
+}
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Noto Sans', sans-serif;
+    font-weight: normal;
+    margin-bottom: 0.50em;
+}
+#main-content {
+    font: 1.3em 'Merriweather', serif;
+}
+#main-content p, #main-content dd, #main-content dt, #main-content li {
+    line-height: 1.5em;
+}
+#main-content p {
+    margin-bottom: 1em;
+}
+#main-content h1 {
+    font-size: 2.5em;
+    line-height: 1;
+}
+#main-content h2 {
+    font-size: 2.00em;
+    line-height: 1;
+}
+#main-content h3 {
+    font-size: 1.5em;
+    line-height: 1;
+}
+#main-content h4 {
+    font-size: 1.2em;
+    line-height: 1;
+}
+#main-content h5 {
+    font-size: 1em;
+    font-weight: bold;
+}
+#main-content h6 {
+    font-size: 0.75em;
+    font-weight: bold;
+}
+#main-content ul, #main-content ol {
+    margin: 0 0 1em 2em;
+}
+#main-content img{
+    margin-bottom: 1em;
+    border: lightgrey 1px solid;
+}
+#main-content blockquote {
+    background: transparent;
+    padding: 0;
+    box-shadow: none;
+}
+#main-content .sidebar {
+    float: right;
+    width: 40%;
+    background-color: whitesmoke;
+    padding: 1em;
+    margin-left: 1em;
+    border: lightgrey 1px solid;
+    border-bottom-width: 2px;
+    border-right-width: 2px;
+}
+#main-content .sidebar p, #main-content .sidebar blockquote {
+    font-size: 0.9em;
+}
+a.headerlink {
+    visibility: hidden;
+}
+h6:hover > a.headerlink,
+h5:hover > a.headerlink,
+h4:hover > a.headerlink,
+h3:hover > a.headerlink,
+h2:hover > a.headerlink,
+h1:hover > a.headerlink{
+    visibility: visible;
+}
+footer, footer h5 {
+    font-family: "Oswald", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+pre, code {
+    font-family: Monaco, Menlo, Consolas, "andale mono", "lucida console", monospace;
+}
+tt {
+    background-color: hsl(205, 48%, 84%);
+    color: hsl(187, 100%, 21%);
+    font-family: Monaco, Menlo, Consolas, "andale mono", "lucida console", monospace;
+    color: rgb(3, 116, 116);
+    padding: 2px 4px;
+    font-size: 85%;
+    border-radius: 5px;
+}
+a .pre {
+    word-wrap: break-word;
 }
