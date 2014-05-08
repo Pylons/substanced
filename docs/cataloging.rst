@@ -30,11 +30,6 @@ contains a default set of indexes:
 
   Represents the Substance D content-type of an object.
 
-- allowed (an ``allowed`` index)
-
-  Represents the set of users granted the ``sdi.view`` permission to each
-  content object.
-
 - text (a ``text`` index)
 
   Represents the text searched for when you use the filter box within the
@@ -268,8 +263,6 @@ Different indexes have different query methods, but most support the ``eq``
 method.  Other methods that are often supported by indexes: ``noteq``,
 ``ge``, ``le``, ``gt``, ``any``, ``notany``, ``all``, ``notall``,
 ``inrange``, ``notinrange``.
-The :class:`~substanced.catalog.indexes.AllowedIndex` supports an additional
-:meth:`~substanced.catalog.indexes.AllowedIndex.allows()` method.
    
 Query objects support an ``execute`` method.  This method returns a
 :class:`hypatia.util.ResultSet`.  A :class:`hypatia.util.ResultSet` 
@@ -313,22 +306,31 @@ before executing the query:
     newresultset = resultset.sort(system_catalog['name'])
 
 
-Allowed Index and Security
---------------------------
+Filtering Catalog Results Using Security
+----------------------------------------
 
-The Substance D system catalog at
-:class:`substanced.catalog.system.SystemCatalogFactory`
-contains a number of default indexes, including an ``Allowed`` index.
-Its job is to index security information to allow security-aware results
-in queries.
+It is possible to postfilter catalog results using the
+:meth:`substanced.objectmap.ObjectMap.allowed` API.  For example:
 
-In Substance D we index two permissions on each catalogued resource:
-``view`` and ``sdi.view``. This allows us to constrain queries to the
-system catalog based on whether the principal issuing the request has
-either of those permissions on the matching resource.
+.. code-block:: python
 
-To set the ACL in a way that helps keep track of all the contracts,
-the helper function :func:`substanced.util.set_acl` can be used. For
+   def get_allowed_to_view(context, request):
+
+       catalog = find_catalog(context, 'system')
+       q = catalog['content_type'].eq('News Item')
+       resultset = q.execute()
+
+       objectmap = find_objectmap(context)
+       return objectmap.allowed(resultset.oids, request.effective_principals, 'view')
+
+The result of :meth:`~substanced.objectmap.ObjectMap.allowed` is a generator
+which returns oids, so the result must be listified if you intend to index into
+it, or slice it, or what-have-you.
+
+The objectmap keeps track of ACLs in a cache to make this functionality work.
+Note that for the object map's cached version of ACLs to be correct, you will
+need to set ACLs in a way that helps keep track of all the contracts.  For
+this, the helper function :func:`substanced.util.set_acl` can be used. For
 example, the site root at :class:`substanced.root.Root` finishes with:
 
 .. code-block:: python
@@ -338,6 +340,9 @@ example, the site root at :class:`substanced.root.Root` finishes with:
         [(Allow, get_oid(admins), ALL_PERMISSIONS)],
         registry=registry,
         )
+
+Using ``set_acl`` this way will generate an event that will keep the
+objectmap's cache updated.
 
 Deferred Indexing and Mode Parameters
 -------------------------------------
