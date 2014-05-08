@@ -32,8 +32,6 @@
 
 .. autoclass:: Facet
 
-.. autoclass:: Allowed
-
 .. autoclass:: Path
 
 .. autoclass:: Catalog
