@@ -215,7 +215,7 @@ class ObjectMap(Persistent):
         acl = get_acl(obj, None)
         
         if acl is not None:
-            self.path_to_acl[path_tuple] = tuple(acl)
+            self.set_acl(path_tuple, acl)
 
         return objectid
 
@@ -517,7 +517,7 @@ class ObjectMap(Persistent):
 
     def set_acl(self, obj_objectid_or_path_tuple, acl):
         path_tuple = self._get_path_tuple(obj_objectid_or_path_tuple)
-        self.path_to_acl[path_tuple] = acl
+        self.path_to_acl[path_tuple] = tuple(acl)
 
     def allowed(self, oids, principals, permission):
         """ For the set of oids present in ``oids``, return a sequence of oids

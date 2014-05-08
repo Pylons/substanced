@@ -185,6 +185,18 @@ class TestObjectMap(unittest.TestCase):
         self.assertEqual(inst.objectid_to_path[1], (_BLANK,))
         self.assertEqual(obj.__oid__, 1)
         
+    def test_add_with_acl(self):
+        inst = self._makeOne()
+        inst._v_nextid = 1
+        obj = testing.DummyResource()
+        obj.__acl__ = [('Allow', 'fred', 'view')]
+        inst.add(obj, (_BLANK,))
+        self.assertEqual(
+            inst.path_to_acl[(_BLANK,)],
+            (('Allow', 'fred', 'view'),)
+            )
+        self.assertEqual(obj.__oid__, 1)
+        
     def test_add_not_valid(self):
         inst = self._makeOne()
         self.assertRaises(AttributeError, inst.add, 'a', (_BLANK,))
@@ -198,8 +210,10 @@ class TestObjectMap(unittest.TestCase):
         inst.objectid_to_path[1] = (_BLANK,)
         inst.path_to_objectid[(_BLANK,)] = 1
         inst.pathindex[(_BLANK,)] = {0:[1]}
+        inst.path_to_acl[(_BLANK,)] = True
         inst.remove(1)
         self.assertEqual(dict(inst.objectid_to_path), {})
+        self.assertEqual(dict(inst.path_to_acl), {})
 
     if IS_32_BIT: # pragma: no cover
         def test_remove_long(self):
@@ -247,6 +261,10 @@ class TestObjectMap(unittest.TestCase):
         result = inst.pathcount(obj)
         self.assertEqual(result, 0)
 
+    def test_navgen_bad_obj_or_path_tuple(self):
+        inst = self._makeOne()
+        self.assertRaises(ValueError, inst.navgen, None, 99)
+        
     def test_navgen_notexist(self):
         inst = self._makeOne()
         result = inst.navgen((_BLANK,), 99)
@@ -378,6 +396,74 @@ class TestObjectMap(unittest.TestCase):
         result = inst.get_extent('pyramid.testing.DummyResource', None)
         self.assertEqual(result, None)
 
+    def test_set_acl(self):
+        inst = self._makeOne()
+        inst.set_acl((_BLANK,), [('Allow', 'fred', 'view')])
+        self.assertEqual(
+            dict(inst.path_to_acl),
+            {
+                (_BLANK,):
+                    (('Allow', 'fred', 'view'),)
+                }
+            )
+
+    def test_allowed_no_oids_in_objectid_to_path(self):
+        oids = [1]
+        inst = self._makeOne()
+        result = inst.allowed(oids, 'fred', 'view')
+        self.assertEqual(list(result), [])
+
+    def test_allowed_no_acls_in_path_to_acl(self):
+        oids = [1]
+        inst = self._makeOne()
+        inst.objectid_to_path[1] = (_BLANK,)
+        result = inst.allowed(oids, 'fred', 'view')
+        self.assertEqual(list(result), [])
+        
+    def test_allowed_explicit_deny(self):
+        oids = [1]
+        inst = self._makeOne()
+        inst.objectid_to_path[1] = (_BLANK,)
+        inst.path_to_acl[(_BLANK,)] = (('Deny', 'fred', 'view'),)
+        result = inst.allowed(oids, 'fred', 'view')
+        self.assertEqual(list(result), [])
+
+    def test_allowed_explicit_allow(self):
+        oids = [1]
+        inst = self._makeOne()
+        inst.objectid_to_path[1] = (_BLANK,)
+        inst.path_to_acl[(_BLANK,)] = (('Allow', 'fred', 'view'),)
+        result = inst.allowed(oids, 'fred', 'view')
+        self.assertEqual(list(result), [1])
+
+    def test_allowed_explicit_allow_and_explicit_deny(self):
+        oids = [1, 2]
+        inst = self._makeOne()
+        inst.objectid_to_path[1] = (_BLANK, '1')
+        inst.objectid_to_path[2] = (_BLANK, '2')
+        inst.path_to_acl[(_BLANK, '1')] = (('Allow', 'fred', 'view'),)
+        inst.path_to_acl[(_BLANK, '2')] = (('Deny', 'fred', 'view'),)
+        result = inst.allowed(oids, 'fred', 'view')
+        self.assertEqual(list(result), [1])
+
+    def test_allowed_explicit_allow_and_inherited_deny(self):
+        oids = [1, 2]
+        inst = self._makeOne()
+        inst.objectid_to_path[1] = (_BLANK, '1')
+        inst.objectid_to_path[2] = (_BLANK, '2')
+        inst.path_to_acl[(_BLANK, '1')] = (('Allow', 'fred', 'view'),)
+        inst.path_to_acl[(_BLANK,)] = (('Deny', 'fred', 'view'),)
+        result = inst.allowed(oids, 'fred', 'view')
+        self.assertEqual(list(result), [1])
+
+    def test_allowed_implicit_deny(self):
+        oids = [1]
+        inst = self._makeOne()
+        inst.objectid_to_path[1] = (_BLANK, '1')
+        inst.path_to_acl[(_BLANK,)] = (('Allow', 'fred', 'read'),)
+        result = inst.allowed(oids, 'fred', 'view')
+        self.assertEqual(list(result), [])
+        
     def test_functional(self):
 
         def l(path, depth=None, include_origin=True):
