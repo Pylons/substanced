@@ -516,6 +516,9 @@ class ObjectMap(Persistent):
         return self.extentmap.get(name, default)
 
     def set_acl(self, obj_objectid_or_path_tuple, acl):
+        """ For the resource implied by ``obj_objectid_or_path_tuple``, set the
+        cached version of its ACL (for later used by ``allowed``) to the ACL
+        passed as ``acl``"""
         path_tuple = self._get_path_tuple(obj_objectid_or_path_tuple)
         self.path_to_acl[path_tuple] = tuple(acl)
 
