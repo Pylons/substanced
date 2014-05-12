@@ -71,6 +71,7 @@
                         .prop('disabled', !!(this.files || []).error);
                     this.handlers = {};
                     this.handlers.submit = [];
+                    this.handlers.abort = [];
                 },
                 uploadState: function() {
                     this.self
@@ -90,11 +91,18 @@
                 submit: function() {
                     // submit all sets of files
                     var all = [];
+                    this.handlers.abort = [];
                     $.each(this.handlers.submit, function (index, handler) {
                         all.push(handler());
                     });
                     // make an 'all' promise from the individual promises
                     return $.when.apply(null, all);
+                },
+                abort: function() {
+                    $.each(this.handlers.abort, function (index, handler) {
+                        handler();
+                    });
+                    this.handlers.abort = [];
                 }
             });
     $('#fileupload').fileupload({
@@ -173,9 +181,6 @@
         //$.each(data.result.files, function (index, file) {
         //    console.log('ERROR file:', index, file);
         //});
-    }).on('fileuploadalways', function (e, data) {
-        // Satisfy my finished promise.
-        data.finished.resolve();
     }).prop('disabled', !$.support.fileInput)
         .parent().addClass($.support.fileInput ? undefined : 'disabled');
 })(jQuery);
