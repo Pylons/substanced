@@ -24,11 +24,11 @@
                             ((this.nr < 2) ? {
                                 // singular
                                 success: '' + this.nr + ' file uploaded',
-                                error: 'Upload failed for ' + this.nr + ' file'
+                                danger: 'Upload failed for ' + this.nr + ' file'
                             } : {
                                 // plural
                                 success: '' + this.nr + ' files uploaded',
-                                error: 'Upload failed for ' + this.nr + ' files'
+                                danger: 'Upload failed for ' + this.nr + ' files'
                             })[alertType]
                         );
                     }
@@ -140,7 +140,7 @@
         }
         // Construct the upload info bar for all the files
         $.each(data.files, function (index, file) {
-            $('<p/>')
+            $('<div class="file-in-progress well"/>')
                 .append($('<span/>').text(file.name))
                 .append('<br>')
                 .appendTo(data.context);
@@ -177,7 +177,7 @@
         flash('success', data.result.files.length);
     }).on('fileuploadfail', function (e, data) {
         // status for the user
-        flash('error', data.result.files.length);
+        flash('danger', data.files.length);
         //$.each(data.result.files, function (index, file) {
         //    console.log('ERROR file:', index, file);
         //});

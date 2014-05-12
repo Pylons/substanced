@@ -6,6 +6,8 @@
     <metal:slot define-slot="head-more">
       <!-- CSS to style the file input field as button and adjust the Bootstrap progress bars -->
       <link rel="stylesheet" href="${request.static_url('substanced.folder:static/vendor/jquery-file-upload/css/jquery.fileupload.css')}">
+      <!-- Page CSS -->
+      <link rel="stylesheet" href="${request.static_url('substanced.folder:static/css/multiupload.css')}">
     </metal:slot>
   </metal:slot>
   <div metal:fill-slot="main">
