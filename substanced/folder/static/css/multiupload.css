@@ -1,4 +1,11 @@
 
-.file-in-progress {
-    //border: 1px solid black;
+
+/* styles for multi upload page */
+
+.file-in-progress .canvas-wrapper {
+    margin-right: 0.5em;
+}
+
+.file-in-progress .file-name {
+    vertical-align: middle;
 }

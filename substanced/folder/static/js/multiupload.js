@@ -123,15 +123,15 @@
         // By default images are resized to FullHD (1920x1080).
         disableImageResize: /Android(?!.*Chrome)|Opera/
             .test(window.navigator.userAgent),
-        previewMaxWidth: 100,
-        previewMaxHeight: 100,
+        previewMaxWidth: 80,
+        previewMaxHeight: 80,
         previewCrop: true,
         // enable multi file uploads, while limiting it with
         // a size (exceeding this a new request will be made)
         singleFileUploads: false,
         limitMultiFileUploadSize: 5 * 1000 * 1000    // 5MB
     }).on('fileuploadadd', function (e, data) {
-        data.context = $('<div/>').appendTo('#files');
+        data.context = $('<div class="container" />').appendTo('#files');
         // add a global upload button, if it does not exist yet
         var button = $('#fileupload-wrapper').find('.upload-button');
         if (button.length === 0) {
@@ -140,9 +140,14 @@
         }
         // Construct the upload info bar for all the files
         $.each(data.files, function (index, file) {
-            $('<div class="file-in-progress well"/>')
-                .append($('<span/>').text(file.name))
-                .append('<br>')
+            $('<div class="file-in-progress well row" />')
+                .append($('<div class="col-xs-5 col-sm-5 col-md-5 col-lg-5 clearfix" />')
+                    .append('<span class="pull-left canvas-wrapper" />')
+                    .append($('<span class="file-name"/>').text(file.name))
+                )
+                .append($('<div class="col-xs-7 col-sm-7 col-md-7 col-lg-7 clearfix" />')
+                    .append('-progress bar-')
+                )
                 .appendTo(data.context);
         });
         // register the submit function on the button
@@ -154,21 +159,14 @@
             file = data.files[index],
             node = $(data.context.children()[index]);
         if (file.preview) {
-            node
-                .prepend('<br>')
-                .prepend(file.preview);
+            node.find('.canvas-wrapper')
+                .append(file.preview);
         }
         if (file.error) {
             node
                 .append('<br>')
                 .append($('<span class="text-danger"/>').text(file.error));
         }
-        //if (index + 1 === data.files.length) {
-        //    // XXX
-        //    data.context.find('button')
-        //        .text('Upload')
-        //        .prop('disabled', !!data.files.error);
-        //}
     }).on('fileuploadprogressall', function (e, data) {
         var progress = parseInt(data.loaded / data.total * 100, 10);
         $('#progress .progress-bar').css('width', progress + '%');
