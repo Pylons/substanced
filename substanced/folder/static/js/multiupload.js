@@ -141,7 +141,7 @@
         // Construct the upload info bar for all the files
         $.each(data.files, function (index, file) {
             $('<div class="file-in-progress well row" />')
-                .append($('<div class="col-xs-5 col-sm-5 col-md-5 col-lg-5 clearfix" />')
+                .append($('<div class="col-xs-5 col-sm-5 col-md-5 col-lg-5 left-col clearfix" />')
                     .append('<span class="pull-left canvas-wrapper" />')
                     .append($('<span class="file-name"/>').text(file.name))
                 )

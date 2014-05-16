@@ -6,6 +6,11 @@
     margin-right: 0.5em;
 }
 
+.file-in-progress .left-col {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .file-in-progress .file-name {
     vertical-align: middle;
 }
