@@ -22,7 +22,6 @@
 }
 .slickgrid-wrapper .grid-canvas {
   /* XXX ... needed ? */
-
 }
 .slickgrid-wrapper .grid-canvas .slick-row {
   border: 0 none;
@@ -89,7 +88,6 @@ body .slickgrid-wrapper .grid-canvas .slick-cell {
   border-top: 0px;
   border-bottom: 0px;
   /* like TH  */
-
   background: transparent;
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   color: #333333;
@@ -116,7 +114,6 @@ body .slickgrid-wrapper .slick-header-columns .slick-header-column.ui-state-defa
 }
 .slickgrid-wrapper .slick-header-columns .slick-header-column.ui-state-default {
   /* like TH  */
-
   background: transparent;
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   color: #333333;
@@ -147,7 +144,7 @@ body .slickgrid-wrapper .slick-header-columns .slick-header-column.ui-state-defa
   border-top: 0;
   border-bottom: .266666667em solid #fff;
 }
-.slickgrid-wrapper .slick-header-columns .slick-header-column .slick-sort-indicator-desc {
+.slickgrid-wrapper .slick-header-columns .slick-header-column      .slick-sort-indicator-desc {
   vertical-align: middle;
 }
 .slickgrid-wrapper .cell-reorder {
@@ -172,7 +169,6 @@ body .slickgrid-wrapper .slick-header-columns .slick-header-column.ui-state-defa
   animation: showgridrow 0.5s;
   -webkit-animation: showgridrow 0.5s;
   /* Safari and Chrome */
-
 }
 .sdi-contents-filter {
   margin-top: 5px;
