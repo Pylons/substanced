@@ -9,14 +9,13 @@
 #}
 {%- if pagename != "search" %}
 <div id="searchbox" style="display: none">
-  <h3>{{ _('Quick search') }}</h3>
-    <form class="search" action="{{ pathto('search') }}" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="{{ _('Go') }}" />
-      <input type="hidden" name="check_keywords" value="yes" />
-      <input type="hidden" name="area" value="default" />
+  <h4>{{ _('Quick search') }}</h4>
+    <form class="navbar-search pull-left" action="{{ pathto('search') }}" method="get">
+        <input type="text" name="q" class="search-query" placeholder="{{ _('Search') }}" />
+        <input type="hidden" name="check_keywords" value="yes" />
+        <input type="hidden" name="area" value="default" />
     </form>
-    <p class="searchtip" style="font-size: 90%">
+    <p class="searchtip">
     {{ _('Enter search terms or a module, class or function name.') }}
     </p>
 </div>
