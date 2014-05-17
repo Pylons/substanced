@@ -235,3 +235,9 @@ body .slickgrid-wrapper .slick-header-columns .slick-header-column.ui-state-defa
   margin: 0 14px 0 6px;
   vertical-align: middle;
 }
+#sdi-contents-table-sg,
+#sdi-contents-table-sg div {
+  -webkit-box-sizing: 'content-box';
+  -moz-box-sizing: 'content-box';
+  box-sizing: 'content-box';
+}

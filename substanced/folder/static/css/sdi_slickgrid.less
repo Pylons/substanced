@@ -1,5 +1,6 @@
 /** Build from https://github.com/Pylons/sdidev to rebuild this LESS file **/
 
+@import "../../../../../bootstrap/less/mixins.less";
 @import "../../../../../bootstrap/less/variables.less";
 
 /* Mixins for SlickGrid */
@@ -314,4 +315,9 @@
         margin: 0 14px 0 6px;
         vertical-align: middle;
     }
+}
+
+//  this fixes column header alignment in the folder contents view as per https://github.com/Pylons/substanced/issues/183
+#sdi-contents-table-sg, #sdi-contents-table-sg div {
+  .box-sizing('content-box');
 }

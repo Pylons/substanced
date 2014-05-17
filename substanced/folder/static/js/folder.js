@@ -155,6 +155,7 @@ var folder = function() {
 
         // Update the buttons if the selection has changed.
         var grid = gridWrapper.grid;
+        grid.autosizeColumns();
         grid.onSelectedRowsChanged.subscribe(function (evt) {
             var selRows = grid.getSelectedRows();
             var data = grid.getData();
