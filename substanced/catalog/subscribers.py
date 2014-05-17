@@ -3,7 +3,6 @@ import os
 
 from zope.interface.interfaces import ComponentLookupError
 
-from pyramid.traversal import resource_path
 from pyramid.settings import asbool
 from pyramid.events import (
     ApplicationCreated,
@@ -15,7 +14,6 @@ from ..event import (
     subscribe_added,
     subscribe_removed,
     subscribe_modified,
-    subscribe_acl_modified,
     )
 
 from ..objectmap import find_objectmap
@@ -25,6 +23,8 @@ from ..util import (
     get_oid,
     find_catalogs,
     )
+
+from ..evolution import EvolutionManager
 
 logger = logging.getLogger(__name__)
 
@@ -136,6 +136,19 @@ def on_startup(event):
         request = Request.blank('/autosync_catalogs') # path is meaningless
         request.registry = registry
         root = app.root_factory(request)
+        em = EvolutionManager(root, registry)
+        unfinished = list(em.get_unfinished_steps())
+        if unfinished:
+            # adding or removing indexes to/from an environment where evolution
+            # is incomplete may lead to end-user-irreconcilable errors (cant
+            # evolve because autosync is on and causes errors, cant autosync
+            # because evolve steps havent been run), so we avoid doing any
+            # sync if there are unfinished evolve steps
+            logger.warn(
+                'Cannot autosync/autoreindex catalog due to unfinished evolve '
+                'steps'
+                )
+            return
         objectmap = find_objectmap(root)
         if objectmap is not None:
             content = registry.content

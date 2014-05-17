@@ -334,6 +334,27 @@ class Test_on_startup(unittest.TestCase):
         result = self._callFUT(event)
         self.assertEqual(result, None)
 
+    def test_autosync_true_from_ini_unfinished_evolve_steps(self):
+        from substanced.interfaces import IEvolutionSteps
+        from substanced.evolution import FINISHED_KEY
+        registry = self.config.registry
+        registry.content = DummyContentRegistry()
+        registry.settings['substanced.catalogs.autosync'] = 'true'
+        steps = testing.DummyResource()
+        steps.sorted = lambda: [('a', ('b', 'b'))]
+        registry.registerUtility(steps, IEvolutionSteps)
+        app = testing.DummyResource()
+        app.registry = registry
+        root = testing.DummyResource()
+        root._p_jar = testing.DummyResource()
+        trueroot = {}
+        trueroot[FINISHED_KEY] = {}
+        root._p_jar.root = lambda: trueroot
+        app.root_factory = lambda *arg: root
+        event = DummyEvent(app, None)
+        result = self._callFUT(event)
+        self.assertEqual(result, None)
+
     def test_autosync_true_from_ini_no_objectmap(self):
         registry = self.config.registry
         registry.content = DummyContentRegistry()
