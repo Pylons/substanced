@@ -11,7 +11,6 @@ from pyramid.view import (
     view_config,
     view_defaults,
     )
-from pyramid.security import authenticated_userid
 
 def _getentrybody(format, entry):
     if format == 'rst':
