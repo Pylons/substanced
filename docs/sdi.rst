@@ -1,6 +1,6 @@
-=====================================
+====================================
 The Substance D Management Interface
-=====================================
+====================================
 
 Substance D's prime directive is to help developers quickly build
 custom content management applications with a custom user experience.
