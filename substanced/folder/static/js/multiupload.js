@@ -123,13 +123,14 @@
         // By default images are resized to FullHD (1920x1080).
         disableImageResize: /Android(?!.*Chrome)|Opera/
             .test(window.navigator.userAgent),
-        previewMaxWidth: 80,
-        previewMaxHeight: 80,
+        previewMaxWidth: 65,
+        previewMaxHeight: 65,
         previewCrop: true,
+        // XXX disable ...
         // enable multi file uploads, while limiting it with
         // a size (exceeding this a new request will be made)
-        singleFileUploads: false,
-        limitMultiFileUploadSize: 5 * 1000 * 1000    // 5MB
+        singleFileUploads: true,
+        //limitMultiFileUploadSize: 5 * 1000 * 1000    // 5MB
     }).on('fileuploadadd', function (e, data) {
         data.context = $('<div class="container" />').appendTo('#files');
         // add a global upload button, if it does not exist yet
@@ -146,7 +147,11 @@
                     .append($('<span class="file-name"/>').text(file.name))
                 )
                 .append($('<div class="col-xs-7 col-sm-7 col-md-7 col-lg-7 clearfix" />')
-                    .append('-progress bar-')
+                    .append('<div class="progress">' +
+                            '   <div class="progress-bar progress-bar-success">' +
+                            '   </div>' +
+                            '</div>'
+                    )
                 )
                 .appendTo(data.context);
         });
@@ -166,6 +171,14 @@
             node
                 .append('<br>')
                 .append($('<span class="text-danger"/>').text(file.error));
+        }
+    }).on('fileuploadprogress', function (e, data) {
+        var progress = parseInt(data.loaded / data.total * 100, 10);
+        if (data.context) {
+            data.context.each(function() {
+                $(this).find('.progress .progress-bar')
+                    .css('width', progress + '%');
+            });
         }
     }).on('fileuploadprogressall', function (e, data) {
         var progress = parseInt(data.loaded / data.total * 100, 10);
