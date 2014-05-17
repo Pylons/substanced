@@ -32,8 +32,9 @@ def blogview(context, request):
                  'title': blogentry.title,
                  'body': _getentrybody(blogentry.format, blogentry.entry),
                  'pubdate': blogentry.pubdate,
-                 'attachments': [{'name': a.__name__, 'url': resource_url(a, request, 'download')} 
-                    for a in blogentry['attachments'].values()],
+                 'attachments': [{'name': a.__name__,
+                                  'url': resource_url(a, request, 'download')} 
+                                 for a in blogentry['attachments'].values()],
                  'numcomments': len(blogentry['comments'].values()),
                  })
     blogentries.sort(key=lambda x: x['pubdate'].isoformat())
