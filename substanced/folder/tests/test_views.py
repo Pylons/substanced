@@ -1911,6 +1911,27 @@ class Test_add_folder_contents_views(unittest.TestCase):
         self._callFUT(config, slamdunk=1)
         self.assertEqual(config.settings[0]['slamdunk'], 1)
 
+class Test_has_services(unittest.TestCase):
+    def _callFUT(self, context, request):
+        from ..views import has_services
+        return has_services(context, request)
+ 
+    def _makeRequest(self, **kw):
+        request = testing.DummyRequest()
+        request.sdiapi = DummySDIAPI()
+        request.registry.content = DummyContent(**kw)
+        return request
+    
+    def test_it(self):
+        from zope.interface import directlyProvides
+        from ...interfaces import IFolder
+        context = testing.DummyResource()
+        directlyProvides(context, IFolder)
+        context['catalogs'] = _makeCatalogs(oids=[1])
+        request = self._makeRequest()
+        result = self._callFUT(context, request)
+        self.assertEqual(result, True)
+
 class FolderServicesTest(unittest.TestCase):
     def setUp(self):
         self.config = testing.setUp()
@@ -2126,6 +2147,9 @@ class DummyResultSet(object):
 
     def sort(self, *arg, **kw):
         return self
+
+    def __len__(self):
+        return len(self.ids)
 
 class DummyIndex(object):
     def __init__(self, name, result):

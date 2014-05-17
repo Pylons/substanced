@@ -1040,11 +1040,24 @@ class FolderContents(object):
 
         return L
 
-@folder_contents_views(name='services',
-                       tab_title=_('Services'),
-                       tab_near=RIGHT,
-                       view_permission='sdi.view-services',
-                      )
+def has_services(context, request):
+    catalog = find_catalog(context, 'system')
+    ifaces = catalog['interfaces']
+    path = catalog['path']
+    q = (
+        path.eq(context, depth=1, include_origin=False) &
+        ifaces.any([IService])
+        )
+    result = bool(len(q.execute()))
+    return result
+
+@folder_contents_views(
+    name='services',
+    tab_title=_('Services'),
+    tab_near=RIGHT,
+    view_permission='sdi.view-services',
+    tab_condition=has_services,
+    )
 class FolderServices(FolderContents):
 
     def sdi_addable_content(self):
