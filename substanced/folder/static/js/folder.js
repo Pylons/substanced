@@ -212,7 +212,7 @@ var folder = function() {
                     // Let's display it a status message in case the user clicks cancel.
                     $('#messages')
                         .append(
-                            $('<div class="alert alert-error contents-error contents-ajax-unauthorized"></div>')
+                            $('<div class="alert alert-danger contents-error contents-ajax-unauthorized"></div>')
                                 .append('It looks like your authentication session has expired.<br>' +
                                         'You can ' +
                                         '<a class="contents-ajax-error-reload" href="#"> reload the page</a>.'
