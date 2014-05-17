@@ -407,6 +407,13 @@ class TestObjectMap(unittest.TestCase):
                 }
             )
 
+    def test_allowed_path_to_acl_is_None(self):
+        oids = [1]
+        inst = self._makeOne()
+        inst.path_to_acl = None
+        result = inst.allowed(oids, 'fred', 'view')
+        self.assertEqual(list(result), [])
+        
     def test_allowed_no_oids_in_objectid_to_path(self):
         oids = [1]
         inst = self._makeOne()

@@ -263,8 +263,9 @@ class ObjectMap(Persistent):
 
         for k in removepaths:
             del self.pathindex[k]
-            if k in self.path_to_acl:
-                del self.path_to_acl[k]
+            if self.path_to_acl is not None: # bw compat
+                if k in self.path_to_acl:
+                    del self.path_to_acl[k]
 
         for x in range(pathlen-1):
 
@@ -519,8 +520,9 @@ class ObjectMap(Persistent):
         """ For the resource implied by ``obj_objectid_or_path_tuple``, set the
         cached version of its ACL (for later used by ``allowed``) to the ACL
         passed as ``acl``"""
-        path_tuple = self._get_path_tuple(obj_objectid_or_path_tuple)
-        self.path_to_acl[path_tuple] = tuple(acl)
+        if self.path_to_acl is not None: # bw compat
+            path_tuple = self._get_path_tuple(obj_objectid_or_path_tuple)
+            self.path_to_acl[path_tuple] = tuple(acl)
 
     def allowed(self, oids, principals, permission):
         """ For the set of oids present in ``oids``, return a sequence of oids
@@ -528,6 +530,8 @@ class ObjectMap(Persistent):
         is a member of the set of principals implied by ``principals``.  This
         method uses the data collected via the ``set_acl`` method of this
         class."""
+        if self.path_to_acl is None: # bw compat
+            raise StopIteration
         
         for oid in oids:
             path_tuple = self.objectid_to_path.get(oid)
