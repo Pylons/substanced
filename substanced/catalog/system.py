@@ -89,12 +89,14 @@ class SystemCatalogFactory(object):
     - content_type (a FieldIndex)
 
       Represents the Substance D content type of an added object.
-
+      
     - allowed (an AllowedIndex)
 
       Represents the set of principals with the ``sdi.view`` or ``view``
-      permission against a content object.
-
+      permission against a content object.  NB: this index is deprecated and
+      will be removed from the system catalog eventually.  Use
+      ``objectmap.allowed`` instead.
+      
     - text (a TextIndex)
 
       Indexes text used for the Substance D folder contents filter box.
@@ -108,6 +110,8 @@ class SystemCatalogFactory(object):
     # interfaces is MODE_ATCOMMIT because code which creates one may
     # need to access it immediately.
     interfaces = Keyword()
+
+    allowed = Allowed()
 
     text = Text(action_mode=MODE_DEFERRED)
 

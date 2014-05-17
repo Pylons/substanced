@@ -1,48 +1,10 @@
 from zope.interface import providedBy
 
-from pyramid.security import principals_allowed_by_permission
-from pyramid.compat import is_nonstr_iter
 from pyramid.threadlocal import get_current_registry
 
 from ..interfaces import IIndexView
 
-from ..util import (
-    get_all_permissions,
-    get_principal_repr,
-    )
-
 _marker = object()
-
-class AllowedIndexDiscriminator(object):
-    def __init__(self, permissions=None):
-        if permissions is not None and not is_nonstr_iter(permissions):
-            permissions = (permissions,)
-        if is_nonstr_iter(permissions):
-            permissions = set(permissions)
-        self.permissions = permissions
-
-    def __call__(self, resource, default):
-        permissions = self.permissions
-
-        if permissions is None:
-            registry = get_current_registry() # XXX lame
-            permissions = get_all_permissions(registry)
-
-        values = []
-
-        for permission in permissions:
-            principal_ids = principals_allowed_by_permission(
-                resource,
-                permission
-                )
-            for principal_id in principal_ids:
-                principal_repr = get_principal_repr(principal_id)
-                values.append((principal_repr, permission))
-
-        if not values:
-            return default
-            
-        return values
 
 class IndexViewDiscriminator(object):
     get_current_registry = staticmethod(get_current_registry) # for testing
@@ -64,6 +26,11 @@ class IndexViewDiscriminator(object):
         if index_view is None:
             return default
         return index_view(resource, default)
+
+class AllowedIndexDiscriminator(object):
+    """ bw compat for unpickling only; safe to delete after system catalog has
+    been resynced"""
+    pass
 
 def dummy_discriminator(object, default):
     return default

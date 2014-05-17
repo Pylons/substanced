@@ -30,6 +30,12 @@ contains a default set of indexes:
 
   Represents the Substance D content-type of an object.
 
+- allowed (an ``allowed`` index)
+
+  Represents the set of users granted the ``sdi.view`` permission to each
+  content object.  NB: this index will be removed from the system catalog
+  profile eventually.  Use ``objectmap.allowed`` instead.
+
 - text (a ``text`` index)
 
   Represents the text searched for when you use the filter box within the
@@ -260,9 +266,10 @@ queries together, but we don't use it above).  Parentheses can be used to
 group query expressions together for the purpose of priority.
 
 Different indexes have different query methods, but most support the ``eq``
-method.  Other methods that are often supported by indexes: ``noteq``,
-``ge``, ``le``, ``gt``, ``any``, ``notany``, ``all``, ``notall``,
-``inrange``, ``notinrange``.
+method.  Other methods that are often supported by indexes: ``noteq``, ``ge``,
+``le``, ``gt``, ``any``, ``notany``, ``all``, ``notall``, ``inrange``,
+``notinrange``.  The :class:`~substanced.catalog.indexes.AllowedIndex` supports
+an additional :meth:`~substanced.catalog.indexes.AllowedIndex.allows()` method.
    
 Query objects support an ``execute`` method.  This method returns a
 :class:`hypatia.util.ResultSet`.  A :class:`hypatia.util.ResultSet` 

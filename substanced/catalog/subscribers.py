@@ -113,27 +113,6 @@ def object_modified(event):
         for catalog in catalogs:
             catalog.reindex_resource(obj, oid=oid)
 
-@subscribe_acl_modified()
-def acl_modified(event):
-    resource = event.object
-    registry = event.registry
-    catalogs = find_catalogs(resource)
-
-    for catalog in catalogs:
-        # hellishly expensive
-        indexes = catalog.values()
-        for index in indexes:
-            index_path = resource_path(index)
-            if registry.content.istype(index, 'Allowed Index'):
-                for node in postorder(resource):
-                    logger.info(
-                        '%s: reindexing %s due to ACL modified' % (
-                            index_path, node)
-                        )
-                    oid = get_oid(node, None)
-                    if oid is not None:
-                        index.reindex_resource(node, oid=oid)
-
 @subscriber(ApplicationCreated)
 def on_startup(event):
     app = event.object

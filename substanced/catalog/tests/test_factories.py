@@ -189,30 +189,11 @@ class TestAllowed(unittest.TestCase):
         return Allowed(**kw)
 
     def test_call(self):
-        inst = self._makeOne(permissions=['a',])
+        inst = self._makeOne()
         result = inst('catalog', 'index')
         self.assertEqual(result.__class__.__name__, 'AllowedIndex')
         self.assertTrue(hasattr(result, '__factory_hash__'))
-        self.assertEqual(result.discriminator.permissions, set(['a']))
 
-    def test_hashvalues_noniter_permissions(self):
-        inst = self._makeOne(permissions='a')
-        result = inst.hashvalues()
-        self.assertEqual(
-            result,
-            {'class': 'substanced.catalog.factories.Allowed',
-             'permissions': ('a',)}
-            )
-        
-    def test_hashvalues_iter_permissions(self):
-        inst = self._makeOne(permissions=['b', 'a'])
-        result = inst.hashvalues()
-        self.assertEqual(
-            result,
-            {'class': 'substanced.catalog.factories.Allowed',
-             'permissions': ('a','b')}
-            )
-        
 class TestCatalogFactory(unittest.TestCase):
     def _makeOne(self, name, index_factories):
         from ..factories import CatalogFactory
