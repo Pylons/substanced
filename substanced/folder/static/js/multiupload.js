@@ -4,7 +4,7 @@
 +(function($) {
     'use strict';
 
-    function flash(alertType, diff) {
+    function flash(alertType, diff, context) {
         // Alert type is either 'success' or 'error'.
         // Diff is a positive value.
         //
@@ -37,6 +37,21 @@
         }
         // Increment the counter with the diff specified.
         flashBox.data().increment(diff);
+        // closing the status box will remove its files 
+        flashBox.find('.close').click(function() {
+            console.log('context:', context);
+            if (context) {
+                context.each(function() {
+                    var self = $(this);
+                    console.log("each:", self);
+                    self.height(self.height());
+                    self.addClass('deleted');
+                    setTimeout(function() {
+                        self.remove();
+                    }, 2200);
+                });
+            }
+        });
     }
 
     var url = './@@upload-submit',
@@ -185,10 +200,14 @@
         $('#progress .progress-bar').css('width', progress + '%');
     }).on('fileuploaddone', function (e, data) {
         // status for the user
-        flash('success', data.result.files.length);
+        if (data.context) {
+            data.context.each(function() {
+            });
+        }
+        flash('success', data.result.files.length, data.context);
     }).on('fileuploadfail', function (e, data) {
         // status for the user
-        flash('danger', data.files.length);
+        flash('danger', data.files.length, data.context);
         //$.each(data.result.files, function (index, file) {
         //    console.log('ERROR file:', index, file);
         //});

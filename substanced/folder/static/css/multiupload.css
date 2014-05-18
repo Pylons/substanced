@@ -6,6 +6,35 @@
     margin-right: 0.5em;
 }
 
+.deleted .file-in-progress {
+    -webkit-animation: disappear 1.5s;
+    -webkit-animation-fill-mode: forwards;
+    animation: disappear 1.5s;
+    animation-fill-mode: forwards;
+}
+
+@-webkit-keyframes disappear{
+    20% {
+        -webkit-transform: translateX(-5%);
+        transform: translateX(-5%);
+    }
+    100% {
+        -webkit-transform: translateX(200%);
+        transform: translateX(200%);
+    }
+}
+
+@keyframes disappear{
+    20% {
+        -webkit-transform: translateX(-5%);
+        transform: translateX(-5%);
+    }
+    100% {
+        -webkit-transform: translateX(200%);
+        transform: translateX(200%);
+    }
+}
+
 .file-in-progress .left-col {
     overflow: hidden;
     text-overflow: ellipsis;
