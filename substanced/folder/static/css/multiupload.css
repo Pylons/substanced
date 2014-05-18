@@ -6,10 +6,11 @@
     margin-right: 0.5em;
 }
 
-.deleted .file-in-progress {
-    -webkit-animation: disappear 1.5s;
+.deleted .file-in-progress,
+.alert.deleted {
+    -webkit-animation: disappear 1s;
     -webkit-animation-fill-mode: forwards;
-    animation: disappear 1.5s;
+    animation: disappear 1s;
     animation-fill-mode: forwards;
 }
 

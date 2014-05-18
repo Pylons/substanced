@@ -15,7 +15,7 @@
             flashBox = $('<div class="alert alert-' + alertType +
                       ' alert-fileupload-' + alertType + '"></div>')
                 .append('<span class="status"></span>')
-                .append('<button type="button" class="close" data-dismiss="alert">&times;</button>')
+                .append('<button type="button" class="close">&times;</button>')
                 .data({
                     nr: 0,
                     increment: function(diff) {
@@ -39,6 +39,13 @@
         flashBox.data().increment(diff);
         // closing the status box will remove its files 
         flashBox.find('.close').click(function() {
+            // close the box
+            var el_alert = $(this).closest('.alert');
+            el_alert.addClass('deleted');
+            setTimeout(function() {
+                el_alert.remove();
+            }, 1100);
+            // remove its files
             console.log('context:', context);
             if (context) {
                 context.each(function() {
@@ -48,7 +55,7 @@
                     self.addClass('deleted');
                     setTimeout(function() {
                         self.remove();
-                    }, 2200);
+                    }, 1100);
                 });
             }
         });
