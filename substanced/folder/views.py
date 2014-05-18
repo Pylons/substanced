@@ -581,6 +581,7 @@ class FolderContents(object):
         resultset = q.execute()
         # NB: must take snapshot of folder_length before limiting the length
         # of the resultset via any sort
+        folder_length = len(resultset)
         sort_info = self._sort_info(
             columns,
             sort_column_name=sort_column_name,
@@ -600,7 +601,6 @@ class FolderContents(object):
                 )
 
         ids = self.allowed_filter(resultset, request)
-        folder_length = len(ids)
 
         buttons = self.get_buttons()
         show_checkbox_column = self.show_checkbox_column(
