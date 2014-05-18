@@ -4,6 +4,16 @@
 +(function($) {
     'use strict';
 
+    function _removeRows(context) {
+        context.each(function() {
+            var el = $(this);
+            el.addClass('deleted');
+            setTimeout(function() {
+                el.remove();
+            }, 1100);
+        });
+    }
+
     function flash(alertType, diff, context) {
         // Alert type is either 'success' or 'error'.
         // Diff is a positive value.
@@ -40,24 +50,9 @@
         // closing the status box will remove its files 
         flashBox.find('.close').click(function() {
             // close the box
-            var el_alert = $(this).closest('.alert');
-            el_alert.addClass('deleted');
-            setTimeout(function() {
-                el_alert.remove();
-            }, 1100);
+            _removeRows($(this).closest('.alert'));
             // remove its files
-            console.log('context:', context);
-            if (context) {
-                context.each(function() {
-                    var self = $(this);
-                    console.log("each:", self);
-                    self.height(self.height());
-                    self.addClass('deleted');
-                    setTimeout(function() {
-                        self.remove();
-                    }, 1100);
-                });
-            }
+            _removeRows(context);
         });
     }
 
