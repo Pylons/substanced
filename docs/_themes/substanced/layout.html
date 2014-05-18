@@ -248,7 +248,7 @@
     {% endif %}
 
     {% if display_github %}
-    <a href="https://github.com/{{ github_user }}/{{ github_repo }}/blob/{{ github_version }}{{ conf_py_path }}{{ pagename }}.rst"><img style="position: absolute; top: 0; right: 0; border: 0;" src="{{ pathto('_static/edit-me-on-github.png', 1) }}" alt="Edit me on GitHub"></a>
+    <a href="https://github.com/{{ github_user }}/{{ github_repo }}/blob/{{ github_version }}{{ conf_py_path }}{{ pagename }}.rst"><img style="z-index: 1030: position: absolute; top: 0; right: 0; border: 0;" src="{{ pathto('_static/edit-me-on-github.png', 1) }}" alt="Edit me on GitHub"></a>
     {% endif %}
 {% endblock %}
     <div class="container">
