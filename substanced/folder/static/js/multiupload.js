@@ -4,7 +4,19 @@
 +(function($) {
     'use strict';
 
-    function _removeRows(context) {
+    function getProgressFromData(data) {
+        return parseInt(data.loaded / data.total * 100, 10);
+    }
+
+    function updateProgress(context, progress) {
+        context.each(function() {
+            $(this)
+                .css('width', progress + '%')
+                .text(progress + '%');
+        });
+    }
+
+    function removeRows(context) {
         context.each(function() {
             var el = $(this);
             el.addClass('deleted');
@@ -50,9 +62,9 @@
         // closing the status box will remove its files 
         flashBox.find('.close').click(function() {
             // close the box
-            _removeRows($(this).closest('.alert'));
+            removeRows($(this).closest('.alert'));
             // remove its files
-            _removeRows(context);
+            removeRows(context);
         });
     }
 
@@ -190,16 +202,11 @@
                 .append($('<span class="text-danger"/>').text(file.error));
         }
     }).on('fileuploadprogress', function (e, data) {
-        var progress = parseInt(data.loaded / data.total * 100, 10);
-        if (data.context) {
-            data.context.each(function() {
-                $(this).find('.progress .progress-bar')
-                    .css('width', progress + '%');
-            });
-        }
+        updateProgress(data.context.find('.progress .progress-bar'),
+            getProgressFromData(data));
     }).on('fileuploadprogressall', function (e, data) {
-        var progress = parseInt(data.loaded / data.total * 100, 10);
-        $('#progress .progress-bar').css('width', progress + '%');
+        updateProgress($('#progress .progress-bar'),
+            getProgressFromData(data));
     }).on('fileuploaddone', function (e, data) {
         // status for the user
         if (data.context) {
