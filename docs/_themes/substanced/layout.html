@@ -22,22 +22,8 @@
         '_static/assets/js/main.js',
         '_static/underscore.js',
         '_static/doctools.js',
-        '_static/twitter.js'] %}
-{%- macro script() %}
-    <script type="text/javascript">
-      var DOCUMENTATION_OPTIONS = {
-        URL_ROOT:    '{{ url_root }}',
-        VERSION:     '{{ release|e }}',
-        COLLAPSE_INDEX: false,
-        FILE_SUFFIX: '{{ '' if no_search_suffix else file_suffix }}',
-        HAS_SOURCE:  {{ has_source|lower }}
-      };
-    </script>
-    {%- for scriptfile in script_files %}
-    <script type="text/javascript" src="{{ pathto(scriptfile, 1) }}"></script>
-    {%- endfor %}
-    <script type="text/javascript">$('#searchbox').show(0);</script>
-{%- endmacro %}
+        '_static/twitter.js',
+        '_static/searchtools.js'] %}
 {# XXX necessary? #}
 {%- if url_root == '#' %}{% set url_root = '' %}{% endif %}
 {%- if not embedded and docstitle %}
@@ -71,6 +57,7 @@
             </div>
         </div>
 {%- endmacro %}
+
 {%- macro sidebar() %}
       {%- if render_sidebar %}
 <div class="span3 bs-docs-sidebar">
@@ -109,6 +96,23 @@
 </div>
       {%- endif %}
 {%- endmacro %}
+
+{%- macro script() %}
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '{{ url_root }}',
+        VERSION:     '{{ release|e }}',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '{{ '' if no_search_suffix else file_suffix }}',
+        HAS_SOURCE:  {{ has_source|lower }}
+      };
+    </script>
+    {%- for scriptfile in script_files %}
+    <script type="text/javascript" src="{{ pathto(scriptfile, 1) }}"></script>
+    {%- endfor %}
+    <script type="text/javascript">$('#searchbox').show(0);</script>
+{%- endmacro %}
+
 {%- macro css() %}
 {%- set css_files = ['_static/assets/css/theme_venera_blue.css',
                     '_static/pygments.css',
@@ -385,6 +389,7 @@
     </footer>
 {%- endblock %}
 {%- block script %}{{ script() }}{% endblock %}
+{%- block extraend %}{% endblock %}
     <script type="text/javascript">
      function handleTweets(tweets){
        var x = tweets.length;
