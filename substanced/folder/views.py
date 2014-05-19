@@ -932,7 +932,9 @@ class FolderContents(object):
             insert_before = None
         context.reorder(item_modify, insert_before)
         msg = _('${i} rows moved.', mapping=dict(i=len(item_modify)))
-        msg = request.sdiapi.get_flash_with_undo_snippet(request.localizer.translate(msg))
+        msg = request.sdiapi.get_flash_with_undo_snippet(
+            request.localizer.translate(msg)
+            )
         results = {
             'flash': msg,
             'flash_queue':'success',
@@ -959,10 +961,12 @@ class FolderContents(object):
                 obj.__parent__.move(obj_name, context)
             return True
         if copy:
-            msg = _('"${obj_name}" is of a type (${obj_type}) that is not addable here, refusing to copy',
+            msg = _('"${obj_name}" is of a type (${obj_type}) that is not '
+                    'addable here, refusing to copy',
                     mapping=dict(obj_name=obj_name, obj_type=obj_type))
         else:
-            msg = _('"${obj_name}" is of a type (${obj_type}) that is not addable here, refusing to move',
+            msg = _('"${obj_name}" is of a type (${obj_type}) that is not '
+                    'addable here, refusing to move',
                     mapping=dict(obj_name=obj_name, obj_type=obj_type))
         self.request.sdiapi.flash(request.localizer.translate(msg), 'danger')
         return False
@@ -1016,7 +1020,11 @@ class FolderContents(object):
                 candidates[viewname] = data
 
         candidate_names = candidates.keys()
-        views = sdi_mgmt_views(self.context, self.request, names=candidate_names)
+        views = sdi_mgmt_views(
+            self.context,
+            self.request,
+            names=candidate_names
+            )
 
         L = []
 
