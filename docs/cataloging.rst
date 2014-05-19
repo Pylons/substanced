@@ -32,9 +32,8 @@ contains a default set of indexes:
 
 - allowed (an ``allowed`` index)
 
-  Represents the set of users granted the ``sdi.view`` permission to each
-  content object.  NB: this index will be removed from the system catalog
-  profile eventually.  Use ``objectmap.allowed`` instead.
+  An index which can be used to filter resultsets using principals and
+  permissions.
 
 - text (a ``text`` index)
 
@@ -270,7 +269,7 @@ method.  Other methods that are often supported by indexes: ``noteq``, ``ge``,
 ``le``, ``gt``, ``any``, ``notany``, ``all``, ``notall``, ``inrange``,
 ``notinrange``.  The :class:`~substanced.catalog.indexes.AllowedIndex` supports
 an additional :meth:`~substanced.catalog.indexes.AllowedIndex.allows()` method.
-   
+
 Query objects support an ``execute`` method.  This method returns a
 :class:`hypatia.util.ResultSet`.  A :class:`hypatia.util.ResultSet` 
 can be iterated over; each iteration returns a content object. 
@@ -312,9 +311,38 @@ before executing the query:
     resultset = q.execute()
     newresultset = resultset.sort(system_catalog['name'])
 
+Filtering Catalog Results Using the Allowed Index
+-------------------------------------------------
 
-Filtering Catalog Results Using Security
-----------------------------------------
+The Substance D system catalog at
+:class:`substanced.catalog.system.SystemCatalogFactory` contains a number of
+default indexes, including an ``allowed`` index.  Its job is to index security
+information to allow security-aware results in queries.  This index allows us
+to filter queries to the system catalog based on whether the principal issuing
+the request has a permission on the matching resource.
+
+For example, the below query will find:
+
+  - all of the subresources inside a folder
+
+  - which is of content type ``News Item``
+
+  - which the current user also possesses the ``view`` permission against
+
+.. code-block:: python
+
+    system_catalog = find_catalog(resource, 'system')
+    path = system_catalog['path']
+    interfaces = system_catalog['content_type']
+    allowed = system_catalog['allowed']
+    q = ( path.eq(resource, depth=1, include_origin=False) &
+          content_type.eq('News Item') &
+          allowed.allows(request, 'view')
+        )
+    return q
+
+ Filtering Catalog Results Using The Objectmap
+---------------------------------------------
 
 It is possible to postfilter catalog results using the
 :meth:`substanced.objectmap.ObjectMap.allowed` API.  For example:
@@ -328,17 +356,22 @@ It is possible to postfilter catalog results using the
        resultset = q.execute()
 
        objectmap = find_objectmap(context)
-       return objectmap.allowed(resultset.oids, request.effective_principals, 'view')
+       return objectmap.allowed(
+                 resultset.oids, request.effective_principals, 'view')
 
 The result of :meth:`~substanced.objectmap.ObjectMap.allowed` is a generator
 which returns oids, so the result must be listified if you intend to index into
 it, or slice it, or what-have-you.
 
-The objectmap keeps track of ACLs in a cache to make this functionality work.
-Note that for the object map's cached version of ACLs to be correct, you will
-need to set ACLs in a way that helps keep track of all the contracts.  For
-this, the helper function :func:`substanced.util.set_acl` can be used. For
-example, the site root at :class:`substanced.root.Root` finishes with:
+Setting ACLs
+------------
+
+The objectmap keeps track of ACLs in a cache to make catalog security
+functionality work.  Note that for the object map's cached version of ACLs to
+be correct, you will need to set ACLs in a way that helps keep track of all the
+contracts.  For this, the helper function :func:`substanced.util.set_acl` can
+be used. For example, the site root at :class:`substanced.root.Root` finishes
+with:
 
 .. code-block:: python
 
@@ -349,7 +382,8 @@ example, the site root at :class:`substanced.root.Root` finishes with:
         )
 
 Using ``set_acl`` this way will generate an event that will keep the
-objectmap's cache updated.
+objectmap's cache updated.  This will allow the ``allowed`` index to work and
+the :meth:`substanced.objectmap.ObjectMap.allowed` method to work.
 
 Deferred Indexing and Mode Parameters
 -------------------------------------

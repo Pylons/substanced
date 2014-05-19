@@ -92,10 +92,8 @@ class SystemCatalogFactory(object):
       
     - allowed (an AllowedIndex)
 
-      Represents the set of principals with the ``sdi.view`` or ``view``
-      permission against a content object.  NB: this index is deprecated and
-      will be removed from the system catalog eventually.  Use
-      ``objectmap.allowed`` instead.
+      Can be used in a query to filter results using permissions and
+      principals.
       
     - text (a TextIndex)
 

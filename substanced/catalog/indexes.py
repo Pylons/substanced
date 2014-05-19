@@ -410,9 +410,7 @@ class FacetIndex(SDIndex, hypatia.facet.FacetIndex):
     )
 class AllowedIndex(SDIndex, hypatia.util.BaseIndexMixin, Persistent, FakeIndex):
     """ An index which defers to ``objectmap.allowed`` as part of a query
-    intersection; it exists only for backwards
-    compatibility.. ``objectmap.allowed`` should be called directly instead,
-    and this index should not be used."""
+    intersection."""
     
     def __init__(self, discriminator, family=None):
         if family is not None:

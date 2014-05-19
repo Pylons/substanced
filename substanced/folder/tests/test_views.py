@@ -1640,6 +1640,9 @@ class TestFolderContents(unittest.TestCase):
         self.assertEqual(query.anded_with[0].name, 'interfaces')
         self.assertEqual(query.anded_with[0].queried,
                          ('notany', ([IService],), {}))
+        self.assertEqual(query.anded_with[1].name, 'allowed')
+        self.assertEqual(query.anded_with[1].queried,
+                         ('allows', (request, 'sdi.view'), {}))
 
     def test_no_content_types(self):
         request = testing.DummyRequest()
@@ -1967,6 +1970,9 @@ class FolderServicesTest(unittest.TestCase):
         self.assertEqual(query.anded_with[0].name, 'interfaces')
         self.assertEqual(query.anded_with[0].queried,
                          ('any', ([IService],), {}))
+        self.assertEqual(query.anded_with[1].name, 'allowed')
+        self.assertEqual(query.anded_with[1].queried,
+                         ('allows', (request, 'sdi.view'), {}))
 
     def test_no_content_types(self):
         request = testing.DummyRequest()
@@ -2180,6 +2186,10 @@ class DummyIndex(object):
     def check_query(self, querytext):
         return True
 
+    def allows(self, *arg, **kw):
+        self.queried = ('allows', arg, kw)
+        return self
+
 def _makeCatalogs(oids=()):
     from zope.interface import directlyProvides
     from ...interfaces import IFolder
@@ -2195,8 +2205,6 @@ class DummyObjectMap(object):
         self.result = result
     def object_for(self, oid):
         return self.result
-    def allowed(self, oids, principals, permission):
-        return oids
 
 class DummyVenusianInfo(object):
     scope = 'notaclass'

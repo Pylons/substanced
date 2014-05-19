@@ -343,21 +343,14 @@ class FolderContents(object):
         folder = self.context
         path = system_catalog['path']
         interfaces = system_catalog['interfaces']
+        allowed = system_catalog['allowed']
         q = ( path.eq(folder, depth=1, include_origin=False) &
-              interfaces.notany([IService])
+              interfaces.notany([IService]) &
+              allowed.allows(self.request, 'sdi.view')
             )
         return q
 
     get_query = get_default_query
-
-    def default_allowed_filter(self, resultset, request):
-        oids = resultset.ids
-        principals = request.effective_principals
-        objectmap = find_objectmap(self.context)
-        oids = objectmap.allowed(oids, principals, permission='sdi.view')
-        return list(oids)
-
-    allowed_filter = default_allowed_filter
 
     @reify
     def system_catalog(self):
@@ -600,15 +593,13 @@ class FolderContents(object):
                 folder, resultset, reverse=reverse, limit=end
                 )
 
-        ids = self.allowed_filter(resultset, request)
-
         buttons = self.get_buttons()
         show_checkbox_column = self.show_checkbox_column(
             buttons, columns, resultset)
 
         records = []
 
-        for oid in itertools.islice(ids, start, end):
+        for oid in itertools.islice(resultset.ids, start, end):
             resource = objectmap.object_for(oid)
             name = getattr(resource, '__name__', '')
             record = dict(
@@ -1080,8 +1071,10 @@ class FolderServices(FolderContents):
         folder = self.context
         path = system_catalog['path']
         interfaces = system_catalog['interfaces']
+        allowed = system_catalog['allowed']
         q = ( path.eq(folder, depth=1, include_origin=False) &
-              interfaces.any([IService])
+              interfaces.any([IService]) &
+              allowed.allows(self.request, 'sdi.view')
             )
         return q
 
