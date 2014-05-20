@@ -69,6 +69,7 @@
     }
 
     var url = './@@upload-submit',
+        globalProgress = $('#progress .progress-bar'),
         UploadButton = $('<button class="upload-button" />')
             .addClass('btn btn-primary')
             .prop('disabled', true)
@@ -186,8 +187,6 @@
         });
         // register the submit function on the button
         button.data().onSubmit($.proxy(data.submit, data));
-        // reset progress
-        $('#progress .progress-bar').css('width', 0);
     }).on('fileuploadprocessalways', function (e, data) {
         var index = data.index,
             file = data.files[index],
@@ -205,8 +204,7 @@
         updateProgress(data.context.find('.progress .progress-bar'),
             getProgressFromData(data));
     }).on('fileuploadprogressall', function (e, data) {
-        updateProgress($('#progress .progress-bar'),
-            getProgressFromData(data));
+        updateProgress(globalProgress, getProgressFromData(data));
     }).on('fileuploaddone', function (e, data) {
         // status for the user
         if (data.context) {
