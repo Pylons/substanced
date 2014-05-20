@@ -1,0 +1,63 @@
+{
+  "type": "script",
+  "seleniumVersion": "2",
+  "formatVersion": 2,
+  "steps": [
+    {
+      "type": "get",
+      "url": "http://127.0.0.1:49160/manage/binder_0/@@upload"
+    },
+    {
+      "type": "pause",
+      "waitTime": "1"
+    },
+    {
+      "type": "storeEval",
+      "script": "$('input').css('position', 'relative')",
+      "variable": "dummy"
+    },
+    {
+      "type": "sendKeysToElement",
+      "locator": {
+        "type": "id",
+        "value": "fileupload"
+      },
+      "text": "~/Desktop/pyramid-logo-red.png"
+    },
+    {
+      "type": "storeEval",
+      "script": "$('input').css('position', 'absolute')",
+      "variable": "dummy"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "xpath",
+        "value": "//span[@id='fileupload-wrapper']//button[.='Upload']"
+      }
+    },
+    {
+      "type": "waitForText",
+      "locator": {
+        "type": "css selector",
+        "value": ".progress-bar"
+      },
+      "text": "100%"
+    },
+    {
+      "type": "clickElement",
+      "locator": {
+        "type": "css selector",
+        "value": "button.close"
+      }
+    }
+  ],
+  "data": {
+    "configs": {
+      "manual": {}
+    },
+    "source": "manual"
+  },
+  "inputs": [],
+  "timeoutSeconds": 60
+}
