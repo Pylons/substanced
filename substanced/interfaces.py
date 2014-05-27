@@ -441,7 +441,7 @@ class IFolder(Interface):
         a KeyError if no such object exists. """
 
     def __setitem__(name, other):
-        """ Set object ``other' into this folder under the name ``name``.
+        """ Set object ``other`` into this folder under the name ``name``.
 
         ``name`` must be a Unicode object or a bytestring object.
 
