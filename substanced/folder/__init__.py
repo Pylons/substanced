@@ -346,7 +346,7 @@ class Folder(Persistent):
         return name in self.data
 
     def __setitem__(self, name, other):
-        """ Set object ``other' into this folder under the name ``name``.
+        """ Set object ``other`` into this folder under the name ``name``.
 
         ``name`` must be a Unicode object or a bytestring object.
 
