@@ -43,7 +43,7 @@
       the <a href="http://docs.pylonsproject.org/projects/substanced/en/latest/">documentation</a>
       for detailed technical information.</p>
       <p>To see it in action, click the button
-      below and log in as <b>admin</b> with the password <b>admin</b>.</p>
+      below and log in as <b>admin</b> with the password <b>{{random_password}}</b>.</p>
       <div style="margin-top: 1em;">
         <a class="btn btn-primary" href="${request.application_url}${manage_prefix}">See the management interface</a>
       </div>
