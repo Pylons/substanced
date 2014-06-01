@@ -1,7 +1,7 @@
 /*jslint unparam: true, regexp: true */
 /*global window, jQuery */
 
-+(function($) {
+(function($) {
     'use strict';
 
     function getProgressFromData(data) {

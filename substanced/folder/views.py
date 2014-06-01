@@ -1475,8 +1475,11 @@ def multi_upload_submit(context, request):
     for filedata in request.params.values():
         mimetype = filedata.type or USE_MAGIC
         filename = filedata.filename
-        stream = filedata.fp
-        size = filedata.length
+        stream = filedata.file
+        # size = filedata.length
+        # XXX length broken in python3. Need to test
+        # if this works from python2 too. TODO
+        size = filedata.bytes_read
         if stream:
             stream.seek(0)
         else:
@@ -1486,7 +1489,7 @@ def multi_upload_submit(context, request):
         print('multi_upload', name, size)
         # create the title, defaulting to name
         title = name
-        # creare and store the File content object
+        # create and store the File content object
         context[name] = _makeob(request, stream, title, mimetype)
         # produce data for the client
         result['files'].append({
