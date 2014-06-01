@@ -1470,7 +1470,7 @@ def _makeob(request, stream, title, mimetype):
     permission='sdi.add-content',
     )
 def multi_upload_submit(context, request):
-    print('in multi_upload_submit')
+    # print('in multi_upload_submit')
     result = {'files': []}
     for filedata in request.params.values():
         mimetype = filedata.type or USE_MAGIC
@@ -1485,7 +1485,7 @@ def multi_upload_submit(context, request):
             size = 0
         # convert filename to a readable, unique name
         name = slugify_in_context(context, filename)
-        print('multi_upload', name, size)
+        # print('multi_upload', name, size)
         # create the title, defaulting to name
         title = name
         # create and store the File content object
