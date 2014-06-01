@@ -1476,14 +1476,13 @@ def multi_upload_submit(context, request):
         mimetype = filedata.type or USE_MAGIC
         filename = filedata.filename
         stream = filedata.file
-        # size = filedata.length
-        # XXX length broken in python3. Need to test
-        # if this works from python2 too. TODO
-        size = filedata.bytes_read
         if stream:
+            stream.seek(0, 2)
+            size = stream.tell()
             stream.seek(0)
         else:
             stream = None
+            size = 0
         # convert filename to a readable, unique name
         name = slugify_in_context(context, filename)
         print('multi_upload', name, size)
