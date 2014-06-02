@@ -29,7 +29,7 @@ class CSRFToken(colander.SchemaNode):
         if self.bindings is None or self.bindings.get('_csrf_token_') is None:
             return colander.drop
         return colander.SchemaNode.deserialize(self, cstruct=cstruct)
-    
+
     def validator(self, node, value):
         token = self.bindings['_csrf_token_']
         if value != token:
@@ -45,7 +45,7 @@ class CSRFToken(colander.SchemaNode):
         if 'request' in kw:
             token = kw['request'].session.get_csrf_token()
             self.default = token
-        
+
 class RemoveCSRFMapping(colander.Mapping):
     def deserialize(self, node, cstruct):
         result = colander.Mapping.deserialize(self, node, cstruct)
@@ -92,7 +92,7 @@ class NameSchemaNode(colander.SchemaNode):
     By default it uses the context's ``check_name`` API to ensure that the name
     provided is valid, and limits filename length to a default of 100
     characters.  Some usage examples follow.
-    
+
     This sets up the name_node to assume that it's in 'add' mode with the
     default 100 character max limit.::
 
@@ -100,13 +100,13 @@ class NameSchemaNode(colander.SchemaNode):
 
     This sets up the name_node to assume that it's in 'add' mode, and that the
     maximum length of the name provided is 20 characters::
-    
+
       name_node = NameSchemaNode(max_len=20)
 
     This sets up the name_node to assume that it's in 'edit'
     mode (``check_name`` will be called on the **parent** of the bind
     context, not on the context itself)::
-    
+
       name_node = NameSchemaNode(editing=True)
 
     This sets up the name_node to condition whether it's in edit mode on the
@@ -114,7 +114,7 @@ class NameSchemaNode(colander.SchemaNode):
 
       def i_am_editing(context, request):
           return request.registry.content.istype(context, 'Document')
-    
+
       name_node = NameSchemaNode(editing=i_am_editing)
     """
 
@@ -186,7 +186,7 @@ class IdSet(object):
                 deform_i18n('${value} is not iterable',
                             mapping={'value':value})
                 )
-        
+
     def serialize(self, node, value):
         if value is colander.null:
             return value
@@ -202,8 +202,9 @@ class IdSet(object):
     def cstruct_children(self, node, cstruct):
         return []
 
-class MultireferenceIdSchemaNode(colander.SchemaNode):
-    schema_type = IdSet
+class ReferenceIdSchemaNode(colander.SchemaNode):
+    schema_type = colander.Int
+    multiple = False
 
     def _get_choices(self):
         context = self.bindings['context']
@@ -213,4 +214,9 @@ class MultireferenceIdSchemaNode(colander.SchemaNode):
     @property
     def widget(self):
         values = self._get_choices()
-        return deform.widget.Select2Widget(values=values, multiple=True)
+        return deform.widget.Select2Widget(values=values, multiple=self.multiple)
+
+
+class MultireferenceIdSchemaNode(ReferenceIdSchemaNode):
+    schema_type = IdSet
+    multiple = True
