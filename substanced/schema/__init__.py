@@ -202,8 +202,9 @@ class IdSet(object):
     def cstruct_children(self, node, cstruct):
         return []
 
-class MultireferenceIdSchemaNode(colander.SchemaNode):
-    schema_type = IdSet
+class ReferenceIdSchemaNode(colander.SchemaNode):
+    schema_type = colander.Int
+    multiple = False
 
     def _get_choices(self):
         context = self.bindings['context']
@@ -213,4 +214,9 @@ class MultireferenceIdSchemaNode(colander.SchemaNode):
     @property
     def widget(self):
         values = self._get_choices()
-        return deform.widget.Select2Widget(values=values, multiple=True)
+        return deform.widget.Select2Widget(values=values, multiple=self.multiple)
+
+
+class MultireferenceIdSchemaNode(ReferenceIdSchemaNode):
+    schema_type = IdSet
+    multiple = True

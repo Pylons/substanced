@@ -256,6 +256,24 @@ class TestIdSet(unittest.TestCase):
         inst = self._makeOne()
         self.assertEqual(inst.cstruct_children(None, None), [])
 
+class TestReferenceIdSchemaNode(unittest.TestCase):
+    def _makeOne(self):
+        from . import ReferenceIdSchemaNode
+        return ReferenceIdSchemaNode()
+
+    def test__get_choices(self):
+        inst = self._makeOne()
+        inst.bindings = {'context':None, 'request':None}
+        inst.choices_getter = lambda *arg: 123
+        self.assertEqual(inst._get_choices(), 123)
+
+    def test_widget(self):
+        inst = self._makeOne()
+        inst._get_choices = lambda: [1]
+        widget = inst.widget
+        self.assertEqual(widget.values, [1])
+        self.assertFalse(widget.multiple)
+
 class TestMultireferenceIdSchemaNode(unittest.TestCase):
     def _makeOne(self):
         from . import MultireferenceIdSchemaNode
