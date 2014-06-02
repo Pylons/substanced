@@ -11,20 +11,22 @@
     </metal:slot>
   </metal:slot>
   <div metal:fill-slot="main">
-    <span id="fileupload-wrapper">
-      <!-- The file input field styled as button -->
-      <span class="btn btn-primary fileinput-button">
-        <i class="glyphicon glyphicon-plus"></i>
-        <span>Add files...</span>
-        <!-- The file input field used as target for the file upload widget -->
-        <input id="fileupload" type="file" name="files[]" multiple>
-      </span>
-    </span>
-    <br>
-    <br>
-    <!-- The global progress bar -->
-    <div id="progress" class="progress">
-      <div class="progress-bar progress-bar-success"></div>
+    <div  id="fileupload-wrapper" class="file-in-progress well clearfix">
+      <div id="fileupload-buttons" class="col-xs-12 col-sm-6 col-md-3 col-lg-2">
+        <!-- The file input field styled as button -->
+        <span class="btn btn-primary fileinput-button">
+          <i class="glyphicon glyphicon-plus"></i>
+          <span>Add files...</span>
+          <!-- The file input field used as target for the file upload widget -->
+          <input id="fileupload" type="file" name="files[]" multiple>
+        </span>
+      </div>
+      <div class="col-xs-12 col-sm-6 col-md-9 col-lg-10">
+        <!-- The global progress bar -->
+        <div id="progress" class="progress">
+          <div class="progress-bar progress-bar-success"></div>
+        </div>
+      </div>
     </div>
     <!-- The container for the uploaded files -->
     <div id="files" class="files"></div>

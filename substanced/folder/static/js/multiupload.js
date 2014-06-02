@@ -167,14 +167,14 @@
         var button = $('#fileupload-wrapper').find('.upload-button');
         if (button.length === 0) {
             button = UploadButton.data().create()
-                .appendTo('#fileupload-wrapper');
+                .appendTo('#fileupload-buttons');
         }
         // Construct the upload info bar for all the files
         $.each(data.files, function (index, file) {
             $('<div class="file-in-progress well row" />')
                 .append($('<div class="col-xs-5 col-sm-5 col-md-5 col-lg-5 left-col clearfix" />')
-                    .append('<span class="pull-left canvas-wrapper" />')
-                    .append($('<span class="file-name"/>').text(file.name))
+                    .append('<div class="pull-left canvas-wrapper" />')
+                    .append($('<div class="file-name"/>').text(file.name))
                 )
                 .append($('<div class="col-xs-7 col-sm-7 col-md-7 col-lg-7 clearfix" />')
                     .append('<div class="progress">' +

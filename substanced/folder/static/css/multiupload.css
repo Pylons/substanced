@@ -2,8 +2,11 @@
 
 /* styles for multi upload page */
 
-.file-in-progress .canvas-wrapper {
-    margin-right: 0.5em;
+/* global progress bar */
+@media (max-width: 767px) { 
+    #progress {
+        margin-top: 1em;
+    }
 }
 
 .deleted .file-in-progress,
