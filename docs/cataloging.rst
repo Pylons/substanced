@@ -341,7 +341,7 @@ For example, the below query will find:
         )
     return q
 
- Filtering Catalog Results Using The Objectmap
+Filtering Catalog Results Using The Objectmap
 ---------------------------------------------
 
 It is possible to postfilter catalog results using the
