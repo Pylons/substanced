@@ -311,6 +311,11 @@ class Batch(object):
     def __len__(self):
         return self.length
 
+    def __nonzero__(self):
+        return True
+
+    __bool__ = __nonzero__ # py3
+
 def chunks(stream, chunk_size=10000):
     """ Return a generator that will iterate over a stream (a filelike
     object) ``chunk_size`` bytes at a time."""

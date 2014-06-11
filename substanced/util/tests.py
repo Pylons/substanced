@@ -322,6 +322,13 @@ class TestBatch(unittest.TestCase):
         request.url = 'http://example.com'
         inst = self._makeOne(seq, request)
         self.assertEqual(len(inst), 3)
+
+    def test___bool__(self):
+        request = testing.DummyRequest()
+        request.url = 'http://example.com'
+        inst = self._makeOne([], request)
+        result = bool(inst)
+        self.assertEqual(result, True)
         
 class Test_merge_url_qs(unittest.TestCase):
     def _callFUT(self, url, **kw):
