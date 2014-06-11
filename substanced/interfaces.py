@@ -580,6 +580,12 @@ class IFolder(Interface):
         and remove events implied by the replacement to be ``True``.
         """
 
+    def clear():
+        """
+        Clear all objects from the folder.  Calling this is equivalent to
+        calling ``.remove`` for each key in the folder.
+        """
+
 class IAutoNamingFolder(IFolder):
     def next_name(subobject):
         """Return a name (a string) based on the autonaming policy for this

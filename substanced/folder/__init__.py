@@ -716,6 +716,15 @@ class Folder(Persistent):
             self.remove(name, loading=True)
         self.add(name, newobject, loading=True, registry=registry)
 
+    def clear(self, registry=None):
+        """ Clear all items from the folder.  This is the equivalent of calling
+        ``.remove`` with each key that exists in the folder. """
+        if registry is None:
+            registry = get_current_registry()
+        for name in self:
+            self.remove(name, registry=registry)
+            
+
 class _AutoNamingFolder(object):
     def add_next(
         self,
