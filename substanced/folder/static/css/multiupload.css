@@ -9,8 +9,7 @@
     }
 }
 #progress {
-    /* top margin important when toolbar wraps */
-    margin-top: 1em;
+    margin-top: 0.5em;
 }
 
 .deleted .file-in-progress,
@@ -41,6 +40,10 @@
         -webkit-transform: translateX(200%);
         transform: translateX(200%);
     }
+}
+
+#fileupload-wrapper {
+    z-index: 1;
 }
 
 .file-in-progress {

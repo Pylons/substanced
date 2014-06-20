@@ -66,6 +66,8 @@
             // remove its files
             removeRows(context);
         });
+        // Always reposition the global toolbar
+        positionToolbar();
     }
 
     var url = './@@upload-submit',
@@ -211,4 +213,32 @@
         //});
     }).prop('disabled', !$.support.fileInput)
         .parent().addClass($.support.fileInput ? undefined : 'disabled');
+
+    // Toolbar positioning
+    function positionToolbar(evt) {
+        // get the offset of the global progress wrapper
+        var navbar = $('.navbar:first');
+        var toolbar = $('#fileupload-wrapper');
+        var next = toolbar.next();
+        var nextTop = next.offset().top;
+        // we add some more margin that stays on top
+        var margin = 8;
+        // if we are not fixed, the toolbar's height
+        // has to be added to the margin
+        var navbarBottom = navbar.offset().top + navbar.height();
+        var switchBottom = navbarBottom + margin + toolbar.outerHeight();
+        if (nextTop < switchBottom) {
+            toolbar.css({
+                'position': 'relative',
+                'top': '' + (switchBottom - nextTop) + 'px'
+            });
+        } else {
+            toolbar.css({
+                'position': 'static'
+            });
+        }
+    }
+    // Bind the toolbar's position fix.
+    $(window).bind('scroll resize', positionToolbar);
+
 })(jQuery);
