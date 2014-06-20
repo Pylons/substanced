@@ -32,7 +32,7 @@
     <!-- The template for the file items -->
     <div id="file-in-progress-template" class="hidden">
       <div class="file-in-progress row">
-        <div class="col-xs-5 col-sm-5 col-md-5 col-lg-5 clearfix">
+        <div class="col-xs-8 col-sm-7 col-md-6 col-lg-5 clearfix">
           <div class="left-col">
             <div class="canvas-wrapper pull-left">
             </div>
@@ -40,7 +40,7 @@
             </span>
           </div>
         </div>
-        <div class="col-xs-7 col-sm-7 col-md-7 col-lg-7 clearfix">
+        <div class="col-xs-4 col-sm-5 col-md-6 col-lg-7 clearfix">
           <div class="progress">
             <div class="progress-bar progress-bar-success">
             </div>

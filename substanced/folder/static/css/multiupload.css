@@ -59,6 +59,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    line-height: 65px;
 }
 
 .file-in-progress .canvas-wrapper {
