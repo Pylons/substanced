@@ -27,11 +27,16 @@
     }
 
     function flash(alertType, diff, context) {
+        // Flash into our own #fileupload-messages bar.
+        // We do not use #messages because this way we can
+        // include the messages into the fixable region that
+        // always stays on top.
+        // 
         // Alert type is either 'success' or 'error'.
         // Diff is a positive value.
         //
         // is there already a flash for this alert type?
-        var flashBox = $('#messages').find('.alert-fileupload-' + alertType).last();
+        var flashBox = $('#fileupload-messages').find('.alert-fileupload-' + alertType).last();
         if (flashBox.length === 0) {
             // If not, create it.
             flashBox = $('<div class="alert alert-' + alertType +
@@ -55,7 +60,7 @@
                         );
                     }
                 })
-                .appendTo('#messages');
+                .appendTo('#fileupload-messages');
         }
         // Increment the counter with the diff specified.
         flashBox.data().increment(diff);
@@ -166,7 +171,7 @@
     }).on('fileuploadadd', function (e, data) {
         data.context = $('<div class="container" />').appendTo('#files');
         // add a global upload button, if it does not exist yet
-        var button = $('#fileupload-wrapper').find('.upload-button');
+        var button = $('#fileupload-toolbar').find('.upload-button');
         if (button.length === 0) {
             button = UploadButton.data().create()
                 .appendTo('#fileupload-buttons');
@@ -218,22 +223,23 @@
     function positionToolbar(evt) {
         // get the offset of the global progress wrapper
         var navbar = $('.navbar:first');
-        var toolbar = $('#fileupload-wrapper');
-        var next = toolbar.next();
-        var nextTop = next.offset().top;
+        var fixable = $('#fileupload-fixable-wrapper');
+        var nextTop = fixable.next().offset().top;
         // we add some more margin that stays on top
         var margin = 8;
-        // if we are not fixed, the toolbar's height
-        // has to be added to the margin
+        // we calculate the height to be shown on top
+        // this is the sum of the toolbar and messages height
+        var showOnTop = margin + fixable.outerHeight();
+        // decide if we are above or over the switch limit
         var navbarBottom = navbar.offset().top + navbar.height();
-        var switchBottom = navbarBottom + margin + toolbar.outerHeight();
+        var switchBottom = navbarBottom + showOnTop;
         if (nextTop < switchBottom) {
-            toolbar.css({
+            fixable.css({
                 'position': 'relative',
                 'top': '' + (switchBottom - nextTop) + 'px'
             });
         } else {
-            toolbar.css({
+            fixable.css({
                 'position': 'static'
             });
         }

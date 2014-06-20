@@ -42,8 +42,12 @@
     }
 }
 
-#fileupload-wrapper {
+#fileupload-fixable-wrapper {
     z-index: 1;
+    /* Bacground is for covering the gap
+     * between #fileupload-messages and #fileupload-toolbar.
+     */
+    background: white;
 }
 
 .file-in-progress {
