@@ -130,7 +130,12 @@
                     this.finished.resolve();
                 },
                 onSubmit: function(handler) {
-                    this.handlers.submit.push(handler);
+                    var a = this.handlers.submit;
+                    a.push(handler);
+                    // return a function that deleted the handler
+                    return function() {
+                        a.splice(a.indexOf(handler), 1);
+                    }
                 },
                 submit: function() {
                     // submit all sets of files
@@ -191,28 +196,14 @@
             var newItem = template.clone().appendTo(data.context);
             newItem.find('.file-name').eq(0).text(file.name);
             newItem.find('.remove-button').click(function() {
-                // Calculate current index, as it may differ from
-                // index at creation time
-                var rowContainer = $(this).closest('.file-in-progress').parent();
-                var currentIndex = allContainers.index(rowContainer);
-                // remove the handler so submit will not upload the file
-                console.log('splice', currentIndex, buttonData.handlers.submit.length, buttonData.handlers.submit);
-                buttonData.handlers.submit.splice(currentIndex, 1);
-                // Remove this element from the file index
-                // Since we upload files individually: there is always
-                // just one file. Delete it.
-                if (data.files.length !== 1) {
-                    // Be on the safe side...
-                    throw new Error('Fatal error at removal of file');
-                }
-                data.files.splice(0);
-                //data.abort();
+                // Remove the file from the submit queue.
+                cancelSubmit();
                 // Remove the row visually
-                removeRow(rowContainer);
+                removeRow($(this).closest('.file-in-progress').parent());
             });
         });
         // register the submit function on the button
-        button.data().onSubmit($.proxy(data.submit, data));
+        var cancelSubmit = button.data().onSubmit($.proxy(data.submit, data));
     }).on('fileuploadprocessalways', function (e, data) {
         var index = data.index,
             file = data.files[index],
