@@ -75,3 +75,8 @@
     /* line height to same as bar height */
     line-height: 20px;
 }
+
+.drop-message {
+    margin-top: 2em;
+    margin-bottom: 1em;
+}
