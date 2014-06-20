@@ -78,7 +78,7 @@
     var url = './@@upload-submit',
         globalProgress = $('#progress .progress-bar'),
         UploadButton = $('<button class="upload-button" />')
-            .addClass('btn btn-primary')
+            .addClass('btn')
             .prop('disabled', true)
             .on('click', function () {
                 var data = $(this).data();
@@ -105,7 +105,9 @@
                 initialState: function() {
                     this.self
                         .text('Upload')
-                        .prop('disabled', !!(this.files || []).error);
+                        .prop('disabled', !!(this.files || []).error)
+                        .removeClass('btn-danger')
+                        .addClass('btn-success');
                     this.handlers = {};
                     this.handlers.submit = [];
                     this.handlers.abort = [];
@@ -113,7 +115,9 @@
                 uploadState: function() {
                     this.self
                         .off('click')
-                        .text('Abort');
+                        .text('Abort')
+                        .removeClass('btn-success')
+                        .addClass('btn-danger');
                     // add a promise for us
                     // to signal when finished
                     this.finished = $.Deferred();
