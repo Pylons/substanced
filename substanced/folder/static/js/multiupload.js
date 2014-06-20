@@ -16,13 +16,16 @@
         });
     }
 
+    function removeRow(el) {
+        el.addClass('deleted');
+        setTimeout(function() {
+            el.remove();
+        }, 1100);
+    }
+
     function removeRows(context) {
         context.each(function() {
-            var el = $(this);
-            el.addClass('deleted');
-            setTimeout(function() {
-                el.remove();
-            }, 1100);
+            removeRow($(this));
         });
     }
 
@@ -183,9 +186,19 @@
         // Construct the upload info bar for all the files
         var template = $('#file-in-progress-template > div');
         $.each(data.files, function (index, file) {
-            template.clone()
-                .appendTo(data.context)
-                .find('.file-name').eq(0).text(file.name);
+            var newItem = template.clone().appendTo(data.context);
+            newItem.find('.file-name').eq(0).text(file.name);
+            newItem.find('.remove-button').click(function() {
+                console.log('clicked!');
+                var rowContainer = $(this).closest('.file-in-progress').parent();
+                // Recalculate index of element as it will
+                // differ from its index at creation
+                var currentIndex = rowContainer.index('#files > *');
+                // Remove this element from the file index
+                data.files.splice(currentIndex);
+                // Remove the row visually
+                removeRow(rowContainer);
+            });
         });
         // register the submit function on the button
         button.data().onSubmit($.proxy(data.submit, data));

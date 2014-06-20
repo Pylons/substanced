@@ -48,6 +48,7 @@
         <div class="col-xs-4 col-sm-5 col-md-6 col-lg-7 clearfix">
           <div class="progress">
             <div class="progress-bar progress-bar-success">
+              <a class="remove-button">Remove</a>
             </div>
           </div>
         </div>

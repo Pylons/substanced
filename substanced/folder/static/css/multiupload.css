@@ -83,6 +83,11 @@
     line-height: 20px;
 }
 
+/*
+.file-in-progress .progress .remove-button {
+}
+*/
+
 .drop-message {
     margin-top: 2em;
     margin-bottom: 1em;
