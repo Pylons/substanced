@@ -42,27 +42,30 @@
     }
 }
 
+.file-in-progress {
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+}
+
 .file-in-progress .left-col {
     overflow: hidden;
-    display: table;
+    text-overflow: ellipsis;
+
 }
 
 .file-in-progress .file-name {
     vertical-align: middle;
-    display: table-cell;
-}
-
-.file-in-progress .file-name span {
+    display: block;
+    overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .file-in-progress .canvas-wrapper {
-    margin-right: 0.5em;
+    margin-right: 1.5em;
     height: 65px;
     width: 65px;
     vertical-align: middle;
-    display: table-cell;
-
 }
 
 .file-in-progress .progress {

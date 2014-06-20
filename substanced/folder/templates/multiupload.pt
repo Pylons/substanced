@@ -36,9 +36,8 @@
           <div class="left-col">
             <div class="canvas-wrapper pull-left">
             </div>
-            <div class="file-name">
-              <span></span>
-            </div>
+            <span class="file-name">
+            </span>
           </div>
         </div>
         <div class="col-xs-7 col-sm-7 col-md-7 col-lg-7 clearfix">

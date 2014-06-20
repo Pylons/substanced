@@ -174,7 +174,7 @@
         $.each(data.files, function (index, file) {
             template.clone()
                 .appendTo(data.context)
-                .find('.file-name span').eq(0).text(file.name);
+                .find('.file-name').eq(0).text(file.name);
         });
         // register the submit function on the button
         button.data().onSubmit($.proxy(data.submit, data));
