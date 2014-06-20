@@ -170,20 +170,11 @@
                 .appendTo('#fileupload-buttons');
         }
         // Construct the upload info bar for all the files
+        var template = $('#file-in-progress-template > div');
         $.each(data.files, function (index, file) {
-            $('<div class="file-in-progress well row" />')
-                .append($('<div class="col-xs-5 col-sm-5 col-md-5 col-lg-5 left-col clearfix" />')
-                    .append('<div class="pull-left canvas-wrapper" />')
-                    .append($('<div class="file-name"/>').text(file.name))
-                )
-                .append($('<div class="col-xs-7 col-sm-7 col-md-7 col-lg-7 clearfix" />')
-                    .append('<div class="progress">' +
-                            '   <div class="progress-bar progress-bar-success">' +
-                            '   </div>' +
-                            '</div>'
-                    )
-                )
-                .appendTo(data.context);
+            template.clone()
+                .appendTo(data.context)
+                .find('.file-name span').eq(0).text(file.name);
         });
         // register the submit function on the button
         button.data().onSubmit($.proxy(data.submit, data));

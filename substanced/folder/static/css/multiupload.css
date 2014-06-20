@@ -44,7 +44,6 @@
 
 .file-in-progress .left-col {
     overflow: hidden;
-    text-overflow: ellipsis;
     display: table;
 }
 
@@ -53,9 +52,17 @@
     display: table-cell;
 }
 
+.file-in-progress .file-name span {
+    text-overflow: ellipsis;
+}
+
 .file-in-progress .canvas-wrapper {
     margin-right: 0.5em;
     height: 65px;
+    width: 65px;
+    vertical-align: middle;
+    display: table-cell;
+
 }
 
 .file-in-progress .progress {

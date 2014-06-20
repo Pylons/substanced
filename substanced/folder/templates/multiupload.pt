@@ -1,7 +1,6 @@
 <div metal:define-macro="main"
      i18n:domain="substanced"
      metal:extend-macro="request.sdiapi.main_template">
-
   <metal:slot fill-slot="head-more">
     <metal:slot define-slot="head-more">
       <!-- CSS to style the file input field as button and adjust the Bootstrap progress bars -->
@@ -28,8 +27,28 @@
         </div>
       </div>
     </div>
-    <!-- The container for the uploaded files -->
+    <!-- The container for the files -->
     <div id="files" class="files"></div>
+    <!-- The template for the file items -->
+    <div id="file-in-progress-template" class="hidden">
+      <div class="file-in-progress row">
+        <div class="col-xs-5 col-sm-5 col-md-5 col-lg-5 clearfix">
+          <div class="left-col">
+            <div class="canvas-wrapper pull-left">
+            </div>
+            <div class="file-name">
+              <span></span>
+            </div>
+          </div>
+        </div>
+        <div class="col-xs-7 col-sm-7 col-md-7 col-lg-7 clearfix">
+          <div class="progress">
+            <div class="progress-bar progress-bar-success">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
     <div class="drop-message">
       You can also <b>drop files</b> anywhere in this window.
     </div>
