@@ -136,14 +136,14 @@
                     // submit all sets of files
                     var all = [];
                     this.handlers.abort = [];
-                    $.each(this.handlers.submit, function (index, handler) {
+                    $.each(this.handlers.submit, function(index, handler) {
                         all.push(handler());
                     });
                     // make an 'all' promise from the individual promises
                     return $.when.apply(null, all);
                 },
                 abort: function() {
-                    $.each(this.handlers.abort, function (index, handler) {
+                    $.each(this.handlers.abort, function(index, handler) {
                         handler();
                     });
                     this.handlers.abort = [];
@@ -184,18 +184,29 @@
                 .appendTo('#fileupload-buttons');
         }
         // Construct the upload info bar for all the files
+        var buttonData = button.data();
         var template = $('#file-in-progress-template > div');
+        var allContainers = $('#files > *');
         $.each(data.files, function (index, file) {
             var newItem = template.clone().appendTo(data.context);
             newItem.find('.file-name').eq(0).text(file.name);
             newItem.find('.remove-button').click(function() {
-                console.log('clicked!');
+                // Calculate current index, as it may differ from
+                // index at creation time
                 var rowContainer = $(this).closest('.file-in-progress').parent();
-                // Recalculate index of element as it will
-                // differ from its index at creation
-                var currentIndex = rowContainer.index('#files > *');
+                var currentIndex = allContainers.index(rowContainer);
+                // remove the handler so submit will not upload the file
+                console.log('splice', currentIndex, buttonData.handlers.submit.length, buttonData.handlers.submit);
+                buttonData.handlers.submit.splice(currentIndex, 1);
                 // Remove this element from the file index
-                data.files.splice(currentIndex);
+                // Since we upload files individually: there is always
+                // just one file. Delete it.
+                if (data.files.length !== 1) {
+                    // Be on the safe side...
+                    throw new Error('Fatal error at removal of file');
+                }
+                data.files.splice(0);
+                //data.abort();
                 // Remove the row visually
                 removeRow(rowContainer);
             });
@@ -228,11 +239,15 @@
         }
         flash('success', data.result.files.length, data.context);
     }).on('fileuploadfail', function (e, data) {
-        // status for the user
-        flash('danger', data.files.length, data.context);
-        //$.each(data.result.files, function (index, file) {
-        //    console.log('ERROR file:', index, file);
-        //});
+        // Ignore failing event if it's caused by user removing a file.
+        // In this case, length will be 0.
+        //if (data.files.length > 0) {
+            // status for the user
+            flash('danger', data.files.length, data.context);
+            //$.each(data.result.files, function (index, file) {
+            //    console.log('ERROR file:', index, file);
+            //});
+        //}
     }).prop('disabled', !$.support.fileInput)
         .parent().addClass($.support.fileInput ? undefined : 'disabled');
 
