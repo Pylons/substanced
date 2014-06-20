@@ -132,10 +132,10 @@
                 onSubmit: function(handler) {
                     var a = this.handlers.submit;
                     a.push(handler);
-                    // return a function that deleted the handler
+                    // return a function that can delete the handler
                     return function() {
                         a.splice(a.indexOf(handler), 1);
-                    }
+                    };
                 },
                 submit: function() {
                     // submit all sets of files
@@ -218,9 +218,13 @@
                 .append($('<span class="text-danger"/>').text(file.error));
         }
     }).on('fileuploadprogress', function (e, data) {
+        // make sure cancel button is removed, will happen at upload start
+        data.context.find('.remove-button').remove();
+        // update progress for single file
         updateProgress(data.context.find('.progress .progress-bar'),
             getProgressFromData(data));
     }).on('fileuploadprogressall', function (e, data) {
+        // update global progress in toolbar
         updateProgress(globalProgress, getProgressFromData(data));
     }).on('fileuploaddone', function (e, data) {
         // status for the user

@@ -83,6 +83,13 @@
     line-height: 20px;
 }
 
+.file-in-progress .remove-button {
+    height: 35px;
+    /* (65px - 35px) / 2 = 15px */
+    margin: 15px;
+    float: left;
+}
+
 /*
 .file-in-progress .progress .remove-button {
 }

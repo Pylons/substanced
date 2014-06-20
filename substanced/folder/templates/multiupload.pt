@@ -46,9 +46,9 @@
           </div>
         </div>
         <div class="col-xs-4 col-sm-5 col-md-6 col-lg-7 clearfix">
+          <button class="remove-button btn btn-warning">Cancel</button>
           <div class="progress">
             <div class="progress-bar progress-bar-success">
-              <a class="remove-button">Remove</a>
             </div>
           </div>
         </div>
