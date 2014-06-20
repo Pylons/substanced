@@ -9,7 +9,8 @@
     }
 }
 #progress {
-    margin-top: 8px;
+    /* top margin important when toolbar wraps */
+    margin-top: 1em;
 }
 
 .deleted .file-in-progress,
@@ -66,12 +67,11 @@
     margin-right: 1.5em;
     height: 65px;
     width: 65px;
-    vertical-align: middle;
 }
 
 .file-in-progress .progress {
     margin-bottom: 0;
-    margin-top: 24px;
+    margin-top: 22px;
     /* line height to same as bar height */
     line-height: 20px;
 }
