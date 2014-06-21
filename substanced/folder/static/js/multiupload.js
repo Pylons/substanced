@@ -4,6 +4,14 @@
 
 (function($) {
     "use strict";
+
+    // Trigger a resize.
+    var triggerResize = function() {
+        window.dispatchEvent(new window.Event('resize'));
+    };
+    // Trigger an initial resize.
+    triggerResize();
+
     function sizeToText(n) {
         // Return in the correct unit of T, G, M, K.
         // powers of 10 are used, ie, 1M = 1000K
@@ -119,7 +127,7 @@
             removeRows(context);
         });
         // Always reposition the global toolbar
-        positionToolbar();
+        triggerResize();
     }
 
     var url = './@@upload-submit',
@@ -367,8 +375,6 @@
             });
         }
     });
-    // Invoke it initially
-    window.dispatchEvent(new window.Event('resize'));
 
     //
     // Drop zone effect
