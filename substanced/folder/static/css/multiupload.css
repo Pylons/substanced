@@ -119,9 +119,16 @@
 }
 */
 
+/* drop message: show only when dnd is possible */
+
 .drop-message {
     margin-top: 2em;
     margin-bottom: 1em;
+    display: none;
+}
+
+html.draganddrop .drop-message {
+    display: block;
 }
 
 /* drop zone effect */
