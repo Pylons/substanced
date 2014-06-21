@@ -279,6 +279,8 @@
                 cancelSubmit();
                 // Remove the row visually
                 removeRow($(this).closest('.file-in-progress').parent());
+                // report the removal of this file to the toolbar
+                Sums.remove(file);
             });
             // report the addition of this file to the toolbar
             Sums.add(file);
@@ -304,8 +306,6 @@
         // update progress for single file
         updateProgress(data.context.find('.progress .progress-bar'),
             getProgressFromData(data));
-        // report the removal of this file to the toolbar
-        Sums.remove(data.file);
     }).on('fileuploadprogressall', function (e, data) {
         // update global progress in toolbar
         updateProgress(globalProgress, getProgressFromData(data));
@@ -341,9 +341,9 @@
         .parent().addClass($.support.fileInput ? undefined : 'disabled');
 
     //
-    // Toolbar positioning
+    // Toolbar sticky positioning
     //
-    function positionToolbar(evt) {
+    $(window).bind('scroll resize', function() {
         // get the offset of the global progress wrapper
         var navbar = $('.navbar:first');
         var fixable = $('#fileupload-fixable-wrapper');
@@ -366,9 +366,9 @@
                 'position': 'static'
             });
         }
-    }
-    // Bind the controller for the toolbar's sticky positioning.
-    $(window).bind('scroll resize', positionToolbar);
+    });
+    // Invoke it initially
+    window.dispatchEvent(new window.Event('resize'));
 
     //
     // Drop zone effect
