@@ -38,7 +38,7 @@
         el.addClass('deleted');
         setTimeout(function() {
             el.remove();
-        }, 1100);
+        }, 300);
     }
 
     function removeRows(context) {
