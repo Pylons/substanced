@@ -26,8 +26,13 @@
             </span>
           </span>
           <span id="fileupload-global-info clearfix">
-            <div><span id="fileupload-global-count">0</span> files</div>
-            <div><span id="fileupload-global-size">0 B</span></div>
+            <div>
+              <span id="fileupload-global-count">0 file</span>
+            </div>
+            <div>
+              <span id="fileupload-global-size">0 B</span>
+              <span id="fileupload-global-bitrate">0 B/s</span>
+            </div>
           </span>
         </div>
         <div class="col-xs-12 col-sm-6 col-md-7 col-lg-8">

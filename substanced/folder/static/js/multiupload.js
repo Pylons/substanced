@@ -5,6 +5,10 @@
 (function($) {
     "use strict";
 
+    function isUploadInProgress() {
+        return $('body').hasClass(disableDropZoneClassName);
+    }
+
     // Trigger a resize.
     var triggerResize = function() {
         window.dispatchEvent(new window.Event('resize'));
@@ -12,11 +16,15 @@
     // Trigger an initial resize.
     triggerResize();
 
-    function sizeToText(n) {
+    function sizeToText(n, unitType) {
         // Return in the correct unit of TB, GB, MB, KB, B
         // Powers of 1024 are used: 1 MB = 1024 KB and so on.
+        // XXX check the correct convention and units.
         var power = Math.pow(2, 10);
-        var units = ['B', 'KB', 'MB', 'GB', 'TB'];
+        var units = {
+            'B': ['B', 'KiB', 'MiB', 'GiB', 'TiB'],
+            'B/s': ['B/s', 'KiB/s', 'MiB/s', 'TiB/s']
+        }[unitType];
         if (n === 0) {
             // special case: would yield Infinity
             // at the logarithm below.
@@ -41,6 +49,9 @@
             data = $('#fileupload').fileupload('progress');
         }
         updateProgress(globalProgress, getProgressFromData(data));
+        // Update the transfer rate too
+        $('#fileupload-global-bitrate').text(sizeToText(data.bitrate, 'B/s'));
+
     }
 
     function getProgressFromData(data) {
@@ -109,16 +120,25 @@
         remove: function(file) {
             this.count -= 1;
             this.size -= file.size;
+
             this.update();
         },
         update: function() {
-            $('#fileupload-global-count').text('' + this.count);
-            $('#fileupload-global-size').text(sizeToText(this.size));
+
+            $('#fileupload-global-count').text(
+                '' + this.count +
+                ' byte' + (this.count >= 2 ? 's' : '')
+            );
+            $('#fileupload-global-size').text(sizeToText(this.size, 'B'));
             // Also update the global progress bar.
             // But since it would keep the last value
             // (perhaps this is a bug in the upstream software?),
             // we will just display a zero both on add and cancel.
-            updateGlobalProgress({total: 1, loaded: 0});
+            // Skip update, if we are in an upload progress, as then
+            // it's taken care of until the end of the update.
+            if (! isUploadInProgress()) {
+                updateGlobalProgress({total: 1, loaded: 0, bitrate: 0});
+            }
         }
     };
 
@@ -332,7 +352,7 @@
             var fileModified = fileInfo.find('.file-modified');
             fileName.text(file.name);
             var fileSize = newItem.find('.file-size');
-            fileSize.text(sizeToText(file.size));
+            fileSize.text(sizeToText(file.size, 'B'));
             fileModified.text(moment(file.lastModifiedDate).format('LL'));
             newItem.find('.remove-button').click(function() {
                 // Remove the file from the submit queue.
@@ -396,7 +416,7 @@
             //});
         //}
     }).on('fileuploaddrop', function (e, data) {
-        if ($('body').hasClass(disableDropZoneClassName)) {
+        if (isUploadInProgress()) {
             // we cannot drop now, let's abort the drop.
             return false;
         }
@@ -441,7 +461,7 @@
     $(document).bind('dragover', function(evt) {
         var body = $('body'),
             timeout = window.dropZoneTimeout;
-        if (body.hasClass(disableDropZoneClassName)) {
+        if (isUploadInProgress()) {
             // we cannot drop now, let's return with cancel.
             return false;
         }
