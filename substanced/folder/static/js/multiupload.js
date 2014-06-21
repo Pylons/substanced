@@ -35,6 +35,14 @@
         ))) + ' ' + units[0];
     }
 
+    function updateGlobalProgress(data) {
+        if (data === undefined) {
+            // If data is not specified, fetch the value
+            data = $('#fileupload').fileupload('progress');
+        }
+        updateProgress(globalProgress, getProgressFromData(data));
+    }
+
     function getProgressFromData(data) {
         return parseInt(data.loaded / data.total * 100, 10);
     }
@@ -106,6 +114,11 @@
         update: function() {
             $('#fileupload-global-count').text('' + this.count);
             $('#fileupload-global-size').text(sizeToText(this.size));
+            // Also update the global progress bar.
+            // But since it would keep the last value
+            // (perhaps this is a bug in the upstream software?),
+            // we will just display a zero both on add and cancel.
+            updateGlobalProgress({total: 1, loaded: 0});
         }
     };
 
@@ -343,7 +356,7 @@
             getProgressFromData(data));
     }).on('fileuploadprogressall', function (e, data) {
         // update global progress in toolbar
-        updateProgress(globalProgress, getProgressFromData(data));
+        updateGlobalProgress(data);
     }).on('fileuploaddone', function (e, data) {
         // status for the user
         if (data.context) {
