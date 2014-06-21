@@ -52,6 +52,11 @@
     background: white;
 }
 
+/* fix padding of the fileupload toolbar */
+#fileupload-toolbar > div {
+    padding: 0;
+}
+
 .file-in-progress {
     margin-top: 0.5em;
     margin-bottom: 0.5em;
