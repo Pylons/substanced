@@ -127,7 +127,7 @@
 
             $('#fileupload-global-count').text(
                 '' + this.count +
-                ' byte' + (this.count >= 2 ? 's' : '')
+                ' file' + (this.count >= 2 ? 's' : '')
             );
             $('#fileupload-global-size').text(sizeToText(this.size, 'B'));
             // Also update the global progress bar.
