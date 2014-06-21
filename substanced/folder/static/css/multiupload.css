@@ -1,0 +1,134 @@
+
+
+/* styles for multi upload page */
+
+/* global progress bar */
+@media (max-width: 767px) { 
+    #progress {
+        margin-bottom: 0;
+    }
+}
+#progress {
+    margin-top: 0.5em;
+}
+
+.deleted .file-in-progress,
+.alert.deleted {
+    -webkit-animation: disappear 1s;
+    -webkit-animation-fill-mode: forwards;
+    animation: disappear 1s;
+    animation-fill-mode: forwards;
+}
+
+@-webkit-keyframes disappear{
+    20% {
+        -webkit-transform: translateX(-5%);
+        transform: translateX(-5%);
+    }
+    100% {
+        -webkit-transform: translateX(200%);
+        transform: translateX(200%);
+    }
+}
+
+@keyframes disappear{
+    20% {
+        -webkit-transform: translateX(-5%);
+        transform: translateX(-5%);
+    }
+    100% {
+        -webkit-transform: translateX(200%);
+        transform: translateX(200%);
+    }
+}
+
+#fileupload-fixable-wrapper {
+    z-index: 1;
+    /* Bacground is for covering the gap
+     * between #fileupload-messages and #fileupload-toolbar.
+     */
+    background: white;
+}
+
+.file-in-progress {
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+}
+
+.file-in-progress .left-col {
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+}
+
+.file-in-progress .file-info {
+    vertical-align: middle;
+    display: block;
+    position: relative;
+    top: 1em;
+}
+
+.file-in-progress .file-info .file-name {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: bold;
+}
+
+.file-in-progress .file-info .file-name-link:hover {
+    color: #2b629f;
+    text-decoration: none;
+    border-bottom: none;
+}
+
+
+.file-in-progress .file-info .file-modified {
+    float: left;
+}
+
+.file-in-progress .file-info .file-size {
+    float: right;
+}
+
+
+.file-in-progress .canvas-wrapper {
+    margin-right: 20px;
+    height: 65px;
+    width: 65px;
+}
+
+.file-in-progress .progress {
+    margin-bottom: 0;
+    margin-top: 22px;
+    /* line height to same as bar height */
+    line-height: 20px;
+}
+
+.file-in-progress .remove-button {
+    height: 35px;
+    /* (65px - 35px) / 2 = 15px */
+    margin: 15px;
+    float: left;
+}
+
+/*
+.file-in-progress .progress .remove-button {
+}
+*/
+
+.drop-message {
+    margin-top: 2em;
+    margin-bottom: 1em;
+}
+
+/* drop zone effect */
+
+body.dropzone {
+    background-color: #efebd3;
+    -webkit-transition: all 0.3s ease-out;
+    -moz-transition: all 0.3s ease-out;
+    -ms-transition: all 0.3s ease-out;
+    -o-transition: all 0.3s ease-out;
+    transition: all 0.3s ease-out;
+}
