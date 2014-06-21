@@ -50,7 +50,7 @@
         }
         updateProgress(globalProgress, getProgressFromData(data));
         // Update the transfer rate too
-        $('#fileupload-global-bitrate').text(sizeToText(data.bitrate, 'B/s'));
+        $('#fileupload-global-bitrate').text(sizeToText(data.bitrate / 8, 'B/s'));
 
     }
 
@@ -124,7 +124,6 @@
             this.update();
         },
         update: function() {
-
             $('#fileupload-global-count').text(
                 '' + this.count +
                 ' file' + (this.count >= 2 ? 's' : '')
