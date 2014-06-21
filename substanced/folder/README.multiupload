@@ -9,8 +9,7 @@ https://github.com/blueimp/jQuery-File-Upload.
 
 Some notes on decisions taken in the implementation:
 
-1. We do not support Cross-domain File Uploads using the
-   Iframe Transport plugin, consequently
+1. We do not support the Iframe Transport plugin, consequently
    we do not support IE<10 versions. I would suggest
    to drop support for IE9 and smaller versions in general.
    Before that, these browsers will display a disabled Upload tab.
