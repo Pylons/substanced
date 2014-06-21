@@ -311,4 +311,19 @@
     // Bind the toolbar's position fix.
     $(window).bind('scroll resize', positionToolbar);
 
+    // drop zone effect
+    $(document).bind('dragover', function (e) {
+        var body = $('body'),
+            timeout = window.dropZoneTimeout;
+        if (! timeout) {
+            body.addClass('dropzone');
+        } else {
+            clearTimeout(timeout);
+        }
+        window.dropZoneTimeout = setTimeout(function () {
+            window.dropZoneTimeout = null;
+            body.removeClass('dropzone');
+        }, 100);
+    });
+
 })(jQuery);
