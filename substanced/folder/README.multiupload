@@ -74,17 +74,21 @@ Some notes on decisions taken in the implementation:
        if needed. This also means that we do not check for duplicate files. If the same
        file is added multiple times, itt will be uploaded multiple times.
 
-    f. In the future, dropping images from another web page can be supported as well.
+7. We do not support dropping images from another web page. Because 
+   of the same origin policy, adding images by dragging and dropping from
+   an external website would require a server side proxy. This can be added
+   at some point in the future, but it would actually make a feature on its
+   own that would also work from any folder page such as Content.
 
-7. Audio and video preview plugins are disabled. Currently only the images
+8. Audio and video preview plugins are disabled. Currently only the images
    are previewable. Supporting audio or video preview would be possible at
    some point in the future. It would require additional work on the design
    and css to include the audio and video preview plugins.
 
-8. I included a customized version of Modernizr for detecting dnd device
+9. I included a customized version of Modernizr for detecting dnd device
    capabilities. (I will also propose to include Modernizr from master.pt
    on another branch.)
 
-9. I included momentjs for displaying the last modification date of the
-   files. (I will also propose to include momentjs from master.pt on another
-   branch.)
+10. I included momentjs for displaying the last modification date of the
+    files. (I will also propose to include momentjs from master.pt on another
+    branch.)
