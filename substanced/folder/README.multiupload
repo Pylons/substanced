@@ -1,0 +1,42 @@
+
+Multi file upload notes
+
+Multi file upload integrates jQuery-FileUpload
+https://github.com/blueimp/jQuery-File-Upload.
+
+Some notes on decisions taken:
+
+1. We support single file upload. Multi file upload (multipart request payload)
+   could be supported in the future, as it could scale better for
+   many (>100) small files uploaded at the same time. It would not have any
+   advantage with other than this edge case.
+
+2. We do not support pre-file Start Upload and Abort buttons (as seen on the
+   official demos of JQuery-File-Upload), there is only a
+   global Upload and Abort button. I experimented
+   with the direction of per-file control, and found out,
+   that it would complicate the code quite a bit, but bring little or no
+   advantage for the user.
+
+   The supported upload workflow is:
+
+   a. Add some files.
+   b. Optionally, cancel some files.
+   c. Repeat a. and b. until needed.
+   d. Press Upload button to upload all files.
+   e. Observe progress during the upload.
+   f. Optionally, press Abort button to abort upload.
+   g. Or, wait until upload completes
+   h. Optionally, dismiss the status box and all uploaded files with it.
+   i. Repeat the whole procedure until desired.
+
+2. I included a customized version of Modernizr for detecting dnd device
+   capabilities. (I will also propose to include Modernizr from master.pt
+   on another branch.)
+
+3. I included momentjs for displaying the last modification date of the
+   files. (I will also propose to include momentjs from master.pt on another
+   branch.)
+
+
+
