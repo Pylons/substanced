@@ -77,9 +77,7 @@
 }
 
 .file-in-progress .file-info .file-name-link:hover {
-    /* apply same styles as in the contents */
-    /* color: lighten(@link-color, 20%); */
-    color: #92bce0;
+    color: #2b629f;
     text-decoration: none;
     border-bottom: none;
 }
