@@ -220,7 +220,6 @@
             var fileSize = newItem.find('.file-size');
             fileSize.text(sizeToText(file.size));
             fileModified.text(moment(file.lastModifiedDate).format('LL'));
-            console.log('file', file);
             newItem.find('.remove-button').click(function() {
                 // Remove the file from the submit queue.
                 cancelSubmit();
