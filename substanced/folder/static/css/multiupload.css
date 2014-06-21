@@ -71,12 +71,24 @@
     margin-right: 0.5em;
 }
 
+#fileupload-global-size {
+    margin-right: 0.5em;
+}
+
 
 /* Info bar for a file in progress */
 
 .file-in-progress {
     margin-top: 0.5em;
     margin-bottom: 0.5em;
+}
+
+#files .file-in-progress {
+    /* Not sure why the left and right compensations are needed,
+     * afaik 'row' would be just good here, but it isn't.
+     */
+    margin-left: -10px;
+    margin-right: 20px;
 }
 
 .file-in-progress .left-col {
@@ -109,9 +121,19 @@
     float: left;
 }
 
+/* file modification is hidden at very small sizes,
+ * to avoid that it overlaps with the file size.
+ */
+@media(max-width: 475px) {
+    .file-modified {
+        display: none;
+    }
+}
+
 .file-in-progress .file-info .file-size {
     float: right;
 }
+
 
 .file-in-progress .canvas-wrapper {
     margin-right: 20px;
