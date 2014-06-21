@@ -146,6 +146,11 @@ html.draganddrop .drop-message {
     display: block;
 }
 
+/* gray it out, when we cannot drop */
+body.add-files-disabled .drop-message {
+    color: #cecece;
+}
+
 /* drop zone effect */
 
 body.dropzone {

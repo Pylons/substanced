@@ -239,6 +239,11 @@
                 this.finished = $.Deferred();
             },
             finishedState: function() {
+                // enable Add button
+                $('#fileupload')
+                    .prop('disabled', false)
+                    .parent().removeClass('disabled');
+                $('body').removeClass(disableDropZoneClassName);
                 this.self.remove();
                 this.finished.resolve();
             },
@@ -251,6 +256,11 @@
                 };
             },
             submit: function() {
+                // disable Add button
+                $('#fileupload')
+                    .prop('disabled', true)
+                    .parent().addClass('disabled');
+                $('body').addClass(disableDropZoneClassName);
                 // submit all sets of files
                 var all = [];
                 this.handlers.abort = [];
@@ -385,6 +395,11 @@
             //    console.log('ERROR file:', index, file);
             //});
         //}
+    }).on('fileuploaddrop', function (e, data) {
+        if ($('body').hasClass(disableDropZoneClassName)) {
+            // we cannot drop now, let's abort the drop.
+            return false;
+        }
     }).prop('disabled', !$.support.fileInput)
         .parent().addClass($.support.fileInput ? undefined : 'disabled');
 
@@ -421,18 +436,23 @@
     // 
     // (The entire document is the drop zone.)
     //
-    $(document).bind('dragover', function(e) {
-        var className = 'dropzone';
+    var dropZoneClassName = 'dropzone';
+    var disableDropZoneClassName = 'add-files-disabled';
+    $(document).bind('dragover', function(evt) {
         var body = $('body'),
             timeout = window.dropZoneTimeout;
+        if (body.hasClass(disableDropZoneClassName)) {
+            // we cannot drop now, let's return with cancel.
+            return false;
+        }
         if (! timeout) {
-            body.addClass(className);
+            body.addClass(dropZoneClassName);
         } else {
             clearTimeout(timeout);
         }
         window.dropZoneTimeout = setTimeout(function() {
             window.dropZoneTimeout = null;
-            body.removeClass(className);
+            body.removeClass(dropZoneClassName);
         }, 100);
     });
 
