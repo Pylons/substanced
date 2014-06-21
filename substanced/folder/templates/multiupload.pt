@@ -57,6 +57,7 @@
         </div>
       </div>
     </div>
+    <!-- inform users about file drop capabilities -->
     <div class="drop-message">
       You can also <b>drop files</b> anywhere in this window.
     </div>
