@@ -17,15 +17,22 @@
         // Powers of 1024 are used: 1 MB = 1024 KB and so on.
         var power = Math.pow(2, 10);
         var units = ['B', 'KB', 'MB', 'GB', 'TB'];
+        if (n === 0) {
+            // special case: would yield Infinity
+            // at the logarithm below.
+            return '0 ' + units[0];
+        }
+        // Divide it until it reaches its correct unit
         while (units.length > 1 && n >= power) {
             n = n / power;
             units.shift();
         }
         // Show 3 digits including the decimals.
         // Examples: 321 4.32K 54.3K 654K 7.65M 87.6M ...
-        return n.toFixed(Math.max(0,
+        // parseFloat is used to trim trailing zeroes.
+        return '' + parseFloat(n.toFixed(Math.max(0,
             2 - Math.floor(Math.log(n) / Math.LN10)
-        )) + ' ' + units[0];
+        ))) + ' ' + units[0];
     }
 
     function getProgressFromData(data) {
