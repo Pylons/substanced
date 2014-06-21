@@ -4,6 +4,24 @@
 (function($) {
     'use strict';
 
+    function sizeToText(n) {
+        // return in units T, G, M, K
+        // powers of 10 are used, ie, 1M = 1000K
+        var power = Math.pow(10, 3);
+        var units = ['', 'K', 'M', 'G', 'T'];
+        while (units.length > 1 && n >= power) {
+            n = n / power;
+            units.shift();
+        }
+        // Examples: 321 4.32K 54.3K 654K 7.65M 87.6M
+        //           987M 1.98G 21.9G 321G ....
+        var formattedN = n.toFixed(Math.max(
+            0,
+            2 - Math.floor(Math.log(n) / Math.LN10)
+        ));
+        return '' + formattedN + units[0];
+    }
+
     function getProgressFromData(data) {
         return parseInt(data.loaded / data.total * 100, 10);
     }
@@ -194,7 +212,15 @@
         var allContainers = $('#files > *');
         $.each(data.files, function (index, file) {
             var newItem = template.clone().appendTo(data.context);
-            newItem.find('.file-name').eq(0).text(file.name);
+            var canvasWrapper = newItem.find('.canvas-wrapper');
+            var fileInfo = newItem.find('.file-info');
+            var fileName = fileInfo.find('.file-name');
+            var fileModified = fileInfo.find('.file-modified');
+            fileName.text(file.name);
+            var fileSize = newItem.find('.file-size');
+            fileSize.text(sizeToText(file.size));
+            fileModified.text(moment(file.lastModifiedDate).format('LL'));
+            console.log('file', file);
             newItem.find('.remove-button').click(function() {
                 // Remove the file from the submit queue.
                 cancelSubmit();

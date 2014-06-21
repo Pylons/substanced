@@ -61,17 +61,31 @@
 
 }
 
-.file-in-progress .file-name {
+.file-in-progress .file-info {
     vertical-align: middle;
+    display: block;
+    position: relative;
+    top: 1em;
+}
+
+.file-in-progress .file-info .file-name {
     display: block;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    line-height: 65px;
+    font-weight: bold;
+}
+
+.file-in-progress .file-info .file-modified {
+    float: left;
+}
+
+.file-in-progress .file-info .file-size {
+    float: right;
 }
 
 .file-in-progress .canvas-wrapper {
-    margin-right: 1.5em;
+    margin-right: 20px;
     height: 65px;
     width: 65px;
 }
