@@ -5,7 +5,7 @@
     'use strict';
 
     function sizeToText(n) {
-        // return in units T, G, M, K
+        // Return in the correct unit of T, G, M, K.
         // powers of 10 are used, ie, 1M = 1000K
         var power = Math.pow(10, 3);
         var units = ['', 'K', 'M', 'G', 'T'];
@@ -13,13 +13,11 @@
             n = n / power;
             units.shift();
         }
-        // Examples: 321 4.32K 54.3K 654K 7.65M 87.6M
-        //           987M 1.98G 21.9G 321G ....
-        var formattedN = n.toFixed(Math.max(
-            0,
+        // Show 3 digits including the decimals.
+        // Examples: 321 4.32K 54.3K 654K 7.65M 87.6M ...
+        return n.toFixed(Math.max(0,
             2 - Math.floor(Math.log(n) / Math.LN10)
-        ));
-        return '' + formattedN + units[0];
+        )) + units[0];
     }
 
     function getProgressFromData(data) {
@@ -125,109 +123,118 @@
     }
 
     var url = './@@upload-submit',
-        globalProgress = $('#progress .progress-bar'),
-        UploadButton = $('<button class="upload-button" />')
-            .addClass('btn')
-            .prop('disabled', true)
-            .on('click', function () {
-                var data = $(this).data();
-                data.uploadState();
-                data.self.on('click', function () {
-                    data.finishedState();
-                    data.abort();
-                });
-                data.submit().always(function () {
-                    data.finishedState();
-                });
-            })
-            .data({
-                //
-                //  Creator (class) method:
-                // 
-                //  var button = UploadButton.create();
-                //
-                create: function() {
-                    // create and return a new button
-                    var self = UploadButton.clone(true);
-                    var data = self.data();
-                    data.self = self;
-                    // set initial state
-                    data.initialState();
-                    // and return it
-                    return self;
-                },
-                //
-                // Instance methods:
-                // 
-                // They should _not_ be called on UploadButton, but
-                // on a button instance created like:
-                // 
-                //      var button = UploadButton.create();
-                //
-                initialState: function() {
-                    this.self
-                        .html('<i class="glyphicon glyphicon-upload"></i> ' +
-                              'Upload')
-                        .prop('disabled', !!(this.files || []).error)
-                        .removeClass('btn-danger')
-                        .addClass('btn-success');
-                    this.handlers = {};
-                    this.handlers.submit = [];
-                    this.handlers.abort = [];
-                },
-                uploadState: function() {
-                    this.self
-                        .off('click')
-                        .html('<i class="glyphicon glyphicon-remove"></i> ' +
-                              'Abort')
-                        .removeClass('btn-success')
-                        .addClass('btn-danger');
-                    // add a promise for us
-                    // to signal when finished
-                    this.finished = $.Deferred();
-                },
-                finishedState: function() {
-                    this.self.remove();
-                    this.finished.resolve();
-                },
-                onSubmit: function(handler) {
-                    var a = this.handlers.submit;
-                    a.push(handler);
-                    // return a function that can delete the handler
-                    return function() {
-                        a.splice(a.indexOf(handler), 1);
-                    };
-                },
-                submit: function() {
-                    // submit all sets of files
-                    var all = [];
-                    this.handlers.abort = [];
-                    $.each(this.handlers.submit, function(index, handler) {
-                        all.push(handler());
-                    });
-                    // Make an 'all' promise from the individual promises.
-                    // $.when.apply(null, all) is jQuery's incomprehensible way of saying
-                    // "wait until all the promises in 'all' are resolved".
-                    return $.when.apply(null, all);
-                },
-                abort: function() {
-                    $.each(this.handlers.abort, function(index, handler) {
-                        handler();
-                    });
-                    this.handlers.abort = [];
-                }
+        globalProgress = $('#progress .progress-bar');
+
+    //
+    // The prototype of the upload button. Usage:
+    //
+    //      var uploadButton = UploadButton.data().create();
+    //
+    var UploadButton = $('<button class="upload-button" />')
+        .addClass('btn')
+        .prop('disabled', true)
+        .on('click', function () {
+            var data = $(this).data();
+            data.uploadState();
+            data.self.on('click', function () {
+                data.finishedState();
+                data.abort();
             });
+            data.submit().always(function () {
+                data.finishedState();
+            });
+        })
+        .data({
+            //
+            // Creator (class) method
+            //
+            // They should be called on UploadButton.data().
+            //
+            create: function() {
+                // Create and return a new button.
+                var uploadButton = UploadButton.clone(true);
+                var data = uploadButton.data();
+                data.self = uploadButton;
+                // Set initial state,
+                data.initialState();
+                // and return it.
+                return uploadButton;
+            },
+            //
+            // Instance methods
+            //
+            // Taken a button returned by create(), they should
+            // be called on button.data().
+            //
+            initialState: function() {
+                this.self
+                    .html('<i class="glyphicon glyphicon-upload"></i> ' +
+                          'Upload')
+                    .prop('disabled', !!(this.files || []).error)
+                    .removeClass('btn-danger')
+                    .addClass('btn-success');
+                this.handlers = {};
+                this.handlers.submit = [];
+                this.handlers.abort = [];
+            },
+            uploadState: function() {
+                this.self
+                    .off('click')
+                    .html('<i class="glyphicon glyphicon-remove"></i> ' +
+                          'Abort')
+                    .removeClass('btn-success')
+                    .addClass('btn-danger');
+                // add a promise for us
+                // to signal when finished
+                this.finished = $.Deferred();
+            },
+            finishedState: function() {
+                this.self.remove();
+                this.finished.resolve();
+            },
+            onSubmit: function(handler) {
+                var a = this.handlers.submit;
+                a.push(handler);
+                // return a function that can delete the handler
+                return function() {
+                    a.splice(a.indexOf(handler), 1);
+                };
+            },
+            submit: function() {
+                // submit all sets of files
+                var all = [];
+                this.handlers.abort = [];
+                $.each(this.handlers.submit, function(index, handler) {
+                    all.push(handler());
+                });
+                // Make an 'all' promise from the individual promises.
+                // $.when.apply(null, all) is jQuery's odd way of saying
+                // "wait until all the promises in 'all' are resolved".
+                return $.when.apply(null, all);
+            },
+            abort: function() {
+                $.each(this.handlers.abort, function(index, handler) {
+                    handler();
+                });
+                this.handlers.abort = [];
+            }
+        });
+
+    //
+    // The jquery-fileupload component binds on the Add File button.
+    //
     $('#fileupload').fileupload({
         url: url,
         dataType: 'json',
         autoUpload: false,
-        // XXX These settings do not make sense generically,
-        // but they can be important in specific use cases.
-        // For this reason, they should be settable on the folder.
+        // XXX The current defaults match best the generic use case.
+        // Uncommenting some of these setting would however make sense
+        // in specific use cases. For this reason, it would be best if
+        // they would become settable as properties on the folder.
         // TODO implement this once.
         //
-        //acceptFileTypes: /(\.|\/)(gif|jpe?g|png)$/i,
-        //maxFileSize: 5000000, // 5 MB
+        // acceptFileTypes: /(\.|\/)(gif|jpe?g|png)$/i,
+        // maxFileSize: 5000000, // 5 MB
         //
         // Enable image resizing, except for Android and Opera,
         // which actually support image resizing, but fail to
@@ -238,21 +245,23 @@
         previewMaxWidth: 65,
         previewMaxHeight: 65,
         previewCrop: true,
-        // XXX disable ...
-        // enable multi file uploads, while limiting it with
-        // a size (exceeding this a new request will be made)
+        // Do not enable multi file uploads, as keeping each file
+        // in its own physical request is necessary for the proper support
+        // of individual progress bars.
+        // XXX Supporting both single and multi file payloads could be a TODO
+        // for the future, as many small files could scale better
+        // with multi file payload enabled.
         singleFileUploads: true,
-        //limitMultiFileUploadSize: 5 * 1000 * 1000    // 5MB
     }).on('fileuploadadd', function (e, data) {
         data.context = $('<div class="container" />').appendTo('#files');
         // add a global upload button, if it does not exist yet
-        var button = $('#fileupload-toolbar').find('.upload-button');
-        if (button.length === 0) {
-            button = UploadButton.data().create()
+        var uploadButton = $('#fileupload-toolbar').find('.upload-button');
+        if (uploadButton.length === 0) {
+            uploadButton = UploadButton.data().create()
                 .appendTo('#fileupload-buttons');
         }
         // Construct the upload info bar for all the files
-        var buttonData = button.data();
+        var uploadButtonData = uploadButton.data();
         var template = $('#file-in-progress-template > div');
         var allContainers = $('#files > *');
         $.each(data.files, function (index, file) {
@@ -273,7 +282,7 @@
             });
         });
         // register the submit function on the button
-        var cancelSubmit = button.data().onSubmit($.proxy(data.submit, data));
+        var cancelSubmit = uploadButton.data().onSubmit($.proxy(data.submit, data));
     }).on('fileuploadprocessalways', function (e, data) {
         var index = data.index,
             file = data.files[index],
@@ -327,7 +336,9 @@
     }).prop('disabled', !$.support.fileInput)
         .parent().addClass($.support.fileInput ? undefined : 'disabled');
 
+    //
     // Toolbar positioning
+    //
     function positionToolbar(evt) {
         // get the offset of the global progress wrapper
         var navbar = $('.navbar:first');
@@ -352,21 +363,26 @@
             });
         }
     }
-    // Bind the toolbar's position fix.
+    // Bind the controller for the toolbar's sticky positioning.
     $(window).bind('scroll resize', positionToolbar);
 
-    // drop zone effect
-    $(document).bind('dragover', function (e) {
+    //
+    // Drop zone effect
+    // 
+    // (The entire document is the drop zone.)
+    //
+    $(document).bind('dragover', function(e) {
+        var className = 'dropzone';
         var body = $('body'),
             timeout = window.dropZoneTimeout;
         if (! timeout) {
-            body.addClass('dropzone');
+            body.addClass(className);
         } else {
             clearTimeout(timeout);
         }
-        window.dropZoneTimeout = setTimeout(function () {
+        window.dropZoneTimeout = setTimeout(function() {
             window.dropZoneTimeout = null;
-            body.removeClass('dropzone');
+            body.removeClass(className);
         }, 100);
     });
 
