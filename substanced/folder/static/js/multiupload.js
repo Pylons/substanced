@@ -13,10 +13,10 @@
     triggerResize();
 
     function sizeToText(n) {
-        // Return in the correct unit of T, G, M, K.
-        // powers of 10 are used, ie, 1M = 1000K
-        var power = Math.pow(10, 3);
-        var units = ['', 'K', 'M', 'G', 'T'];
+        // Return in the correct unit of TB, GB, MB, KB, B
+        // Powers of 1024 are used: 1 MB = 1024 KB and so on.
+        var power = Math.pow(2, 10);
+        var units = ['B', 'KB', 'MB', 'GB', 'TB'];
         while (units.length > 1 && n >= power) {
             n = n / power;
             units.shift();
@@ -25,7 +25,7 @@
         // Examples: 321 4.32K 54.3K 654K 7.65M 87.6M ...
         return n.toFixed(Math.max(0,
             2 - Math.floor(Math.log(n) / Math.LN10)
-        )) + units[0];
+        )) + ' ' + units[0];
     }
 
     function getProgressFromData(data) {
