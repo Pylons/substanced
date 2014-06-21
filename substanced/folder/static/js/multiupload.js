@@ -125,7 +125,8 @@
                 },
                 initialState: function() {
                     this.self
-                        .text('Upload')
+                        .html('<i class="glyphicon glyphicon-upload"></i> ' +
+                              'Upload')
                         .prop('disabled', !!(this.files || []).error)
                         .removeClass('btn-danger')
                         .addClass('btn-success');
@@ -136,7 +137,8 @@
                 uploadState: function() {
                     this.self
                         .off('click')
-                        .text('Abort')
+                        .html('<i class="glyphicon glyphicon-remove"></i> ' +
+                              'Abort')
                         .removeClass('btn-success')
                         .addClass('btn-danger');
                     // add a promise for us

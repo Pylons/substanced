@@ -15,7 +15,7 @@
       <div id="fileupload-messages"></div>
       <!-- main toolbar -->
       <div  id="fileupload-toolbar" class="file-in-progress well clearfix">
-        <div id="fileupload-buttons" class="col-xs-12 col-sm-6 col-md-3 col-lg-3">
+        <div id="fileupload-buttons" class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
           <!-- The file input field styled as button -->
           <span class="btn btn-primary fileinput-button">
             <i class="glyphicon glyphicon-plus"></i>
@@ -24,7 +24,7 @@
             <input id="fileupload" type="file" name="files[]" multiple>
           </span>
         </div>
-        <div class="col-xs-12 col-sm-6 col-md-9 col-lg-9">
+        <div class="col-xs-12 col-sm-6 col-md-8 col-lg-9">
           <!-- The global progress bar -->
           <div id="progress" class="progress">
             <div class="progress-bar progress-bar-success"></div>
@@ -49,7 +49,10 @@
           </div>
         </div>
         <div class="col-xs-4 col-sm-5 col-md-6 col-lg-7 clearfix">
-          <button class="remove-button btn btn-warning">Cancel</button>
+          <button class="remove-button btn btn-warning">
+            <i class="glyphicon glyphicon-remove"></i>
+            Cancel
+          </button>
           <div class="progress">
             <div class="progress-bar progress-bar-success">
             </div>
