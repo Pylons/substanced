@@ -1,9 +1,9 @@
-/*jslint unparam: true, regexp: true */
-/*global window, jQuery */
+
+/* jshint undef: true */
+/* global document, window, jQuery, setTimeout, clearTimeout, moment */
 
 (function($) {
-    'use strict';
-
+    "use strict";
     function sizeToText(n) {
         // Return in the correct unit of T, G, M, K.
         // powers of 10 are used, ie, 1M = 1000K
@@ -69,7 +69,7 @@
             this.update();
         },
         update: function() {
-
+            console.log('Sums:', this.count, this.size);
         }
     };
 
@@ -280,6 +280,8 @@
                 // Remove the row visually
                 removeRow($(this).closest('.file-in-progress').parent());
             });
+            // report the addition of this file to the toolbar
+            Sums.add(file);
         });
         // register the submit function on the button
         var cancelSubmit = uploadButton.data().onSubmit($.proxy(data.submit, data));
@@ -302,6 +304,8 @@
         // update progress for single file
         updateProgress(data.context.find('.progress .progress-bar'),
             getProgressFromData(data));
+        // report the removal of this file to the toolbar
+        Sums.remove(data.file);
     }).on('fileuploadprogressall', function (e, data) {
         // update global progress in toolbar
         updateProgress(globalProgress, getProgressFromData(data));
