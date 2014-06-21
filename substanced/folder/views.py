@@ -1464,7 +1464,7 @@ def add_folder_contents_views(
     name='upload',
     tab_title=_('Upload'),
     tab_condition=True,
-    tab_before='services',
+    tab_after='contents',
     permission='sdi.add-content',
     renderer='substanced.folder:templates/multiupload.pt'
     )
