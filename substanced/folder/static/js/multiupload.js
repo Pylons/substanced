@@ -206,7 +206,7 @@
                         all.push(handler());
                     });
                     // Make an 'all' promise from the individual promises.
-                    // $.when.apply is jQuery's incomprehensible way of saying
+                    // $.when.apply(null, all) is jQuery's incomprehensible way of saying
                     // "wait until all the promises in 'all' are resolved".
                     return $.when.apply(null, all);
                 },
