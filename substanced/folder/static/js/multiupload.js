@@ -56,6 +56,25 @@
         });
     }
 
+    // Singleton to display sums in the fileupload toolbar
+    var Sums = {
+        count: 0,
+        size: 0,
+        add: function(file) {
+            this.count += 1;
+            this.size += file.size;
+            this.update();
+        },
+        remove: function(file) {
+            this.count -= 1;
+            this.size -= file.size;
+            this.update();
+        },
+        update: function() {
+
+        }
+    };
+
     function flash(alertType, diff, context) {
         // Flash into our own #fileupload-messages bar.
         // We do not use #messages because this way we can
@@ -122,6 +141,11 @@
                 });
             })
             .data({
+                //
+                //  Creator (class) method:
+                // 
+                //  var button = UploadButton.create();
+                //
                 create: function() {
                     // create and return a new button
                     var self = UploadButton.clone(true);
@@ -132,6 +156,14 @@
                     // and return it
                     return self;
                 },
+                //
+                // Instance methods:
+                // 
+                // They should _not_ be called on UploadButton, but
+                // on a button instance created like:
+                // 
+                //      var button = UploadButton.create();
+                //
                 initialState: function() {
                     this.self
                         .html('<i class="glyphicon glyphicon-upload"></i> ' +
@@ -173,7 +205,9 @@
                     $.each(this.handlers.submit, function(index, handler) {
                         all.push(handler());
                     });
-                    // make an 'all' promise from the individual promises
+                    // Make an 'all' promise from the individual promises.
+                    // $.when.apply is jQuery's incomprehensible way of saying
+                    // "wait until all the promises in 'all' are resolved".
                     return $.when.apply(null, all);
                 },
                 abort: function() {
