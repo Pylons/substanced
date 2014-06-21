@@ -83,12 +83,14 @@
     margin-bottom: 0.5em;
 }
 
-#files .file-in-progress {
-    /* Not sure why the left and right compensations are needed,
-     * afaik 'row' would be just good here, but it isn't.
-     */
-    margin-left: -10px;
-    margin-right: 20px;
+@media (min-width: 768px) {
+    #files .file-in-progress {
+        /* Not sure why the left and right compensations are needed,
+         * afaik 'row' would be just good here, but it isn't.
+         */
+        margin-left: -10px;
+        margin-right: 20px;
+    }
 }
 
 .file-in-progress .left-col {
