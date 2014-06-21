@@ -146,9 +146,9 @@
         })
         .data({
             //
-            // Creator (class) method
+            // create method
             //
-            // They should be called on UploadButton.data().
+            // It should be called on UploadButton.data().
             //
             create: function() {
                 // Create and return a new button.
