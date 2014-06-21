@@ -76,6 +76,15 @@
     font-weight: bold;
 }
 
+.file-in-progress .file-info .file-name-link:hover {
+    /* apply same styles as in the contents */
+    /* color: lighten(@link-color, 20%); */
+    color: #92bce0;
+    text-decoration: none;
+    border-bottom: none;
+}
+
+
 .file-in-progress .file-info .file-modified {
     float: left;
 }
@@ -83,6 +92,7 @@
 .file-in-progress .file-info .file-size {
     float: right;
 }
+
 
 .file-in-progress .canvas-wrapper {
     margin-right: 20px;

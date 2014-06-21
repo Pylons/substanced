@@ -254,8 +254,18 @@
     }).on('fileuploaddone', function (e, data) {
         // status for the user
         if (data.context) {
-            data.context.each(function() {
-            });
+            if (data.result.files.length != 1) {
+                // Due to single file upload, we should lways have 1 here.
+                // Check this as otherwise it would break.
+                throw new Error('Fatal error, we should be doing single file uploads.');
+            }
+            // The server told us the real id of the file. Construct a link from this.
+            var realName = data.result.files[0].name;
+            $(data.context[0]).find('.file-name').wrap(
+                $('<a/>')
+                    .addClass('file-name-link')
+                    .attr('href', realName + '/@@manage_main')
+            );
         }
         flash('success', data.result.files.length, data.context);
     }).on('fileuploadfail', function (e, data) {
