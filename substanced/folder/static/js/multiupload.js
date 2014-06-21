@@ -276,6 +276,7 @@
                 $('<a/>')
                     .addClass('file-name-link')
                     .attr('href', realName + '/@@manage_main')
+                    .attr('target', '_blank')
             );
         }
         flash('success', data.result.files.length, data.context);
