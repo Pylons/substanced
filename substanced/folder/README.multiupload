@@ -33,16 +33,17 @@ Some notes on decisions taken in the implementation:
 
 4. The supported upload workflow
 
-   a. Go to Upload tab of a folder.
+   a. Go to the Upload tab of a folder.
    b. Add some files.
-   c. Optionally, cancel some files.
-   d. Repeat a. and b. until needed.
-   e. Press Upload button to upload all files.
+   c. Optionally, cancel some files by pressing the Cancel button.
+   d. Repeat a. and b., until needed.
+   e. Press the Upload button to upload all files.
    f. Observe progress during the upload.
-   g. Optionally, press Abort button to abort an ongoing upload.
-   h. Or, wait until upload completes.
-   i. Optionally, dismiss the status box and all uploaded files with it.
-   j. Repeat the whole procedure until desired.
+   g. Optionally, press the Abort button to abort an ongoing upload.
+   h. Or, wait until the upload completes.
+   i. Optionally, dismiss the status box (and the uploaded files
+      with it) from the page.
+   j. Repeat the whole procedure, until desired.
 
 5. When an upload is completed, the file name becomes a shortcut
    link to the uploaded file in the SDI. This link is opened in a new
@@ -50,7 +51,7 @@ Some notes on decisions taken in the implementation:
    if we opened the link in the same window, and then returned to the current
    page via the Back button, we would find that all files are disappeared from
    the page. This would be rightfully considered a critical bug.
-   Opening the link in a new window circumvents this issue for the moment.
+   Opening the link in a new window circumvents this issue.
 
 6. How to add files
 
@@ -73,7 +74,7 @@ Some notes on decisions taken in the implementation:
        if needed. This also means that we do not check for duplicate files. If the same
        file is added multiple times, itt will be uploaded multiple times.
 
-    f. In the future, dragging images from other web pages can be supported as well.
+    f. In the future, dropping images from another web page can be supported as well.
 
 7. Audio and video preview plugins are disabled. Currently only the images
    are previewable. Supporting audio or video preview would be possible at
