@@ -60,9 +60,9 @@
 
     function updateProgress(context, progress) {
         context.each(function() {
-            $(this)
-                .css('width', progress + '%')
-                .text(progress + '%');
+            var bar = $(this);
+            bar.css('width', progress + '%');
+            bar.text(progress > 0 ? progress + '%' : '');
         });
     }
 
