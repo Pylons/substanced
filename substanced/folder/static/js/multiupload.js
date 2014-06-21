@@ -48,6 +48,17 @@
     }
 
     function removeRow(el) {
+        // remove row from sums
+        var item = el.find('.file-in-progress');
+        // but only for file items, skip when call for a status box
+        // which has no .file-in-progress contained.
+        if (item.length > 0) {
+            var undoSums = item.data().undoSums;
+            if (undoSums) {
+                undoSums();
+            }
+        }
+        // animate removal
         el.addClass('deleted');
         setTimeout(function() {
             el.remove();
@@ -74,9 +85,18 @@
         count: 0,
         size: 0,
         add: function(file) {
+            var self = this;
             this.count += 1;
             this.size += file.size;
             this.update();
+            // make the file info immutable
+            // to protect against possible modification
+            file = {size: file.size};
+            // return a handler to remove
+            // the file from the sum
+            return function() {
+                self.remove(file);
+            };
         },
         remove: function(file) {
             this.count -= 1;
@@ -102,6 +122,7 @@
         var flashBox = $('#fileupload-messages').find('.alert-fileupload-' + alertType).last();
         if (flashBox.length === 0) {
             // If not, create it.
+            // data-
             flashBox = $('<div class="alert alert-' + alertType +
                       ' alert-fileupload-' + alertType + '"></div>')
                 .append('<span class="status"></span>')
@@ -130,7 +151,7 @@
         // closing the status box will remove its files 
         flashBox.find('.close').click(function() {
             // close the box
-            removeRows($(this).closest('.alert'));
+            removeRow($(this).closest('.alert'));
             // remove its files
             removeRows(context);
         });
@@ -295,11 +316,9 @@
                 cancelSubmit();
                 // Remove the row visually
                 removeRow($(this).closest('.file-in-progress').parent());
-                // report the removal of this file to the toolbar
-                Sums.remove(file);
             });
             // report the addition of this file to the toolbar
-            Sums.add(file);
+            newItem.data().undoSums = Sums.add(file);
         });
         // register the submit function on the button
         var cancelSubmit = uploadButton.data().onSubmit($.proxy(data.submit, data));
