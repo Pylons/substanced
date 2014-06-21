@@ -38,7 +38,16 @@
         el.addClass('deleted');
         setTimeout(function() {
             el.remove();
-        }, 300);
+        //
+        // this timeout must match the 'disappear' animation's timing,
+        //  e.g. for 450:
+        //
+        //    -webkit-animation: disappear 0.45s;
+        //    -webkit-animation-fill-mode: forwards;
+        //    animation: disappear 0.45s;
+        //    animation-fill-mode: forwards;
+        //
+        }, 450);
     }
 
     function removeRows(context) {

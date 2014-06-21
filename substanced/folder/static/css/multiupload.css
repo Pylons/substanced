@@ -16,9 +16,9 @@
 
 .deleted .file-in-progress,
 .alert.deleted {
-    -webkit-animation: disappear 0.4s;
+    -webkit-animation: disappear 0.45s;
     -webkit-animation-fill-mode: forwards;
-    animation: disappear 0.4s;
+    animation: disappear 0.45s;
     animation-fill-mode: forwards;
 }
 
@@ -28,8 +28,8 @@
         transform: translateX(-5%);
     }
     100% {
-        -webkit-transform: translateX(400%);
-        transform: translateX(400%);
+        -webkit-transform: translateX(200%);
+        transform: translateX(200%);
     }
 }
 
@@ -39,8 +39,8 @@
         transform: translateX(-5%);
     }
     100% {
-        -webkit-transform: translateX(400%);
-        transform: translateX(400%);
+        -webkit-transform: translateX(200%);
+        transform: translateX(200%);
     }
 }
 
