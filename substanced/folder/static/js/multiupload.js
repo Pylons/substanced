@@ -77,7 +77,8 @@
             this.update();
         },
         update: function() {
-            console.log('Sums:', this.count, this.size);
+            $('#fileupload-global-count').text('' + this.count);
+            $('#fileupload-global-size').text(sizeToText(this.size));
         }
     };
 
