@@ -3,13 +3,15 @@
 /* styles for multi upload page */
 
 /* global progress bar */
-@media (max-width: 767px) { 
-    #progress {
-        margin-bottom: 0;
-    }
-}
 #progress {
     margin-top: 0.5em;
+}
+@media (max-width: 767px) {
+    /* wrapping state */ 
+    #progress {
+        margin-bottom: 0;
+        margin-top: 1.5em;
+    }
 }
 
 .deleted .file-in-progress,
