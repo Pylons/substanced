@@ -5,9 +5,9 @@
 (function($) {
     "use strict";
 
-    function isUploadInProgress() {
-        return $('body').hasClass(disableDropZoneClassName);
-    }
+    var dropZoneClassName = 'dropzone';
+    var disableDropZoneClassName = 'add-files-disabled';
+    var fileUploadClassName = 'file-upload';
 
     // Trigger a resize.
     var triggerResize = function() {
@@ -18,7 +18,11 @@
 
     // set a class if we have html5 xhr upload.
     if (window.FormData) {
-        $('body').addClass('file-upload');
+        $('body').addClass(fileUploadClassName);
+    }
+
+    function isUploadInProgress() {
+        return $('body').hasClass(disableDropZoneClassName);
     }
 
     function sizeToText(n, unitType) {
@@ -440,7 +444,7 @@
         var fixable = $('#fileupload-fixable-wrapper');
         var nextTop = fixable.next().offset().top;
         // we add some more margin that stays on top
-        var margin = 8;
+        var margin = 6;
         // we calculate the height to be shown on top
         // this is the sum of the toolbar and messages height
         var showOnTop = margin + fixable.outerHeight();
@@ -464,8 +468,6 @@
     // 
     // (The entire document is the drop zone.)
     //
-    var dropZoneClassName = 'dropzone';
-    var disableDropZoneClassName = 'add-files-disabled';
     $(document).bind('dragover', function(evt) {
         var body = $('body'),
             timeout = window.dropZoneTimeout;
