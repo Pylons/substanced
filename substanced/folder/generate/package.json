@@ -16,7 +16,7 @@
         "grunt-banner": "*"
     },
     "scripts": {
-        "install": "napa; grunt install"
+        "postinstall": "napa; grunt install"
     },
     "napa": {
         "free-file-icons": "https://github.com/teambox/Free-file-icons.git"
