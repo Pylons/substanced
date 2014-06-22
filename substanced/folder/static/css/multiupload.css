@@ -185,10 +185,18 @@ body.add-files-disabled .drop-message {
     color: #cecece;
 }
 
-/* drop zone effect */
+/* 
+ * drop zone effect.
+ * All areas that override background, should also be
+ * colored, for a nice result.
+ */
 
-body.dropzone {
-    background-color: #efebd3;
+body.dropzone,
+body.dropzone .progress,
+body.dropzone .navbar,
+body.dropzone #fileupload-toolbar,
+body.dropzone .active > a {
+    background: #efebd3;
     -webkit-transition: all 0.3s ease-out;
     -moz-transition: all 0.3s ease-out;
     -ms-transition: all 0.3s ease-out;
