@@ -444,7 +444,7 @@
         var fixable = $('#fileupload-fixable-wrapper');
         var nextTop = fixable.next().offset().top;
         // we add some more margin that stays on top
-        var margin = 6;
+        var margin = 7;
         // we calculate the height to be shown on top
         // this is the sum of the toolbar and messages height
         var showOnTop = margin + fixable.outerHeight();
