@@ -8,7 +8,7 @@
     },
     "devDependencies": {
         "napa": "*",
-        "matchdep": "*",
+        "load-grunt-tasks": "*",
         "grunt-cli": "*",
         "grunt": "*",
         "phantomjs": "*",

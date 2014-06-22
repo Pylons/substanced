@@ -20,8 +20,7 @@ module.exports = function(grunt) {
         },
     });
 
-    // Load the task plugins.
-    require('matchdep').filterDev(['grunt-*', '!grunt-cli']).forEach(grunt.loadNpmTasks);
+    require('load-grunt-tasks')(grunt);
 
     grunt.registerTask('install', ['sprite']);
 
