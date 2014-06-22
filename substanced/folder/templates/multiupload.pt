@@ -79,6 +79,13 @@
     <div class="drop-message">
       You can also <b>drop files</b> anywhere in this window.
     </div>
+    <div class="not-supported-message">
+      Your browser does not support HTML5 file uploads.
+      Please upgrade it to a newer version,
+      <br>
+      or install
+      <a href="https://firefox.com">a different browser</a>.
+    </div>
     <!-- XXX Moment.js is only included in this page, could be loaded globally instead. -->
     <script src="${request.static_url('substanced.sdi:static/js/moment.js')}" type="text/javascript"></script>
     <!-- XXX Modernizr is only included in this page, could be loaded globally instead. -->

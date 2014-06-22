@@ -16,6 +16,11 @@
     // Trigger an initial resize.
     triggerResize();
 
+    // set a class if we have html5 xhr upload.
+    if (window.FormData) {
+        $('body').addClass('file-upload');
+    }
+
     function sizeToText(n, unitType) {
         // Return in the correct unit of TB, GB, MB, KB, B
         // Powers of 1024 are used: 1 MB = 1024 KB and so on.

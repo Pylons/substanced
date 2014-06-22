@@ -49,12 +49,29 @@
     }
 }
 
+/* main toolbar only shown if we are capable */
+
 #fileupload-fixable-wrapper {
     z-index: 1;
     /* Bacground is for covering the gap
      * between #fileupload-messages and #fileupload-toolbar.
      */
     background: white;
+    display: none;
+}
+
+body.file-upload #fileupload-fixable-wrapper {
+    display: block;
+}
+
+.not-supported-message {
+    display: inline-block;
+    text-align: center;
+    margin: 3em;
+}
+
+body.file-upload .not-supported-message {
+    display: none;
 }
 
 /* fix padding of the fileupload toolbar */
@@ -168,7 +185,7 @@
 }
 
 
-/* drop message: show only when dnd is possible */
+/* drop message: show only when both file upload and dnd is possible */
 
 .drop-message {
     margin-top: 2em;
@@ -176,7 +193,7 @@
     display: none;
 }
 
-html.draganddrop .drop-message {
+html.draganddrop body.file-upload .drop-message {
     display: block;
 }
 
