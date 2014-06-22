@@ -52,7 +52,9 @@
       <div class="file-in-progress row">
         <div class="col-xs-8 col-sm-7 col-md-6 col-lg-5 clearfix">
           <div class="left-col">
-            <div class="canvas-wrapper pull-left"></div>
+            <div class="canvas-wrapper pull-left">
+              <div class="file-icon mimetype-icon-_page"></div>
+            </div>
             <div class="file-info">
               <span class="file-name"></span>
               <span class="file-modified"></span>

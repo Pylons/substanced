@@ -346,11 +346,15 @@
         $.each(data.files, function (index, file) {
             var newItem = template.clone().appendTo(data.context);
             var canvasWrapper = newItem.find('.canvas-wrapper');
+            var fileIcon = canvasWrapper.find('.file-icon');
             var fileInfo = newItem.find('.file-info');
-            var fileName = fileInfo.find('.file-name');
-            var fileModified = fileInfo.find('.file-modified');
-            fileName.text(file.name);
+            var fileName = newItem.find('.file-name');
             var fileSize = newItem.find('.file-size');
+            var fileModified = newItem.find('.file-modified');
+            if (file.type) {
+                fileIcon.addClass('mimetype-icon-' + file.type.split('/', 2)[1]);
+            }
+            fileName.text(file.name);
             fileSize.text(sizeToText(file.size, 'B'));
             fileModified.text(moment(file.lastModifiedDate).format('LL'));
             newItem.find('.remove-button').click(function() {

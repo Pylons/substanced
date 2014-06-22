@@ -136,11 +136,21 @@
     float: right;
 }
 
+.file-in-progress .file-icon {
+    /* pad out from 48px to 65px */
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    /* hide it behind an image preview, if there is one */
+    z-index: -1;
+}
 
 .file-in-progress .canvas-wrapper {
     margin-right: 20px;
     height: 65px;
     width: 65px;
+    /* positioning parent for mimetype icon */
+    position: relative;
 }
 
 .file-in-progress .progress {
