@@ -12,7 +12,8 @@
         "grunt-cli": "*",
         "grunt": "*",
         "phantomjs": "*",
-        "grunt-spritesmith": "*"
+        "grunt-spritesmith": "*",
+        "grunt-banner": "*"
     },
     "scripts": {
         "install": "napa; grunt install"
