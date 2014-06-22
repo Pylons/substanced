@@ -1,0 +1,35 @@
+
+# substanced-folder-generate #
+
+This is a pseudo npm package for generating resources for substanced.folder.
+
+Use this to re-generate the mimetype icon sprite from sources.
+
+
+## Goals
+
+- generates sprite for mimetype icons
+
+
+## Requirements
+
+- install node, npm
+
+### MacOSX
+
+$ brew install node
+
+### Ubuntu
+
+$ sudo add-apt-repository ppa:chris-lea/node.js
+$ sudo apt-get update
+$ sudo apt-get install nodejs
+
+- check that both node and npm are executable
+
+
+## Usage
+
+- cd into substanced/folder/generate directory
+
+$ npm install
