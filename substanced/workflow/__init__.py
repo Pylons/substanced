@@ -11,6 +11,7 @@ from pyramid.security import Everyone
 from pyramid.security import has_permission
 from zope.interface import implementer
 
+from ..event import AfterTransition
 from ..interfaces import (
     IWorkflow,
     IDefaultWorkflow,
@@ -18,6 +19,7 @@ from ..interfaces import (
 
 from ..util import (
     get_content_type,
+    get_current_registry,
     set_acl,
     )
 
@@ -306,7 +308,16 @@ class Workflow(object):
                      workflow=self,
                     )
 
-        self._set_state(content, to_state, request, transition)
+        new_state, msg = self._set_state(content, to_state, request, transition)
+        if new_state == to_state:
+            event = AfterTransition(content, state, new_state, transition_name)
+            if request is None:
+                registry = get_current_registry()
+            else:
+                registry = request.registry
+
+            registry.notify(event)
+
 
     def transition(self, content, request, transition_name):
         """Execute a transition using a **transition_name** on **content**.
