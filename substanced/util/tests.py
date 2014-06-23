@@ -1,6 +1,7 @@
 import unittest
 
 from pyramid import testing
+from pyramid.compat import text_
 
 from . import _marker
 
@@ -349,6 +350,16 @@ class Test_merge_url_qs(unittest.TestCase):
         url = 'http://example.com?c=3'
         result = self._callFUT(url, a=1, b=2)
         self.assertEqual(result, 'http://example.com?a=1&b=2&c=3')
+
+    def test_with_quoted_strings_in_url(self):
+        url = 'http://example.com?c=%2B'
+        result = self._callFUT(url, a=1)
+        self.assertEqual(result, 'http://example.com?a=1&c=%2B')
+
+    def test_with_nonascii_values_in_kw(self):
+        url = 'http://example.com?c=%2B'
+        result = self._callFUT(url, a=text_(b'LaPe\xc3\xb1a', 'utf-8'))
+        self.assertEqual(result, 'http://example.com?a=LaPe%C3%B1a&c=%2B')
 
 class Test_acquire(unittest.TestCase):
     def _callFUT(self, node, name, default=None):
