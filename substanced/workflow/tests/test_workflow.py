@@ -780,6 +780,27 @@ class WorkflowTests(unittest.TestCase):
         wf.initialize(content, request=request)
         wf.transition_to_state(content, request, 'new')
 
+    def test_after_transition_event_sent(self):
+        class DummyEventsRegistry(object):
+            events = []
+            def notify(self, *events):
+                self.events = events
+
+        from substanced.event import AfterTransition
+        request = testing.DummyRequest()
+        request.registry = DummyEventsRegistry()
+        sm = self._makePopulated()
+        ob = DummyContent()
+        ob.__workflow_state__ = {'basic': 'pending'}
+        sm._transition(ob, 'publish', ob, request)
+        self.assertEqual(len(request.registry.events), 1)
+        event = request.registry.events[0]
+        self.assertEqual(event.__class__, AfterTransition)
+        self.assertEqual(event.object, ob)
+        self.assertEqual(event.old_state, 'pending')
+        self.assertEqual(event.new_state, 'published')
+        self.assertEqual(event.transition, 'publish')
+
 class GetWorkflowTests(unittest.TestCase):
 
     def setUp(self):
