@@ -308,16 +308,14 @@ class Workflow(object):
                      workflow=self,
                     )
 
-        new_state, msg = self._set_state(content, to_state, request, transition)
-        if new_state == to_state:
-            event = AfterTransition(content, state, new_state, transition_name)
-            if request is None:
-                registry = get_current_registry()
-            else:
-                registry = request.registry
+        self._set_state(content, to_state, request, transition)
+        event = AfterTransition(content, state, to_state, transition_name)
+        if request is None:
+            registry = get_current_registry()
+        else:
+            registry = request.registry
 
-            registry.notify(event)
-
+        registry.notify(event)
 
     def transition(self, content, request, transition_name):
         """Execute a transition using a **transition_name** on **content**.
