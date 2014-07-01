@@ -65,8 +65,9 @@ class WorkflowTests(unittest.TestCase):
 
         mock_has_permission.side_effect = lambda p, c, r: p != 'forbidden'
         ob = DummyContent()
+        request = testing.DummyRequest()
         ob.__workflow_state__ = {'basic': 'private'}
-        sm.transition_to_state(ob, object(), 'pending')
+        sm.transition_to_state(ob, request, 'pending')
         self.assertEqual(len(args), 1)
         self.assertEqual(args[0][1]['transition']['name'], 'submit2')
 
@@ -86,7 +87,7 @@ class WorkflowTests(unittest.TestCase):
 
         ob = DummyContent()
         ob.__workflow_state__ = {'basic': 'private'}
-        request = object()
+        request = testing.DummyRequest()
         from substanced.workflow import WorkflowError
         mock_has_permission.return_value = False
         self.assertRaises(WorkflowError, sm.transition_to_state,
@@ -754,7 +755,7 @@ class WorkflowTests(unittest.TestCase):
         state_info.append({'transitions': [{'permission': 'view'}, {}]})
         workflow = self._makeOne()
         workflow._get_states = lambda *arg, **kw: state_info
-        request = object()
+        request = testing.DummyRequest()
         result = workflow.get_states(request, 'whatever')
         self.assertEqual(result, [{'transitions': [{}]},
                                   {'transitions': [{}]}])
@@ -774,10 +775,31 @@ class WorkflowTests(unittest.TestCase):
                           'initial',
                           'new',
                           callback=transition_cb)
-        request = object()
+        request = testing.DummyRequest()
         content = DummyContent()
         wf.initialize(content, request=request)
         wf.transition_to_state(content, request, 'new')
+
+    def test_after_transition_event_sent(self):
+        class DummyEventsRegistry(object):
+            events = []
+            def notify(self, *events):
+                self.events = events
+
+        from substanced.event import AfterTransition
+        request = testing.DummyRequest()
+        request.registry = DummyEventsRegistry()
+        sm = self._makePopulated()
+        ob = DummyContent()
+        ob.__workflow_state__ = {'basic': 'pending'}
+        sm._transition(ob, 'publish', ob, request)
+        self.assertEqual(len(request.registry.events), 1)
+        event = request.registry.events[0]
+        self.assertEqual(event.__class__, AfterTransition)
+        self.assertEqual(event.object, ob)
+        self.assertEqual(event.old_state, 'pending')
+        self.assertEqual(event.new_state, 'published')
+        self.assertEqual(event.transition, 'publish')
 
 class GetWorkflowTests(unittest.TestCase):
 

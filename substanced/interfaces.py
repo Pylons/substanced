@@ -284,6 +284,13 @@ class IRootAdded(Interface):
     the database as its ``_p_jar`` attribute. """
     object = Attribute('The root object')
 
+class IAfterTransition(Interface):
+    """ An event type sent after a transition has been done """
+    object = Attribute('The object on which the transition has been done')
+    initial_state = Attribute('The initial state of the object')
+    new_state = Attribute('The new state of the object')
+    transition = Attribute('The transition name')
+
 #
 # subtanced.evolution APIs
 #
