@@ -44,6 +44,65 @@ class Test_root_factory(unittest.TestCase):
         self.assertEqual(result, app_root)
         self.assertFalse(txn.committed)
 
+class Test_includeme(unittest.TestCase):
+    def test_it(self):
+        from .. import (
+            includeme,
+            connection_opened,
+            connection_will_close,
+            ZODBConnectionOpened,
+            ZODBConnectionWillClose,
+            )
+        config = DummyConfig()
+        includeme(config)
+        self.assertEqual(
+            config.subscriptions,
+            [(connection_opened, ZODBConnectionOpened),
+             (connection_will_close, ZODBConnectionWillClose),
+             ]
+            )
+
+class Test_connection_opened(unittest.TestCase):
+    def test_it(self):
+        from  .. import connection_opened
+        event = DummyEvent()
+        connection_opened(event)
+        self.assertEqual(event.request._zodb_tx_counts, (0,0))
+
+class Test_connection_will_close(unittest.TestCase):
+    def _callFUT(self, event, statsd_gauge):
+        from  .. import connection_will_close
+        return connection_will_close(event, statsd_gauge)
+
+    def test_no_tx_counts(self):
+        event = DummyEvent()
+        result = self._callFUT(event, None)
+        self.assertEqual(result, None) # doesnt fail
+
+    def test_with_postitive_tx_counts(self):
+        event = DummyEvent(5,5)
+        event.request._zodb_tx_counts = (1, 1)
+        L = []
+        def statsd_gauge(name, num):
+            L.append((name, num))
+        self._callFUT(event, statsd_gauge)
+        self.assertEqual(
+            L,
+            [('zodb.loads', 4), ('zodb.stores', 4)]
+            )
+
+    def test_with_zero_tx_counts(self):
+        event = DummyEvent(1,1)
+        event.request._zodb_tx_counts = (1, 1)
+        L = []
+        def statsd_gauge(name, num):
+            L.append((name, num))
+        self._callFUT(event, statsd_gauge)
+        self.assertEqual(
+            L,
+            []
+            )
+
 class DummyTransaction(object):
     committed = False
     savepointed = False
@@ -80,3 +139,21 @@ class DummyRegistry(object):
     def notify(self, event):
         self.event = event
 
+class DummyConfig(object):
+    def __init__(self):
+        self.subscriptions = []
+    def add_subscriber(self, fn, event_type):
+        self.subscriptions.append((fn, event_type))
+
+class DummyConnection(object):
+    def __init__(self, loads, stores):
+        self.loads = loads
+        self.stores = stores
+
+    def getTransferCounts(self):
+        return (self.loads, self.stores)
+
+class DummyEvent(object):
+    def __init__(self, loads=0, stores=0):
+        self.request = testing.DummyRequest()
+        self.conn = DummyConnection(loads, stores)
