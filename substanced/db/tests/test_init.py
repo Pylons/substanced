@@ -70,9 +70,9 @@ class Test_connection_opened(unittest.TestCase):
         self.assertEqual(event.request._zodb_tx_counts, (0,0))
 
 class Test_connection_will_close(unittest.TestCase):
-    def _callFUT(self, event, statsd_gauge):
+    def _callFUT(self, event, statsd_incr):
         from  .. import connection_will_close
-        return connection_will_close(event, statsd_gauge)
+        return connection_will_close(event, statsd_incr)
 
     def test_no_tx_counts(self):
         event = DummyEvent()
@@ -83,9 +83,9 @@ class Test_connection_will_close(unittest.TestCase):
         event = DummyEvent(5,5)
         event.request._zodb_tx_counts = (1, 1)
         L = []
-        def statsd_gauge(name, num):
+        def statsd_incr(name, num, registry=None):
             L.append((name, num))
-        self._callFUT(event, statsd_gauge)
+        self._callFUT(event, statsd_incr)
         self.assertEqual(
             L,
             [('zodb.loads', 4), ('zodb.stores', 4)]
@@ -95,9 +95,7 @@ class Test_connection_will_close(unittest.TestCase):
         event = DummyEvent(1,1)
         event.request._zodb_tx_counts = (1, 1)
         L = []
-        def statsd_gauge(name, num):
-            L.append((name, num))
-        self._callFUT(event, statsd_gauge)
+        self._callFUT(event, None)
         self.assertEqual(
             L,
             []
