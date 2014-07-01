@@ -147,6 +147,7 @@ class RootAdded(object):
 
 @implementer(IAfterTransition)
 class AfterTransition(object):
+    """  Event sent after any workflow transition happens """
     def __init__(self, object, old_state, new_state, transition):
         self.object = object
         self.old_state = old_state
