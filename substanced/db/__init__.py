@@ -11,8 +11,8 @@ from ..event import RootAdded
 
 def root_factory(request, t=transaction, g=get_connection,
                  mark_unfinished_as_finished=mark_unfinished_as_finished):
-    """ A function which can be used as a Pyramid ``root_factory``.  It
-    accepts a request and returns an instance of the ``Root`` content type."""
+    """ A function which can be used as a Pyramid ``root_factory``.  It accepts
+    a request and returns an instance of the ``Root`` content type."""
     # accepts "t", "g", and "mark_unfinished_as_finished" for unit testing
     # purposes only
     conn = g(request)
@@ -33,7 +33,7 @@ def connection_opened(event):
     request._zodb_tx_counts = event.conn.getTransferCounts()
 
 def connection_will_close(event, statsd_incr=statsd_incr):
-    # statsd_gauge is passed in above only for testing purposes
+    # statsd_incr is passed in above only for testing purposes
     request = event.request
     counts = getattr(request, '_zodb_tx_counts',  None)
     if counts is not None:
