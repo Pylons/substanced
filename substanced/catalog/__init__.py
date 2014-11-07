@@ -639,7 +639,7 @@ def add_indexview(
 
     Or, a class::
 
-        def IndexViews(object):
+        class IndexViews(object):
             def __init__(self, resource):
                 self.resource = resource
 
@@ -653,7 +653,7 @@ def add_indexview(
     If an ``attr`` arg is supplied to ``add_indexview``, you can use a
     different attribute of the class instad of ``__call__``::
 
-        def IndexViews(object):
+        class IndexViews(object):
             def __init__(self, resource):
                 self.resource = resource
 
