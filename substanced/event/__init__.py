@@ -19,13 +19,14 @@ from ..interfaces import (
     IContentCreated,
     ILoggedIn,
     IRootAdded,
+    IAfterTransition,
     )
 
 from ..util import find_objectmap
-    
+
 class _ObjectEvent(object):
     pass
-        
+
 
 @implementer(IObjectAdded)
 class ObjectAdded(_ObjectEvent):
@@ -143,7 +144,16 @@ class LoggedIn(object):
 class RootAdded(object):
     def __init__(self, object):
         self.object = object
-        
+
+@implementer(IAfterTransition)
+class AfterTransition(object):
+    """  Event sent after any workflow transition happens """
+    def __init__(self, object, old_state, new_state, transition):
+        self.object = object
+        self.old_state = old_state
+        self.new_state = new_state
+        self.transition = transition
+
 # subscriber decorators, e.g.
 # @subscribe_added(MyContent)
 # def foo(event):
@@ -253,6 +263,11 @@ class subscribe_root_added(_SimpleSubscriber):
     has a database connection """
     event = IRootAdded
 
+class subscribe_after_transition(_SimpleSubscriber):
+    """ Decorator for registering an event listener for when a transition has
+    been done on an object"""
+    event = IAfterTransition
+
 def add_content_subscriber(config, subscriber, iface=None, **predicates):
     """ Configurator directive that works like Pyramid's ``add_subscriber``,
     except it wraps the subscriber in something that first adds the
@@ -283,7 +298,7 @@ class _ContentTypePredicate(object):
         # XXX *arg can go away once a Pyramid 1.4 final is out (or if used
         # against Pyramid 1.4b1+)
         return self.registry.content.istype(event.object, self.val)
-    
+
 def includeme(config): # pragma: no cover
     config.add_directive('add_content_subscriber', add_content_subscriber)
     config.add_subscriber_predicate('content_type', _ContentTypePredicate)

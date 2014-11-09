@@ -1,5 +1,9 @@
 import transaction
-from pyramid_zodbconn import get_connection
+from pyramid_zodbconn import (
+    get_connection,
+    ZODBConnectionOpened,
+    ZODBConnectionWillClose,
+    )
 from substanced.evolution import mark_unfinished_as_finished
 
 from ..stats import statsd_incr
@@ -24,3 +28,24 @@ def root_factory(request, t=transaction, g=get_connection,
     statsd_incr('root_factory', rate=.1)
     return zodb_root['app_root']
 
+def connection_opened(event):
+    request = event.request
+    request._zodb_tx_counts = event.conn.getTransferCounts()
+
+def connection_will_close(event, statsd_incr=statsd_incr):
+    # statsd_gauge is passed in above only for testing purposes
+    request = event.request
+    counts = getattr(request, '_zodb_tx_counts',  None)
+    if counts is not None:
+        loads_before, stores_before = counts
+        loads_after, stores_after = event.conn.getTransferCounts()
+        loads = loads_after - loads_before
+        stores = stores_after - stores_before
+        if loads:
+            statsd_incr('zodb.loads', loads, registry=request.registry)
+        if stores:
+            statsd_incr('zodb.stores', stores, registry=request.registry)
+
+def includeme(config):
+    config.add_subscriber(connection_opened, ZODBConnectionOpened)
+    config.add_subscriber(connection_will_close, ZODBConnectionWillClose)

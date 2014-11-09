@@ -100,17 +100,23 @@ class SystemCatalogFactory(object):
       Indexes text used for the Substance D folder contents filter box.
 
     """
+    # path index is not a "real" index (no writes happen when the index is
+    # updated with a new resource) so action mode is irrelevant
     path = Path()
 
     # name is MODE_ATCOMMIT for next-request folder contents consistency
     name = Field()
 
-    # interfaces is MODE_ATCOMMIT because code which creates one may
-    # need to access it immediately.
+    # interfaces is MODE_ATCOMMIT because code which indexes something by its
+    # interface may need to access it immediately.
     interfaces = Keyword()
 
+    # allowed index is not a "real" index (no writes happen when the index is
+    # updated with a new resource) so action mode is irrelevant
     allowed = Allowed()
 
+    # results from a text search is considered deferrable until an arbitrary
+    # time in the future, so we use MODE_DEFERRED
     text = Text(action_mode=MODE_DEFERRED)
 
     # content_type is MODE_ATCOMMIT because code which creates one may
