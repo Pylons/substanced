@@ -80,6 +80,7 @@ In your configuration file (e.g. ``production.ini``), the
 
 We thus need a ``relstorage.conf`` file::
 
+    %import relstorage
     <zodb main>
       <relstorage>
         blob-dir ../var/blobs
