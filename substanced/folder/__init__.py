@@ -721,7 +721,8 @@ class Folder(Persistent):
         ``.remove`` with each key that exists in the folder. """
         if registry is None:
             registry = get_current_registry()
-        for name in self:
+        # why do we listify?  http://www.zodb.org/en/latest/documentation/guide/modules.html#iteration-and-mutation
+        for name in list(self.data):
             self.remove(name, registry=registry)
             
 
