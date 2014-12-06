@@ -1,12 +1,11 @@
+from __future__ import unicode_literals
 import sys
 import colander
 import unittest
-# XXX
 try:
     from io import StringIO
 except:
     from cStringIO import StringIO
-
 from pyramid import testing
 from pyramid.httpexceptions import HTTPFound
 import mock
@@ -2147,7 +2146,7 @@ class Test_multi_upload_submit(unittest.TestCase):
         dummyFileParam = Dummy(
             type = 'TYPE',
             filename = 'FILENAME',
-            file = StringIO(u'CONTENT'),
+            file = StringIO('CONTENT'),
             )
         dummyFileParam.create = mock.Mock(
             return_value={},
