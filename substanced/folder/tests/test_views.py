@@ -1,6 +1,11 @@
 import sys
 import colander
 import unittest
+# XXX
+try:
+    from io import StringIO
+except:
+    from cStringIO import StringIO
 
 from pyramid import testing
 from pyramid.httpexceptions import HTTPFound
@@ -2110,6 +2115,81 @@ class Test_slugify_in_context(unittest.TestCase):
         self.assertEqual(self._callFUT(context, 'bar.txt', remove_extension=False), 'bar-txt-1')
         self.assertEqual(self._callFUT(context, 'boo.pdf', remove_extension=False), 'boo-pdf-3')
 
+class Test_multi_upload_view(unittest.TestCase):
+    def _callFUT(self, context, request):
+        from substanced.folder.views import multi_upload
+        return multi_upload(context, request)
+
+    def test_it(self):
+        context = {}
+        request = testing.DummyRequest()
+        context = request.registry.content = DummyContent()
+        result = self._callFUT(context, request)
+        self.assertEqual(result, {})
+
+class Test_multi_upload_submit(unittest.TestCase):
+    def _callFUT(self, context, request):
+        from substanced.folder.views import multi_upload_submit
+        return multi_upload_submit(context, request)
+
+    def test_empty_params(self):
+        context = {}
+        request = testing.DummyRequest()
+        context = request.registry.content = DummyContent()
+        result = self._callFUT(context, request)
+        self.assertEqual(result, {'files': []})
+    
+    def test_upload(self):
+        import substanced.folder.views
+        substanced.folder.views._makeob = mock.Mock(
+            return_value='FILE'
+            )
+        dummyFileParam = Dummy(
+            type = 'TYPE',
+            filename = 'FILENAME',
+            file = StringIO('CONTENT'),
+            )
+        dummyFileParam.create = mock.Mock(
+            return_value={},
+            )
+        request = testing.DummyRequest({
+             'file1': dummyFileParam,
+            })
+        context = request.registry.content = {}
+        result = self._callFUT(context, request)
+        self.assertEqual(result, {
+            'files': [{
+               'name': 'filename',
+               'size': 7
+               }]
+            })
+
+    def test_upload_nostream(self):
+        import substanced.folder.views
+        substanced.folder.views._makeob = mock.Mock(
+            return_value='FILE'
+            )
+        dummyFileParam = Dummy(
+            type = 'TYPE',
+            filename = 'FILENAME',
+            file = None,
+            )
+        dummyFileParam.create = mock.Mock(
+            return_value={},
+            )
+        request = testing.DummyRequest({
+             'file1': dummyFileParam,
+            })
+        context = request.registry.content = {}
+        result = self._callFUT(context, request)
+        self.assertEqual(result, {
+            'files': [{
+               'name': 'filename',
+               'size': 0
+               }]
+            })
+
+
 class DummyContainer(object):
     oid_store = {}
 
@@ -2275,7 +2355,8 @@ class DummyConfig(object):
         return self
 
 class Dummy(object):
-    pass
+    def __init__(self, **kw):
+        self.__dict__.update(kw)
 
 class DummyVenusianContext(object):
     def __init__(self):
