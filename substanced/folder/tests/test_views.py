@@ -2088,17 +2088,17 @@ class Test_slugify_in_context(unittest.TestCase):
         return slugify_in_context(context, name, remove_extension=remove_extension)
 
     def test_replace_nonword_characters(self):
-        context = {}
+        context = []
         self.assertEqual(self._callFUT(context, 'abcABC123'), 'abcabc123')
         self.assertEqual(self._callFUT(context, 'a.b,c d=e_f)g\th', remove_extension=False), 'a-b-c-d-e_f-g-h')
         self.assertEqual(self._callFUT(context, 'a&b&c d=e_f)g\th'), 'a-b-c-d-e_f-g-h')
 
     def test_uniquness_without_extension(self):
         context = {
-            'bar',
-            'boo',
-            'boo-1',
-            'boo-2',
+            'bar': True,
+            'boo': True,
+            'boo-1': True,
+            'boo-2': True,
         }
         self.assertEqual(self._callFUT(context, 'foo.txt'), 'foo')
         self.assertEqual(self._callFUT(context, 'bar.txt'), 'bar-1')
@@ -2106,10 +2106,10 @@ class Test_slugify_in_context(unittest.TestCase):
 
     def test_uniquness_with_extension(self):
         context = {
-            'bar-txt',
-            'boo-pdf',
-            'boo-pdf-1',
-            'boo-pdf-2',
+            'bar-txt': True,
+            'boo-pdf': True,
+            'boo-pdf-1': True,
+            'boo-pdf-2': True,
         }
         self.assertEqual(self._callFUT(context, 'foo.txt', remove_extension=False), 'foo-txt')
         self.assertEqual(self._callFUT(context, 'bar.txt', remove_extension=False), 'bar-txt-1')
