@@ -2147,7 +2147,7 @@ class Test_multi_upload_submit(unittest.TestCase):
         dummyFileParam = Dummy(
             type = 'TYPE',
             filename = 'FILENAME',
-            file = StringIO('CONTENT'),
+            file = StringIO(u'CONTENT'),
             )
         dummyFileParam.create = mock.Mock(
             return_value={},
