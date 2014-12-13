@@ -163,9 +163,8 @@ class Workflow(object):
         """Return the current state of the content object or None
         if the content object does not have this workflow.
         """
-        states = getattr(content, STATE_ATTR, None)
-        if states:
-            return states.get(self.type, None)
+        states = getattr(content, STATE_ATTR, {})
+        return states.get(self.type)
 
     def has_state(self, content):
         """Return True if the content has state for this workflow,
@@ -258,7 +257,7 @@ class Workflow(object):
         """
         state = self.state_of(content)
         if state is None:
-            return self.initialize(content)
+            return self.initialize(content, request=request)
         try:
             self._states[state]
         except KeyError:
