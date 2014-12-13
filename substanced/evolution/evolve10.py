@@ -2,7 +2,7 @@ import logging
 
 logger = logging.getLogger('evolution')
 
-def evolve(root):
+def evolve(registry, root):
     logger.info(
         'substanced evolve step 10: add created index'
     )

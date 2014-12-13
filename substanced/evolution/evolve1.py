@@ -5,7 +5,7 @@ _marker = object()
 
 logger = logging.getLogger('evolution')
 
-def evolve(root):
+def evolve(registry, root):
     logger.info(
         'Running substanced evolve step 1: convert __objectid__ to __oid__'
         )

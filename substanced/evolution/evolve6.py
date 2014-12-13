@@ -10,7 +10,7 @@ _marker = object()
 
 logger = logging.getLogger('evolution')
 
-def evolve(root):
+def evolve(registry, root):
     logger.info(
         'Running substanced evolve step 6: files should not have USE_MAGIC '
         'as a mimetype or any other non-string value'

@@ -21,7 +21,7 @@ def postorder(startnode):
         yield node
     return visit(startnode)
 
-def evolve(root):
+def evolve(registry, root):
     logger.info(
         'Running substanced evolve step 8: add explicit oid ordering to folders'
         )

@@ -9,7 +9,7 @@ _marker = object()
 
 logger = logging.getLogger('evolution')
 
-def evolve(root):
+def evolve(registry, root):
     logger.info(
         'Running substanced evolve step 5: remove None as default for index '
         'action mode (MODE_ATCOMMIT should be implicit default)'
