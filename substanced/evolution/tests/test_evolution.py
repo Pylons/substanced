@@ -88,7 +88,7 @@ class TestEvolutionManager(unittest.TestCase):
         root = DummyRoot()
         txn = DummyTransaction()
         inst = self._makeOne(root, None, txn)
-        def func(context):
+        def func(registry, context):
             self.assertEqual(context, root)
         inst.get_unfinished_steps = lambda *arg: [('name', func)]
         log = []
@@ -105,7 +105,7 @@ class TestEvolutionManager(unittest.TestCase):
         root = DummyRoot()
         txn = DummyTransaction()
         inst = self._makeOne(root, None, txn)
-        def func(context):
+        def func(registry, context):
             self.assertEqual(context, root)
         inst.get_unfinished_steps = lambda *arg: [('name', func)]
         log = []
@@ -255,11 +255,11 @@ class Test_add_evolution_step(unittest.TestCase):
             ['fred'])
         self.assertEqual(iface, IEvolutionSteps)
 
-def dummystep(root): pass
+def dummystep(registry, root): pass
 
-def dummybefore(root): pass
+def dummybefore(registry, root): pass
 
-def dummyafter(root): pass
+def dummyafter(registry, root): pass
    
 
 class DummyTransaction(object):

@@ -72,7 +72,7 @@ class EvolutionManager(object):
         for name, func in steps:
             self.transaction.begin()
             self.out('Executing evolution step %s' % name)
-            func(self.context)
+            func(self.registry, self.context)
             self.add_finished_step(name)
             if commit:
                 t = self.transaction.get()
