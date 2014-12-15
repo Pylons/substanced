@@ -3,7 +3,7 @@ from zope.interface import alsoProvides
 from ..interfaces import IService
 from ..interfaces import MODE_IMMEDIATE
 
-def convert_services_to_IService(root):
+def convert_services_to_IService(registry, root):
     # can't use find_catalog because we changed it to expect IService, which
     # we are in the process of bootstrapping.
     catalog = root['catalogs']['system']

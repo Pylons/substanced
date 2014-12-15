@@ -1,7 +1,7 @@
 from pyramid.threadlocal import get_current_registry
 
-def add_lock_service(root):
-    if not 'locks' in root:
+def add_lock_service(registry, root):
+    if 'locks' not in root:
         registry = get_current_registry()
         locks = registry.content.create('Lock Service')
         root.add_service('locks', locks, registry=registry)
