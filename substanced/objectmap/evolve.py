@@ -1,10 +1,9 @@
-import BTrees
-
-from substanced._compat import u
-
 from logging import getLogger
 
-from substanced.util import (
+import BTrees
+
+from .._compat import u
+from ..util import (
     get_acl,
     postorder,
     )
@@ -20,7 +19,7 @@ def oobtreeify_referencemap(registry, root): # pragma: no cover
         refset.src2target = BTrees.family64.OO.BTree(refset.src2target)
         refset.target2src = BTrees.family64.OO.BTree(refset.target2src)
 
-def oobtreeify_object_to_path(root): # pragma: no cover
+def oobtreeify_object_to_path(registry, root): # pragma: no cover
     objectmap = root.__objectmap__
     oobtree = BTrees.family64.OO.BTree
     objectmap.objectid_to_path = oobtree(objectmap.objectid_to_path)

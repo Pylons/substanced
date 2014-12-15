@@ -4,7 +4,6 @@ from pkg_resources import EntryPoint
 import transaction
 
 from pyramid.util import TopologicalSorter
-from pyramid.threadlocal import get_current_registry
 
 from ..interfaces import IEvolutionSteps
 from ..util import get_dotted_name
@@ -143,8 +142,7 @@ def add_evolution_step(config, func, before=None, after=None, name=None):
 VERSION = 10         # legacy
 NAME = 'substanced'  # legacy
 
-def legacy_to_new(root): # pragma: no cover
-    registry = get_current_registry()
+def legacy_to_new(registry, root): # pragma: no cover
     mgr = EvolutionManager(root, registry)
     finished_steps = mgr.get_finished_steps()
     zodb_root = mgr.get_zodb_root()
