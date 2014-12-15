@@ -88,7 +88,7 @@ class TestEvolutionManager(unittest.TestCase):
         root = DummyRoot()
         txn = DummyTransaction()
         inst = self._makeOne(root, None, txn)
-        def func(registry, context):
+        def func(context, registry):
             self.assertEqual(context, root)
         inst.get_unfinished_steps = lambda *arg: [('name', func)]
         log = []
@@ -105,7 +105,7 @@ class TestEvolutionManager(unittest.TestCase):
         root = DummyRoot()
         txn = DummyTransaction()
         inst = self._makeOne(root, None, txn)
-        def func(registry, context):
+        def func(context, registry):
             self.assertEqual(context, root)
         inst.get_unfinished_steps = lambda *arg: [('name', func)]
         log = []
@@ -118,6 +118,27 @@ class TestEvolutionManager(unittest.TestCase):
         self.assertEqual(txn.notes, ['Executed evolution step name'])
         self.assertEqual(txn.was_aborted, False)
 
+    def test_evolve_func_with_registry(self):
+        root = DummyRoot()
+        reg = DummyRegistry(None)
+        inst = self._makeOne(root, reg, None)
+        def func(context, registry):
+            """New evolution step API - accepts root, registry."""
+            self.assertEqual(context, root)
+            self.assertTrue(registry is reg)
+        inst.get_unfinished_steps = lambda *arg: [('name', func)]            
+        inst.evolve(False)
+
+    def test_evolve_func_without_registry_BBB(self):
+        root = DummyRoot()        
+        inst = self._makeOne(root, None, None)
+        def func(context):
+            """BBB Support old evolution steps."""
+            self.assertEqual(context, root)
+        inst.get_unfinished_steps = lambda *arg: [('name', func)]
+        inst.evolve(False)
+        
+        
 class Test_mark_unfinished_as_finished(unittest.TestCase):
     def _callFUT(self, app_root, registry, t):
         from .. import mark_unfinished_as_finished
@@ -214,7 +235,8 @@ class Test_add_evolution_step(unittest.TestCase):
             ({'after': 'substanced.evolution.tests.test_evolution.dummyafter',
               'name': 'substanced.evolution.tests.test_evolution.dummystep',
               'func': dummystep,
-              'before': 'substanced.evolution.tests.test_evolution.dummybefore'},
+              'before':
+                  'substanced.evolution.tests.test_evolution.dummybefore'},
              )
             )
         action['register']()
@@ -255,11 +277,11 @@ class Test_add_evolution_step(unittest.TestCase):
             ['fred'])
         self.assertEqual(iface, IEvolutionSteps)
 
-def dummystep(registry, root): pass
+def dummystep(root, registry): pass
 
-def dummybefore(registry, root): pass
+def dummybefore(root, registry): pass
 
-def dummyafter(registry, root): pass
+def dummyafter(root, registry): pass
    
 
 class DummyTransaction(object):

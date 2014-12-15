@@ -12,7 +12,7 @@ _marker = object()
 
 logger = logging.getLogger('evolution')
 
-def evolve(registry, root):
+def evolve(root, registry):
     logger.info(
         'Running substanced evolve step 9: reindex all allowed indices '
         'due to change in discriminator principal repr'

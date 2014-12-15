@@ -4,7 +4,7 @@ from substanced.audit import (
     )
 from substanced.util import postorder
 
-def remove_bogus_auditlogs(registry, root):
+def remove_bogus_auditlogs(root, registry):
     i = 0
     # Blow away even the root auditlog, as it will have references to
     # AuditLogEntry objects that inherit from Persistent
@@ -16,10 +16,10 @@ def remove_bogus_auditlogs(registry, root):
         if i % 1000 == 0:
             resource._p_jar.cacheGC()
 
-def add_root_auditlog(registry, root):
+def add_root_auditlog(root, registry):
     root.__auditlog__ = AuditLog()
 
-def use_external_db(registry, root):
+def use_external_db(root, registry):
     if hasattr(root, '__auditlog__'):
         del root.__auditlog__
     set_auditlog(root)

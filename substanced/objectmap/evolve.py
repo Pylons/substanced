@@ -12,20 +12,20 @@ _SLASH = u('/')
 
 logger = getLogger(__name__)
 
-def oobtreeify_referencemap(registry, root): # pragma: no cover
+def oobtreeify_referencemap(root, registry): # pragma: no cover
     objectmap = root.__objectmap__
     refmap = objectmap.referencemap.refmap
     for k, refset in refmap.items():
         refset.src2target = BTrees.family64.OO.BTree(refset.src2target)
         refset.target2src = BTrees.family64.OO.BTree(refset.target2src)
 
-def oobtreeify_object_to_path(registry, root): # pragma: no cover
+def oobtreeify_object_to_path(root, registry): # pragma: no cover
     objectmap = root.__objectmap__
     oobtree = BTrees.family64.OO.BTree
     objectmap.objectid_to_path = oobtree(objectmap.objectid_to_path)
     objectmap.path_to_objectid = oobtree(objectmap.path_to_objectid)
 
-def treesetify_objectmap_pathindex(registry, root): # pragma: no cover
+def treesetify_objectmap_pathindex(root, registry): # pragma: no cover
     # to avoid having huge pickles
     objectmap = root.__objectmap__
     pathindex = objectmap.pathindex
@@ -34,7 +34,7 @@ def treesetify_objectmap_pathindex(registry, root): # pragma: no cover
             treeset = objectmap.family.IF.TreeSet(not_treeset)
             not_treesets[d] = treeset
 
-def treesetify_referencesets(registry, root): # pragma: no cover
+def treesetify_referencesets(root, registry): # pragma: no cover
     # to avoid having huge pickles
     objectmap = root.__objectmap__
     refmap = objectmap.referencemap.refmap
@@ -46,7 +46,7 @@ def treesetify_referencesets(registry, root): # pragma: no cover
             if oidset.__class__ != refset.oidset_class:
                 refset.target2src[reftype] = refset.oidset_class(oidset)
 
-def add_path_to_acl_to_objectmap(registry, root):
+def add_path_to_acl_to_objectmap(root, registry):
     objectmap = root.__objectmap__
     objectmap.path_to_acl = objectmap.family.OO.BTree()
     logger.info('Populating path_to_acl in objectmap (expensive evolve step)')

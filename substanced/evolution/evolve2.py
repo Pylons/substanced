@@ -19,7 +19,7 @@ def _referenceable_principals(acl):
             result.add(principal_id)
     return result
 
-def evolve(registry, root):
+def evolve(root):
     logger.info(
         'Running substanced evolve step 2: add PRINCIPAL_TO_ACL_BEARING '
         'relationships'
