@@ -2,7 +2,7 @@ from substanced.catalog.indexes import PathIndex
 from substanced.util import get_dotted_name
 from substanced.objectmap import find_objectmap
 
-def treesetify_catalog_pathindexes(root): # pragma: no cover
+def treesetify_catalog_pathindexes(registry, root): # pragma: no cover
     # to avoid having huge pickles
     objectmap = find_objectmap(root)
 
