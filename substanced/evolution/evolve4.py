@@ -8,7 +8,7 @@ _marker = object()
 
 logger = logging.getLogger('evolution')
 
-def evolve(root):
+def evolve(root, registry):
     logger.info(
         'Running substanced evolve step 4: add an extentmap to the objectmap'
         )
