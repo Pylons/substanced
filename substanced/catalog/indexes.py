@@ -310,7 +310,7 @@ class IndexSchema(Schema):
         widget=deform.widget.RadioChoiceWidget(
             values=(
                 ('MODE_IMMEDIATE', 'Immediate'),
-                ('MODE_ATCOMMIT', 'Defer Until Commit'),
+                ('MODE_ATCOMMIT', 'At Commit'),
                 ('MODE_DEFERRED', 'Defer Until Action Processing'),
                 )
             )
