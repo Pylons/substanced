@@ -38,8 +38,8 @@ Substance D checkout.
   $ cd substanced
   $ ../env/bin/python setup.py dev
 
-- At that point, you should be able to create new Substance D projects by using
-  ``pcreate``::
+- At that point, you should be able to create new Substance D projects by
+  using ``pcreate``::
 
   $ cd ../env
   $ bin/pcreate -s substanced myproj
@@ -60,7 +60,7 @@ In order to add a feature to Substance D:
 - The feature must be documented in both the API and narrative
   documentation (in ``docs/``).
 
-- The feature must work fully on the following CPython versions: 2.6, 2.7, 
+- The feature must work fully on the following CPython versions: 2.6, 2.7,
   3.2, and 3.3 on both UNIX and Windows.
 
 - The feature must work on the latest version of PyPy.
@@ -80,7 +80,7 @@ Coding Style
 - PEP8 compliance.  Whitespace rules are relaxed: not necessary to put
   2 newlines between classes.  But 80-column lines, in particular, are
   mandatory. See 
-  http://docs.pylonsproject.org/en/latest/community/codestyle.html for more 
+  http://docs.pylonsproject.org/en/latest/community/codestyle.html for more
   information.
 
 - Please do not remove trailing whitespace.  Configure your editor to reduce
@@ -89,8 +89,8 @@ Coding Style
 Running Substance D Tests
 -------------------------
 
-To run the full test suite (your system will need Python 2.6, 2.7, 3.2, and 3.3
-to be installed):
+To run the full test suite (your system will need Python 2.6, 2.7, 3.2, and
+3.3 to be installed):
 
 - Install "tox" (``easy_install tox``).
 
@@ -110,15 +110,16 @@ To run coverage tests for a single version of Python:
 
 - To run individual tests (i.e. during development) you can use a regular
   expression with the ``-t`` parameter courtesy of the `nose-selecttests
-  <https://pypi.python.org/pypi/nose-selecttests/>`_ plugin that's been 
-  installed (along with nose itself) via ``python setup.py dev``. The 
-  easiest usage is to simply provide the verbatim name of the test you're 
+  <https://pypi.python.org/pypi/nose-selecttests/>`_ plugin that's been
+  installed (along with nose itself) via ``python setup.py dev``. The
+  easiest usage is to simply provide the verbatim name of the test you're
   working on.
 
 Internalization (adding/updating languages)
 -------------------------------------------
 
-The Transifex project should be used for translations: https://www.transifex.com/projects/p/substanced/resource/master/
+The Transifex project should be used for translations:
+https://www.transifex.com/projects/p/substanced/resource/master/
 
 Before you can do anything related to translations, there is small setup:
 
@@ -126,21 +127,24 @@ Before you can do anything related to translations, there is small setup:
 
 To update Transifex with new translations:
 
-- Run ``python setup.py extract_messages`` to populate `substanced.pot`
+- Run ``python setup.py extract_messages`` to populate `substanced.pot`.
 
-- Run ``python setup.py update_catalog`` to update translation strings in existing .po files
+- Run ``python setup.py update_catalog`` to update translation strings in
+  existing .po files.
 
-- Run ``tx push -t -s`` to push translation files to Transifex to be translated 
+- Run ``tx push -t -s`` to push translation files to Transifex to be
+  translated.
 
-- Notify translators through Transifex
+- Notify translators through Transifex.
 
-To fetch translated files from Transifex: 
+To fetch translated files from Transifex:
 
-- Run ``tx pull`` to update .po files with translations
+- Run ``tx pull`` to update .po files with translations.
 
-- Run ``python setup.py compile_catalog`` to update .mo files
+- Run ``python setup.py compile_catalog`` to update .mo files.
 
-- Run `git commit -m "Update catalog" substanced/locales` to commit changes (don't forget to submit changes upstream)
+- Run `git commit -m "Update catalog" substanced/locales` to commit changes
+  (don't forget to submit changes upstream).
 
 To add a new language:
 
