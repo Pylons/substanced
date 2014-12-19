@@ -99,4 +99,10 @@ See `Hacking on Substance D
 <https://github.com/Pylons/substanced/blob/master/HACKING.txt>`_, or look in
 your checked out local git repository for ``HACKING.txt``, for information and
 guidelines to develop your application, including testing and
-internationalization.
+internationalization. For convenience ``HACKING.txt`` is included below, but
+note that lines 6-54 are redundant to the previous section.
+
+.. literalinclude:: ../HACKING.txt
+   :language: rst
+   :linenos:
+   :emphasize-lines: 6-54
