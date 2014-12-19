@@ -109,8 +109,8 @@ def add_evolution_step(config, func, before=None, after=None, name=None):
     ``func`` should be a function that performs the evolution logic.
     It should accept two arguments (conventionally-named) ``root`` and
     ``registry.  ``root`` will be the root of the ZODB used to serve
-    your Substance D site, and ``registry`` will be the :ref:`pyramid`
-    application registry.
+    your Substance D site, and ``registry`` will be the Pyramid application
+    registry.
 
     ``before`` should either be ``None``, another evolution step function, or
     the dotted name to such a function.  By default, it is ``None``, which

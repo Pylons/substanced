@@ -15,54 +15,13 @@ It requires Python 2.6, 2.7, 3.2, 3.3, or 3.4.
 
 Installation
 ------------
-
-Install using setuptools, e.g. (within a virtualenv)::
-
-  $ easy_install substanced
-
-.. warning:: 
-
-   During Substance D's pre-alpha period, it may be necessary to use a checkout
-   of Substance D as well as checkouts of the most recent versions of the
-   libraries upon which Substance D depends.
-
-.. _optional_dependencies:
-
-Optional Dependencies
----------------------
-
-Use of the :py:attr:`substanced.file.USE_MAGIC`
-constant for guessing file types
-from stream content requires the ``python-magic`` library, which works without
-extra help on Linux systems, but requires special dependency installations on
-Mac OS and Windows systems.  You'll need to follow these steps on those
-platforms to use this feature:
-
-Mac OS X
-
-  http://www.brambraakman.com/blog/comments/installing_libmagic_in_mac_os_x_for_python-magic/
-
-Windows
-
-  "Installation on Win32" in https://github.com/ahupp/python-magic
+See :doc:`install`.
 
 Demonstration Application
---------------------------
+-------------------------
 
 See the application running at http://demo.substanced.net for a demonstration
-of the Substance D management interface. 
-
-To deploy the demo locally, run ``pcreate -s substanced myproj`` after 
-installing Substance D. That creates a ``myproj`` directory and installs
-the ``substanced`` scaffold in it. To run it, change into ``mpyproj`` and
-execute ``pserve development.ini``. The development server listens to 
-requests sent to ``http://0.0.0.0:6543`` by default. The initial password 
-for the admin user is generated randomly. Use something like ``grep initial_password *.ini`` 
-in ``myproj`` directory to see the password. Output should looks like::
-
-    $ grep initial_password *.ini
-    development.ini:substanced.initial_password = 4vGhUPuDCr
-    production.ini:substanced.initial_password = 4vGhUPuDCr
+of the Substance D management interface.
 
 Narrative Documentation
 -----------------------
@@ -70,6 +29,7 @@ Narrative Documentation
 .. toctree::
    :maxdepth: 1
 
+   install
    intro
    sdi
    content
