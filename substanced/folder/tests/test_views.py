@@ -1,4 +1,4 @@
-from __future__ import unicode_literals
+
 import sys
 import colander
 import unittest
