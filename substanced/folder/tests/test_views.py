@@ -2,10 +2,7 @@
 import sys
 import colander
 import unittest
-try:
-    from io import StringIO
-except:
-    from cStringIO import StringIO
+from io import StringIO
 from pyramid import testing
 from pyramid.httpexceptions import HTTPFound
 import mock
