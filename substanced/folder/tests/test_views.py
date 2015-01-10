@@ -2101,30 +2101,30 @@ class Test_multi_upload_submit(unittest.TestCase):
         context = request.registry.content = DummyContent()
         result = self._callFUT(context, request)
         self.assertEqual(result, {'files': []})
-    
+
     def test_upload(self):
         import substanced.folder.views
         substanced.folder.views._makeob = mock.Mock(
             return_value='FILE'
             )
         dummyFileParam = Dummy(
-            type = 'TYPE',
-            filename = 'FILENAME',
-            file = StringIO('CONTENT'),
+            type='TYPE',
+            filename='FILENAME',
+            file=StringIO(u('CONTENT')),
             )
         dummyFileParam.create = mock.Mock(
             return_value={},
             )
         request = testing.DummyRequest({
-             'file1': dummyFileParam,
+            'file1': dummyFileParam,
             })
         context = request.registry.content = {}
         result = self._callFUT(context, request)
         self.assertEqual(result, {
             'files': [{
-               'name': 'filename',
-               'size': 7
-               }]
+                'name': 'filename',
+                'size': 7
+                }]
             })
 
     def test_upload_nostream(self):
@@ -2133,23 +2133,23 @@ class Test_multi_upload_submit(unittest.TestCase):
             return_value='FILE'
             )
         dummyFileParam = Dummy(
-            type = 'TYPE',
-            filename = 'FILENAME',
-            file = None,
+            type='TYPE',
+            filename='FILENAME',
+            file=None,
             )
         dummyFileParam.create = mock.Mock(
             return_value={},
             )
         request = testing.DummyRequest({
-             'file1': dummyFileParam,
+            'file1': dummyFileParam,
             })
         context = request.registry.content = {}
         result = self._callFUT(context, request)
         self.assertEqual(result, {
             'files': [{
-               'name': 'filename',
-               'size': 0
-               }]
+                'name': 'filename',
+                'size': 0
+                }]
             })
 
     def test_upload_multiple(self):
@@ -2158,25 +2158,25 @@ class Test_multi_upload_submit(unittest.TestCase):
             return_value='FILE'
             )
         dummyFileParam1 = Dummy(
-            type = 'TYPE1',
-            filename = 'FILENAME1',
-            file = StringIO('CONTENT1'),
+            type='TYPE1',
+            filename='FILENAME1',
+            file=StringIO(u('CONTENT1')),
             )
         dummyFileParam1.create = mock.Mock(
             return_value={},
             )
         dummyFileParam2 = Dummy(
-            type = 'TYPE2',
-            filename = 'FILENAME2',
-            file = StringIO('CONTENT02'),
+            type='TYPE2',
+            filename='FILENAME2',
+            file=StringIO(u('CONTENT02')),
             )
         dummyFileParam2.create = mock.Mock(
             return_value={},
             )
         dummyFileParam3 = Dummy(
-            type = 'TYPE3',
-            filename = 'FILENAME3',
-            file = StringIO('CONTENT003'),
+            type='TYPE3',
+            filename='FILENAME3',
+            file=StringIO(u('CONTENT003')),
             )
         dummyFileParam3.create = mock.Mock(
             return_value={},
@@ -2193,16 +2193,16 @@ class Test_multi_upload_submit(unittest.TestCase):
         self.assertEqual(list(result.keys()), ['files'])
         self.assertEqual(len(result['files']), 3)
         self.assertEqual(result['files'][0], {
-           'name': 'filename1',
-           'size': 8,
+            'name': 'filename1',
+            'size': 8,
         })
         self.assertEqual(result['files'][1], {
-           'name': 'filename2',
-           'size': 9,
+            'name': 'filename2',
+            'size': 9,
         })
         self.assertEqual(result['files'][2], {
-           'name': 'filename3',
-           'size': 10,
+            'name': 'filename3',
+            'size': 10,
         })
 
 class DummyContainer(object):
