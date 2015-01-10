@@ -42,12 +42,14 @@ from . import FolderKeyError
 
 _marker = object()
 
+re_word = re.compile(r'\W+')
+
 def slugify_in_context(context, name, remove_extension=True):
     if remove_extension:
         name = os.path.splitext(name)[0]
 
     slug = unidecode.unidecode(name).lower()
-    orig = slug = re.sub(r'\W+', '-', slug)
+    orig = slug = re_word.sub('-', slug)
     i = 1
     while True:
         if slug not in context:
