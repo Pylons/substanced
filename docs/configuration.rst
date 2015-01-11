@@ -69,9 +69,10 @@ make sure that you:
   connections
 
 Next, we'll make some changes to some of the configuration files. In
-your ``setup.py``, indicate that you need the ``RelStorage`` package as
-the ``psycopg2`` Python binding for PostgreSQL. This presumes that the
-binaries for the PostgreSQL client are available on your path.
+your ``setup.py``, indicate that you need the ``RelStorage`` package
+as well as the ``psycopg2`` Python binding for PostgreSQL. This
+presumes that the binaries for the PostgreSQL client are available on
+your path.
 
 In your configuration file (e.g. ``production.ini``), the
 ``[app:main]`` section should have::
