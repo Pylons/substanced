@@ -29,7 +29,7 @@ Introduction
 	"What?" Fred said. He did not understand the answer-- was it yes or no?
 	Was he damaged forever or not? Which had they said?
 
-      -- Phillip K. Dick, A Scanner Darkly
+      -- Philip K. Dick, A Scanner Darkly
 
 
 Substance D is an application server.  It provides the following features:
