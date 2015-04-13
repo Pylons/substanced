@@ -1,0 +1,222 @@
+
+/* 
+ * Styles for multi upload page.
+ *
+ * Provided in plain CSS for simplicity.
+ */
+
+
+/* Global progress bar */
+
+#progress {
+    margin-top: 0.5em;
+}
+@media (max-width: 767px) {
+    /* wrapping state */ 
+    #progress {
+        margin-bottom: 0;
+        margin-top: 1.0em;
+    }
+}
+
+.deleted .file-in-progress,
+.alert.deleted {
+    -webkit-animation: disappear 0.45s;
+    -webkit-animation-fill-mode: forwards;
+    animation: disappear 0.45s;
+    animation-fill-mode: forwards;
+}
+
+@-webkit-keyframes disappear {
+    15% {
+        -webkit-transform: translateX(-5%);
+        transform: translateX(-5%);
+    }
+    100% {
+        -webkit-transform: translateX(200%);
+        transform: translateX(200%);
+    }
+}
+
+@keyframes disappear {
+    15% {
+        -webkit-transform: translateX(-5%);
+        transform: translateX(-5%);
+    }
+    100% {
+        -webkit-transform: translateX(200%);
+        transform: translateX(200%);
+    }
+}
+
+/* main toolbar only shown if we are capable */
+
+#fileupload-fixable-wrapper {
+    z-index: 1;
+    /* Bacground is for covering the gap
+     * between #fileupload-messages and #fileupload-toolbar.
+     */
+    background: white;
+    display: none;
+}
+
+body.file-upload #fileupload-fixable-wrapper {
+    display: block;
+}
+
+.not-supported-message {
+    display: inline-block;
+    text-align: center;
+    margin: 3em;
+}
+
+body.file-upload .not-supported-message {
+    display: none;
+}
+
+/* fix padding of the fileupload toolbar */
+#fileupload-toolbar > div {
+    padding: 0;
+}
+
+#fileupload-buttons {
+    float: left;
+    margin-right: 1em;
+}
+
+#fileupload-global-info {
+    margin-right: 0.5em;
+}
+
+#fileupload-global-size {
+    margin-right: 0.5em;
+}
+
+
+/* Info bar for a file in progress */
+
+.file-in-progress {
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+}
+
+@media (min-width: 768px) {
+    #files .file-in-progress {
+        /* Not sure why the left and right compensations are needed,
+         * afaik 'row' would be just good here, but it isn't.
+         */
+        margin-left: -10px;
+        margin-right: 20px;
+    }
+}
+
+.file-in-progress .left-col {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.file-in-progress .file-info {
+    vertical-align: middle;
+    display: block;
+    position: relative;
+    top: 1em;
+}
+
+.file-in-progress .file-info .file-name {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: bold;
+}
+
+.file-in-progress .file-info .file-name-link:hover {
+    color: #2b629f;
+    text-decoration: none;
+    border-bottom: none;
+}
+
+.file-in-progress .file-info .file-modified {
+    float: left;
+}
+
+/* file modification is hidden at very small sizes,
+ * to avoid that it overlaps with the file size.
+ */
+@media(max-width: 475px) {
+    .file-modified {
+        display: none;
+    }
+}
+
+.file-in-progress .file-info .file-size {
+    float: right;
+}
+
+.file-in-progress .file-icon {
+    /* pad out from 48px to 65px */
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    /* hide it behind an image preview, if there is one */
+    z-index: -1;
+}
+
+.file-in-progress .canvas-wrapper {
+    margin-right: 20px;
+    height: 65px;
+    width: 65px;
+    /* positioning parent for mimetype icon */
+    position: relative;
+}
+
+.file-in-progress .progress {
+    margin-bottom: 0;
+    margin-top: 22px;
+    /* line height to same as bar height */
+    line-height: 20px;
+}
+
+.file-in-progress .remove-button {
+    height: 35px;
+    /* (65px - 35px) / 2 = 15px */
+    margin: 15px;
+    float: left;
+}
+
+
+/* drop message: show only when both file upload and dnd is possible */
+
+.drop-message {
+    margin-top: 2em;
+    margin-bottom: 1em;
+    display: none;
+}
+
+html.draganddrop body.file-upload .drop-message {
+    display: block;
+}
+
+/* gray it out, when we cannot drop */
+body.add-files-disabled .drop-message {
+    color: #cecece;
+}
+
+/* 
+ * drop zone effect.
+ * All areas that override background, should also be
+ * colored, for a nice result.
+ */
+
+body.dropzone,
+body.dropzone .progress,
+body.dropzone .navbar,
+body.dropzone #fileupload-toolbar,
+body.dropzone .active > a {
+    background: #efebd3;
+    -webkit-transition: all 0.3s ease-out;
+    -moz-transition: all 0.3s ease-out;
+    -ms-transition: all 0.3s ease-out;
+    -o-transition: all 0.3s ease-out;
+    transition: all 0.3s ease-out;
+}

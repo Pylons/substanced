@@ -1,0 +1,94 @@
+
+Multi file upload notes
+
+
+Multi file upload is part of substanced.folder.
+
+Multi file upload integrates jQuery-FileUpload
+https://github.com/blueimp/jQuery-File-Upload.
+
+Some notes on decisions taken in the implementation:
+
+1. We do not support the Iframe Transport plugin, consequently
+   we do not support IE<10 versions. I would suggest
+   to drop support for IE9 and smaller versions in general.
+   Before that, these browsers will display a disabled Upload tab.
+   Users of IE<10 will be able to upload files the old way, by adding
+   a File content object, but won't be able to take advantage
+   of multi file upload.
+
+2. We support single file upload payload only, initially.
+   Multi file upload (multipart request payload)
+   could be supported in the future, as it could scale better for
+   many (>100) small files uploaded at the same time. It would not have any
+   advantage with other than this edge case.
+
+3. We do not support pre-file Start Upload and Abort buttons (as seen on the
+   official demos of JQuery-File-Upload), there is only a
+   global Upload and Abort button. I experimented
+   with the direction of per-file control
+   (during the PyCon Montreal 2014 sprint), and found out,
+   that it would complicate the code quite a bit, but bring little or no
+   real advantage for the end user.
+
+4. The supported upload workflow
+
+   a. Go to the Upload tab of a folder.
+   b. Add some files.
+   c. Optionally, cancel some files by pressing the Cancel button.
+   d. Repeat a. and b., until needed.
+   e. Press the Upload button to upload all files.
+   f. Observe progress during the upload.
+   g. Optionally, press the Abort button to abort an ongoing upload.
+   h. Or, wait until the upload completes.
+   i. Optionally, dismiss the status box (and the uploaded files
+      with it) from the page.
+   j. Repeat the whole procedure, until desired.
+
+5. When an upload is completed, the file name becomes a shortcut
+   link to the uploaded file in the SDI. This link is opened in a new
+   window (target="_blank") instead of the same one. This is needed, because 
+   if we opened the link in the same window, and then returned to the current
+   page via the Back button, we would find that all files are disappeared from
+   the page. This would be rightfully considered a critical bug.
+   Opening the link in a new window circumvents this issue.
+
+6. How to add files
+
+    a. By clicking on Add button.
+
+    b. By dragging and dropping files from the desktop, not available on touch devices.
+
+    c. Multiple files or entire folders can be added. The content of folders
+       is flattened in the upload (folder structure is not created, instead each
+       file is simply uploaded into the current dorectory.
+
+    d. Added files show their name, size, the date of last modification, and in
+       case of images, a thumbnail. This appears immediately upon adding the file.
+
+    e. If a filename already exists in a folder, the uploaded file will be created with
+       a folder key (id) that is slugified from the original
+       file name, and if needed, numbered to be guaranteed unique
+       within the upload folder. All uploaded files are kept as separately
+       numbered versions, and they can be deleted manually from the Contents tab
+       if needed. This also means that we do not check for duplicate files. If the same
+       file is added multiple times, itt will be uploaded multiple times.
+
+7. We do not support dropping images from another web page. Because 
+   of the same origin policy, adding images by dragging and dropping from
+   an external website would require a server side proxy. This can be added
+   at some point in the future, but it would actually make a feature on its
+   own that would also work from any folder page such as Content.
+
+8. Audio and video preview plugins are disabled. Currently only the images
+   are previewable. Supporting audio or video preview would be possible at
+   some point in the future. It would require additional work on the design
+   and css to include the audio and video preview plugins.
+
+9. I included a customized version of Modernizr for detecting dnd device
+   capabilities. (I will also propose to include Modernizr from master.pt
+   on another branch.)
+
+10. I included momentjs for displaying the last modification date of the
+    files. (I will also propose to include momentjs from master.pt on another
+    branch.)

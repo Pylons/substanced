@@ -1,0 +1,24 @@
+{
+    "name": "substanced-folder-generate",
+    "version": "0.0.0",
+    "description": "Generate resources for the python package substanced.folder",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/Pylons/substanced"
+    },
+    "devDependencies": {
+        "napa": "*",
+        "load-grunt-tasks": "*",
+        "grunt-cli": "*",
+        "grunt": "*",
+        "phantomjs": "*",
+        "grunt-spritesmith": "*",
+        "grunt-banner": "*"
+    },
+    "scripts": {
+        "postinstall": "napa; grunt install"
+    },
+    "napa": {
+        "free-file-icons": "https://github.com/teambox/Free-file-icons.git"
+    }
+}

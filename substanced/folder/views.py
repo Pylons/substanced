@@ -1,8 +1,9 @@
+
 import functools
 import itertools
 import operator
 import re
-
+import os
 import colander
 import venusian
 
@@ -24,6 +25,7 @@ from substanced.util import (
     get_icon_name,
     )
 from substanced._compat import u
+from substanced.file import USE_MAGIC
 
 from ..sdi import (
     default_sdi_addable,
@@ -31,6 +33,7 @@ from ..sdi import (
     sdi_mgmt_views,
     RIGHT,
     )
+from .util import slugify_in_context
 from ..util import _
 
 from . import FolderKeyError
@@ -1439,7 +1442,63 @@ def add_folder_contents_views(
         check_csrf=True,
         attr='reorder_rows',
         )
-        
+
+@mgmt_view(
+    context=IFolder,
+    name='upload',
+    tab_title=_('Upload'),
+    tab_condition=True,
+    tab_after='contents',
+    permission='sdi.add-content',
+    renderer='substanced.folder:templates/multiupload.pt'
+    )
+def multi_upload(context, request):
+    return {}
+
+def _makeob(request, stream, title, mimetype):
+    return request.registry.content.create(
+        'File',
+        stream=stream,
+        mimetype=mimetype,
+        title=title,
+        )
+
+@mgmt_view(
+    context=IFolder,
+    name='upload-submit',
+    request_method='POST',
+    renderer='json',
+    tab_condition=False,
+    permission='sdi.add-content',
+    )
+def multi_upload_submit(context, request):
+    # print('in multi_upload_submit')
+    result = {'files': []}
+    for filedata in request.params.values():
+        mimetype = filedata.type or USE_MAGIC
+        filename = filedata.filename
+        stream = filedata.file
+        if stream:
+            stream.seek(0, 2)
+            size = stream.tell()
+            stream.seek(0)
+        else:
+            stream = None
+            size = 0
+        # convert filename to a readable, unique name
+        name = slugify_in_context(context, filename)
+        # print('multi_upload', name, size)
+        # create the title, defaulting to name
+        title = name
+        # create and store the File content object
+        context[name] = _makeob(request, stream, title, mimetype)
+        # produce data for the client
+        result['files'].append({
+            'name': name,
+            'size': size,
+        })
+    return result
+
 def includeme(config): # pragma: no cover
     config.add_directive(
         'add_folder_contents_views',
