@@ -93,13 +93,10 @@ def catalog_buttons(context, request, default_buttons):
 @implementer(ICatalog)
 class Catalog(Folder):
     
-    family = BTrees.family64
     transaction = transaction
     
     def __init__(self, family=None):
-        Folder.__init__(self)
-        if family is not None:
-            self.family = family
+        Folder.__init__(self, family=family)
         self.reset()
 
     def __sdi_addable__(self, context, introspectable):
