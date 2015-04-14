@@ -7,13 +7,11 @@ from pyramid.httpexceptions import (
 from .. import (
     mgmt_view,
     sdi_mgmt_views,
-    sdi_add_views,
     )
 
 class ManagementViews(object):
     # these defined as staticmethods only for test overriding
     sdi_mgmt_views = staticmethod(sdi_mgmt_views)
-    sdi_add_views = staticmethod(sdi_add_views)
     
     def __init__(self, context, request):
         self.context = context

@@ -37,7 +37,7 @@ def main():
             'Title of blog entry %s' % n,
             LOREM_IPSUM,
             'html',
-            datetime.date.today(),
+            datetime.datetime.now(),
             )
         id = 'blogentry_%s' % n
         root[id] = entry

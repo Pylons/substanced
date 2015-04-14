@@ -1,25 +1,25 @@
-# Translations template for substanced.
+# Slovenian translations for substanced.
 # Copyright (C) 2013 ORGANIZATION
 # This file is distributed under the same license as the substanced project.
-# 
+#
 # Translators:
 # iElectric <domen@dev.si>, 2013
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2013
-# iElectric <domen@dev.si>, 2013
 msgid ""
 msgstr ""
-"Project-Id-Version: SubstanceD\n"
+"Project-Id-Version:  SubstanceD\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-11-15 17:53+0100\n"
+"POT-Creation-Date: 2014-06-10 09:22+0200\n"
 "PO-Revision-Date: 2013-11-15 16:55+0000\n"
 "Last-Translator: iElectric <domen@dev.si>\n"
-"Language-Team: Slovenian (http://www.transifex.com/projects/p/substanced/language/sl/)\n"
+"Language-Team: Slovenian "
+"(http://www.transifex.com/projects/p/substanced/language/sl/)\n"
+"Plural-Forms: nplurals=4; plural=(n%100==1 ? 0 : n%100==2 ? 1 : n%100==3 "
+"|| n%100==4 ? 2 : 3)\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 1.3\n"
-"Language: sl\n"
-"Plural-Forms: nplurals=4; plural=(n%100==1 ? 0 : n%100==2 ? 1 : n%100==3 || n%100==4 ? 2 : 3);\n"
 
 #: substanced/audit/views.py:29
 msgid "Auditing"
@@ -33,7 +33,7 @@ msgstr "Reviziraj dogodke"
 msgid "Id"
 msgstr "Id"
 
-#: substanced/audit/templates/auditing.pt:16 substanced/folder/views.py:300
+#: substanced/audit/templates/auditing.pt:16 substanced/folder/views.py:303
 msgid "Name"
 msgstr "Ime"
 
@@ -157,8 +157,8 @@ msgid "Show summary of pending evolve steps (finished/unfinished)"
 msgstr ""
 
 #: substanced/db/templates/db.pt:67
-msgid "Show summary"
-msgstr "Prikaži povzetek"
+msgid "Summarize"
+msgstr ""
 
 #: substanced/db/templates/db.pt:77
 msgid "Details"
@@ -178,14 +178,14 @@ msgstr "Velikost"
 
 #: substanced/db/templates/db.pt:95
 msgid ""
-"Number of objects that the connections' cache will try to keep around before"
-" LRU pruning"
+"Number of objects that the connections' cache will try to keep around "
+"before LRU pruning"
 msgstr ""
 
 #: substanced/db/templates/db.pt:99
 msgid ""
-"Estimated byte size sum of objects that the connections' cache will try to "
-"keep around before LRU pruning (0 means unlimited)"
+"Estimated byte size sum of objects that the connections' cache will try "
+"to keep around before LRU pruning (0 means unlimited)"
 msgstr ""
 
 #: substanced/db/templates/db.pt:103
@@ -258,44 +258,44 @@ msgstr "Uporabljeno dne"
 msgid "Mark as unfinished"
 msgstr "Označi kot nedokončano"
 
-#: substanced/folder/views.py:133
+#: substanced/folder/views.py:137
 msgid "Add Folder"
 msgstr "Dodaj mapo"
 
-#: substanced/folder/views.py:170
+#: substanced/folder/views.py:173
 msgid "Copy here"
 msgstr "Kopiraj sem"
 
-#: substanced/folder/views.py:175 substanced/folder/views.py:189
+#: substanced/folder/views.py:178 substanced/folder/views.py:192
 #: substanced/folder/templates/rename.pt:49
 msgid "Cancel"
 msgstr "Prekliči"
 
-#: substanced/folder/views.py:184
+#: substanced/folder/views.py:187
 msgid "Move here"
 msgstr "Premakni sem"
 
-#: substanced/folder/views.py:238
+#: substanced/folder/views.py:241
 msgid "Rename"
 msgstr "Preimenuj"
 
-#: substanced/folder/views.py:243
+#: substanced/folder/views.py:246
 msgid "Copy"
 msgstr "Kopiraj"
 
-#: substanced/folder/views.py:249
+#: substanced/folder/views.py:252
 msgid "Move"
 msgstr "Premakni"
 
-#: substanced/folder/views.py:254
+#: substanced/folder/views.py:257
 msgid "Duplicate"
 msgstr "Podvoji"
 
-#: substanced/folder/views.py:265
+#: substanced/folder/views.py:268
 msgid "Delete"
 msgstr "Izbriši"
 
-#: substanced/folder/views.py:762
+#: substanced/folder/views.py:764
 msgid "Deleted ${num} item"
 msgid_plural "Deleted ${num} items"
 msgstr[0] "Pobrisan ${num} vnos"
@@ -303,7 +303,7 @@ msgstr[1] "Pobrisana ${num} vnosa"
 msgstr[2] "Pobrisani ${num} vnosi"
 msgstr[3] "Pobrisanih ${num} vnosov"
 
-#: substanced/folder/views.py:778
+#: substanced/folder/views.py:780
 msgid "Duplicated ${num} item"
 msgid_plural "Duplicated ${num} items"
 msgstr[0] "Podvojil ${num} vnos"
@@ -311,11 +311,11 @@ msgstr[1] "Podvojil ${num} vnosa"
 msgstr[2] "Podvojil ${num} vnosov"
 msgstr[3] "Podvojil ${num} vnosov"
 
-#: substanced/folder/views.py:798
+#: substanced/folder/views.py:800
 msgid "No items renamed"
 msgstr "Ni preimenovanih vnosov"
 
-#: substanced/folder/views.py:815
+#: substanced/folder/views.py:817
 msgid "Renamed ${num} item"
 msgid_plural "Renamed ${num} items"
 msgstr[0] "Preimenoval ${num} vnos"
@@ -323,19 +323,19 @@ msgstr[1] "Preimenoval ${num} vnosa"
 msgstr[2] "Preimenoval ${num} vnosov"
 msgstr[3] "Preimenoval ${num} vnosov"
 
-#: substanced/folder/views.py:831
+#: substanced/folder/views.py:833
 msgid "Choose where to copy the items:"
 msgstr "Izberi kam skopiram vnose:"
 
-#: substanced/folder/views.py:833
+#: substanced/folder/views.py:835
 msgid "No items to copy"
 msgstr "Ni skopiranih vnosov"
 
-#: substanced/folder/views.py:840
+#: substanced/folder/views.py:842
 msgid "No items copied"
 msgstr "Ni prekopiral vnosov"
 
-#: substanced/folder/views.py:867
+#: substanced/folder/views.py:869
 msgid "Copied ${num} item"
 msgid_plural "Copied ${num} items"
 msgstr[0] "Kopiral ${num} vnos"
@@ -343,19 +343,19 @@ msgstr[1] "Kopiral ${num} vnosa"
 msgstr[2] "Kopiral ${num} vnosov"
 msgstr[3] "Kopiral ${num} vnosov"
 
-#: substanced/folder/views.py:883
+#: substanced/folder/views.py:885
 msgid "Choose where to move the items:"
 msgstr "Izberi kam skopiram vnose:"
 
-#: substanced/folder/views.py:885
+#: substanced/folder/views.py:887
 msgid "No items to move"
 msgstr "Ni vnosov za premaknit"
 
-#: substanced/folder/views.py:892
+#: substanced/folder/views.py:894
 msgid "No items moved"
 msgstr ""
 
-#: substanced/folder/views.py:919
+#: substanced/folder/views.py:921
 msgid "Moved ${num} item"
 msgid_plural "Moved ${num} items"
 msgstr[0] "Premaknil ${num} vnos"
@@ -363,23 +363,31 @@ msgstr[1] "Premaknil ${num} vnosa"
 msgstr[2] "Premaknil ${num} vnosov"
 msgstr[3] "Premaknil ${num} vnosov"
 
-#: substanced/folder/views.py:932
+#: substanced/folder/views.py:934
 msgid "${i} rows moved."
 msgstr ""
 
-#: substanced/folder/views.py:961
+#: substanced/folder/views.py:966
 msgid ""
 "\"${obj_name}\" is of a type (${obj_type}) that is not addable here, "
 "refusing to copy"
-msgstr "\"${obj_name}\" je tipa (${obj_type}), ki se ga ne da dodati sem. Zavračam kopiranje."
+msgstr ""
+"\"${obj_name}\" je tipa (${obj_type}), ki se ga ne da dodati sem. "
+"Zavračam kopiranje."
 
-#: substanced/folder/views.py:964
+#: substanced/folder/views.py:970
 msgid ""
 "\"${obj_name}\" is of a type (${obj_type}) that is not addable here, "
 "refusing to move"
-msgstr "\"${obj_name}\" je tipa (${obj_type}), ki se ga ne da dodati sem. Zavračam premikanje."
+msgstr ""
+"\"${obj_name}\" je tipa (${obj_type}), ki se ga ne da dodati sem. "
+"Zavračam premikanje."
 
-#: substanced/folder/views.py:990
+#: substanced/folder/views.py:1055
+msgid "Services"
+msgstr ""
+
+#: substanced/folder/views.py:1115
 msgid "Contents"
 msgstr "Vsebina"
 
@@ -437,10 +445,11 @@ msgstr "Integrity Error"
 
 #: substanced/objectmap/templates/integrityerror.pt:8
 msgid ""
-"Sorry, the object ${link} you've attempted to remove could not be removed "
-"due to an integrity error for the reference type ${reftype}. Below is a list"
-" of objects that refer to (or are refered to by) the object you're trying to"
-" remove. Disconnect these references before attempting to delete the object."
+"Sorry, the object ${link} you've attempted to remove could not be removed"
+" due to an integrity error for the reference type ${reftype}. Below is a "
+"list of objects that refer to (or are refered to by) the object you're "
+"trying to remove. Disconnect these references before attempting to delete"
+" the object."
 msgstr ""
 
 #: substanced/objectmap/templates/referenced.pt:15
@@ -478,82 +487,82 @@ msgstr "Sdi naslov"
 msgid "Invalid cross-site scripting token"
 msgstr ""
 
-#: substanced/sdi/views/acl.py:47 substanced/sdi/views/acl.py:56
-#: substanced/sdi/views/acl.py:61 substanced/sdi/views/acl.py:72
-#: substanced/sdi/views/acl.py:83 substanced/sdi/views/acl.py:93
-#: substanced/sdi/views/acl.py:130
+#: substanced/sdi/views/acl.py:49 substanced/sdi/views/acl.py:58
+#: substanced/sdi/views/acl.py:63 substanced/sdi/views/acl.py:74
+#: substanced/sdi/views/acl.py:85 substanced/sdi/views/acl.py:95
+#: substanced/sdi/views/acl.py:143
 msgid "Security"
 msgstr "Varnost"
 
-#: substanced/sdi/views/undo.py:70 substanced/sdi/views/undo.py:111
+#: substanced/sdi/views/undo.py:70 substanced/sdi/views/undo.py:113
 msgid "Could not undo, sorry"
 msgstr "Žal ni bilo mogoče razveljaviti"
 
-#: substanced/sdi/views/undo.py:146 substanced/sdi/views/templates/undo.pt:64
+#: substanced/sdi/views/undo.py:148 substanced/sdi/views/templates/undo.pt:64
 #: substanced/sdi/views/templates/undobutton.pt:1
 msgid "Undo"
 msgstr "Razveljavi"
 
-#: substanced/sdi/views/templates/acl.pt:61
+#: substanced/sdi/views/templates/acl.pt:49
 msgid "Local ACL"
 msgstr "Lokalni seznam za kontrolo dostopa"
 
-#: substanced/sdi/views/templates/acl.pt:70
-#: substanced/sdi/views/templates/acl.pt:266
+#: substanced/sdi/views/templates/acl.pt:58
+#: substanced/sdi/views/templates/acl.pt:254
 msgid "Allow / Deny"
 msgstr "Dovoli / Zavrni"
 
-#: substanced/sdi/views/templates/acl.pt:71
-#: substanced/sdi/views/templates/acl.pt:267
+#: substanced/sdi/views/templates/acl.pt:59
+#: substanced/sdi/views/templates/acl.pt:255
 msgid "Principal"
 msgstr "Varnostni subjekt"
 
-#: substanced/sdi/views/templates/acl.pt:72
-#: substanced/sdi/views/templates/acl.pt:268
+#: substanced/sdi/views/templates/acl.pt:60
+#: substanced/sdi/views/templates/acl.pt:256
 msgid "Permissions"
 msgstr "Dovoljenja"
 
-#: substanced/sdi/views/templates/acl.pt:73
+#: substanced/sdi/views/templates/acl.pt:61
 msgid "Control"
 msgstr "Nadzor"
 
-#: substanced/sdi/views/templates/acl.pt:135
+#: substanced/sdi/views/templates/acl.pt:123
 msgid "${button} Allow"
 msgstr "${button} Dovoli"
 
-#: substanced/sdi/views/templates/acl.pt:145
+#: substanced/sdi/views/templates/acl.pt:133
 msgid "${button} Deny"
 msgstr "${button} Zavrni"
 
-#: substanced/sdi/views/templates/acl.pt:156
+#: substanced/sdi/views/templates/acl.pt:144
 msgid "Choose a Principal"
 msgstr "Izberi varnostni subjekt"
 
-#: substanced/sdi/views/templates/acl.pt:173
+#: substanced/sdi/views/templates/acl.pt:161
 msgid "Choose Permissions"
 msgstr "Izberi pravice"
 
-#: substanced/sdi/views/templates/acl.pt:185
+#: substanced/sdi/views/templates/acl.pt:173
 msgid "Add"
 msgstr "Dodaj"
 
-#: substanced/sdi/views/templates/acl.pt:209
+#: substanced/sdi/views/templates/acl.pt:197
 msgid "Inherit Parent ACL"
 msgstr "Podeduj nadrejen seznam za kontrolo dostopa"
 
-#: substanced/sdi/views/templates/acl.pt:217
+#: substanced/sdi/views/templates/acl.pt:205
 msgid "${button} Enabled"
 msgstr "${button} Vključen"
 
-#: substanced/sdi/views/templates/acl.pt:228
+#: substanced/sdi/views/templates/acl.pt:216
 msgid "${button} Disabled"
 msgstr "${button} Izključen"
 
-#: substanced/sdi/views/templates/acl.pt:241
+#: substanced/sdi/views/templates/acl.pt:229
 msgid "Update"
 msgstr "Posodobi"
 
-#: substanced/sdi/views/templates/acl.pt:260
+#: substanced/sdi/views/templates/acl.pt:248
 msgid "Parent ACL"
 msgstr "Nadrejen seznam za kontrolo dostopa"
 
@@ -570,8 +579,8 @@ msgstr ""
 
 #: substanced/sdi/views/templates/forbidden.pt:10
 msgid ""
-"Sorry, your account is not permitted to perform the requested action. You "
-"can try to log in using a different account below or you can <dynamic "
+"Sorry, your account is not permitted to perform the requested action. You"
+" can try to log in using a different account below or you can <dynamic "
 "element>."
 msgstr ""
 
@@ -636,10 +645,14 @@ msgstr "Opis"
 msgid "${workflow type} workflow in state ${workflow state}"
 msgstr "${workflow type} potek dela v stanju ${workflow state}"
 
-#: substanced/workflow/templates/workflow.pt:22
+#: substanced/workflow/templates/workflow.pt:21
 msgid "Transition to another state"
 msgstr "Prehod v drugo stanje"
 
-#: substanced/workflow/templates/workflow.pt:32
+#: substanced/workflow/templates/workflow.pt:31
 msgid "Transition"
 msgstr "Prehod"
+
+#~ msgid "Show summary"
+#~ msgstr "Prikaži povzetek"
+

@@ -16,6 +16,7 @@ from pyramid.location import lineage
 from ...objectmap import find_objectmap
 from ...util import (
     get_oid,
+    get_acl,
     get_all_permissions,
     set_acl,
     find_service,
@@ -38,7 +39,7 @@ class ACLEditViews(object):
     def __init__(self, context, request):
         self.context = context
         self.request = request
-        self.acl = self.original_acl = getattr(context, '__acl__', [])
+        self.acl = self.original_acl = get_acl(context, [])
         if self.acl and self.acl[-1] == NO_INHERIT:
             self.acl = self.acl[:-1]
             self.epilog = [NO_INHERIT]
@@ -169,7 +170,7 @@ class ACLEditViews(object):
         parent_acl = []
 
         while parent is not None:
-            p_acl = getattr(parent, '__acl__', ())
+            p_acl = get_acl(parent, ())
             stop = False
             for ace in p_acl:
                 if ace == NO_INHERIT:
@@ -193,7 +194,7 @@ class ACLEditViews(object):
     def get_local_acl(self):
         local_acl = []
         inheriting = 'enabled'
-        l_acl = getattr(self.context, '__acl__', ())
+        l_acl = get_acl(self.context, ())
         for l_ace in l_acl:
             principal_id = l_ace[1]
             permissions = l_ace[2]

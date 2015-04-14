@@ -752,6 +752,26 @@ class TestFolder(unittest.TestCase):
                 ('added', {'loading':True, 'registry':registry}),
                 ])
 
+    def test_clear_with_registry(self):
+        registry = self.config.registry
+        folder = self._makeOne()
+        one = testing.DummyResource()
+        folder['a'] = one
+        result = []
+        folder.remove = lambda *arg, **kw: result.append((arg, kw))
+        folder.clear(registry=registry)
+        self.assertEqual(result, [(('a',), {'registry':registry})])
+
+    def test_clear_no_registry(self):
+        registry = self.config.registry
+        folder = self._makeOne()
+        one = testing.DummyResource()
+        folder['a'] = one
+        result = []
+        folder.remove = lambda *arg, **kw: result.append((arg, kw))
+        folder.clear()
+        self.assertEqual(result, [(('a',), {'registry':registry})])
+        
     def test_pop_success(self):
         from substanced.interfaces import IObjectEvent
         from substanced.interfaces import IObjectRemoved

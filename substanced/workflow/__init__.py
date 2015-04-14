@@ -11,6 +11,7 @@ from pyramid.security import Everyone
 from pyramid.security import has_permission
 from zope.interface import implementer
 
+from ..event import AfterTransition
 from ..interfaces import (
     IWorkflow,
     IDefaultWorkflow,
@@ -18,6 +19,7 @@ from ..interfaces import (
 
 from ..util import (
     get_content_type,
+    get_current_registry,
     set_acl,
     )
 
@@ -161,9 +163,8 @@ class Workflow(object):
         """Return the current state of the content object or None
         if the content object does not have this workflow.
         """
-        states = getattr(content, STATE_ATTR, None)
-        if states:
-            return states.get(self.type, None)
+        states = getattr(content, STATE_ATTR, {})
+        return states.get(self.type)
 
     def has_state(self, content):
         """Return True if the content has state for this workflow,
@@ -256,7 +257,7 @@ class Workflow(object):
         """
         state = self.state_of(content)
         if state is None:
-            return self.initialize(content)
+            return self.initialize(content, request=request)
         try:
             self._states[state]
         except KeyError:
@@ -307,6 +308,13 @@ class Workflow(object):
                     )
 
         self._set_state(content, to_state, request, transition)
+        event = AfterTransition(content, state, to_state, transition_name)
+        if request is None:
+            registry = get_current_registry()
+        else:
+            registry = request.registry
+
+        registry.notify(event)
 
     def transition(self, content, request, transition_name):
         """Execute a transition using a **transition_name** on **content**.

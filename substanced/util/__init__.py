@@ -18,6 +18,7 @@ from zope.interface.declarations import Declaration
 from pyramid.location import lineage
 from pyramid.threadlocal import get_current_registry
 from pyramid.i18n import TranslationStringFactory
+from pyramid.encode import urlencode
 
 from ..interfaces import IFolder
 from ..interfaces import IService
@@ -81,16 +82,12 @@ def merge_url_qs(url, **kw):
     If any query string element exists in ``url`` that also exists in
     ``kw``, replace it."""
     segments = urlsplit(url)
-    extra_qs = [ '%s=%s' % (k, v) for (k, v) in 
+    extra_qs = [ (k, v) for (k, v) in
                  parse_qsl(segments.query, keep_blank_values=1) 
                  if k not in kw ]
-    qs = ''
-    for k, v in sorted(kw.items()):
-        qs += '%s=%s&' % (k, v)
+    qs = urlencode(sorted(kw.items()))
     if extra_qs:
-        qs += '&'.join(extra_qs)
-    else:
-        qs = qs[:-1]
+        qs += '&' + urlencode(extra_qs)
     return urlunsplit(
         (segments.scheme, segments.netloc, segments.path, qs, segments.fragment)
         )
@@ -310,6 +307,11 @@ class Batch(object):
 
     def __len__(self):
         return self.length
+
+    def __nonzero__(self):
+        return True
+
+    __bool__ = __nonzero__ # py3
 
 def chunks(stream, chunk_size=10000):
     """ Return a generator that will iterate over a stream (a filelike

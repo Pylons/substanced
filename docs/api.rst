@@ -247,6 +247,10 @@ Other Helpers
    :members:
    :inherited-members:
 
+.. autoclass:: AfterTransition
+   :members:
+   :inherited-members:
+
 .. autoclass:: subscribe_added
    :members:
    :inherited-members:
@@ -278,6 +282,11 @@ Other Helpers
 .. autoclass:: subscribe_root_added
    :members:
    :inherited-members:
+
+.. autoclass:: subscribe_after_transition
+   :members:
+   :inherited-members:
+
 
 :mod:`substanced.evolution` API
 --------------------------------
@@ -504,7 +513,7 @@ Other Helpers
 
 .. autofunction:: add_mgmt_view
 
-.. autoclass:: mgmt_view
+.. autofunction:: mgmt_view
 
 .. autoclass:: sdiapi
    :members:

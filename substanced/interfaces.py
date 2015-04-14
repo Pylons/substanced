@@ -284,6 +284,13 @@ class IRootAdded(Interface):
     the database as its ``_p_jar`` attribute. """
     object = Attribute('The root object')
 
+class IAfterTransition(Interface):
+    """ An event type sent after a transition has been done """
+    object = Attribute('The object on which the transition has been done')
+    initial_state = Attribute('The initial state of the object')
+    new_state = Attribute('The new state of the object')
+    transition = Attribute('The transition name')
+
 #
 # subtanced.evolution APIs
 #
@@ -441,7 +448,7 @@ class IFolder(Interface):
         a KeyError if no such object exists. """
 
     def __setitem__(name, other):
-        """ Set object ``other' into this folder under the name ``name``.
+        """ Set object ``other`` into this folder under the name ``name``.
 
         ``name`` must be a Unicode object or a bytestring object.
 
@@ -578,6 +585,12 @@ class IFolder(Interface):
         Same as :meth:`substanced.interfaces.IFolder.replace` except it causes
         the ``loading`` flag of added and removed events sent during the add
         and remove events implied by the replacement to be ``True``.
+        """
+
+    def clear():
+        """
+        Clear all objects from the folder.  Calling this is equivalent to
+        calling ``.remove`` for each key in the folder.
         """
 
 class IAutoNamingFolder(IFolder):

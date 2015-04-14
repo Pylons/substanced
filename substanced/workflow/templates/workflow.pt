@@ -11,7 +11,6 @@
           <b i18n:name="workflow state">${workflow.current_state}</b>
         </div>
         <div class="panel-body">
-          <div class="container">
             <form action="${request.sdiapi.mgmt_url(request.context, 
                                                     '@@workflows')}"
                   method="POST">
@@ -35,7 +34,6 @@
               </div>
               
             </form>
-          </div>
 
         </div>
 

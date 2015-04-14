@@ -42,8 +42,9 @@
       <p>See
       the <a href="http://docs.pylonsproject.org/projects/substanced/en/latest/">documentation</a>
       for detailed technical information.</p>
-      <p>To see it in action, click the button
-      below and log in as <b>admin</b> with the password <b>admin</b>.</p>
+      <p>To see it in action, click the button below and log in as the user
+      named in the <code>substanced.initial_login</code> with the <code>substanced.initial_password</code>, both of which are in your <code>development.ini</code>
+      or <code>production.ini</code> file.</p>
       <div style="margin-top: 1em;">
         <a class="btn btn-primary" href="${request.application_url}${manage_prefix}">See the management interface</a>
       </div>

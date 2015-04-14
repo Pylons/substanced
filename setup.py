@@ -25,12 +25,12 @@ except IOError:
 
 install_requires = [
     'pyramid>=1.5dev', # route_name argument to resource_url
-    'ZODB3', 
-    'hypatia>=0.1a6', # check_query method of text index
+    'ZODB',
+    'hypatia>=0.2', # query objects have intersection/union methods
     'venusian>=1.0a3',  # pyramid wants this too (prefer_finals...)
     'deform>=2.0a2', # asset spec in ZPTRendererFactory
     'colander>=1.0a1', # subclassable schemanodes
-    'pyramid_zodbconn',
+    'pyramid_zodbconn>=0.6', # connection opened/closed events
     'pyramid_chameleon',
     'pyramid_mailer',
     'cryptacular',
@@ -42,11 +42,12 @@ install_requires = [
     'statsd',
     'walkabout',
     'pytz',
+    'unidecode',
     ]
 
 docs_extras = ['Sphinx', 'repoze.sphinx.autointerface']
 testing_extras = ['nose', 'coverage', 'mock', 'virtualenv']
-i18n_extras = ['Babel', 'transifex-client']
+i18n_extras = ['Babel', 'transifex-client', 'lingua<2.0']
 
 setup(name='substanced',
       version='0.0',
@@ -62,6 +63,7 @@ setup(name='substanced',
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.2",
         "Programming Language :: Python :: 3.3",
+        "Programming Language :: Python :: 3.4",
         "Programming Language :: Python :: Implementation :: CPython",
         "Framework :: Pylons",
         "Topic :: Internet :: WWW/HTTP :: WSGI",

@@ -1,0 +1,392 @@
+/*
+ * Resource generated automatically by substanced.folder.
+ * DO NOT EDIT! Regenerate with:
+ *
+ * $ cd substanced/folder/generate; npm install
+ */
+
+/*
+Icon classes can be used entirely standalone. They are named after their original file names.
+
+```html
+<i class="icon-home"></i>
+```
+*/
+.mimetype-icon-_blank {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -48px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-_page {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -1488px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-aac {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -96px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-ai {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -144px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-aiff {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -192px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-avi {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -240px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-bmp {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -288px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-c {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -336px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-cpp {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -384px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-css {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -432px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-dat {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -480px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-dmg {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -528px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-doc {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -576px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-dotx {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -624px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-dwg {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -672px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-dxf {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -720px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-eps {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -768px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-exe {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -816px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-flv {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -864px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-gif {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -912px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-h {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -960px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-hpp {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -1008px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-html {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -1056px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-ics {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -1104px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-iso {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -1152px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-java {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -1200px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-jpg {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -1248px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-js {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -1296px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-key {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -1344px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-less {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -1392px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-mid {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -1440px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-mp3 {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px 0px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-mp4 {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -1536px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-mpg {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -1584px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-odf {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -1632px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-ods {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -1680px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-odt {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -1728px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-otp {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -1776px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-ots {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -1824px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-ott {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -1872px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-pdf {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -1920px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-php {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -1968px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-png {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -2016px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-ppt {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -2064px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-psd {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -2112px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-py {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -2160px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-qt {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -2208px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-rar {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -2256px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-rb {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -2304px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-rtf {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -2352px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-sass {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -2400px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-scss {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -2448px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-sql {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -2496px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-tga {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -2544px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-tgz {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -2592px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-tiff {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -2640px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-txt {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -2688px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-wav {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -2736px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-xls {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -2784px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-xlsx {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -2832px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-xml {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -2880px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-yml {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -2928px;
+  width: 48px;
+  height: 48px;
+}
+.mimetype-icon-zip {
+  background-image: url(images/mimetype-icons.png);
+  background-position: 0px -2976px;
+  width: 48px;
+  height: 48px;
+}

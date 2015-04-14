@@ -1,0 +1,410 @@
+{#
+    basic/layout.html
+    ~~~~~~~~~~~~~~~~~
+
+    Master layout template for Sphinx themes.
+
+    :copyright: Copyright 2007-2013 by the Sphinx team, see AUTHORS.
+    :license: BSD, see LICENSE for details.
+#}
+{%- block doctype -%}
+<!DOCTYPE html>
+{%- endblock %}
+{%- set reldelim1 = reldelim1 is not defined and ' &raquo;' or reldelim1 %}
+{%- set reldelim2 = reldelim2 is not defined and ' |' or reldelim2 %}
+{%- set render_sidebar = (not embedded) and (not theme_nosidebar|tobool) and
+                         (sidebars != []) %}
+{%- set url_root = pathto('', 1) %}
+{%- set script_files = ['_static/assets/js/jquery-1.10.1.min.js',
+        '_static/assets/js/bootstrap.js',
+        '_static/assets/js/prettify.js',
+        '_static/assets/js/lightbox.js',
+        '_static/assets/js/main.js',
+        '_static/underscore.js',
+        '_static/doctools.js',
+        '_static/twitter.js',
+        '_static/searchtools.js'] %}
+{# XXX necessary? #}
+{%- if url_root == '#' %}{% set url_root = '' %}{% endif %}
+{%- if not embedded and docstitle %}
+  {%- set titlesuffix = " - "|safe + docstitle|e %}
+{%- else %}
+  {%- set titlesuffix = "" %}
+{%- endif %}
+{%- macro relbar() %}
+        <div class="row relbar">
+            <div class="span12">
+                <div class="pull-left">
+        {%- block rootrellink %}
+                    <a class="btn btn-small" href="{{ pathto(master_doc) }}"><i class="icon-home"></i> {{ shorttitle|e }}</a>
+                </div>
+        {%- endblock %}
+                <div class="pull-right">
+        {%- for rellink in rellinks|reverse %}
+                    <a class="btn btn-small" href="{{ pathto(rellink[0]) }}" title="{{ rellink[1]|striptags|e }}" {{ accesskey(rellink[2]) }}>
+                        {%- if rellink[3] == 'previous' %}<i class="icon-backward"></i> {% endif %}
+                        {%- if rellink[3] == 'index' %}<i class="icon-info"></i> {% endif %}
+                        {%- if rellink[3] == 'modules' %}<i class="icon-gears"></i> {% endif %}
+                        {{ rellink[3] }}
+                        {%- if rellink[3] == 'next' %} <i class="icon-forward"></i>{% endif %}
+                    </a>
+        {%- endfor %}
+        {%- for parent in parents %}
+                    <a class="btn btn-small" href="{{ parent.link|e }}" {% if loop.last %}{{ accesskey("U") }}{% endif %}>{{ parent.title }}</a>
+        {%- endfor %}
+        {%- block relbaritems %} {% endblock %}
+                </div>
+            </div>
+        </div>
+{%- endmacro %}
+
+{%- macro sidebar() %}
+      {%- if render_sidebar %}
+<div class="span3 bs-docs-sidebar">
+    <div class="nav nav-list bs-docs-sidenav affix-top" data-spy="affix" data-offset-top="30">
+          {%- block sidebarlogo %}
+          {%- if logo %}
+            <p class="logo"><a href="{{ pathto(master_doc) }}">
+              <img class="logo" src="{{ pathto('_static/' + logo, 1) }}" alt="Logo" />
+            </a></p>
+          {%- endif %}
+          {%- endblock %}
+          {%- if sidebars != None %}
+            {#- new style sidebar: explicitly include/exclude templates #}
+            {%- for sidebartemplate in sidebars %}
+            {%- include sidebartemplate %}
+            {%- endfor %}
+          {%- else %}
+            {#- old style sidebars: using blocks -- should be deprecated #}
+            {%- block sidebartoc %}
+            {%- include "localtoc.html" %}
+            {%- endblock %}
+            {%- block sidebarrel %}
+            {%- include "relations.html" %}
+            {%- endblock %}
+            {%- block sidebarsourcelink %}
+            {%- include "sourcelink.html" %}
+            {%- endblock %}
+            {%- if customsidebar %}
+            {%- include customsidebar %}
+            {%- endif %}
+            {%- block sidebarsearch %}
+            {%- include "searchbox.html" %}
+            {%- endblock %}
+          {%- endif %}
+    </div>
+</div>
+      {%- endif %}
+{%- endmacro %}
+
+{%- macro script() %}
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '{{ url_root }}',
+        VERSION:     '{{ release|e }}',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '{{ '' if no_search_suffix else file_suffix }}',
+        HAS_SOURCE:  {{ has_source|lower }}
+      };
+    </script>
+    {%- for scriptfile in script_files %}
+    <script type="text/javascript" src="{{ pathto(scriptfile, 1) }}"></script>
+    {%- endfor %}
+    <script type="text/javascript">$('#searchbox').show(0);</script>
+{%- endmacro %}
+
+{%- macro css() %}
+{%- set css_files = ['_static/assets/css/theme_venera_blue.css',
+                    '_static/pygments.css',
+                    '_static/substanced.css'] %}
+    {%- for cssfile in css_files %}
+    <link rel="stylesheet" href="{{ pathto(cssfile, 1) }}" type="text/css" />
+    {%- endfor %}
+{%- endmacro %}
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+<head>
+    <meta charset="{{ encoding }}">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width">
+    {{ metatags }}
+    {%- block htmltitle %}
+    <title>{{ title|striptags|e }}{{ titlesuffix }}</title>
+    {%- endblock %}
+    {{ css() }}
+    {%- if not embedded %}
+    {%- if use_opensearch %}
+    <link rel="search" type="application/opensearchdescription+xml"
+          title="{% trans docstitle=docstitle|e %}Search within {{ docstitle }}{% endtrans %}"
+          href="{{ pathto('_static/opensearch.xml', 1) }}" />
+    {%- endif %}
+    {%- if favicon %}
+    <link rel="shortcut icon" href="{{ pathto('_static/' + favicon, 1) }}" />
+    {%- endif %}
+    {%- endif %}
+{%- block linktags %}
+    {%- if hasdoc('about') %}
+    <link rel="author" title="{{ _('About these documents') }}" href="{{ pathto('about') }}" />
+    {%- endif %}
+    {%- if hasdoc('genindex') %}
+    <link rel="index" title="{{ _('Index') }}" href="{{ pathto('genindex') }}" />
+    {%- endif %}
+    {%- if hasdoc('search') %}
+    <link rel="search" title="{{ _('Search') }}" href="{{ pathto('search') }}" />
+    {%- endif %}
+    {%- if hasdoc('copyright') %}
+    <link rel="copyright" title="{{ _('Copyright') }}" href="{{ pathto('copyright') }}" />
+    {%- endif %}
+    <link rel="top" title="{{ docstitle|e }}" href="{{ pathto('index') }}" />
+    {%- if parents %}
+    <link rel="up" title="{{ parents[-1].title|striptags|e }}" href="{{ parents[-1].link|e }}" />
+    {%- endif %}
+    {%- if next %}
+    <link rel="next" title="{{ next.title|striptags|e }}" href="{{ next.link|e }}" />
+    {%- endif %}
+    {%- if prev %}
+    <link rel="prev" title="{{ prev.title|striptags|e }}" href="{{ prev.link|e }}" />
+    {%- endif %}
+{%- endblock %}
+{%- block extrahead %}
+    <meta name="description" content="Substance D is an application server built using the Pyramid web framework. Use Substance D to build a blog, a shopping cart or ecommerce application, a scheduling application, or any other web app that requires both an administration and a retail interface.">
+    <meta name="keywords" content="substance d, pyramid, python, web, framework, documentation, ">
+    <link href='//fonts.googleapis.com/css?family=Merriweather:400,400italic,700|Noto+Sans:400,700' rel='stylesheet' type='text/css'>
+    {%- if theme_favicon %}
+    <link rel="shortcut icon" href="{{ pathto('_static/'+theme_favicon, 1) }}" />
+    {%- endif %}
+    {%- if theme_canonical_url %}
+    <link rel="canonical" href="{{ theme_canonical_url }}{{ pagename }}.html" />
+    {%- endif %}
+{% endblock %}
+  </head>
+  <body data-spy="scroll" data-target=".bs-docs-sidebar">
+        <!--[if lt IE 7]>
+            <p class="chromeframe">You are using an outdated browser. <a href="http://browsehappy.com/">Upgrade your browser today</a> or <a href="http://www.google.com/chromeframe/?redirect=true">install Google Chrome Frame</a> to better experience this site.</p>
+            <![endif]-->
+    <div class="ribbon">
+        <a href="#" title="Software Available only From Version Control">Pre-release</a>
+    </div>
+{%- block header %}
+    <header id="header">
+      <div class="navbar navbar-fixed-top">
+        <div class="navbar-inner">
+          <div class="container">
+            <a class="btn btn-navbar" data-target=".nav-collapse" data-toggle="collapse">
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+            </a>
+            <a href="http://substanced.net/" class="brand"><img src="{{ pathto('_static/capsule-icon-32.png', 1) }}" alt="Substance D Image"> Substance D</a>
+            <div class="nav-collapse subnav-collapse collapse pull-right" id="top-navigation">
+              <ul class="nav">
+                <li>
+                  <a href="http://substanced.net/">Home</a>
+                </li>
+                <li>
+                  <a href="http://demo.substanced.net/">Live Demo</a>
+                </li>
+                <li class="dropdown active">
+                  <a href="#" class="dropdown-toggle" data-toggle="dropdown">Documentation</a>
+                  <ul class="dropdown-menu">
+                    <li>
+                      <a href="{{ theme_latest_url }}">Developer Docs</a>
+                    </li>
+                    <li>
+                      <a href="{{ theme_latest_url }}#api-documentation">API Docs</a>
+                    </li>
+                    <li>
+                      <a href="{{ theme_latest_url }}install.html">Installation Docs</a>
+                    </li>
+                  </ul>
+                </li>
+                <li class="dropdown">
+                  <a href="#" class="dropdown-toggle" data-toggle="dropdown">Support</a>
+                  <ul class="dropdown-menu">
+                    <li>
+                      <a href="http://substanced.net/support">Community Support</a>
+                    </li>
+                    <li>
+                      <a href="http://substanced.net/consulting">Consulting Services</a>
+                    </li>
+                  </ul>
+                </li>
+                <li class="">
+                  <a href="http://substanced.net/faq">FAQ</a>
+                </li>
+                <li class="">
+                  <a href="https://github.com/Pylons/substanced">Code <i class="icon-github-sign"></i></a>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+    {% if theme_in_progress|tobool %}
+    <img style="position: fixed; display: block; width: 165px; height: 165px; bottom: 60px; right: 0; border: 0;" src="{{ pathto('_static/in_progress.png', 1) }}" alt="Documentation in progress" />
+    {% endif %}
+
+    {% if theme_outdated|tobool %}
+    <a href="{{ theme_latest_url }}"><img style="position: fixed; display: block; width: 165px; height: 165px; bottom: 60px; right: 0; border: 0;" src="{{ pathto('_static/outdated.png', 1) }}" alt="Documentation is outdated" /></a>
+    {% endif %}
+
+    {% if display_github %}
+    <a href="https://github.com/{{ github_user }}/{{ github_repo }}/blob/{{ github_version }}{{ conf_py_path }}{{ pagename }}.rst"><img style="z-index: 1030; position: absolute; top: 0; right: 0; border: 0;" src="{{ pathto('_static/edit-me-on-github.png', 1) }}" alt="Edit me on GitHub"></a>
+    {% endif %}
+{% endblock %}
+    <div class="container">
+
+{%- block relbar1 %}{{ relbar() }}{% endblock %}
+
+        <div class="row">
+{%- block content %}
+  {%- block sidebar1 %}{{ sidebar() }}{% endblock %}
+            <div id="main-content" class="span9">
+<!--
+    <div class="document">
+-->
+  {%- block document %}
+<!--
+      <div class="documentwrapper">
+-->
+      {%- if render_sidebar %}
+<!--
+        <div class="bodywrapper">
+-->
+      {%- endif %}
+<!--
+          <div class="body">
+-->
+            {% block body %} {% endblock %}
+<!--
+          </div>
+-->
+      {%- if render_sidebar %}
+<!--
+        </div>
+-->
+      {%- endif %}
+<!--
+      </div>
+-->
+  {%- endblock %}
+            </div>
+  {%- block sidebar2 %}{# possible location for sidebar #}{% endblock %}
+<!--
+      <div class="clearer"></div>
+            </div>
+        </div>
+    </div>
+-->
+{%- endblock %}
+        </div>
+
+{%- block relbar2 %}{{ relbar() }}{% endblock %}
+
+    </div>
+{%- block footer %}
+    <footer>
+      <div class='pre-footer'>
+        <div class='container'>
+          <div class='row'>
+            <div class='span6'>
+              <div class='blog-recent-tweets widget-tp'>
+                <h5 class="footer-header"><i class='icon-twitter-sign'></i> Recent Tweets</h5>
+                <div id="substanced-tweets"></div>
+              </div>
+            </div>
+            <div class='span6'>
+              <h5 class='footer-header'>Substance D Developers</h5>
+              <ul class='footer-img-list thumbnails'>
+                <li class='span1'>
+                  <a class='thumbnail'>
+                    <img alt="Chris McDonough" title="Chris McDonough" src="{{ pathto('_static/mcdonc.jpg', 1) }}" />
+                  </a>
+                </li>
+                <li class='span1'>
+                  <a class='thumbnail'>
+                    <img alt="Paul Everitt" title="Paul Everitt" src="{{ pathto('_static/repaul.jpg', 1) }}" />
+                  </a>
+                </li>
+                <li class='span1'>
+                  <a class='thumbnail'>
+                    <img alt="Tres Seaver" title="Tres Seaver" src="{{ pathto('_static/tresequis.jpg', 1) }}" />
+                  </a>
+                </li>
+                <li class='span1'>
+                  <a class='thumbnail'>
+                    <img alt="Domen Kožar" title="Domen Kožar" src="{{ pathto('_static/ielectric.jpg', 1) }}" />
+                  </a>
+                </li>
+                <li class='span1'>
+                  <a class='thumbnail'>
+                    <img alt="Balázs Reé" title="Balázs Reé"  src="{{ pathto('_static/ree.png', 1) }}" />
+                  </a>
+                </li>
+                <li class='span1'>
+                  <a class='thumbnail'>
+                    <img alt="Carlos de la Guardia" title="Carlos de la Guardia" src="{{ pathto('_static/cguardia.jpg', 1) }}" />
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="deep-footer">
+        <div class="container">
+          <div class="row">
+            <div class="span6">
+              <div class="copyright">
+    {%- if show_copyright %}
+      {%- if hasdoc('copyright') %}
+        {% trans path=pathto('copyright'), copyright=copyright|e %}<a href="{{ path }}">Copyright</a> &copy; {{ copyright }}. All rights reserved.{% endtrans %}
+      {%- else %}
+        {% trans copyright=copyright|e %}Copyright &copy; {{ copyright }}. All rights reserved.{% endtrans %}
+      {%- endif %}
+    {%- endif %}
+              </div>
+            </div>
+            <div class="span6">
+              <ul class="footer-links">
+                <li>
+                  <a href="http://www.pylonsproject.org/">A Pylons Project</a>
+                </li>
+                <li>
+    {%- if last_updated %}
+      {% trans last_updated=last_updated|e %}Last updated on {{ last_updated }}.{% endtrans %}
+    {%- endif %}
+    {%- if show_sphinx %}
+      {% trans sphinx_version=sphinx_version|e %}Created using <a href="http://sphinx-doc.org/">Sphinx</a> {{ sphinx_version }}.{% endtrans %}
+    {%- endif %}
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </footer>
+{%- endblock %}
+{%- block script %}{{ script() }}{% endblock %}
+{%- block extraend %}{% endblock %}
+    <script type="text/javascript">
+     function handleTweets(tweets){
+       var x = tweets.length;
+       var n = 0;
+       var element = document.getElementById('substanced-tweets');
+       var html = '<ul>';
+       while(n < x) {
+         html += '<li>' + tweets[n] + '</li>';
+         n++;
+       }
+       html += '</ul>';
+       element.innerHTML = html;
+     }
+     twitterFetcher.fetch('374572305348706306', '', 3, true, true, true, '', false, handleTweets, false);
+    </script>
+  </body>
+</html>
+

@@ -200,8 +200,9 @@ def add_content_type(config, content_type, factory, factory_type=None, **meta):
       will obtain a tab in the SDI that allows users to manage its
       properties.
 
-    - If ``meta`` contains the keyword ``catalog`` and its value is true, the
-      object will be tracked in the Substance D catalog.
+    - If ``meta`` contains the keyword ``icon``, this value will be used as the
+      icon for the content type that shows up next to the content in a folder
+      content view.
 
     Other keywords in ``meta`` will just be stored, and have no special
     meaning.

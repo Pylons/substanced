@@ -4,7 +4,6 @@ import zlib
 import BTrees
 from zope.interface import implementer
 
-from pyramid.compat import is_nonstr_iter
 from pyramid.traversal import resource_path
 
 from ..interfaces import (
@@ -22,10 +21,7 @@ from .indexes import (
     PathIndex,
     )
 
-from .discriminators import (
-    IndexViewDiscriminator,
-    AllowedIndexDiscriminator,
-    )
+from .discriminators import IndexViewDiscriminator
 
 @implementer(IIndexFactory)
 class IndexFactory(object):
@@ -91,22 +87,6 @@ class Facet(IndexFactory):
 
 class Allowed(IndexFactory):
     index_type = AllowedIndex
-
-    def __call__(self, catalog_name, index_name):
-        kw = self.kw.copy() # hashvalues below needs permissions
-        permissions = kw.pop('permissions', None)
-        discriminator = AllowedIndexDiscriminator(permissions)
-        index = self.index_type(discriminator=discriminator, **kw)
-        index.__factory_hash__ = hash(self)
-        return index
-
-    def hashvalues(self):
-        values = IndexFactory.hashvalues(self)
-        permissions = values.get('permissions', None)
-        if not is_nonstr_iter(permissions):
-            permissions = (permissions,)
-        values['permissions'] = tuple(sorted(permissions))
-        return values
 
 class Path(IndexFactory):
     index_type = PathIndex

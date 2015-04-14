@@ -19,6 +19,48 @@ def _makeSite(**kw):
         alsoProvides(v, IService)
     return site
 
+class TestFakeIndex(unittest.TestCase):
+    def _makeOne(self):
+        from ..indexes import FakeIndex
+        return FakeIndex()
+
+    def test_reset(self):
+        inst = self._makeOne()
+        inst.reset()
+        self.assertEqual(list(inst._not_indexed), [])
+
+    def test_index_doc(self):
+        inst = self._makeOne()
+        self.assertEqual(inst.index_doc(1, None), None)
+        
+    def test_unindex_doc(self):
+        inst = self._makeOne()
+        self.assertEqual(inst.unindex_doc(1), None)
+
+    def test_reindex_doc(self):
+        inst = self._makeOne()
+        self.assertEqual(inst.reindex_doc(1, None), None)
+
+    def test_docids(self):
+        inst = self._makeOne()
+        fake_catalog = Dummy()
+        fake_catalog.objectids = [1]
+        inst.__parent__ =  fake_catalog
+        self.assertEqual(inst.docids(), [1])
+
+    def test_indexed(self):
+        inst = self._makeOne()
+        fake_catalog = Dummy()
+        fake_catalog.objectids = [1]
+        inst.__parent__ =  fake_catalog
+        self.assertEqual(inst.indexed(), [1])
+
+    def test_not_indexed(self):
+        inst = self._makeOne()
+        inst._not_indexed = [1]
+        self.assertEqual(inst.not_indexed(), [1])
+        
+        
 class TestSDIndex(unittest.TestCase):
     def _makeOne(self, oid=1):
         from ..indexes import SDIndex
@@ -567,44 +609,59 @@ class TestAllowedIndex(unittest.TestCase):
         index = AllowedIndex(discriminator, family=family)
         return index
 
-    def test_allows_request_default_permission(self):
-        discriminator = DummyAllowsDiscriminator(('view',))
-        index = self._makeOne(discriminator)
-        request = testing.DummyRequest()
-        q = index.allows(request)
-        self.assertEqual(q._value, [('system.Everyone', 'view')])
+    def test_alt_family(self):
+        index = self._makeOne(None, family='foo')
+        self.assertEqual(index.family, 'foo')
 
-    def test_allows_request_nondefault_permission(self):
-        discriminator = DummyAllowsDiscriminator(('view', 'edit'))
-        index = self._makeOne(discriminator)
+    def test_document_repr(self):
+        index = self._makeOne(None)
+        self.assertEqual(index.document_repr(None), 'N/A')
+
+    def test_allows_request(self):
+        index = self._makeOne(None)
         request = testing.DummyRequest()
         q = index.allows(request, 'edit')
-        self.assertEqual(q._value, [('system.Everyone', 'edit')])
-
-    def test_allows_no_default_permission(self):
-        discriminator = DummyAllowsDiscriminator(('view', 'edit'))
-        index = self._makeOne(discriminator)
-        request = testing.DummyRequest()
-        self.assertRaises(ValueError, index.allows, request)
-
-    def test_allows_bad__permission(self):
-        discriminator = DummyAllowsDiscriminator(('view', 'edit'))
-        index = self._makeOne(discriminator)
-        request = testing.DummyRequest()
-        self.assertRaises(ValueError, index.allows, request, 'whatever')
+        self.assertEqual(q._value, (['system.Everyone'], 'edit'))
 
     def test_allows_iterable(self):
-        discriminator = DummyAllowsDiscriminator(('edit',))
-        index = self._makeOne(discriminator)
+        index = self._makeOne(None)
         q = index.allows(['bob', 'joe'], 'edit')
-        self.assertEqual(q._value, [('bob', 'edit'), ('joe', 'edit')])
+        self.assertEqual(q._value, (['bob', 'joe'], 'edit'))
 
     def test_allows_single(self):
-        discriminator = DummyAllowsDiscriminator(('edit',))
-        index = self._makeOne(discriminator)
+        index = self._makeOne(None)
         q = index.allows('bob', 'edit')
-        self.assertEqual(q._value, [('bob', 'edit')])
+        self.assertEqual(q._value, (('bob',), 'edit'))
 
+class TestAllowsComparator(unittest.TestCase):
+    def _makeOne(self, index, value):
+        from ..indexes import AllowsComparator
+        return AllowsComparator(index, value)
+
+    def test_union(self):
+        inst = self._makeOne(None, None)
+        self.assertRaises(NotImplementedError, inst.union, None, None)
+
+    def test__apply(self):
+        inst = self._makeOne(None, None)
+        self.assertRaises(NotImplementedError, inst._apply, None)
+
+    def test_negate(self):
+        inst = self._makeOne(None, None)
+        self.assertRaises(NotImplementedError, inst.negate)
+
+    def test___str__(self):
+        inst = self._makeOne(None, None)
+        self.assertEqual(inst.__str__(), 'allows query')
+
+    def test_intersect(self):
+        objectmap = DummyObjectmap()
+        context = Dummy()
+        context.__objectmap__ = objectmap
+        inst = self._makeOne(context, (('fred',), 'edit'))
+        result = inst.intersect([1], [])
+        self.assertEqual(list(result), [1])
+        
 class TestIndexPropertySheet(unittest.TestCase):
     def _makeOne(self, context, request):
         from ..indexes import IndexPropertySheet
@@ -650,6 +707,8 @@ class DummyCatalog(object):
 class DummyObjectmap(object):
     def object_for(self, docid): return 'a'
 
+    def allowed(self, theset, principals, permission): return theset
+
 class DummyQuery(object):
     def flush(self, *arg, **kw):
         self.flushed = True
@@ -672,9 +731,3 @@ class DummyActionTM(object):
     def add(self, action):
         self.actions.append(action)
         
-class DummyAllowsDiscriminator(object):
-    def __init__(self, permissions):
-        self.permissions = permissions
-
-    def __call__(self): pass
-    

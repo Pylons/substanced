@@ -1,11 +1,12 @@
+import logging
+
 from pyramid.compat import string_types
 
-from substanced.util import (
+from ..util import (
     get_oid,
     is_folder,
     )
     
-import logging
 
 _marker = object()
 
@@ -21,7 +22,7 @@ def postorder(startnode):
         yield node
     return visit(startnode)
 
-def evolve(root):
+def evolve(root, registry):
     logger.info(
         'Running substanced evolve step 8: add explicit oid ordering to folders'
         )

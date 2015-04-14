@@ -43,7 +43,7 @@ class TestCSRFToken(unittest.TestCase):
         inst.bindings = {'_csrf_token_':'123'}
         result = inst.deserialize('123')
         self.assertEqual(result, '123')
-        
+
 class TestSchema(unittest.TestCase):
     def _getTargetClass(self):
         from . import Schema
@@ -103,7 +103,7 @@ class TestNameSchemaNode(unittest.TestCase):
 
     def tearDown(self):
         testing.tearDown()
-    
+
     def _makeBindings(self):
         request = testing.DummyRequest()
         context = testing.DummyResource()
@@ -183,7 +183,7 @@ class TestPermissionsSchemaNode(unittest.TestCase):
 
     def tearDown(self):
         testing.tearDown()
-        
+
     def _makeOne(self):
         from . import PermissionsSchemaNode
         return PermissionsSchemaNode()
@@ -256,6 +256,24 @@ class TestIdSet(unittest.TestCase):
         inst = self._makeOne()
         self.assertEqual(inst.cstruct_children(None, None), [])
 
+class TestReferenceIdSchemaNode(unittest.TestCase):
+    def _makeOne(self):
+        from . import ReferenceIdSchemaNode
+        return ReferenceIdSchemaNode()
+
+    def test__get_choices(self):
+        inst = self._makeOne()
+        inst.bindings = {'context':None, 'request':None}
+        inst.choices_getter = lambda *arg: 123
+        self.assertEqual(inst._get_choices(), 123)
+
+    def test_widget(self):
+        inst = self._makeOne()
+        inst._get_choices = lambda: [1]
+        widget = inst.widget
+        self.assertEqual(widget.values, [1])
+        self.assertFalse(widget.multiple)
+
 class TestMultireferenceIdSchemaNode(unittest.TestCase):
     def _makeOne(self):
         from . import MultireferenceIdSchemaNode
@@ -282,7 +300,7 @@ class DummyRequest(testing.DummyRequest):
     def __init__(self, *arg, **kw):
         testing.DummyRequest.__init__(self, *arg, **kw)
         self.session = DummySession()
-    
+
 
 class DummyContent(object):
     def __init__(self, result):

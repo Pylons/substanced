@@ -89,31 +89,34 @@ class SystemCatalogFactory(object):
     - content_type (a FieldIndex)
 
       Represents the Substance D content type of an added object.
-
+      
     - allowed (an AllowedIndex)
 
-      Represents the set of principals with the ``sdi.view`` or ``view``
-      permission against a content object.
-
+      Can be used in a query to filter results using permissions and
+      principals.
+      
     - text (a TextIndex)
 
       Indexes text used for the Substance D folder contents filter box.
 
     """
+    # path index is not a "real" index (no writes happen when the index is
+    # updated with a new resource) so action mode is irrelevant
     path = Path()
 
     # name is MODE_ATCOMMIT for next-request folder contents consistency
     name = Field()
 
-    # interfaces is MODE_ATCOMMIT because code which creates one may
-    # need to access it immediately.
+    # interfaces is MODE_ATCOMMIT because code which indexes something by its
+    # interface may need to access it immediately.
     interfaces = Keyword()
 
-    # allowed is MODE_ATCOMMIT for next-request folder contents consistency
-    allowed = Allowed(
-        permissions=('sdi.view', 'view'),
-        )
+    # allowed index is not a "real" index (no writes happen when the index is
+    # updated with a new resource) so action mode is irrelevant
+    allowed = Allowed()
 
+    # results from a text search is considered deferrable until an arbitrary
+    # time in the future, so we use MODE_DEFERRED
     text = Text(action_mode=MODE_DEFERRED)
 
     # content_type is MODE_ATCOMMIT because code which creates one may

@@ -346,7 +346,7 @@ class Folder(Persistent):
         return name in self.data
 
     def __setitem__(self, name, other):
-        """ Set object ``other' into this folder under the name ``name``.
+        """ Set object ``other`` into this folder under the name ``name``.
 
         ``name`` must be a Unicode object or a bytestring object.
 
@@ -715,6 +715,16 @@ class Folder(Persistent):
         if name in self:
             self.remove(name, loading=True)
         self.add(name, newobject, loading=True, registry=registry)
+
+    def clear(self, registry=None):
+        """ Clear all items from the folder.  This is the equivalent of calling
+        ``.remove`` with each key that exists in the folder. """
+        if registry is None:
+            registry = get_current_registry()
+        # why do we listify?  http://www.zodb.org/en/latest/documentation/guide/modules.html#iteration-and-mutation
+        for name in list(self.data):
+            self.remove(name, registry=registry)
+            
 
 class _AutoNamingFolder(object):
     def add_next(

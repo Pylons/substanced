@@ -1,7 +1,8 @@
+
 import sys
 import colander
 import unittest
-
+from io import StringIO
 from pyramid import testing
 from pyramid.httpexceptions import HTTPFound
 import mock
@@ -1637,12 +1638,177 @@ class TestFolderContents(unittest.TestCase):
         self.assertEqual(query.queried,
                          ('eq', (context,), {'depth': 1,
                                              'include_origin': False}))
-        self.assertEqual(query.anded_with[0].name, 'allowed')
+        self.assertEqual(query.anded_with[0].name, 'interfaces')
         self.assertEqual(query.anded_with[0].queried,
-                         ('allows', (request, 'sdi.view'), {}))
-        self.assertEqual(query.anded_with[1].name, 'interfaces')
-        self.assertEqual(query.anded_with[1].queried,
                          ('notany', ([IService],), {}))
+        self.assertEqual(query.anded_with[1].name, 'allowed')
+        self.assertEqual(query.anded_with[1].queried,
+                         ('allows', (request, 'sdi.view'), {}))
+
+    def test_no_content_types(self):
+        request = testing.DummyRequest()
+        request.matched_route = None
+        request.registry.content = DummyContent()
+        request.registry.introspector = DummyIntrospector()
+        inst = self._makeOne(None, request)
+        result = inst.sdi_add_views()
+        self.assertEqual(result, [])  
+
+    def test_one_content_type_content(self):
+        request = testing.DummyRequest()
+        request.matched_route = None
+        request.registry.content = DummyContent()
+        request.sdiapi = DummySDIAPI()
+        ct_intr = {}
+        ct_intr['meta'] = {'add_view':'abc'}
+        ct_intr['content_type'] = 'Content'
+        ct_intr = DummyIntrospectable(introspectable=ct_intr)
+        view_intr1 = DummyIntrospectable()
+        view_intr1.category_name = 'views'
+        view_intr1['name'] = 'abc'
+        view_intr1['context'] = None
+        view_intr1['derived_callable'] = None
+        intr = {}
+        intr['tab_title'] = 'abc'
+        intr['tab_condition'] = None
+        intr['tab_before'] = None
+        intr['tab_after'] = None
+        intr = DummyIntrospectable(related=(view_intr1,), introspectable=intr)
+        request.registry.introspector = DummyIntrospector([(ct_intr,), (intr,)])
+        context = testing.DummyResource()
+        inst = self._makeOne(context, request) 
+        result = inst.sdi_add_views()
+        self.assertEqual(
+            result,
+            [{
+                    'url': '/mgmt_path',
+                    'type_name': 'Content',
+                    'icon': '',
+                    'content_type':'Content',
+                    }])
+
+    def test_one_content_type_service(self):
+        request = testing.DummyRequest()
+        request.matched_route = None
+        request.registry.content = DummyContent()
+        request.sdiapi = DummySDIAPI()
+        ct_intr = {}
+        ct_intr['meta'] = {'add_view':'abc', 'is_service': True}
+        ct_intr['content_type'] = 'Content'
+        ct_intr = DummyIntrospectable(introspectable=ct_intr)
+        view_intr1 = DummyIntrospectable()
+        view_intr1.category_name = 'views'
+        view_intr1['name'] = 'abc'
+        view_intr1['context'] = None
+        view_intr1['derived_callable'] = None
+        intr = {}
+        intr['tab_title'] = 'abc'
+        intr['tab_condition'] = None
+        intr['tab_before'] = None
+        intr['tab_after'] = None
+        intr = DummyIntrospectable(related=(view_intr1,), introspectable=intr)
+        request.registry.introspector = DummyIntrospector([(ct_intr,), (intr,)])
+        context = testing.DummyResource()
+        inst = self._makeOne(context, request) 
+        result = inst.sdi_add_views()
+        self.assertEqual(result, [])
+
+    def test_one_content_type_not_addable(self):
+        request = testing.DummyRequest()
+        request.matched_route = None
+        request.registry.content = DummyContent()
+        request.sdiapi = DummySDIAPI()
+        context = testing.DummyResource()
+        context.__sdi_addable__ = ('Not Content',)
+        ct_intr = {}
+        ct_intr['meta'] = {'add_view':'abc'}
+        ct_intr['content_type'] = 'Content'
+        ct_intr = DummyIntrospectable(introspectable=ct_intr)
+        view_intr1 = DummyIntrospectable()
+        view_intr1.category_name = 'views'
+        view_intr1['name'] = 'abc'
+        view_intr1['context'] = None
+        view_intr1['derived_callable'] = None
+        intr = {}
+        intr['tab_title'] = 'abc'
+        intr['tab_condition'] = None
+        intr['tab_before'] = None
+        intr['tab_after'] = None
+        intr = DummyIntrospectable(related=(view_intr1,), introspectable=intr)
+        request.registry.introspector = DummyIntrospector([(ct_intr,), (intr,)])
+        inst = self._makeOne(context, request) 
+        result = inst.sdi_add_views()
+        self.assertEqual(result, [])
+
+    def test_one_content_type_not_addable_callable(self):
+        request = testing.DummyRequest()
+        request.matched_route = None
+        request.registry.content = DummyContent()
+        request.sdiapi = DummySDIAPI()
+        context = testing.DummyResource()
+        context.__sdi_addable__ = lambda *arg: False
+        ct_intr = {}
+        ct_intr['meta'] = {'add_view':'abc'}
+        ct_intr['content_type'] = 'Content'
+        ct_intr = DummyIntrospectable(introspectable=ct_intr)
+        view_intr1 = DummyIntrospectable()
+        view_intr1.category_name = 'views'
+        view_intr1['name'] = 'abc'
+        view_intr1['context'] = None
+        view_intr1['derived_callable'] = None
+        intr = {}
+        intr['tab_title'] = 'abc'
+        intr['tab_condition'] = None
+        intr['tab_before'] = None
+        intr['tab_after'] = None
+        intr = DummyIntrospectable(related=(view_intr1,), introspectable=intr)
+        request.registry.introspector = DummyIntrospector([(ct_intr,), (intr,)])
+        inst = self._makeOne(context, request) 
+        result = inst.sdi_add_views()
+        self.assertEqual(result, [])
+
+    def test_content_type_not_addable_to(self):
+        request = testing.DummyRequest()
+        request.matched_route = None
+        request.registry.content = DummyContent()
+        request.sdiapi = DummySDIAPI()
+        context = testing.DummyResource()
+        context.__content_type__ = 'Foo'
+        ct_intr = {}
+        ct_intr['meta'] = {'add_view':lambda *arg: 'abc'}
+        ct_intr['content_type'] = 'Content'
+        ct_intr = DummyIntrospectable(introspectable=ct_intr)
+        ct2_intr = {}
+        checked = []
+        def check(context, request):
+            checked.append(True)
+        ct2_intr['meta'] = {'add_view':check}
+        ct2_intr['content_type'] = 'Content'
+        ct2_intr = DummyIntrospectable(introspectable=ct2_intr)
+        view_intr1 = DummyIntrospectable()
+        view_intr1.category_name = 'views'
+        view_intr1['name'] = 'abc'
+        view_intr1['context'] = None
+        view_intr1['derived_callable'] = None
+        intr = {}
+        intr['tab_title'] = 'abc'
+        intr['tab_condition'] = None
+        intr['tab_before'] = None
+        intr['tab_after'] = None
+        intr = DummyIntrospectable(related=(view_intr1,), introspectable=intr)
+        request.registry.introspector = DummyIntrospector(
+            [(ct_intr, ct2_intr), (intr,)])
+        inst = self._makeOne(context, request) 
+        result = inst.sdi_add_views()
+        self.assertEqual(checked, [True])
+        self.assertEqual(
+            result,
+            [
+                {'url': '/mgmt_path',
+                 'type_name': 'Content',
+                 'icon': '',
+                 'content_type':'Content',
+                 }])
 
 class Test_folder_contents_views_decorator(unittest.TestCase):
     def setUp(self):
@@ -1751,48 +1917,24 @@ class Test_add_folder_contents_views(unittest.TestCase):
 
 class Test_has_services(unittest.TestCase):
     def _callFUT(self, context, request):
-        from substanced.folder.views import has_services
+        from ..views import has_services
         return has_services(context, request)
-
+ 
+    def _makeRequest(self, **kw):
+        request = testing.DummyRequest()
+        request.sdiapi = DummySDIAPI()
+        request.registry.content = DummyContent(**kw)
+        return request
+    
     def test_it(self):
         from zope.interface import directlyProvides
         from ...interfaces import IFolder
         context = testing.DummyResource()
         directlyProvides(context, IFolder)
         context['catalogs'] = _makeCatalogs(oids=[1])
-        request = testing.DummyRequest()
-        self.assertTrue(self._callFUT(context, request))
-
-class Test_HasServicesPredicate(unittest.TestCase):
-    def _makeOne(self, val, config):
-        from ..views import _HasServicesPredicate
-        return _HasServicesPredicate(val, config)
-
-    def test_text(self):
-        config = Dummy()
-        config.registry = Dummy()
-        inst = self._makeOne(True, config)
-        self.assertEqual(inst.text(), 'has_services = True')
-
-    def test_phash(self):
-        config = Dummy()
-        config.registry = Dummy()
-        inst = self._makeOne(True, config)
-        self.assertEqual(inst.phash(), 'has_services = True')
-
-    def test__call__(self):
-        config = Dummy()
-        config.registry = Dummy()
-        inst = self._makeOne(True, config)
-        _called_with = []
-        def has_services(context, request):
-            _called_with.append((context, request))
-            return True
-        inst.has_services = has_services
-        context = testing.DummyResource()
-        request = testing.DummyRequest()
-        self.assertEqual(inst(context, request), True)
-        self.assertEqual(_called_with, [(context, request)])
+        request = self._makeRequest()
+        result = self._callFUT(context, request)
+        self.assertEqual(result, True)
 
 class FolderServicesTest(unittest.TestCase):
     def setUp(self):
@@ -1826,13 +1968,80 @@ class FolderServicesTest(unittest.TestCase):
         self.assertEqual(query.queried,
                          ('eq', (context,), {'depth': 1,
                                              'include_origin': False}))
-        self.assertEqual(query.anded_with[0].name, 'allowed')
+        self.assertEqual(query.anded_with[0].name, 'interfaces')
         self.assertEqual(query.anded_with[0].queried,
-                         ('allows', (request, 'sdi.view'), {}))
-        self.assertEqual(query.anded_with[1].name, 'interfaces')
-        self.assertEqual(query.anded_with[1].queried,
                          ('any', ([IService],), {}))
+        self.assertEqual(query.anded_with[1].name, 'allowed')
+        self.assertEqual(query.anded_with[1].queried,
+                         ('allows', (request, 'sdi.view'), {}))
 
+    def test_no_content_types(self):
+        request = testing.DummyRequest()
+        request.matched_route = None
+        request.registry.content = DummyContent()
+        request.registry.introspector = DummyIntrospector()
+        inst = self._makeOne(None, request)
+        result = inst.sdi_add_views()
+        self.assertEqual(result, [])  
+
+    def test_one_content_type_content(self):
+        request = testing.DummyRequest()
+        request.matched_route = None
+        request.registry.content = DummyContent()
+        request.sdiapi = DummySDIAPI()
+        ct_intr = {}
+        ct_intr['meta'] = {'add_view':'abc'}
+        ct_intr['content_type'] = 'Content'
+        ct_intr = DummyIntrospectable(introspectable=ct_intr)
+        view_intr1 = DummyIntrospectable()
+        view_intr1.category_name = 'views'
+        view_intr1['name'] = 'abc'
+        view_intr1['context'] = None
+        view_intr1['derived_callable'] = None
+        intr = {}
+        intr['tab_title'] = 'abc'
+        intr['tab_condition'] = None
+        intr['tab_before'] = None
+        intr['tab_after'] = None
+        intr = DummyIntrospectable(related=(view_intr1,), introspectable=intr)
+        request.registry.introspector = DummyIntrospector([(ct_intr,), (intr,)])
+        context = testing.DummyResource()
+        inst = self._makeOne(context, request) 
+        result = inst.sdi_add_views()
+        self.assertEqual(result, [])
+
+    def test_one_content_type_service(self):
+        request = testing.DummyRequest()
+        request.matched_route = None
+        request.registry.content = DummyContent()
+        request.sdiapi = DummySDIAPI()
+        ct_intr = {}
+        ct_intr['meta'] = {'add_view':'abc', 'is_service':True}
+        ct_intr['content_type'] = 'Content'
+        ct_intr = DummyIntrospectable(introspectable=ct_intr)
+        view_intr1 = DummyIntrospectable()
+        view_intr1.category_name = 'views'
+        view_intr1['name'] = 'abc'
+        view_intr1['context'] = None
+        view_intr1['derived_callable'] = None
+        intr = {}
+        intr['tab_title'] = 'abc'
+        intr['tab_condition'] = None
+        intr['tab_before'] = None
+        intr['tab_after'] = None
+        intr = DummyIntrospectable(related=(view_intr1,), introspectable=intr)
+        request.registry.introspector = DummyIntrospector([(ct_intr,), (intr,)])
+        context = testing.DummyResource()
+        inst = self._makeOne(context, request) 
+        result = inst.sdi_add_views()
+        self.assertEqual(
+            result,
+            [{
+                    'url': '/mgmt_path',
+                    'type_name': 'Content',
+                    'icon': '',
+                    'content_type':'Content',
+                    }])
 
 class Test_generate_text_filter_terms(unittest.TestCase):
     def _callFUT(self, filter_text):
@@ -1868,7 +2077,134 @@ class Test_generate_text_filter_terms(unittest.TestCase):
         filter_text = 'foo "bar baz bar" "ab'
         terms = self._callFUT(filter_text)
         self.assertEqual(terms, ['"bar baz bar"', '"ab"', 'foo*'])
-        
+
+class Test_multi_upload_view(unittest.TestCase):
+    def _callFUT(self, context, request):
+        from substanced.folder.views import multi_upload
+        return multi_upload(context, request)
+
+    def test_it(self):
+        context = {}
+        request = testing.DummyRequest()
+        context = request.registry.content = DummyContent()
+        result = self._callFUT(context, request)
+        self.assertEqual(result, {})
+
+class Test_multi_upload_submit(unittest.TestCase):
+    def _callFUT(self, context, request):
+        from substanced.folder.views import multi_upload_submit
+        return multi_upload_submit(context, request)
+
+    def test_empty_params(self):
+        context = {}
+        request = testing.DummyRequest()
+        context = request.registry.content = DummyContent()
+        result = self._callFUT(context, request)
+        self.assertEqual(result, {'files': []})
+
+    def test_upload(self):
+        import substanced.folder.views
+        substanced.folder.views._makeob = mock.Mock(
+            return_value='FILE'
+            )
+        dummyFileParam = Dummy(
+            type='TYPE',
+            filename='FILENAME',
+            file=StringIO(u('CONTENT')),
+            )
+        dummyFileParam.create = mock.Mock(
+            return_value={},
+            )
+        request = testing.DummyRequest({
+            'file1': dummyFileParam,
+            })
+        context = request.registry.content = {}
+        result = self._callFUT(context, request)
+        self.assertEqual(result, {
+            'files': [{
+                'name': 'filename',
+                'size': 7
+                }]
+            })
+
+    def test_upload_nostream(self):
+        import substanced.folder.views
+        substanced.folder.views._makeob = mock.Mock(
+            return_value='FILE'
+            )
+        dummyFileParam = Dummy(
+            type='TYPE',
+            filename='FILENAME',
+            file=None,
+            )
+        dummyFileParam.create = mock.Mock(
+            return_value={},
+            )
+        request = testing.DummyRequest({
+            'file1': dummyFileParam,
+            })
+        context = request.registry.content = {}
+        result = self._callFUT(context, request)
+        self.assertEqual(result, {
+            'files': [{
+                'name': 'filename',
+                'size': 0
+                }]
+            })
+
+    def test_upload_multiple(self):
+        import substanced.folder.views
+        substanced.folder.views._makeob = mock.Mock(
+            return_value='FILE'
+            )
+        dummyFileParam1 = Dummy(
+            type='TYPE1',
+            filename='FILENAME1',
+            file=StringIO(u('CONTENT1')),
+            )
+        dummyFileParam1.create = mock.Mock(
+            return_value={},
+            )
+        dummyFileParam2 = Dummy(
+            type='TYPE2',
+            filename='FILENAME2',
+            file=StringIO(u('CONTENT02')),
+            )
+        dummyFileParam2.create = mock.Mock(
+            return_value={},
+            )
+        dummyFileParam3 = Dummy(
+            type='TYPE3',
+            filename='FILENAME3',
+            file=StringIO(u('CONTENT003')),
+            )
+        dummyFileParam3.create = mock.Mock(
+            return_value={},
+            )
+        # Make sure we get the exact order we specify
+        params = Dummy(values=lambda: [
+            dummyFileParam1,
+            dummyFileParam2,
+            dummyFileParam3,
+            ])
+        request = testing.DummyRequest(params)
+        context = request.registry.content = {}
+        result = self._callFUT(context, request)
+        self.assertEqual(list(result.keys()), ['files'])
+        self.assertEqual(len(result['files']), 3)
+        self.assertEqual(result['files'][0], {
+            'name': 'filename1',
+            'size': 8,
+        })
+        self.assertEqual(result['files'][1], {
+            'name': 'filename2',
+            'size': 9,
+        })
+        self.assertEqual(result['files'][2], {
+            'name': 'filename3',
+            'size': 10,
+        })
+
 class DummyContainer(object):
     oid_store = {}
 
@@ -1963,10 +2299,6 @@ class DummyIndex(object):
         self.queried = ('eq', arg, kw)
         return self
 
-    def allows(self, *arg, **kw):
-        self.queried = ('allows', arg, kw)
-        return self
-
     def notany(self, *arg, **kw):
         self.queried = ('notany', arg, kw)
         return self
@@ -1981,6 +2313,10 @@ class DummyIndex(object):
 
     def check_query(self, querytext):
         return True
+
+    def allows(self, *arg, **kw):
+        self.queried = ('allows', arg, kw)
+        return self
 
 def _makeCatalogs(oids=()):
     from zope.interface import directlyProvides
@@ -2034,7 +2370,8 @@ class DummyConfig(object):
         return self
 
 class Dummy(object):
-    pass
+    def __init__(self, **kw):
+        self.__dict__.update(kw)
 
 class DummyVenusianContext(object):
     def __init__(self):
@@ -2046,3 +2383,17 @@ def call_venusian(venusian, context=None):
     for wrapped, callback, category in venusian.attachments:
         callback(context, None, None)
     return context.config
+
+class DummyIntrospector(object):
+    def __init__(self, results=()):
+        self.results = list(results)
+
+    def get_category(self, *arg):
+        if self.results:
+            return self.results.pop(0)
+        return ()
+
+class DummyIntrospectable(dict):
+    def __init__(self, **kw):
+        dict.__init__(self, **kw)
+

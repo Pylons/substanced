@@ -29,7 +29,7 @@ Introduction
 	"What?" Fred said. He did not understand the answer-- was it yes or no?
 	Was he damaged forever or not? Which had they said?
 
-      -- Phillip K. Dick, A Scanner Darkly
+      -- Philip K. Dick, A Scanner Darkly
 
 
 Substance D is an application server.  It provides the following features:
@@ -52,6 +52,8 @@ Substance D is an application server.  It provides the following features:
 - Built-in content workflow.
 
 - Indexing and searching of content (field, keyword, facet, and full-text).
+  Searches can be easily filtered by the security settings of individual pieces
+  of content, by path in the content hierarchy, or by a combination of the two.
 
 - A facility for relating content objects to each other (with optional
   referential integrity).

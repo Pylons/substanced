@@ -50,7 +50,7 @@
          style="display:none;" 
          alt="Loading indicator"/>
 
-    <div class="navbar navbar-fixed-top nav-bordered-bottom">
+    <div class="navbar navbar-default navbar-fixed-top nav-bordered-bottom">
       <div class="container">
 
         <div class="col-md-10 breadcrumbs-bounding"

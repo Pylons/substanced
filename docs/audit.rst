@@ -11,7 +11,7 @@ content if you have an audit database configured.  At the time of this writing, 
 
 - When a resource is modified.
 
-The audit log is of a fixed size (currently 10,000 items).  When the audit log
+The audit log is of a fixed size (currently 1,000 items).  When the audit log
 fills up, the oldest audit event is thrown away.  Currently we don't have an
 archiving mechanism in place to keep around the items popped off the end of the
 log when it fills up; this is planned.

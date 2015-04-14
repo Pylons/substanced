@@ -14,6 +14,7 @@ from ..interfaces import (
 from ..objectmap import find_objectmap
 from ..util import (
     get_oid,
+    get_acl,
     postorder,
     set_acl,
     find_service,
@@ -118,7 +119,7 @@ def acl_maybe_added(event):
 
     if objectmap is not None: # object might not yet be seated
         for resource in postorder(obj):
-            acl = getattr(resource, '__acl__', None)
+            acl = get_acl(resource, None)
             if acl is not None:
                 for princid in _referenceable_principals(acl):
                     objectmap.connect(
