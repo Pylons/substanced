@@ -109,26 +109,23 @@ class Test_is_propertied(unittest.TestCase):
     def tearDown(self):
         testing.tearDown()
 
-    def _callFUT(self, resource, registry=None):
+    def _callFUT(self, resource, request):
         from .. import is_propertied
-        return is_propertied(resource, registry)
-
-    def test_no_registry_passed(self):
-        resource = Dummy()
-        self.config.registry.content = DummyContent(True)
-        self.assertTrue(self._callFUT(resource))
+        return is_propertied(resource, request)
 
     def test_true(self):
         resource = Dummy()
-        registry = Dummy()
-        registry.content = DummyContent(())
-        self.assertTrue(self._callFUT(resource, registry))
+        request = testing.DummyRequest()
+        request.registry = DummyRegistry()
+        request.registry.content = DummyContent(['sheet one', 'sheet two'])
+        self.assertTrue(self._callFUT(resource, request))
 
     def test_false(self):
         resource = Dummy()
-        registry = Dummy()
-        registry.content = DummyContent(None)
-        self.assertFalse(self._callFUT(resource, registry))
+        request = testing.DummyRequest()
+        request.registry = DummyRegistry()
+        request.registry.content = DummyContent([])
+        self.assertFalse(self._callFUT(resource, request))
 
 class Test_PropertiedPredicate(unittest.TestCase):
     def _makeOne(self, val, config):
@@ -149,14 +146,15 @@ class Test_PropertiedPredicate(unittest.TestCase):
 
     def test__call__(self):
         config = Dummy()
-        config.registry = Dummy()
+        request = testing.DummyRequest()
+        request.registry = config.registry = Dummy()
         inst = self._makeOne(True, config)
-        def is_propertied(context, registry):
+        def is_propertied(context, request):
             self.assertEqual(context, None)
-            self.assertEqual(registry, config.registry)
+            self.assertEqual(request.registry, config.registry)
             return True
         inst.is_propertied = is_propertied
-        self.assertEqual(inst(None, None), True)
+        self.assertEqual(inst(None, request), True)
 
 class Dummy(object):
     pass

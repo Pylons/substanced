@@ -5,8 +5,6 @@ from zope.interface import (
     Interface,
     )
 
-from pyramid.threadlocal import get_current_registry
-from pyramid.threadlocal import get_current_request
 from pyramid.compat import is_nonstr_iter
 from pyramid.config.util import action_method
 from walkabout import IPredicateDomain
