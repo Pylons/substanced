@@ -102,5 +102,5 @@ class Root(Folder):
             registry=registry,
             )
         
-def includeme(config):
+def includeme(config): # pragma: no cover
     config.add_propertysheet('', RootPropertySheet, IRoot)
