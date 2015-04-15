@@ -260,6 +260,6 @@ class File(Persistent):
             blob = self.blob._p_serial
         return oid_repr(max(mine, blob))
 
-def includeme(config):
+def includeme(config): # pragma: no cover
     config.add_propertysheet('Basic', FilePropertySheet, IFile)
     config.add_propertysheet('Upload', FileUploadPropertySheet, IFile)
