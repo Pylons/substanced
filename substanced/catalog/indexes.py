@@ -450,5 +450,9 @@ class AllowsComparator(hypatia.query.Comparator):
     def __str__(self):
         return 'allows query'
 
-def includeme(config):
-        config.add_propertysheet('', IndexPropertySheet, hypatia.interfaces.IIndex)
+def includeme(config): # pragma: no cover
+        config.add_propertysheet(
+            '',
+            IndexPropertySheet,
+            hypatia.interfaces.IIndex
+            )
