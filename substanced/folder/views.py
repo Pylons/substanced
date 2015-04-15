@@ -3,7 +3,6 @@ import functools
 import itertools
 import operator
 import re
-import os
 import colander
 import venusian
 
