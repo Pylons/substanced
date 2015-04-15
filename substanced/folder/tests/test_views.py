@@ -2205,6 +2205,14 @@ class Test_multi_upload_submit(unittest.TestCase):
             'size': 10,
         })
 
+class Test_makeob(unittest.TestCase):
+    def test_it(self):
+        from substanced.folder.views import _makeob
+        request = testing.DummyRequest()
+        request.registry.content = DummyContent()
+        value = _makeob(request, None, None, None)
+        self.assertEqual(value, None)
+
 class DummyContainer(object):
     oid_store = {}
 
