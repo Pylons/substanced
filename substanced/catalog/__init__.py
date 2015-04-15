@@ -731,3 +731,4 @@ def includeme(config): # pragma: no cover
         (Interface,), IIndexingActionProcessor
         )
     config.include('.evolve')
+    config.include('.indexes')

@@ -302,8 +302,7 @@ class PathIndex(SDIndex, hypatia.util.BaseIndexMixin, Persistent, FakeIndex):
         return hypatia.query.NotEq(self, val)
 
 class IndexSchema(Schema):
-    """ The property schema for :class:`substanced.principal.Group`
-    objects."""
+    """ A property schema for :class:`hypatia.interfaces.IIndex` objects."""
     action_mode = colander.SchemaNode(
         colander.String(),
         missing=colander.null,
@@ -334,7 +333,6 @@ class IndexPropertySheet(PropertySheet):
     'Field Index',
     icon='glyphicon glyphicon-search',
     is_index=True,
-    propertysheets = ( ('', IndexPropertySheet), ),
     )
 class FieldIndex(SDIndex, hypatia.field.FieldIndex):
     def __init__(self, discriminator=None, family=None, action_mode=None):
@@ -348,7 +346,6 @@ class FieldIndex(SDIndex, hypatia.field.FieldIndex):
     'Keyword Index',
     icon='glyphicon glyphicon-search',
     is_index=True,
-    propertysheets = ( ('', IndexPropertySheet), ),
     )
 class KeywordIndex(SDIndex, hypatia.keyword.KeywordIndex):
     def __init__(self, discriminator=None, family=None, action_mode=None):
@@ -364,7 +361,6 @@ class KeywordIndex(SDIndex, hypatia.keyword.KeywordIndex):
     'Text Index',
     icon='glyphicon glyphicon-search',
     is_index=True,
-    propertysheets = ( ('', IndexPropertySheet), ),
     )
 class TextIndex(SDIndex, hypatia.text.TextIndex):
     def __init__(
@@ -387,7 +383,6 @@ class TextIndex(SDIndex, hypatia.text.TextIndex):
     'Facet Index',
     icon='glyphicon glyphicon-search',
     is_index=True,
-    propertysheets = ( ('', IndexPropertySheet), ),
     )
 class FacetIndex(SDIndex, hypatia.facet.FacetIndex):
     def __init__(self, discriminator=None, facets=None, family=None,
@@ -406,7 +401,6 @@ class FacetIndex(SDIndex, hypatia.facet.FacetIndex):
     'Allowed Index',
     icon='glyphicon glyphicon-search',
     is_index=True,
-    propertysheets = ( ('', IndexPropertySheet), ),
     )
 class AllowedIndex(SDIndex, hypatia.util.BaseIndexMixin, Persistent, FakeIndex):
     """ An index which defers to ``objectmap.allowed`` as part of a query
@@ -455,3 +449,6 @@ class AllowsComparator(hypatia.query.Comparator):
 
     def __str__(self):
         return 'allows query'
+
+def includeme(config):
+        config.add_propertysheet('', IndexPropertySheet, hypatia.interfaces.IIndex)

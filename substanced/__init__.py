@@ -24,6 +24,8 @@ def include(config): # pragma: no cover
     config.include('.audit')
     config.include('.editable')
     config.include('.db')
+    config.include('.root')
+    config.include('.principal')
     config.add_translation_dirs('locale/')
     config.add_translation_dirs('deform:locale/')
     config.add_translation_dirs('colander:locale/')

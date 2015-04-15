@@ -34,9 +34,6 @@ class RootPropertySheet(PropertySheet):
 @content(
     'Root',
     icon='subd-capsule',
-    propertysheets = (
-        ('', RootPropertySheet),
-        ),
     after_create='after_create',
     )
 @implementer(IRoot)
@@ -105,3 +102,5 @@ class Root(Folder):
             registry=registry,
             )
         
+def includeme(config):
+    config.add_propertysheet('', RootPropertySheet, IRoot)

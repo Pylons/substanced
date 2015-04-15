@@ -630,6 +630,9 @@ class WriteLock(ReferenceType):
     """ Represents a DAV-style writelock.  It's a Substance D reference type
     from resource object to lock object"""
 
+class ILock(Interface):
+    """ Represents a lock to be applied by the lock service """
+
 class ILockService(IAutoNamingFolder):
     def lock(resource, owner_or_ownerid, timeout=None, locktype=WriteLock):
         """

@@ -22,6 +22,7 @@ from pyramid.threadlocal import get_current_registry
 from pyramid.traversal import resource_path
 
 from substanced.interfaces import (
+    ILock,
     ILockService,
     WriteLock,
     UserToLock,
@@ -174,10 +175,8 @@ class LockPropertySheet(PropertySheet):
     'Lock',
     icon='glyphicon glyphicon-lock',
     add_view='add_lock',
-    propertysheets = (
-        ('', LockPropertySheet),
-        )
     )
+@implementer(ILock)
 class Lock(Persistent):
     """ A persistent object representing a lock.
     """
@@ -555,6 +554,7 @@ def discover_resource_locks(
 
 def includeme(config): # pragma: no cover
     config.add_permission('sdi.lock')
+    config.add_propertysheet('', LockPropertySheet, ILock)
     config.include('.views')
     config.include('.evolve')
 
