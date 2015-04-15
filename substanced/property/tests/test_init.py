@@ -156,6 +156,31 @@ class Test_PropertiedPredicate(unittest.TestCase):
         inst.is_propertied = is_propertied
         self.assertEqual(inst(None, request), True)
 
+class Test_get_domain(unittest.TestCase):
+    def _makeRegistry(self, domain):
+        registry = Dummy()
+        registry.queryUtility = lambda self, *arg, **kw: domain
+        def regUt(self, *args, **kw):
+            registry.domainargs = (args, kw)
+        registry.registerUtility = regUt
+        return registry
+
+    def _callFUT(self, registry):
+        from substanced.property import get_domain
+        return get_domain(registry)
+
+    def test_domain_is_None(self):
+        reg = self._makeRegistry(None)
+        result = self._callFUT(reg)
+        self.assertEqual(result.__class__.__name__, 'PredicateDomain')
+        self.assertTrue(reg.domainargs)
+
+    def test_domain_is_not_None(self):
+        domain = object()
+        reg = self._makeRegistry(domain)
+        result = self._callFUT(reg)
+        self.assertEqual(result, domain)
+
 class Dummy(object):
     pass
 
