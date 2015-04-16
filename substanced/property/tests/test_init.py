@@ -185,8 +185,50 @@ class Test_get_domain(unittest.TestCase):
         result = self._callFUT(reg)
         self.assertEqual(result, domain)
 
+class Test_add_propertysheet(unittest.TestCase):
+    def _callFUT(self, config, name, propsheet, iface=None, **predicates):
+        from substanced.property import add_propertysheet
+        return add_propertysheet(config, name, propsheet, iface, **predicates)
+
+    @mock.patch('substanced.property.get_domain')
+    def test_iface_is_None(self, mock_get_domain):
+        from zope.interface import Interface
+        domain = mock.Mock()
+        cands = []
+        domain.add_candidate = lambda *arg, **kw: cands.append((arg, kw))
+        config = DummyConfig()
+        config.registry = None
+        propsheet = mock.Mock()
+        mock_get_domain.return_value = domain
+        result = self._callFUT(config, 'name', propsheet)
+        self.assertEqual(result, propsheet)
+        self.assertEqual(config.action_discrim, None)
+        intr = config.action_kw['introspectables'][0]
+        self.assertEqual(intr['propsheet'], propsheet)
+        self.assertEqual(intr['interfaces'], Interface)
+        config.action_callable()
+        self.assertEqual(cands[0][0], (propsheet, Interface, Interface))
+        self.assertEqual(cands[0][1], {'name':'name'})
+
 class Dummy(object):
     pass
+
+class DummyConfig(object):
+    _ainfo = None
+    def maybe_dotted(self, val):
+        return val
+
+    def introspectable(self, *arg, **kw):
+        self.intrargs = (arg, kw)
+        return {}
+
+    def action(self, action_discrim, action_callable, **action_kw):
+        self.action_discrim = action_discrim
+        self.action_callable = action_callable
+        self.action_kw = action_kw
+
+    def object_description(self, ob):
+        return str(ob)
 
 class DummyRegistry(object):
     def __init__(self):

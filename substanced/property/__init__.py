@@ -139,7 +139,7 @@ def add_propertysheet(config, name, propsheet, iface=None, **predicates):
         'property sheet'
         )
 
-    intr['propshseet'] = propsheet
+    intr['propsheet'] = propsheet
     intr['interfaces'] = iface
 
     config.action(None, register, introspectables=(intr,))
