@@ -210,6 +210,27 @@ class Test_add_propertysheet(unittest.TestCase):
         self.assertEqual(cands[0][0], (propsheet, Interface, Interface))
         self.assertEqual(cands[0][1], {'name':'name'})
 
+    @mock.patch('substanced.property.get_domain')
+    def test_iface_is_not_None(self, mock_get_domain):
+        from zope.interface import Interface
+        class IFoo(Interface): pass
+        domain = mock.Mock()
+        cands = []
+        domain.add_candidate = lambda *arg, **kw: cands.append((arg, kw))
+        config = DummyConfig()
+        config.registry = None
+        propsheet = mock.Mock()
+        mock_get_domain.return_value = domain
+        result = self._callFUT(config, 'name', propsheet, iface=IFoo)
+        self.assertEqual(result, propsheet)
+        self.assertEqual(config.action_discrim, None)
+        intr = config.action_kw['introspectables'][0]
+        self.assertEqual(intr['propsheet'], propsheet)
+        self.assertEqual(intr['interfaces'], IFoo)
+        config.action_callable()
+        self.assertEqual(cands[0][0], (propsheet, IFoo, Interface))
+        self.assertEqual(cands[0][1], {'name':'name'})
+
 class Dummy(object):
     pass
 
