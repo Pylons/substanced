@@ -124,7 +124,7 @@ def add_propertysheet(config, name, propsheet, iface=None, **predicates):
     can be used.
     """
     dotted = config.maybe_dotted
-    subscriber, iface = dotted(propsheet), dotted(iface)
+    iface = dotted(iface)
     if iface is None:
         iface = Interface
 
