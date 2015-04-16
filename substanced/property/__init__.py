@@ -123,8 +123,7 @@ def add_propertysheet(config, name, propsheet, iface=None, **predicates):
     :meth:`pyramid.config.Configurator.add_propertysheet_predicate` before it
     can be used.
     """
-    dotted = config.maybe_dotted
-    iface = dotted(iface)
+    iface = config.maybe_dotted(iface)
     if iface is None:
         iface = Interface
 
