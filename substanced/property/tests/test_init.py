@@ -1,4 +1,5 @@
 import unittest
+import mock
 from pyramid import testing
 
 import colander
@@ -113,19 +114,22 @@ class Test_is_propertied(unittest.TestCase):
         from .. import is_propertied
         return is_propertied(resource, request)
 
-    def test_true(self):
+    def test_some(self):
         resource = Dummy()
         request = testing.DummyRequest()
         request.registry = DummyRegistry()
         request.registry.content = DummyContent(['sheet one', 'sheet two'])
         self.assertTrue(self._callFUT(resource, request))
 
-    def test_false(self):
+    @mock.patch('substanced.property.get_domain')
+    def test_None(self, mock_domain):
+        mock_domain.all = lambda *arg: []
         resource = Dummy()
         request = testing.DummyRequest()
         request.registry = DummyRegistry()
-        request.registry.content = DummyContent([])
-        self.assertFalse(self._callFUT(resource, request))
+        request.registry.content = DummyContent(None)
+        result = self._callFUT(resource, request)
+        self.assertFalse(result)
 
 class Test_PropertiedPredicate(unittest.TestCase):
     def _makeOne(self, val, config):
