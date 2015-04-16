@@ -103,8 +103,8 @@ def get_domain(registry):
 
 @action_method
 def add_propertysheet(config, name, propsheet, iface=None, **predicates):
-    """Add an a propertysheet for the content types implied by
-    ``iface`` and ``predicates``.
+    """Add a propertysheet for the content types implied by ``iface`` and
+    ``predicates``.
 
     The ``propsheet`` argument represents a propertysheet class (or a
     :term:`dotted Python name` which identifies such a class); it will be
@@ -153,7 +153,7 @@ def add_propertysheet_predicate(config, name, factory,
         Adds a property sheet predicate factory.  The associated property sheet
         predicate can later be named as a keyword argument to
         :meth:`pyramid.config.Configurator.add_propertysheet` in the
-        ``**predicates`` anonyous keyword argument dictionary.
+        ``**predicates`` anonymous keyword argument dictionary.
 
         ``name`` should be the name of the predicate.  It must be a valid
         Python identifier (it will be used as a ``**predicates`` keyword

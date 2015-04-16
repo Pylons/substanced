@@ -490,6 +490,7 @@ Other Helpers
 --------------------------------
 
 .. automodule:: substanced.property
+   :members:
 
 .. autoclass:: PropertySheet
    :members:
