@@ -231,6 +231,27 @@ class Test_add_propertysheet(unittest.TestCase):
         self.assertEqual(cands[0][0], (propsheet, IFoo, Interface))
         self.assertEqual(cands[0][1], {'name':'name'})
 
+class Test_add_propertysheet_predicate(unittest.TestCase):
+    def _callFUT(self, config, name, factory, before=None, after=None):
+        from substanced.property import add_propertysheet_predicate
+        return add_propertysheet_predicate(
+            config, name, factory, before=before, after=after
+            )
+
+    @mock.patch('substanced.property.get_domain')
+    def test_it(self, mock_get_domain):
+        domain = mock.Mock()
+        preds = []
+        domain.add_predicate = lambda *arg, **kw: preds.append((arg, kw))
+        mock_get_domain.return_value = domain
+        config = DummyConfig()
+        config.registry = None
+        self._callFUT(config, 'name', 'factory', 'before', 'after')
+        self.assertEqual(len(preds), 1)
+        pred = preds[0]
+        self.assertEqual(pred[0], ('name', 'factory'))
+        self.assertEqual(pred[1], {'after':'after', 'before':'before'})
+
 class Dummy(object):
     pass
 
