@@ -1,6 +1,4 @@
-Unreleased
-----------
+1.0a (2015-04-17)
+----------------
 
-- Add AfterTransition event.
-- Fixed #95 (When the scrolling causes an ajax request the selections are
-  lost.)
+- Initial release.

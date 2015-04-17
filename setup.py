@@ -50,7 +50,7 @@ testing_extras = ['nose', 'coverage', 'mock', 'virtualenv']
 i18n_extras = ['Babel', 'transifex-client', 'lingua<2.0']
 
 setup(name='substanced',
-      version='0.0',
+      version='1.0a',
       description='An application server built using Pyramid',
       long_description=README + '\n\n' + CHANGES,
       classifiers=[
