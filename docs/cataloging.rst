@@ -333,7 +333,7 @@ For example, the below query will find:
 
     system_catalog = find_catalog(resource, 'system')
     path = system_catalog['path']
-    interfaces = system_catalog['content_type']
+    content_type = system_catalog['content_type']
     allowed = system_catalog['allowed']
     q = ( path.eq(resource, depth=1, include_origin=False) &
           content_type.eq('News Item') &
