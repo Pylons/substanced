@@ -241,6 +241,8 @@ is passed to this function, along with the folder and request. If *any one*
 of the folder subobjects returns ``False`` for this call, the button will
 not be enabled.
 
+.. _filtering-what-can-be-added:
+
 Filtering What Can Be Added
 ===========================
 
@@ -432,5 +434,3 @@ example:
        pass
 
    MyCoolResource = MySuperVeryCoolResource # bw compat alias
-
-
