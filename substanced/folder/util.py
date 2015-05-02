@@ -4,7 +4,6 @@ import os
 import unidecode
 
 from substanced._compat import u
-from substanced.sdi import default_sdi_addable
 
 re_word = re.compile(r'\W+')
 
@@ -36,6 +35,8 @@ def content_type_addable(context, request, content_type):
     :ref:`filtering-what-can-be-added` for details.p
 
     """
+    from ..sdi import default_sdi_addable  # import cycle
+
     introspector = request.registry.introspector
     discrim = ('sd-content-type', content_type)
     intr = introspector.get('substance d content types', discrim)

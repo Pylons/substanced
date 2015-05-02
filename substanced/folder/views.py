@@ -32,10 +32,7 @@ from ..sdi import (
     sdi_mgmt_views,
     RIGHT,
     )
-from .util import (
-    content_type_addable,
-    slugify_in_context,
-    )
+from .util import slugify_in_context
 from ..util import _
 
 from . import FolderKeyError
@@ -1449,7 +1446,8 @@ def add_folder_contents_views(
     context=IFolder,
     name='upload',
     tab_title=_('Upload'),
-    tab_condition=functools.partial(content_type_addable, content_type='File'),
+    tab_condition=True,
+    sdi_addable='File',
     tab_after='contents',
     permission='sdi.add-content',
     renderer='substanced.folder:templates/multiupload.pt'
@@ -1471,6 +1469,7 @@ def _makeob(request, stream, title, mimetype):
     request_method='POST',
     renderer='json',
     tab_condition=False,
+    sdi_addable='File',
     permission='sdi.add-content',
     )
 def multi_upload_submit(context, request):

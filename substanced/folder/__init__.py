@@ -7,7 +7,10 @@ from persistent import (
     Persistent,
     )
 from persistent.interfaces import IPersistent
-from pyramid.compat import string_types
+from pyramid.compat import (
+    is_nonstr_iter,
+    string_types,
+    )
 from pyramid.location import (
     lineage,
     inside,
@@ -48,6 +51,7 @@ from ..util import (
     )
 from .._compat import STRING_TYPES
 from .._compat import u
+from .util import content_type_addable
 
 
 class FolderKeyError(KeyError):
@@ -926,6 +930,23 @@ class CopyHook(object):
         # ResumeCopy.
         raise ResumeCopy
 
+
+class _AddablePredicate(object):
+    def __init__(self, val, config):
+        if is_nonstr_iter(val):
+            self.val = set(val)
+        else:
+            self.val = set([val])
+
+    def text(self):
+        return 'sdi_addable = %s' % ', '.join(sorted(self.val))
+
+    phash = text
+
+    def __call__(self, context, request):
+        return any(content_type_addable(context, request, content_type)
+                   for content_type in self.val)
+
 def includeme(config): # pragma: no cover
     # The ICopyHook adapter avoids dumping referenced objects that are not
     # located inside an object containment-wise when that object is copied.  If
@@ -936,5 +957,6 @@ def includeme(config): # pragma: no cover
     YEAR = 86400 * 365
     config.add_static_view('fcstatic', 'substanced.folder:static',
                            cache_max_age=YEAR)
+    config.add_view_predicate('sdi_addable', _AddablePredicate)
     config.include('.views')
     config.include('.evolve')

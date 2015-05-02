@@ -1,4 +1,5 @@
 import unittest
+import mock
 from pyramid import testing
 
 from zope.interface import (
@@ -1139,6 +1140,34 @@ class TestCopyHook(unittest.TestCase):
         child.__parent__ = parent
         inst = self._makeOne(child)
         self.assertRaises(ResumeCopy, inst, parent, None)
+
+class Test_AddablePredicate(unittest.TestCase):
+    def _makeOne(self, val, config):
+        from .. import _AddablePredicate
+        return _AddablePredicate(val, config)
+
+    def test_text(self):
+        config = mock.sentinel.config
+        pred = self._makeOne('Foo', config)
+        self.assertEqual(pred.text(), "sdi_addable = Foo")
+
+    def test_phash(self):
+        config = mock.sentinel.config
+        pred = self._makeOne(['Foo', 'Bar'], config)
+        self.assertEqual(pred.text(), "sdi_addable = Bar, Foo")
+
+    @mock.patch('substanced.folder.content_type_addable')
+    def test_call(self, content_type_addable):
+        content_type_addable.return_value = False
+        config = mock.sentinel.config
+        context = mock.sentinel.context
+        request = mock.sentinel.request
+        pred = self._makeOne('Foo', config)
+        rv = pred(context, request)
+        self.assertFalse(rv)
+        self.assertEqual(content_type_addable.mock_calls, [
+            mock.call(context, request, 'Foo'),
+            ])
 
 class DummyModel(object):
     def __init__(self, oid=1):
