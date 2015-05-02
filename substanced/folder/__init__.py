@@ -51,7 +51,7 @@ from ..util import (
     )
 from .._compat import STRING_TYPES
 from .._compat import u
-from .util import content_type_addable
+from .util import is_sdi_addable
 
 
 class FolderKeyError(KeyError):
@@ -944,7 +944,7 @@ class _AddablePredicate(object):
     phash = text
 
     def __call__(self, context, request):
-        return any(content_type_addable(context, request, content_type)
+        return any(is_sdi_addable(context, request, content_type)
                    for content_type in self.val)
 
 def includeme(config): # pragma: no cover

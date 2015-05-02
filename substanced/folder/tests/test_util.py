@@ -65,7 +65,7 @@ class Test_slugify_in_context(unittest.TestCase):
             )
 
 
-class Test_content_type_addable(unittest.TestCase):
+class Test_is_sdi_addable(unittest.TestCase):
     def setUp(self):
         self.config = testing.setUp()
 
@@ -73,8 +73,8 @@ class Test_content_type_addable(unittest.TestCase):
         testing.tearDown()
 
     def call_it(self, context, request, content_type):
-        from ..util import content_type_addable
-        return content_type_addable(context, request, content_type)
+        from ..util import is_sdi_addable
+        return is_sdi_addable(context, request, content_type)
 
     def test_true_if_sdi_addable_is_none(self):
         config = self.config

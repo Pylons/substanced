@@ -1156,16 +1156,16 @@ class Test_AddablePredicate(unittest.TestCase):
         pred = self._makeOne(['Foo', 'Bar'], config)
         self.assertEqual(pred.text(), "sdi_addable = Bar, Foo")
 
-    @mock.patch('substanced.folder.content_type_addable')
-    def test_call(self, content_type_addable):
-        content_type_addable.return_value = False
+    @mock.patch('substanced.folder.is_sdi_addable')
+    def test_call(self, is_sdi_addable):
+        is_sdi_addable.return_value = False
         config = mock.sentinel.config
         context = mock.sentinel.context
         request = mock.sentinel.request
         pred = self._makeOne('Foo', config)
         rv = pred(context, request)
         self.assertFalse(rv)
-        self.assertEqual(content_type_addable.mock_calls, [
+        self.assertEqual(is_sdi_addable.mock_calls, [
             mock.call(context, request, 'Foo'),
             ])
 

@@ -23,7 +23,7 @@ def slugify_in_context(context, name, remove_extension=True):
     return slug
 
 
-def content_type_addable(context, request, content_type):
+def is_sdi_addable(context, request, content_type):
     """Determine whether resources of type ``content_type`` can be added
     to ``context`` using the SDI management interface.
 
