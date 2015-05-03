@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: substanced 0.0\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2014-06-10 09:22+0200\n"
-"PO-Revision-Date: 2015-05-03 20:40+0200\n"
+"PO-Revision-Date: 2015-05-03 21:10+0200\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -94,7 +94,7 @@ msgstr "Hakemistopalvelu sijainnissa \"${request.resource_path(catalog)}\""
 
 #: substanced/catalog/views/templates/indexing.pt:16
 msgid "Index name"
-msgstr "Indeksin nimi"
+msgstr "Indeksi"
 
 #: substanced/catalog/views/templates/indexing.pt:17
 msgid "Value"
@@ -102,7 +102,7 @@ msgstr "Arvo"
 
 #: substanced/catalog/views/templates/indexing.pt:32
 msgid "Reindex This Object"
-msgstr "Uudellenindeksoi tämä kohde"
+msgstr "Uudellenindeksoi kohde"
 
 #: substanced/catalog/views/templates/search.pt:22
 msgid "Search Results"
@@ -277,7 +277,7 @@ msgstr "Siirrä tähän"
 
 #: substanced/folder/views.py:241
 msgid "Rename"
-msgstr "Uudelleennimeä"
+msgstr "Nimeä"
 
 #: substanced/folder/views.py:246
 msgid "Copy"
@@ -289,7 +289,7 @@ msgstr "Siirrä"
 
 #: substanced/folder/views.py:257
 msgid "Duplicate"
-msgstr "Kopio"
+msgstr "Monista"
 
 #: substanced/folder/views.py:268
 msgid "Delete"
@@ -304,18 +304,18 @@ msgstr[1] "${num} kohdetta poistettu"
 #: substanced/folder/views.py:780
 msgid "Duplicated ${num} item"
 msgid_plural "Duplicated ${num} items"
-msgstr[0] "Kohde kopioitu"
-msgstr[1] "${num} kohdetta kopioitu"
+msgstr[0] "Kohde monistettu"
+msgstr[1] "${num} kohdetta monistettu"
 
 #: substanced/folder/views.py:800
 msgid "No items renamed"
-msgstr "Yhtään kohdetta ei uudelleennimetty"
+msgstr "Yhtään kohdetta ei nimetty"
 
 #: substanced/folder/views.py:817
 msgid "Renamed ${num} item"
 msgid_plural "Renamed ${num} items"
-msgstr[0] "Kohde uudelleennimetty"
-msgstr[1] "${num} kohdetta uudelleennimetty"
+msgstr[0] "Kohde nimetty"
+msgstr[1] "${num} kohdetta nimetty"
 
 #: substanced/folder/views.py:833
 msgid "Choose where to copy the items:"
@@ -395,7 +395,7 @@ msgstr "yhteensä"
 
 #: substanced/folder/templates/contents.pt:120
 msgid "selected"
-msgstr "valitut"
+msgstr "valittu"
 
 #: substanced/folder/templates/rename.pt:11
 msgid "Rename Items"
@@ -486,7 +486,7 @@ msgstr "Epäkelpo sivustojenvälinen komentosarjatunniste"
 #: substanced/sdi/views/acl.py:85 substanced/sdi/views/acl.py:95
 #: substanced/sdi/views/acl.py:143
 msgid "Security"
-msgstr "Tietoturva"
+msgstr "Käyttöoikeudet"
 
 #: substanced/sdi/views/undo.py:70 substanced/sdi/views/undo.py:113
 msgid "Could not undo, sorry"
@@ -499,7 +499,7 @@ msgstr "Peru"
 
 #: substanced/sdi/views/templates/acl.pt:49
 msgid "Local ACL"
-msgstr "Paikalliset pääsyasetukset"
+msgstr "Kohteen oikeusasetukset"
 
 #: substanced/sdi/views/templates/acl.pt:58
 #: substanced/sdi/views/templates/acl.pt:254
@@ -509,7 +509,7 @@ msgstr "Salli / Estä"
 #: substanced/sdi/views/templates/acl.pt:59
 #: substanced/sdi/views/templates/acl.pt:255
 msgid "Principal"
-msgstr "Edustajuus"
+msgstr "Käyttäjä"
 
 #: substanced/sdi/views/templates/acl.pt:60
 #: substanced/sdi/views/templates/acl.pt:256
@@ -530,7 +530,7 @@ msgstr "${button} Estä"
 
 #: substanced/sdi/views/templates/acl.pt:144
 msgid "Choose a Principal"
-msgstr "Valitse edustajuus"
+msgstr "Valitse käyttäjä"
 
 #: substanced/sdi/views/templates/acl.pt:161
 msgid "Choose Permissions"
@@ -542,15 +542,15 @@ msgstr "Lisää"
 
 #: substanced/sdi/views/templates/acl.pt:197
 msgid "Inherit Parent ACL"
-msgstr "Käytä ylätason pääsyasetuksia"
+msgstr "Peri oikeusasetukset ylemmältä kohdetasolta"
 
 #: substanced/sdi/views/templates/acl.pt:205
 msgid "${button} Enabled"
-msgstr "${button} Sallittu"
+msgstr "${button} Käytössä"
 
 #: substanced/sdi/views/templates/acl.pt:216
 msgid "${button} Disabled"
-msgstr "${button} Estetty"
+msgstr "${button} Ei käytössä"
 
 #: substanced/sdi/views/templates/acl.pt:229
 msgid "Update"
@@ -558,7 +558,7 @@ msgstr "Päivitä"
 
 #: substanced/sdi/views/templates/acl.pt:248
 msgid "Parent ACL"
-msgstr "Ylätason pääsyasetukset"
+msgstr "Ylemmän kohdetason oikeusasetukset"
 
 #: substanced/sdi/views/templates/batching.pt:4
 msgid "${batch.seqlen} entries total"
@@ -617,15 +617,15 @@ msgstr "Sivu # ${batch_num+1|1}"
 
 #: substanced/sdi/views/templates/undo.pt:15
 msgid "${icon} Latest"
-msgstr "${icon} Viimeisin"
+msgstr "${icon} Viimeisimmät"
 
 #: substanced/sdi/views/templates/undo.pt:19
 msgid "${icon} Later"
-msgstr "${icon} Jälkeen"
+msgstr "${icon} Seuraavat"
 
 #: substanced/sdi/views/templates/undo.pt:23
 msgid "${icon} Earlier"
-msgstr "${icon} Ennen"
+msgstr "${icon} Edelliset"
 
 #: substanced/sdi/views/templates/undo.pt:38
 msgid "Undoable transactions"
