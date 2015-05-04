@@ -75,7 +75,7 @@ def name_or_file(node, kw):
     tab_title='Add File', 
     permission='sdi.add-content', 
     renderer='substanced.sdi:templates/form.pt',
-    sdi_addable='File',
+    addable_content='File',
     tab_condition=False
     )
 class AddFileView(FormView):

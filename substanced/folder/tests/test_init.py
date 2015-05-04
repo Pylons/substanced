@@ -1141,20 +1141,20 @@ class TestCopyHook(unittest.TestCase):
         inst = self._makeOne(child)
         self.assertRaises(ResumeCopy, inst, parent, None)
 
-class Test_AddablePredicate(unittest.TestCase):
+class Test_AddableContentPredicate(unittest.TestCase):
     def _makeOne(self, val, config):
-        from .. import _AddablePredicate
-        return _AddablePredicate(val, config)
+        from .. import _AddableContentPredicate
+        return _AddableContentPredicate(val, config)
 
     def test_text(self):
         config = mock.sentinel.config
         pred = self._makeOne('Foo', config)
-        self.assertEqual(pred.text(), "sdi_addable = Foo")
+        self.assertEqual(pred.text(), "addable_content = Foo")
 
     def test_phash(self):
         config = mock.sentinel.config
         pred = self._makeOne(['Foo', 'Bar'], config)
-        self.assertEqual(pred.text(), "sdi_addable = Bar, Foo")
+        self.assertEqual(pred.text(), "addable_content = Bar, Foo")
 
     @mock.patch('substanced.folder.is_sdi_addable')
     def test_call(self, is_sdi_addable):

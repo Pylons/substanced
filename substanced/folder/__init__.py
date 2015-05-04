@@ -931,7 +931,7 @@ class CopyHook(object):
         raise ResumeCopy
 
 
-class _AddablePredicate(object):
+class _AddableContentPredicate(object):
     def __init__(self, val, config):
         if is_nonstr_iter(val):
             self.val = set(val)
@@ -939,7 +939,7 @@ class _AddablePredicate(object):
             self.val = set([val])
 
     def text(self):
-        return 'sdi_addable = %s' % ', '.join(sorted(self.val))
+        return 'addable_content = %s' % ', '.join(sorted(self.val))
 
     phash = text
 
@@ -957,6 +957,6 @@ def includeme(config): # pragma: no cover
     YEAR = 86400 * 365
     config.add_static_view('fcstatic', 'substanced.folder:static',
                            cache_max_age=YEAR)
-    config.add_view_predicate('sdi_addable', _AddablePredicate)
+    config.add_view_predicate('addable_content', _AddableContentPredicate)
     config.include('.views')
     config.include('.evolve')

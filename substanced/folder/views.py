@@ -1447,7 +1447,7 @@ def add_folder_contents_views(
     name='upload',
     tab_title=_('Upload'),
     tab_condition=True,
-    sdi_addable='File',
+    addable_content='File',
     tab_after='contents',
     permission='sdi.add-content',
     renderer='substanced.folder:templates/multiupload.pt'
@@ -1469,7 +1469,7 @@ def _makeob(request, stream, title, mimetype):
     request_method='POST',
     renderer='json',
     tab_condition=False,
-    sdi_addable='File',
+    addable_content='File',
     permission='sdi.add-content',
     )
 def multi_upload_submit(context, request):
