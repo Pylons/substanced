@@ -51,7 +51,6 @@ from ..util import (
     )
 from .._compat import STRING_TYPES
 from .._compat import u
-from .util import is_sdi_addable
 
 
 class FolderKeyError(KeyError):
@@ -929,6 +928,35 @@ class CopyHook(object):
         # definitely want to copy them and we signify this desire by raising
         # ResumeCopy.
         raise ResumeCopy
+
+
+def is_sdi_addable(context, request, content_type):
+    """Determine whether resources of type ``content_type`` can be added
+    to ``context`` using the SDI management interface.
+
+    Returns ``True`` iff resources of the type named by ``content_type`` can be
+    added to ``context`` using the SDI management interface.
+
+    Addability is determined by consulting the ``__sdi_addable__``
+    attribute of the ``context``.  See
+    :ref:`filtering-what-can-be-added` for details.p
+
+    """
+    from ..sdi import default_sdi_addable  # import cycle
+
+    introspector = request.registry.introspector
+    discrim = ('sd-content-type', content_type)
+    intr = introspector.get('substance d content types', discrim)
+    if intr is None:
+        return False            # unknown content_type
+
+    sdi_addable = getattr(context, '__sdi_addable__', default_sdi_addable)
+    if sdi_addable is None:
+        return True
+    elif callable(sdi_addable):
+        return sdi_addable(context, intr)
+    else:
+        return content_type in sdi_addable
 
 
 class _AddableContentPredicate(object):
