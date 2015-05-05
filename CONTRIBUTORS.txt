@@ -124,3 +124,5 @@ Contributors
 - Cédric Messiant, 2014/6/2
 
 - Matt Russell, 2014/12/13
+
+- Geoffrey T. Dairiki, 2015/05/02
