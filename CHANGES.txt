@@ -1,3 +1,11 @@
+Next release
+------------
+
+- Omit the ``Upload`` tab for folders which can not contain files. See
+  https://github.com/Pylons/substanced/pull/247.
+
+- Added Finnish translation.
+  
 1.0a1 (2015-04-17)
 ==================
 
