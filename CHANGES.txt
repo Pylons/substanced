@@ -5,6 +5,8 @@ Next release
   https://github.com/Pylons/substanced/pull/247.
 
 - Added Finnish translation.
+
+- Fixed bug in scaffold that prevented Document properties tab from showing up in the sdi.
   
 1.0a1 (2015-04-17)
 ==================
