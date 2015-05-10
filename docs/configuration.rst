@@ -105,7 +105,7 @@ supervisor service, remove the data as above, restart it,
 and restart the app server.
 
 With RelStorage, you get a rich set of existing tools such as
-``pgadmin`` to browser and modify table data. You can, though,
+``pgadmin`` to browse and modify table data. You can, though,
 do it the quickie way via ``bin/pshell`` and just delete the root
 object, then commit the transaction.
 
