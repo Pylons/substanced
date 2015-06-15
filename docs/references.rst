@@ -95,7 +95,7 @@ objectids which are *targets* of the object and reference type it's passed.  If
 no objects are involved in the relation, an empty set will be returned in
 either case.  :meth:`~substanced.objectmap.ObjectMap.sources` and
 :meth:`~substanced.objectmap.ObjectMap.targets` methods also exist which are
-analgous, but return the actual objects involved in the relation instead of the
+analogous, but return the actual objects involved in the relation instead of the
 objectids:
 
 .. code-block:: python
