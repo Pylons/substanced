@@ -41,7 +41,7 @@
          var d = new Date();
          var tzo = d.getTimezoneOffset() / 60 * -1;
          var dif = tzo >= 0 ? '+' : '-';
-         var formatted = tzo >= 10 ? '' : '0' + tzo + ':00';
+         var formatted = tzo >= 10 ? '' : '0' + tzo + '00';
          var timezone = dif + formatted;
          $timezone.val(timezone);
        }

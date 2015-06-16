@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import colander
 import deform.schema
 import deform.widget
@@ -228,8 +230,17 @@ class MultireferenceIdSchemaNode(ReferenceIdSchemaNode):
 
 
 class UserTimeZoneDateTimeNode(colander.SchemaNode):
-    widget = UserTimeZoneDateTimeInputWidget()
-
     @staticmethod
     def schema_type():
         return colander.DateTime(default_tzinfo=None)
+
+    @property
+    def widget(self):
+        request = self.bindings['request']
+        if request.user:
+            timezone = request.user.timezone.localize(datetime(1991, 11, 5)).strftime("%z")
+        else:
+            timezone = ''
+        return UserTimeZoneDateTimeInputWidget(
+            timezone=timezone
+        )
