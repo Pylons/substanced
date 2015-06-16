@@ -20,13 +20,19 @@
              tal:attributes="style style"
              id="${oid}-time"/>
     </div>
-    <div class="input-group col-xs-6">
+    <div class="input-group col-xs-6"
+         tal:condition="show_timezone">
       <span class="input-group-addon" i18n:translate="">TimeZone</span>
       <input type="text" name="timezone" value="${timezone}"
              class="span2 form-control ${css_class or ''}"
              tal:attributes="style style"
              id="${oid}-timezone">
     </div>
+    <input type="hidden" name="timezone" value="${timezone}"
+           class="span2 form-control ${css_class or ''}"
+           tal:condition="not show_timezone"
+           tal:attributes="style style"
+           id="${oid}-timezone">
   </div>
   ${field.end_mapping()}
   <script type="text/javascript">

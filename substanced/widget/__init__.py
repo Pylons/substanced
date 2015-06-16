@@ -13,11 +13,15 @@ from deform.i18n import _
 class UserTimeZoneDateTimeInputWidget(deform_widget.DateTimeInputWidget):
     template = 'timezonedatetimeinput'
     timezone = ''
+    show_timezone = False
 
     def serialize(self, field, cstruct, **kw):
         if cstruct in (null, None):
             cstruct = ''
         readonly = kw.get('readonly', self.readonly)
+
+        if 'show_timezone' not in kw:
+            kw['show_timezone'] = self.show_timezone
 
         if 'timezone' not in kw:
             kw['timezone'] = self.timezone

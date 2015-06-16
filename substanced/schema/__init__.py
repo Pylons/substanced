@@ -230,6 +230,8 @@ class MultireferenceIdSchemaNode(ReferenceIdSchemaNode):
 
 
 class UserTimeZoneDateTimeNode(colander.SchemaNode):
+    show_timezone = False
+
     @staticmethod
     def schema_type():
         return colander.DateTime(default_tzinfo=None)
@@ -242,5 +244,6 @@ class UserTimeZoneDateTimeNode(colander.SchemaNode):
         else:
             timezone = ''
         return UserTimeZoneDateTimeInputWidget(
-            timezone=timezone
+            timezone=timezone,
+            show_timezone=self.show_timezone,
         )
