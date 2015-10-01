@@ -110,6 +110,8 @@ class AddFileView(FormView):
         name = name or filename
         fileob = self._makeob(stream, title, mimetype)
         self.context[name] = fileob
+        tmpstore = FileUploadTempStore(self.request)
+        tmpstore.clear()
         return HTTPFound(self.request.sdiapi.mgmt_path(self.context))
 
 onepixel = pkg_resources.resource_filename(
