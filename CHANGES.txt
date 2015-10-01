@@ -7,6 +7,9 @@ Next release
 - Added Finnish translation.
 
 - Fixed bug in scaffold that prevented Document properties tab from showing up in the sdi.
+
+- ``substanced.file.FileUploadPropertySheet`` (which backs the File->Upload
+  property tab) did not properly clear tempfiles from the upload tmpdir.
   
 1.0a1 (2015-04-17)
 ==================

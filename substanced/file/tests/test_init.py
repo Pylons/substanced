@@ -74,7 +74,8 @@ class TestFileUploadPropertySheet(unittest.TestCase):
         context = testing.DummyResource()
         request = testing.DummyRequest()
         inst = self._makeOne(context, request)
-        inst.set({'file':{}})
+        result = inst.set({'file':{}})
+        self.assertFalse(result)
 
     def test_set_with_fp_and_filename(self):
         fp = io.BytesIO(b'abc')
@@ -87,9 +88,11 @@ class TestFileUploadPropertySheet(unittest.TestCase):
         context.upload = upload
         request = testing.DummyRequest()
         inst = self._makeOne(context, request)
-        inst.set({'file':{'fp':fp, 'filename':'foo.pt'}})
+        result = inst.set({'file':{'fp':fp, 'filename':'foo.pt'}})
         self.assertTrue(context.uploaded)
         self.assertEqual(fp.tell(), 0)
+        self.assertTrue(result)
+
 
     def test_set_with_fp_no_filename(self):
         from .. import USE_MAGIC
@@ -103,11 +106,12 @@ class TestFileUploadPropertySheet(unittest.TestCase):
         context.upload = upload
         request = testing.DummyRequest()
         inst = self._makeOne(context, request)
-        inst.set({'file':{'fp':fp}})
+        result = inst.set({'file':{'fp':fp}})
         self.assertTrue(context.uploaded)
         self.assertEqual(fp.tell(), 0)
+        self.assertTrue(result)
 
-    def test_after_set(self):
+    def test_after_set_changed_true(self):
         context = testing.DummyResource()
         here = os.path.dirname(__file__)
         request = testing.DummyRequest()
@@ -118,6 +122,15 @@ class TestFileUploadPropertySheet(unittest.TestCase):
         inst = self._makeOne(context, request)
         inst.after_set(True)
         self.assertEqual(request.session.get('substanced.tempstore'), None)
+
+    def test_after_set_changed_false(self):
+        context = testing.DummyResource()
+        request = testing.DummyRequest()
+        tmpstore = {'1':{}}
+        request.session['substanced.tempstore'] = tmpstore
+        inst = self._makeOne(context, request)
+        inst.after_set(False)
+        self.assertEqual(request.session['substanced.tempstore'], tmpstore)
 
 class TestFile(unittest.TestCase):
     def setUp(self):
