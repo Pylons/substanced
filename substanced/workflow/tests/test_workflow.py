@@ -1015,7 +1015,7 @@ class register_workflowTests(unittest.TestCase):
                           wf,
                           'basic',
                           'Foobar')
-        self.config.registry.content.exists.assert_call('Foobar')
+        self.config.registry.content.exists.assert_called_with('Foobar')
 
 class Test_WorkflowedPredicate(unittest.TestCase):
     def _makeOne(self, val, config):
