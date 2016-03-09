@@ -64,7 +64,7 @@ following steps.
       
    $ hack-on-substanced/bin/pcreate -s substanced myproj
 
-#. Now you can make a virtualenv for your project
+#. Now you can make a virtualenv for your project and move into it
 
    $ virtualenv -p python2.7 myproj
    $ cd myproj
