@@ -70,9 +70,9 @@ following steps.
 #. The initial Administrator password is randomly generated automatically.
    Use the following command to find the login information::
    
-   $ grep initial_password *.ini
-   development.ini:substanced.initial_password = hNyrGI5nnl
-   production.ini:substanced.initial_password = hNyrGI5nnl
+    $ grep initial_password *.ini
+    development.ini:substanced.initial_password = hNyrGI5nnl
+    production.ini:substanced.initial_password = hNyrGI5nnl
 
 Hacking on Substance D
 ----------------------
