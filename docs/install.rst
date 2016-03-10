@@ -13,23 +13,6 @@ Install using pip, e.g. (within a virtualenv)::
 
 .. _optional_dependencies:
 
-Optional Dependencies
----------------------
-
-Use of the :py:attr:`substanced.file.USE_MAGIC` constant for guessing file
-types from stream content requires the ``python-magic`` library, which works
-without extra help on Linux systems, but requires special dependency
-installations on Mac OS and Windows systems.  You'll need to follow these
-steps on those platforms to use this feature:
-
-Mac OS X
-
-  http://www.brambraakman.com/blog/comments/installing_libmagic_in_mac_os_x_for_python-magic/
-
-Windows
-
-  "Installation on Win32" in https://github.com/ahupp/python-magic
-
 Demonstration Application
 -------------------------
 
@@ -44,27 +27,34 @@ following steps.
    $ virtualenv -p python2.7 hack-on-substanced
    $ cd hack-on-substanced
 
-#. Install Substance D either from PyPI or from a git checkout
+#. Install Substance D either from PyPI or from a git checkout::
 
    $ bin/pip install substanced
    
-   OR
+   OR::
    
    $ bin/pip install git+https://github.com/Pylons/substanced#egg=substanced
 
    Alternatively create a writeable fork on GitHub and check that out.
    
-#. Move back to the parent directory
+#. Check that the python-magic library has been installed::
+
+   $ bin/python -c "from substanced.file import magic; assert magic is not None, 'python-magic not installed'"
+   
+   If you then see "python-magic not installed" then you will need to take
+   additional steps to install the python-magic library. See :doc:`magic`.
+   
+#. Move back to the parent directory::
 
    $ cd ..
 
 #. Now you should be able to create new Substance D projects by
    using ``pcreate``. The following ``pcreate`` command uses the scaffold
-   ``substanced`` to create a new project named ``myproj`` 
+   ``substanced`` to create a new project named ``myproj``::
       
    $ hack-on-substanced/bin/pcreate -s substanced myproj
 
-#. Now you can make a virtualenv for your project and move into it
+#. Now you can make a virtualenv for your project and move into it::
 
    $ virtualenv -p python2.7 myproj
    $ cd myproj

@@ -49,6 +49,7 @@ Narrative Documentation
    vrooting
    retail
    scripts
+   magic
 
 API Documentation
 -----------------
