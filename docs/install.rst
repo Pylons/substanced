@@ -1,34 +1,17 @@
 Installation
 ============
 
-Install using setuptools, e.g. (within a virtualenv)::
+Install using pip, e.g. (within a virtualenv)::
 
-  $ easy_install substanced
+  $ pip substanced
 
 .. warning::
 
-   During Substance D's pre-alpha period, it may be necessary to use a
+   During Substance D's alpha period, it may be necessary to use a
    checkout of Substance D as well as checkouts of the most recent versions of
    the libraries upon which Substance D depends.
 
 .. _optional_dependencies:
-
-Optional Dependencies
----------------------
-
-Use of the :py:attr:`substanced.file.USE_MAGIC` constant for guessing file
-types from stream content requires the ``python-magic`` library, which works
-without extra help on Linux systems, but requires special dependency
-installations on Mac OS and Windows systems.  You'll need to follow these
-steps on those platforms to use this feature:
-
-Mac OS X
-
-  http://www.brambraakman.com/blog/comments/installing_libmagic_in_mac_os_x_for_python-magic/
-
-Windows
-
-  "Installation on Win32" in https://github.com/ahupp/python-magic
 
 Demonstration Application
 -------------------------
@@ -41,47 +24,46 @@ following steps.
 
 #. Create a new directory somewhere and ``cd`` to it::
 
-   $ mkdir ~/hack-on-substanced
-   $ cd ~/hack-on-substanced
+   $ virtualenv -p python2.7 hack-on-substanced
+   $ cd hack-on-substanced
 
-#. Check out a read-only copy of the Substance D source::
+#. Install Substance D either from PyPI or from a git checkout::
 
-   $ git clone git://github.com/Pylons/substanced.git
+   $ bin/pip install substanced
+   
+   OR::
+   
+   $ bin/pip install git+https://github.com/Pylons/substanced#egg=substanced
 
    Alternatively create a writeable fork on GitHub and check that out.
+   
+#. Check that the python-magic library has been installed::
 
-#. Create a virtualenv in which to install Substance D::
+   $ bin/python -c "from substanced.file import magic; assert magic is not None, 'python-magic not installed'"
+   
+   If you then see "python-magic not installed" then you will need to take
+   additional steps to install the python-magic library. See :doc:`magic`.
+   
+#. Move back to the parent directory::
 
-   $ virtualenv -p python2.7 --no-site-packages env
+   $ cd ..
 
-#. Install ``setuptools-git`` into the virtualenv (for good measure, as we're
-   using git to do version control)::
-
-   $ env/bin/easy_install setuptools-git
-
-#. Install Substance D from the checkout into the virtualenv using ``setup.py
-   dev``. ``setup.py dev`` is an alias for "setup.py develop" which also
-   installs testing requirements such as nose and coverage. Running
-   ``setup.py dev`` *must* be done while the current working directory is the
-   ``substanced`` checkout directory::
-
-   $ cd substanced
-   $ ../env/bin/python setup.py dev
-
-#. At that point, you should be able to create new Substance D projects by
+#. Now you should be able to create new Substance D projects by
    using ``pcreate``. The following ``pcreate`` command uses the scaffold
-   ``substanced`` to create a new project named ``myproj`` in the current
-   directory::
+   ``substanced`` to create a new project named ``myproj``::
+      
+   $ hack-on-substanced/bin/pcreate -s substanced myproj
 
-   $ cd ../env
-   $ bin/pcreate -s substanced myproj
+#. Now you can make a virtualenv for your project and move into it::
 
-#. Install that project using ``setup.py develop`` into the virtualenv::
-
+   $ virtualenv -p python2.7 myproj
    $ cd myproj
-   $ ../bin/python setup.py develop
 
-#. Run the resulting project via ``../bin/pserve development.ini``. The
+#. Install that project using ``pip install -e`` into the virtualenv::
+
+   $ bin/pip install -e .
+
+#. Run the resulting project via ``bin/pserve development.ini``. The
    development server listens to requests sent to http://0.0.0.0:6543 by
    default. Open this URL in a web browser.
    
