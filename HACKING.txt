@@ -146,7 +146,7 @@ To add a new language:
 
 - Run ``python setup.py init_catalog -l de``
 
-Test Coverage
+Test coverage
 -------------
 
 - The codebase *must* have 100% test statement coverage after each commit.
