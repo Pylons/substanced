@@ -24,6 +24,7 @@ except IOError:
     README = CHANGES = ''
 
 install_requires = [
+    'webob<1.6',
     'pyramid>=1.5dev', # route_name argument to resource_url
     'ZODB',
     'hypatia>=0.2', # query objects have intersection/union methods
