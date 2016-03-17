@@ -1,13 +1,15 @@
 Hacking on Substance D
 ======================
 
-Here are some guidelines about hacking on Substance D.
+The following are guidelines and instructions for hacking on and with Substance
+D.
 
-Using a Development Checkout
-----------------------------
+Use a development checkout
+--------------------------
 
-Below is a quick start for creating a development environment using a Substance
-D checkout.
+For hacking on the core of Substance D, where you would like to experiment with
+the addition of new features, fixing bugs, writing tests, and writing docs,
+then you should use a development checkout of Substance D.
 
 - Create a new directory somewhere and ``cd`` into it::
 
@@ -32,8 +34,11 @@ D checkout.
   $ ../env/bin/pip install -e .
   $ ../env/bin/pip install -r test_requirements.txt
 
-- At that point, you should be able to create new Substance D projects by using
-  ``pcreate``::
+Create a project from Substance D
+---------------------------------
+
+- Optionally, after using a development checkout, you can create new project
+  from a scaffold in Substance D by using ``pcreate``::
 
   $ cd ../env
   $ bin/pcreate -s substanced myproj
@@ -47,7 +52,7 @@ D checkout.
 
   $ ../bin/pserve development.ini
 
-Adding Features
+Adding features
 ---------------
 
 In order to add a feature to Substance D:
@@ -68,7 +73,7 @@ scaffold has an install-time dependency on something that doesn't work on a
 particular platform, that caveat should be spelled out clearly in *its*
 documentation (within its ``docs/`` directory).
 
-Coding Style
+Coding style
 ------------
 
 - PEP8 compliance.  Whitespace rules are relaxed: not necessary to put two
@@ -79,7 +84,7 @@ Coding Style
 - Please do not remove trailing whitespace.  Configure your editor to reduce
   diff noise.  See https://github.com/Pylons/pyramid/issues/788 for more.
 
-Running Substance D Tests
+Running Substance D tests
 -------------------------
 
 To run all tests for a single version of Python:
