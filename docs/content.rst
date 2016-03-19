@@ -575,7 +575,7 @@ Adding Automatic Naming for Content
 
 On some sites you don't want to set the name for every piece of content you
 create. Substance D provides support for this with a special kind of folder.
-You can configure your site to use the autonaming folder like by overrding
+You can configure your site to use the autonaming folder by overriding
 the standard folder:
 
 .. code-block:: python
@@ -593,7 +593,7 @@ the standard folder:
     class  MyFolder(SequentialAutoNamingFolder):
         """ Override Folder content type """
 
-The add view for Documents can then be edited to no longer require a name:
+The ``add view`` for Documents can then be edited to no longer require a name:
 
 .. code-block:: python
 
