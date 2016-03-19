@@ -569,6 +569,47 @@ of ``substanced.folder.Folder`` it is ``MyFolder``.
     complicated goings-on. Instead, provide your own content type
     factory, as above, for ``Root``.
 
+
+Adding Automatic Naming for Content
+===================================
+
+On some sites you don't want to set the name for every piece of content you
+create. Substance D provides support for this with a special kind of folder.
+You can configure your site to use the autonaming folder like by overrding
+the standard folder:
+
+.. code-block:: python
+
+    from substanced.folder import SequentialAutoNamingFolder
+    from substanced.interaces import IFolder
+    from zope.interface import implementer
+
+    @content(
+       'Folder',
+        icon='glyphicon glyphicon-folder-close',
+        add_view='add_folder',
+    )
+    @implementer(IFolder)
+    class  MyFolder(SequentialAutoNamingFolder):
+        """ Override Folder content type """
+
+The add view for Documents can then be edited to no longer require a name:
+
+.. code-block:: python
+
+    def add_success(self, appstruct):
+        registry = self.request.registry
+        document = registry.content.create('Document', **appstruct)
+        self.context.add_next(document)
+        return HTTPFound(
+              self.request.sdiapi.mgmt_path(self.context, '@@contents')
+          )
+
+.. note::
+
+    This does not apply to the root object.
+
+
 Affecting the Tab Order for Management Views
 ============================================
 
