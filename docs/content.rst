@@ -3,7 +3,7 @@ Defining Content
 ================
 
 :term:`Resource` is the term that Substance D uses to describe an object
-placed in the :term:`resource tree`.  
+placed in the :term:`resource tree`.
 
 Ideally, all resources in your resource tree will be :term:`content`. "Content"
 is the term that Substance D uses to describe resource objects that are
@@ -227,7 +227,7 @@ Once you've done this, content you add to a folder in the sytem will display
 the icon next to it in the contents view of the management interface and in
 the breadcrumb list.  The available icon class names are listed at
 http://getbootstrap.com/components/#glyphicons .  For glyphicon icons, you'll
-need to use two classnames: ``glyphicon`` and ``glyphicon-foo``, separated by 
+need to use two classnames: ``glyphicon`` and ``glyphicon-foo``, separated by
 a space.
 
 You can also pass a callback as an ``icon`` argument:
@@ -315,15 +315,15 @@ addable in this circumstance.
 Obtaining Metadata About a Content Object's Type
 ------------------------------------------------
 
-Return the icon class name for the blogentry's content type or 
+Return the icon class name for the blogentry's content type or
 ``None`` if it does not exist::
 
   request.registry.content.metadata(blogentry, 'icon')
 
-Return the icon for the blogentry's content type or 
+Return the icon for the blogentry's content type or
 ``glyphicon glyphicon-file`` if it does not exist::
 
-  request.registry.content.metadata(blogentry, 'icon', 
+  request.registry.content.metadata(blogentry, 'icon',
                                     'glyphicon glyphicon-file')
 
 
