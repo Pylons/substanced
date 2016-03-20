@@ -602,8 +602,8 @@ The ``add view`` for Documents can then be edited to no longer require a name:
         document = registry.content.create('Document', **appstruct)
         self.context.add_next(document)
         return HTTPFound(
-              self.request.sdiapi.mgmt_path(self.context, '@@contents')
-          )
+            self.request.sdiapi.mgmt_path(self.context, '@@contents')
+        )
 
 .. note::
 
