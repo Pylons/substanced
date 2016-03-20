@@ -19,3 +19,6 @@ Data.fs*
 .DS_Store
 coverage
 test
+bin
+lib
+include
