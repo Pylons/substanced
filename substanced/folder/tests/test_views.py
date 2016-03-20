@@ -838,6 +838,7 @@ class TestFolderContents(unittest.TestCase):
         request.view_name = 'contents'
         request.params = {}
         request.POST.get.return_value = 'a/b'
+        request.sdiapi.mgmt_path.return_value = ''
         mock_rename_duplicated_resource.side_effect = ['a-1', 'b-1']
 
         inst = self._makeOne(context, request)
@@ -858,6 +859,7 @@ class TestFolderContents(unittest.TestCase):
         request.view_name = 'contents'
         request.params = {}
         request.POST.get.return_value = ''
+        request.sdiapi.mgmt_path.return_value = ''
         inst = self._makeOne(context, request)
         inst.duplicate()
 
@@ -874,6 +876,7 @@ class TestFolderContents(unittest.TestCase):
         request.view_name = 'contents'
         request.params = {}
         request.POST.get.return_value = 'a'
+        request.sdiapi.mgmt_path.return_value = ''
         inst = self._makeOne(context, request)
         inst.duplicate()
 
@@ -932,6 +935,7 @@ class TestFolderContents(unittest.TestCase):
         request.view_name = 'contents'
         request.params = {}
         request.localizer = testing.DummyRequest().localizer
+        request.sdiapi.mgmt_path.return_value = ''
         request.POST.getall.return_value = ('foobar',)
         request.POST.get.side_effect = lambda x: {
             'foobar': 'foobar2',
@@ -949,6 +953,7 @@ class TestFolderContents(unittest.TestCase):
         request.view_name = 'contents'
         request.params = {}
         request.localizer = testing.DummyRequest().localizer
+        request.sdiapi.mgmt_path.return_value = ''
         request.POST.getall.return_value = ('foobar', 'foobar1')
         request.POST.get.side_effect = lambda x: {
             'foobar': 'foobar0',
@@ -968,6 +973,7 @@ class TestFolderContents(unittest.TestCase):
         request = mock.Mock()
         request.view_name = 'contents'
         request.params = {}
+        request.sdiapi.mgmt_path.return_value = ''
         request.POST.getall.return_value = ('foobar',)
         request.POST.get.side_effect = lambda x: {
             'foobar': 'foobar0',
@@ -985,6 +991,7 @@ class TestFolderContents(unittest.TestCase):
         request = mock.Mock()
         request.view_name = 'contents'
         request.params = {}
+        request.sdiapi.mgmt_path.return_value = ''
         request.POST.getall.return_value = ('foobar',)
         request.POST.get.side_effect = lambda x: {
             'foobar': 'foobar0',
