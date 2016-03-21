@@ -1,3 +1,5 @@
+.. _defining_content:
+
 ================
 Defining Content
 ================

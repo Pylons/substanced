@@ -1,5 +1,7 @@
-Installing python-magic
------------------------
+.. _installing_python_magic:
+
+Installing ``python-magic``
+===========================
 
 Use of the :py:attr:`substanced.file.USE_MAGIC` constant for guessing file
 types from stream content requires the ``python-magic`` library, which works
