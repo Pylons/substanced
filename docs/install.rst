@@ -1,19 +1,20 @@
+.. _installation:
+
 Installation
 ============
 
-Install using pip, e.g. (within a virtualenv)::
+Install using pip, e.g., (within a virtualenv)::
 
-  $ pip substanced
+  $ pip install substanced
 
 .. warning::
 
-   During Substance D's alpha period, it may be necessary to use a
-   checkout of Substance D as well as checkouts of the most recent versions of
-   the libraries upon which Substance D depends.
+   During Substance D's alpha period, it may be necessary to use a checkout of
+   Substance D as well as checkouts of the most recent versions of the
+   libraries upon which Substance D depends.
 
-.. _optional_dependencies:
 
-Demonstration Application
+Demonstration application
 -------------------------
 
 See the application running at http://demo.substanced.net for a demonstration
@@ -74,6 +75,35 @@ following steps.
     development.ini:substanced.initial_password = hNyrGI5nnl
     production.ini:substanced.initial_password = hNyrGI5nnl
 
+
+Create a project from a scaffold in Substance D
+-----------------------------------------------
+
+After creating a development checkout, you can create a new project from the
+default substanced scaffold by using ``pcreate``.
+
+.. code-block:: bash
+
+  $ cd ../env
+  $ bin/pcreate -s substanced myproj
+
+Then install that project using ``pip install -e .`` into the virtual
+environment.
+
+.. code-block:: bash
+
+  $ cd myproj
+  $ ../bin/pip install -e .
+
+Run the resulting project.
+
+.. code-block:: bash
+
+  $ ../bin/pserve development.ini
+
+Then start hacking on your new project.
+
+
 Hacking on Substance D
 ----------------------
 
@@ -81,10 +111,4 @@ See `Hacking on Substance D
 <https://github.com/Pylons/substanced/blob/master/HACKING.txt>`_, or look in
 your checked out local git repository for ``HACKING.txt``, for information and
 guidelines to develop your application, including testing and
-internationalization. For convenience ``HACKING.txt`` is included below, but
-note that lines 6-54 are redundant to the previous section.
-
-.. literalinclude:: ../HACKING.txt
-   :language: rst
-   :linenos:
-   :emphasize-lines: 6-54
+internationalization.
