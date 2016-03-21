@@ -38,7 +38,7 @@ class Test_rename_duplicated_resource(unittest.TestCase):
     def _callFUT(self, context, name):
         from ..views import rename_duplicated_resource
         return rename_duplicated_resource(context, name)
-        
+
     def test_rename_first(self):
         context = testing.DummyResource()
         new_name = self._callFUT(context, 'foobar')
@@ -137,7 +137,7 @@ class TestFolderContents(unittest.TestCase):
         inst = self._makeOne(context, request)
         result = inst.get_columns(None)
         self.assertEqual(len(result), 1)
-        
+
     def test_get_columns_custom_columns_exists(self):
         context = testing.DummyResource()
         def columns(context, subobject, request, columns):
@@ -332,7 +332,7 @@ class TestFolderContents(unittest.TestCase):
         self.assertEqual(result['column'], None)
         self.assertEqual(result['sorter'], None)
         self.assertEqual(result['column_name'], 'col3')
-        
+
     def test__sort_info_context_unordered_default_sort_column_via_initial(self):
         context = testing.DummyResource(
             is_ordered=lambda: False,
@@ -346,7 +346,7 @@ class TestFolderContents(unittest.TestCase):
         self.assertEqual(result['column'], columns[1])
         self.assertEqual(result['sorter'], True)
         self.assertEqual(result['column_name'], 'col2')
-        
+
     def test__folder_contents_columns_callable(self):
         from substanced.interfaces import IFolder
         context = DummyFolder(__provides__=IFolder)
@@ -426,7 +426,7 @@ class TestFolderContents(unittest.TestCase):
         length, records = info['length'], info['records']
         self.assertEqual(length, 1)
         self.assertEqual(len(records), 1)
-        
+
     def test__folder_contents_with_global_filter_value_multiple_words(self):
         from substanced.interfaces import IFolder
         context = DummyFolder(__provides__=IFolder)
@@ -465,7 +465,7 @@ class TestFolderContents(unittest.TestCase):
         length, records = info['length'], info['records']
         self.assertEqual(length, 1)
         self.assertEqual(len(records), 1)
-        
+
     def test__folder_contents_with_nonglobal__and_global_filter_values(self):
         from substanced.interfaces import IFolder
         context = DummyFolder(__provides__=IFolder)
@@ -520,7 +520,7 @@ class TestFolderContents(unittest.TestCase):
                      'initial_sort_reverse':True,}]
         request.registry.content = DummyContent(columns=get_columns)
         inst._folder_contents()
-        
+
     def test__folder_contents_button_enabled_for_true(self):
         from substanced.interfaces import IFolder
         context = DummyFolder(__provides__=IFolder)
@@ -592,7 +592,7 @@ class TestFolderContents(unittest.TestCase):
                 ('foo', 'def'),
                 ('bar', 'ghi'),
                 ])
-        
+
     def test_get_filter_values_with_None_and_empty(self):
         from substanced.interfaces import IFolder
         context = DummyFolder(__provides__=IFolder)
@@ -609,7 +609,7 @@ class TestFolderContents(unittest.TestCase):
                 ('', 'abc'),
                 ('bar', ''),
                 ])
-        
+
     def test__folder_contents_folder_is_ordered(self):
         from substanced.interfaces import IFolder
         context = DummyFolder(__provides__=IFolder)
@@ -659,10 +659,10 @@ class TestFolderContents(unittest.TestCase):
             slickgrid_wrapper_options['configName'],
             'sdi-content-grid'
             )
-        # None because it cannot be sorted.  
+        # None because it cannot be sorted.
         self.assertEqual(slickgrid_wrapper_options['isReorderable'], False)
         self.assertEqual(slickgrid_wrapper_options['showCheckboxColumn'], True)
-        self.assertEqual(slickgrid_wrapper_options['sortCol'], None)   
+        self.assertEqual(slickgrid_wrapper_options['sortCol'], None)
         self.assertEqual(slickgrid_wrapper_options['sortDir'], False)
         self.assertEqual(slickgrid_wrapper_options['url'], '')
         self.assertTrue('items' in slickgrid_wrapper_options)
@@ -727,7 +727,7 @@ class TestFolderContents(unittest.TestCase):
             slickgrid_wrapper_options['configName'], 'sdi-content-grid'
             )
         self.assertEqual(slickgrid_wrapper_options['isReorderable'], False)
-        self.assertEqual(slickgrid_wrapper_options['sortCol'], 'col1')  
+        self.assertEqual(slickgrid_wrapper_options['sortCol'], 'col1')
         self.assertEqual(slickgrid_wrapper_options['sortDir'], True)
         self.assertEqual(slickgrid_wrapper_options['url'], '')
         self.assertTrue('items' in slickgrid_wrapper_options)
@@ -1109,10 +1109,10 @@ class TestFolderContents(unittest.TestCase):
                 mock.sentinel.name, request.registry.content.typeof(None)
                 ), 'danger',
             )
-            
+
         self.assertEqual(request.session.__delitem__.call_args,
                          mock.call('tocopy'))
-        
+
     @mock.patch('substanced.folder.views.find_objectmap')
     def test_copy_finish_one(self, mock_find_objectmap):
         context = mock.MagicMock()
@@ -1296,10 +1296,10 @@ class TestFolderContents(unittest.TestCase):
                 mock.sentinel.name, request.registry.content.typeof(None)
                 ), 'danger',
             )
-            
+
         self.assertEqual(request.session.__delitem__.call_args,
                          mock.call('tomove'))
-        
+
     @mock.patch('substanced.folder.views.find_objectmap')
     def test_move_finish_one(self, mock_find_objectmap):
         context = mock.MagicMock()
@@ -1430,7 +1430,7 @@ class TestFolderContents(unittest.TestCase):
         inst.system_catalog = {}
         result = inst._name_sorter(resource, resultset, 1, True)
         self.assertEqual(result, resultset)
-        
+
     def test__name_sorter_index_is_not_None(self):
         context = testing.DummyResource()
         request = self._makeRequest()
@@ -1458,7 +1458,7 @@ class TestFolderContents(unittest.TestCase):
         self.assertEqual(
            result,
            [
-                {'sorter': inst._name_sorter, 
+                {'sorter': inst._name_sorter,
                  'name': 'Name',
                  'formatter':'html',
                  'value':('<i class="" title="Type \'fred\'"> </i> '
@@ -1476,7 +1476,7 @@ class TestFolderContents(unittest.TestCase):
         self.assertEqual(
            result,
            [
-                {'sorter': inst._name_sorter, 
+                {'sorter': inst._name_sorter,
                  'name': 'Name',
                  'formatter':'html',
                  'value':('<i class="icon" title="Type \'fred\'"> </i> '
@@ -1494,14 +1494,14 @@ class TestFolderContents(unittest.TestCase):
         self.assertEqual(
            result,
            [
-                {'sorter': inst._name_sorter, 
+                {'sorter': inst._name_sorter,
                  'name': 'Name',
                  'formatter':'html',
                  'value':('<i class="icon" title="Type \'fred\'"> </i> '
                           '<a href="/mgmt_path">fred</a>')},
                 ]
            )
-        
+
     def test_get_buttons_novals(self):
         self.config.testing_securitypolicy(permissive=True)
         request = self._makeRequest()
@@ -1550,7 +1550,7 @@ class TestFolderContents(unittest.TestCase):
         delete_enabled_for = delete_button['enabled_for']
         result = delete_enabled_for(context, context, request)
         self.assertFalse(result)
-        
+
     def test_get_buttons_delete_enabled_for_callable_sdi_deletable_attr(self):
         self.config.testing_securitypolicy(permissive=True)
         request = self._makeRequest()
@@ -1580,7 +1580,7 @@ class TestFolderContents(unittest.TestCase):
         delete_enabled_for = delete_button['enabled_for']
         result = delete_enabled_for(context, subobject, request)
         self.assertFalse(result)
-        
+
     def test_get_buttons_tocopy(self):
         self.config.testing_securitypolicy(permissive=True)
         request = self._makeRequest()
@@ -1591,16 +1591,16 @@ class TestFolderContents(unittest.TestCase):
         self.assertEqual(
             result,
             [
-              {'buttons': 
-                [{'text': 'Copy here', 
-                  'class': 'btn-primary btn-sdi-act', 
-                  'id': 'copy_finish', 
-                  'value': 'copy_finish', 
-                  'name': 'form.copy_finish'}, 
-                 {'text': 'Cancel', 
-                  'class': 'btn-danger btn-sdi-act', 
-                  'id': 'cancel', 
-                  'value': 'cancel', 
+              {'buttons':
+                [{'text': 'Copy here',
+                  'class': 'btn-primary btn-sdi-act',
+                  'id': 'copy_finish',
+                  'value': 'copy_finish',
+                  'name': 'form.copy_finish'},
+                 {'text': 'Cancel',
+                  'class': 'btn-danger btn-sdi-act',
+                  'id': 'cancel',
+                  'value': 'cancel',
                   'name': 'form.copy_finish_cancel'}],
                'type': 'single'}
                ]
@@ -1627,7 +1627,7 @@ class TestFolderContents(unittest.TestCase):
                  'value': 'cancel',
                  'name':'form.move_finish_cancel'}],
              'type': 'single'}
-            ]            
+            ]
             )
 
     def test_get_default_query(self):
@@ -1659,7 +1659,7 @@ class TestFolderContents(unittest.TestCase):
         request.registry.introspector = DummyIntrospector()
         inst = self._makeOne(None, request)
         result = inst.sdi_add_views()
-        self.assertEqual(result, [])  
+        self.assertEqual(result, [])
 
     def test_one_content_type_content(self):
         request = testing.DummyRequest()
@@ -1683,7 +1683,7 @@ class TestFolderContents(unittest.TestCase):
         intr = DummyIntrospectable(related=(view_intr1,), introspectable=intr)
         request.registry.introspector = DummyIntrospector([(ct_intr,), (intr,)])
         context = testing.DummyResource()
-        inst = self._makeOne(context, request) 
+        inst = self._makeOne(context, request)
         result = inst.sdi_add_views()
         self.assertEqual(
             result,
@@ -1716,7 +1716,7 @@ class TestFolderContents(unittest.TestCase):
         intr = DummyIntrospectable(related=(view_intr1,), introspectable=intr)
         request.registry.introspector = DummyIntrospector([(ct_intr,), (intr,)])
         context = testing.DummyResource()
-        inst = self._makeOne(context, request) 
+        inst = self._makeOne(context, request)
         result = inst.sdi_add_views()
         self.assertEqual(result, [])
 
@@ -1743,7 +1743,7 @@ class TestFolderContents(unittest.TestCase):
         intr['tab_after'] = None
         intr = DummyIntrospectable(related=(view_intr1,), introspectable=intr)
         request.registry.introspector = DummyIntrospector([(ct_intr,), (intr,)])
-        inst = self._makeOne(context, request) 
+        inst = self._makeOne(context, request)
         result = inst.sdi_add_views()
         self.assertEqual(result, [])
 
@@ -1770,7 +1770,7 @@ class TestFolderContents(unittest.TestCase):
         intr['tab_after'] = None
         intr = DummyIntrospectable(related=(view_intr1,), introspectable=intr)
         request.registry.introspector = DummyIntrospector([(ct_intr,), (intr,)])
-        inst = self._makeOne(context, request) 
+        inst = self._makeOne(context, request)
         result = inst.sdi_add_views()
         self.assertEqual(result, [])
 
@@ -1805,7 +1805,7 @@ class TestFolderContents(unittest.TestCase):
         intr = DummyIntrospectable(related=(view_intr1,), introspectable=intr)
         request.registry.introspector = DummyIntrospector(
             [(ct_intr, ct2_intr), (intr,)])
-        inst = self._makeOne(context, request) 
+        inst = self._makeOne(context, request)
         result = inst.sdi_add_views()
         self.assertEqual(checked, [True])
         self.assertEqual(
@@ -1899,7 +1899,7 @@ class Test_add_folder_contents_views(unittest.TestCase):
     def _callFUT(self, config, **kw):
         from ..views import add_folder_contents_views
         return add_folder_contents_views(config, **kw)
-    
+
     def test_it_gardenpath(self):
         from ..views import FolderContents
         from substanced.interfaces import IFolder
@@ -1926,13 +1926,13 @@ class Test_has_services(unittest.TestCase):
     def _callFUT(self, context, request):
         from ..views import has_services
         return has_services(context, request)
- 
+
     def _makeRequest(self, **kw):
         request = testing.DummyRequest()
         request.sdiapi = DummySDIAPI()
         request.registry.content = DummyContent(**kw)
         return request
-    
+
     def test_it(self):
         from zope.interface import directlyProvides
         from ...interfaces import IFolder
@@ -1989,7 +1989,7 @@ class FolderServicesTest(unittest.TestCase):
         request.registry.introspector = DummyIntrospector()
         inst = self._makeOne(None, request)
         result = inst.sdi_add_views()
-        self.assertEqual(result, [])  
+        self.assertEqual(result, [])
 
     def test_one_content_type_content(self):
         request = testing.DummyRequest()
@@ -2013,7 +2013,7 @@ class FolderServicesTest(unittest.TestCase):
         intr = DummyIntrospectable(related=(view_intr1,), introspectable=intr)
         request.registry.introspector = DummyIntrospector([(ct_intr,), (intr,)])
         context = testing.DummyResource()
-        inst = self._makeOne(context, request) 
+        inst = self._makeOne(context, request)
         result = inst.sdi_add_views()
         self.assertEqual(result, [])
 
@@ -2039,7 +2039,7 @@ class FolderServicesTest(unittest.TestCase):
         intr = DummyIntrospectable(related=(view_intr1,), introspectable=intr)
         request.registry.introspector = DummyIntrospector([(ct_intr,), (intr,)])
         context = testing.DummyResource()
-        inst = self._makeOne(context, request) 
+        inst = self._makeOne(context, request)
         result = inst.sdi_add_views()
         self.assertEqual(
             result,
@@ -2069,7 +2069,7 @@ class Test_generate_text_filter_terms(unittest.TestCase):
         filter_text = 'foo b'
         terms = self._callFUT(filter_text)
         self.assertEqual(terms, ['foo*'])
-        
+
     def test_with_phrase_pattern(self):
         filter_text = 'foo "bar baz" "bar"'
         terms = self._callFUT(filter_text)
@@ -2098,6 +2098,17 @@ class Test_multi_upload_view(unittest.TestCase):
         self.assertEqual(result, {})
 
 class Test_multi_upload_submit(unittest.TestCase):
+
+    def setUp(self):
+        import substanced.folder.views
+        substanced.folder.views._makeob_origin = substanced.folder.views._makeob
+        substanced.folder.views._makeob = mock.Mock(return_value='FILE')
+
+    def tearDown(self):
+        import substanced.folder.views
+        substanced.folder.views._makeob = substanced.folder.views._makeob_origin
+        delattr(substanced.folder.views, '_makeob_origin')
+
     def _callFUT(self, context, request):
         from substanced.folder.views import multi_upload_submit
         return multi_upload_submit(context, request)
@@ -2110,10 +2121,6 @@ class Test_multi_upload_submit(unittest.TestCase):
         self.assertEqual(result, {'files': []})
 
     def test_upload(self):
-        import substanced.folder.views
-        substanced.folder.views._makeob = mock.Mock(
-            return_value='FILE'
-            )
         dummyFileParam = Dummy(
             type='TYPE',
             filename='FILENAME',
@@ -2135,10 +2142,6 @@ class Test_multi_upload_submit(unittest.TestCase):
             })
 
     def test_upload_nostream(self):
-        import substanced.folder.views
-        substanced.folder.views._makeob = mock.Mock(
-            return_value='FILE'
-            )
         dummyFileParam = Dummy(
             type='TYPE',
             filename='FILENAME',
@@ -2160,10 +2163,6 @@ class Test_multi_upload_submit(unittest.TestCase):
             })
 
     def test_upload_multiple(self):
-        import substanced.folder.views
-        substanced.folder.views._makeob = mock.Mock(
-            return_value='FILE'
-            )
         dummyFileParam1 = Dummy(
             type='TYPE1',
             filename='FILENAME1',
@@ -2309,7 +2308,7 @@ class DummyIndex(object):
 
     def execute(self):
         return self.result
-        
+
     def eq(self, *arg, **kw):
         self.queried = ('eq', arg, kw)
         return self
@@ -2342,7 +2341,7 @@ def _makeCatalogs(oids=()):
     catalog = DummyCatalog(oids)
     catalogs['system'] = catalog
     return catalogs
-    
+
 class DummyObjectMap(object):
     def __init__(self, result):
         self.result = result
@@ -2391,7 +2390,7 @@ class Dummy(object):
 class DummyVenusianContext(object):
     def __init__(self):
         self.config = DummyConfig()
-    
+
 def call_venusian(venusian, context=None):
     if context is None:
         context = DummyVenusianContext()
