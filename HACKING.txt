@@ -23,9 +23,10 @@ then you should use a development checkout of Substance D.
   If you intend to hack on Substance D, see below for "Adding features" and
   "Submitting pull requests".
 
-- Create a virtualenv in which to install Substance D::
+- Create a virtualenv in which to install Substance D, where you specify the
+  version of Python with the ``-p`` option::
 
-  $ virtualenv -p python2.7 env
+  $ virtualenv -p python3.5 env
 
 - Change directory to the ``substanced`` checkout, then install Substance D
   from the checkout into the virtualenv using ``pip install -e .``, as well as
@@ -53,7 +54,7 @@ To run all tests for a single version of Python:
 Then, to run the full test suite (your system will need Python 2.7, 3.4, and
 3.5, and PyPy installed), run::
 
-  $ tox substanced
+  $ ../env/bin/tox substanced
 
 To run coverage tests for a single version of Python::
 
