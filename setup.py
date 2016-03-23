@@ -14,7 +14,7 @@
 
 import os
 
-from setuptools import setup, find_packages
+from distutils.core import setup
 
 here = os.path.abspath(os.path.dirname(__file__))
 try:
@@ -46,7 +46,7 @@ install_requires = [
     ]
 
 docs_extras = ['Sphinx', 'repoze.sphinx.autointerface']
-testing_extras = ['nose', 'coverage', 'mock', 'virtualenv']
+testing_extras = ['tox', 'nose', 'coverage', 'mock',]
 i18n_extras = ['Babel', 'transifex-client', 'lingua<2.0']
 
 setup(name='substanced',
@@ -72,7 +72,7 @@ setup(name='substanced',
       author_email="pylons-devel@googlegroups.com",
       url="http://docs.pylonsproject.org",
       license="BSD-derived (http://www.repoze.org/LICENSE.txt)",
-      packages=find_packages(),
+      packages=['substanced'],
       include_package_data=True,
       zip_safe=False,
       install_requires=install_requires,
