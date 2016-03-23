@@ -1,3 +1,5 @@
+.. _substance_d:
+
 Substance D
 ===========
 
@@ -11,7 +13,7 @@ other web app that requires both an administration and a retail interface.
 
 Substance D owes much of its spirit to the :term:`Zope` application server.
 
-It requires Python 2.6, 2.7, 3.2, 3.3, or 3.4.
+It requires Python 2.7, 3.4, or 3.5.
 
 Installation
 ------------
