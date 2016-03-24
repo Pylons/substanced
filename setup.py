@@ -24,20 +24,20 @@ except IOError:
     README = CHANGES = ''
 
 install_requires = [
-    'pyramid>=1.5dev', # route_name argument to resource_url
+    'pyramid>=1.5dev',  # route_name argument to resource_url
     'ZODB',
-    'hypatia>=0.2', # query objects have intersection/union methods
+    'hypatia>=0.2',  # query objects have intersection/union methods
     'venusian>=1.0a3',  # pyramid wants this too (prefer_finals...)
-    'deform>=2.0a2', # asset spec in ZPTRendererFactory
-    'colander>=1.0a1', # subclassable schemanodes
-    'pyramid_zodbconn>=0.6', # connection opened/closed events
+    'deform>=2.0a2',  # asset spec in ZPTRendererFactory
+    'colander>=1.0a1',  # subclassable schemanodes
+    'pyramid_zodbconn>=0.6',  # connection opened/closed events
     'pyramid_chameleon',
     'pyramid_mailer',
     'cryptacular',
     'python-magic',
     'PyYAML',
     'zope.copy',
-    'zope.component', # implictly depended upon by zope.copy
+    'zope.component',  # implictly depended upon by zope.copy
     'zope.deprecation',
     'statsd',
     'walkabout',
@@ -45,9 +45,23 @@ install_requires = [
     'unidecode',
     ]
 
-docs_extras = ['Sphinx', 'repoze.sphinx.autointerface']
-testing_extras = ['tox', 'nose', 'coverage', 'mock',]
-i18n_extras = ['Babel', 'transifex-client', 'lingua<2.0']
+docs_extras = [
+    'Sphinx >= 1.3.5',
+    'repoze.sphinx.autointerface'
+]
+
+testing_extras = [
+    'nose',
+    'coverage',
+    'mock',
+    'tox'
+]
+
+i18n_extras = [
+    'Babel',
+    'transifex-client',
+    'lingua < 2.0'
+]
 
 setup(name='substanced',
       version='1.0a1',
@@ -56,21 +70,20 @@ setup(name='substanced',
       classifiers=[
         "Intended Audience :: Developers",
         "Programming Language :: Python",
-        "Programming Language :: Python",
         "Programming Language :: Python :: 2",
         "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.4",
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: Implementation :: CPython",
-        "Framework :: Pylons",
+        "Framework :: Pyramid",
         "Topic :: Internet :: WWW/HTTP :: WSGI",
         "License :: Repoze Public License",
         ],
       keywords='wsgi pylons pyramid zodb catalog zope',
       author="Chris McDonough",
       author_email="pylons-devel@googlegroups.com",
-      url="http://docs.pylonsproject.org",
+      url="http://www.substanced.net/",
       license="BSD-derived (http://www.repoze.org/LICENSE.txt)",
       packages=['substanced'],
       include_package_data=True,
@@ -94,9 +107,9 @@ setup(name='substanced',
       [pyramid.scaffold]
       substanced=substanced.scaffolds:SubstanceDProjectTemplate
       """,
-      extras_require = {
-          'testing':testing_extras,
-          'docs':docs_extras,
-          'i18n':i18n_extras,
+      extras_require={
+          'testing': testing_extras,
+          'docs': docs_extras,
+          'i18n': i18n_extras,
           },
       )
