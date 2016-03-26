@@ -1,5 +1,7 @@
+.. _introduction:
+
 Introduction
-------------
+============
 
 .. sidebar::  A Scanner Darkly
 
