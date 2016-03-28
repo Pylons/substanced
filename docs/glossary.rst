@@ -20,7 +20,7 @@ Glossary
      laid out hierarchically in the resource tree as they're added.
 
    Folder
-     An resource object which contains other resource objects.  See
+     A resource object which contains other resource objects.  See
      :class:`substanced.folder.Folder`.
 
    Content
@@ -88,11 +88,11 @@ Glossary
      objects in the :term:`object map`.  It's usually a string.
 
    Object Map
-     A Substance D :term:`service` which maps the object ids of persistent
-     objects to paths and object ids to other object ids in the system.
+     A Substance D :term:`service` which maps the object IDs of persistent
+     objects to paths and object IDs to other object IDs in the system.
 
    Service
-     A substanced content object which provides a service to application code
+     A Substance D content object which provides a service to application code
      (such as a catalog or a principals service).
 
    Global Object
@@ -109,6 +109,6 @@ Glossary
 
    DataDog
      A Software-as-a-Service (SaaS) provider for monitoring and visualizing
-     performance data that is compatible with the ``statsd`` statstics output
+     performance data that is compatible with the ``statsd`` statistics output
      channel used by Substance D.  See http://www.datadoghq.com
 
