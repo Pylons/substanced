@@ -47,20 +47,20 @@ install_requires = [
 
 docs_extras = [
     'Sphinx >= 1.3.5',
-    'repoze.sphinx.autointerface'
+    'repoze.sphinx.autointerface',
 ]
 
 testing_extras = [
     'nose',
     'coverage',
     'mock',
-    'tox'
+    'tox',
 ]
 
 i18n_extras = [
     'Babel',
     'transifex-client',
-    'lingua < 2.0'
+    'lingua < 2.0',
 ]
 
 setup(name='substanced',

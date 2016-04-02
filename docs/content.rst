@@ -5,7 +5,7 @@ Defining Content
 ================
 
 :term:`Resource` is the term that Substance D uses to describe an object
-placed in the :term:`resource tree`.  
+placed in the :term:`resource tree`.
 
 Ideally, all resources in your resource tree will be :term:`content`. "Content"
 is the term that Substance D uses to describe resource objects that are
