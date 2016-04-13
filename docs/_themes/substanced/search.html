@@ -18,6 +18,10 @@
   {# this is used when loading the search index using $.ajax fails,
      such as on Chrome for documents on localhost #}
   <script type="text/javascript" id="searchindexloader"></script>
+  {# somehow, search is not being initialized automatically #}
+  <script type="text/javascript">
+    jQuery(function() { Search.init(); });
+  </script>
   {{ super() }}
 {% endblock %}
 {% block body %}
