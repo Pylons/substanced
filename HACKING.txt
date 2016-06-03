@@ -1,124 +1,161 @@
 Hacking on Substance D
 ======================
 
-Here are some guidelines about hacking on Substance D.
+The following are guidelines and instructions for hacking on and building
+projects with Substance D.
 
-Using a Development Checkout
+Using a development checkout
 ----------------------------
 
-Below is a quick start on creating a development environment using a
-Substance D checkout.
+For hacking on the core of Substance D, where you would like to experiment with
+the addition of new features, fixing bugs, writing tests, and writing docs,
+then you should use a development checkout of Substance D.
 
-- Create a new directory somewhere and ``cd`` to it::
+- Create a new directory somewhere and ``cd`` into it::
 
   $ mkdir ~/hack-on-substanced
   $ cd ~/hack-on-substanced
 
 - Check out a read-only copy of the Substance D source::
 
-  $ git clone git://github.com/Pylons/substanced.git
+  $ git clone https://github.com/Pylons/substanced.git
 
-  (alternately, create a writeable fork on GitHub and check that out).
+  If you intend to hack on Substance D, see below for "Adding features" and
+  "Submitting pull requests".
 
-- Create a virtualenv in which to install Substance D::
+- Create a virtualenv in which to install Substance D, where you specify the
+  version of Python with the ``-p`` option::
 
-  $ virtualenv -p python2.7 --no-site-packages env
+  $ virtualenv -p python3.5 env
 
-- Install ``setuptools-git`` into the virtualenv (for good measure, as we're
-  using git to do version control)::
-
-  $ env/bin/easy_install setuptools-git
-
-- Install Substance D from the checkout into the virtualenv using ``setup.py
-  dev``.  ``setup.py dev`` is an alias for "setup.py develop" which also
-  installs testing requirements such as nose and coverage.  Running
-  ``setup.py dev`` *must* be done while the current working directory is the
-  ``substanced`` checkout directory::
+- Change directory to the ``substanced`` checkout, then install Substance D
+  from the checkout into the virtualenv using ``pip install -e .``, as well as
+  its testing requirements as follows::
 
   $ cd substanced
-  $ ../env/bin/python setup.py dev
+  $ ../env/bin/pip install -e .
+  $ ../env/bin/pip install -r test_requirements.txt
 
-- At that point, you should be able to create new Substance D projects by using
-  ``pcreate``::
+Running Substance D tests
+-------------------------
 
-  $ cd ../env
-  $ bin/pcreate -s substanced myproj
+Once you have a development checkout, it's a good idea to run tests before you
+do anything else to ensure everything works and that the latest versions of
+dependencies that you just installed do not break anything.
 
-- And install that project using ``setup.py develop`` into the
-  virtualenv::
+To run all tests for a single version of Python:
 
-  $ cd myproj
-  $ ../bin/python setup.py develop
+- Install the testing requirements as described above.
 
-- Run the resulting project via ``../bin/pserve development.ini``.
+- Run the tests for the Python version used in your virtualenv::
 
-Adding Features
+  $ ../env/bin/nosetests substanced
+
+Then, to run the full test suite (your system will need Python 2.7, 3.4, and
+3.5, and PyPy installed), run::
+
+  $ ../env/bin/tox substanced
+
+To run coverage tests for a single version of Python::
+
+  $ ../env/bin/nosetests --with-coverage substanced
+
+- To run individual tests (i.e., during development) you can use a regular
+  expression with the ``-t`` parameter courtesy of the `nose-selecttests
+  <https://pypi.python.org/pypi/nose-selecttests/>`_ plugin that's been
+  installed (along with nose itself) via ``pip install -r
+  test_requirements.txt``. The easiest usage is to simply provide the verbatim
+  name of the test you're working on.
+
+Adding features
 ---------------
 
 In order to add a feature to Substance D:
 
-- The feature must be documented in both the API and narrative
-  documentation (in ``docs/``).
+- The feature must be documented in both the API and narrative documentation in
+  ``docs/``. See below for "Documentation coverage and building HTML
+  documentation".
 
-- The feature must work fully on the following CPython versions: 2.6, 2.7, 
-  3.2, and 3.3 on both UNIX and Windows.
+- The feature must work fully on the CPython versions 2.7, 3.4, and 3.5, on
+  both UNIX and Windows.
 
 - The feature must work on the latest version of PyPy.
 
-- The feature must not add unnecessary dependencies (where
-  "unnecessary" is of course subjective, but new dependencies should
-  be discussed).
+- The codebase *must* have 100% test statement coverage after each commit. You
+  can test coverage via ``tox -e coverage`` or ``nosetests --with-coverage``.
 
-The above requirements are relaxed for scaffolding dependencies.  If a
-scaffold has an install-time dependency on something that doesn't work on a
-particular platform, that caveat should be spelled out clearly in *its*
-documentation (within its ``docs/`` directory).
+- Feature additions and bugfixes must be added to the ``CHANGES.txt`` file in
+  the prevailing style. Include a link to the relevant issue or pull request on
+  GitHub. Changelog entries should be long and descriptive, not cryptic. Other
+  developers should be able to know what your changelog entry means.
 
-Coding Style
-------------
+- The feature must not add unnecessary dependencies (where "unnecessary" is of
+  course subjective, but new dependencies should be discussed).
 
-- PEP8 compliance.  Whitespace rules are relaxed: not necessary to put
-  2 newlines between classes.  But 80-column lines, in particular, are
-  mandatory. See 
-  http://docs.pylonsproject.org/en/latest/community/codestyle.html for more 
+The above requirements are relaxed for scaffolding dependencies.  If a scaffold
+has an install-time dependency on something that doesn't work on a particular
+platform, that caveat should be spelled out clearly in *its* documentation
+(within its ``docs/`` directory).
+
+Coding style
+~~~~~~~~~~~~
+
+- PEP8 compliance.  Whitespace rules are relaxed: not necessary to put two
+  newlines between classes.  But 79-column lines, in particular, are mandatory.
+  See http://docs.pylonsproject.org/en/latest/community/codestyle.html for more
   information.
 
 - Please do not remove trailing whitespace.  Configure your editor to reduce
   diff noise.  See https://github.com/Pylons/pyramid/issues/788 for more.
 
-Running Substance D Tests
--------------------------
+Getting started with GitHub
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To run the full test suite (your system will need Python 2.6, 2.7, 3.2, and 3.3
-to be installed):
+- Visit the `upstream` repository at https://github.com/Pylons/substanced/
 
-- Install "tox" (``easy_install tox``).
+- Click the `Fork` button to fork the upstream repository to your `origin`
+  repository.
 
-- Run ``tox`` from within the top-level ``substanced`` directory.
+- If you have not already cloned the upstream substanced repository, then clone
+  your origin repository to have a local repository.
 
-To run all tests for a single version of Python:
+- Configure your remotes such that "upstream" points to
+  https://github.com/Pylons/substanced.git and "origin" points to
+  git@github.com:<username>/substanced.git
 
-- Run ``setup.py dev`` (this will install ``coverage`` and ``nose``).
+- Checkout and track `upstream/master`.
 
-- Run ``setup.py nosetests``.
+Submitting pull requests
+~~~~~~~~~~~~~~~~~~~~~~~~
 
-To run coverage tests for a single version of Python:
+- Work on a single issue or feature. It's much easier for the project
+  maintainers to deal with a focused set of changes, rather than evaluate
+  several different change sets at the same time.
 
-- Run ``setup.py dev`` (this will install ``coverage`` and ``nose``).
+- Create an issue describing the problem or feature on GitHub.
 
-- Run ``setup.py nosetests --with-coverage``.
+- Pull from upstream/master to update your local master branch.
 
-- To run individual tests (i.e. during development) you can use a regular
-  expression with the ``-t`` parameter courtesy of the `nose-selecttests
-  <https://pypi.python.org/pypi/nose-selecttests/>`_ plugin that's been 
-  installed (along with nose itself) via ``python setup.py dev``. The 
-  easiest usage is to simply provide the verbatim name of the test you're 
-  working on.
+- Create a new branch off of your local checkout of master, naming the branch
+  descriptively, e.g., "feature/induce-delusions-of-grandeur".
 
-Internalization (adding/updating languages)
--------------------------------------------
+- Satisfy all requirements listed above in "Adding features".
 
-The Transifex project should be used for translations: https://www.transifex.com/projects/p/substanced/resource/master/
+- Update meta files as needed, such as signing CONTRIBUTORS.txt and adding
+  change log entries to CHANGES.txt.
+
+- Commit and push the changes to origin (your own GitHub repository).
+
+- On GitHub in origin, submit a pull request.
+
+See also "Understanding the GitHub Flow":
+https://guides.github.com/introduction/flow/
+
+Internationalization and localization (adding/updating languages)
+-----------------------------------------------------------------
+
+The Transifex project should be used for translations:
+https://www.transifex.com/projects/p/substanced/resource/master/
 
 Before you can do anything related to translations, there is small setup:
 
@@ -126,35 +163,30 @@ Before you can do anything related to translations, there is small setup:
 
 To update Transifex with new translations:
 
-- Run ``python setup.py extract_messages`` to populate `substanced.pot`
+- Run ``python setup.py extract_messages`` to populate `substanced.pot`.
 
-- Run ``python setup.py update_catalog`` to update translation strings in existing .po files
+- Run ``python setup.py update_catalog`` to update translation strings in
+  existing .po files.
 
-- Run ``tx push -t -s`` to push translation files to Transifex to be translated 
+- Run ``tx push -t -s`` to push translation files to Transifex to be
+  translated.
 
-- Notify translators through Transifex
+- Notify translators through Transifex.
 
-To fetch translated files from Transifex: 
+To fetch translated files from Transifex:
 
-- Run ``tx pull`` to update .po files with translations
+- Run ``tx pull`` to update .po files with translations.
 
-- Run ``python setup.py compile_catalog`` to update .mo files
+- Run ``python setup.py compile_catalog`` to update .mo files.
 
-- Run `git commit -m "Update catalog" substanced/locales` to commit changes (don't forget to submit changes upstream)
+- Run `git commit -m "Update catalog" substanced/locales` to commit changes
+  (don't forget to submit changes upstream).
 
 To add a new language:
 
 - Run ``python setup.py init_catalog -l de``
 
-Test Coverage
--------------
-
-- The codebase *must* have 100% test statement coverage after each commit.
-  You can test coverage via ``tox -e coverage``, or alternately by installing
-  ``nose`` and ``coverage`` into your virtualenv (easiest via ``setup.py
-  dev``), and running ``setup.py nosetests --with-coverage``.
-
-Documentation Coverage and Building HTML Documentation
+Documentation coverage and building HTML documentation
 ------------------------------------------------------
 
 If you fix a bug, and the bug requires an API or behavior modification, all
@@ -176,11 +208,3 @@ using to develop substanced):
 
 3. Open the ``docs/_build/html/index.html`` file to see the resulting HTML
    rendering.
-
-Change Log
-----------
-
-- Feature additions and bugfixes must be added to the ``CHANGES.txt``
-  file in the prevailing style.  Changelog entries should be long and
-  descriptive, not cryptic.  Other developers should be able to know
-  what your changelog entry means.

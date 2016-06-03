@@ -33,9 +33,6 @@ class DocumentPropertySheet(PropertySheet):
     'Document',
     icon='glyphicon glyphicon-align-left',
     add_view='add_document',
-    propertysheets=(
-        ('Basic', DocumentPropertySheet),
-        ),
     )
 class Document(Persistent):
 
@@ -44,3 +41,6 @@ class Document(Persistent):
     def __init__(self, title='', body=''):
         self.title = title
         self.body = body
+
+def includeme(config): # pragma: no cover
+    config.add_propertysheet('Basic', DocumentPropertySheet, Document)

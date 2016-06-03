@@ -1,23 +1,23 @@
-# Translations template for substanced.
+# French translations for substanced.
 # Copyright (C) 2013 ORGANIZATION
 # This file is distributed under the same license as the substanced project.
-# 
+#
 # Translators:
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2013
 msgid ""
 msgstr ""
-"Project-Id-Version: SubstanceD\n"
+"Project-Id-Version:  SubstanceD\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-11-15 17:53+0100\n"
-"PO-Revision-Date: 2013-11-15 16:57+0000\n"
-"Last-Translator: iElectric <domen@dev.si>\n"
-"Language-Team: French (http://www.transifex.com/projects/p/substanced/language/fr/)\n"
+"POT-Creation-Date: 2014-06-10 09:22+0200\n"
+"PO-Revision-Date: 2014-06-03 16:32+0100\n"
+"Last-Translator: Cédric Messiant <cedric.messiant@gmail.com>\n"
+"Language-Team: French "
+"(http://www.transifex.com/projects/p/substanced/language/fr/)\n"
+"Plural-Forms: nplurals=2; plural=(n > 1)\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 1.3\n"
-"Language: fr\n"
-"Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
 #: substanced/audit/views.py:29
 msgid "Auditing"
@@ -31,7 +31,7 @@ msgstr "Audit des évènements"
 msgid "Id"
 msgstr "Identifiant"
 
-#: substanced/audit/templates/auditing.pt:16 substanced/folder/views.py:300
+#: substanced/audit/templates/auditing.pt:16 substanced/folder/views.py:303
 msgid "Name"
 msgstr "Nom"
 
@@ -62,11 +62,11 @@ msgstr "Réindexer tous les objects sur tous les index"
 
 #: substanced/catalog/views/templates/catalog.pt:29
 msgid "Update all index definitions"
-msgstr "Mettre à jour toutes les définitions d'indexs"
+msgstr "Mettre à jour toutes les définitions d'index"
 
 #: substanced/catalog/views/templates/index.pt:6
 msgid "Manage Index"
-msgstr "Gérer les indexs"
+msgstr "Gérer les index"
 
 #: substanced/catalog/views/templates/index.pt:11
 msgid "Index type"
@@ -128,7 +128,9 @@ msgstr "Administrer"
 msgid ""
 "Remove (\"pack\") previous revisions of objects that are older than this "
 "number of days."
-msgstr "Supprime (\"compacte\") les versions précédentes des objets plus anciens que ce nombre de jours."
+msgstr ""
+"Supprime (\"compacte\") les versions précédentes des objets plus anciens "
+"que ce nombre de jours."
 
 #: substanced/db/templates/db.pt:20
 msgid "Pack"
@@ -155,8 +157,8 @@ msgid "Show summary of pending evolve steps (finished/unfinished)"
 msgstr "Afficher le résumé des mises à jour en attente (appliquées/non-appliquées)"
 
 #: substanced/db/templates/db.pt:67
-msgid "Show summary"
-msgstr "Afficher le résumé"
+msgid "Summarize"
+msgstr ""
 
 #: substanced/db/templates/db.pt:77
 msgid "Details"
@@ -176,15 +178,20 @@ msgstr "Taille"
 
 #: substanced/db/templates/db.pt:95
 msgid ""
-"Number of objects that the connections' cache will try to keep around before"
-" LRU pruning"
-msgstr "Nombre d'objets que le cache des connexions essaiera de conserver avant la mise à jour du LRU"
+"Number of objects that the connections' cache will try to keep around "
+"before LRU pruning"
+msgstr ""
+"Nombre d'objets que le cache des connexions essaiera de conserver avant "
+"la mise à jour du LRU"
 
 #: substanced/db/templates/db.pt:99
 msgid ""
-"Estimated byte size sum of objects that the connections' cache will try to "
-"keep around before LRU pruning (0 means unlimited)"
-msgstr "Taille estimée des objets que le cache des connexions essaiera de conserver avant la mise à jour du LRU (0 équivaut à aucune limite de taille)"
+"Estimated byte size sum of objects that the connections' cache will try "
+"to keep around before LRU pruning (0 means unlimited)"
+msgstr ""
+"Taille estimée des objets que le cache des connexions essaiera de "
+"conserver avant la mise à jour du LRU (0 équivaut à aucune limite de "
+"taille)"
 
 #: substanced/db/templates/db.pt:103
 msgid "Connection pool size"
@@ -256,118 +263,126 @@ msgstr "Appliquer à"
 msgid "Mark as unfinished"
 msgstr "Marqué comme non terminé"
 
-#: substanced/folder/views.py:133
+#: substanced/folder/views.py:137
 msgid "Add Folder"
 msgstr "Ajouter un dossier"
 
-#: substanced/folder/views.py:170
+#: substanced/folder/views.py:173
 msgid "Copy here"
 msgstr "Coller ici"
 
-#: substanced/folder/views.py:175 substanced/folder/views.py:189
+#: substanced/folder/views.py:178 substanced/folder/views.py:192
 #: substanced/folder/templates/rename.pt:49
 msgid "Cancel"
 msgstr "Annuler"
 
-#: substanced/folder/views.py:184
+#: substanced/folder/views.py:187
 msgid "Move here"
 msgstr "Déplacer ici"
 
-#: substanced/folder/views.py:238
+#: substanced/folder/views.py:241
 msgid "Rename"
 msgstr "Renommer"
 
-#: substanced/folder/views.py:243
+#: substanced/folder/views.py:246
 msgid "Copy"
 msgstr "Copier"
 
-#: substanced/folder/views.py:249
+#: substanced/folder/views.py:252
 msgid "Move"
 msgstr "Déplacer"
 
-#: substanced/folder/views.py:254
+#: substanced/folder/views.py:257
 msgid "Duplicate"
 msgstr "Coller"
 
-#: substanced/folder/views.py:265
+#: substanced/folder/views.py:268
 msgid "Delete"
 msgstr "Supprimer"
 
-#: substanced/folder/views.py:762
+#: substanced/folder/views.py:764
 msgid "Deleted ${num} item"
 msgid_plural "Deleted ${num} items"
 msgstr[0] "one: ${num} Elément supprimé"
 msgstr[1] "other:  ${num} Eléments supprimés"
 
-#: substanced/folder/views.py:778
+#: substanced/folder/views.py:780
 msgid "Duplicated ${num} item"
 msgid_plural "Duplicated ${num} items"
 msgstr[0] "${num} élément collé"
 msgstr[1] "${num} éléments collés"
 
-#: substanced/folder/views.py:798
+#: substanced/folder/views.py:800
 msgid "No items renamed"
 msgstr "Aucun élément renommé"
 
-#: substanced/folder/views.py:815
+#: substanced/folder/views.py:817
 msgid "Renamed ${num} item"
 msgid_plural "Renamed ${num} items"
 msgstr[0] "one: ${num} Elément renommé"
 msgstr[1] "other: ${num} Eléments renommés"
 
-#: substanced/folder/views.py:831
+#: substanced/folder/views.py:833
 msgid "Choose where to copy the items:"
 msgstr "Sélectionner où coller les éléments"
 
-#: substanced/folder/views.py:833
+#: substanced/folder/views.py:835
 msgid "No items to copy"
 msgstr "Aucun élément à copier"
 
-#: substanced/folder/views.py:840
+#: substanced/folder/views.py:842
 msgid "No items copied"
 msgstr "Aucun élément copié."
 
-#: substanced/folder/views.py:867
+#: substanced/folder/views.py:869
 msgid "Copied ${num} item"
 msgid_plural "Copied ${num} items"
 msgstr[0] "one: ${num} élément copié"
 msgstr[1] "other: ${num} éléments copiés"
 
-#: substanced/folder/views.py:883
+#: substanced/folder/views.py:885
 msgid "Choose where to move the items:"
 msgstr "Sélectionner l'emplacement de destination"
 
-#: substanced/folder/views.py:885
+#: substanced/folder/views.py:887
 msgid "No items to move"
 msgstr "Aucun objet à déplacer"
 
-#: substanced/folder/views.py:892
+#: substanced/folder/views.py:894
 msgid "No items moved"
-msgstr ""
+msgstr "Aucun élément déplacé"
 
-#: substanced/folder/views.py:919
+#: substanced/folder/views.py:921
 msgid "Moved ${num} item"
 msgid_plural "Moved ${num} items"
 msgstr[0] "one: Déplacer ${num} objet"
 msgstr[1] "other: Déplacer ${num} objets"
 
-#: substanced/folder/views.py:932
+#: substanced/folder/views.py:934
 msgid "${i} rows moved."
-msgstr ""
+msgstr "${i} lignes déplacées."
 
-#: substanced/folder/views.py:961
+#: substanced/folder/views.py:966
 msgid ""
 "\"${obj_name}\" is of a type (${obj_type}) that is not addable here, "
 "refusing to copy"
-msgstr "\"${obj_name}\" est un type de contenu (${obj_type}) que l'on ne peut ajouter ici, le déplacement est impossible"
+msgstr ""
+"\"${obj_name}\" est un type de contenu (${obj_type}) que l'on ne peut "
+"ajouter ici, le déplacement est impossible"
 
-#: substanced/folder/views.py:964
+#: substanced/folder/views.py:970
 msgid ""
 "\"${obj_name}\" is of a type (${obj_type}) that is not addable here, "
 "refusing to move"
 msgstr ""
+"\"${obj_name}\" est de type (${obj_type}). Ce type d'élément ne peut pas "
+"être ajouté ici, le déplacement a échoué"
 
-#: substanced/folder/views.py:990
+#: substanced/folder/views.py:1055
+msgid "Services"
+msgstr ""
+
+#: substanced/folder/views.py:1115
 msgid "Contents"
 msgstr "Contenus"
 
@@ -405,19 +420,19 @@ msgstr "Les renommer tous"
 
 #: substanced/locking/views.py:67
 msgid "Delete Expired"
-msgstr ""
+msgstr "Supprimer les expirés"
 
 #: substanced/locking/views.py:92
 msgid "Owner"
-msgstr ""
+msgstr "Propriétaire"
 
 #: substanced/locking/views.py:95
 msgid "Resource"
-msgstr ""
+msgstr "Ressource"
 
 #: substanced/locking/views.py:98
 msgid "Expires"
-msgstr ""
+msgstr "Expire"
 
 #: substanced/objectmap/templates/integrityerror.pt:6
 msgid "Integrity Error"
@@ -425,11 +440,17 @@ msgstr "Erreur d'intégrité"
 
 #: substanced/objectmap/templates/integrityerror.pt:8
 msgid ""
-"Sorry, the object ${link} you've attempted to remove could not be removed "
-"due to an integrity error for the reference type ${reftype}. Below is a list"
-" of objects that refer to (or are refered to by) the object you're trying to"
-" remove. Disconnect these references before attempting to delete the object."
-msgstr "Désolé, mais l'objet ${link} que vous essayez de supprimer, ne peut l'être sans casser l'intégrité des références  ${reftype}. Ci-dessous la liste des objets qui ont une référence (ou qui sont référencés) avec l'objet que vous voulez supprimer. Supprimer d'abord ces références avant de supprimer cet objet."
+"Sorry, the object ${link} you've attempted to remove could not be removed"
+" due to an integrity error for the reference type ${reftype}. Below is a "
+"list of objects that refer to (or are refered to by) the object you're "
+"trying to remove. Disconnect these references before attempting to delete"
+" the object."
+msgstr ""
+"Désolé, mais l'objet ${link} que vous essayez de supprimer, ne peut "
+"l'être sans casser l'intégrité des références  ${reftype}. Ci-dessous la "
+"liste des objets qui ont une référence (ou qui sont référencés) avec "
+"l'objet que vous voulez supprimer. Supprimer d'abord ces références avant"
+" de supprimer cet objet."
 
 #: substanced/objectmap/templates/referenced.pt:15
 msgid "Relationship type"
@@ -441,13 +462,15 @@ msgstr "Objets"
 
 #: substanced/principal/views.py:117
 msgid "Change Password"
-msgstr ""
+msgstr "Modifier le mot de passe"
 
 #: substanced/principal/templates/resetpassword_email.pt:1
 msgid ""
 "Please visit at ${reseturl} to change your password. Thank you,\n"
 "Management"
-msgstr "Merci de cliquer ici ${reseturl} pour modifier votre mot de passe.\nLes administrateurs."
+msgstr ""
+"Merci de cliquer ici ${reseturl} pour modifier votre mot de passe.\n"
+"Les administrateurs."
 
 #: substanced/property/views.py:38
 #: substanced/property/templates/propertysheets.pt:35
@@ -466,82 +489,82 @@ msgstr "Titre"
 msgid "Invalid cross-site scripting token"
 msgstr "Jeton mutli-sites invalide"
 
-#: substanced/sdi/views/acl.py:47 substanced/sdi/views/acl.py:56
-#: substanced/sdi/views/acl.py:61 substanced/sdi/views/acl.py:72
-#: substanced/sdi/views/acl.py:83 substanced/sdi/views/acl.py:93
-#: substanced/sdi/views/acl.py:130
+#: substanced/sdi/views/acl.py:49 substanced/sdi/views/acl.py:58
+#: substanced/sdi/views/acl.py:63 substanced/sdi/views/acl.py:74
+#: substanced/sdi/views/acl.py:85 substanced/sdi/views/acl.py:95
+#: substanced/sdi/views/acl.py:143
 msgid "Security"
 msgstr "Sécurité"
 
-#: substanced/sdi/views/undo.py:70 substanced/sdi/views/undo.py:111
+#: substanced/sdi/views/undo.py:70 substanced/sdi/views/undo.py:113
 msgid "Could not undo, sorry"
 msgstr "Impossible de revenir à la version précédente, désolé"
 
-#: substanced/sdi/views/undo.py:146 substanced/sdi/views/templates/undo.pt:64
+#: substanced/sdi/views/undo.py:148 substanced/sdi/views/templates/undo.pt:64
 #: substanced/sdi/views/templates/undobutton.pt:1
 msgid "Undo"
 msgstr "Revenir à la version précédente"
 
-#: substanced/sdi/views/templates/acl.pt:61
+#: substanced/sdi/views/templates/acl.pt:49
 msgid "Local ACL"
 msgstr "Contrôle d'accès local"
 
-#: substanced/sdi/views/templates/acl.pt:70
-#: substanced/sdi/views/templates/acl.pt:266
+#: substanced/sdi/views/templates/acl.pt:58
+#: substanced/sdi/views/templates/acl.pt:254
 msgid "Allow / Deny"
 msgstr "Autoriser/Interdire"
 
-#: substanced/sdi/views/templates/acl.pt:71
-#: substanced/sdi/views/templates/acl.pt:267
+#: substanced/sdi/views/templates/acl.pt:59
+#: substanced/sdi/views/templates/acl.pt:255
 msgid "Principal"
 msgstr "Compte"
 
-#: substanced/sdi/views/templates/acl.pt:72
-#: substanced/sdi/views/templates/acl.pt:268
+#: substanced/sdi/views/templates/acl.pt:60
+#: substanced/sdi/views/templates/acl.pt:256
 msgid "Permissions"
 msgstr "Permissions"
 
-#: substanced/sdi/views/templates/acl.pt:73
+#: substanced/sdi/views/templates/acl.pt:61
 msgid "Control"
 msgstr "Contrôle"
 
-#: substanced/sdi/views/templates/acl.pt:135
+#: substanced/sdi/views/templates/acl.pt:123
 msgid "${button} Allow"
 msgstr "${button} Autoriser"
 
-#: substanced/sdi/views/templates/acl.pt:145
+#: substanced/sdi/views/templates/acl.pt:133
 msgid "${button} Deny"
 msgstr "${button} Interdire"
 
-#: substanced/sdi/views/templates/acl.pt:156
+#: substanced/sdi/views/templates/acl.pt:144
 msgid "Choose a Principal"
 msgstr "Sélectionner un compte"
 
-#: substanced/sdi/views/templates/acl.pt:173
+#: substanced/sdi/views/templates/acl.pt:161
 msgid "Choose Permissions"
 msgstr "Sélectionner les permissions"
 
-#: substanced/sdi/views/templates/acl.pt:185
+#: substanced/sdi/views/templates/acl.pt:173
 msgid "Add"
 msgstr "Ajouter"
 
-#: substanced/sdi/views/templates/acl.pt:209
+#: substanced/sdi/views/templates/acl.pt:197
 msgid "Inherit Parent ACL"
 msgstr "Contrôle d'accès hérité"
 
-#: substanced/sdi/views/templates/acl.pt:217
+#: substanced/sdi/views/templates/acl.pt:205
 msgid "${button} Enabled"
 msgstr "${button} Activer"
 
-#: substanced/sdi/views/templates/acl.pt:228
+#: substanced/sdi/views/templates/acl.pt:216
 msgid "${button} Disabled"
 msgstr "${button} Désactiver"
 
-#: substanced/sdi/views/templates/acl.pt:241
+#: substanced/sdi/views/templates/acl.pt:229
 msgid "Update"
 msgstr "Mettre à jour"
 
-#: substanced/sdi/views/templates/acl.pt:260
+#: substanced/sdi/views/templates/acl.pt:248
 msgid "Parent ACL"
 msgstr "Contrôle d'accès du niveau supérieur"
 
@@ -554,14 +577,19 @@ msgstr "${batch.seqlen} total des entrées"
 msgid ""
 "Page # ${batch.num+1} (${'%d-%d of %d' % (batch.startitem+1, "
 "batch.enditem+1, batch.seqlen)})"
-msgstr "Page # ${batch.num+1} (${'%d-%d of %d' % (batch.startitem+1, batch.enditem+1, batch.seqlen)})"
+msgstr ""
+"Page # ${batch.num+1} (${'%d-%d of %d' % (batch.startitem+1, "
+"batch.enditem+1, batch.seqlen)})"
 
 #: substanced/sdi/views/templates/forbidden.pt:10
 msgid ""
-"Sorry, your account is not permitted to perform the requested action. You "
-"can try to log in using a different account below or you can <dynamic "
+"Sorry, your account is not permitted to perform the requested action. You"
+" can try to log in using a different account below or you can <dynamic "
 "element>."
-msgstr "Désolé, mais vous n'avez pas les droits nécessaires pour effectuer cette action. Vous pouvez essayer de vous identifier sous un autre compte ci-dessous ou vous pouvez <dynamic element>."
+msgstr ""
+"Désolé, mais vous n'avez pas les droits nécessaires pour effectuer cette "
+"action. Vous pouvez essayer de vous identifier sous un autre compte ci-"
+"dessous ou vous pouvez <dynamic element>."
 
 #: substanced/sdi/views/templates/forbidden.pt:21
 msgid "Log In as Another User"
@@ -624,10 +652,14 @@ msgstr "Description"
 msgid "${workflow type} workflow in state ${workflow state}"
 msgstr "le workflow ${workflow type} est dans l'état ${workflow state}"
 
-#: substanced/workflow/templates/workflow.pt:22
+#: substanced/workflow/templates/workflow.pt:21
 msgid "Transition to another state"
 msgstr "Transition vers un autre état"
 
-#: substanced/workflow/templates/workflow.pt:32
+#: substanced/workflow/templates/workflow.pt:31
 msgid "Transition"
 msgstr "Transition"
+
+#~ msgid "Show summary"
+#~ msgstr "Afficher le résumé"
+

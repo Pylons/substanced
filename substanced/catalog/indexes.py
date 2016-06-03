@@ -34,7 +34,6 @@ from ..stats import statsd_timer
 from .._compat import STRING_TYPES
 from .._compat import INT_TYPES
 from .._compat import u
-from ..util import get_principal_repr
 
 from .discriminators import dummy_discriminator
 from .util import oid_from_resource
@@ -127,13 +126,38 @@ class SDIndex(object):
                                           getattr(self, '__name__', None),
                                           id(self))
 
+class FakeIndex(object):
+
+    family = BTrees.family64
+
+    def reset(self):
+        self._not_indexed = self.family.IF.TreeSet()
+
+    def index_doc(self, docid, obj):
+        pass
+
+    def unindex_doc(self, docid):
+        pass
+
+    def reindex_doc(self, docid, obj):
+        pass
+
+    def docids(self):
+        return self.__parent__.objectids
+
+    indexed = docids
+
+    def not_indexed(self):
+        return self._not_indexed
+
+    
 @content(
     'Path Index',
     icon='glyphicon glyphicon-search',
     is_index=True,
     )
 @implementer(hypatia.interfaces.IIndex)
-class PathIndex(SDIndex, hypatia.util.BaseIndexMixin, Persistent):
+class PathIndex(SDIndex, hypatia.util.BaseIndexMixin, Persistent, FakeIndex):
     """ Uses the :meth:`substanced.objectmap.ObjectMap.pathlookup` to
     apply a query to retrieve object identifiers at or under a path.
 
@@ -161,7 +185,6 @@ class PathIndex(SDIndex, hypatia.util.BaseIndexMixin, Persistent):
     - NotEq
 
     """
-    family = BTrees.family64
     include_origin = True
     depth = None
 
@@ -176,26 +199,6 @@ class PathIndex(SDIndex, hypatia.util.BaseIndexMixin, Persistent):
         if path is None:
             return default
         return path
-
-    def reset(self):
-        self._not_indexed = self.family.IF.TreeSet()
-
-    def index_doc(self, docid, obj):
-        pass
-
-    def unindex_doc(self, docid):
-        pass
-
-    def reindex_doc(self, docid, obj):
-        pass
-
-    def docids(self):
-        return self.__parent__.objectids
-
-    indexed = docids
-
-    def not_indexed(self):
-        return self._not_indexed
 
     def search(self, path_tuple, depth=None, include_origin=True):
         objectmap = find_objectmap(self.__parent__)
@@ -299,15 +302,14 @@ class PathIndex(SDIndex, hypatia.util.BaseIndexMixin, Persistent):
         return hypatia.query.NotEq(self, val)
 
 class IndexSchema(Schema):
-    """ The property schema for :class:`substanced.principal.Group`
-    objects."""
+    """ A property schema for :class:`hypatia.interfaces.IIndex` objects."""
     action_mode = colander.SchemaNode(
         colander.String(),
         missing=colander.null,
         widget=deform.widget.RadioChoiceWidget(
             values=(
                 ('MODE_IMMEDIATE', 'Immediate'),
-                ('MODE_ATCOMMIT', 'Defer Until Commit'),
+                ('MODE_ATCOMMIT', 'At Commit'),
                 ('MODE_DEFERRED', 'Defer Until Action Processing'),
                 )
             )
@@ -331,7 +333,6 @@ class IndexPropertySheet(PropertySheet):
     'Field Index',
     icon='glyphicon glyphicon-search',
     is_index=True,
-    propertysheets = ( ('', IndexPropertySheet), ),
     )
 class FieldIndex(SDIndex, hypatia.field.FieldIndex):
     def __init__(self, discriminator=None, family=None, action_mode=None):
@@ -345,7 +346,6 @@ class FieldIndex(SDIndex, hypatia.field.FieldIndex):
     'Keyword Index',
     icon='glyphicon glyphicon-search',
     is_index=True,
-    propertysheets = ( ('', IndexPropertySheet), ),
     )
 class KeywordIndex(SDIndex, hypatia.keyword.KeywordIndex):
     def __init__(self, discriminator=None, family=None, action_mode=None):
@@ -361,7 +361,6 @@ class KeywordIndex(SDIndex, hypatia.keyword.KeywordIndex):
     'Text Index',
     icon='glyphicon glyphicon-search',
     is_index=True,
-    propertysheets = ( ('', IndexPropertySheet), ),
     )
 class TextIndex(SDIndex, hypatia.text.TextIndex):
     def __init__(
@@ -384,7 +383,6 @@ class TextIndex(SDIndex, hypatia.text.TextIndex):
     'Facet Index',
     icon='glyphicon glyphicon-search',
     is_index=True,
-    propertysheets = ( ('', IndexPropertySheet), ),
     )
 class FacetIndex(SDIndex, hypatia.facet.FacetIndex):
     def __init__(self, discriminator=None, facets=None, family=None,
@@ -403,36 +401,58 @@ class FacetIndex(SDIndex, hypatia.facet.FacetIndex):
     'Allowed Index',
     icon='glyphicon glyphicon-search',
     is_index=True,
-    propertysheets = ( ('', IndexPropertySheet), ),
     )
-class AllowedIndex(KeywordIndex):
-    def allows(self, principals, permission=None):
+class AllowedIndex(SDIndex, hypatia.util.BaseIndexMixin, Persistent, FakeIndex):
+    """ An index which defers to ``objectmap.allowed`` as part of a query
+    intersection."""
+    
+    def __init__(self, discriminator, family=None):
+        if family is not None:
+            self.family = family
+        
+    def document_repr(self, docid, default=None):
+        return 'N/A'
+
+    def allows(self, principals, permission):
         """ ``principals`` may either be 1) a sequence of principal
         indentifiers, 2) a single principal identifier, or 3) a Pyramid
         request, which indicates that all the effective principals implied by
         the request are used.
 
-        ``permission`` may be ``None`` if this index is configured with
-        only a single permission.  Otherwise a permission name must be passed
-        or an error will be raised.
+        ``permission`` must be a permission name.
         """
-        permissions = self.discriminator.permissions
-        if permission is None:
-            if len(permissions) > 1:
-                raise ValueError('Must pass a permission')
-            else:
-                permission = list(permissions)[0]
-        else:
-            if permissions is not None and not permission in permissions:
-                raise ValueError(
-                    'This index does not support the %s '
-                    'permission' % (permission,)
-                    )
         if IRequest.providedBy(principals):
             principals = effective_principals(principals)
         elif not is_nonstr_iter(principals):
             principals = (principals,)
-        principals = [ get_principal_repr(p) for p in principals ]
-        values = [(principal, permission) for principal in principals]
-        return hypatia.query.Any(self, values)
+        return AllowsComparator(self, (principals, permission))
 
+class AllowsComparator(hypatia.query.Comparator):
+    """ Comparator that only allows intersection; it's nonsensical to use an
+    allows query as anything but a filter """
+    def union(self, left, names):
+        raise NotImplementedError
+    
+    def intersect(self, left, names):
+        principals, permission = self._value
+        omap = find_objectmap(self.index)
+        result = self.family.IF.Set(
+            list(omap.allowed(left, principals, permission))
+            )
+        return result
+
+    def _apply(self, names):
+        raise NotImplementedError
+
+    def negate(self):
+        raise NotImplementedError
+
+    def __str__(self):
+        return 'allows query'
+
+def includeme(config): # pragma: no cover
+        config.add_propertysheet(
+            '',
+            IndexPropertySheet,
+            hypatia.interfaces.IIndex
+            )

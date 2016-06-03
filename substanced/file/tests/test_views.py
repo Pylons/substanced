@@ -1,6 +1,8 @@
 import io
 import os
 import unittest
+import tempfile
+import shutil
 
 import colander
 import pkg_resources
@@ -69,9 +71,18 @@ class Test_name_or_file(unittest.TestCase):
 class TestAddFileView(unittest.TestCase):
     def setUp(self):
         testing.setUp()
+        self.tempdir = tempfile.mkdtemp()
 
     def tearDown(self):
         testing.tearDown()
+        shutil.rmtree(self.tempdir)
+
+    def _makeRequest(self):
+        request = testing.DummyRequest()
+        request.registry.settings = {}
+        request.registry.settings['substanced.uploads_tempdir'] = self.tempdir
+        request.session = {}
+        return request
 
     def _makeOne(self, context, request):
         from ..views import AddFileView
@@ -80,7 +91,7 @@ class TestAddFileView(unittest.TestCase):
     def test_add_success_no_filedata(self):
         created = testing.DummyResource()
         context = testing.DummyResource()
-        request = testing.DummyRequest()
+        request = self._makeRequest()
         request.sdiapi = DummySDIAPI()
         request.registry.content = DummyContent(created)
         appstruct = {
@@ -93,11 +104,12 @@ class TestAddFileView(unittest.TestCase):
         result = inst.add_success(appstruct)
         self.assertEqual(result.location, '/mgmt_path')
         self.assertEqual(context['abc'], created)
+        self.assertEqual(os.listdir(self.tempdir), [])
 
     def test_add_success_with_filedata_no_name(self):
         created = testing.DummyResource()
         context = testing.DummyResource()
-        request = testing.DummyRequest()
+        request = self._makeRequest()
         request.sdiapi = DummySDIAPI()
         request.registry.content = DummyContent(created)
         fp = io.BytesIO(b'abc')
@@ -111,11 +123,12 @@ class TestAddFileView(unittest.TestCase):
         result = inst.add_success(appstruct)
         self.assertEqual(result.location, '/mgmt_path')
         self.assertEqual(context['filename'], created)
+        self.assertEqual(os.listdir(self.tempdir), [])
 
     def test_add_success_with_filedata_and_name(self):
         created = testing.DummyResource()
         context = testing.DummyResource()
-        request = testing.DummyRequest()
+        request = self._makeRequest()
         request.sdiapi = DummySDIAPI()
         request.registry.content = DummyContent(created)
         fp = io.BytesIO(b'abc')
@@ -129,12 +142,13 @@ class TestAddFileView(unittest.TestCase):
         result = inst.add_success(appstruct)
         self.assertEqual(result.location, '/mgmt_path')
         self.assertEqual(context['abc'], created)
+        self.assertEqual(os.listdir(self.tempdir), [])
 
     def test_add_success_with_filedata_but_no_fp(self):
         from substanced.file import USE_MAGIC
         created = testing.DummyResource()
         context = testing.DummyResource()
-        request = testing.DummyRequest()
+        request = self._makeRequest()
         request.sdiapi = DummySDIAPI()
         content_reg = DummyContent(created)
         request.registry.content = content_reg
@@ -149,11 +163,13 @@ class TestAddFileView(unittest.TestCase):
         self.assertEqual(result.location, '/mgmt_path')
         self.assertEqual(context['abc'], created)
         self.assertEqual(content_reg.created_args[1]['mimetype'], USE_MAGIC)
+        self.assertEqual(os.listdir(self.tempdir), [])
 
     def test_add_success_with_mimetype(self):
         created = testing.DummyResource()
         context = testing.DummyResource()
         request = testing.DummyRequest()
+        request = self._makeRequest()
         request.sdiapi = DummySDIAPI()
         content_reg = DummyContent(created)
         request.registry.content = content_reg
@@ -168,6 +184,7 @@ class TestAddFileView(unittest.TestCase):
         self.assertEqual(result.location, '/mgmt_path')
         self.assertEqual(context['abc'], created)
         self.assertEqual(content_reg.created_args[1]['mimetype'], 'text/xml')
+        self.assertEqual(os.listdir(self.tempdir), [])
 
 
 class Test_preview_image_upload(unittest.TestCase):

@@ -294,37 +294,6 @@ class Test_object_modified(unittest.TestCase):
             self.assertEqual(reindexed[0][0], model)
             self.assertEqual(reindexed[0][1], 1)
 
-class Test_acl_modified(unittest.TestCase):
-    def _callFUT(self, event):
-        from ..subscribers import acl_modified
-        return acl_modified(event)
-
-    def test_no_catalogs(self):
-        resource = testing.DummyResource()
-        event = DummyEvent(resource, None)
-        self._callFUT(event) # doesnt blow up
-
-    def test_gardenpath(self):
-        from substanced.interfaces import IFolder
-        from substanced.interfaces import IService
-        resource = testing.DummyResource(__provides__=IFolder)
-        resource.__oid__ = 1
-        catalog = DummyCatalog()
-        catalog.__name__ = 'catalog'
-        catalogs = resource['catalogs'] = testing.DummyResource(
-            __provides__=(IFolder, IService), __name__='catalogs')
-        catalogs['catalog'] = catalog
-        index = DummyIndex()
-        index.__name__ = 'index'
-        catalog['index'] = index
-        event = DummyEvent(resource, None)
-        content = DummyContent()
-        registry = DummyRegistry(content=content)
-        event.registry = registry
-        self._callFUT(event)
-        self.assertEqual(index.oid, 1)
-        self.assertEqual(index.resource, resource)
-
 class Test_on_startup(unittest.TestCase):
     def setUp(self):
         self.config = testing.setUp()
@@ -361,6 +330,27 @@ class Test_on_startup(unittest.TestCase):
         registry.content = DummyContentRegistry()
         app = testing.DummyResource()
         app.registry = registry
+        event = DummyEvent(app, None)
+        result = self._callFUT(event)
+        self.assertEqual(result, None)
+
+    def test_autosync_true_from_ini_unfinished_evolve_steps(self):
+        from substanced.interfaces import IEvolutionSteps
+        from substanced.evolution import FINISHED_KEY
+        registry = self.config.registry
+        registry.content = DummyContentRegistry()
+        registry.settings['substanced.catalogs.autosync'] = 'true'
+        steps = testing.DummyResource()
+        steps.sorted = lambda: [('a', ('b', 'b'))]
+        registry.registerUtility(steps, IEvolutionSteps)
+        app = testing.DummyResource()
+        app.registry = registry
+        root = testing.DummyResource()
+        root._p_jar = testing.DummyResource()
+        trueroot = {}
+        trueroot[FINISHED_KEY] = {}
+        root._p_jar.root = lambda: trueroot
+        app.root_factory = lambda *arg: root
         event = DummyEvent(app, None)
         result = self._callFUT(event)
         self.assertEqual(result, None)
@@ -503,21 +493,12 @@ class DummyEvent(object):
         self.moving = moving
         
 class DummyContent(object):
-    def istype(self, obj, whatever):
-        return True
+    pass
 
 class DummyRegistry(object):
     def __init__(self, content):
         self.content = content
         
-class DummyIndex(object):
-    def __init__(self):
-        self.reindexed = []
-
-    def reindex_resource(self, resource, oid=None, action_mode=None):
-        self.oid = oid
-        self.resource = resource
-
 class DummyContentRegistry(object):
     def __init__(self, result=None):
         self.result = result

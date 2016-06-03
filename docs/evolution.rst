@@ -93,7 +93,7 @@ add the following:
 
     logger = logging.getLogger('evolution')
 
-    def evolve_stuff(root):
+    def evolve_stuff(root, registry):
         logger.info('Stuff evolved.')
 
     def includeme(config):

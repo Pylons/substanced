@@ -1,5 +1,26 @@
-Unreleased
-----------
+Next release
+------------
 
-- Fixed #95 (When the scrolling causes an ajax request the selections are
-  lost.)
+- Replace virtualenv with tox as a testing extra.
+
+- Remove support for Python 2.6, 3.2, and 3.3, and add support for Python 3.5.
+  See https://github.com/Pylons/substanced/pull/264
+
+- Omit the ``Upload`` tab for folders which can not contain files. See
+  https://github.com/Pylons/substanced/pull/247.
+
+- Added Finnish translation.
+
+- Fixed bug in scaffold that prevented Document properties tab from showing up
+  in the SDI.
+
+- ``substanced.file.FileUploadPropertySheet`` (which backs the File->Upload
+  property tab) did not properly clear tempfiles from the upload tmpdir.
+
+- ``substanced.file.views.AddFileView`` (which backs the Add -> File form in
+  the SDI) did not properly clear tempfiles from the upload tmpdir.
+  
+1.0a1 (2015-04-17)
+==================
+
+- Initial release.

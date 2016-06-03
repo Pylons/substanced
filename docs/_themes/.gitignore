@@ -1,0 +1,13 @@
+*.egg
+*.egg-info
+*.pyc
+*.pt.py
+*.txt.py
+.coverage
+.DS_Store
+env26
+env24
+env27
+build/
+substanced/static/assets/less/
+substanced/static/assets/images/photos/

@@ -1,4 +1,5 @@
 import unittest
+import mock
 from pyramid import testing
 
 from zope.interface import (
@@ -752,6 +753,26 @@ class TestFolder(unittest.TestCase):
                 ('added', {'loading':True, 'registry':registry}),
                 ])
 
+    def test_clear_with_registry(self):
+        registry = self.config.registry
+        folder = self._makeOne()
+        one = testing.DummyResource()
+        folder['a'] = one
+        result = []
+        folder.remove = lambda *arg, **kw: result.append((arg, kw))
+        folder.clear(registry=registry)
+        self.assertEqual(result, [(('a',), {'registry':registry})])
+
+    def test_clear_no_registry(self):
+        registry = self.config.registry
+        folder = self._makeOne()
+        one = testing.DummyResource()
+        folder['a'] = one
+        result = []
+        folder.remove = lambda *arg, **kw: result.append((arg, kw))
+        folder.clear()
+        self.assertEqual(result, [(('a',), {'registry':registry})])
+        
     def test_pop_success(self):
         from substanced.interfaces import IObjectEvent
         from substanced.interfaces import IObjectRemoved
@@ -1119,6 +1140,85 @@ class TestCopyHook(unittest.TestCase):
         child.__parent__ = parent
         inst = self._makeOne(child)
         self.assertRaises(ResumeCopy, inst, parent, None)
+
+
+class Test_is_sdi_addable(unittest.TestCase):
+    def setUp(self):
+        self.config = testing.setUp()
+
+    def tearDown(self):
+        testing.tearDown()
+
+    def call_it(self, context, request, content_type):
+        from .. import is_sdi_addable
+        return is_sdi_addable(context, request, content_type)
+
+    def test_true_if_sdi_addable_is_none(self):
+        config = self.config
+        config.include('substanced.content')
+        config.add_content_type('Some Type', object)
+        context = testing.DummyResource(__sdi_addable__=None)
+        request = testing.DummyRequest()
+        self.assertTrue(self.call_it(context, request, 'Some Type'))
+
+    def test_with_callable_sdi_addable(self):
+        config = self.config
+        config.include('substanced.content')
+        config.add_content_type('Type1', object, addable=True)
+        config.add_content_type('Type2', object, addable=False)
+
+        def addable(context, intr):
+            meta = intr['meta']
+            return meta.get('addable', False)
+
+        context = testing.DummyResource(__sdi_addable__=addable)
+        request = testing.DummyRequest()
+        self.assertTrue(self.call_it(context, request, 'Type1'))
+        self.assertFalse(self.call_it(context, request, 'Type2'))
+
+    def test_with_sequence_sdi_addable(self):
+        config = self.config
+        config.include('substanced.content')
+        config.add_content_type('Type1', object)
+        config.add_content_type('Type2', object)
+
+        context = testing.DummyResource(__sdi_addable__=('Type1',))
+        request = testing.DummyRequest()
+        self.assertTrue(self.call_it(context, request, 'Type1'))
+        self.assertFalse(self.call_it(context, request, 'Type2'))
+
+    def test_false_if_content_type_unknown(self):
+        context = testing.DummyResource()
+        request = testing.DummyRequest()
+        self.assertFalse(self.call_it(context, request, 'Unknown'))
+
+class Test_AddableContentPredicate(unittest.TestCase):
+    def _makeOne(self, val, config):
+        from .. import _AddableContentPredicate
+        return _AddableContentPredicate(val, config)
+
+    def test_text(self):
+        config = mock.sentinel.config
+        pred = self._makeOne('Foo', config)
+        self.assertEqual(pred.text(), "addable_content = Foo")
+
+    def test_phash(self):
+        config = mock.sentinel.config
+        pred = self._makeOne(['Foo', 'Bar'], config)
+        self.assertEqual(pred.text(), "addable_content = Bar, Foo")
+
+    @mock.patch('substanced.folder.is_sdi_addable')
+    def test_call(self, is_sdi_addable):
+        is_sdi_addable.return_value = False
+        config = mock.sentinel.config
+        context = mock.sentinel.context
+        request = mock.sentinel.request
+        pred = self._makeOne('Foo', config)
+        rv = pred(context, request)
+        self.assertFalse(rv)
+        self.assertEqual(is_sdi_addable.mock_calls, [
+            mock.call(context, request, 'Foo'),
+            ])
 
 class DummyModel(object):
     def __init__(self, oid=1):

@@ -119,3 +119,12 @@ Contributors
 
 - Arno Rinker, 2013/10/10
 
+- David Glick, 2014/4/9
+
+- Cédric Messiant, 2014/6/2
+
+- Matt Russell, 2014/12/13
+
+- Geoffrey T. Dairiki, 2015/05/02
+
+- Charlie Clark, 2016/03/11

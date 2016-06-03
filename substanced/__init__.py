@@ -15,6 +15,7 @@ def include(config): # pragma: no cover
     config.include('.content')
     config.include('.objectmap')
     config.include('.property')
+    config.include('.file')
     config.include('.catalog')
     config.include('.form')
     config.include('.workflow')
@@ -23,7 +24,12 @@ def include(config): # pragma: no cover
     config.include('.audit')
     config.include('.editable')
     config.include('.jsonapi')
+    config.include('.db')
+    config.include('.root')
+    config.include('.principal')
     config.add_translation_dirs('locale/')
+    config.add_translation_dirs('deform:locale/')
+    config.add_translation_dirs('colander:locale/')
 
 def scan(config): # pragma: no cover
     """ Perform all ``config.scan`` tasks required for Substance D and the

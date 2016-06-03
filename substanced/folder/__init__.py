@@ -7,7 +7,10 @@ from persistent import (
     Persistent,
     )
 from persistent.interfaces import IPersistent
-from pyramid.compat import string_types
+from pyramid.compat import (
+    is_nonstr_iter,
+    string_types,
+    )
 from pyramid.location import (
     lineage,
     inside,
@@ -346,7 +349,7 @@ class Folder(Persistent):
         return name in self.data
 
     def __setitem__(self, name, other):
-        """ Set object ``other' into this folder under the name ``name``.
+        """ Set object ``other`` into this folder under the name ``name``.
 
         ``name`` must be a Unicode object or a bytestring object.
 
@@ -716,6 +719,16 @@ class Folder(Persistent):
             self.remove(name, loading=True)
         self.add(name, newobject, loading=True, registry=registry)
 
+    def clear(self, registry=None):
+        """ Clear all items from the folder.  This is the equivalent of calling
+        ``.remove`` with each key that exists in the folder. """
+        if registry is None:
+            registry = get_current_registry()
+        # why do we listify?  http://www.zodb.org/en/latest/documentation/guide/modules.html#iteration-and-mutation
+        for name in list(self.data):
+            self.remove(name, registry=registry)
+            
+
 class _AutoNamingFolder(object):
     def add_next(
         self,
@@ -916,6 +929,52 @@ class CopyHook(object):
         # ResumeCopy.
         raise ResumeCopy
 
+
+def is_sdi_addable(context, request, content_type):
+    """Determine whether resources of type ``content_type`` can be added
+    to ``context`` using the SDI management interface.
+
+    Returns ``True`` iff resources of the type named by ``content_type`` can be
+    added to ``context`` using the SDI management interface.
+
+    Addability is determined by consulting the ``__sdi_addable__``
+    attribute of the ``context``.  See
+    :ref:`filtering-what-can-be-added` for details.p
+
+    """
+    from ..sdi import default_sdi_addable  # import cycle
+
+    introspector = request.registry.introspector
+    discrim = ('sd-content-type', content_type)
+    intr = introspector.get('substance d content types', discrim)
+    if intr is None:
+        return False            # unknown content_type
+
+    sdi_addable = getattr(context, '__sdi_addable__', default_sdi_addable)
+    if sdi_addable is None:
+        return True
+    elif callable(sdi_addable):
+        return sdi_addable(context, intr)
+    else:
+        return content_type in sdi_addable
+
+
+class _AddableContentPredicate(object):
+    def __init__(self, val, config):
+        if is_nonstr_iter(val):
+            self.val = set(val)
+        else:
+            self.val = set([val])
+
+    def text(self):
+        return 'addable_content = %s' % ', '.join(sorted(self.val))
+
+    phash = text
+
+    def __call__(self, context, request):
+        return any(is_sdi_addable(context, request, content_type)
+                   for content_type in self.val)
+
 def includeme(config): # pragma: no cover
     # The ICopyHook adapter avoids dumping referenced objects that are not
     # located inside an object containment-wise when that object is copied.  If
@@ -926,5 +985,6 @@ def includeme(config): # pragma: no cover
     YEAR = 86400 * 365
     config.add_static_view('fcstatic', 'substanced.folder:static',
                            cache_max_age=YEAR)
+    config.add_view_predicate('addable_content', _AddableContentPredicate)
     config.include('.views')
     config.include('.evolve')

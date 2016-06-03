@@ -69,9 +69,10 @@ make sure that you:
   connections
 
 Next, we'll make some changes to some of the configuration files. In
-your ``setup.py``, indicate that you need the ``RelStorage`` package as
-the ``psycopg2`` Python binding for PostgreSQL. This presumes that the
-binaries for the PostgreSQL client are available on your path.
+your ``setup.py``, indicate that you need the ``RelStorage`` package
+as well as the ``psycopg2`` Python binding for PostgreSQL. This
+presumes that the binaries for the PostgreSQL client are available on
+your path.
 
 In your configuration file (e.g. ``production.ini``), the
 ``[app:main]`` section should have::
@@ -80,6 +81,7 @@ In your configuration file (e.g. ``production.ini``), the
 
 We thus need a ``relstorage.conf`` file::
 
+    %import relstorage
     <zodb main>
       <relstorage>
         blob-dir ../var/blobs
@@ -103,7 +105,7 @@ supervisor service, remove the data as above, restart it,
 and restart the app server.
 
 With RelStorage, you get a rich set of existing tools such as
-``pgadmin`` to browser and modify table data. You can, though,
+``pgadmin`` to browse and modify table data. You can, though,
 do it the quickie way via ``bin/pshell`` and just delete the root
 object, then commit the transaction.
 

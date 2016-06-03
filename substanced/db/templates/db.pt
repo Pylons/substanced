@@ -65,7 +65,7 @@
               </div>
               <div class="col-md-2">
                 <input type="submit" class="btn btn-primary" i18n:attributes="value"
-                       value="Show summary" name="show_evolve"/>
+                       value="Summarize" name="show_evolve"/>
               </div>
             </div>
           </form>

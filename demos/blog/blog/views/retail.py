@@ -7,11 +7,11 @@ from webob import Response
 from pyramid.decorator import reify
 from pyramid.httpexceptions import HTTPFound
 from pyramid.url import resource_url
+from substanced.util import find_catalog
 from pyramid.view import (
     view_config,
     view_defaults,
     )
-from pyramid.security import authenticated_userid
 
 def _getentrybody(format, entry):
     if format == 'rst':
@@ -25,20 +25,23 @@ def _getentrybody(format, entry):
     content_type='Root',
     )
 def blogview(context, request):
+    system_catalog = find_catalog(context, 'system')
+    blog_catalog = find_catalog(context, 'blog')
+    content_type = system_catalog['content_type']
+    query = content_type.eq('Blog Entry')
+    query_result = query.execute().sort(blog_catalog['pubdate'], reverse=True)
     blogentries = []
-    for name, blogentry in context.items():
-        if request.registry.content.istype(blogentry, 'Blog Entry'):
-            blogentries.append(
-                {'url': resource_url(blogentry, request),
-                 'title': blogentry.title,
-                 'body': _getentrybody(blogentry.format, blogentry.entry),
-                 'pubdate': blogentry.pubdate,
-                 'attachments': [{'name': a.__name__, 'url': resource_url(a, request, 'download')} 
-                    for a in blogentry['attachments'].values()],
-                 'numcomments': len(blogentry['comments'].values()),
-                 })
-    blogentries.sort(key=lambda x: x['pubdate'].isoformat())
-    blogentries.reverse()
+    for blogentry in query_result:
+        blogentries.append(
+            {'url': resource_url(blogentry, request),
+             'title': blogentry.title,
+             'body': _getentrybody(blogentry.format, blogentry.entry),
+             'pubdate': blogentry.pubdate,
+             'attachments': [
+                {'name': a.__name__, 'url': resource_url(a, request, 'download')} 
+                for a in blogentry['attachments'].values()],
+             'numcomments': len(blogentry['comments'].values()),
+             })
     return dict(blogentries = blogentries)
 
 @view_defaults(
@@ -57,7 +60,15 @@ class BlogEntryView(object):
 
     @reify
     def comments(self):
-        return self.context['comments'].values()
+        context = self.context
+        system_catalog = find_catalog(context, 'system')
+        blog_catalog = find_catalog(context, 'blog')
+        content_type = system_catalog['content_type']
+        path = system_catalog['path']
+        comments_path = self.request.resource_path(context['comments'])
+        query = content_type.eq('Comment') & path.eq(comments_path)
+        query_result = query.execute().sort(blog_catalog['pubdate'])
+        return query_result
 
     @reify
     def attachments(self):
@@ -103,6 +114,9 @@ def download_attachment(context, request):
     response = Response(headerlist=headers, app_iter=f)
     return response
 
+@view_defaults(
+    content_type='Root',
+    )
 class FeedViews(object):
     def __init__(self, context, request):
         self.context = context

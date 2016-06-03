@@ -101,11 +101,12 @@ class FileUploadPropertySheet(PropertySheet):
         if fp:
             fp.seek(0)
             context.upload(fp, mimetype_hint=filename)
+            return True
         return False
 
     def after_set(self, changed):
+        PropertySheet.after_set(self, changed)
         if changed is not False:
-            PropertySheet.after_set(self, changed)
             tmpstore = FileUploadTempStore(self.request)
             tmpstore.clear()
 
@@ -116,10 +117,7 @@ class FileUploadPropertySheet(PropertySheet):
     # prevent view tab from sorting first (it would display the image when
     # manage_main clicked)
     tab_order = ('properties', 'acl_edit', 'view'),
-    propertysheets = (
-        ('Basic', FilePropertySheet),
-        ('Upload', FileUploadPropertySheet),
-        ),
+    #propertysheet_order = ('Basic', 'Upload'),
     catalog = True,
     )
 @implementer(IFile)
@@ -262,3 +260,7 @@ class File(Persistent):
             self.blob._p_activate()
             blob = self.blob._p_serial
         return oid_repr(max(mine, blob))
+
+def includeme(config): # pragma: no cover
+    config.add_propertysheet('Basic', FilePropertySheet, IFile)
+    config.add_propertysheet('Upload', FileUploadPropertySheet, IFile)

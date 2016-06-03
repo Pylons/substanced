@@ -1,8 +1,8 @@
+
 import functools
 import itertools
 import operator
 import re
-
 import colander
 import venusian
 
@@ -24,12 +24,15 @@ from substanced.util import (
     get_icon_name,
     )
 from substanced._compat import u
+from substanced.file import USE_MAGIC
 
 from ..sdi import (
     default_sdi_addable,
     mgmt_view,
     sdi_mgmt_views,
+    RIGHT,
     )
+from .util import slugify_in_context
 from ..util import _
 
 from . import FolderKeyError
@@ -340,13 +343,12 @@ class FolderContents(object):
         """ The default query function for a folder """
         system_catalog = self.system_catalog
         folder = self.context
-        request = self.request
         path = system_catalog['path']
-        allowed = system_catalog['allowed']
         interfaces = system_catalog['interfaces']
+        allowed = system_catalog['allowed']
         q = ( path.eq(folder, depth=1, include_origin=False) &
-              allowed.allows(request, 'sdi.view') &
-              interfaces.notany([IService])
+              interfaces.notany([IService]) &
+              allowed.allows(self.request, 'sdi.view')
             )
         return q
 
@@ -575,7 +577,6 @@ class FolderContents(object):
         # NB: must take snapshot of folder_length before limiting the length
         # of the resultset via any sort
         folder_length = len(resultset)
-
         sort_info = self._sort_info(
             columns,
             sort_column_name=sort_column_name,
@@ -594,15 +595,13 @@ class FolderContents(object):
                 folder, resultset, reverse=reverse, limit=end
                 )
 
-        ids = resultset.ids
-
         buttons = self.get_buttons()
         show_checkbox_column = self.show_checkbox_column(
             buttons, columns, resultset)
 
         records = []
 
-        for oid in itertools.islice(ids, start, end):
+        for oid in itertools.islice(resultset.ids, start, end):
             resource = objectmap.object_for(oid)
             name = getattr(resource, '__name__', '')
             record = dict(
@@ -935,7 +934,9 @@ class FolderContents(object):
             insert_before = None
         context.reorder(item_modify, insert_before)
         msg = _('${i} rows moved.', mapping=dict(i=len(item_modify)))
-        msg = request.sdiapi.get_flash_with_undo_snippet(request.localizer.translate(msg))
+        msg = request.sdiapi.get_flash_with_undo_snippet(
+            request.localizer.translate(msg)
+            )
         results = {
             'flash': msg,
             'flash_queue':'success',
@@ -962,10 +963,12 @@ class FolderContents(object):
                 obj.__parent__.move(obj_name, context)
             return True
         if copy:
-            msg = _('"${obj_name}" is of a type (${obj_type}) that is not addable here, refusing to copy',
+            msg = _('"${obj_name}" is of a type (${obj_type}) that is not '
+                    'addable here, refusing to copy',
                     mapping=dict(obj_name=obj_name, obj_type=obj_type))
         else:
-            msg = _('"${obj_name}" is of a type (${obj_type}) that is not addable here, refusing to move',
+            msg = _('"${obj_name}" is of a type (${obj_type}) that is not '
+                    'addable here, refusing to move',
                     mapping=dict(obj_name=obj_name, obj_type=obj_type))
         self.request.sdiapi.flash(request.localizer.translate(msg), 'danger')
         return False
@@ -1019,7 +1022,11 @@ class FolderContents(object):
                 candidates[viewname] = data
 
         candidate_names = candidates.keys()
-        views = sdi_mgmt_views(self.context, self.request, names=candidate_names)
+        views = sdi_mgmt_views(
+            self.context,
+            self.request,
+            names=candidate_names
+            )
 
         L = []
 
@@ -1034,10 +1041,24 @@ class FolderContents(object):
 
         return L
 
-@folder_contents_views(name='services',
-                       tab_title=_('Services'),
-                       view_permission='sdi.view-services',
-                      )
+def has_services(context, request):
+    catalog = find_catalog(context, 'system')
+    ifaces = catalog['interfaces']
+    path = catalog['path']
+    q = (
+        path.eq(context, depth=1, include_origin=False) &
+        ifaces.any([IService])
+        )
+    result = bool(len(q.execute()))
+    return result
+
+@folder_contents_views(
+    name='services',
+    tab_title=_('Services'),
+    tab_near=RIGHT,
+    view_permission='sdi.view-services',
+    tab_condition=has_services,
+    )
 class FolderServices(FolderContents):
 
     def sdi_addable_content(self):
@@ -1058,13 +1079,12 @@ class FolderServices(FolderContents):
         """ The default query function for a folder """
         system_catalog = self.system_catalog
         folder = self.context
-        request = self.request
         path = system_catalog['path']
-        allowed = system_catalog['allowed']
         interfaces = system_catalog['interfaces']
+        allowed = system_catalog['allowed']
         q = ( path.eq(folder, depth=1, include_origin=False) &
-              allowed.allows(request, 'sdi.view') &
-              interfaces.any([IService])
+              interfaces.any([IService]) &
+              allowed.allows(self.request, 'sdi.view')
             )
         return q
 
@@ -1421,7 +1441,65 @@ def add_folder_contents_views(
         check_csrf=True,
         attr='reorder_rows',
         )
-        
+
+@mgmt_view(
+    context=IFolder,
+    name='upload',
+    tab_title=_('Upload'),
+    tab_condition=True,
+    addable_content='File',
+    tab_after='contents',
+    permission='sdi.add-content',
+    renderer='substanced.folder:templates/multiupload.pt'
+    )
+def multi_upload(context, request):
+    return {}
+
+def _makeob(request, stream, title, mimetype):
+    return request.registry.content.create(
+        'File',
+        stream=stream,
+        mimetype=mimetype,
+        title=title,
+        )
+
+@mgmt_view(
+    context=IFolder,
+    name='upload-submit',
+    request_method='POST',
+    renderer='json',
+    tab_condition=False,
+    addable_content='File',
+    permission='sdi.add-content',
+    )
+def multi_upload_submit(context, request):
+    # print('in multi_upload_submit')
+    result = {'files': []}
+    for filedata in request.params.values():
+        mimetype = filedata.type or USE_MAGIC
+        filename = filedata.filename
+        stream = filedata.file
+        if stream:
+            stream.seek(0, 2)
+            size = stream.tell()
+            stream.seek(0)
+        else:
+            stream = None
+            size = 0
+        # convert filename to a readable, unique name
+        name = slugify_in_context(context, filename)
+        # print('multi_upload', name, size)
+        # create the title, defaulting to name
+        title = name
+        # create and store the File content object
+        context[name] = _makeob(request, stream, title, mimetype)
+        # produce data for the client
+        result['files'].append({
+            'name': name,
+            'size': size,
+        })
+    return result
+
 def includeme(config): # pragma: no cover
     config.add_directive(
         'add_folder_contents_views',

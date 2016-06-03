@@ -1,0 +1,118 @@
+<div metal:define-macro="main"
+     i18n:domain="substanced"
+     metal:extend-macro="request.sdiapi.main_template">
+  <metal:slot fill-slot="head-more">
+    <metal:slot define-slot="head-more">
+      <!-- CSS to style the file input field as button and adjust the Bootstrap progress bars -->
+      <link rel="stylesheet" href="${request.static_url('substanced.folder:static/vendor/jquery-file-upload/css/jquery.fileupload.css')}">
+      <!-- Mime type icons -->
+      <link rel="stylesheet" href="${request.static_url('substanced.folder:static/css/mimetype-icons.css')}">
+      <!-- Page CSS -->
+      <link rel="stylesheet" href="${request.static_url('substanced.folder:static/css/multiupload.css')}">
+    </metal:slot>
+  </metal:slot>
+  <div metal:fill-slot="main">
+    <div id="fileupload-fixable-wrapper">
+      <!-- Private message area to play nicely with our scrolling -->
+      <div id="fileupload-messages"></div>
+      <!-- main toolbar -->
+      <div  id="fileupload-toolbar" class="file-in-progress well clearfix">
+        <div class="col-xs-12 col-sm-6 col-md-5 col-lg-4">
+          <span id="fileupload-buttons">
+            <!-- The file input field styled as button -->
+            <span class="btn btn-primary fileinput-button">
+              <i class="glyphicon glyphicon-plus"></i>
+              <span>Add files</span>
+              <!-- The file input field used as target for the file upload widget -->
+              <input id="fileupload" type="file" name="files[]" multiple>
+            </span>
+          </span>
+          <span id="fileupload-global-info clearfix">
+            <div>
+              <span id="fileupload-global-count">0 file</span>
+            </div>
+            <div>
+              <span id="fileupload-global-size">0 B</span>
+              <span id="fileupload-global-bitrate">0 B/s</span>
+            </div>
+          </span>
+        </div>
+        <div class="col-xs-12 col-sm-6 col-md-7 col-lg-8">
+          <!-- The global progress bar -->
+          <div id="progress" class="progress">
+            <div class="progress-bar progress-bar-success"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- The container for the files -->
+    <div id="files" class="files"></div>
+    <!-- The template for the file items -->
+    <div id="file-in-progress-template" class="hidden">
+      <div class="file-in-progress row">
+        <div class="col-xs-8 col-sm-7 col-md-6 col-lg-5 clearfix">
+          <div class="left-col">
+            <div class="canvas-wrapper pull-left">
+              <div class="file-icon mimetype-icon-_page"></div>
+            </div>
+            <div class="file-info">
+              <span class="file-name"></span>
+              <span class="file-modified"></span>
+              <span class="file-size"></span>
+              <div class="clearfix"></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-xs-4 col-sm-5 col-md-6 col-lg-7 clearfix">
+          <button class="remove-button btn btn-warning">
+            <i class="glyphicon glyphicon-remove"></i>
+            Cancel
+          </button>
+          <div class="progress">
+            <div class="progress-bar progress-bar-success">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- inform users about file drop capabilities -->
+    <div class="drop-message">
+      You can also <b>drop files</b> anywhere in this window.
+    </div>
+    <div class="not-supported-message">
+      Your browser does not support HTML5 file uploads.
+      Please upgrade it to a newer version,
+      <br>
+      or install
+      <a href="https://firefox.com">a different browser</a>.
+    </div>
+    <!-- XXX Moment.js is only included in this page, could be loaded globally instead. -->
+    <script src="${request.static_url('substanced.sdi:static/js/moment.js')}" type="text/javascript"></script>
+    <!-- XXX Modernizr is only included in this page, could be loaded globally instead. -->
+    <script src="${request.static_url('substanced.sdi:static/js/modernizr.js')}" type="text/javascript"></script>
+    <!-- The jQuery UI widget factory -->
+    <script src="${request.static_url('substanced.folder:static/vendor/jquery-file-upload/js/vendor/jquery.ui.widget.js')}" type="text/javascript"></script>
+    <!-- The Load Image plugin is included for the preview images and image resizing functionality -->
+    <script src="${request.static_url('substanced.folder:static/vendor/jquery-load-image/load-image.min.js')}" type="text/javascript"></script>
+    <!-- The Canvas to Blob plugin is included for image resizing functionality -->
+    <script src="${request.static_url('substanced.folder:static/vendor/javascript-canvas-to-blob/canvas-to-blob.js')}" type="text/javascript"></script>
+    <!-- The basic File Upload plugin -->
+    <script src="${request.static_url('substanced.folder:static/vendor/jquery-file-upload/js/jquery.fileupload.js')}" type="text/javascript"></script>
+    <!-- The File Upload processing plugin -->
+    <script src="${request.static_url('substanced.folder:static/vendor/jquery-file-upload/js/jquery.fileupload-process.js')}" type="text/javascript"></script>
+    <!-- The File Upload image preview & resize plugin -->
+    <script src="${request.static_url('substanced.folder:static/vendor/jquery-file-upload/js/jquery.fileupload-image.js')}" type="text/javascript"></script>
+    <!-- The File Upload audio preview plugin -->
+    <!--
+    <script src="${request.static_url('substanced.folder:static/vendor/jquery-file-upload/js/jquery.fileupload-audio.js')}" type="text/javascript"></script>
+    -->
+    <!-- The File Upload video preview plugin -->
+    <!--
+    <script src="${request.static_url('substanced.folder:static/vendor/jquery-file-upload/js/jquery.fileupload-video.js')}" type="text/javascript"></script>
+    -->
+    <!-- The File Upload validation plugin -->
+    <script src="${request.static_url('substanced.folder:static/vendor/jquery-file-upload/js/jquery.fileupload-validate.js')}" type="text/javascript"></script>
+    <!-- Page code -->
+    <script src="${request.static_url('substanced.folder:static/js/multiupload.js')}" type="text/javascript"></script>
+  </div>
+</div>

@@ -121,6 +121,17 @@ class TestPropertySheetsView(unittest.TestCase):
         self.assertTrue(form.rendered)
         self.assertEqual(result['form'], None)
 
+    def test_viewable_sheet_factories_fallback_to_domain(self):
+        sheet_factory = DummySheetFactory([('view', 'sdi.view')])
+        domain = DummyContent([('sheet', DummyPropertySheet)])
+        request = testing.DummyRequest()
+        request.registry = _makeRegistry(domain)
+        request.registry.content = DummyContent(None)
+        request.context = testing.DummyResource()
+        inst = self._makeOne(request)
+        result = inst.viewable_sheet_factories()
+        self.assertEqual(result, [('sheet', DummyPropertySheet)])
+
     def test_has_permission_to_no_permissions(self):
         request = testing.DummyRequest()
         request.registry = testing.DummyResource()
@@ -216,6 +227,19 @@ class Test_has_permission_to_view_any_propertysheet(unittest.TestCase):
         context = testing.DummyResource()
         self.assertTrue(self._callFUT(context, request))
 
+    def test_fallback_to_domain(self):
+        sheet_factory = DummySheetFactory([('edit', 'sdi.edit')])
+        domain = DummyContent([('sheet', sheet_factory)])
+        request = testing.DummyRequest()
+        request.registry = _makeRegistry(domain)
+        request.registry.content = DummyContent(None)
+        context = testing.DummyResource()
+        self.assertTrue(self._callFUT(context, request))
+
+def _makeRegistry(domain):
+    registry = Dummy()
+    registry.queryUtility = lambda self, *arg, **kw: domain
+    return registry
 
 class DummySheetFactory(object):
 
@@ -256,6 +280,9 @@ class DummyContent(object):
     def metadata(self, context, name, default=None):
         return self.result
     
+    def all(self, context, request):
+        return self.result
+
 class Dummy(object):
     pass
 

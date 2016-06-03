@@ -35,18 +35,6 @@
 
      }
 
-     var pathcount = ${pathcount};
-
-     function loading_indicator() {
-       result = true;
-       if (pathcount > 500) {
-         result = confirm("${request.localizer.translate('This operation could take a long time. ${pathcount} objects will be reindexed, are you sure you want to continue?')}");
-       }
-       if (result) {
-         sdi.loading_indicator_on() // from sdi.js
-       }
-       return result;
-     }
 
     </script>
 
@@ -81,7 +69,7 @@
                   <td tal:content="ace[1]">PRINCIPAL</td>
                   <td tal:content="', '.join(ace[2])">PERM1, PERM2</td>
                   <td>
-                    <form action="@@acl_edit" method="post" onsubmit="return loading_indicator()">
+                    <form action="@@acl_edit" method="post" onsubmit="return sdi.loading_indicator_on()">
                       <input type="hidden" name="index" value="${repeat['ace'].index}" />
 
                       <button
@@ -128,7 +116,7 @@
           <div class="panel-body">
 
             <form action="@@acl_edit" method="post" 
-                  onsubmit="return loading_indicator()">
+                  onsubmit="return sdi.loading_indicator_on()">
 
               <div class="col-md-2">
                 <div class="radio">

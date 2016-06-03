@@ -25,6 +25,7 @@ from substanced.util import (
     get_oid,
     set_oid,
     get_acl,
+    set_acl,
     get_dotted_name,
     get_content_type,
     is_folder,
@@ -416,7 +417,7 @@ class ACLDumper(object):
     def load(self, context):
         if context.exists(self.fn):
             acl = context.load_yaml(self.fn)
-            context.resource.__acl__ = acl
+            set_acl(context.resource, acl)
 
 class WorkflowDumper(object):
     def __init__(self, name, registry):

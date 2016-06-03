@@ -93,13 +93,10 @@ def catalog_buttons(context, request, default_buttons):
 @implementer(ICatalog)
 class Catalog(Folder):
     
-    family = BTrees.family64
     transaction = transaction
     
     def __init__(self, family=None):
-        Folder.__init__(self)
-        if family is not None:
-            self.family = family
+        Folder.__init__(self, family=family)
         self.reset()
 
     def __sdi_addable__(self, context, introspectable):
@@ -639,7 +636,7 @@ def add_indexview(
 
     Or, a class::
 
-        def IndexViews(object):
+        class IndexViews(object):
             def __init__(self, resource):
                 self.resource = resource
 
@@ -653,7 +650,7 @@ def add_indexview(
     If an ``attr`` arg is supplied to ``add_indexview``, you can use a
     different attribute of the class instad of ``__call__``::
 
-        def IndexViews(object):
+        class IndexViews(object):
             def __init__(self, resource):
                 self.resource = resource
 
@@ -734,3 +731,4 @@ def includeme(config): # pragma: no cover
         (Interface,), IIndexingActionProcessor
         )
     config.include('.evolve')
+    config.include('.indexes')

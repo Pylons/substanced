@@ -245,9 +245,6 @@ class GroupPropertySheet(PropertySheet):
     icon='glyphicon glyphicon-th-list',
     add_view='add_group',
     tab_order=('properties',),
-    propertysheets = (
-        ('', GroupPropertySheet),
-        )
     )
 @implementer(IGroup)
 class Group(Folder):
@@ -373,10 +370,6 @@ class UserGroupsPropertySheet(PropertySheet):
     icon='glyphicon glyphicon-user',
     add_view='add_user',
     tab_order=('properties',),
-    propertysheets = (
-        ('Preferences', UserPropertySheet),
-        ('Groups', UserGroupsPropertySheet),
-        )
     )
 @implementer(IUser)
 class User(Folder):
@@ -532,3 +525,7 @@ def groupfinder(userid, request):
 
 def includeme(config): # pragma: no cover
     config.add_directive('set_user_locator', set_user_locator)
+    config.add_propertysheet('Groups', UserGroupsPropertySheet, IUser)
+    config.add_propertysheet('Preferences', UserPropertySheet, IUser)
+    config.add_propertysheet('', GroupPropertySheet, IGroup)
+

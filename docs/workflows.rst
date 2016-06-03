@@ -128,7 +128,7 @@ or when content enters a specific state. Let's define a transition with
 a callback::
 
     >>> def cb(context, **kw):
-    ...     print "keywords: ", meta
+    ...     print "keywords: ", kw
 
     >>> workflow.add_transition('to_publish_with_callback',
     ...                         from_state='draft',

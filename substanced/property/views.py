@@ -14,10 +14,14 @@ from ..locking import LockError
 from ..locking import could_lock_resource
 from ..sdi import mgmt_view
 from ..util import _
+from . import get_domain
 
 def has_permission_to_view_any_propertysheet(context, request):
     candidates = request.registry.content.metadata(
-        context, 'propertysheets', [])
+        context, 'propertysheets', None)
+    if candidates is None:
+        domain = get_domain(request.registry)
+        candidates = domain.all(context, request)
     sheet_factories = [ x[1] for x in candidates ]
     for sheet_factory in sheet_factories:
         permissions = getattr(sheet_factory, 'permissions', None)
@@ -73,7 +77,10 @@ class PropertySheetsView(FormView):
     def viewable_sheet_factories(self):
         L = []
         candidates = self.request.registry.content.metadata(
-            self.context, 'propertysheets', [])
+            self.context, 'propertysheets', None)
+        if candidates is None:
+            domain = get_domain(self.request.registry)
+            candidates = domain.all(self.context, self.request)
         for name, factory in candidates:
             if not self.has_permission_to('view', factory):
                 continue

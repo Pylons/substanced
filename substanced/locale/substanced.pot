@@ -1,14 +1,14 @@
 # Translations template for substanced.
-# Copyright (C) 2013 ORGANIZATION
+# Copyright (C) 2014 ORGANIZATION
 # This file is distributed under the same license as the substanced project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2013.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2014.
 #
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: substanced 0.0\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2013-11-15 17:53+0100\n"
+"POT-Creation-Date: 2014-06-10 09:22+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -29,7 +29,7 @@ msgstr ""
 msgid "Id"
 msgstr ""
 
-#: substanced/audit/templates/auditing.pt:16 substanced/folder/views.py:300
+#: substanced/audit/templates/auditing.pt:16 substanced/folder/views.py:303
 msgid "Name"
 msgstr ""
 
@@ -153,7 +153,7 @@ msgid "Show summary of pending evolve steps (finished/unfinished)"
 msgstr ""
 
 #: substanced/db/templates/db.pt:67
-msgid "Show summary"
+msgid "Summarize"
 msgstr ""
 
 #: substanced/db/templates/db.pt:77
@@ -254,118 +254,122 @@ msgstr ""
 msgid "Mark as unfinished"
 msgstr ""
 
-#: substanced/folder/views.py:133
+#: substanced/folder/views.py:137
 msgid "Add Folder"
 msgstr ""
 
-#: substanced/folder/views.py:170
+#: substanced/folder/views.py:173
 msgid "Copy here"
 msgstr ""
 
-#: substanced/folder/views.py:175 substanced/folder/views.py:189
+#: substanced/folder/views.py:178 substanced/folder/views.py:192
 #: substanced/folder/templates/rename.pt:49
 msgid "Cancel"
 msgstr ""
 
-#: substanced/folder/views.py:184
+#: substanced/folder/views.py:187
 msgid "Move here"
 msgstr ""
 
-#: substanced/folder/views.py:238
+#: substanced/folder/views.py:241
 msgid "Rename"
 msgstr ""
 
-#: substanced/folder/views.py:243
+#: substanced/folder/views.py:246
 msgid "Copy"
 msgstr ""
 
-#: substanced/folder/views.py:249
+#: substanced/folder/views.py:252
 msgid "Move"
 msgstr ""
 
-#: substanced/folder/views.py:254
+#: substanced/folder/views.py:257
 msgid "Duplicate"
 msgstr ""
 
-#: substanced/folder/views.py:265
+#: substanced/folder/views.py:268
 msgid "Delete"
 msgstr ""
 
-#: substanced/folder/views.py:762
+#: substanced/folder/views.py:764
 msgid "Deleted ${num} item"
 msgid_plural "Deleted ${num} items"
 msgstr[0] ""
 msgstr[1] ""
 
-#: substanced/folder/views.py:778
+#: substanced/folder/views.py:780
 msgid "Duplicated ${num} item"
 msgid_plural "Duplicated ${num} items"
 msgstr[0] ""
 msgstr[1] ""
 
-#: substanced/folder/views.py:798
+#: substanced/folder/views.py:800
 msgid "No items renamed"
 msgstr ""
 
-#: substanced/folder/views.py:815
+#: substanced/folder/views.py:817
 msgid "Renamed ${num} item"
 msgid_plural "Renamed ${num} items"
 msgstr[0] ""
 msgstr[1] ""
 
-#: substanced/folder/views.py:831
+#: substanced/folder/views.py:833
 msgid "Choose where to copy the items:"
 msgstr ""
 
-#: substanced/folder/views.py:833
+#: substanced/folder/views.py:835
 msgid "No items to copy"
 msgstr ""
 
-#: substanced/folder/views.py:840
+#: substanced/folder/views.py:842
 msgid "No items copied"
 msgstr ""
 
-#: substanced/folder/views.py:867
+#: substanced/folder/views.py:869
 msgid "Copied ${num} item"
 msgid_plural "Copied ${num} items"
 msgstr[0] ""
 msgstr[1] ""
 
-#: substanced/folder/views.py:883
+#: substanced/folder/views.py:885
 msgid "Choose where to move the items:"
 msgstr ""
 
-#: substanced/folder/views.py:885
+#: substanced/folder/views.py:887
 msgid "No items to move"
 msgstr ""
 
-#: substanced/folder/views.py:892
+#: substanced/folder/views.py:894
 msgid "No items moved"
 msgstr ""
 
-#: substanced/folder/views.py:919
+#: substanced/folder/views.py:921
 msgid "Moved ${num} item"
 msgid_plural "Moved ${num} items"
 msgstr[0] ""
 msgstr[1] ""
 
-#: substanced/folder/views.py:932
+#: substanced/folder/views.py:934
 msgid "${i} rows moved."
 msgstr ""
 
-#: substanced/folder/views.py:961
+#: substanced/folder/views.py:966
 msgid ""
 "\"${obj_name}\" is of a type (${obj_type}) that is not addable here, refusing"
 " to copy"
 msgstr ""
 
-#: substanced/folder/views.py:964
+#: substanced/folder/views.py:970
 msgid ""
 "\"${obj_name}\" is of a type (${obj_type}) that is not addable here, refusing"
 " to move"
 msgstr ""
 
-#: substanced/folder/views.py:990
+#: substanced/folder/views.py:1055
+msgid "Services"
+msgstr ""
+
+#: substanced/folder/views.py:1115
 msgid "Contents"
 msgstr ""
 
@@ -464,82 +468,82 @@ msgstr ""
 msgid "Invalid cross-site scripting token"
 msgstr ""
 
-#: substanced/sdi/views/acl.py:47 substanced/sdi/views/acl.py:56
-#: substanced/sdi/views/acl.py:61 substanced/sdi/views/acl.py:72
-#: substanced/sdi/views/acl.py:83 substanced/sdi/views/acl.py:93
-#: substanced/sdi/views/acl.py:130
+#: substanced/sdi/views/acl.py:49 substanced/sdi/views/acl.py:58
+#: substanced/sdi/views/acl.py:63 substanced/sdi/views/acl.py:74
+#: substanced/sdi/views/acl.py:85 substanced/sdi/views/acl.py:95
+#: substanced/sdi/views/acl.py:143
 msgid "Security"
 msgstr ""
 
-#: substanced/sdi/views/undo.py:70 substanced/sdi/views/undo.py:111
+#: substanced/sdi/views/undo.py:70 substanced/sdi/views/undo.py:113
 msgid "Could not undo, sorry"
 msgstr ""
 
-#: substanced/sdi/views/undo.py:146 substanced/sdi/views/templates/undo.pt:64
+#: substanced/sdi/views/undo.py:148 substanced/sdi/views/templates/undo.pt:64
 #: substanced/sdi/views/templates/undobutton.pt:1
 msgid "Undo"
 msgstr ""
 
-#: substanced/sdi/views/templates/acl.pt:61
+#: substanced/sdi/views/templates/acl.pt:49
 msgid "Local ACL"
 msgstr ""
 
-#: substanced/sdi/views/templates/acl.pt:70
-#: substanced/sdi/views/templates/acl.pt:266
+#: substanced/sdi/views/templates/acl.pt:58
+#: substanced/sdi/views/templates/acl.pt:254
 msgid "Allow / Deny"
 msgstr ""
 
-#: substanced/sdi/views/templates/acl.pt:71
-#: substanced/sdi/views/templates/acl.pt:267
+#: substanced/sdi/views/templates/acl.pt:59
+#: substanced/sdi/views/templates/acl.pt:255
 msgid "Principal"
 msgstr ""
 
-#: substanced/sdi/views/templates/acl.pt:72
-#: substanced/sdi/views/templates/acl.pt:268
+#: substanced/sdi/views/templates/acl.pt:60
+#: substanced/sdi/views/templates/acl.pt:256
 msgid "Permissions"
 msgstr ""
 
-#: substanced/sdi/views/templates/acl.pt:73
+#: substanced/sdi/views/templates/acl.pt:61
 msgid "Control"
 msgstr ""
 
-#: substanced/sdi/views/templates/acl.pt:135
+#: substanced/sdi/views/templates/acl.pt:123
 msgid "${button} Allow"
 msgstr ""
 
-#: substanced/sdi/views/templates/acl.pt:145
+#: substanced/sdi/views/templates/acl.pt:133
 msgid "${button} Deny"
 msgstr ""
 
-#: substanced/sdi/views/templates/acl.pt:156
+#: substanced/sdi/views/templates/acl.pt:144
 msgid "Choose a Principal"
 msgstr ""
 
-#: substanced/sdi/views/templates/acl.pt:173
+#: substanced/sdi/views/templates/acl.pt:161
 msgid "Choose Permissions"
 msgstr ""
 
-#: substanced/sdi/views/templates/acl.pt:185
+#: substanced/sdi/views/templates/acl.pt:173
 msgid "Add"
 msgstr ""
 
-#: substanced/sdi/views/templates/acl.pt:209
+#: substanced/sdi/views/templates/acl.pt:197
 msgid "Inherit Parent ACL"
 msgstr ""
 
-#: substanced/sdi/views/templates/acl.pt:217
+#: substanced/sdi/views/templates/acl.pt:205
 msgid "${button} Enabled"
 msgstr ""
 
-#: substanced/sdi/views/templates/acl.pt:228
+#: substanced/sdi/views/templates/acl.pt:216
 msgid "${button} Disabled"
 msgstr ""
 
-#: substanced/sdi/views/templates/acl.pt:241
+#: substanced/sdi/views/templates/acl.pt:229
 msgid "Update"
 msgstr ""
 
-#: substanced/sdi/views/templates/acl.pt:260
+#: substanced/sdi/views/templates/acl.pt:248
 msgid "Parent ACL"
 msgstr ""
 
@@ -621,11 +625,11 @@ msgstr ""
 msgid "${workflow type} workflow in state ${workflow state}"
 msgstr ""
 
-#: substanced/workflow/templates/workflow.pt:22
+#: substanced/workflow/templates/workflow.pt:21
 msgid "Transition to another state"
 msgstr ""
 
-#: substanced/workflow/templates/workflow.pt:32
+#: substanced/workflow/templates/workflow.pt:31
 msgid "Transition"
 msgstr ""
 
