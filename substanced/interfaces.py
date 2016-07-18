@@ -324,14 +324,14 @@ class IFile(Interface):
           stream's actual content.
         """
 
-    def get_response(self, **kw):
+    def get_response(**kw):
         """ Return a WebOb-compatible response object which uses the blob
         content as the stream data and the mimetype of the file as the
         content type.  The ``**kw`` arguments will be passed to the
         :class:`pyramid.response.FileResponse` constructor as its keyword
         arguments."""
 
-    def get_size(self):
+    def get_size():
         """ Return the size in bytes of the data in the blob associated with
         the file"""
 
