@@ -151,7 +151,7 @@ class File(Persistent):
 
              On non-Linux systems, successful use of
              :attr:`substanced.file.USE_MAGIC` requires the installation
-             of additional dependencies.  See :ref:`optional_dependencies`.
+             of additional dependencies.  See :ref:`installing_python_magic`.
         """
         self.blob = Blob()
         self.title = title or _BLANK
@@ -196,8 +196,7 @@ class File(Persistent):
 
              On non-Linux systems, successful use of
              :attr:`substanced.file.USE_MAGIC` requires the installation
-             of additional dependencies.  See :ref:`optional_dependencies`.
-          
+             of additional dependencies.  See :ref:`installing_python_magic`.
         """
         if not stream:
             stream = io.StringIO()
