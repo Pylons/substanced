@@ -3,7 +3,9 @@
 Installation
 ============
 
-Install using pip, e.g., (within a virtualenv)::
+Install using pip, e.g., (within a virtual environment).
+
+.. code-block:: bash
 
   $ pip install substanced
 
@@ -55,12 +57,12 @@ following steps.
       
    $ hack-on-substanced/bin/pcreate -s substanced myproj
 
-#. Now you can make a virtualenv for your project and move into it::
+#. Now you can make a virtual environment for your project and move into it::
 
    $ virtualenv -p python2.7 myproj
    $ cd myproj
 
-#. Install that project using ``pip install -e`` into the virtualenv::
+#. Install that project using ``pip install -e`` into the virtual environment::
 
    $ bin/pip install -e .
 
