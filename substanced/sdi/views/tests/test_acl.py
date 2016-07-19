@@ -191,9 +191,9 @@ class TestAdd(unittest.TestCase):
         from ....testing import make_site
         request = testing.DummyRequest()
         request.sdiapi = DummySDIAPI()
-        request.POST = DummyPost(getall_result=('test',))
-        token = request.session.get_csrf_token()
-        request.params['csrf_token'] = token
+        request.POST = DummyPost(getall_result=('view'))
+        token = request.session.new_csrf_token()
+        request.POST['csrf_token'] = token
         request.POST['verb'] = 'Allow'
         request.POST['principal'] = '1'
         request.POST['permissions'] = 'test'
@@ -226,9 +226,9 @@ class TestAdd(unittest.TestCase):
         from ....testing import make_site
         request = testing.DummyRequest()
         request.sdiapi = DummySDIAPI()
-        request.POST = DummyPost(getall_result=('test',))
-        token = request.session.get_csrf_token()
-        request.params['csrf_token'] = token
+        request.POST = DummyPost(getall_result=('view'))
+        token = request.session.new_csrf_token()
+        request.POST['csrf_token'] = token
         request.POST['verb'] = 'Allow'
         request.POST['principal'] = ''
         request.POST['permissions'] = 'test'
@@ -260,9 +260,9 @@ class TestAdd(unittest.TestCase):
         from ....testing import make_site
         request = testing.DummyRequest()
         request.sdiapi = DummySDIAPI()
-        request.POST = DummyPost(getall_result=('-- ALL --',))
-        token = request.session.get_csrf_token()
-        request.params['csrf_token'] = token
+        request.POST = DummyPost(getall_result=('view'))
+        token = request.session.new_csrf_token()
+        request.POST['csrf_token'] = token
         request.POST['verb'] = 'Deny'
         request.POST['principal'] = 'system.Everyone'
         request.POST['permissions'] = '-- ALL --'
@@ -292,9 +292,9 @@ class TestAdd(unittest.TestCase):
         from ....testing import make_site
         request = testing.DummyRequest()
         request.sdiapi = DummySDIAPI()
-        request.POST = DummyPost(getall_result=('-- ALL --',))
-        token = request.session.get_csrf_token()
-        request.params['csrf_token'] = token
+        request.POST = DummyPost(getall_result=('view'))
+        token = request.session.new_csrf_token()
+        request.POST['csrf_token'] = token
         request.POST['verb'] = 'Deny'
         request.POST['principal'] = 'system.Everyone'
         request.POST['permissions'] = '-- ALL --'
@@ -328,9 +328,9 @@ class TestAdd(unittest.TestCase):
         from ....testing import make_site
         request = testing.DummyRequest()
         request.sdiapi = DummySDIAPI()
-        request.POST = DummyPost(getall_result=('test',))
-        token = request.session.get_csrf_token()
-        request.params['csrf_token'] = token
+        request.POST = DummyPost(getall_result=('view'))
+        token = request.session.new_csrf_token()
+        request.POST['csrf_token'] = token
         request.POST['verb'] = 'Allow'
         request.POST['principal'] = '3'
         request.POST['permissions'] = 'test'
@@ -363,12 +363,11 @@ class TestAdd(unittest.TestCase):
         from ....testing import make_site
         request = testing.DummyRequest()
         request.sdiapi = DummySDIAPI()
-        request.POST = DummyPost(getall_result=None)
-        token = request.session.get_csrf_token()
-        request.params['csrf_token'] = token
+        request.POST = DummyPost(getall_result=('view'))
+        token = request.session.new_csrf_token()
+        request.POST['csrf_token'] = token
         request.POST['verb'] = 'Allow'
         request.POST['principal'] = '1'
-        request.POST['permissions'] = 'test'
         site = make_site()
         context = site['page'] = testing.DummyResource()
         site.__acl__ = [(None, 1, (None,))]
@@ -389,12 +388,12 @@ class TestAdd(unittest.TestCase):
         from ....testing import make_site
         request = testing.DummyRequest()
         request.sdiapi = DummySDIAPI()
-        request.POST = DummyPost(getall_result=('-- ALL --,'))
-        token = request.session.get_csrf_token()
-        request.params['csrf_token'] = token
+        request.POST = DummyPost(getall_result=('view'))
+        token = request.session.new_csrf_token()
+        request.POST['csrf_token'] = token
         request.POST['verb'] = 'Allow'
         request.POST['principal'] = '1'
-        request.POST['permissions'] = 'test'
+        request.POST['permissions'] = '-- ALL --'
         site = make_site()
         context = site['page'] = testing.DummyResource()
         site.__acl__ = [(None, 1, (None,))]
@@ -416,11 +415,11 @@ class TestAdd(unittest.TestCase):
         request = testing.DummyRequest()
         request.sdiapi = DummySDIAPI()
         request.POST = DummyPost(getall_result=('view'))
-        token = request.session.get_csrf_token()
-        request.params['csrf_token'] = token
+        token = request.session.new_csrf_token()
+        request.POST['csrf_token'] = token
         request.POST['verb'] = 'Allow'
         request.POST['principal'] = Everyone
-        request.POST['permissions'] = 'test'
+        request.POST['permissions'] = 'view'
         site = make_site()
         context = site['pagge'] = testing.DummyResource()
         context.__oid__ = 5
@@ -428,7 +427,7 @@ class TestAdd(unittest.TestCase):
         context.__objectmap__ = DummyObjectMap({})
         inst = self._makeOne(context, request)
         resp = inst()
-        self.assertEqual(context.__acl__[-1], ('Allow', Everyone, 'view'))
+        self.assertEqual(context.__acl__[-1], ('Allow', Everyone, ('view',)))
         self.assertEqual(resp['inheriting'], 'enabled')
         self.assertEqual(request.sdiapi.flashed, 'New ACE added')
 
@@ -634,10 +633,13 @@ class DummyPost(dict):
         self.get_result = get_result
 
     def getall(self, name): # pragma: no cover
-        return self.getall_result
+        result = self.get(name, None)
+        return result and (result,) or ()
 
     def get(self, name, default=None): # pragma: no cover
-        if self.get_result is None: 
+        if name in self:
+            return self[name]
+        if self.get_result is None:
             return default
         return self.get_result
 
