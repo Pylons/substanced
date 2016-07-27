@@ -5,10 +5,10 @@
     <div tal:repeat="workflow workflows">
 
       <div class="panel panel-default">
-        <div class="panel-heading" i18n:translate="">
-          <b i18n:name="workflow type">${workflow.workflow.name or workflow.workflow.type}</b> 
+        <div class="panel-heading">
+          <b>${workflow.workflow.name or workflow.workflow.type}</b> 
                workflow in state 
-          <b i18n:name="workflow state">${workflow.current_state}</b>
+          <b>${workflow.current_state}</b>
         </div>
         <div class="panel-body">
             <form action="${request.sdiapi.mgmt_url(request.context, 
