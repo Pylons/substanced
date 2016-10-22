@@ -25,7 +25,7 @@ def now_default(node, kw):
 
 class BlogEntrySchema(Schema):
     name = NameSchemaNode(
-        editing=lambda c, r: r.registry.content.istype(c, 'BlogEntry')
+        editing=lambda c, r: r.registry.content.istype(c, 'Blog Entry')
         )
     title = colander.SchemaNode(
         colander.String(),
