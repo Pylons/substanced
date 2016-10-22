@@ -177,6 +177,19 @@ class TestNameSchemaNode(unittest.TestCase):
         node.bindings = bindings
         self.assertEqual(node.validator(node, 'abc'), None)
 
+    def test_it_editing_targetname_exists(self):
+        bindings = self._makeBindings()
+        parent = testing.DummyResource()
+        parent['abc'] = testing.DummyResource()
+        def check_name(value): return 'abc'
+        parent.validate_name = check_name
+        bindings['context'].__parent__ = parent
+        bindings['request'].registry.content = DummyContent(True)
+        node = self._makeOne(editing=True)
+        node.bindings = bindings
+        self.assertRaises(colander.Invalid, node.validator, node, 'abc')
+        
+
 class TestPermissionsSchemaNode(unittest.TestCase):
     def setUp(self):
         testing.setUp()

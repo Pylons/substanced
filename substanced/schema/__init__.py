@@ -125,24 +125,22 @@ class NameSchemaNode(colander.SchemaNode):
     def validator(self, node, value):
         context = self.bindings['context']
         request = self.bindings['request']
+        # By default, we are adding, which means ``context`` is the parent
+        # object that we're being added to.  But if ``editing`` turns out to be
+        # true, we're making edits to the object itself, not adding the object
+        # for the first time, which means the context is the object itself.
         editing = self.editing
-        # By default, we are adding, meaning that we're checking the name
-        # against the raw context which is assumed to be the parent
-        # object that we're being added to.
-        if editing is not None:
-            if callable(editing):
-                editing = editing(context, request)
-            if editing:
-                # However, if this is true, we are editing, not adding, which
-                # means the raw context is the object itself, so we need to
-                # walk up its parent chain to get the folder to call
-                # ``check_name`` against.
-                context = context.__parent__
+
         try:
+            if editing is not None:
+                if callable(editing):
+                    editing = editing(context, request)
             if editing:
-                value = context.validate_name(value)
+                value = self.is_edit_ok(context, request, node, value)
             else:
-                value = context.check_name(value)
+                value = self.is_add_ok(context, request, node, value)
+        except colander.Invalid:
+            raise
         except Exception as e:
             raise colander.Invalid(node, e.args[0], value)
         if len(value) > self.max_len:
@@ -151,6 +149,24 @@ class NameSchemaNode(colander.SchemaNode):
                 'Length of name must be %s characters or fewer' % self.max_len,
                 value
                 )
+
+    def is_edit_ok(self, context, request, node, value):
+        parent = context.__parent__
+        value = parent.validate_name(value)
+        named = parent.get(value)
+        if named is not None:
+            # if the parent already has an object named ``value`` that
+            # is not the object being edited
+            if named is not context:
+                raise colander.Invalid(
+                    node,
+                    'Sorry an object with that name already exists',
+                    value,
+                    )
+        return value
+
+    def is_add_ok(self, context, request, node, value):
+        return context.check_name(value)
 
 class PermissionsSchemaNode(colander.SchemaNode):
     """ A SchemaNode which represents a set of permissions; uses a widget which
