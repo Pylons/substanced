@@ -126,8 +126,11 @@ class TestEvolutionManager(unittest.TestCase):
             """New evolution step API - accepts root, registry."""
             self.assertEqual(context, root)
             self.assertTrue(registry is reg)
+        L = []
+        inst.out = L.append
         inst.get_unfinished_steps = lambda *arg: [('name', func)]            
         inst.evolve(False)
+        self.assertEqual(len(L), 1)
 
     def test_evolve_func_without_registry_BBB(self):
         root = DummyRoot()        
@@ -135,8 +138,11 @@ class TestEvolutionManager(unittest.TestCase):
         def func(context):
             """BBB Support old evolution steps."""
             self.assertEqual(context, root)
+        L = []
+        inst.out = L.append
         inst.get_unfinished_steps = lambda *arg: [('name', func)]
         inst.evolve(False)
+        self.assertEqual(len(L), 1)
         
         
 class Test_mark_unfinished_as_finished(unittest.TestCase):
