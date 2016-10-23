@@ -25,6 +25,8 @@ Next release
   would fail with an exception if the name you chose was already
   used within the folder.  It now shows a flash message and prevents
   the change.
+
+- Removed Python 2.6 compatibility shim ``substanced._compat.total_ordering``.
   
 1.0a1 (2015-04-17)
 ==================

@@ -6,13 +6,14 @@ import threading
 import time
 import transaction
 
+from functools import total_ordering
+
 from pyramid.settings import asbool
 from pyramid.threadlocal import get_current_registry
 from transaction.interfaces import ISavepointDataManager
 from zope.interface import implementer
 from ZODB.POSException import ConflictError
 
-from .._compat import total_ordering
 from ..interfaces import (
     IIndexingActionProcessor,
     MODE_DEFERRED,
