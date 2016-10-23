@@ -19,6 +19,12 @@ Next release
 
 - ``substanced.file.views.AddFileView`` (which backs the Add -> File form in
   the SDI) did not properly clear tempfiles from the upload tmpdir.
+
+- Changing a NameSchemaNode property via a propertysheet view (ie.
+  changing the name of an item in a folder via its propertysheet)
+  would fail with an exception if the name you chose was already
+  used within the folder.  It now shows a flash message and prevents
+  the change.
   
 1.0a1 (2015-04-17)
 ==================
