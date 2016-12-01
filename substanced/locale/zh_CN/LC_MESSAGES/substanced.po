@@ -1,0 +1,639 @@
+# Translations template for substanced.
+# Copyright (C) 2014 ORGANIZATION
+# This file is distributed under the same license as the substanced project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2014.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: myproj 0.0\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2016-11-06 09:19+0800\n"
+"PO-Revision-Date: 2016-11-06 12:04+0800\n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 1.3\n"
+"X-Generator: Poedit 1.8.6\n"
+"Last-Translator: \n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"Language: zh_CN\n"
+
+#: substanced/audit/views.py:29
+msgid "Auditing"
+msgstr "审计"
+
+#: substanced/audit/templates/auditing.pt:8
+msgid "Audit events"
+msgstr "审计事件"
+
+#: substanced/audit/templates/auditing.pt:15
+msgid "Id"
+msgstr "编号"
+
+#: substanced/audit/templates/auditing.pt:16 substanced/folder/views.py:303
+msgid "Name"
+msgstr "姓名"
+
+#: substanced/audit/templates/auditing.pt:17
+#: substanced/sdi/views/templates/undo.pt:46
+msgid "Time"
+msgstr "时间"
+
+#: substanced/audit/templates/auditing.pt:18
+msgid "Payload"
+msgstr "负载"
+
+#: substanced/audit/templates/auditing.pt:31
+msgid "Auditing not configured in this system"
+msgstr "系统尚未配置审计"
+
+#: substanced/catalog/views/indexing.py:30
+msgid "Indexing"
+msgstr "正在索引"
+
+#: substanced/catalog/views/templates/catalog.pt:7
+msgid "Manage catalog &nbsp; (${length} items in this catalog)"
+msgstr "管理分类&nbsp; (${length} 个项目在这个分类里面)"
+
+#: substanced/catalog/views/templates/catalog.pt:20
+msgid "Reindex all objects in all indexes."
+msgstr "全部索引重建"
+
+#: substanced/catalog/views/templates/catalog.pt:29
+msgid "Update all index definitions"
+msgstr "更新所有索引的定义"
+
+#: substanced/catalog/views/templates/index.pt:6
+msgid "Manage Index"
+msgstr "管理索引"
+
+#: substanced/catalog/views/templates/index.pt:11
+msgid "Index type"
+msgstr "索引类型"
+
+#: substanced/catalog/views/templates/index.pt:20
+msgid "Number of indexed items"
+msgstr "已索引的项目总数"
+
+#: substanced/catalog/views/templates/index.pt:29
+msgid "Number of not-indexed items"
+msgstr "未索引的项目数量"
+
+#: substanced/catalog/views/templates/index.pt:37
+msgid "Reindex this index"
+msgstr "对该对象重建索引"
+
+#: substanced/catalog/views/templates/index.pt:43
+msgid "Reindex"
+msgstr "重建索引"
+
+#: substanced/catalog/views/templates/indexing.pt:8
+msgid "Catalog service at \"${request.resource_path(catalog)}\""
+msgstr "对\"${request.resource_path(catalog)}\"做目录分类"
+
+#: substanced/catalog/views/templates/indexing.pt:16
+msgid "Index name"
+msgstr "索引名字"
+
+#: substanced/catalog/views/templates/indexing.pt:17
+msgid "Value"
+msgstr "结果"
+
+#: substanced/catalog/views/templates/indexing.pt:32
+msgid "Reindex This Object"
+msgstr "重新索引该对象"
+
+#: substanced/catalog/views/templates/search.pt:22
+msgid "Search Results"
+msgstr "查询结果"
+
+#: substanced/catalog/views/templates/search.pt:27
+msgid "Object Id"
+msgstr "对象编号"
+
+#: substanced/catalog/views/templates/search.pt:28
+msgid "Repr"
+msgstr "Repr"
+
+#: substanced/db/views.py:34 substanced/db/views.py:93
+msgid "Database"
+msgstr "数据库"
+
+#: substanced/db/templates/db.pt:5
+msgid "Manage"
+msgstr "管理"
+
+#: substanced/db/templates/db.pt:13
+msgid ""
+"Remove (\"pack\") previous revisions of objects that are older than this "
+"number of days."
+msgstr "删除（归档）距今多少天之前的对象"
+
+#: substanced/db/templates/db.pt:20
+msgid "Pack"
+msgstr "归档"
+
+#: substanced/db/templates/db.pt:25
+msgid "Remove all objects from the ZODB connection cache"
+msgstr "删除ZODB数据库的连接缓存中的所有对象"
+
+#: substanced/db/templates/db.pt:38
+msgid "Evolve"
+msgstr "改变"
+
+#: substanced/db/templates/db.pt:45
+msgid "Run evolve steps up to the latest"
+msgstr "应用全部操作（直至最新的操作）"
+
+#: substanced/db/templates/db.pt:54
+msgid "Dry-run evolve steps to latest"
+msgstr "只模拟应用全部操作（直至最新的操作）"
+
+#: substanced/db/templates/db.pt:63
+msgid "Show summary of pending evolve steps (finished/unfinished)"
+msgstr "显示摘要：关于已完成和未完成的操作情况"
+
+#: substanced/db/templates/db.pt:67
+msgid "Summarize"
+msgstr "总结"
+
+#: substanced/db/templates/db.pt:77
+msgid "Details"
+msgstr "详情"
+
+#: substanced/db/templates/db.pt:83
+msgid "Location"
+msgstr "地址"
+
+#: substanced/db/templates/db.pt:87
+msgid "Storage"
+msgstr "存储"
+
+#: substanced/db/templates/db.pt:91 substanced/sdi/views/templates/undo.pt:47
+msgid "Size"
+msgstr "大小"
+
+#: substanced/db/templates/db.pt:95
+msgid ""
+"Number of objects that the connections' cache will try to keep around before "
+"LRU pruning"
+msgstr "连接缓存按LRU规则重新清理时保留多少对象"
+
+#: substanced/db/templates/db.pt:99
+msgid ""
+"Estimated byte size sum of objects that the connections' cache will try to "
+"keep around before LRU pruning (0 means unlimited)"
+msgstr "预计回收前至少保留多少字节（byte）用于连接缓存。如果0，就表示不限"
+
+#: substanced/db/templates/db.pt:103
+msgid "Connection pool size"
+msgstr "连接池大小"
+
+#: substanced/db/templates/db.pt:107
+msgid "Total number of objects in the database"
+msgstr "数据库内的对象总数"
+
+#: substanced/db/templates/db.pt:116
+msgid "Connections"
+msgstr "连接数"
+
+#: substanced/db/templates/db.pt:122
+msgid "Connection"
+msgstr "连接"
+
+#: substanced/db/templates/db.pt:123
+msgid "Number of non-ghost objects (in total ${db.cacheSize()})"
+msgstr "已激活的对象的数量(${db.cacheSize()}的总数)"
+
+#: substanced/db/templates/db.pt:124
+msgid "Number of ghost objects"
+msgstr "幽灵（未激活）的对象数量"
+
+#: substanced/db/templates/db.pt:141
+msgid "Activity"
+msgstr "运行情况"
+
+#: substanced/db/templates/db.pt:184
+msgid "Database activity monitoring inactive"
+msgstr "数据库运行监控已禁用"
+
+#: substanced/db/templates/db_show_evolve.pt:5
+msgid "Back"
+msgstr "返回"
+
+#: substanced/db/templates/db_show_evolve.pt:8
+msgid "Unfinished steps"
+msgstr "未完成的操作"
+
+#: substanced/db/templates/db_show_evolve.pt:11
+msgid "There are no unfinished steps."
+msgstr "所有操作已完成。"
+
+#: substanced/db/templates/db_show_evolve.pt:16
+#: substanced/db/templates/db_show_evolve.pt:44
+msgid "Step name"
+msgstr "操作名称"
+
+#: substanced/db/templates/db_show_evolve.pt:17
+#: substanced/db/templates/db_show_evolve.pt:46
+msgid "Action"
+msgstr "动作"
+
+#: substanced/db/templates/db_show_evolve.pt:28
+msgid "Mark as finished"
+msgstr "标记为已完成"
+
+#: substanced/db/templates/db_show_evolve.pt:39
+msgid "Finished steps"
+msgstr "已完成的操作"
+
+#: substanced/db/templates/db_show_evolve.pt:45
+msgid "Applied on"
+msgstr "应用到"
+
+#: substanced/db/templates/db_show_evolve.pt:58
+msgid "Mark as unfinished"
+msgstr "标记为未完成"
+
+#: substanced/folder/views.py:137
+msgid "Add Folder"
+msgstr "添加目录"
+
+#: substanced/folder/views.py:173
+msgid "Copy here"
+msgstr "复制到此"
+
+#: substanced/folder/views.py:178 substanced/folder/views.py:192
+#: substanced/folder/templates/rename.pt:49
+msgid "Cancel"
+msgstr "取消"
+
+#: substanced/folder/views.py:187
+msgid "Move here"
+msgstr "移动到此"
+
+#: substanced/folder/views.py:241
+msgid "Rename"
+msgstr "重命名"
+
+#: substanced/folder/views.py:246
+msgid "Copy"
+msgstr "复制"
+
+#: substanced/folder/views.py:252
+msgid "Move"
+msgstr "移动"
+
+#: substanced/folder/views.py:257
+msgid "Duplicate"
+msgstr "拷贝"
+
+#: substanced/folder/views.py:268
+msgid "Delete"
+msgstr "删除"
+
+#: substanced/folder/views.py:764
+msgid "Deleted ${num} item"
+msgid_plural "Deleted ${num} items"
+msgstr[0] "已删除${num}个项目"
+
+#: substanced/folder/views.py:780
+msgid "Duplicated ${num} item"
+msgid_plural "Duplicated ${num} items"
+msgstr[0] "${num}个项目克隆成功"
+
+#: substanced/folder/views.py:800
+msgid "No items renamed"
+msgstr "没有项目被重命名"
+
+#: substanced/folder/views.py:817
+msgid "Renamed ${num} item"
+msgid_plural "Renamed ${num} items"
+msgstr[0] "${num}个项目被重命名"
+
+#: substanced/folder/views.py:833
+msgid "Choose where to copy the items:"
+msgstr "项目要复制到哪里，请选择："
+
+#: substanced/folder/views.py:835
+msgid "No items to copy"
+msgstr "无项目需要复制"
+
+#: substanced/folder/views.py:842
+msgid "No items copied"
+msgstr "无项目被复制"
+
+#: substanced/folder/views.py:869
+msgid "Copied ${num} item"
+msgid_plural "Copied ${num} items"
+msgstr[0] "已复制了${num}个项目"
+
+#: substanced/folder/views.py:885
+msgid "Choose where to move the items:"
+msgstr "项目要移动到哪里，请选择："
+
+#: substanced/folder/views.py:887
+msgid "No items to move"
+msgstr "无项目需要移动"
+
+#: substanced/folder/views.py:894
+msgid "No items moved"
+msgstr "无项目被移动"
+
+#: substanced/folder/views.py:921
+msgid "Moved ${num} item"
+msgid_plural "Moved ${num} items"
+msgstr[0] "已移动了个${num}项目"
+
+#: substanced/folder/views.py:934
+msgid "${i} rows moved."
+msgstr "${i}行移动成功"
+
+#: substanced/folder/views.py:966
+msgid ""
+"\"${obj_name}\" is of a type (${obj_type}) that is not addable here, "
+"refusing to copy"
+msgstr "\"${obj_name}\" 是一种无法添加的(${obj_type})。复制失败"
+
+#: substanced/folder/views.py:970
+msgid ""
+"\"${obj_name}\" is of a type (${obj_type}) that is not addable here, "
+"refusing to move"
+msgstr "\"${obj_name}\" 是一种无法添加的(${obj_type})。移动失败"
+
+#: substanced/folder/views.py:1055
+msgid "Services"
+msgstr "服务"
+
+#: substanced/folder/views.py:1115
+msgid "Contents"
+msgstr "内容"
+
+#: substanced/folder/templates/contents.pt:45
+msgid "Add ${caret}"
+msgstr "添加${caret}"
+
+#: substanced/folder/templates/contents.pt:86
+msgid "Type to filter…"
+msgstr "输入过滤条件"
+
+#: substanced/folder/templates/contents.pt:115
+msgid "total"
+msgstr "总数"
+
+#: substanced/folder/templates/contents.pt:120
+msgid "selected"
+msgstr "已选："
+
+#: substanced/folder/templates/rename.pt:11
+msgid "Rename Items"
+msgstr "重命名项目"
+
+#: substanced/folder/templates/rename.pt:16
+msgid "Old Name"
+msgstr "旧的名字"
+
+#: substanced/folder/templates/rename.pt:17
+msgid "New Name"
+msgstr "新的名字"
+
+#: substanced/folder/templates/rename.pt:42
+msgid "Rename all"
+msgstr "移除所有"
+
+#: substanced/locking/views.py:67
+msgid "Delete Expired"
+msgstr "删除已超期的"
+
+#: substanced/locking/views.py:92
+msgid "Owner"
+msgstr "所有者"
+
+#: substanced/locking/views.py:95
+msgid "Resource"
+msgstr "资源"
+
+#: substanced/locking/views.py:98
+msgid "Expires"
+msgstr "超期"
+
+#: substanced/objectmap/templates/integrityerror.pt:6
+msgid "Integrity Error"
+msgstr "不兼容（不完整导致出错）"
+
+#: substanced/objectmap/templates/integrityerror.pt:8
+msgid ""
+"Sorry, the object ${link} you've attempted to remove could not be removed "
+"due to an integrity error for the reference type ${reftype}. Below is a list "
+"of objects that refer to (or are refered to by) the object you're trying to "
+"remove. Disconnect these references before attempting to delete the object."
+msgstr ""
+"对不起，您要删除的对象无法被删除，因为它的引用类型${reftype}存在兼容性问题。"
+"下面列出你要删除的对象列表（包括引用和被引用的）。要成功删除，请先删除有关的"
+"引用。"
+
+#: substanced/objectmap/templates/referenced.pt:15
+msgid "Relationship type"
+msgstr "关系类型"
+
+#: substanced/objectmap/templates/referenced.pt:16
+msgid "Objects"
+msgstr "对象（多个）"
+
+#: substanced/principal/views.py:117
+msgid "Change Password"
+msgstr "修改密码"
+
+#: substanced/principal/templates/resetpassword_email.pt:1
+msgid ""
+"Please visit at ${reseturl} to change your password. Thank you,\n"
+"Management"
+msgstr "请访问${reseturl}以修改密码。谢谢，这里是管理登录"
+
+#: substanced/property/views.py:38
+#: substanced/property/templates/propertysheets.pt:35
+msgid "Properties"
+msgstr "属性"
+
+#: substanced/property/views.py:43
+msgid "save"
+msgstr "保存"
+
+#: substanced/root/__init__.py:27
+msgid "Sdi Title"
+msgstr "sdi标题"
+
+#: substanced/schema/__init__.py:38
+msgid "Invalid cross-site scripting token"
+msgstr "无效的跨站脚本令牌"
+
+#: substanced/sdi/views/acl.py:49 substanced/sdi/views/acl.py:58
+#: substanced/sdi/views/acl.py:63 substanced/sdi/views/acl.py:74
+#: substanced/sdi/views/acl.py:85 substanced/sdi/views/acl.py:95
+#: substanced/sdi/views/acl.py:143
+msgid "Security"
+msgstr "安全"
+
+#: substanced/sdi/views/undo.py:70 substanced/sdi/views/undo.py:113
+msgid "Could not undo, sorry"
+msgstr "对不起，无法撤销"
+
+#: substanced/sdi/views/undo.py:148 substanced/sdi/views/templates/undo.pt:64
+#: substanced/sdi/views/templates/undobutton.pt:1
+msgid "Undo"
+msgstr "撤销"
+
+#: substanced/sdi/views/templates/acl.pt:49
+msgid "Local ACL"
+msgstr "本地权限设置"
+
+#: substanced/sdi/views/templates/acl.pt:58
+#: substanced/sdi/views/templates/acl.pt:254
+msgid "Allow / Deny"
+msgstr "允许/禁止"
+
+#: substanced/sdi/views/templates/acl.pt:59
+#: substanced/sdi/views/templates/acl.pt:255
+msgid "Principal"
+msgstr "规则"
+
+#: substanced/sdi/views/templates/acl.pt:60
+#: substanced/sdi/views/templates/acl.pt:256
+msgid "Permissions"
+msgstr "权限"
+
+#: substanced/sdi/views/templates/acl.pt:61
+msgid "Control"
+msgstr "控制"
+
+#: substanced/sdi/views/templates/acl.pt:123
+msgid "${button} Allow"
+msgstr "${button} 允许"
+
+#: substanced/sdi/views/templates/acl.pt:133
+msgid "${button} Deny"
+msgstr "${button}禁止"
+
+#: substanced/sdi/views/templates/acl.pt:144
+msgid "Choose a Principal"
+msgstr "选择一个规则"
+
+#: substanced/sdi/views/templates/acl.pt:161
+msgid "Choose Permissions"
+msgstr "选择权限"
+
+#: substanced/sdi/views/templates/acl.pt:173
+msgid "Add"
+msgstr "添加"
+
+#: substanced/sdi/views/templates/acl.pt:197
+msgid "Inherit Parent ACL"
+msgstr "从上级继承权限控制"
+
+#: substanced/sdi/views/templates/acl.pt:205
+msgid "${button} Enabled"
+msgstr "${button}已启用"
+
+#: substanced/sdi/views/templates/acl.pt:216
+msgid "${button} Disabled"
+msgstr "${button}已禁用"
+
+#: substanced/sdi/views/templates/acl.pt:229
+msgid "Update"
+msgstr "更新"
+
+#: substanced/sdi/views/templates/acl.pt:248
+msgid "Parent ACL"
+msgstr "上级权限控制"
+
+#: substanced/sdi/views/templates/batching.pt:4
+msgid "${batch.seqlen} entries total"
+msgstr "${batch.seqlen}条目总数"
+
+#: substanced/sdi/views/templates/batching.pt:9
+#, python-format
+msgid ""
+"Page # ${batch.num+1} (${'%d-%d of %d' % (batch.startitem+1, batch.enditem"
+"+1, batch.seqlen)})"
+msgstr ""
+"页面 # ${batch.num+1} (${'%d-%d of %d' % (batch.startitem+1, batch.enditem"
+"+1, batch.seqlen)})"
+
+#: substanced/sdi/views/templates/forbidden.pt:10
+msgid ""
+"Sorry, your account is not permitted to perform the requested action. You "
+"can try to log in using a different account below or you can <dynamic "
+"element>."
+msgstr ""
+"对不起，您的账号不允许执行这个操作。请用合适账号登录，或者您可以<dynamic "
+"element>。"
+
+#: substanced/sdi/views/templates/forbidden.pt:21
+msgid "Log In as Another User"
+msgstr "用其他账号登录。"
+
+#: substanced/sdi/views/templates/login.pt:23
+#: substanced/sdi/views/templates/login.pt:37
+msgid "Log In"
+msgstr "登录"
+
+#: substanced/sdi/views/templates/login.pt:29
+msgid "Login"
+msgstr "登录"
+
+#: substanced/sdi/views/templates/login.pt:33
+msgid "Password"
+msgstr "密码"
+
+#: substanced/sdi/views/templates/login.pt:44
+msgid "Forgot your password?"
+msgstr "忘记密码了？"
+
+#: substanced/sdi/views/templates/master.pt:90
+msgid "${icon} Account"
+msgstr "${icon} 账号"
+
+#: substanced/sdi/views/templates/master.pt:94
+msgid "${icon} Log Out"
+msgstr "${icon} 退出登录"
+
+#: substanced/sdi/views/templates/undo.pt:12
+msgid "Page # ${batch_num+1|1}"
+msgstr "页面 # ${batch_num+1|1}"
+
+#: substanced/sdi/views/templates/undo.pt:15
+msgid "${icon} Latest"
+msgstr "最新${icon}"
+
+#: substanced/sdi/views/templates/undo.pt:19
+msgid "${icon} Later"
+msgstr "较新的${icon}"
+
+#: substanced/sdi/views/templates/undo.pt:23
+msgid "${icon} Earlier"
+msgstr "早前的${icon}"
+
+#: substanced/sdi/views/templates/undo.pt:38
+msgid "Undoable transactions"
+msgstr "可撤销的会话"
+
+#: substanced/sdi/views/templates/undo.pt:48
+msgid "User"
+msgstr "用户"
+
+#: substanced/sdi/views/templates/undo.pt:49
+msgid "Description"
+msgstr "描述"
+
+#: substanced/workflow/templates/workflow.pt:8
+msgid "${workflow type} workflow in state ${workflow state}"
+msgstr "${workflow type} 工作流，状态 ${workflow state}"
+
+#: substanced/workflow/templates/workflow.pt:21
+msgid "Transition to another state"
+msgstr "会话转变为另一个状态"
+
+#: substanced/workflow/templates/workflow.pt:31
+msgid "Transition"
+msgstr "会话"
