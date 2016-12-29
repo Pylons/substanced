@@ -36,7 +36,7 @@ following steps.
    
    OR::
    
-   $ bin/pip install git+https://github.com/Pylons/substanced#egg=substanced
+   $ bin/pip install -e git+https://github.com/Pylons/substanced#egg=substanced
 
    Alternatively create a writeable fork on GitHub and check that out.
    
