@@ -16,6 +16,7 @@ from substanced.root import Root
 from substanced.schema import (
     Schema,
     NameSchemaNode,
+    UserTimeZoneDateTimeNode,
     )
 from substanced.util import renamer
 
@@ -40,10 +41,10 @@ class BlogEntrySchema(Schema):
         widget = deform.widget.SelectWidget(
             values=[('rst', 'rst'), ('html', 'html')]),
         )
-    pubdate = colander.SchemaNode(
-       colander.DateTime(default_tzinfo=None),
-       default = now_default,
-       )
+    pubdate = UserTimeZoneDateTimeNode(
+        default=now_default,
+    )
+
 
 class BlogEntryPropertySheet(PropertySheet):
     schema = BlogEntrySchema()
@@ -88,10 +89,9 @@ class CommentSchema(Schema):
     text = colander.SchemaNode(
        colander.String(),
        )
-    pubdate = colander.SchemaNode(
-       colander.DateTime(),
-       default = now_default,
-       )
+    pubdate = UserTimeZoneDateTimeNode(
+        default=now_default,
+    )
 
 class CommentPropertySheet(PropertySheet):
     schema = CommentSchema()

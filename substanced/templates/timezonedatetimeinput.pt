@@ -1,0 +1,57 @@
+<div i18n:domain="deform"
+      tal:omit-tag=""
+      tal:define="oid oid|field.oid;
+                  name name|field.name;
+                  css_class css_class|field.widget.css_class;
+                  style style|field.widget.style;">
+  ${field.start_mapping()}
+  <div class="row">
+    <div class="input-group col-xs-6">
+      <span class="input-group-addon" i18n:translate="">Date</span>
+      <input type="text" name="date" value="${date}"
+             class="span2 form-control ${css_class or ''} hasDatepicker"
+             tal:attributes="style style"
+             id="${oid}-date"/>
+    </div>
+    <div class="input-group col-xs-6">
+      <span class="input-group-addon" i18n:translate="">Time</span>
+      <input type="text" name="time" value="${time}"
+             class="span2 form-control ${css_class or ''} hasDatepicker"
+             tal:attributes="style style"
+             id="${oid}-time"/>
+    </div>
+    <div class="input-group col-xs-6"
+         tal:condition="show_timezone">
+      <span class="input-group-addon" i18n:translate="">TimeZone</span>
+      <input type="text" name="timezone" value="${timezone}"
+             class="span2 form-control ${css_class or ''}"
+             tal:attributes="style style"
+             id="${oid}-timezone">
+    </div>
+    <input type="hidden" name="timezone" value="${timezone}"
+           class="span2 form-control ${css_class or ''}"
+           tal:condition="not show_timezone"
+           tal:attributes="style style"
+           id="${oid}-timezone">
+  </div>
+  ${field.end_mapping()}
+  <script type="text/javascript">
+   deform.addCallback(
+     '${oid}',
+     function(oid) {
+       $('#' + oid + '-date').pickadate(${date_options_json});
+       $('#' + oid + '-time').pickatime(${time_options_json});
+
+       var $timezone = $('#' + oid + '-timezone');
+       if (!$timezone.val()) {
+         var d = new Date();
+         var tzo = d.getTimezoneOffset() / 60 * -1;
+         var dif = tzo >= 0 ? '+' : '-';
+         var formatted = tzo >= 10 ? '' : '0' + tzo + '00';
+         var timezone = dif + formatted;
+         $timezone.val(timezone);
+       }
+     }
+   );
+  </script>
+</div>

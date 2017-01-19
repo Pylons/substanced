@@ -1,9 +1,13 @@
+from datetime import datetime
+
 import colander
+import deform.schema
 import deform.widget
 
 from deform.i18n import _ as deform_i18n
 
 from ..util import get_all_permissions
+from ..widget import UserTimeZoneDateTimeInputWidget
 
 from pyramid.i18n import TranslationStringFactory
 
@@ -239,3 +243,23 @@ class ReferenceIdSchemaNode(colander.SchemaNode):
 class MultireferenceIdSchemaNode(ReferenceIdSchemaNode):
     schema_type = IdSet
     multiple = True
+
+
+class UserTimeZoneDateTimeNode(colander.SchemaNode):
+    show_timezone = False
+
+    @staticmethod
+    def schema_type():
+        return colander.DateTime(default_tzinfo=None)
+
+    @property
+    def widget(self):
+        request = self.bindings['request']
+        if request.user:
+            timezone = request.user.timezone.localize(datetime(1991, 11, 5)).strftime("%z")
+        else:
+            timezone = ''
+        return UserTimeZoneDateTimeInputWidget(
+            timezone=timezone,
+            show_timezone=self.show_timezone,
+        )

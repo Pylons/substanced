@@ -211,5 +211,6 @@ def get_deform_renderer(search_paths):
 
 def includeme(config): # pragma: no cover
     deform_dir = resource_filename('deform', 'templates/')
-    deform_renderer = get_deform_renderer((deform_dir,))
+    substanced_dir = resource_filename('substanced', 'templates/')
+    deform_renderer = get_deform_renderer((deform_dir, substanced_dir))
     deform.Form.set_default_renderer(deform_renderer)
