@@ -14,7 +14,7 @@
 
 import os
 
-from setuptools import setup, find_packages
+from distutils.core import setup
 
 here = os.path.abspath(os.path.dirname(__file__))
 try:
@@ -85,7 +85,7 @@ setup(name='substanced',
       author_email="pylons-devel@googlegroups.com",
       url="http://www.substanced.net/",
       license="BSD-derived (http://www.repoze.org/LICENSE.txt)",
-      packages=find_packages(),
+      packages=['substanced'],
       include_package_data=True,
       zip_safe=False,
       install_requires=install_requires,
