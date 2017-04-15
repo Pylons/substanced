@@ -99,7 +99,6 @@ class CommentPropertySheet(PropertySheet):
 @content(
     'Comment',
     icon='glyphicon glyphicon-comment',
-    add_view='add_comment',
     propertysheets = (
         ('', CommentPropertySheet),
         ),
@@ -132,7 +131,7 @@ class Comments(Folder):
     """ Folder for comments of a blog entry
     """
     def __sdi_addable__(self, context, introspectable):
-        return introspectable.get('content_type') == 'Comment'
+        return False
 
 def attachments_columns(folder, subobject, request, default_columnspec):
     kb_size = None
