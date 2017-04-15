@@ -1,0 +1,17 @@
+graft substanced/scaffolds/substanced
+graft demos/blog/blog/static
+graft demos/blog/blog/views/templates
+graft substanced/audit/templates
+graft substanced/catalog/views/templates
+graft substanced/db/templates
+graft substanced/file/templates
+graft substanced/folder/static
+graft substanced/folder/templates
+graft substanced/objectmap/templates
+graft substanced/principal/templates
+graft substanced/property/templates
+graft substanced/sdi/static
+graft substanced/sdi/static
+graft substanced/sdi/views/templates
+graft substanced/sdi/views/templates
+graft substanced/workflow/templates
