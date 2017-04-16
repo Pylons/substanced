@@ -508,6 +508,24 @@ class TestDefaultUserLocator(unittest.TestCase):
         self.assertTrue(adapter.get_user_by_userid('oid123') is phred)
         self.assertTrue(adapter.get_user_by_userid('nonesuch') is None)
 
+    def test_get_user_by_userid_w_invalid_userid_type(self):
+        from pyramid.testing import DummyModel
+        from pyramid.testing import DummyRequest
+        from zope.interface import directlyProvides
+        from ...interfaces import IFolder
+        context = DummyModel()
+        directlyProvides(context, IFolder)
+        principals = context['principals'] = DummyModel(__is_service__=True)
+        directlyProvides(principals, IFolder)
+        users = principals['users'] = DummyModel()
+        phred = users['phred'] = DummyModel()
+        adapter = self._makeOne(context, DummyRequest())
+        omap = context.__objectmap__ = DummyObjectMap()
+        def _raise_ValueError(*args):
+            raise ValueError()
+        omap.object_for = _raise_ValueError
+        self.assertTrue(adapter.get_user_by_userid('nonesuch') is None)
+
     def test_get_user_by_email(self):
         from pyramid.testing import DummyModel
         from pyramid.testing import DummyRequest
@@ -544,6 +562,25 @@ class TestDefaultUserLocator(unittest.TestCase):
         omap = context.__objectmap__ = DummyObjectMap(oid123=phred)
         self.assertEqual(adapter.get_groupids('oid123'), ['phlyntstones'])
 
+    def test_get_groupids_w_invalid_userid_type(self):
+        from pyramid.testing import DummyModel
+        from pyramid.testing import DummyRequest
+        from zope.interface import directlyProvides
+        from ...interfaces import IFolder
+        context = DummyModel()
+        directlyProvides(context, IFolder)
+        principals = context['principals'] = DummyModel(__is_service__=True)
+        directlyProvides(principals, IFolder)
+        users = principals['users'] = DummyModel()
+        phred = users['phred'] = DummyModel()
+        phred.groupids = ['phlyntstones']
+        adapter = self._makeOne(context, DummyRequest())
+        omap = context.__objectmap__ = DummyObjectMap()
+        def _raise_ValueError(*args):
+            raise ValueError()
+        omap.object_for = _raise_ValueError
+        self.assertEqual(adapter.get_groupids('oid123'), ())
+
 class Test_groupfinder(unittest.TestCase):
     def _callFUT(self, userid, request):
         from .. import groupfinder
@@ -555,8 +592,8 @@ class Test_groupfinder(unittest.TestCase):
         context = testing.DummyResource(__provides__=IFolder)
         request.context = context
         result = self._callFUT(1, request)
-        self.assertEqual(result, None)
-    
+        self.assertEqual(result, ())
+
     def test_with_objectmap_no_user(self):
         from ...interfaces import IFolder
         request = testing.DummyRequest()
@@ -566,7 +603,7 @@ class Test_groupfinder(unittest.TestCase):
         context.__objectmap__ = omap
         request.context = context
         result = self._callFUT(1, request)
-        self.assertEqual(result, None)
+        self.assertEqual(result, ())
 
     def test_w_adapter(self):
         from pyramid.testing import testConfig

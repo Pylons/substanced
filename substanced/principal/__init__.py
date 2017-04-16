@@ -477,8 +477,10 @@ class DefaultUserLocator(object):
         objectmap = find_objectmap(self.context)
         if objectmap is None:
             return None
-        user = objectmap.object_for(userid)
-        return user
+        try:
+            return objectmap.object_for(userid)
+        except ValueError: # non-integer userid
+            pass
 
     def get_user_by_email(self, email):
         context = self.context
@@ -490,7 +492,7 @@ class DefaultUserLocator(object):
     def get_groupids(self, userid):
         user = self.get_user_by_userid(userid)
         if user is None:
-            return None
+            return ()
         return user.groupids
 
 def set_user_locator(config, cls):
