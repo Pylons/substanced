@@ -129,6 +129,8 @@ class UndoViews(object):
             t = tz.localize(t).strftime('%Y-%m-%d %H:%M:%S %Z')
             d['time'] = t
             desc = d['description'] or b''
+            if not isinstance(desc, bytes): #pragma NO COVER Py3k
+                desc = desc.encode('ascii', 'surrogateescape')
             tid = d['id']
             un = d['user_name']
             try:
