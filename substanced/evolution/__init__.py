@@ -2,7 +2,6 @@ import time
 import warnings
 
 from BTrees import family64
-from pyramid.config.util import takes_one_arg
 from pyramid.util import TopologicalSorter
 from pkg_resources import EntryPoint
 import transaction
@@ -10,6 +9,13 @@ import transaction
 from ..interfaces import IEvolutionSteps
 from ..util import get_dotted_name
 from .._compat import STRING_TYPES
+
+try:
+    # pyramid 1.9 and below
+    from pyramid.config.util import takes_one_arg
+except ImportError:
+    from pyramid.util import takes_one_arg
+
 
 _marker = object()
 
@@ -121,7 +127,7 @@ def add_evolution_step(config, func, before=None, after=None, name=None):
     the dotted name to such a function.  By default, it is ``None``.
 
     ``name`` is the name of the evolution step.  It must be unique between all
-    registered evolution steps.  If it is not provided, the dotted name of 
+    registered evolution steps.  If it is not provided, the dotted name of
     the function used as ``func`` will be used as the evolution step name.
     """
     func_desc = config.object_description(func)

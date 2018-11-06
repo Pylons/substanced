@@ -6,13 +6,18 @@ from zope.interface import (
     )
 
 from pyramid.compat import is_nonstr_iter
-from pyramid.config.util import action_method
 from walkabout import IPredicateDomain
 from walkabout import PredicateDomain
 
 from ..interfaces import IPropertySheet
 from ..event import ObjectModified
 from ..content import _ContentTypePredicate
+
+try:
+    # pyramid 1.9 and below
+    from pyramid.config.util import action_method
+except ImportError:
+    from pyramid.config.actions import action_method
 
 _marker = object()
 
@@ -80,7 +85,7 @@ def is_propertied(context, request):
 
 class _PropertiedPredicate(object):
     is_propertied = staticmethod(is_propertied) # for testing
-    
+
     def __init__(self, val, config):
         self.val = bool(val)
         self.registry = config.registry
@@ -169,7 +174,7 @@ def add_propertysheet_predicate(config, name, factory,
             before=before,
             after=after
             )
-    
+
 
 def includeme(config): # pragma: no cover
     config.add_view_predicate('propertied', _PropertiedPredicate)

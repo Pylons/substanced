@@ -9,7 +9,6 @@ import venusian
 from pyramid.decorator import reify
 from pyramid.httpexceptions import HTTPFound
 from pyramid.security import has_permission
-from pyramid.util import action_method
 
 from substanced._compat import escape
 from substanced.form import FormView
@@ -37,6 +36,12 @@ from ..util import _
 
 from . import FolderKeyError
 
+try:
+    # pyramid 1.9 and below
+    from pyramid.util import action_method
+except ImportError:
+    from pyramid.config.actions import action_method
+
 _marker = object()
 
 
@@ -50,7 +55,7 @@ class folder_contents_views(object):
           FolderContents,
           folder_contents_views,
           )
-      
+
       @folder_contents_views(name='mycontents')
       class MyFolderContents(FolderContents):
           pass
@@ -64,7 +69,7 @@ class folder_contents_views(object):
 
     Like ``view_config``, and ``mgmt_view``, the decorator must be found via a
     scan to have any effect.
-    
+
     """
     venusian = venusian # for testing injection
     def __init__(self, **settings):
@@ -73,7 +78,7 @@ class folder_contents_views(object):
     def __call__(self, wrapped):
         settings = self.settings.copy()
         depth = settings.pop('_depth', 0)
-        
+
         def callback(context, name, ob):
             config = context.config.with_package(info.module)
             config.add_folder_contents_views(cls=ob, **settings)
@@ -156,12 +161,12 @@ class FolderContents(object):
     def __init__(self, context, request):
         self.context = context
         self.request = request
-        
+
     def get_default_buttons(self):
         """ The default buttons content-type hook """
         context = self.context
         request = self.request
-        
+
         buttons = []
         finish_buttons = []
 
@@ -449,7 +454,7 @@ class FolderContents(object):
 
         sort_column = None
         sorter = None
-        
+
         # Is the folder content ordered?
         is_ordered = context.is_ordered()
 
@@ -481,13 +486,13 @@ class FolderContents(object):
 
         if sort_column is not None:
             sorter = sort_column['sorter']
-            
+
         return {
             'column':sort_column,
             'column_name':sort_column_name,
             'sorter':sorter,
             }
-   
+
     def _global_text_filter(self, context, filter_text, q):
         terms = generate_text_filter_terms(filter_text)
         text = self.system_catalog['text']
@@ -495,7 +500,7 @@ class FolderContents(object):
             if text.check_query(term):
                 q = q & text.eq(term)
         return q
-    
+
     def _folder_contents(
         self,
         start=None,
@@ -511,7 +516,7 @@ class FolderContents(object):
         ``length``
 
           The folder's length (ie. `len(folder)`)
-          
+
         ``records``
 
           A sequence of dictionaries that represent the folder's subobjects.
@@ -533,7 +538,7 @@ class FolderContents(object):
             The column values obtained from this subobject's attributes, as
             defined by the ``columns`` content-type hook (or the default
             columns, if no hook was supplied).
-          
+
         ``sort_column_name``
 
           The crrent sort_column_name
@@ -545,7 +550,7 @@ class FolderContents(object):
         ``columns``
 
           A sequence of column header values.
-        
+
         XXX TODO Document ``sort_column_name``, ``reverse``, and
         ``filter_values`` arguments.  Document ``columns`` return value.
         """
@@ -824,7 +829,7 @@ class FolderContents(object):
         request = self.request
         context = self.context
         tocopy = self.modified_items()
-        
+
         if tocopy:
             l = []
             for name in tocopy:
@@ -1104,7 +1109,7 @@ def generate_text_filter_terms(filter_text):
             glob = word + '*'
         terms.append(glob)
     return terms
-        
+
 @action_method
 def add_folder_contents_views(
     config,
@@ -1123,10 +1128,10 @@ def add_folder_contents_views(
     ):
     """
     A directive which adds a set of folder contents views.
-    
+
     XXX the below was ripped out of its context from another method's docstring
     and needs to be recontextualized here.
-    
+
     This function honors three content type hooks: ``icon``, ``buttons``,
     and ``columns``.
 
@@ -1173,11 +1178,11 @@ def add_folder_contents_views(
     ``btn-sdi-del`` means the button will stay disabled until one or
     more *deletable* items are selected. You *must* use one of these
     classes for the button to be enabled.
-    
+
     The ``class`` value can contain several classes separated by spaces.
     In addition to the classes mentioned above, any custom css class or any
     bootstrap button class can be used.
-    
+
     Finally, each button can optionally include an ``enabled_for`` key,
     which will point to a callable that will be passed a subobject from the
     current folder and must return True if the button should be enabled for
@@ -1267,7 +1272,7 @@ def add_folder_contents_views(
     ``formatter``, can give the name of a javascript method for formatting
     the ``value``.  Currently, available formatters are ``icon_label_url``
     and ``date``.
-    
+
     The ``icon_label_url`` formatter gets the URL and icon (if any) of the
     subobject and creates a link using ``value`` as link text. The ``date``
     formatter expects that ``value`` is an ISO date and returns a text date
@@ -1300,18 +1305,18 @@ def add_folder_contents_views(
           )
       class MyCustomFolder(Persistent):
           pass
-          
+
     In some cases, it might be needed to override the custom columns
     defined for an already existing content type. This can be accomplished
     by registering the content type a second time, but passing the columns
     then. For example, to add columns to the user folder content listing
     from substanced::
-    
+
       from substanced import root_factory
       from substanced.interfaces import IUsers
       from substanced.principal import Users
       from myapp import custom_user_columns
-      
+
       def main(global_config, **settings):
           config = Configurator(
               root_factory=root_factory,
@@ -1333,7 +1338,7 @@ def add_folder_contents_views(
 
     if context is None:
         context = IFolder
-        
+
     add_fc_view = functools.partial(
         config.add_mgmt_view,
         view=cls,

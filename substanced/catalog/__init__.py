@@ -15,11 +15,7 @@ from zope.interface import (
 
 from pyramid.traversal import resource_path
 from pyramid.threadlocal import get_current_registry
-from pyramid.util import (
-    object_description,
-    viewdefaults,
-    action_method,
-    )
+from pyramid.util import object_description
 
 from ..content import (
     content,
@@ -53,6 +49,17 @@ from .factories import (
 from .util import oid_from_resource
 
 from . import deferred
+
+try:
+    # pyramid 1.9 and below
+    from pyramid.util import (
+        viewdefaults,
+        action_method,
+    )
+except ImportError:
+    from pyramid.config.actions import action_method
+    from pyramid.config.views import viewdefaults
+
 
 Text = Text # API
 Field = Field # API
@@ -92,9 +99,9 @@ def catalog_buttons(context, request, default_buttons):
     )
 @implementer(ICatalog)
 class Catalog(Folder):
-    
+
     transaction = transaction
-    
+
     def __init__(self, family=None):
         Folder.__init__(self, family=family)
         self.reset()
@@ -108,7 +115,7 @@ class Catalog(Folder):
 
     def flush(self, all=True):
         """ Flush pending indexing actions for all indexes in this catalog.
-        
+
         If ``all`` is ``True``, all pending indexing actions will be
         immediately executed regardless of the action's mode.
 
@@ -181,7 +188,7 @@ class Catalog(Folder):
                 self.objectids.remove(oid)
             except KeyError:
                 pass
-        
+
     @deprecate('unindex_doc is deprecated, use unindex_resource')
     def unindex_doc(self, docid):
         """ Bw compatibility function """
@@ -223,7 +230,7 @@ class Catalog(Folder):
         """ Bw compatibility method """
         return self.reindex_resource(obj, oid=docid)
 
-    def reindex(self, dry_run=False, commit_interval=3000, indexes=None, 
+    def reindex(self, dry_run=False, commit_interval=3000, indexes=None,
                 path_re=None, output=None, registry=None):
 
         """\
@@ -291,7 +298,7 @@ class Catalog(Folder):
                 path = objectmap.path_for(oid)
                 if path is None:
                     output and output(
-                        'error: no path for objectid %s in object map' % 
+                        'error: no path for objectid %s in object map' %
                         oid)
                     continue
                 upath = _SLASH.join(path)
@@ -522,7 +529,7 @@ class indexview_defaults(object):
     """
     def __init__(self, **settings):
         self.settings = settings
-    
+
     def __call__(self, wrapped):
         wrapped.__view_defaults__ = self.settings.copy()
         return wrapped
@@ -534,7 +541,7 @@ class indexview(object):
     each has the same meaning.
     """
     venusian = venusian # for testing injection
-    
+
     def __init__(self, **settings):
         self.settings = settings
 
@@ -545,7 +552,7 @@ class indexview(object):
         def callback(context, name, ob):
             config = context.config.with_package(info.module)
             config.add_indexview(ob, **settings)
-    
+
         info = self.venusian.attach(wrapped, callback, category='substanced',
                                     depth=depth + 1)
 
@@ -560,7 +567,7 @@ class indexview(object):
 
         settings['_info'] = info.codeinfo # fbo "action_method"
         return wrapped
-        
+
 def is_catalogable(resource, registry=None):
     if registry is None:
         registry = get_current_registry()
@@ -569,7 +576,7 @@ def is_catalogable(resource, registry=None):
 
 class _CatalogablePredicate(object):
     is_catalogable = staticmethod(is_catalogable) # for testing
-    
+
     def __init__(self, val, config):
         self.val = bool(val)
         self.registry = config.registry
@@ -718,9 +725,9 @@ def add_indexview(
     intr['name'] = composite_name
     intr['callable'] = view
     intr['attr'] = attr
-    
+
     config.action(discriminator, callable=register, introspectables=(intr,))
-    
+
 def includeme(config): # pragma: no cover
     config.add_view_predicate('catalogable', _CatalogablePredicate)
     config.add_directive('add_catalog_factory', add_catalog_factory)

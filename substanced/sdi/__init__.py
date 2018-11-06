@@ -34,8 +34,6 @@ from pyramid.security import (
 from pyramid.session import UnencryptedCookieSessionFactoryConfig
 
 from pyramid.util import (
-    action_method,
-    viewdefaults,
     TopologicalSorter,
     FIRST,
     LAST,
@@ -47,6 +45,16 @@ from ..util import acquire, _
 from ..interfaces import IUserLocator
 from ..interfaces import ISDIAPI
 from ..principal import DefaultUserLocator
+
+try:
+    # pyramid 1.9 and below
+    from pyramid.util import (
+        viewdefaults,
+        action_method,
+    )
+except ImportError:
+    from pyramid.config.actions import action_method
+    from pyramid.config.views import viewdefaults
 
 LEFT = 'LEFT'
 RIGHT = 'RIGHT'
@@ -72,16 +80,16 @@ def add_mgmt_view(
     request_param=None,
     containment=None,
     attr=None,
-    renderer=None, 
+    renderer=None,
     wrapper=None,
     xhr=None,
     accept=None,
     header=None,
-    path_info=None, 
+    path_info=None,
     custom_predicates=(),
     context=None,
     decorator=None,
-    mapper=None, 
+    mapper=None,
     http_cache=None,
     match_param=None,
     tab_title=None,
@@ -91,7 +99,7 @@ def add_mgmt_view(
     tab_near=None,
     **predicates
     ):
-    
+
     view = config.maybe_dotted(view)
     context = config.maybe_dotted(context)
     containment = config.maybe_dotted(containment)
@@ -117,7 +125,7 @@ def add_mgmt_view(
         )
 
     predlist = config.get_predlist('view')
-    
+
     def view_discrim_func():
         # We need to defer the discriminator until we know what the phash
         # is.  It can't be computed any sooner because thirdparty
@@ -146,22 +154,22 @@ def add_mgmt_view(
         request_param=request_param,
         containment=containment,
         attr=attr,
-        renderer=renderer, 
+        renderer=renderer,
         wrapper=wrapper,
         xhr=xhr,
         accept=accept,
-        header=header, 
+        header=header,
         path_info=path_info,
-        custom_predicates=custom_predicates, 
+        custom_predicates=custom_predicates,
         context=context,
         decorator=decorator,
-        mapper=mapper, 
+        mapper=mapper,
         http_cache=http_cache,
-        match_param=match_param, 
+        match_param=match_param,
         request_type=request_type,
         **predicates
         )
-    
+
     intr = config.introspectable(
         'sdi views', discriminator, view_desc, 'sdi view'
         )
@@ -204,7 +212,7 @@ class mgmt_view(object):
     venusian = venusian
     def __init__(self, **settings):
         self.__dict__.update(settings)
-    
+
     def __call__(self, wrapped):
         settings = self.__dict__.copy()
 
@@ -212,7 +220,7 @@ class mgmt_view(object):
             config = context.config.with_package(info.module)
             # was "substanced.sdi" included?
             add_mgmt_view = getattr(config, 'add_mgmt_view', None)
-            if add_mgmt_view is not None: 
+            if add_mgmt_view is not None:
                 add_mgmt_view(view=ob, **settings)
 
         info = self.venusian.attach(wrapped, callback, category='substanced')
@@ -244,11 +252,11 @@ def sdi_mgmt_views(context, request, names=None):
     req.script_name = request.script_name
     req.context = context
     req.matched_route = request.matched_route
-    req.method = 'GET' 
+    req.method = 'GET'
     req.registry = request.registry
     sro_enum = list(enumerate(providedBy(context).__sro__[:-1]))
 
-    for data in introspector.get_category('sdi views'): 
+    for data in introspector.get_category('sdi views'):
         related = data['related']
         sdi_intr = data['introspectable']
         tab_title = sdi_intr['tab_title']
@@ -269,7 +277,7 @@ def sdi_mgmt_views(context, request, names=None):
             # something reasonable will show up
             intr_context = view_intr['context']
             sro_index = MAX_ORDER
-            
+
             if intr_context is None:
                 intr_context = Interface
 
@@ -338,7 +346,7 @@ def sdi_mgmt_views(context, request, names=None):
     manually_ordered = []
 
     tab_order = request.registry.content.metadata(context, 'tab_order')
-    
+
     if tab_order is not None:
         ordered_names = [ y for y in tab_order if y in
                           [ x['view_name'] for x in deduplicated ] ]
@@ -425,7 +433,7 @@ class sdiapi(object):
     get_connection = staticmethod(get_connection) # testing
     transaction = transaction # testing
     sdi_mgmt_views = staticmethod(sdi_mgmt_views) # testing
-    
+
     def __init__(self, request):
         self.request = request
 
