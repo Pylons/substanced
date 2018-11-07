@@ -562,7 +562,7 @@ def includeme(config): # pragma: no cover
     config.add_request_method(mgmt_url) # XXX deprecate
     config.add_request_method(flash_with_undo) # XXX deprecate
     config.add_request_method(user, reify=True)
-    config.set_request_property(lambda r: r.user.locale, name="_LOCALE_")
+    config.add_request_method(lambda r: r.user.locale, name="_LOCALE_", property=True)
     config.add_request_method(sdiapi, reify=True)
     secret = settings.get('substanced.secret')
     if secret is None:
