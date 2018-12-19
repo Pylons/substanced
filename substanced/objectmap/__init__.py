@@ -1,10 +1,10 @@
 import random
+import sys
 
 from persistent.list import PersistentList
 import BTrees
 import colander
 from persistent import Persistent
-from pyramid.compat import is_nonstr_iter
 from pyramid.security import Allow
 from pyramid.traversal import (
     resource_path_tuple,
@@ -23,7 +23,10 @@ from ..util import (
     find_objectmap,
     wrap_if_broken,
     )
-from .._compat import INT_TYPES
+from .._compat import (
+    integer_types,
+    is_nonstr_iter,
+    )
 
 """
 Pathindex data structure of object map:
@@ -131,7 +134,7 @@ class ObjectMap(Persistent):
         path_tuple = None
         if hasattr(obj_objectid_or_path_tuple, '__parent__'):
             path_tuple = resource_path_tuple(obj_objectid_or_path_tuple)
-        elif isinstance(obj_objectid_or_path_tuple, INT_TYPES):
+        elif isinstance(obj_objectid_or_path_tuple, integer_types):
             path_tuple = self.objectid_to_path.get(obj_objectid_or_path_tuple)
         elif isinstance(obj_objectid_or_path_tuple, tuple):
             path_tuple = obj_objectid_or_path_tuple
@@ -531,7 +534,11 @@ class ObjectMap(Persistent):
         method uses the data collected via the ``set_acl`` method of this
         class."""
         if self.path_to_acl is None: # bw compat
-            raise StopIteration
+            # https://www.python.org/dev/peps/pep-0479/
+            if sys.version_info[:2] >= (3, 7):
+                return
+            else:
+                raise StopIteration
         
         for oid in oids:
             path_tuple = self.objectid_to_path.get(oid)

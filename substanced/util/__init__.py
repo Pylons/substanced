@@ -27,8 +27,8 @@ from .._compat import (
     parse_qsl,
     urlsplit,
     urlunsplit,
-    STRING_TYPES,
-    INT_TYPES,
+    string_types,
+    integer_types,
     )
 
 
@@ -581,7 +581,7 @@ def get_principal_repr(principal_or_id):
 
     Given any other string value, return it.
     """
-    base_types = STRING_TYPES + INT_TYPES
+    base_types = string_types + integer_types
     if isinstance(principal_or_id, base_types):
         return str(principal_or_id)
     prepr = getattr(principal_or_id, '__principal_repr__', None)

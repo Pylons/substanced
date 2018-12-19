@@ -1,8 +1,8 @@
 import unittest
 
 from pyramid import testing
-from pyramid.compat import text_
 
+from .._compat import text_
 from . import _marker
 
 class Test__postorder(unittest.TestCase):

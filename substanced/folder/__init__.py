@@ -7,10 +7,6 @@ from persistent import (
     Persistent,
     )
 from persistent.interfaces import IPersistent
-from pyramid.compat import (
-    is_nonstr_iter,
-    string_types,
-    )
 from pyramid.location import (
     lineage,
     inside,
@@ -49,8 +45,11 @@ from ..util import (
     find_services,
     wrap_if_broken,
     )
-from .._compat import STRING_TYPES
 from .._compat import u
+from .._compat import (
+    is_nonstr_iter,
+    string_types,
+    )
 
 
 class FolderKeyError(KeyError):
@@ -393,7 +392,7 @@ class Folder(Persistent):
         the name passed is in the list of ``reserved_names``, raise a
         :exc:`ValueError`.
         """
-        if not isinstance(name, STRING_TYPES):
+        if not isinstance(name, string_types):
             raise ValueError("Name must be a string rather than a %s" %
                              name.__class__.__name__)
         if not name:

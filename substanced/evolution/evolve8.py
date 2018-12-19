@@ -1,6 +1,6 @@
 import logging
 
-from pyramid.compat import string_types
+from .._compat import string_types
 
 from ..util import (
     get_oid,

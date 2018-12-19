@@ -8,7 +8,6 @@ from pyramid.security import Allow
 from pyramid.security import Authenticated
 from pyramid.security import DENY_ALL
 from pyramid.security import Everyone
-from pyramid.security import has_permission
 from zope.interface import implementer
 
 from ..event import AfterTransition
@@ -221,8 +220,7 @@ class Workflow(object):
             for transition in state['transitions']:
                 permission = transition.get('permission')
                 if permission is not None:
-                    if not has_permission(permission, content,
-                                          request):
+                    if not request.has_permission(permission, content):
                         continue
                 L.append(transition)
             state['transitions'] = L
@@ -289,7 +287,7 @@ class Workflow(object):
 
         permission = transition.get('permission')
         if permission is not None:
-            if not has_permission(permission, context, request):
+            if not request.has_permission(permission, context):
                 raise WorkflowError(
                     '%s permission required for transition using %r' % (
                     permission, self.name)
@@ -401,8 +399,7 @@ class Workflow(object):
         for transition in transitions:
             permission = transition.get('permission')
             if permission is not None:
-                if not has_permission(permission, content,
-                                      request):
+                if not request.has_permission(permission, content):
                     continue
             L.append(transition)
         return L

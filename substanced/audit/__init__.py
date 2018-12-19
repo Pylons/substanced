@@ -4,7 +4,7 @@ import time
 from persistent import Persistent
 from ZODB.POSException import ConflictError
 
-from pyramid.compat import is_nonstr_iter
+from substanced._compat import is_nonstr_iter
 
 class LayerFull(Exception):
     pass

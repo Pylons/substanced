@@ -1,6 +1,5 @@
 import inspect
 
-from pyramid.compat import is_nonstr_iter
 from pyramid.location import lineage
 import venusian
 
@@ -10,7 +9,11 @@ from ..util import (
     set_oid,
     get_factory_type,
     )
-from .._compat import STRING_TYPES
+
+from .._compat import (
+    string_types,
+    is_nonstr_iter,
+    )
 
 _marker = object()
 
@@ -57,7 +60,7 @@ class ContentRegistry(object):
             if not is_nonstr_iter(aftercreate):
                 aftercreate = [aftercreate]
             for callback in aftercreate:
-                if isinstance(callback, STRING_TYPES):
+                if isinstance(callback, string_types):
                     callback = getattr(inst, callback)
                 callback(inst, self.registry)
         self.registry.subscribers(

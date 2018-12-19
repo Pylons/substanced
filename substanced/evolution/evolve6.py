@@ -4,7 +4,7 @@ from substanced.objectmap import (
 import logging
 from substanced.file import File
 from substanced.util import get_dotted_name
-from pyramid.compat import string_types
+from .._compat import string_types
 
 _marker = object()
 

@@ -27,11 +27,15 @@ from pyramid.renderers import (
     get_renderer,
     )
 from pyramid.request import Request
-from pyramid.security import (
-    authenticated_userid,
-    has_permission,
-    )
-from pyramid.session import UnencryptedCookieSessionFactoryConfig
+try:
+    from pyramid.session import (
+        UnencryptedCookieSessionFactoryConfig as session_config
+        )
+except ImportError:
+    from pyramid.session import (
+        SignedCookieSessionFactory as session_config
+        )
+
 
 from pyramid.util import (
     TopologicalSorter,
@@ -411,7 +415,7 @@ def default_sdi_addable(context, intr):
 
 def user(request):
     context = request.context
-    userid = authenticated_userid(request)
+    userid = request.authenticated_userid
     if userid is None:
         return None
     adapter = request.registry.queryAdapter((context, request), IUserLocator)
@@ -452,7 +456,7 @@ class sdiapi(object):
         conn = self.get_connection(request)
         db = conn.db()
         snippet = msg
-        has_perm = has_permission('sdi.undo', request.context, request)
+        has_perm = request.has_permission('sdi.undo', request.context)
         if db.supportsUndo() and has_perm:
             hsh = str(id(request)) + str(hash(msg))
             t = self.transaction.get()
@@ -506,7 +510,7 @@ class sdiapi(object):
         request = self.request
         breadcrumbs = []
         for resource in lineage(request.context):
-            if not has_permission('sdi.view', resource, request):
+            if not request.has_permission('sdi.view', resource):
                 return []
             url = request.sdiapi.mgmt_path(resource, '@@manage_main')
             name = getattr(resource, 'sdi_title', None)
@@ -568,7 +572,7 @@ def includeme(config): # pragma: no cover
     if secret is None:
         raise ConfigurationError(
             'You must set a substanced.secret key in your .ini file')
-    session_factory = UnencryptedCookieSessionFactoryConfig(secret)
+    session_factory = session_config(secret)
     config.set_session_factory(session_factory)
     from ..principal import groupfinder
     # NB: we use the AuthTktAuthenticationPolicy rather than the session

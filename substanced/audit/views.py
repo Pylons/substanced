@@ -3,7 +3,7 @@ from logging import getLogger
 
 from pyramid.view import view_defaults
 from pyramid.httpexceptions import HTTPPreconditionFailed
-from pyramid.compat import PY3, text_type
+from substanced._compat import PY3, text_type
 from substanced.sdi import mgmt_view, RIGHT
 from substanced.util import (
     Batch,

@@ -5,10 +5,10 @@ from zope.interface import (
     Interface,
     )
 
-from pyramid.compat import is_nonstr_iter
 from walkabout import IPredicateDomain
 from walkabout import PredicateDomain
 
+from .._compat import is_nonstr_iter
 from ..interfaces import IPropertySheet
 from ..event import ObjectModified
 from ..content import _ContentTypePredicate

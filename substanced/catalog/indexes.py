@@ -11,15 +11,15 @@ import hypatia.keyword
 import hypatia.text
 import hypatia.util
 from persistent import Persistent
-from pyramid.compat import (
-    url_unquote_text,
-    is_nonstr_iter,
-    )
 from pyramid.settings import asbool
-from pyramid.security import effective_principals
 from pyramid.traversal import resource_path_tuple
 from pyramid.interfaces import IRequest
 from zope.interface import implementer
+
+from .._compat import (
+    url_unquote_text,
+    is_nonstr_iter,
+    )
 
 from ..content import content
 from .. import interfaces as sd_interfaces
@@ -31,8 +31,8 @@ from ..objectmap import find_objectmap
 from ..property import PropertySheet
 from ..schema import Schema
 from ..stats import statsd_timer
-from .._compat import STRING_TYPES
-from .._compat import INT_TYPES
+from .._compat import string_types
+from .._compat import integer_types
 from .._compat import u
 
 from .discriminators import dummy_discriminator
@@ -107,7 +107,7 @@ class SDIndex(object):
             self.add_action(action)
 
     def unindex_resource(self, resource_or_oid, action_mode=None):
-        if isinstance(resource_or_oid, INT_TYPES):
+        if isinstance(resource_or_oid, integer_types):
             oid = resource_or_oid
         else:
             oid = oid_from_resource(resource_or_oid)
@@ -253,7 +253,7 @@ class PathIndex(SDIndex, hypatia.util.BaseIndexMixin, Persistent, FakeIndex):
         path_tuple = obj_or_path
         if hasattr(obj_or_path, '__parent__'):
             path_tuple = resource_path_tuple(obj_or_path)
-        elif isinstance(obj_or_path, STRING_TYPES):
+        elif isinstance(obj_or_path, string_types):
             path_tuple, depth, include_origin = self._parse_path_str(
                 obj_or_path)
         elif not isinstance(obj_or_path, tuple):
@@ -422,7 +422,7 @@ class AllowedIndex(SDIndex, hypatia.util.BaseIndexMixin, Persistent, FakeIndex):
         ``permission`` must be a permission name.
         """
         if IRequest.providedBy(principals):
-            principals = effective_principals(principals)
+            principals = principals.effective_principals
         elif not is_nonstr_iter(principals):
             principals = (principals,)
         return AllowsComparator(self, (principals, permission))
