@@ -1,6 +1,8 @@
 Next release
 ------------
 
+- Rely on at least Pyramid 1.5+.  Compatibility with Pyramid 2.X.
+
 - Replace virtualenv with tox as a testing extra.
 
 - Remove support for Python 2.6, 3.2, and 3.3, and add support for Python 3.5.
