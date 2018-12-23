@@ -64,7 +64,7 @@ i18n_extras = [
 ]
 
 setup(name='substanced',
-      version='1.0a1',
+      version='1.1dev',
       description='An application server built using Pyramid',
       long_description=README + '\n\n' + CHANGES,
       classifiers=[
@@ -104,8 +104,6 @@ setup(name='substanced',
       sd_drain_indexing = substanced.scripts.drain_indexing:main
       sd_dump = substanced.scripts.dump:main
       sd_adduser = substanced.scripts.add_user:main
-      [pyramid.scaffold]
-      substanced=substanced.scaffolds:SubstanceDProjectTemplate
       """,
       extras_require={
           'testing': testing_extras,
