@@ -12,7 +12,7 @@ except ImportError: # pragma: no cover
 
 try:
     from pyramid.scaffolds.tests import TemplateTest
-except ImportError:
+except ImportError: # pragma: no cover
     SubstanceDTemplateTest = None
 else:
 

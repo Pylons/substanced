@@ -5,14 +5,14 @@ import types
 PY2 = sys.version_info[0] == 2
 PY3 = sys.version_info[0] == 3
 
-if PY2:
+if PY2: # pragma: no cover
     string_types = (str, unicode)
     integer_types = (int, long)
     class_types = (type, types.ClassType)
     text_type = unicode
     binary_type = str
     long = long
-else:
+else: # pragma: no cover
     string_types = (str,)
     integer_types = int,
     class_types = type,
@@ -22,7 +22,7 @@ else:
 
 try:
     u = unicode
-except NameError: #pragma NO COVER Python >= 3.0
+except NameError: # pragma NO COVER Python >= 3.0
     TEXT = str
     def u(x, encoding='ascii'):
         if isinstance(x, str):
@@ -72,23 +72,23 @@ except ImportError: #pragma NO COVER
     from cgi import escape
 
 
-if PY2:
+if PY2: # pragma: no cover
     def is_nonstr_iter(v):
         return hasattr(v, '__iter__')
-else:
+else: # pragma: no cover
     def is_nonstr_iter(v):
         if isinstance(v, str):
             return False
         return hasattr(v, '__iter__')
 
-if PY2:
+if PY2: # pragma: no cover
     def native_(s, encoding='latin-1', errors='strict'):
         """ If ``s`` is an instance of ``text_type``, return
         ``s.encode(encoding, errors)``, otherwise return ``str(s)``"""
         if isinstance(s, text_type):
             return s.encode(encoding, errors)
         return str(s)
-else:
+else: # pragma: no cover
     def native_(s, encoding='latin-1', errors='strict'):
         """ If ``s`` is an instance of ``text_type``, return
         ``s``, otherwise return ``str(s, encoding, errors)``"""
@@ -96,7 +96,7 @@ else:
             return s
         return str(s, encoding, errors)
 
-if PY2:
+if PY2: # pragma: no cover
     import urlparse
     from urllib import quote as url_quote
     from urllib import quote_plus as url_quote_plus
@@ -110,7 +110,7 @@ if PY2:
 
     def url_unquote_native(v, encoding='utf-8', errors='replace'): # pragma: no cover
         return native_(url_unquote_text(v, encoding, errors))
-else:
+else: # pragma: no cover
     from urllib import parse
     urlparse = parse
     from urllib.parse import quote as url_quote
@@ -121,7 +121,7 @@ else:
     url_unquote_text = url_unquote
     url_unquote_native = url_unquote
 
-def text_(s, encoding='latin-1', errors='strict'):
+def text_(s, encoding='latin-1', errors='strict'): # pragma: no cover
     """ If ``s`` is an instance of ``binary_type``, return
     ``s.decode(encoding, errors)``, otherwise return ``s``"""
     if isinstance(s, binary_type):

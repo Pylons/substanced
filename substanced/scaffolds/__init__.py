@@ -1,6 +1,6 @@
 try:
     from pyramid.scaffolds import PyramidTemplate
-except ImportError:
+except ImportError: # pragma: no cover
     # pyramid 2.X
     SubstanceDProjectTemplate = None
 else:
