@@ -84,14 +84,18 @@ references to the objectid represented by '/a' *and* any children
 
 {(u'',):      {1: set([3])},
  (u'', u'z'): {0: set([3])}}
- 
+
 """
 
 _marker = object()
 
+class Cascading(object):
+    DELETE = object()
+    DISCONNECT = object()
+
 @implementer(IObjectMap)
 class ObjectMap(Persistent):
-    
+
     _v_nextid = None
     _randrange = random.randrange
     path_to_acl = None # b/c
@@ -113,7 +117,7 @@ class ObjectMap(Persistent):
         """ Obtain an unused integer object identifier """
         while True:
             if self._v_nextid is None:
-                self._v_nextid = self._randrange(self.family.minint, 
+                self._v_nextid = self._randrange(self.family.minint,
                                                  self.family.maxint)
 
             objectid = self._v_nextid
@@ -121,7 +125,7 @@ class ObjectMap(Persistent):
             if objectid > self.family.maxint:
                 self._v_nextid = None
                 continue
-                
+
             self._v_nextid += 1
 
             # object id zero is reserved as "irresolveable"
@@ -216,7 +220,7 @@ class ObjectMap(Persistent):
             oidset.add(objectid)
 
         acl = get_acl(obj, None)
-        
+
         if acl is not None:
             self.set_acl(path_tuple, acl)
 
@@ -338,17 +342,17 @@ class ObjectMap(Persistent):
             raise ValueError(
                 'must provide a traversable object or a '
                 'path tuple, got %s' % (obj_or_path_tuple,))
-            
+
         omap = self.pathindex.get(path_tuple)
 
         result = 0
 
         if omap is None:
             return result
-        
+
         if depth is None:
             for d, oidset in omap.items():
-                
+
                 if d == 0 and not include_origin:
                     continue
 
@@ -380,17 +384,17 @@ class ObjectMap(Persistent):
             raise ValueError(
                 'must provide a traversable object or a '
                 'path tuple, got %s' % (obj_or_path_tuple,))
-            
+
         omap = self.pathindex.get(path_tuple)
 
         result = self.family.IF.Set()
 
         if omap is None:
             return result
-        
+
         if depth is None:
             for d, oidset in omap.items():
-                
+
                 if d == 0 and not include_origin:
                     continue
 
@@ -447,7 +451,7 @@ class ObjectMap(Persistent):
         if not order in (None, _marker):
             order = [ self._refid_for(x) for x in order ]
         return self.referencemap.order_targets(sourceid, reftype, order)
-        
+
     def connect(self, source, target, reftype):
         """ Connect a source object or objectid to a target object or
         objectid using reference type ``reftype``"""
@@ -477,7 +481,7 @@ class ObjectMap(Persistent):
         if isinstance(maybe_set, ListSet):
             return ListSet(maybe_set)
         return self.family.OO.Set(maybe_set)
-    
+
     def sourceids(self, obj, reftype):
         """ Return a set of object identifiers of the objects connected to
         ``obj`` a source using reference type ``reftype``"""
@@ -539,12 +543,12 @@ class ObjectMap(Persistent):
                 return
             else:
                 raise StopIteration
-        
+
         for oid in oids:
             path_tuple = self.objectid_to_path.get(oid)
             if path_tuple is None:
                 continue
-        
+
             try:
                 for idx in reversed(range(len(path_tuple))):
                     acl = self.path_to_acl.get(path_tuple[:idx+1])
@@ -603,9 +607,9 @@ class ExtentMap(Persistent):
         return self.extent_to_oids.get(name, default)
 
 class ReferenceMap(Persistent):
-    
+
     family = BTrees.family64
-    
+
     def __init__(self, refmap=None):
         if refmap is None:
             refmap = self.family.OO.BTree()
@@ -618,7 +622,7 @@ class ReferenceMap(Persistent):
     def order_targets(self, sourceid, reftype, order=_marker):
         refset = self.refmap.setdefault(reftype, ReferenceSet())
         return refset.order_targets(sourceid, order)
-        
+
     def connect(self, source, target, reftype):
         refset = self.refmap.setdefault(reftype, ReferenceSet())
         refset.connect(source, target)
@@ -640,8 +644,12 @@ class ReferenceMap(Persistent):
             return refset.sourceids(oid)
         return self.family.OO.Set()
 
-    def remove(self, oids):
-        for refset in self.refmap.values():
+    def remove(self, oids, reftype=None):
+        if reftype is None:
+            for refset in self.refmap.values():
+                refset.remove(oids)
+        else:
+            refset = self.refmap.get(reftype)
             refset.remove(oids)
 
     def get_reftypes(self):
@@ -669,7 +677,7 @@ class ListSet(PersistentList):
         return '<ListSet: %s>' % PersistentList.__repr__(self)
 
 class ReferenceSet(Persistent):
-    
+
     family = BTrees.family64
     oidset_class = BTrees.family64.OO.TreeSet
     oidlist_class = ListSet
@@ -691,7 +699,7 @@ class ReferenceSet(Persistent):
                 targets.remove(target)
             except KeyError:
                 pass
-            
+
         sources = self.target2src.get(target)
         if sources is not None:
             try:
@@ -784,7 +792,7 @@ class ReferenceSet(Persistent):
                 self.target2src[target] = newoids
                 oids = newoids
         return oids
-            
+
 def _reference_property(reftype, resolve, orientation='source'):
     def _get(self, resolve=resolve):
         objectmap = find_objectmap(self)
@@ -923,7 +931,7 @@ def reference_source_property(reftype):
 
        del profile.user
        print profile.user # will print None
-    
+
     """
     return _reference_property(reftype, resolve=True)
 
@@ -1091,7 +1099,7 @@ class Multireference(object):
         else:
             oids = self.objectmap.sourceids(self.context, self.reftype)
         return oids
-            
+
     def __nonzero__(self):
         """ Returns ``True`` if there are oids associated with this
         multireference, ``False`` if the oid list is empty. """
@@ -1202,7 +1210,7 @@ def has_references(context):
 
 class _ReferencedPredicate(object):
     has_references = staticmethod(has_references) # for testing
-    
+
     def __init__(self, val, config):
         self.val = bool(val)
         self.registry = config.registry
@@ -1233,20 +1241,62 @@ def referential_integrity(event):
 
             is_iface = IInterface.providedBy(reftype)
 
-            if is_iface and reftype.queryTaggedValue('source_integrity', False):
-                targetids = objectmap.targetids(oid, reftype)
-                if oid in targetids:
-                    targetids.remove(oid) # self-referential
-                if targetids:
+            if is_iface:
+                integrity = reftype.queryTaggedValue('source_integrity', False)
+
+                if integrity:
+                    targetids = objectmap.targetids(oid, reftype)
+                    if oid in targetids:
+                        targetids.remove(oid) # self-referential
+
+                if integrity is Cascading.DELETE:
+                    for targetid in targetids:
+                        obj = objectmap.object_for(targetid)
+                        if obj is not None:
+                            if integrity is Cascading.DELETE:
+                                parent = getattr(obj, '__parent__', None)
+                                if parent is None:
+                                    # its the root, we can't delete the root
+                                    raise SourceIntegrityError(
+                                        obj, reftype, targetids
+                                    )
+                                parent.remove(obj.__name__)
+
+                elif integrity is Cascading.DISCONNECT and targetids:
+                    # XXX do we need to pay attention to which "side" we
+                    # remove it from?
+                    objectmap.referencemap.remove(targetids, reftype)
+
+                elif integrity and targetids:
                     # object is a source
                     obj = objectmap.object_for(oid)
                     raise SourceIntegrityError(obj, reftype, targetids)
 
-            if is_iface and reftype.queryTaggedValue('target_integrity', False):
-                sourceids = objectmap.sourceids(oid, reftype)
-                if oid in sourceids:
-                    sourceids.remove(oid) # self-referential
-                if sourceids:
+                integrity = reftype.queryTaggedValue('target_integrity', False)
+
+                if integrity:
+                    sourceids = objectmap.sourceids(oid, reftype)
+                    if oid in sourceids:
+                        sourceids.remove(oid) # self-referential
+
+                if integrity is Cascading.DELETE:
+                    for sourceid in sourceids:
+                        obj = objectmap.object_for(sourceid)
+                        if obj is not None:
+                            parent = getattr(obj, '__parent__', None)
+                            if parent is None:
+                                # its the root, we can't delete the root
+                                raise TargetIntegrityError(
+                                    obj, reftype, sourceids
+                                )
+                            parent.remove(obj.__name__)
+
+                elif integrity is Cascading.DISCONNECT and sourceids:
+                    # XXX do we need to pay attention to which "side" we
+                    # remove it from?
+                    objectmap.referencemap.remove(sourceids, reftype)
+
+                elif integrity and sourceids:
                     # object is a target
                     obj = objectmap.object_for(oid)
                     raise TargetIntegrityError(obj, reftype, sourceids)
@@ -1284,7 +1334,7 @@ class ReferentialIntegrityError(Exception):
         if objectmap is not None:
             for oid in self.oids:
                 yield '/'.join(objectmap.path_for(oid))
-        
+
 
 class SourceIntegrityError(ReferentialIntegrityError):
     pass
@@ -1296,4 +1346,3 @@ class TargetIntegrityError(ReferentialIntegrityError):
 def includeme(config): # pragma: no cover
     config.add_view_predicate('referenced', _ReferencedPredicate)
     config.include('.evolve')
-
