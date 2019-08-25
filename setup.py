@@ -30,6 +30,7 @@ install_requires = [
     'venusian>=1.0a3',  # pyramid wants this too (prefer_finals...)
     'deform>=2.0a2',  # asset spec in ZPTRendererFactory
     'colander>=1.0a1',  # subclassable schemanodes
+    'mock',
     'pyramid_zodbconn>=0.6',  # connection opened/closed events
     'pyramid_chameleon',
     'pyramid_mailer',
@@ -53,7 +54,6 @@ docs_extras = [
 testing_extras = [
     'nose',
     'coverage',
-    'mock',
     'tox',
 ]
 
