@@ -11,12 +11,6 @@ from zope.interface.verify import (
     verifyClass
     )
 
-def u(x, encoding):
-    if isinstance(x, str):
-        return x
-    if isinstance(x, bytes):
-        return x.decode(encoding)
-
 
 BYTES_NAME = b'La Pe\xc3\xb1a'
 TEXT_NAME = BYTES_NAME.decode('utf-8')
