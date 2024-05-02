@@ -34,7 +34,7 @@ install_requires = [
     'pyramid_zodbconn>=0.6',  # connection opened/closed events
     'pyramid_chameleon',
     'pyramid_mailer',
-    'cryptacular',
+    'bcrypt',
     'python-magic',
     'PyYAML',
     'zope.copy',
