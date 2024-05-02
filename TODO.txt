@@ -109,7 +109,7 @@ Probably Bad Ideas
   how contained object can be acted upon?  E.g.::
 
     def __viewable__(self, context, request):
-        return has_permission('sdi.view', context, request)
+        return request.has_permission('sdi.view', context)
 
 
 Made Irrelevant

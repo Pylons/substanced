@@ -27,9 +27,6 @@ from pyramid.renderers import (
     get_renderer,
     )
 from pyramid.request import Request
-from pyramid.security import (
-    has_permission,
-    )
 from pyramid.session import UnencryptedCookieSessionFactoryConfig
 
 from pyramid.util import (
@@ -451,7 +448,7 @@ class sdiapi(object):
         conn = self.get_connection(request)
         db = conn.db()
         snippet = msg
-        has_perm = has_permission('sdi.undo', request.context, request)
+        has_perm = request.has_permission('sdi.undo', request.context)
         if db.supportsUndo() and has_perm:
             hsh = str(id(request)) + str(hash(msg))
             t = self.transaction.get()
@@ -505,7 +502,7 @@ class sdiapi(object):
         request = self.request
         breadcrumbs = []
         for resource in lineage(request.context):
-            if not has_permission('sdi.view', resource, request):
+            if not request.has_permission('sdi.view', resource):
                 return []
             url = request.sdiapi.mgmt_path(resource, '@@manage_main')
             name = getattr(resource, 'sdi_title', None)

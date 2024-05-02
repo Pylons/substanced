@@ -17,9 +17,8 @@ To lock a resource:
 .. code-block:: python
 
    from substanced.locking import lock_resource
-   from pyramid.security import has_permission
 
-   if has_permission('sdi.lock', someresource, request):
+   if request.has_permission('sdi.lock', someresource):
        lock_resource(someresource, request.user, timeout=3600)
 
 If the resource is already locked by the owner supplied as ``owner_or_ownerid``

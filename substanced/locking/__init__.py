@@ -17,7 +17,6 @@ import colander
 import deform.widget
 
 from pyramid.location import lineage
-from pyramid.security import has_permission
 from pyramid.threadlocal import get_current_registry
 from pyramid.traversal import resource_path
 
@@ -110,7 +109,7 @@ class LockResourceSchema(colander.SchemaNode):
             resource = objectmap.object_for(tuple(value.split('/')))
         except ValueError:
             return None
-        if not has_permission('sdi.lock', resource, request):
+        if not request.has_permission('sdi.lock', resource):
             return False
         return resource
 

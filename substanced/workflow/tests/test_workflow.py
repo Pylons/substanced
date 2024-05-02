@@ -49,9 +49,7 @@ class WorkflowTests(unittest.TestCase):
             )
         return sm
 
-    @mock.patch('substanced.workflow.has_permission')
-    def test_transition_to_state_two_transitions_second_works(
-            self, mock_has_permission):
+    def test_transition_to_state_two_transitions_second_works(self):
         args = []
         def dummy(content, **info):
             args.append((content, info))
@@ -63,17 +61,19 @@ class WorkflowTests(unittest.TestCase):
         sm._transitions['submit']['permission'] = 'forbidden'
         sm._transitions['submit2']['permission'] = 'allowed'
 
-        mock_has_permission.side_effect = lambda p, c, r: p != 'forbidden'
         ob = DummyContent()
         request = testing.DummyRequest()
+        request.has_permission = mock.Mock(
+            spec_set=(), side_effect = lambda p, c: p != 'forbidden',
+        )
         ob.__workflow_state__ = {'basic': 'private'}
         sm.transition_to_state(ob, request, 'pending')
         self.assertEqual(len(args), 1)
         self.assertEqual(args[0][1]['transition']['name'], 'submit2')
 
-    @mock.patch('substanced.workflow.has_permission')
-    def test_transition_to_state_two_transitions_none_works(
-            self, mock_has_permission):
+    def test_transition_to_state_two_transitions_none_works(self):
+        from substanced.workflow import WorkflowError
+
         callback_args = []
         def dummy(content, info):  # pragma NO COVER
             callback_args.append((content, info))
@@ -88,14 +88,15 @@ class WorkflowTests(unittest.TestCase):
         ob = DummyContent()
         ob.__workflow_state__ = {'basic': 'private'}
         request = testing.DummyRequest()
-        from substanced.workflow import WorkflowError
-        mock_has_permission.return_value = False
+        hp = request.has_permission = mock.Mock(
+            spec_set=(), return_value=False,
+        )
         self.assertRaises(WorkflowError, sm.transition_to_state,
                           ob, request, 'pending')
         self.assertEqual(len(callback_args), 0)
-        pcalls = sorted(mock_has_permission.mock_calls)
-        self.assertEqual(pcalls[0], mock.call('forbidden1', ob, request))
-        self.assertEqual(pcalls[1], mock.call('forbidden2', ob, request))
+        pcalls = sorted(hp.mock_calls)
+        self.assertEqual(pcalls[0], mock.call('forbidden1', ob))
+        self.assertEqual(pcalls[1], mock.call('forbidden2', ob))
 
     def test_class_conforms_to_IWorkflow(self):
         from zope.interface.verify import verifyClass
@@ -646,9 +647,7 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(transitioned['request'], request)
         self.assertEqual(transitioned['context'], None)
 
-    @mock.patch('substanced.workflow.has_permission')
-    def test_transition_to_state_not_permissive(self, mock_has_permission):
-        mock_has_permission.return_value = False
+    def test_transition_to_state_not_permissive(self):
         workflow = self._makeOne()
         transitioned = []
         def append(content, name, context=None, request=None,
@@ -657,7 +656,10 @@ class WorkflowTests(unittest.TestCase):
                  'context': context, 'skip_same': skip_same}
             transitioned.append(D)
         workflow._transition_to_state = lambda *arg, **kw: append(*arg, **kw)
-        request = object()
+        request = testing.DummyRequest()
+        request.has_permission = mock.Mock(
+            spec_set=(), return_value = False,
+        )
         content = DummyContent()
         content.__workflow_state__ = {'basic': 'pending'}
         workflow.transition_to_state(content, request, 'published')
@@ -710,58 +712,66 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(transitioned['context'], None)
         self.assertEqual(transitioned['skip_same'], True)
 
-    @mock.patch('substanced.workflow.has_permission')
-    def test_get_transitions_permissive(self, mock_has_permission):
-        mock_has_permission.return_value = True
-        workflow = self._makeOne()
-        workflow._get_transitions = \
-            lambda *arg, **kw: [{'permission': 'view'}, {}]
-        transitions = workflow.get_transitions(None, None, 'private')
-        self.assertEqual(len(transitions), 2)
-        self.assertEqual(mock_has_permission.mock_calls,
-                         [mock.call('view', None, None)])
-
-    @mock.patch('substanced.workflow.has_permission')
-    def test_get_transitions_nonpermissive(self, mock_has_permission):
-        mock_has_permission.return_value = False
-        workflow = self._makeOne()
-        workflow._get_transitions = \
-            lambda *arg, **kw: [{'permission': 'view'}, {}]
-        transitions = workflow.get_transitions(None, 'private')
-        self.assertEqual(len(transitions), 1)
-        self.assertEqual(mock_has_permission.mock_calls,
-                         [mock.call('view', None, 'private')])
-
-    @mock.patch('substanced.workflow.has_permission')
-    def test_get_states_permissive(self, mock_has_permission):
-        mock_has_permission.return_value = True
-        state_info = []
-        state_info.append({'transitions': [{'permission': 'view'}, {}]})
-        state_info.append({'transitions': [{'permission': 'view'}, {}]})
-        workflow = self._makeOne()
-        workflow._get_states = lambda *arg, **kw: state_info
-        request = object()
-        result = workflow.get_states(request, 'whatever')
-        self.assertEqual(result, state_info)
-        self.assertEqual(mock_has_permission.mock_calls,
-                         [mock.call('view', request, 'whatever'),
-                          mock.call('view', request, 'whatever')])
-
-    @mock.patch('substanced.workflow.has_permission')
-    def test_get_states_nonpermissive(self, mock_has_permission):
-        mock_has_permission.return_value = False
-        state_info = []
-        state_info.append({'transitions': [{'permission': 'view'}, {}]})
-        state_info.append({'transitions': [{'permission': 'view'}, {}]})
-        workflow = self._makeOne()
-        workflow._get_states = lambda *arg, **kw: state_info
+    def test_get_transitions_permissive(self):
         request = testing.DummyRequest()
-        result = workflow.get_states(request, 'whatever')
+        hp = request.has_permission = mock.Mock(
+            spec_set=(), return_value=True,
+        )
+        content = object()
+        workflow = self._makeOne()
+        workflow._get_transitions = \
+            lambda *arg, **kw: [{'permission': 'view'}, {}]
+        transitions = workflow.get_transitions(content, request, 'private')
+        self.assertEqual(len(transitions), 2)
+        self.assertEqual(hp.mock_calls, [mock.call('view', content)])
+
+    def test_get_transitions_nonpermissive(self):
+        request = testing.DummyRequest()
+        hp = request.has_permission = mock.Mock(
+            spec_set=(), return_value=False,
+        )
+        content = object()
+        workflow = self._makeOne()
+        workflow._get_transitions = \
+            lambda *arg, **kw: [{'permission': 'view'}, {}]
+        transitions = workflow.get_transitions(content, request, 'private')
+        self.assertEqual(len(transitions), 1)
+        self.assertEqual(hp.mock_calls, [mock.call('view', content)])
+
+    def test_get_states_permissive(self):
+        request = testing.DummyRequest()
+        hp = request.has_permission = mock.Mock(
+            spec_set=(), return_value=True,
+        )
+        state_info = []
+        state_info.append({'transitions': [{'permission': 'view'}, {}]})
+        state_info.append({'transitions': [{'permission': 'view'}, {}]})
+        content = object()
+        workflow = self._makeOne()
+        workflow._get_states = lambda *arg, **kw: state_info
+        result = workflow.get_states(content, request, 'whatever')
+        self.assertEqual(result, state_info)
+        self.assertEqual(hp.mock_calls,
+                         [mock.call('view', content),
+                          mock.call('view', content)])
+
+    def test_get_states_nonpermissive(self):
+        request = testing.DummyRequest()
+        hp = request.has_permission = mock.Mock(
+            spec_set=(), return_value=False,
+        )
+        state_info = []
+        state_info.append({'transitions': [{'permission': 'view'}, {}]})
+        state_info.append({'transitions': [{'permission': 'view'}, {}]})
+        content = object()
+        workflow = self._makeOne()
+        workflow._get_states = lambda *arg, **kw: state_info
+        result = workflow.get_states(content, request, 'whatever')
         self.assertEqual(result, [{'transitions': [{}]},
                                   {'transitions': [{}]}])
-        self.assertEqual(mock_has_permission.mock_calls,
-                         [mock.call('view', request, 'whatever'),
-                          mock.call('view', request, 'whatever')])
+        self.assertEqual(hp.mock_calls,
+                         [mock.call('view', content),
+                          mock.call('view', content)])
 
     def test_callbackinfo_has_request(self):
         def transition_cb(content, **info):

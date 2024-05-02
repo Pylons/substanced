@@ -8,7 +8,6 @@ import venusian
 
 from pyramid.decorator import reify
 from pyramid.httpexceptions import HTTPFound
-from pyramid.security import has_permission
 
 from substanced.form import FormView
 from substanced.interfaces import IFolder
@@ -204,7 +203,7 @@ class FolderContents(object):
         if not 'tomove' in request.session and not 'tocopy' in request.session:
 
             can_manage = bool(
-                has_permission('sdi.manage-contents', context, request)
+                request.has_permission('sdi.manage-contents', context)
                 )
 
             def delete_enabled_for(folder, resource, request):
