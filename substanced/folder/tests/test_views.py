@@ -7,8 +7,7 @@ from pyramid import testing
 from pyramid.httpexceptions import HTTPFound
 import mock
 
-from substanced._compat import u
-_FOOBAR = u('foobar')
+_FOOBAR = 'foobar'
 
 class Test_name_validator(unittest.TestCase):
     def _callFUT(self, node, kw):
@@ -848,7 +847,9 @@ class TestFolderContents(unittest.TestCase):
         mock_rename_duplicated_resource.assert_any_call(context, 'b')
         request.sdiapi.flash_with_undo.assert_called_once_with(
             'Duplicated 2 items', 'success')
-        request.sdiapi.mgmt_path.called_once_with(context, '@@contents')
+        request.sdiapi.mgmt_path.assert_called_once_with(
+            context, '@@contents', _query=[],
+        )
         context.copy.assert_any_call('a', context, 'a-1')
         context.copy.assert_any_call('b', context, 'b-1')
 
@@ -864,8 +865,12 @@ class TestFolderContents(unittest.TestCase):
         inst.duplicate()
 
         self.assertEqual(context.mock_calls, [])
-        request.sdiapi.flash_with_undo.assert_called_once_with('Duplicated 0 items', 'success')
-        request.sdiapi.mgmt_path.called_once_with(context, '@@contents')
+        request.sdiapi.flash_with_undo.assert_called_once_with(
+            'Duplicated 0 items', 'success',
+        )
+        request.sdiapi.mgmt_path.assert_called_once_with(
+            context, '@@contents', _query=[],
+        )
 
     @mock.patch('substanced.folder.views.rename_duplicated_resource')
     def test_duplicate_one(self, mock_rename_duplicated_resource):
@@ -884,7 +889,9 @@ class TestFolderContents(unittest.TestCase):
         context.copy.assert_any_call('a', context, 'a-1')
         request.sdiapi.flash_with_undo.assert_called_once_with(
             'Duplicated 1 item', 'success')
-        request.sdiapi.mgmt_path.called_once_with(context, '@@contents')
+        request.sdiapi.mgmt_path.assert_called_once_with(
+            context, '@@contents', _query=[],
+        )
 
     def test_rename_one(self):
         context = testing.DummyResource()
@@ -2124,7 +2131,7 @@ class Test_multi_upload_submit(unittest.TestCase):
         dummyFileParam = Dummy(
             type='TYPE',
             filename='FILENAME',
-            file=StringIO(u('CONTENT')),
+            file=StringIO('CONTENT'),
             )
         dummyFileParam.create = mock.Mock(
             return_value={},
@@ -2166,7 +2173,7 @@ class Test_multi_upload_submit(unittest.TestCase):
         dummyFileParam1 = Dummy(
             type='TYPE1',
             filename='FILENAME1',
-            file=StringIO(u('CONTENT1')),
+            file=StringIO('CONTENT1'),
             )
         dummyFileParam1.create = mock.Mock(
             return_value={},
@@ -2174,7 +2181,7 @@ class Test_multi_upload_submit(unittest.TestCase):
         dummyFileParam2 = Dummy(
             type='TYPE2',
             filename='FILENAME2',
-            file=StringIO(u('CONTENT02')),
+            file=StringIO('CONTENT02'),
             )
         dummyFileParam2.create = mock.Mock(
             return_value={},
@@ -2182,7 +2189,7 @@ class Test_multi_upload_submit(unittest.TestCase):
         dummyFileParam3 = Dummy(
             type='TYPE3',
             filename='FILENAME3',
-            file=StringIO(u('CONTENT003')),
+            file=StringIO('CONTENT003'),
             )
         dummyFileParam3.create = mock.Mock(
             return_value={},

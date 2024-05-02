@@ -62,11 +62,10 @@ from ..util import (
     acquire,
     )
 from ..stats import statsd_gauge
-from .._compat import _LETTERS
 
 def _gen_random_token():
     length = random.choice(range(10, 16))
-    chars = _LETTERS + string.digits
+    chars = string.ascii_letters + string.digits
     return ''.join(random.choice(chars) for _ in range(length))
 
 @service(

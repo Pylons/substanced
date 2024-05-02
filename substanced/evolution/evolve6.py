@@ -4,7 +4,6 @@ from substanced.objectmap import (
 import logging
 from substanced.file import File
 from substanced.util import get_dotted_name
-from pyramid.compat import string_types
 
 _marker = object()
 
@@ -21,5 +20,5 @@ def evolve(root, registry):
         if oids is not None:
             for oid in oids:
                 f = objectmap.object_for(oid)
-                if not type(f.mimetype) in string_types:
+                if not isinstance(f.mimetype, str):
                     f.mimetype = 'application/octet-stream'

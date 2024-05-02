@@ -6,13 +6,12 @@ from pyramid import testing
 
 IS_32_BIT = sys.maxsize == 2**32
 
-from substanced._compat import u
-_BLANK = u('')
-_SLASH = u('/')
-_A = u('a')
-_B = u('b')
-_C = u('c')
-_Z = u('z')
+_BLANK = ''
+_SLASH = '/'
+_A = 'a'
+_B = 'b'
+_C = 'c'
+_Z = 'z'
 
 class TestObjectMap(unittest.TestCase):
     def setUp(self):

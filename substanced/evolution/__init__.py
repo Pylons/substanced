@@ -8,7 +8,6 @@ import transaction
 
 from ..interfaces import IEvolutionSteps
 from ..util import get_dotted_name
-from .._compat import STRING_TYPES
 
 try:
     # pyramid 1.9 and below
@@ -135,9 +134,9 @@ def add_evolution_step(config, func, before=None, after=None, name=None):
         name = get_dotted_name(func)
     else:
         func_desc = func_desc + ' (%s)' % name
-    if after is not None and not isinstance(after, STRING_TYPES):
+    if after is not None and not isinstance(after, str):
         after = get_dotted_name(after)
-    if before is not None and not isinstance(before, STRING_TYPES):
+    if before is not None and not isinstance(before, str):
         before = get_dotted_name(before)
     discriminator = ('evolution step', name)
     intr = config.introspectable(

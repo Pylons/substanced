@@ -1,5 +1,5 @@
-
 import functools
+from html import escape
 import itertools
 import operator
 import re
@@ -10,7 +10,6 @@ from pyramid.decorator import reify
 from pyramid.httpexceptions import HTTPFound
 from pyramid.security import has_permission
 
-from substanced._compat import escape
 from substanced.form import FormView
 from substanced.interfaces import IFolder
 from substanced.interfaces import IService
@@ -22,7 +21,6 @@ from substanced.util import (
     find_catalog,
     get_icon_name,
     )
-from substanced._compat import u
 from substanced.file import USE_MAGIC
 
 from ..sdi import (
@@ -103,9 +101,9 @@ def rename_duplicated_resource(context, name):
     m = re.search(r'-(\d+)$', name)
     if m:
         new_id = int(m.groups()[0]) + 1
-        new_name = name.rsplit('-', 1)[0] + u('-%d') % new_id
+        new_name = name.rsplit('-', 1)[0] + '-%d' % new_id
     else:
-        new_name = name + u('-1')
+        new_name = name + '-1'
 
     if new_name in context:
         return rename_duplicated_resource(context, new_name)

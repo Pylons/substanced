@@ -2,9 +2,8 @@ import unittest
 
 from pyramid import testing
 
-from ...._compat import u
-_JOHN = u('john')
-_MARY = u('mary')
+_JOHN = 'john'
+_MARY = 'mary'
 
 class TestACLView(unittest.TestCase):
     def setUp(self):
