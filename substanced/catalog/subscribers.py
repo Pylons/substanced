@@ -144,7 +144,7 @@ def on_startup(event):
             # evolve because autosync is on and causes errors, cant autosync
             # because evolve steps havent been run), so we avoid doing any
             # sync if there are unfinished evolve steps
-            logger.warn(
+            logger.warning(
                 'Cannot autosync/autoreindex catalog due to unfinished evolve '
                 'steps'
                 )
