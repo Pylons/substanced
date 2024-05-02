@@ -27,7 +27,7 @@ from pyramid.renderers import (
     get_renderer,
     )
 from pyramid.request import Request
-from pyramid.session import UnencryptedCookieSessionFactoryConfig
+from pyramid.session import SignedCookieSessionFactory
 
 from pyramid.util import (
     TopologicalSorter,
@@ -564,7 +564,7 @@ def includeme(config): # pragma: no cover
     if secret is None:
         raise ConfigurationError(
             'You must set a substanced.secret key in your .ini file')
-    session_factory = UnencryptedCookieSessionFactoryConfig(secret)
+    session_factory = SignedCookieSessionFactory(secret)
     config.set_session_factory(session_factory)
     from ..principal import groupfinder
     # NB: we use the AuthTktAuthenticationPolicy rather than the session
