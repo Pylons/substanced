@@ -14,7 +14,6 @@ import hypatia.text
 import hypatia.util
 from persistent import Persistent
 from pyramid.settings import asbool
-from pyramid.security import effective_principals
 from pyramid.traversal import resource_path_tuple
 from pyramid.interfaces import IRequest
 from zope.interface import implementer
@@ -418,7 +417,7 @@ class AllowedIndex(SDIndex, hypatia.util.BaseIndexMixin, Persistent, FakeIndex):
         ``permission`` must be a permission name.
         """
         if IRequest.providedBy(principals):
-            principals = effective_principals(principals)
+            principals = principals.effective_principals
         elif not is_nonstr_iter(principals):
             principals = (principals,)
         return AllowsComparator(self, (principals, permission))
