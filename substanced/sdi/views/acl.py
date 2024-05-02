@@ -8,7 +8,7 @@ from pyramid.security import (
     Everyone,
     Authenticated,
     )
-from pyramid.session import check_csrf_token
+from pyramid.csrf import check_csrf_token
 from pyramid.view import view_defaults
 from pyramid.location import lineage
 
