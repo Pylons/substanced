@@ -28,7 +28,6 @@ from pyramid.renderers import (
     )
 from pyramid.request import Request
 from pyramid.security import (
-    authenticated_userid,
     has_permission,
     )
 from pyramid.session import UnencryptedCookieSessionFactoryConfig
@@ -411,7 +410,7 @@ def default_sdi_addable(context, intr):
 
 def user(request):
     context = request.context
-    userid = authenticated_userid(request)
+    userid = request.authenticated_userid
     if userid is None:
         return None
     adapter = request.registry.queryAdapter((context, request), IUserLocator)

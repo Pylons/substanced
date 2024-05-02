@@ -4,7 +4,6 @@ from pyramid.httpexceptions import (
     HTTPNotFound,
     )
 from pyramid.security import (
-    authenticated_userid,
     has_permission,
     )
 
@@ -93,7 +92,7 @@ class PropertySheetsView(FormView):
                 "You don't have permission to change properties of this "
                 "property sheet")
         try:
-            ownerid = authenticated_userid(self.request)
+            ownerid = self.request.authenticated_userid
             if could_lock_resource(self.context, ownerid): #may raise
                 changed = self.active_sheet.set(appstruct)
         except LockError as e:
