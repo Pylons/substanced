@@ -14,11 +14,11 @@ import deform.widget
 import colander
 import pytz
 
-from pyramid.renderers import render
-from pyramid.security import (
+from pyramid.authorization import (
     Allow,
     Everyone,
     )
+from pyramid.renderers import render
 from pyramid.threadlocal import get_current_registry
 
 from pyramid_mailer import get_mailer

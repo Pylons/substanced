@@ -4,7 +4,7 @@ from persistent.list import PersistentList
 import BTrees
 import colander
 from persistent import Persistent
-from pyramid.security import Allow
+from pyramid.authorization import Allow
 from pyramid.traversal import (
     resource_path_tuple,
     find_resource,

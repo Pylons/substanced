@@ -1,4 +1,4 @@
-from pyramid.security import Allow
+from pyramid.authorization import Allow
 
 from ..event import (
     subscribe_added,
