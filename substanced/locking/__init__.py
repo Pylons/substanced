@@ -7,7 +7,6 @@ used by add-ons such as DAV implementations.
 
 import datetime
 import uuid
-import pytz
 
 from zope.interface import implementer
 
@@ -70,7 +69,7 @@ class UnlockError(LockingError):
     """
 
 def now():
-    return datetime.datetime.utcnow().replace(tzinfo=pytz.UTC)
+    return datetime.datetime.now(datetime.timezone.utc)
 
 class LockOwnerSchema(colander.SchemaNode):
     title = 'Owner'
