@@ -104,7 +104,7 @@ class Test_add_mgmt_view(unittest.TestCase):
         self.assertEqual(config._intr['tab_before'], CENTER2)
         self.assertEqual(config._intr['tab_after'], CENTER1)
         self.assertEqual(config._intr['tab_near'], MIDDLE)
-        
+
     def test_with_tab_near_right(self):
         from .. import RIGHT, CENTER2, LAST
         config = self._makeConfig()
@@ -159,7 +159,7 @@ class Test_mgmt_view(unittest.TestCase):
         self.assertEqual(decorator.mapper, 'mapper')
         self.assertEqual(decorator.decorator, 'decorator')
         self.assertEqual(decorator.match_param, 'match_param')
-        
+
     def test_call_function(self):
         decorator = self._makeOne()
         venusian = DummyVenusian()
@@ -204,7 +204,7 @@ class Test_sdi_mgmt_views(unittest.TestCase):
 
     def tearDown(self):
         testing.tearDown()
-        
+
     def _callFUT(self, context, request, names=None):
         from .. import sdi_mgmt_views
         return sdi_mgmt_views(context, request, names)
@@ -607,7 +607,7 @@ class Test_sdi_mgmt_views(unittest.TestCase):
         intr4['tab_condition'] = None
         intr4['tab_before'] = CENTER2
         intr4['tab_after'] = CENTER1
-        
+
         intr = DummyIntrospectable(related=(view_intr1,), introspectable=intr)
         intr2 = DummyIntrospectable(related=(view_intr2,), introspectable=intr2)
         intr3 = DummyIntrospectable(related=(view_intr3,), introspectable=intr3)
@@ -790,7 +790,7 @@ class Test_sdi_mgmt_views(unittest.TestCase):
         context = testing.DummyResource()
         result = self._callFUT(context, request)
         self.assertEqual(len(result), 0)
-        
+
 class Test_default_sdi_addable(unittest.TestCase):
     def _callFUT(self, context, intr):
         from .. import default_sdi_addable
@@ -800,12 +800,12 @@ class Test_default_sdi_addable(unittest.TestCase):
         context = {'catalog':True}
         intr = {'meta':{'is_service':True, 'service_name':'catalog'}}
         self.assertFalse(self._callFUT(context, intr))
-                         
+
     def test_is_service_with_service_name_not_in_context(self):
         context = {}
         intr = {'meta':{'is_service':True, 'service_name':'catalog'}}
         self.assertTrue(self._callFUT(context, intr))
-    
+
     def test_is_service_without_service_name(self):
         context = {'catalog':True}
         intr = {'meta':{'is_service':True}}
@@ -850,7 +850,7 @@ class Test_sdiapi(unittest.TestCase):
 
     def tearDown(self):
         testing.tearDown()
-        
+
     def _makeOne(self, request):
         from .. import sdiapi
         return sdiapi(request)
@@ -922,7 +922,7 @@ class Test_sdiapi(unittest.TestCase):
         inst = self._makeOne(request)
         inst.flash('message', 'error')
         self.assertEqual(request.session['_f_danger'], ['message'])
-        
+
     def test_mgmt_path(self):
         from .. import MANAGE_ROUTE_NAME
         request = testing.DummyRequest()
@@ -948,7 +948,7 @@ class Test_sdiapi(unittest.TestCase):
         inst = self._makeOne(request)
         result = inst.mgmt_path(context, 'a', b=1, route_name=route_name)
         self.assertEqual(result, '/path')
-        
+
     def test_mgmt_url(self):
         from .. import MANAGE_ROUTE_NAME
         request = testing.DummyRequest()
@@ -974,7 +974,7 @@ class Test_sdiapi(unittest.TestCase):
         inst = self._makeOne(request)
         result = inst.mgmt_url(context, 'a', b=1, route_name=route_name)
         self.assertEqual(result, 'http://example.com/path')
-        
+
     def test_breadcrumbs_no_permissions(self):
         self.config.testing_securitypolicy(permissive=False)
         resource = testing.DummyResource()
@@ -983,7 +983,7 @@ class Test_sdiapi(unittest.TestCase):
         inst = self._makeOne(request)
         result = inst.breadcrumbs()
         self.assertEqual(result, [])
-        
+
     def test_breadcrumbs_with_permissions(self):
         self.config.testing_securitypolicy(permissive=True)
         resource = testing.DummyResource()
@@ -1041,7 +1041,7 @@ class Test_sdiapi(unittest.TestCase):
                'content_type':'Type',
                'icon': None}]
             )
-        
+
     def test_sdi_title_exists(self):
         resource = testing.DummyResource()
         resource.sdi_title = 'My Title'
@@ -1074,7 +1074,7 @@ class Test_sdiapi(unittest.TestCase):
             config.include('pyramid_chameleon')
             macro = inst.get_macro('substanced.sdi.views:templates/master.pt')
         self.assertTrue(macro.macros)
-        
+
     def test_get_macro_with_name(self):
         request = testing.DummyRequest()
         inst = self._makeOne(request)
@@ -1090,7 +1090,7 @@ class Test_sdiapi(unittest.TestCase):
         request.matched_route.name = 'substanced_manage'
         inst = self._makeOne(request)
         self.assertTrue(inst.is_mgmt())
-        
+
     def test_is_mgmt_false_wrong_name(self):
         request = testing.DummyRequest()
         request.matched_route = Dummy()
@@ -1102,7 +1102,7 @@ class Test_sdiapi(unittest.TestCase):
         request = testing.DummyRequest()
         inst = self._makeOne(request)
         self.assertFalse(inst.is_mgmt())
-        
+
 class Test_mgmt_path(unittest.TestCase):
     def _callFUT(self, *arg, **kw):
         from .. import mgmt_path
@@ -1162,12 +1162,12 @@ class Test__bwcompat_kw(unittest.TestCase):
                 'port':'port'
                 }
             )
-        
+
 
 class DummyContent(object):
     def __init__(self, **kw):
         self.__dict__.update(kw)
-        
+
     def metadata(self, context, name, default=None):
         return getattr(self, name, default)
 
@@ -1177,7 +1177,7 @@ class DummyContent(object):
 class DummyIntrospector(object):
     def __init__(self, results=()):
         self.results = list(results)
-        
+
     def get_category(self, *arg):
         if self.results:
             return self.results.pop(0)
@@ -1189,13 +1189,13 @@ class DummyVenusianInfo(object):
     module = None
     def __init__(self, **kw):
         self.__dict__.update(kw)
-    
+
 class DummyVenusian(object):
     def __init__(self, info=None):
         if info is None:
             info = DummyVenusianInfo()
         self.info = info
-        
+
     def attach(self, wrapped, callback, category):
         self.wrapped = wrapped
         self.callback = callback
@@ -1216,7 +1216,7 @@ class DummyConfigurator(object):
 
     def object_description(self, ob):
         return ob
-        
+
     def maybe_dotted(self, thing):
         return thing
 
@@ -1236,12 +1236,12 @@ class DummyConfigurator(object):
 
     def action(self, discriminator, introspectables):
         self._actions.append((discriminator, introspectables))
-    
+
 class DummyIntrospectable(dict):
     def __init__(self, **kw):
         dict.__init__(self, **kw)
         self.related = {}
-        
+
     def relate(self, category, discrim):
         self.related[category] = discrim
 
@@ -1268,7 +1268,7 @@ class DummyConnection(object):
 class DummyTransaction(object):
     def __init__(self):
         self.notes = []
-        
+
     def get(self):
         return self
 
@@ -1281,7 +1281,7 @@ class DummyTransaction(object):
 class DummySDIAPI(object):
     def __init__(self, result=None):
         self.result = result
-        
+
     def mgmt_path(self, obj, *arg, **kw):
         return self.result or '/mgmt_path'
 
@@ -1290,4 +1290,4 @@ class DummySDIAPI(object):
 
     def flash_with_undo(self, val):
         self.flashed = val
-    
+
