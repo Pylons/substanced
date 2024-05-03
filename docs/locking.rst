@@ -46,9 +46,8 @@ To unlock a resource:
 .. code-block:: python
 
    from substanced.locking import unlock_resource
-   from pyramid.security import has_permission
 
-   if has_permission('sdi.lock', someresource, request):
+   if request.has_permission('sdi.lock', someresource):
        unlock_resource(someresource, request.user)
 
 If the resource is already locked by a user other than the owner supplied as
@@ -72,9 +71,8 @@ To unlock a resource using an explicit lock token:
 .. code-block:: python
 
    from substanced.locking import unlock_token
-   from pyramid.security import has_permission
 
-   if has_permission('sdi.lock', someresource, request):
+   if request.has_permission('sdi.lock', someresource):
        unlock_token(someresource, token, request.user)
 
 If the lock identified by ``token`` belongs to a user other than the owner
