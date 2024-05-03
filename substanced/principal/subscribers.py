@@ -19,7 +19,6 @@ from ..util import (
     set_acl,
     find_service,
     )
-from .._compat import INT_TYPES
 
 @subscribe_added(IUser)
 def user_added(event):
@@ -100,12 +99,11 @@ def principal_added(event):
                 'user with the login name %s' % principal_name
             )
 
-_TO_APPEND = INT_TYPES + (tuple,)
 def _referenceable_principals(acl):
     result = set()
     for ace in (acl or ()):
         principal_id = ace[1]
-        if isinstance(principal_id, _TO_APPEND):
+        if isinstance(principal_id, (int, tuple)):
             result.add(principal_id)
     return result
 

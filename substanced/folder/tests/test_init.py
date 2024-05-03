@@ -11,6 +11,12 @@ from zope.interface.verify import (
     verifyClass
     )
 
+
+BYTES_NAME = b'La Pe\xc3\xb1a'
+TEXT_NAME = BYTES_NAME.decode('utf-8')
+LATIN1_NAME = TEXT_NAME.encode('latin-1')
+
+
 class TestFolder(unittest.TestCase):
     def setUp(self):
         self.config = testing.setUp()
@@ -826,8 +832,7 @@ class TestFolder(unittest.TestCase):
         self.assertTrue(r.endswith('>'))
 
     def test_unresolveable_unicode_setitem(self):
-        from substanced._compat import u
-        name = u(b'La Pe\xc3\xb1a', 'utf-8').encode('latin-1')
+        name = LATIN1_NAME
         folder = self._makeOne()
         self.assertRaises(ValueError,
                           folder.__setitem__, name, DummyModel())
@@ -839,8 +844,7 @@ class TestFolder(unittest.TestCase):
         self.assertTrue(folder.get(name))
 
     def test_unresolveable_unicode_getitem(self):
-        from substanced._compat import u
-        name = u(b'La Pe\xc3\xb1a', 'utf-8').encode('latin-1')
+        name = LATIN1_NAME
         folder = self._makeOne()
         self.assertRaises(UnicodeDecodeError, folder.__getitem__, name)
 

@@ -24,7 +24,7 @@ except IOError:
     README = CHANGES = ''
 
 install_requires = [
-    'pyramid>=1.5dev',  # route_name argument to resource_url
+    'pyramid>=1.5dev,<2.0dev',  # route_name argument to resource_url
     'ZODB',
     'hypatia>=0.2',  # query objects have intersection/union methods
     'venusian>=1.0a3',  # pyramid wants this too (prefer_finals...)
@@ -34,7 +34,7 @@ install_requires = [
     'pyramid_zodbconn>=0.6',  # connection opened/closed events
     'pyramid_chameleon',
     'pyramid_mailer',
-    'cryptacular',
+    'bcrypt',
     'python-magic',
     'PyYAML',
     'zope.copy',
@@ -70,13 +70,12 @@ setup(name='substanced',
       classifiers=[
         "Intended Audience :: Developers",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 2",
-        "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.5",
-        "Programming Language :: Python :: 3.6",
-        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
         "Programming Language :: Python :: Implementation :: CPython",
         "Framework :: Pyramid",
         "Topic :: Internet :: WWW/HTTP :: WSGI",

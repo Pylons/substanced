@@ -1,6 +1,8 @@
 import unittest
-from pyramid import testing
+
+import bcrypt
 import colander
+from pyramid import testing
 from zope.interface import implementer
 
 class Test_locale_widget(unittest.TestCase):
@@ -356,7 +358,7 @@ class TestUser(unittest.TestCase):
     def test___dump__(self):
         inst = self._makeOne('abc')
         result = inst.__dump__()
-        self.assertTrue(inst.pwd_manager.check(result['password'], 'abc'))
+        self.assertTrue(bcrypt.checkpw(b'abc', result['password']))
 
     def test_check_password(self):
         inst = self._makeOne('abc')
@@ -370,7 +372,7 @@ class TestUser(unittest.TestCase):
     def test_set_password(self):
         inst = self._makeOne('abc')
         inst.set_password('abcdef')
-        self.assertTrue(inst.pwd_manager.check(inst.password, 'abcdef'))
+        self.assertTrue(bcrypt.checkpw(b'abcdef', inst.password))
 
     def test_email_password_reset(self):
         from ...testing import make_site

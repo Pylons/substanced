@@ -12,9 +12,8 @@ from ZODB.utils import z64
 from zope.interface import implementer
 
 from ..util import get_oid
-from .._compat import u
 
-_BLANK = u('')
+_BLANK = ''
 
 try:
     import magic
@@ -227,8 +226,7 @@ class File(Persistent):
             if use_magic and first:
                 first = False
                 m = magic.Magic(mime=True)
-                mimetype = m.from_buffer(chunk)
-                self.mimetype = u(mimetype)
+                self.mimetype = m.from_buffer(chunk)
             fp.write(chunk)
         fp.close()
 

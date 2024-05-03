@@ -8,8 +8,7 @@ from pyramid.security import (
     Everyone,
     Authenticated,
     )
-from pyramid.compat import is_nonstr_iter
-from pyramid.session import check_csrf_token
+from pyramid.csrf import check_csrf_token
 from pyramid.view import view_defaults
 from pyramid.location import lineage
 
@@ -20,8 +19,8 @@ from ...util import (
     get_all_permissions,
     set_acl,
     find_service,
+    is_nonstr_iter,
     )
-from ..._compat import STRING_TYPES
 from ...util import _
 
 from .. import mgmt_view
@@ -203,7 +202,7 @@ class ACLEditViews(object):
                 break
             if permissions == ALL_PERMISSIONS:
                 permissions = ('-- ALL --',)
-            if (isinstance(permissions, STRING_TYPES) or
+            if (isinstance(permissions, str) or
                 not hasattr(permissions, '__iter__')):
                 permissions = (permissions,)
             pname = self.get_principal_name(principal_id)

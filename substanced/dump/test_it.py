@@ -22,7 +22,7 @@ class Test_set_yaml(unittest.TestCase):
                   encoding='utf-8')
         self.assertEqual(
             stream.getvalue(),
-            b"!interface 'substanced.dump.tests.DummyInterface'\n"
+            b"!interface 'substanced.dump.test_it.DummyInterface'\n"
             )
 
     def test_iface_constructor(self):
@@ -31,7 +31,7 @@ class Test_set_yaml(unittest.TestCase):
         registry = DummyRegistry(None)
         self._callFUT(registry)
         stream = io.BytesIO(
-            b"!interface 'substanced.dump.tests.DummyInterface'\n"
+            b"!interface 'substanced.dump.test_it.DummyInterface'\n"
             )
         result = yaml.load(stream, Loader=registry['yaml_loader'])
         self.assertEqual(result, DummyInterface)
@@ -322,16 +322,16 @@ class Test_ResourceContext(unittest.TestCase):
         return _ResourceContext()
 
     def test_resolve_dotted_name(self):
-        import substanced.dump.tests
+        import substanced.dump.test_it
         inst = self._makeOne()
-        result = inst.resolve_dotted_name('substanced.dump.tests')
-        self.assertEqual(result, substanced.dump.tests)
+        result = inst.resolve_dotted_name('substanced.dump.test_it')
+        self.assertEqual(result, substanced.dump.test_it)
 
     def test_get_dotted_name(self):
-        import substanced.dump.tests
+        import substanced.dump.test_it
         inst = self._makeOne()
-        result = inst.get_dotted_name(substanced.dump.tests)
-        self.assertEqual(result, 'substanced.dump.tests')
+        result = inst.get_dotted_name(substanced.dump.test_it)
+        self.assertEqual(result, 'substanced.dump.test_it')
 
 class Test_ResourceDumpContext(unittest.TestCase):
     def _makeOne(self, directory, registry, dumpers, verbose, dry_run):
@@ -477,7 +477,7 @@ class TestACLDumper(unittest.TestCase):
 
     def test_init_adds_yaml_stuff(self):
         from pyramid.security import ALL_PERMISSIONS
-        from .._compat import u
+        from . import DUMP_ALL_PERMISSIONS
         yamlthing = DummyYAMLDumperLoader()
         registry = {'yaml_loader':yamlthing, 'yaml_dumper':yamlthing}
         self._makeOne('name', registry)
@@ -488,7 +488,7 @@ class TestACLDumper(unittest.TestCase):
             )
         dumper = testing.DummyResource()
         def represent_scalar(one, two):
-            self.assertEqual(one, u('!all_permissions'))
+            self.assertEqual(one, DUMP_ALL_PERMISSIONS)
         dumper.represent_scalar = represent_scalar
         yamlthing.representers[0][1](dumper, None)
 
@@ -727,7 +727,7 @@ class TestPropertySheetDumper(unittest.TestCase):
 
     def test_init_adds_yaml_stuff(self):
         import colander
-        from .._compat import u
+        from . import DUMP_COLANDER_NULL
         yamlthing = DummyYAMLDumperLoader()
         registry = {'yaml_loader':yamlthing, 'yaml_dumper':yamlthing}
         self._makeOne('name', registry)
@@ -738,7 +738,7 @@ class TestPropertySheetDumper(unittest.TestCase):
             )
         dumper = testing.DummyResource()
         def represent_scalar(one, two):
-            self.assertEqual(one, u('!colander_null'))
+            self.assertEqual(one, DUMP_COLANDER_NULL)
         dumper.represent_scalar = represent_scalar
         yamlthing.representers[0][1](dumper, None)
 

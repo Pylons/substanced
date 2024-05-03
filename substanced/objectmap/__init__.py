@@ -4,7 +4,6 @@ from persistent.list import PersistentList
 import BTrees
 import colander
 from persistent import Persistent
-from pyramid.compat import is_nonstr_iter
 from pyramid.security import Allow
 from pyramid.traversal import (
     resource_path_tuple,
@@ -22,8 +21,8 @@ from ..util import (
     set_oid,
     find_objectmap,
     wrap_if_broken,
+    is_nonstr_iter,
     )
-from .._compat import INT_TYPES
 
 """
 Pathindex data structure of object map:
@@ -39,10 +38,10 @@ index will end up looking like this:
 >>> map.add('/a/b/c')
 >>> map.pathindex
 
-{(u'',):                  {3: set([1])},
- (u'', u'a'):             {2: set([1])},
- (u'', u'a', u'b'):       {1: set([1])},
- (u'', u'a', u'b', u'c'): {0: set([1])}}
+{('',):                  {3: set([1])},
+ ('', 'a'):              {2: set([1])},
+ ('', 'a', 'b'):         {1: set([1])},
+ ('', 'a', 'b', 'c'):    {0: set([1])}}
 
 (Level 0 is "this path")
 
@@ -52,21 +51,21 @@ will look like this:
 >>> map.add('/a')
 >>> map.pathindex
 
-{(u'',):                  {1: set([2]), 3: set([1])},
- (u'', u'a'):             {0: set([2]), 2: set([1])},
- (u'', u'a', u'b'):       {1: set([1])},
- (u'', u'a', u'b', u'c'): {0: set([1])}}
+{('',):                  {1: set([2]), 3: set([1])},
+ ('', 'a'):              {0: set([2]), 2: set([1])},
+ ('', 'a', 'b'):         {1: set([1])},
+ ('', 'a', 'b', 'c'):    {0: set([1])}}
 
 If we then add '/z' (and its objectid is 3):
 
 >>> map.add('/z')
 >>> map.pathindex
 
-{(u'',):                  {1: set([2, 3]), 3: set([1])},
- (u'', u'a'):             {0: set([2]), 2: set([1])},
- (u'', u'a', u'b'):       {1: set([1])},
- (u'', u'a', u'b', u'c'): {0: set([1])},
- (u'', u'z'):             {0: set([3])}}
+{('',):                  {1: set([2, 3]), 3: set([1])},
+ ('', 'a'):              {0: set([2]), 2: set([1])},
+ ('', 'a', 'b'):         {1: set([1])},
+ ('', 'a', 'b', 'c'):    {0: set([1])},
+ ('', 'z'):              {0: set([3])}}
 
 And so on and so forth as more items are added.  It is an error to attempt to
 add an item to object map with a path that already exists in the object
@@ -79,8 +78,8 @@ references to the objectid represented by '/a' *and* any children
 >>> map.remove(2)
 >>> map.pathindex
 
-{(u'',):      {1: set([3])},
- (u'', u'z'): {0: set([3])}}
+{('',):      {1: set([3])},
+ ('', 'z'):  {0: set([3])}}
 
 """
 
@@ -131,7 +130,7 @@ class ObjectMap(Persistent):
         path_tuple = None
         if hasattr(obj_objectid_or_path_tuple, '__parent__'):
             path_tuple = resource_path_tuple(obj_objectid_or_path_tuple)
-        elif isinstance(obj_objectid_or_path_tuple, INT_TYPES):
+        elif isinstance(obj_objectid_or_path_tuple, int):
             path_tuple = self.objectid_to_path.get(obj_objectid_or_path_tuple)
         elif isinstance(obj_objectid_or_path_tuple, tuple):
             path_tuple = obj_objectid_or_path_tuple

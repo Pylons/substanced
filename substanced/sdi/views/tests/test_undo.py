@@ -175,7 +175,9 @@ class TestUndoViews(unittest.TestCase):
 
     def test_undo_multiple(self):
         import binascii
+        sec_pol = testing.DummySecurityPolicy(userid="phred")
         request = testing.DummyRequest()
+        request._get_authentication_policy = lambda: sec_pol
         context = testing.DummyResource()
         inst = self._makeOne(context, request)
         conn = DummyConnection()
@@ -183,9 +185,6 @@ class TestUndoViews(unittest.TestCase):
             self.assertEqual(req, request)
             return conn
         inst.get_connection = get_connection
-        def authenticated_userid(req):
-            self.assertEqual(req, request)
-            return 1
         post = testing.DummyResource()
         enca = binascii.b2a_base64(b'a')
         encb = binascii.b2a_base64(b'b')
@@ -196,18 +195,19 @@ class TestUndoViews(unittest.TestCase):
         post.getall = getall
         request.POST = post
         request.sdiapi = DummySDIAPI()
-        inst.authenticated_userid = authenticated_userid
         txn = DummyTransaction()
         inst.transaction = txn
         result = inst.undo_multiple()
         self.assertEqual(result.location, '/mgmt_path')
         self.assertEqual(conn._db.tids, [b'a', b'b'])
         self.assertTrue(txn.committed)
-        self.assertEqual(txn.user, 1)
+        self.assertEqual(txn.user, "phred")
 
     def test_undo_multiple_with_text_in_POST(self):
         import binascii
+        sec_pol = testing.DummySecurityPolicy(userid="phred")
         request = testing.DummyRequest()
+        request._get_authentication_policy = lambda: sec_pol
         context = testing.DummyResource()
         inst = self._makeOne(context, request)
         conn = DummyConnection()
@@ -215,9 +215,6 @@ class TestUndoViews(unittest.TestCase):
             self.assertEqual(req, request)
             return conn
         inst.get_connection = get_connection
-        def authenticated_userid(req):
-            self.assertEqual(req, request)
-            return 1
         post = testing.DummyResource()
         enca = binascii.b2a_base64(b'a').decode('ascii')
         encb = binascii.b2a_base64(b'b').decode('ascii')
@@ -228,14 +225,13 @@ class TestUndoViews(unittest.TestCase):
         post.getall = getall
         request.POST = post
         request.sdiapi = DummySDIAPI()
-        inst.authenticated_userid = authenticated_userid
         txn = DummyTransaction()
         inst.transaction = txn
         result = inst.undo_multiple()
         self.assertEqual(result.location, '/mgmt_path')
         self.assertEqual(conn._db.tids, [b'a', b'b'])
         self.assertTrue(txn.committed)
-        self.assertEqual(txn.user, 1)
+        self.assertEqual(txn.user, "phred")
 
     def test_undo_multiple_with_exception(self):
         import binascii
@@ -249,9 +245,6 @@ class TestUndoViews(unittest.TestCase):
             return conn
         conn._db.undo_exc = POSError
         inst.get_connection = get_connection
-        def authenticated_userid(req):
-            self.assertEqual(req, request)
-            return 1
         post = testing.DummyResource()
         enca = binascii.b2a_base64(b'a')
         encb = binascii.b2a_base64(b'b')
@@ -262,7 +255,6 @@ class TestUndoViews(unittest.TestCase):
         post.getall = getall
         request.POST = post
         request.sdiapi = DummySDIAPI()
-        inst.authenticated_userid = authenticated_userid
         txn = DummyTransaction()
         inst.transaction = txn
         result = inst.undo_multiple()

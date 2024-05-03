@@ -2,8 +2,8 @@ import random
 import os
 import string
 
+import bcrypt
 from persistent import Persistent
-from cryptacular.bcrypt import BCRYPTPasswordManager
 
 from zope.interface import (
     implementer,
@@ -62,11 +62,10 @@ from ..util import (
     acquire,
     )
 from ..stats import statsd_gauge
-from .._compat import _LETTERS
 
 def _gen_random_token():
     length = random.choice(range(10, 16))
-    chars = _LETTERS + string.digits
+    chars = string.ascii_letters + string.digits
     return ''.join(random.choice(chars) for _ in range(length))
 
 @service(
@@ -376,16 +375,21 @@ class User(Folder):
     """ Represents a user.  """
     tzname = 'UTC' # backwards compatibility default
 
-    pwd_manager = BCRYPTPasswordManager()
-
     groupids = multireference_sourceid_property(UserToGroup)
     groups = multireference_source_property(UserToGroup)
     name = renamer()
 
+    @staticmethod
+    def hash_new_password(password):
+        if isinstance(password, str):
+            password = password.encode('utf-8')
+
+        return bcrypt.hashpw(password, bcrypt.gensalt())
+
     def __init__(self, password=None, email=None, tzname=None, locale=None):
         Folder.__init__(self)
         if password is not None:
-            password = self.pwd_manager.encode(password)
+            password = self.hash_new_password(password)
         self.password = password
         self.email = email
         if tzname is None:
@@ -411,10 +415,12 @@ class User(Folder):
             # avoid DOS ala
             # https://www.djangoproject.com/weblog/2013/sep/15/security/
             raise ValueError('Not checking password > 4096 bytes')
-        return self.pwd_manager.check(self.password, password)
+        if isinstance(password, str):
+            password = password.encode('utf-8')
+        return bcrypt.checkpw(password, self.password)
 
     def set_password(self, password):
-        self.password = self.pwd_manager.encode(password)
+        self.password = self.hash_new_password(password)
 
     def email_password_reset(self, request):
         """ Sends a password reset email."""
