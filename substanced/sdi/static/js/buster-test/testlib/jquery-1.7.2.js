@@ -8509,7 +8509,7 @@ jQuery.fn.extend({
 			// will store per property easing and be used to determine when an animation is complete
 			opt.animatedProperties = {};
 
-			// first pass over propertys to expand / normalize
+			// first pass over properties to expand / normalize
 			for ( p in prop ) {
 				name = jQuery.camelCase( p );
 				if ( p !== name ) {

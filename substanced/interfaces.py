@@ -188,7 +188,7 @@ class IEditable(Interface):
     def get():
         """ Return ``(body_iter, mimetype)`` representing the context.
 
-        - ``body_iter`` is an iterable, whose chunks are bytes represenating
+        - ``body_iter`` is an iterable, whose chunks are bytes representing
           the context as an editable file.
 
         - ``mimetype`` is the MIMEType corresponding to ``body_iter``.
