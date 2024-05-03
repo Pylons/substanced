@@ -1,5 +1,14 @@
 import unittest
+from unittest import mock
+
+from pyramid.authentication import AuthTktCookieHelper
+from pyramid.authorization import ACLHelper
+from pyramid.authorization import Authenticated
+from pyramid.authorization import Everyone
 from pyramid import testing
+
+
+SECRET = "seekr1t"
 
 class Test_add_mgmt_view(unittest.TestCase):
     def _callFUT(self, config, **kw):
@@ -1162,6 +1171,176 @@ class Test__bwcompat_kw(unittest.TestCase):
                 'port':'port'
                 }
             )
+
+class TestSubstancedSecurityPolicy(unittest.TestCase):
+
+    helper_klass = mock.create_autospec(AuthTktCookieHelper, instance=False)
+
+    def _getTargetClass(self):
+        from .. import SubstancedSecurityPolicy
+        return SubstancedSecurityPolicy
+
+    def _makeOne(self, *arg, **kw):
+        self.helper_klass.reset_mock()
+        self.helper.reset_mock()
+
+        with mock.patch(
+            "substanced.sdi.AuthTktCookieHelper", self.helper_klass,
+        ):
+            return self._getTargetClass()(*arg, secret=SECRET, **kw)
+
+    @property
+    def helper(self):
+        return self.helper_klass.return_value
+
+    def test___init__(self):
+        policy = self._makeOne()
+
+        assert policy._helper is self.helper_klass.return_value
+        self.helper_klass.assert_called_once_with(SECRET)
+
+    def test_identify_w_none(self):
+        self.helper.identify.return_value = None
+        policy = self._makeOne()
+        request = testing.DummyRequest()
+
+        identity = policy.identity(request)
+
+        self.assertIsNone(identity)
+        self.helper.identify.assert_called_once_with(request)
+
+    def test_identify_w_userid_wo_groups(self):
+        self.helper.identify.return_value = {"userid": "phred"}
+        policy = self._makeOne()
+        request = testing.DummyRequest()
+
+        with mock.patch("substanced.sdi.groupfinder") as gf:
+            gf.return_value = None
+            identity = policy.identity(request)
+
+        self.assertEqual(identity, {
+            "userid": "phred",
+            "principals": (),
+        })
+        self.helper.identify.assert_called_once_with(request)
+
+    def test_identify_w_userid_and_groups(self):
+        self.helper.identify.return_value = {"userid": "phred"}
+        policy = self._makeOne()
+        request = testing.DummyRequest()
+
+        with mock.patch("substanced.sdi.groupfinder") as gf:
+            gf.return_value = ["buffaloes"]
+            identity = policy.identity(request)
+
+        self.assertEqual(identity, {
+            "userid": "phred",
+            "principals": ["buffaloes"],
+        })
+        self.helper.identify.assert_called_once_with(request)
+
+    def test_authenticated_userid_wo_identity(self):
+        self.helper.identify.return_value = None
+        policy = self._makeOne()
+        request = testing.DummyRequest()
+
+        auid = policy.authenticated_userid(request)
+
+        self.assertIsNone(auid)
+        self.helper.identify.assert_called_once_with(request)
+
+    def test_authenticated_w_identity(self):
+        self.helper.identify.return_value = {"userid": "phred"}
+        policy = self._makeOne()
+        request = testing.DummyRequest()
+
+        auid = policy.authenticated_userid(request)
+
+        self.assertEqual(auid, "phred")
+        self.helper.identify.assert_called_once_with(request)
+
+    def test_permits_wo_identity(self):
+        self.helper.identify.return_value = None
+        policy = self._makeOne()
+        request = testing.DummyRequest()
+        context = testing.DummyResource()
+
+        aclh_klass = mock.create_autospec(ACLHelper)
+        aclh = aclh_klass.return_value
+
+        with mock.patch("substanced.sdi.ACLHelper", aclh_klass):
+            auid = policy.permits(request, context, "testing")
+
+        self.assertIs(auid, aclh.permits.return_value)
+        expected_principals = {Everyone}
+        aclh.permits.assert_called_once_with(
+            context, expected_principals, "testing",
+        )
+        self.helper.identify.assert_called_once_with(request)
+
+    def test_permits_w_identity(self):
+        self.helper.identify.return_value = {"userid": "phred"}
+        policy = self._makeOne()
+        request = testing.DummyRequest()
+        context = testing.DummyResource()
+
+        gf = mock.Mock(spec_set=(), return_value = ["buffaloes"])
+        aclh_klass = mock.create_autospec(ACLHelper)
+        aclh = aclh_klass.return_value
+
+        with mock.patch.multiple(
+            "substanced.sdi", groupfinder=gf, ACLHelper=aclh_klass,
+        ):
+            auid = policy.permits(request, context, "testing")
+
+        self.assertIs(auid, aclh.permits.return_value)
+        expected_principals = {Everyone, Authenticated, "phred", "buffaloes"}
+        aclh.permits.assert_called_once_with(
+            context, expected_principals, "testing",
+        )
+        self.helper.identify.assert_called_once_with(request)
+
+    def test_remember_wo_kw(self):
+        policy = self._makeOne()
+        request = testing.DummyRequest()
+
+        result = policy.remember(request, "phred")
+
+        self.assertIs(result, self.helper.remember.return_value)
+        self.helper.remember.assert_called_once_with(
+            request, "phred", max_age=None, tokens=(),
+        )
+
+    def test_remember_w_max_age(self):
+        policy = self._makeOne()
+        request = testing.DummyRequest()
+
+        result = policy.remember(request, "phred", max_age=3600)
+
+        self.assertIs(result, self.helper.remember.return_value)
+        self.helper.remember.assert_called_once_with(
+            request, "phred", max_age=3600, tokens=(),
+        )
+
+    def test_remember_w_tokens(self):
+        policy = self._makeOne()
+        request = testing.DummyRequest()
+
+        result = policy.remember(request, "phred", tokens=("foo", "bar"))
+
+        self.assertIs(result, self.helper.remember.return_value)
+        self.helper.remember.assert_called_once_with(
+            request, "phred", max_age=None, tokens=("foo", "bar"),
+        )
+
+    def test_forget(self):  # AuthTktCookieHelper.forget takes no kwargs
+        policy = self._makeOne()
+        request = testing.DummyRequest()
+
+        result = policy.forget(request)
+
+        self.assertIs(result, self.helper.forget.return_value)
+        self.helper.forget.assert_called_once_with(request)
 
 
 class DummyContent(object):

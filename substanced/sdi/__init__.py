@@ -572,27 +572,23 @@ class SubstancedSecurityPolicy:
     def identity(self, request):
         identity = self._helper.identify(request)
 
-        if identity is None:
-            return None
-
-        userid = identity['userid']
-        principals = groupfinder(userid, request)
-
-        if principals is not None:
+        if identity is not None:
+            userid = identity['userid']
+            principals = groupfinder(userid, request)
             return {
                 'userid': userid,
-                'principals': principals,
+                'principals': principals or (),
             }
 
     def authenticated_userid(self, request):
-        identity = request.identity
+        identity = self.identity(request)
 
         if identity is not None:
             return identity['userid']
 
     def permits(self, request, context, permission):
         principals = set([Everyone])
-        identity = request.identity
+        identity = self.identity(request)
 
         if identity is not None:
             principals.add(Authenticated)
@@ -601,11 +597,13 @@ class SubstancedSecurityPolicy:
 
         return ACLHelper().permits(context, principals, permission)
 
-    def remember(self, request, userid, **kw):
-        return self._helper.remember(request, userid, **kw)
+    def remember(self, request, userid, max_age=None, tokens=()):
+        return self._helper.remember(
+            request, userid, max_age=max_age, tokens=tokens,
+        )
 
-    def forget(self, request, **kw):
-        return self._helper.forget(request, **kw)
+    def forget(self, request):
+        return self._helper.forget(request)
 
 
 def includeme(config): # pragma: no cover
