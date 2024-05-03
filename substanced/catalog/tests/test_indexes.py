@@ -618,6 +618,44 @@ class TestAllowedIndex(unittest.TestCase):
         index = self._makeOne(None)
         self.assertEqual(index.document_repr(None), 'N/A')
 
+    def test__effective_principals_wo_identity(self):
+        index = self._makeOne(None)
+        request = testing.DummyRequest()
+
+        sec_pol = testing.DummySecurityPolicy()
+        with mock.patch("pyramid.security._get_security_policy") as gsp:
+            gsp.return_value = sec_pol
+            principals = index._effective_principals(request)
+
+        self.assertEqual(principals, ['system.Everyone'])
+
+    def test__effective_principals_w_identity_as_dict(self):
+        index = self._makeOne(None)
+        request = testing.DummyRequest()
+
+        identity = {
+            "userid": "phred",
+            "principals": ["buffaloes"],
+        }
+        sec_pol = testing.DummySecurityPolicy(identity=identity)
+        with mock.patch("pyramid.security._get_security_policy") as gsp:
+            gsp.return_value = sec_pol
+            principals = index._effective_principals(request)
+
+        self.assertEqual(principals, ['system.Everyone', 'phred', 'buffaloes'])
+
+    def test__effective_principals_w_identity_as_other(self):
+        index = self._makeOne(None)
+        request = testing.DummyRequest()
+
+        identity = 'phred'
+        sec_pol = testing.DummySecurityPolicy(identity=identity)
+        with mock.patch("pyramid.security._get_security_policy") as gsp:
+            gsp.return_value = sec_pol
+            principals = index._effective_principals(request)
+
+        self.assertEqual(principals, ['system.Everyone', 'phred'])
+
     def test_allows_request(self):
         index = self._makeOne(None)
         request = testing.DummyRequest()
