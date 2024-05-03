@@ -13,8 +13,10 @@ from zope.interface.interfaces import IInterface
 
 import venusian
 
-from pyramid.authentication import AuthTktAuthenticationPolicy
-from pyramid.authorization import ACLAuthorizationPolicy
+from pyramid.authentication import AuthTktCookieHelper
+from pyramid.authorization import ACLHelper
+from pyramid.authorization import Authenticated
+from pyramid.authorization import Everyone
 from pyramid.decorator import reify
 from pyramid.exceptions import ConfigurationError
 from pyramid.location import lineage
@@ -41,6 +43,7 @@ from ..util import acquire, _
 from ..interfaces import IUserLocator
 from ..interfaces import ISDIAPI
 from ..principal import DefaultUserLocator
+from ..principal import groupfinder
 
 try:
     # pyramid 1.9 and below
@@ -541,6 +544,70 @@ def _bwcompat_kw(kw):
             kw[name] = val
     return kw
 
+
+class SubstancedSecurityPolicy:
+    """Pyramid 2.0 replacement for authn / authz policies
+
+    See:
+    https://docs.pylonsproject.org/projects/pyramid/en/2.0-branch
+           /whatsnew-2.0.html#upgrading-from-built-in-policies
+
+    TODO:  Is this verbiage still correct?  Useful?
+
+    NB: we use the AuthTktCookieHelper rather than the session
+    version because using the session versionic
+    resources to be uncacheable.  In particular, if you use the
+    UnencryptedBlahBlahBlah session factory, and anything asks for the
+    authenticated or unauthenticated user from the policy, the session needs
+    to be reserialized because that factory works by resetting the cookie on
+    every access to set the last-accessed value.  In practice, pyramid_tm
+    asks for the unauthenticated user, so every static resource will have a
+    set-cookie header in it, making them uncacheable.  This could also be
+    solved by using a different session factory (e.g. pyramid_redis_sessions)
+    which does not reserialize the cookie on every access.
+    """
+    def __init__(self, secret):
+        self._helper = AuthTktCookieHelper(secret)
+
+    def identity(self, request):
+        identity = self._helper.identify(request)
+
+        if identity is None:
+            return None
+
+        userid = identity['userid']
+        principals = groupfinder(userid, request)
+
+        if principals is not None:
+            return {
+                'userid': userid,
+                'principals': principals,
+            }
+
+    def authenticated_userid(self, request):
+        identity = request.identity
+
+        if identity is not None:
+            return identity['userid']
+
+    def permits(self, request, context, permission):
+        principals = set([Everyone])
+        identity = request.identity
+
+        if identity is not None:
+            principals.add(Authenticated)
+            principals.add(identity['userid'])
+            principals.update(identity['principals'])
+
+        return ACLHelper().permits(context, principals, permission)
+
+    def remember(self, request, userid, **kw):
+        return self._helper.remember(request, userid, **kw)
+
+    def forget(self, request, **kw):
+        return self._helper.forget(request, **kw)
+
+
 def includeme(config): # pragma: no cover
     settings = config.registry.settings
     YEAR = 86400 * 365
@@ -566,20 +633,6 @@ def includeme(config): # pragma: no cover
             'You must set a substanced.secret key in your .ini file')
     session_factory = SignedCookieSessionFactory(secret)
     config.set_session_factory(session_factory)
-    from ..principal import groupfinder
-    # NB: we use the AuthTktAuthenticationPolicy rather than the session
-    # authentication policy because using the session policy can cause static
-    # resources to be uncacheable.  In particular, if you use the
-    # UnencryptedBlahBlahBlah session factory, and anything asks for the
-    # authenticated or unauthenticated user from the policy, the session needs
-    # to be reserialized because that factory works by resetting the cookie on
-    # every access to set the last-accessed value.  In practice, pyramid_tm
-    # asks for the unauthenticated user, so every static resource will have a
-    # set-cookie header in it, making them uncacheable.  This could also be
-    # solved by using a different session factory (e.g. pyramid_redis_sessions)
-    # which does not reserialize the cookie on every access.
-    authn_policy = AuthTktAuthenticationPolicy(secret, callback=groupfinder)
-    authz_policy = ACLAuthorizationPolicy()
-    config.set_authentication_policy(authn_policy)
-    config.set_authorization_policy(authz_policy)
+    sec_policy = SubstancedSecurityPolicy(secret)
+    config.set_security_policy(sec_policy)
     config.add_permission('sdi.edit-properties') # used by property machinery
