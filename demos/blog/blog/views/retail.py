@@ -123,9 +123,7 @@ class FeedViews(object):
         self.request = request
 
     def _nowtz(self):
-        now = datetime.datetime.utcnow() # naive
-        y, mo, d, h, mi, s = now.timetuple()[:6]
-        return datetime.datetime(y, mo, d, h, mi, s, tzinfo=pytz.utc)
+        return datetime.datetime.now(datetime.timezone.utc)
 
     def _get_feed_info(self):
         context = self.context
