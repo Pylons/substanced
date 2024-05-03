@@ -1,4 +1,6 @@
 import unittest
+from unittest import mock
+
 from pyramid import testing
 
 import BTrees
@@ -619,7 +621,12 @@ class TestAllowedIndex(unittest.TestCase):
     def test_allows_request(self):
         index = self._makeOne(None)
         request = testing.DummyRequest()
-        q = index.allows(request, 'edit')
+
+        sec_pol = testing.DummySecurityPolicy()
+        with mock.patch("pyramid.security._get_security_policy") as gsp:
+            gsp.return_value = sec_pol
+            q = index.allows(request, 'edit')
+
         self.assertEqual(q._value, (['system.Everyone'], 'edit'))
 
     def test_allows_iterable(self):

@@ -13,6 +13,7 @@ import hypatia.keyword
 import hypatia.text
 import hypatia.util
 from persistent import Persistent
+from pyramid.authorization import Everyone
 from pyramid.settings import asbool
 from pyramid.traversal import resource_path_tuple
 from pyramid.interfaces import IRequest
@@ -408,6 +409,18 @@ class AllowedIndex(SDIndex, hypatia.util.BaseIndexMixin, Persistent, FakeIndex):
     def document_repr(self, docid, default=None):
         return 'N/A'
 
+    def _effective_principals(self, request):
+        identity = request.identity
+        if identity is None:
+            return [Everyone]
+        if isinstance(identity, dict):  # assume our security policy
+            return [
+                Everyone,
+                identity["userid"]
+            ] + identity["principals"]
+        else:
+            return [Everyone, identity]
+
     def allows(self, principals, permission):
         """ ``principals`` may either be 1) a sequence of principal
         indentifiers, 2) a single principal identifier, or 3) a Pyramid
@@ -417,9 +430,10 @@ class AllowedIndex(SDIndex, hypatia.util.BaseIndexMixin, Persistent, FakeIndex):
         ``permission`` must be a permission name.
         """
         if IRequest.providedBy(principals):
-            principals = principals.effective_principals
+            principals = self._effective_principals(principals)
         elif not is_nonstr_iter(principals):
             principals = (principals,)
+
         return AllowsComparator(self, (principals, permission))
 
 class AllowsComparator(hypatia.query.Comparator):
