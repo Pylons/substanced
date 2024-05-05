@@ -1,9 +1,9 @@
+import importlib
 import time
 import warnings
 
 from BTrees import family64
 from pyramid.util import TopologicalSorter
-from pkg_resources import EntryPoint
 import transaction
 
 from ..interfaces import IEvolutionSteps
@@ -156,6 +156,14 @@ def add_evolution_step(config, func, before=None, after=None, name=None):
 VERSION = 10         # legacy
 NAME = 'substanced'  # legacy
 
+def iterate_evolve_funcs():
+    for i in range(1, VERSION+1):
+        script_name = f".evolve{i}"
+        script_module = importlib.import_module(
+            script_name, package="substanced.evolution",
+        )
+        yield script_module.evolve
+
 def legacy_to_new(root, registry): # pragma: no cover
     mgr = EvolutionManager(root, registry)
     finished_steps = mgr.get_finished_steps()
@@ -169,7 +177,5 @@ def includeme(config): # pragma: no cover
     config.add_directive('add_evolution_step', add_evolution_step)
     config.add_evolution_step(legacy_to_new)
     config.scan('.subscribers')
-    for i in range(1, VERSION+1):
-        scriptname = 'substanced.evolution.evolve%s' % i
-        evmodule = EntryPoint.parse('x=%s' % scriptname).load(False)
-        config.add_evolution_step(evmodule.evolve)
+    for evolve_func in iterate_evolve_funcs:
+        config.add_evolution_step(evolve_func)

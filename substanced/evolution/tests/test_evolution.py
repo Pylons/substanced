@@ -293,6 +293,21 @@ class Test_add_evolution_step(unittest.TestCase):
             ['fred'])
         self.assertEqual(iface, IEvolutionSteps)
 
+def test_iterate_evolve_funcs():
+    from substanced.evolution import iterate_evolve_funcs
+    from substanced.evolution import VERSION
+
+    evolve_funcs = list(iterate_evolve_funcs())
+    i_versions = list(range(1, VERSION+1))
+
+    for i_version, evolve_func in zip(i_versions, evolve_funcs, strict=True):
+        assert evolve_func.__name__ == "evolve"
+        assert (
+            evolve_func.__module__ ==
+            f"substanced.evolution.evolve{i_version}"
+        )
+
+
 def dummystep(root, registry): pass
 
 def dummybefore(root, registry): pass
