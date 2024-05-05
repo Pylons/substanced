@@ -24,7 +24,6 @@ class TestContentRegistry(unittest.TestCase):
     def test_create(self):
         registry = DummyRegistry()
         inst = self._makeOne(registry)
-        inst._utcnow = lambda *a: 1
         content = testing.DummyResource()
         inst.content_types['dummy'] = lambda a: content
         inst.meta['dummy'] = {}
@@ -34,7 +33,6 @@ class TestContentRegistry(unittest.TestCase):
     def test_create_with_oid(self):
         registry = DummyRegistry()
         inst = self._makeOne(registry)
-        inst._utcnow = lambda *a: 1
         content = testing.DummyResource()
         inst.content_types['dummy'] = lambda a: content
         inst.meta['dummy'] = {}
@@ -218,7 +216,7 @@ class Test_add_content_type(unittest.TestCase):
         ft = config.actions[0][0][0]
         self.assertEqual(
             ft,
-            ('sd-factory-type', 'substanced.content.tests.factory')
+            ('sd-factory-type', 'substanced.content.test_it.factory')
             )
         self.assertEqual(
             config.actions[1][0][0],
@@ -242,7 +240,7 @@ class Test_add_content_type(unittest.TestCase):
         ft = config.actions[0][0][0]
         self.assertEqual(
             ft,
-            ('sd-factory-type', 'substanced.content.tests.Foo')
+            ('sd-factory-type', 'substanced.content.test_it.Foo')
             )
         self.assertEqual(
             config.actions[1][0][0],
@@ -292,7 +290,7 @@ class Test__wrap_factory(unittest.TestCase):
             pass
         factory_type, factory = self._callFUT(Foo, None)
         self.assertTrue(factory is Foo)
-        self.assertEqual(factory_type, 'substanced.content.tests.Foo')
+        self.assertEqual(factory_type, 'substanced.content.test_it.Foo')
 
     def test_content_factory_isclass_factory_type_is_supplied(self):
         class Foo(object):
@@ -316,7 +314,7 @@ class Test__wrap_factory(unittest.TestCase):
         self.assertTrue(factory.__factory__ is ctor)
         ob = factory()
         self.assertTrue(ob is foo)
-        self.assertEqual(ob.__factory_type__, 'substanced.content.tests.ctor')
+        self.assertEqual(ob.__factory_type__, 'substanced.content.test_it.ctor')
 
     def test_content_factory_isfunction_factory_type_is_supplied(self):
         class Foo(object):
@@ -415,7 +413,7 @@ def call_venusian(venusian, context=None):
         
 class DummyVenusianInfo(object):
     scope = 'notaclass'
-    module = sys.modules['substanced.content.tests']
+    module = sys.modules['substanced.content.test_it']
     codeinfo = 'codeinfo'
 
 class DummyVenusian(object):

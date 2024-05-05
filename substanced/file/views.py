@@ -1,4 +1,4 @@
-import pkg_resources
+import importlib.resources
 import mimetypes
 import colander
 import deform.schema
@@ -114,8 +114,10 @@ class AddFileView(FormView):
         tmpstore.clear()
         return HTTPFound(self.request.sdiapi.mgmt_path(self.context))
 
-onepixel = pkg_resources.resource_filename(
-    'substanced.sdi', 'static/img/onepixel.gif')
+sdi_files = importlib.resources.files('substanced.sdi')
+onepixel_ref = sdi_files / 'static/img/onepixel.gif'
+with importlib.resources.as_file(onepixel_ref) as onepixel_path:
+    onepixel_bytes = onepixel_path.read_bytes()
 
 # this doesn't require a permission, because it's based on session data
 # which the user would have to put there anyway
@@ -130,12 +132,15 @@ def preview_image_upload(request):
     filedata = tempstore.get(uid, {})
     fp = filedata.get('fp')
     filename = ''
+
     if fp is not None:
         fp.seek(0)
         filename = filedata['filename']
+
     mimetype = mimetypes.guess_type(filename, strict=False)[0]
+
     if not mimetype or not mimetype.startswith('image/'):
         mimetype = 'image/gif'
-        fp = open(onepixel, 'rb')
-    response = Response(content_type=mimetype, app_iter=fp)
-    return response
+        return Response(content_type="image/gif", body=onepixel_bytes)
+
+    return Response(content_type=mimetype, app_iter=fp)

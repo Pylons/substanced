@@ -1,4 +1,5 @@
 import os
+import pathlib
 import tempfile
 import shutil
 import unittest
@@ -176,7 +177,7 @@ class TestFileUploadTempStore(unittest.TestCase):
         request = self._makeRequest()
         inst = self._makeOne(request)
         here = os.path.dirname(__file__)
-        thisfile = os.path.join(here, 'tests.py')
+        thisfile = os.path.join(here, 'test_it.py')
         with open(thisfile, 'rb') as f:
             inst['a'] = {'fp': f}
             randid = inst.session['substanced.tempstore']['a']['randid']
@@ -255,21 +256,34 @@ class TestDeformRenderer(unittest.TestCase):
         
     def _makeOne(self, dirs):
         from . import get_deform_renderer
+
         return get_deform_renderer(dirs)
 
     def test_functional_using_searchpath(self):
-        from pkg_resources import resource_filename
-        from .._compat import u
-        default_dir = resource_filename('substanced.form', 'fixtures/')
+        import importlib.resources
+
+        sd_form_files = importlib.resources.files("substanced.form")
+        default_dir = sd_form_files / "fixtures/"
+        assert default_dir.is_dir()
         renderer = self._makeOne((default_dir,))
         result = renderer('test')
-        self.assertEqual(result.strip(), u('<div>Test</div>'))
+        self.assertEqual(result.strip(), '<div>Test</div>')
 
     def test_functional_using_assetspec(self):
-        from .._compat import u
         renderer = self._makeOne(())
         result = renderer('substanced.form:fixtures/test.pt')
-        self.assertEqual(result.strip(), u('<div>Test</div>'))
+        self.assertEqual(result.strip(), '<div>Test</div>')
+
+
+def test_get_deform_dir():
+    import deform
+    from . import get_deform_dir
+
+    expected = (pathlib.Path(deform.__file__) / "../templates").resolve()
+    assert expected.is_dir()
+
+    assert get_deform_dir() == expected
+
 
 class DummyWidget(object):
     pass

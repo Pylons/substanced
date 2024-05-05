@@ -1,4 +1,5 @@
 import unittest
+import warnings
 
 class TestEvolutionManager(unittest.TestCase):
     def _makeOne(self, context, registry, txn):
@@ -141,8 +142,17 @@ class TestEvolutionManager(unittest.TestCase):
         L = []
         inst.out = L.append
         inst.get_unfinished_steps = lambda *arg: [('name', func)]
-        inst.evolve(False)
+
+        with warnings.catch_warnings(record=True) as log:
+            inst.evolve(False)
+
         self.assertEqual(len(L), 1)
+        assert len(log) == 1
+        warned = log[0]
+        assert warned.category is DeprecationWarning
+        assert warned.message.args[0].startswith(
+            "Single argument evolution function"
+        )
         
         
 class Test_mark_unfinished_as_finished(unittest.TestCase):
@@ -282,6 +292,21 @@ class Test_add_evolution_step(unittest.TestCase):
             utility.names,
             ['fred'])
         self.assertEqual(iface, IEvolutionSteps)
+
+def test_iterate_evolve_funcs():
+    from substanced.evolution import iterate_evolve_funcs
+    from substanced.evolution import VERSION
+
+    evolve_funcs = list(iterate_evolve_funcs())
+    i_versions = list(range(1, VERSION+1))
+
+    for i_version, evolve_func in zip(i_versions, evolve_funcs, strict=True):
+        assert evolve_func.__name__ == "evolve"
+        assert (
+            evolve_func.__module__ ==
+            f"substanced.evolution.evolve{i_version}"
+        )
+
 
 def dummystep(root, registry): pass
 

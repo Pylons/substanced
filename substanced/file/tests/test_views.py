@@ -1,3 +1,4 @@
+import importlib.resources
 import io
 import os
 import unittest
@@ -5,7 +6,6 @@ import tempfile
 import shutil
 
 import colander
-import pkg_resources
 from pyramid import testing
 
 class Test_view_file(unittest.TestCase):
@@ -205,10 +205,10 @@ class Test_preview_image_upload(unittest.TestCase):
         request.registry.settings['substanced.uploads_tempdir'] = here
         response = self._callFUT(request)
         self.assertEqual(response.content_type, 'image/gif')
-        fn = pkg_resources.resource_filename(
-            'substanced.sdi', 'static/img/onepixel.gif')
-        with open(fn, 'rb') as f:
-            expected = f.read()
+        sdi_files = importlib.resources.files('substanced.sdi')
+        onepixel_ref = sdi_files / 'static/img/onepixel.gif'
+        with importlib.resources.as_file(onepixel_ref) as path:
+            expected = path.read_bytes()
         self.assertEqual(response.body, expected)
 
     def test_with_fp(self):

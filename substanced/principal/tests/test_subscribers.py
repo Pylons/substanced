@@ -115,7 +115,7 @@ class Test_user_added(unittest.TestCase):
         self.assertRaises(AttributeError, self._callFUT, event)
         
     def test_it(self):
-        from pyramid.security import Allow
+        from pyramid.authorization import Allow
         user = testing.DummyResource()
         user.__oid__ = 1
         event = testing.DummyResource(object=user, loading=False)

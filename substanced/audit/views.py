@@ -3,7 +3,6 @@ from logging import getLogger
 
 from pyramid.view import view_defaults
 from pyramid.httpexceptions import HTTPPreconditionFailed
-from pyramid.compat import PY3, text_type
 from substanced.sdi import mgmt_view, RIGHT
 from substanced.util import (
     Batch,
@@ -99,7 +98,7 @@ class AuditLogEventStreamView(object):
                 oids = [get_oid(self.context)]
             _gen, _idx = map(int, last_event_id.split('-', 1))
             events = log.newer(_gen, _idx, oids=oids)
-            msg = text_type('')
+            msg = ''
             for gen, idx, event in events:
                 event_id = '%s-%s' % (gen, idx)
                 message = compose_message(event_id, event.name, event.payload)
@@ -118,8 +117,4 @@ def compose_message(eventid, name=None, payload=''):
     msg += 'retry: 10000\n'
     msg += 'data: %s\n' % payload
     msg += '\n'
-    if PY3: # pragma: no cover
-        return msg
-    else: # pragma: no cover
-        return msg.decode('utf-8')
-
+    return msg

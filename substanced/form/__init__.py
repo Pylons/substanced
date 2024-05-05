@@ -1,6 +1,6 @@
 import binascii
+import importlib.resources
 import os
-from pkg_resources import resource_filename
 
 from pyramid.i18n import get_localizer
 from pyramid.threadlocal import get_current_request
@@ -206,10 +206,15 @@ class FileUploadTempStore(object):
 def translator(term): # pragma: no cover
     return get_localizer(get_current_request()).translate(term)
 
+def get_deform_dir():
+    deform_files = importlib.resources.files('deform')
+    deform_dir = deform_files / 'templates'
+    assert deform_dir.is_dir()
+    return deform_dir
+
 def get_deform_renderer(search_paths):
     return ZPTRendererFactory(search_paths, translator=translator)
 
 def includeme(config): # pragma: no cover
-    deform_dir = resource_filename('deform', 'templates/')
-    deform_renderer = get_deform_renderer((deform_dir,))
+    deform_renderer = get_deform_renderer((get_deform_dir(),))
     deform.Form.set_default_renderer(deform_renderer)

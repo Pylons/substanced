@@ -7,10 +7,6 @@ from persistent import (
     Persistent,
     )
 from persistent.interfaces import IPersistent
-from pyramid.compat import (
-    is_nonstr_iter,
-    string_types,
-    )
 from pyramid.location import (
     lineage,
     inside,
@@ -48,9 +44,8 @@ from ..util import (
     find_service,
     find_services,
     wrap_if_broken,
+    is_nonstr_iter,
     )
-from .._compat import STRING_TYPES
-from .._compat import u
 
 
 class FolderKeyError(KeyError):
@@ -118,8 +113,7 @@ class Folder(Persistent):
         order_oids = []
 
         for name in names:
-            assert(isinstance(name, string_types))
-            name = u(name)
+            assert(isinstance(name, str))
             oid = get_oid(self[name])
             order.append(name)
             order_oids.append(oid)
@@ -173,8 +167,7 @@ class Folder(Persistent):
         reorder_oids = []
 
         for name in names:
-            assert(isinstance(name, string_types))
-            name = u(name)
+            assert(isinstance(name, str))
             if not name in order_names:
                 raise FolderKeyError(name)
             idx = order_names.index(name)
@@ -321,8 +314,10 @@ class Folder(Persistent):
         object or directly decodeable to Unicode using the system default
         encoding.
         """
+        if isinstance(name, bytes):
+            name = name.decode()
+
         with statsd_timer('folder.get'):
-            name = u(name)
             return wrap_if_broken(self.data[name])
 
     def get(self, name, default=None):
@@ -334,7 +329,6 @@ class Folder(Persistent):
         system default encoding.
         """
         with statsd_timer('folder.get'):
-            name = u(name)
             return wrap_if_broken(self.data.get(name, default))
 
     def __contains__(self, name):
@@ -345,7 +339,6 @@ class Folder(Persistent):
         If ``name`` is a bytestring object, it must be decodable using the
         system default encoding.
         """
-        name = u(name)
         return name in self.data
 
     def __setitem__(self, name, other):
@@ -393,16 +386,11 @@ class Folder(Persistent):
         the name passed is in the list of ``reserved_names``, raise a
         :exc:`ValueError`.
         """
-        if not isinstance(name, STRING_TYPES):
+        if not isinstance(name, str):
             raise ValueError("Name must be a string rather than a %s" %
                              name.__class__.__name__)
         if not name:
             raise ValueError("Name must not be empty")
-
-        try:
-            name = u(name)
-        except UnicodeDecodeError: #pragma NO COVER (on Py3k)
-            raise ValueError('Name "%s" not decodeable to unicode' % name)
 
         if name in reserved_names:
             raise ValueError('%s is a reserved name' % name)
@@ -578,7 +566,6 @@ class Folder(Persistent):
         attribute of events sent as a result of calling this method will be
         ``True`` too.
         """
-        name = u(name)
         other = wrap_if_broken(self.data[name])
         oid = get_oid(other, None)
 

@@ -1,14 +1,13 @@
+import importlib
 import time
 import warnings
 
 from BTrees import family64
 from pyramid.util import TopologicalSorter
-from pkg_resources import EntryPoint
 import transaction
 
 from ..interfaces import IEvolutionSteps
 from ..util import get_dotted_name
-from .._compat import STRING_TYPES
 
 try:
     # pyramid 1.9 and below
@@ -135,9 +134,9 @@ def add_evolution_step(config, func, before=None, after=None, name=None):
         name = get_dotted_name(func)
     else:
         func_desc = func_desc + ' (%s)' % name
-    if after is not None and not isinstance(after, STRING_TYPES):
+    if after is not None and not isinstance(after, str):
         after = get_dotted_name(after)
-    if before is not None and not isinstance(before, STRING_TYPES):
+    if before is not None and not isinstance(before, str):
         before = get_dotted_name(before)
     discriminator = ('evolution step', name)
     intr = config.introspectable(
@@ -157,6 +156,14 @@ def add_evolution_step(config, func, before=None, after=None, name=None):
 VERSION = 10         # legacy
 NAME = 'substanced'  # legacy
 
+def iterate_evolve_funcs():
+    for i in range(1, VERSION+1):
+        script_name = f".evolve{i}"
+        script_module = importlib.import_module(
+            script_name, package="substanced.evolution",
+        )
+        yield script_module.evolve
+
 def legacy_to_new(root, registry): # pragma: no cover
     mgr = EvolutionManager(root, registry)
     finished_steps = mgr.get_finished_steps()
@@ -170,7 +177,5 @@ def includeme(config): # pragma: no cover
     config.add_directive('add_evolution_step', add_evolution_step)
     config.add_evolution_step(legacy_to_new)
     config.scan('.subscribers')
-    for i in range(1, VERSION+1):
-        scriptname = 'substanced.evolution.evolve%s' % i
-        evmodule = EntryPoint.parse('x=%s' % scriptname).load(False)
-        config.add_evolution_step(evmodule.evolve)
+    for evolve_func in iterate_evolve_funcs:
+        config.add_evolution_step(evolve_func)

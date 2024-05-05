@@ -2,13 +2,12 @@ from logging import getLogger
 
 import BTrees
 
-from .._compat import u
 from ..util import (
     get_acl,
     postorder,
     )
 
-_SLASH = u('/')
+_SLASH = '/'
 
 logger = getLogger(__name__)
 

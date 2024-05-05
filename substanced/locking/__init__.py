@@ -7,7 +7,6 @@ used by add-ons such as DAV implementations.
 
 import datetime
 import uuid
-import pytz
 
 from zope.interface import implementer
 
@@ -17,7 +16,6 @@ import colander
 import deform.widget
 
 from pyramid.location import lineage
-from pyramid.security import has_permission
 from pyramid.threadlocal import get_current_registry
 from pyramid.traversal import resource_path
 
@@ -46,7 +44,6 @@ from substanced.util import (
     get_oid,
     )
 from substanced.schema import Schema
-from substanced._compat import INT_TYPES
 
 class LockingError(Exception):
     def __init__(self, lock):
@@ -72,7 +69,7 @@ class UnlockError(LockingError):
     """
 
 def now():
-    return datetime.datetime.utcnow().replace(tzinfo=pytz.UTC)
+    return datetime.datetime.now(datetime.timezone.utc)
 
 class LockOwnerSchema(colander.SchemaNode):
     title = 'Owner'
@@ -111,7 +108,7 @@ class LockResourceSchema(colander.SchemaNode):
             resource = objectmap.object_for(tuple(value.split('/')))
         except ValueError:
             return None
-        if not has_permission('sdi.lock', resource, request):
+        if not request.has_permission('sdi.lock', resource):
             return False
         return resource
 
@@ -263,7 +260,7 @@ class LockService(Folder, _AutoNamingFolder):
         ownerid = get_oid(owner_or_ownerid, None)
         if ownerid is None:
             ownerid = owner_or_ownerid
-        if not isinstance(ownerid, INT_TYPES):
+        if not isinstance(ownerid, int):
             raise ValueError(
                 'Bad value for owner_or_ownerid %r' % owner_or_ownerid
                 )

@@ -1,6 +1,6 @@
 from pyramid.view import view_defaults
 from pyramid.httpexceptions import HTTPFound
-from pyramid.session import check_csrf_token
+from pyramid.csrf import check_csrf_token
 
 from substanced.interfaces import MODE_IMMEDIATE
 from substanced.util import (
