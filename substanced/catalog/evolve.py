@@ -14,4 +14,5 @@ def treesetify_catalog_pathindexes(root, registry): # pragma: no cover
             pathindex._not_indexed)
 
 def includeme(config):
+    config.include('..evolution')  # 'add_evolution_step' directive
     config.add_evolution_step(treesetify_catalog_pathindexes)

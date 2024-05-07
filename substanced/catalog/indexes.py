@@ -451,6 +451,7 @@ class AllowsComparator(hypatia.query.Comparator):
         return 'allows query'
 
 def includeme(config): # pragma: no cover
+        config.include('..property')   # 'add_propertysheet' directive
         config.add_propertysheet(
             '',
             IndexPropertySheet,
