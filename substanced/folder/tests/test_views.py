@@ -848,7 +848,9 @@ class TestFolderContents(unittest.TestCase):
         mock_rename_duplicated_resource.assert_any_call(context, 'b')
         request.sdiapi.flash_with_undo.assert_called_once_with(
             'Duplicated 2 items', 'success')
-        request.sdiapi.mgmt_path.called_once_with(context, '@@contents')
+        request.sdiapi.mgmt_path.assert_called_once_with(
+            context, '@@contents', _query=[],
+        )
         context.copy.assert_any_call('a', context, 'a-1')
         context.copy.assert_any_call('b', context, 'b-1')
 
@@ -865,7 +867,9 @@ class TestFolderContents(unittest.TestCase):
 
         self.assertEqual(context.mock_calls, [])
         request.sdiapi.flash_with_undo.assert_called_once_with('Duplicated 0 items', 'success')
-        request.sdiapi.mgmt_path.called_once_with(context, '@@contents')
+        request.sdiapi.mgmt_path.assert_called_once_with(
+            context, '@@contents', _query=[],
+        )
 
     @mock.patch('substanced.folder.views.rename_duplicated_resource')
     def test_duplicate_one(self, mock_rename_duplicated_resource):
@@ -884,7 +888,9 @@ class TestFolderContents(unittest.TestCase):
         context.copy.assert_any_call('a', context, 'a-1')
         request.sdiapi.flash_with_undo.assert_called_once_with(
             'Duplicated 1 item', 'success')
-        request.sdiapi.mgmt_path.called_once_with(context, '@@contents')
+        request.sdiapi.mgmt_path.assert_called_once_with(
+            context, '@@contents', _query=[],
+        )
 
     def test_rename_one(self):
         context = testing.DummyResource()
