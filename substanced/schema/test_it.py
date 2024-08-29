@@ -280,6 +280,14 @@ class TestReferenceIdSchemaNode(unittest.TestCase):
         inst.choices_getter = lambda *arg: 123
         self.assertEqual(inst._get_choices(), 123)
 
+    def test_serialize_w_none(self):
+        inst = self._makeOne()
+        assert inst.serialize(None) is colander.null
+
+    def test_serialize_w_int(self):
+        inst = self._makeOne()
+        assert inst.serialize(123) == "123"
+
     def test_widget(self):
         inst = self._makeOne()
         inst._get_choices = lambda: [1]
