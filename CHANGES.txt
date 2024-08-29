@@ -1,6 +1,9 @@
 1.0b1 (unreleased)
 ==================
 
+- Update to use Pyramid >= 2.0.
+  See https://github.com/Pylons/substanced/pull/308
+
 - Drop old Python versions (< 3.8), add newer ones (up to 3.12).
   - Remove all the "straddle" compatibility stuff FBO Python 2.7
   - Pin pyramid < 2.0dev, until it can be reviewed in depth.
