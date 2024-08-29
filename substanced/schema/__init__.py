@@ -227,6 +227,15 @@ class ReferenceIdSchemaNode(colander.SchemaNode):
         request = self.bindings['request']
         return self.choices_getter(context, request) # passed to SchemaNode ctor
 
+    def serialize(self, appstruct):
+        # 'substanced.objectmap._reference_property' returns None if no
+        # reference exists, but that value cannot be serialized by
+        # 'colander.Int'.
+        if appstruct is None:
+            return colander.null
+
+        return super().serialize(appstruct)
+
     @property
     def widget(self):
         values = self._get_choices()
