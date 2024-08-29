@@ -70,7 +70,7 @@ class Workflow(object):
                          :meth:`Workflow.transition_to_state` will trigger
                          callback if entering this state.
         :type callback: callable
-        :param \*\*kw: Metadata assigned to this state.
+        :param kw: Metadata assigned to this state.
 
         :raises: :exc:`WorkflowError` if state already exists.
 
@@ -98,7 +98,7 @@ class Workflow(object):
                          :meth:`Workflow.transition_to_state` will trigger
                          callback if this transition is executed.
         :type callback: callable
-        :param \*\*kw: Metadata assigned to this transition.
+        :param kw: Metadata assigned to this transition.
 
         :raises: :exc:`WorkflowError` if transition already exists.
         :raises: :exc:`WorkflowError` if from_state or to_state don't exist.
