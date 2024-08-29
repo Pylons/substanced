@@ -1,15 +1,74 @@
-Next release
-------------
+1.0b1 (unreleased)
+==================
+
+- Override ``serialize`` for ``ReferenceIdSchemaNode``.
+  See https://github.com/Pylons/substanced/pull/311
+
+- Get all tests running under ``py.test`` against head of Pyramid's 
+  ``1.10`` branch.  See https://github.com/Pylons/substanced/pull/309
+
+- Add support for Python 3.6 and 3.7; drop support for Python 3.4.
+  See https://github.com/Pylons/substanced/pull/305
+
+- Accomodate Pyramid's deprecation of ``confg.set_request_property``.
+  See: https://github.com/Pylons/substanced/pull/303
+
+- Fix type conflict when rendering description of an undoable transaction.
+  See https://github.com/Pylons/substanced/pull/299
+
+- Add ``zh_CN`` translation.
+  See https://github.com/Pylons/substanced/pull/296
+
+- Replace exception, raised due to conflict when renaming an object, with
+  flash message.  See https://github.com/Pylons/substanced/pull/292
+
+- Fix docs build broken by Sphinx 1.4.x.
+  See https://github.com/Pylons/substanced/pull/287
 
 - Replace virtualenv with tox as a testing extra.
+  See https://github.com/Pylons/substanced/pull/275
+
+- Docs cleanups.  See
+  https://github.com/Pylons/substanced/pull/306,
+  https://github.com/Pylons/substanced/pull/289,
+  https://github.com/Pylons/substanced/pull/283,
+  https://github.com/Pylons/substanced/pull/281,
+  https://github.com/Pylons/substanced/pull/280,
+  https://github.com/Pylons/substanced/pull/279,
+  https://github.com/Pylons/substanced/pull/278,
+  https://github.com/Pylons/substanced/pull/277,
+  https://github.com/Pylons/substanced/pull/274,
+  https://github.com/Pylons/substanced/pull/273,
+  https://github.com/Pylons/substanced/pull/271,
+  and https://github.com/Pylons/substanced/pull/265
+
+- Ensure tests run under ``py.test``.
+  See https://github.com/Pylons/substanced/pull/272
+
+- Update tests for compatibilty with WebOb >= 1.6.
+  See https://github.com/Pylons/substanced/pull/269
 
 - Remove support for Python 2.6, 3.2, and 3.3, and add support for Python 3.5.
   See https://github.com/Pylons/substanced/pull/264
 
-- Omit the ``Upload`` tab for folders which can not contain files. See
-  https://github.com/Pylons/substanced/pull/247.
+- Show "up" arrow in not-root folder contents views.
+  See https://github.com/Pylons/substanced/pull/253
+
+- Fix typo in references docs.
+  See https://github.com/Pylons/substanced/pull/251
+
+- Omit the ``Upload`` tab for folders which can not contain files.
+  See https://github.com/Pylons/substanced/pull/246
+  and https://github.com/Pylons/substanced/pull/247.
 
 - Added Finnish translation.
+  See https://github.com/Pylons/substanced/pull/248
+
+- Fix variable name in workflow docs.
+  See https://github.com/Pylons/substanced/pull/245
+
+- Fix variable name in cataloging docs.
+  See https://github.com/Pylons/substanced/pull/244
 
 - Fixed bug in scaffold that prevented Document properties tab from showing up
   in the SDI.
