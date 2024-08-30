@@ -17,7 +17,6 @@ jobs:
                     - "3.10"
                     - "3.11"
                     - "3.12"
-                    - "pypy-3.9"
                 os:
                     - "ubuntu-22.04"
                 architecture:
@@ -26,9 +25,6 @@ jobs:
                     # Only run coverage on ubuntu-22.04, except on pypy3
                     - os: "ubuntu-22.04"
                       pytest-args: "--cov"
-                    - os: "ubuntu-22.04"
-                      py: "pypy-3.9"
-                      pytest-args: ""
 
         name: "Python: ${{ matrix.py }}-${{ matrix.architecture }} on ${{ matrix.os }}"
         runs-on: ${{ matrix.os }}
