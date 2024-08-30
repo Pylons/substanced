@@ -1,6 +1,16 @@
 1.0b1 (unreleased)
 ==================
 
+- Drop old Python versions (< 3.8), add newer ones (up to 3.12).
+  - Remove all the "straddle" compatibility stuff FBO Python 2.7
+  - Pin pyramid < 2.0dev, until it can be reviewed in depth.
+  - Fix deprecation warnings from pyramid.
+  - Silence deprecation warnings related to pkg_resources.
+  - Make ``py.test`` the testrunner (to support the newer Python versions).
+  - Replace ``cryptacular`` with plain ``bcrypt`` (the ``enscons`` builder
+    that ``cryptacular`` needs barfs on Python 3.12).
+  See: https://github.com/Pylons/substanced/pull/307
+
 - Override ``serialize`` for ``ReferenceIdSchemaNode``.
   See https://github.com/Pylons/substanced/pull/311
 

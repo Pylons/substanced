@@ -1,4 +1,5 @@
 import unittest
+import warnings
 
 class TestEvolutionManager(unittest.TestCase):
     def _makeOne(self, context, registry, txn):
@@ -141,8 +142,17 @@ class TestEvolutionManager(unittest.TestCase):
         L = []
         inst.out = L.append
         inst.get_unfinished_steps = lambda *arg: [('name', func)]
-        inst.evolve(False)
+
+        with warnings.catch_warnings(record=True) as log:
+            inst.evolve(False)
+
         self.assertEqual(len(L), 1)
+        assert len(log) == 1
+        warned = log[0]
+        assert warned.category is DeprecationWarning
+        assert warned.message.args[0].startswith(
+            "Single argument evolution function"
+        )
         
         
 class Test_mark_unfinished_as_finished(unittest.TestCase):

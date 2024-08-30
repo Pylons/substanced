@@ -1,0 +1,66 @@
+name: Build and test
+
+on:
+    push:
+        branches:
+            - master
+        tags:
+    pull_request:
+
+jobs:
+    test:
+        strategy:
+            matrix:
+                py:
+                    - "3.8"
+                    - "3.9"
+                    - "3.10"
+                    - "3.11"
+                    - "3.12"
+                os:
+                    - "ubuntu-22.04"
+                architecture:
+                    - x64
+                include:
+                    # Only run coverage on ubuntu-22.04, except on pypy3
+                    - os: "ubuntu-22.04"
+                      pytest-args: "--cov"
+
+        name: "Python: ${{ matrix.py }}-${{ matrix.architecture }} on ${{ matrix.os }}"
+        runs-on: ${{ matrix.os }}
+        steps:
+            - uses: actions/checkout@v4
+            - name: Setup python
+              uses: actions/setup-python@v5
+              with:
+                  python-version: ${{ matrix.py }}
+                  architecture: ${{ matrix.architecture }}
+            - run: pip install tox
+            - name: Running tox
+              run: tox -e py -- ${{ matrix.pytest-args }}
+
+    coverage:
+        runs-on: ubuntu-22.04
+        name: Validate coverage
+        steps:
+            - uses: actions/checkout@v4
+            - name: Setup python
+              uses: actions/setup-python@v5
+              with:
+                  python-version: 3.12
+                  architecture: x64
+            - run: pip install tox
+            - run: tox -e cover
+
+    docs:
+        runs-on: ubuntu-22.04
+        name: Build the documentation
+        steps:
+            - uses: actions/checkout@v4
+            - name: Setup python
+              uses: actions/setup-python@v5
+              with:
+                  python-version: 3.12
+                  architecture: x64
+            - run: pip install tox
+            - run: tox -e docs

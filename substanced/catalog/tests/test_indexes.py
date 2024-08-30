@@ -3,10 +3,9 @@ from pyramid import testing
 
 import BTrees
 
-from ..._compat import u
-_BLANK = u('')
-_A = u('a')
-_ABC = u('abc')
+_BLANK = ''
+_A = 'a'
+_ABC = 'abc'
 
 def _makeSite(**kw):
     from ...interfaces import IFolder

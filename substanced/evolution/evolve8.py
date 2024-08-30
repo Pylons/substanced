@@ -1,7 +1,5 @@
 import logging
 
-from pyramid.compat import string_types
-
 from ..util import (
     get_oid,
     is_folder,
@@ -33,7 +31,7 @@ def evolve(root, registry):
                 oid_order = ()
                 name_order = ()
                 if order:
-                    if isinstance(order[0], string_types):
+                    if isinstance(order[0], str):
                         # handle master branch
                         name_order = obj._order
                         oid_order = []

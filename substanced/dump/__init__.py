@@ -1,3 +1,5 @@
+from base64 import decodebytes
+from base64 import encodebytes
 import logging
 import os
 
@@ -30,16 +32,17 @@ from substanced.util import (
     get_content_type,
     is_folder,
     )
-from .._compat import TEXT
-from .._compat import u
-from .._compat import decodebytes
-from .._compat import encodebytes
 
 
 logger = logging.getLogger(__name__)
 
 RESOURCE_FILENAME = 'resource.yaml'
 RESOURCES_DIRNAME = 'resources'
+
+DUMP_INTERFACE = '!interface'
+DUMP_BLOB = '!blob'
+DUMP_ALL_PERMISSIONS = '!all_permissions'
+DUMP_COLANDER_NULL = '!colander_null'
 
 dotted_name_resolver = DottedNameResolver()
 
@@ -60,27 +63,28 @@ def set_yaml(registry):
     registry['yaml_dumper'] = SDumper
 
     def iface_representer(dumper, data):
-        return dumper.represent_scalar(u('!interface'), get_dotted_name(data))
+        return dumper.represent_scalar(DUMP_INTERFACE, get_dotted_name(data))
     def iface_constructor(loader, node):
         return dotted_name_resolver.resolve(node.value)
 
     SDumper.add_multi_representer(InterfaceClass, iface_representer)
-    SLoader.add_constructor(u('!interface'), iface_constructor)
+    SLoader.add_constructor(DUMP_INTERFACE, iface_constructor)
 
     def blob_representer(dumper, data):
         with data.open('r') as f:
             data = f.read()
         encoded = encodebytes(data)
         u_encoded = encoded.decode('ascii')
-        return dumper.represent_scalar(u('!blob'), u_encoded)
+        return dumper.represent_scalar(DUMP_BLOB, u_encoded)
+
     def blob_constructor(loader, node):
         value = node.value
-        if isinstance(value, TEXT):
+        if isinstance(value, str):
             value = value.encode('ascii')
         return Blob(decodebytes(value))
 
     SDumper.add_representer(Blob, blob_representer)
-    SLoader.add_constructor(u('!blob'), blob_constructor)
+    SLoader.add_constructor(DUMP_BLOB, blob_constructor)
 
 
 def get_dumpers(registry):
@@ -395,12 +399,15 @@ class ACLDumper(object):
         self.name = name
         self.registry = registry
         self.fn = '%s.yaml' % self.name
+
         def ap_constructor(loader, node):
             return ALL_PERMISSIONS
+
         def ap_representer(dumper, data):
-            return dumper.represent_scalar(u('!all_permissions'), '')
+            return dumper.represent_scalar(DUMP_ALL_PERMISSIONS, '')
+
         registry['yaml_loader'].add_constructor(
-            u('!all_permissions'),
+            DUMP_ALL_PERMISSIONS,
             ap_constructor,
             )
         registry['yaml_dumper'].add_representer(
@@ -558,9 +565,9 @@ class PropertySheetDumper(object):
         def cn_constructor(loader, node):
             return colander.null
         def cn_representer(dumper, data):
-            return dumper.represent_scalar(u('!colander_null'), '')
+            return dumper.represent_scalar(DUMP_COLANDER_NULL, '')
         registry['yaml_loader'].add_constructor(
-            u('!colander_null'),
+            DUMP_COLANDER_NULL,
             cn_constructor,
             )
         registry['yaml_dumper'].add_representer(

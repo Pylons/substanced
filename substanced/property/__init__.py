@@ -5,13 +5,13 @@ from zope.interface import (
     Interface,
     )
 
-from pyramid.compat import is_nonstr_iter
 from walkabout import IPredicateDomain
 from walkabout import PredicateDomain
 
 from ..interfaces import IPropertySheet
 from ..event import ObjectModified
 from ..content import _ContentTypePredicate
+from ..util import is_nonstr_iter
 
 try:
     # pyramid 1.9 and below

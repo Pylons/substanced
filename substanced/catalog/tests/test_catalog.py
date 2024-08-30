@@ -10,10 +10,9 @@ from zope.interface import (
 
 from hypatia.interfaces import IIndex
 
-from ..._compat import u
-_BLANK = u('')
-_A = u('a')
-_B = u('b')
+_BLANK = ''
+_A = 'a'
+_B = 'b'
 
 def _makeSite(**kw):
     from ...interfaces import IFolder

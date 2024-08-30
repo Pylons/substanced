@@ -3,7 +3,7 @@ from pyramid.httpexceptions import (
     HTTPFound
     )
 from pyramid.renderers import get_renderer
-from pyramid.session import check_csrf_token
+from pyramid.csrf import check_csrf_token
 from pyramid.security import (
     remember,
     forget,

@@ -32,8 +32,6 @@ from ..interfaces import (
 from ..objectmap import find_objectmap
 from ..stats import statsd_timer
 from ..util import get_oid
-from .._compat import INT_TYPES
-from .._compat import u
 
 from .factories import (
     IndexFactory,
@@ -70,7 +68,7 @@ Path = Path # API
 
 logger = logging.getLogger(__name__) # API
 
-_SLASH = u('/')
+_SLASH = '/'
 
 _marker = object()
 
@@ -174,7 +172,7 @@ class Catalog(Folder):
         which explicitly indicates that you'd like to use the index's
         action_mode value."""
         oid = get_oid(resource_or_oid, resource_or_oid)
-        if not isinstance(oid, INT_TYPES):
+        if not isinstance(oid, int):
             raise ValueError(
                 'resource_or_oid must be a resource object with an __oid__ '
                 'attribute or an integer oid'

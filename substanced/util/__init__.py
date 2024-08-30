@@ -1,4 +1,8 @@
 import calendar
+try:
+    import cProfile as _profile
+except ImportError: # pragma: no cover (pypy)
+    import profile as _profile
 import itertools
 import json
 import math
@@ -6,30 +10,20 @@ import os
 import pstats
 import tempfile
 import types
-from ZODB.interfaces import IBroken
-try:
-    import cProfile as _profile
-except ImportError: # pragma: no cover (pypy)
-    import profile as _profile
-
-from zope.interface import providedBy
-from zope.interface.declarations import Declaration
+from urllib.parse import parse_qsl
+from urllib.parse import urlsplit
+from urllib.parse import urlunsplit
 
 from pyramid.location import lineage
 from pyramid.threadlocal import get_current_registry
 from pyramid.i18n import TranslationStringFactory
 from pyramid.encode import urlencode
+from ZODB.interfaces import IBroken
+from zope.interface import providedBy
+from zope.interface.declarations import Declaration
 
 from ..interfaces import IFolder
 from ..interfaces import IService
-
-from .._compat import (
-    parse_qsl,
-    urlsplit,
-    urlunsplit,
-    STRING_TYPES,
-    INT_TYPES,
-    )
 
 
 _ = TranslationStringFactory('substanced')
@@ -581,8 +575,7 @@ def get_principal_repr(principal_or_id):
 
     Given any other string value, return it.
     """
-    base_types = STRING_TYPES + INT_TYPES
-    if isinstance(principal_or_id, base_types):
+    if isinstance(principal_or_id, (str, int)):
         return str(principal_or_id)
     prepr = getattr(principal_or_id, '__principal_repr__', None)
     if prepr is not None:
@@ -662,3 +655,5 @@ def profile(
     finally:
         os.remove(fn)
 
+def is_nonstr_iter(v):
+    return (not isinstance(v, str)) and hasattr(v, '__iter__')

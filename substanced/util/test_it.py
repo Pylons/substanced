@@ -1,7 +1,6 @@
 import unittest
 
 from pyramid import testing
-from pyramid.compat import text_
 
 from . import _marker
 
@@ -358,7 +357,9 @@ class Test_merge_url_qs(unittest.TestCase):
 
     def test_with_nonascii_values_in_kw(self):
         url = 'http://example.com?c=%2B'
-        result = self._callFUT(url, a=text_(b'LaPe\xc3\xb1a', 'utf-8'))
+        result = self._callFUT(
+            url, a=b'LaPe\xc3\xb1a'.decode('utf-8', errors='strict')
+        )
         self.assertEqual(result, 'http://example.com?a=LaPe%C3%B1a&c=%2B')
 
 class Test_acquire(unittest.TestCase):
@@ -519,7 +520,9 @@ class Test_get_dotted_name(unittest.TestCase):
 
     def test_nonmodule(self):
         result = self._callFUT(self.__class__)
-        self.assertEqual(result, 'substanced.util.tests.Test_get_dotted_name')
+        self.assertEqual(
+            result, 'substanced.util.test_it.Test_get_dotted_name',
+        )
 
 class Test_get_content_type(unittest.TestCase):
     def setUp(self):
@@ -717,7 +720,7 @@ class Test_get_factory_type(unittest.TestCase):
     def test_without_ft_attr(self):
         resource = Dummy()
         self.assertEqual(self._callFUT(resource),
-                         'substanced.util.tests.Dummy')
+                         'substanced.util.test_it.Dummy')
 
 class Test_get_interfaces(unittest.TestCase):
     def _callFUT(self, resource, classes=True):
