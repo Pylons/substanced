@@ -5,15 +5,6 @@ import colander
 from pyramid import testing
 from zope.interface import implementer
 
-class Test_locale_widget(unittest.TestCase):
-    def _callFUT(self, node, kw):
-        from substanced.principal import locale_widget
-        return locale_widget(node, kw)
-
-    def test_it(self):
-        result = self._callFUT(None, None)
-        self.assertTrue( ('en', 'en') in result.values)
-
 class TestPrincipals(unittest.TestCase):
     def setUp(self):
         self.config = testing.setUp()
@@ -342,6 +333,26 @@ class Test_groups_choices(unittest.TestCase):
         request = testing.DummyRequest()
         result = self._makeOne(site, request)
         self.assertEqual(result, ())
+
+class Test_tzname_widget(unittest.TestCase):
+    def _callFUT(self, node, kw):
+        from substanced.principal import tzname_widget
+        return tzname_widget(node, kw)
+
+    def test_it(self):
+        result = self._callFUT(None, None)
+        self.assertIn(
+            ('America/New_York', 'America/New_York'), result.values
+        )
+
+class Test_locale_widget(unittest.TestCase):
+    def _callFUT(self, node, kw):
+        from substanced.principal import locale_widget
+        return locale_widget(node, kw)
+
+    def test_it(self):
+        result = self._callFUT(None, None)
+        self.assertIn( ('en', 'en'), result.values)
 
 class TestUser(unittest.TestCase):
     def setUp(self):
