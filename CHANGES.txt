@@ -1,6 +1,9 @@
 1.0b1 (unreleased)
 ==================
 
+- Fix ``tznames_widget``, b0rken seemingly forever under Python3.
+  See https://github.com/Pylons/substanced/pull/314
+
 - Drop old Python versions (< 3.8), add newer ones (up to 3.12).
   - Remove all the "straddle" compatibility stuff FBO Python 2.7
   - Pin pyramid < 2.0dev, until it can be reviewed in depth.
