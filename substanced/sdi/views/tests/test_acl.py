@@ -383,7 +383,7 @@ class TestAdd(unittest.TestCase):
         self.assertEqual(request.sdiapi.flashed, 'New ACE added')
 
     def test_add_all_permissions(self):
-        from pyramid.security import ALL_PERMISSIONS
+        from pyramid.authorization import ALL_PERMISSIONS
         from ....testing import make_site
         request = testing.DummyRequest()
         request.sdiapi = DummySDIAPI()
@@ -409,7 +409,7 @@ class TestAdd(unittest.TestCase):
         self.assertEqual(request.sdiapi.flashed, 'New ACE added')
 
     def test_add_Everyone(self):
-        from pyramid.security import Everyone
+        from pyramid.authorization import Everyone
         from ....testing import make_site
         request = testing.DummyRequest()
         request.sdiapi = DummySDIAPI()
@@ -547,7 +547,7 @@ class TestOther(unittest.TestCase):
         self.assertEqual(result, ('disabled', []))
 
     def test_get_local_acl_with_all_permissions(self):
-        from pyramid.security import ALL_PERMISSIONS, Allow
+        from pyramid.authorization import ALL_PERMISSIONS, Allow
         request = testing.DummyRequest()
         site = self._makeSite()
         user = testing.DummyResource()
@@ -577,7 +577,7 @@ class TestOther(unittest.TestCase):
         self.assertEqual(result, [])
 
     def test_get_parent_acl_with_noniter_permission(self):
-        from pyramid.security import Allow
+        from pyramid.authorization import Allow
         request = testing.DummyRequest()
         context = testing.DummyResource()
         context.__acl__ = [(Allow, 1, 'edit')]
@@ -590,7 +590,7 @@ class TestOther(unittest.TestCase):
         self.assertEqual(result, [(Allow, 'fred', ('edit',))])
 
     def test_get_parent_acl_with_all_permissions(self):
-        from pyramid.security import Allow, ALL_PERMISSIONS
+        from pyramid.authorization import Allow, ALL_PERMISSIONS
         request = testing.DummyRequest()
         context = testing.DummyResource()
         context.__acl__ = [ (Allow, 1, ALL_PERMISSIONS) ]
@@ -612,7 +612,7 @@ class TestOther(unittest.TestCase):
         self.assertEqual(result, '<deleted principal>')
 
     def test_get_principal_name_Everyone(self):
-        from pyramid.security import Everyone
+        from pyramid.authorization import Everyone
         request = testing.DummyRequest()
         context = testing.DummyResource()
         context.__parent__ = None

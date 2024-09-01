@@ -1,4 +1,6 @@
 import unittest
+from unittest import mock
+
 from pyramid import testing
 
 class TestUndoViews(unittest.TestCase):
@@ -175,9 +177,7 @@ class TestUndoViews(unittest.TestCase):
 
     def test_undo_multiple(self):
         import binascii
-        sec_pol = testing.DummySecurityPolicy(userid="phred")
         request = testing.DummyRequest()
-        request._get_authentication_policy = lambda: sec_pol
         context = testing.DummyResource()
         inst = self._makeOne(context, request)
         conn = DummyConnection()
@@ -197,7 +197,12 @@ class TestUndoViews(unittest.TestCase):
         request.sdiapi = DummySDIAPI()
         txn = DummyTransaction()
         inst.transaction = txn
-        result = inst.undo_multiple()
+
+        sec_pol = testing.DummySecurityPolicy(userid="phred")
+        with mock.patch("pyramid.security._get_security_policy") as gsp:
+            gsp.return_value = sec_pol
+            result = inst.undo_multiple()
+
         self.assertEqual(result.location, '/mgmt_path')
         self.assertEqual(conn._db.tids, [b'a', b'b'])
         self.assertTrue(txn.committed)
@@ -205,9 +210,7 @@ class TestUndoViews(unittest.TestCase):
 
     def test_undo_multiple_with_text_in_POST(self):
         import binascii
-        sec_pol = testing.DummySecurityPolicy(userid="phred")
         request = testing.DummyRequest()
-        request._get_authentication_policy = lambda: sec_pol
         context = testing.DummyResource()
         inst = self._makeOne(context, request)
         conn = DummyConnection()
@@ -227,7 +230,12 @@ class TestUndoViews(unittest.TestCase):
         request.sdiapi = DummySDIAPI()
         txn = DummyTransaction()
         inst.transaction = txn
-        result = inst.undo_multiple()
+
+        sec_pol = testing.DummySecurityPolicy(userid="phred")
+        with mock.patch("pyramid.security._get_security_policy") as gsp:
+            gsp.return_value = sec_pol
+            result = inst.undo_multiple()
+
         self.assertEqual(result.location, '/mgmt_path')
         self.assertEqual(conn._db.tids, [b'a', b'b'])
         self.assertTrue(txn.committed)

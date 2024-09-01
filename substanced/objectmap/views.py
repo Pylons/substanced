@@ -1,5 +1,5 @@
-from pyramid.view import view_defaults
 from pyramid.security import NO_PERMISSION_REQUIRED
+from pyramid.view import view_defaults
 
 from . import (
     find_objectmap,

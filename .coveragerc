@@ -3,6 +3,7 @@ omit =
     substanced/*/evolve.py
     substanced/evolution/evolve*.py
     substanced/scripts/*.py
+    substanced/scaffolds/*.py
 
 [coverage:report]
 show_missing = true

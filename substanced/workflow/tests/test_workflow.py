@@ -1100,9 +1100,9 @@ class ACLStateTests(unittest.TestCase):
         state(object(), request={}, transition='dummy', workflow=object())
 
     def test___call___w_acl(self):
-        from pyramid.security import Allow
-        from pyramid.security import Everyone
-        from pyramid.security import ALL_PERMISSIONS
+        from pyramid.authorization import Allow
+        from pyramid.authorization import Everyone
+        from pyramid.authorization import ALL_PERMISSIONS
         class _Content(object):
             pass
         content = _Content()

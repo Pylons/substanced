@@ -4,10 +4,8 @@ import time
 import deform.widget
 
 from persistent import Persistent
-from pyramid.security import (
-    Allow,
-    Everyone,
-    )
+from pyramid.authorization import Allow
+from pyramid.authorization import Everyone
 
 from substanced.content import content
 from substanced.folder import Folder

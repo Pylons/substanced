@@ -1,11 +1,11 @@
 import colander
 from zope.interface import implementer
 
-from pyramid.exceptions import ConfigurationError
-from pyramid.security import (
+from pyramid.authorization import (
     Allow,
     ALL_PERMISSIONS,
     )
+from pyramid.exceptions import ConfigurationError
 
 from ..interfaces import IRoot
 

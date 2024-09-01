@@ -476,7 +476,7 @@ class TestACLDumper(unittest.TestCase):
         return ACLDumper(name, registry)
 
     def test_init_adds_yaml_stuff(self):
-        from pyramid.security import ALL_PERMISSIONS
+        from pyramid.authorization import ALL_PERMISSIONS
         from . import DUMP_ALL_PERMISSIONS
         yamlthing = DummyYAMLDumperLoader()
         registry = {'yaml_loader':yamlthing, 'yaml_dumper':yamlthing}

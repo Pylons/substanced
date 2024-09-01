@@ -9,8 +9,8 @@ from zope.interface import (
     alsoProvides,
     )
 from zope.interface.interface import InterfaceClass
+from pyramid.authorization import AllPermissionsList, ALL_PERMISSIONS
 from pyramid.request import Request
-from pyramid.security import AllPermissionsList, ALL_PERMISSIONS
 from pyramid.threadlocal import get_current_registry
 from pyramid.traversal import resource_path
 from pyramid.util import (

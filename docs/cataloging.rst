@@ -349,6 +349,10 @@ It is possible to postfilter catalog results using the
 
 .. code-block:: python
 
+   from pyramid.authorization import Everyone
+
+   ...
+
    def get_allowed_to_view(context, request):
 
        catalog = find_catalog(context, 'system')
@@ -356,8 +360,12 @@ It is possible to postfilter catalog results using the
        resultset = q.execute()
 
        objectmap = find_objectmap(context)
+       identity = request.identity
+       effective_principals = [
+           Everyone, identity["userid"]
+       ] + identity["principals"]
        return objectmap.allowed(
-                 resultset.oids, request.effective_principals, 'view')
+                 resultset.oids, effective_principals, 'view')
 
 The result of :meth:`~substanced.objectmap.ObjectMap.allowed` is a generator
 which returns oids, so the result must be listified if you intend to index into

@@ -1,13 +1,13 @@
+from pyramid.authorization import Authenticated
+from pyramid.csrf import check_csrf_token
 from pyramid.httpexceptions import (
     HTTPForbidden,
     HTTPFound
     )
 from pyramid.renderers import get_renderer
-from pyramid.csrf import check_csrf_token
 from pyramid.security import (
     remember,
     forget,
-    Authenticated,
     NO_PERMISSION_REQUIRED,
     )
 
