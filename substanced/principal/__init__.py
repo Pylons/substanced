@@ -407,17 +407,23 @@ class User(Folder):
         return pytz.timezone(self.tzname)
 
     def check_password(self, password):
-        """ Checks if the plaintext password passed as ``password`` matches
-        this user's stored, encrypted password.  Returns ``True`` or
-        ``False``."""
+        """Check plaintext ``password`` against stored, hashed password.
+        """
         statsd_gauge('check_password', 1)
+
         if len(password) > 4096:
             # avoid DOS ala
             # https://www.djangoproject.com/weblog/2013/sep/15/security/
             raise ValueError('Not checking password > 4096 bytes')
+
         if isinstance(password, str):
             password = password.encode('utf-8')
-        return bcrypt.checkpw(password, self.password)
+
+        hashed = self.password
+        if isinstance(hashed, str):
+            hashed = hashed.encode('utf-8')
+
+        return bcrypt.checkpw(password, hashed)
 
     def set_password(self, password):
         self.password = self.hash_new_password(password)
