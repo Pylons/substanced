@@ -297,8 +297,8 @@ def groups_choices(context, request):
 _ZONES = pytz.all_timezones
 
 @colander.deferred
-def tzname_widget(node, kw): #pragma NO COVER
-    return deform.widget.Select2Widget(values=zip(_ZONES, _ZONES))
+def tzname_widget(node, kw):
+    return deform.widget.Select2Widget(values=list(zip(_ZONES, _ZONES)))
 
 def get_locales():
     dir_ = os.listdir(os.path.join(os.path.dirname(__file__),
