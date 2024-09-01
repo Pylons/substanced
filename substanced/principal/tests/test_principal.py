@@ -376,6 +376,14 @@ class TestUser(unittest.TestCase):
         self.assertTrue(inst.check_password('abc'))
         self.assertFalse(inst.check_password('abcdef'))
 
+    def test_check_password_w_str(self):
+        inst = self._makeOne('abc')
+        assert isinstance(inst.password, bytes)
+        # See https://github.com/Pylons/substanced/issues/315
+        inst.password = inst.password.decode('utf8')
+        self.assertTrue(inst.check_password('abc'))
+        self.assertFalse(inst.check_password('abcdef'))
+
     def test_check_password_gt_4096_bytes(self):
         inst = self._makeOne('abc')
         self.assertRaises(ValueError, inst.check_password, 'a'*4097)
