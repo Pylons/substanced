@@ -26,6 +26,9 @@
 - Add support for Python 3.6 and 3.7; drop support for Python 3.4.
   See https://github.com/Pylons/substanced/pull/305
 
+1.0.post1 (2018-11-07)
+======================
+
 - Accomodate Pyramid's deprecation of ``confg.set_request_property``.
   See: https://github.com/Pylons/substanced/pull/303
 
