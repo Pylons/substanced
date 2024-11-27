@@ -1,0 +1,14 @@
+graft substanced
+graft docs
+prune docs/_build
+
+include *.rst
+include *.txt
+include *.md
+include *.mo
+include *.po
+include *.pot
+include tox.ini
+include .coveragerc
+
+global-exclude __pycache__ *.py[cod]
