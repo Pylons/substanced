@@ -64,7 +64,7 @@ i18n_extras = [
 ]
 
 setup(name='substanced',
-      version='1.0a1',
+      version='1.0b1',
       description='An application server built using Pyramid',
       long_description=README + '\n\n' + CHANGES,
       classifiers=[

@@ -1,4 +1,4 @@
-1.0b1 (unreleased)
+1.0b1 (2024-11-27)
 ==================
 
 - Fix password check for users created prior to switching to ``bcrypt``.
