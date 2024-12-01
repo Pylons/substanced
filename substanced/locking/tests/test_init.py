@@ -26,9 +26,9 @@ class Test_now(unittest.TestCase):
         return now()
 
     def test_it(self):
-        from pytz import UTC
+        import datetime
         result = self._callFUT()
-        self.assertEqual(result.tzinfo, UTC)
+        self.assertIs(result.tzinfo, datetime.timezone.utc)
 
 class TestLockOwnerSchema(unittest.TestCase):
     def _makeOne(self):
@@ -212,14 +212,14 @@ class TestLock(unittest.TestCase):
     def test_refresh(self):
         import datetime
         inst = self._makeOne()
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now(datetime.timezone.utc)
         inst.refresh(when=now)
         self.assertEqual(inst.last_refresh, now)
 
     def test_refresh_with_timeout(self):
         import datetime
         inst = self._makeOne()
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now(datetime.timezone.utc)
         inst.refresh(timeout=30, when=now)
         self.assertEqual(inst.last_refresh, now)
         self.assertEqual(inst.timeout, 30)
@@ -233,7 +233,7 @@ class TestLock(unittest.TestCase):
         import datetime
         inst = self._makeOne()
         inst.timeout = 30
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now(datetime.timezone.utc)
         inst.last_refresh = now
         self.assertEqual(inst.expires(), now + datetime.timedelta(seconds=30))
 
@@ -246,7 +246,7 @@ class TestLock(unittest.TestCase):
         import datetime
         inst = self._makeOne()
         inst.timeout = 30
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now(datetime.timezone.utc)
         future = now + datetime.timedelta(seconds=60)
         inst.last_refresh = now
         self.assertTrue(inst.is_valid(now))
@@ -256,7 +256,7 @@ class TestLock(unittest.TestCase):
         import datetime
         inst = self._makeOne()
         inst.timeout = 30
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now(datetime.timezone.utc)
         inst.last_refresh = now
         inst.__objectmap__ = DummyObjectMap([1])
         self.assertTrue(inst.is_valid(now))
@@ -265,7 +265,7 @@ class TestLock(unittest.TestCase):
         import datetime
         inst = self._makeOne()
         inst.timeout = 30
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now(datetime.timezone.utc)
         inst.last_refresh = now
         inst.__objectmap__ = DummyObjectMap([])
         self.assertFalse(inst.is_valid(now))

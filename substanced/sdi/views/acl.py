@@ -1,7 +1,6 @@
 import logging
 
-from pyramid.security import (
-    NO_PERMISSION_REQUIRED,
+from pyramid.authorization import (
     ALL_PERMISSIONS,
     DENY_ALL,
     Deny,
@@ -9,6 +8,7 @@ from pyramid.security import (
     Authenticated,
     )
 from pyramid.csrf import check_csrf_token
+from pyramid.security import NO_PERMISSION_REQUIRED
 from pyramid.view import view_defaults
 from pyramid.location import lineage
 

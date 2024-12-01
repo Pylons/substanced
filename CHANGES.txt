@@ -1,6 +1,9 @@
 1.0b1 (2024-11-27)
 ==================
 
+- Update to use Pyramid >= 2.0.
+  See https://github.com/Pylons/substanced/pull/308
+
 - Fix password check for users created prior to switching to ``bcrypt``.
   See https://github.com/Pylons/substanced/pull/316
 

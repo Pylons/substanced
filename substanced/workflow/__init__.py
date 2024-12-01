@@ -2,12 +2,12 @@ from collections import defaultdict
 
 from persistent.mapping import PersistentMapping
 
+from pyramid.authorization import ALL_PERMISSIONS
+from pyramid.authorization import Allow
+from pyramid.authorization import Authenticated
+from pyramid.authorization import DENY_ALL
+from pyramid.authorization import Everyone
 from pyramid.config import ConfigurationError
-from pyramid.security import ALL_PERMISSIONS
-from pyramid.security import Allow
-from pyramid.security import Authenticated
-from pyramid.security import DENY_ALL
-from pyramid.security import Everyone
 from zope.interface import implementer
 
 from ..event import AfterTransition

@@ -24,7 +24,6 @@ class TestContentRegistry(unittest.TestCase):
     def test_create(self):
         registry = DummyRegistry()
         inst = self._makeOne(registry)
-        inst._utcnow = lambda *a: 1
         content = testing.DummyResource()
         inst.content_types['dummy'] = lambda a: content
         inst.meta['dummy'] = {}
@@ -34,7 +33,6 @@ class TestContentRegistry(unittest.TestCase):
     def test_create_with_oid(self):
         registry = DummyRegistry()
         inst = self._makeOne(registry)
-        inst._utcnow = lambda *a: 1
         content = testing.DummyResource()
         inst.content_types['dummy'] = lambda a: content
         inst.meta['dummy'] = {}
