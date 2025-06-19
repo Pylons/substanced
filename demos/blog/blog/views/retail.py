@@ -7,7 +7,10 @@ from webob import Response
 from pyramid.decorator import reify
 from pyramid.httpexceptions import HTTPFound
 from pyramid.url import resource_url
-from substanced.util import find_catalog
+from substanced.util import (
+    find_catalog,
+    now,
+)
 from pyramid.view import (
     view_config,
     view_defaults,
@@ -122,11 +125,6 @@ class FeedViews(object):
         self.context = context
         self.request = request
 
-    def _nowtz(self):
-        now = datetime.datetime.utcnow() # naive
-        y, mo, d, h, mi, s = now.timetuple()[:6]
-        return datetime.datetime(y, mo, d, h, mi, s, tzinfo=pytz.utc)
-
     def _get_feed_info(self):
         context = self.context
         request = self.request
@@ -160,7 +158,7 @@ class FeedViews(object):
                 
         blogentries.sort(key=lambda x: x[0].isoformat())
         blogentries = [entry[1] for entry in reversed(blogentries)][:15]
-        updated = blogentries and blogentries[0]['pubdate'] or self._nowtz()
+        updated = blogentries and blogentries[0]['pubdate'] or now()
         _add_updated_strings(updated, feed)
         
         return feed, blogentries

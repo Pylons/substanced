@@ -3,6 +3,7 @@ try:
     import cProfile as _profile
 except ImportError: # pragma: no cover (pypy)
     import profile as _profile
+import datetime
 import itertools
 import json
 import math
@@ -29,6 +30,9 @@ from ..interfaces import IService
 _ = TranslationStringFactory('substanced')
 
 _marker = object()
+
+def now():
+    return datetime.datetime.now(datetime.timezone.utc)
 
 class JsonDict(dict):
     def __str__(self):

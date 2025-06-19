@@ -4,6 +4,17 @@ from pyramid import testing
 
 from . import _marker
 
+class Test_now(unittest.TestCase):
+    def _callFUT(self):
+        from . import now
+        return now()
+
+    def test_it(self):
+        import datetime
+
+        result = self._callFUT()
+        self.assertIs(result.tzinfo, datetime.timezone.utc)
+
 class Test__postorder(unittest.TestCase):
     def setUp(self):
         testing.setUp()
@@ -391,8 +402,8 @@ class Test_coarse_datetime_repr(unittest.TestCase):
 
     def test_it(self):
         import calendar
-        import datetime
-        d = datetime.datetime.utcnow()
+        from . import now
+        d = now()
         result = self._callFUT(d)
         timetime = calendar.timegm(d.timetuple())
         val = int(timetime) // 100        
