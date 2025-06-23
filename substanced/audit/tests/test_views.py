@@ -1,4 +1,6 @@
+import datetime
 import unittest
+
 from pyramid import testing
 
 class Test_AuditLogEventStreamView(unittest.TestCase):
@@ -93,11 +95,10 @@ class Test_AuditLogEventStreamView(unittest.TestCase):
         self.assertEqual(list(auditlog.oids), [3])
 
     def test_auditing(self):
-        import pytz
         context = testing.DummyResource()
         request = testing.DummyRequest()
         request.user = testing.DummyResource()
-        request.user.timezone = pytz.timezone('UTC')
+        request.user.timezone = datetime.timezone.utc
         inst = self._makeOne(context, request)
         inst.get_auditlog = lambda c: DummyAuditLog()
         result = inst.auditing()

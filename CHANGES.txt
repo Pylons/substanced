@@ -1,3 +1,13 @@
+1.0 (unreleased)
+================
+
+- Move 'substanced.locking.now' to 'substanced.util.now', and rework to avoid
+  warning spew for 'datetime.datetime.utcnow'.
+
+- Suppress other warning spew from upstreams in newer Python versions
+  ('chameleon' / AST, 'pkg_resources', etc.)
+
+
 1.0b1 (2024-11-27)
 ==================
 
@@ -26,7 +36,7 @@
 - Override ``serialize`` for ``ReferenceIdSchemaNode``.
   See https://github.com/Pylons/substanced/pull/311
 
-- Get all tests running under ``py.test`` against head of Pyramid's 
+- Get all tests running under ``py.test`` against head of Pyramid's
   ``1.10`` branch.  See https://github.com/Pylons/substanced/pull/309
 
 - Add support for Python 3.6 and 3.7; drop support for Python 3.4.
@@ -111,7 +121,7 @@
   the change.
 
 - Removed Python 2.6 compatibility shim ``substanced._compat.total_ordering``.
-  
+
 1.0a1 (2015-04-17)
 ==================
 

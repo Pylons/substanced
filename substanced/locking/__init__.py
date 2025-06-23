@@ -7,7 +7,6 @@ used by add-ons such as DAV implementations.
 
 import datetime
 import uuid
-import pytz
 
 from zope.interface import implementer
 
@@ -43,6 +42,7 @@ from substanced.util import (
     find_objectmap,
     find_service,
     get_oid,
+    now,
     )
 from substanced.schema import Schema
 
@@ -68,9 +68,6 @@ class UnlockError(LockingError):
     :class:`substanced.locking.Lock` object, representing the conflicting lock,
     or ``None`` if there was no lock to unlock.
     """
-
-def now():
-    return datetime.datetime.utcnow().replace(tzinfo=pytz.UTC)
 
 class LockOwnerSchema(colander.SchemaNode):
     title = 'Owner'

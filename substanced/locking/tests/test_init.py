@@ -20,16 +20,6 @@ class TestUnlockError(unittest.TestCase):
         inst = self._makeOne('lock')
         self.assertEqual(inst.lock, 'lock')
 
-class Test_now(unittest.TestCase):
-    def _callFUT(self):
-        from .. import now
-        return now()
-
-    def test_it(self):
-        from pytz import UTC
-        result = self._callFUT()
-        self.assertEqual(result.tzinfo, UTC)
-
 class TestLockOwnerSchema(unittest.TestCase):
     def _makeOne(self):
         from .. import LockOwnerSchema
@@ -210,18 +200,18 @@ class TestLock(unittest.TestCase):
         self.assertEqual(inst.comment, 'comment')
 
     def test_refresh(self):
-        import datetime
+        from .. import now
         inst = self._makeOne()
-        now = datetime.datetime.utcnow()
-        inst.refresh(when=now)
-        self.assertEqual(inst.last_refresh, now)
+        NOW = now()
+        inst.refresh(when=NOW)
+        self.assertEqual(inst.last_refresh, NOW)
 
     def test_refresh_with_timeout(self):
-        import datetime
+        from .. import now
         inst = self._makeOne()
-        now = datetime.datetime.utcnow()
-        inst.refresh(timeout=30, when=now)
-        self.assertEqual(inst.last_refresh, now)
+        NOW = now()
+        inst.refresh(timeout=30, when=NOW)
+        self.assertEqual(inst.last_refresh, NOW)
         self.assertEqual(inst.timeout, 30)
 
     def test_expires_timeout_is_None(self):
@@ -231,11 +221,12 @@ class TestLock(unittest.TestCase):
 
     def test_expires_timeout_is_int(self):
         import datetime
+        from .. import now
         inst = self._makeOne()
         inst.timeout = 30
-        now = datetime.datetime.utcnow()
-        inst.last_refresh = now
-        self.assertEqual(inst.expires(), now + datetime.timedelta(seconds=30))
+        NOW = now()
+        inst.last_refresh = NOW
+        self.assertEqual(inst.expires(), NOW + datetime.timedelta(seconds=30))
 
     def test_is_valid_expires_timeout_is_None(self):
         inst = self._makeOne()
@@ -244,31 +235,34 @@ class TestLock(unittest.TestCase):
 
     def test_is_valid_expires_timeout_is_int(self):
         import datetime
+        from .. import now
         inst = self._makeOne()
         inst.timeout = 30
-        now = datetime.datetime.utcnow()
-        future = now + datetime.timedelta(seconds=60)
-        inst.last_refresh = now
-        self.assertTrue(inst.is_valid(now))
-        self.assertFalse(inst.is_valid(future))
+        NOW = now()
+        FUTURE = NOW + datetime.timedelta(seconds=60)
+        inst.last_refresh = NOW
+        self.assertTrue(inst.is_valid(NOW))
+        self.assertFalse(inst.is_valid(FUTURE))
 
     def test_is_valid_expires_resource_id_exists(self):
         import datetime
+        from .. import now
         inst = self._makeOne()
         inst.timeout = 30
-        now = datetime.datetime.utcnow()
-        inst.last_refresh = now
+        NOW = now()
+        inst.last_refresh = NOW
         inst.__objectmap__ = DummyObjectMap([1])
-        self.assertTrue(inst.is_valid(now))
+        self.assertTrue(inst.is_valid(NOW))
 
     def test_is_valid_expires_resource_id_notexist(self):
         import datetime
+        from .. import now
         inst = self._makeOne()
         inst.timeout = 30
-        now = datetime.datetime.utcnow()
-        inst.last_refresh = now
+        NOW = now()
+        inst.last_refresh = NOW
         inst.__objectmap__ = DummyObjectMap([])
-        self.assertFalse(inst.is_valid(now))
+        self.assertFalse(inst.is_valid(NOW))
 
     def test_depth_wo_infinite(self):
         inst = self._makeOne(infinite=False)
